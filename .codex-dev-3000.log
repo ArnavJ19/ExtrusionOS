@@ -1,0 +1,27 @@
+
+> extrusionos-pro@0.1.0 dev
+> next dev --port 3000
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.25:3000
+- Environments: .env.local
+✓ Ready in 551ms
+
+ GET /login 200 in 453ms (next.js: 123ms, proxy.ts: 11ms, application-code: 319ms)
+ GET /login 200 in 291ms (next.js: 78ms, proxy.ts: 96ms, application-code: 117ms)
+ GET /login 200 in 256ms (next.js: 6ms, proxy.ts: 13ms, application-code: 237ms)
+ GET /login 200 in 185ms (next.js: 22ms, proxy.ts: 24ms, application-code: 139ms)
+ GET /login 200 in 185ms (next.js: 52ms, proxy.ts: 26ms, application-code: 107ms)
+ GET /login 200 in 185ms (next.js: 82ms, proxy.ts: 28ms, application-code: 75ms)
+ GET /login 200 in 183ms (next.js: 115ms, proxy.ts: 29ms, application-code: 39ms)
+ GET /login 200 in 147ms (next.js: 5ms, proxy.ts: 8ms, application-code: 135ms)
+ GET / 307 in 2.3s (next.js: 152ms, proxy.ts: 1945ms, application-code: 155ms)
+ GET /dashboard 200 in 3.8s (next.js: 233ms, proxy.ts: 935ms, application-code: 2.6s)
+ GET /settings 200 in 1217ms (next.js: 61ms, proxy.ts: 444ms, application-code: 711ms)
+ GET /settings 200 in 1082ms (next.js: 11ms, proxy.ts: 429ms, application-code: 642ms)
+ GET /settings/enterprise 200 in 3.5s (next.js: 1577ms, proxy.ts: 494ms, application-code: 1397ms)
+ GET /settings/data 200 in 1317ms (next.js: 53ms, proxy.ts: 436ms, application-code: 828ms)
+ GET /dies 200 in 913ms (next.js: 76ms, proxy.ts: 416ms, application-code: 422ms)
+ GET /dies/b41e4734-a8e9-475d-93af-8a224e67c2d5 200 in 2.2s (next.js: 814ms, proxy.ts: 414ms, application-code: 944ms)
+ POST /dies/b41e4734-a8e9-475d-93af-8a224e67c2d5 500 in 921ms (next.js: 20ms, proxy.ts: 420ms, application-code: 481ms)
