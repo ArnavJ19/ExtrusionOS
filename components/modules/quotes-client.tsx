@@ -17,7 +17,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { formatCurrency, formatDate, formatMeters, formatWeight, todayIso } from "@/lib/utils/format";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { rowMatchesSearch } from "@/lib/utils/search";
-import { convertQuoteToOrderAction, saveQuoteAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
+import { saveQuoteAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
 import { dieAmortizationTypes, labelize, type DieAmortizationType, type FinishingChargeType, type FinishingType, type QuoteStatus, type SessionContext } from "@/types/app";
 
 type Customer = { id: string; customer_name: string; company_name: string | null; gst_number: string | null; billing_address: string | null; shipping_address: string | null };
@@ -277,11 +277,8 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
     await loadAll();
   }
 
-  async function convertToOrder(quote: QuoteRow) {
-    const result = await convertQuoteToOrderAction(quote.id);
-    if (!result.success) return toast.error(result.error);
-    toast.success("Quote converted to order");
-    await loadAll();
+  function convertToOrder(quote: QuoteRow) {
+    window.location.assign(`/orders/new?quoteId=${quote.id}`);
   }
 
   async function copyWhatsapp(quote: QuoteRow) {

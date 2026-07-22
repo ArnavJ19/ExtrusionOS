@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { CommandCenterClient } from "@/components/modules/command-center-client";
+import { calculateIssuedBilletRecovery } from "@/lib/command-center/metrics";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
@@ -13,10 +15,7 @@ export default async function CommandCenterPage() {
 
   const supabase = await createClient();
   const now = new Date();
-  const today = now.toISOString().slice(0, 10);
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10);
-  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10);
+  const { today, monthStart, lastMonthStart, lastMonthEnd, monthStartIso, tomorrowStartIso } = getBusinessDateBoundaries(now);
 
   const activeProductionStages = [
     "order_confirmed", "die_ready", "billet_ready", "billet_heating", "extrusion_planned",
@@ -75,10 +74,10 @@ export default async function CommandCenterPage() {
   ] = await Promise.all([
     // Monthly quotes
     supabase.from("quotes").select("id, grand_total, status", { count: "exact" })
-      .eq("company_id", context.companyId).gte("quote_date", monthStart),
+      .eq("company_id", context.companyId).gte("quote_date", monthStart).lte("quote_date", today),
     // Monthly orders
     supabase.from("orders").select("id, order_value, current_stage", { count: "exact" })
-      .eq("company_id", context.companyId).gte("order_date", monthStart).neq("current_stage", "cancelled"),
+      .eq("company_id", context.companyId).gte("order_date", monthStart).lte("order_date", today).neq("current_stage", "cancelled"),
     // Last month orders
     supabase.from("orders").select("id, order_value", { count: "exact" })
       .eq("company_id", context.companyId).gte("order_date", lastMonthStart).lte("order_date", lastMonthEnd).neq("current_stage", "cancelled"),
@@ -90,7 +89,7 @@ export default async function CommandCenterPage() {
       .eq("company_id", context.companyId).eq("status", "sent"),
     // Converted quotes
     supabase.from("quotes").select("id", { count: "exact", head: true })
-      .eq("company_id", context.companyId).eq("status", "converted_to_order").gte("quote_date", monthStart),
+      .eq("company_id", context.companyId).eq("status", "converted_to_order").gte("quote_date", monthStart).lte("quote_date", today),
 
     // Active production orders
     supabase.from("orders").select("id", { count: "exact", head: true })
@@ -104,7 +103,7 @@ export default async function CommandCenterPage() {
       .order("expected_dispatch_date", { ascending: true }).limit(10),
     // Monthly dispatches
     supabase.from("dispatches").select("id, total_weight_kg", { count: "exact" })
-      .eq("company_id", context.companyId).gte("dispatch_date", monthStart),
+      .eq("company_id", context.companyId).gte("dispatch_date", monthStart).lte("dispatch_date", today),
     // Delayed orders
     supabase.from("orders").select("id, order_number, expected_dispatch_date, order_value, customers(customer_name, company_name)")
       .eq("company_id", context.companyId).lt("expected_dispatch_date", today)
@@ -116,8 +115,7 @@ export default async function CommandCenterPage() {
       .eq("company_id", context.companyId).in("status", ["sent", "partially_paid", "overdue"])
       .lt("due_date", today).gt("balance_due", 0).order("due_date", { ascending: true }).limit(10),
     // Monthly payments
-    supabase.from("payments").select("id, amount")
-      .eq("company_id", context.companyId).gte("payment_date", monthStart),
+    supabase.rpc("get_financial_collection_events", { p_start_date: monthStart }),
     // Total receivables
     supabase.from("invoices").select("id, balance_due")
       .eq("company_id", context.companyId).in("status", ["sent", "partially_paid", "overdue"]).gt("balance_due", 0),
@@ -135,7 +133,7 @@ export default async function CommandCenterPage() {
       .eq("company_id", context.companyId).in("status", ["rejected", "rework"]),
     // Quality fails this month
     supabase.from("quality_inspections").select("id, status, quantity_checked_kg")
-      .eq("company_id", context.companyId).gte("inspection_date", monthStart),
+      .eq("company_id", context.companyId).gte("inspection_date", monthStart).lte("inspection_date", today),
 
     // Dies needing correction
     supabase.from("dies").select("id", { count: "exact", head: true })
@@ -156,37 +154,47 @@ export default async function CommandCenterPage() {
 
     // Active customers
     supabase.from("orders").select("customer_id")
-      .eq("company_id", context.companyId).gte("order_date", monthStart).neq("current_stage", "cancelled"),
+      .eq("company_id", context.companyId).gte("order_date", monthStart).lte("order_date", today).neq("current_stage", "cancelled"),
     // Recent orders
     supabase.from("orders").select("id, order_number, order_value, order_date, current_stage, priority, customers(customer_name, company_name)")
       .eq("company_id", context.companyId).order("order_date", { ascending: false }).limit(5),
     // Top customers by order value
     supabase.from("orders").select("customer_id, order_value, customers(customer_name, company_name)")
-      .eq("company_id", context.companyId).gte("order_date", monthStart).neq("current_stage", "cancelled"),
+      .eq("company_id", context.companyId).gte("order_date", monthStart).lte("order_date", today).neq("current_stage", "cancelled"),
 
     // Completed production jobs for weight calculation
-    supabase.from("production_jobs").select("actual_quantity_kg")
-      .eq("company_id", context.companyId).eq("status", "completed").gte("updated_at", monthStart),
+    supabase.from("production_jobs").select("id, actual_quantity_kg")
+      .eq("company_id", context.companyId).eq("status", "completed").gte("updated_at", monthStartIso).lt("updated_at", tomorrowStartIso),
     // Scrap records weight calculation
     supabase.from("scrap_records").select("weight_kg")
-      .eq("company_id", context.companyId).gte("created_at", monthStart),
+      .eq("company_id", context.companyId).gte("created_at", monthStartIso).lt("created_at", tomorrowStartIso),
   ]);
+
+  const completedProductionJobs = productionJobsCompleted.data ?? [];
+  const completedProductionJobIds = completedProductionJobs.map((job: any) => job.id);
+  const issuedBillets = completedProductionJobIds.length
+    ? await supabase.from("foundry_billets")
+      .select("production_job_id, weight_kg")
+      .eq("company_id", context.companyId)
+      .in("production_job_id", completedProductionJobIds)
+      .in("status", ["issued", "consumed"])
+    : { data: [], error: null };
 
   // Compute derived metrics
   const monthlyQuoteValue = (monthlyQuotes.data ?? []).reduce((s, q: any) => s + Number(q.grand_total ?? 0), 0);
   const monthlyOrderValue = (monthlyOrders.data ?? []).reduce((s, o: any) => s + Number(o.order_value ?? 0), 0);
   const lastMonthOrderValue = (lastMonthOrders.data ?? []).reduce((s, o: any) => s + Number(o.order_value ?? 0), 0);
   const sentQuoteValue = (sentQuotes.data ?? []).reduce((s, q: any) => s + Number(q.grand_total ?? 0), 0);
-  const monthlyPaymentValue = (monthlyPayments.data ?? []).reduce((s, p: any) => s + Number(p.amount ?? 0), 0);
+  const monthlyPaymentValue = (monthlyPayments.data ?? []).reduce((s: number, p: any) => s + Number(p.amount ?? 0), 0);
   const totalReceivableValue = (totalReceivables.data ?? []).reduce((s, i: any) => s + Number(i.balance_due ?? 0), 0);
   const dispatchWeight = (monthlyDispatches.data ?? []).reduce((s, d: any) => s + Number(d.total_weight_kg ?? 0), 0);
   const activeCustomerIds = new Set((activeCustomers.data ?? []).map((r: any) => r.customer_id).filter(Boolean));
 
-  // Scrap & yield
-  const totalProduced = (productionJobsCompleted.data ?? []).reduce((s, j: any) => s + Number(j.actual_quantity_kg ?? 0), 0);
+  // Scrap & yield. Recovery uses only physical billet input linked to each
+  // completed job; it is not inferred from output plus recorded scrap.
+  const totalProduced = completedProductionJobs.reduce((s: number, j: any) => s + Number(j.actual_quantity_kg ?? 0), 0);
   const totalScrap = (scrapRecordsMonthly.data ?? []).reduce((s, j: any) => s + Number(j.weight_kg ?? 0), 0);
-  const totalInput = totalProduced + totalScrap;
-  const recoveryPercent = totalInput > 0 ? (totalProduced / totalInput) * 100 : 0;
+  const recovery = calculateIssuedBilletRecovery(completedProductionJobs, issuedBillets.data ?? []);
 
   // Low stock filtering
   const lowStockFiltered = (lowStockItems.data ?? []).filter((item: any) => {
@@ -222,8 +230,9 @@ export default async function CommandCenterPage() {
 
   if (totalReceivableValue > monthlyOrderValue * 0.5) insights.push({ text: `Receivables (₹${(totalReceivableValue / 100000).toFixed(1)}L) exceed 50% of monthly revenue. Follow up urgently.`, severity: "critical" });
 
-  if (recoveryPercent > 0 && recoveryPercent < 85) insights.push({ text: `Recovery rate ${recoveryPercent.toFixed(1)}% is below 85% target. Investigate billet quality and die condition.`, severity: "warning" });
-  else if (recoveryPercent >= 90) insights.push({ text: `Recovery rate ${recoveryPercent.toFixed(1)}% — excellent yield performance this month.`, severity: "success" });
+  if (recovery.percent !== null && recovery.percent < 85) insights.push({ text: `Recovery rate ${recovery.percent.toFixed(1)}% is below 85% target. Investigate billet quality and die condition.`, severity: "warning" });
+  else if (recovery.percent !== null && recovery.percent >= 90) insights.push({ text: `Recovery rate ${recovery.percent.toFixed(1)}% — excellent yield performance this month.`, severity: "success" });
+  else if (recovery.missingJobCount > 0) insights.push({ text: `Recovery is not captured: ${recovery.missingJobCount} completed production job(s) have no issued billet input.`, severity: "warning" });
 
   if (lowStockFiltered.length > 3) insights.push({ text: `${lowStockFiltered.length} inventory items below reorder level. Check billet and packing material stock.`, severity: "warning" });
 
@@ -249,7 +258,7 @@ export default async function CommandCenterPage() {
     qualityHolds, qualityFails,
     dieCorrectionCount, dieInactiveCount,
     unreadAlerts, openTasks, urgentTasks,
-    activeCustomers, recentOrders, topCustomers, productionJobsCompleted, scrapRecordsMonthly,
+    activeCustomers, recentOrders, topCustomers, productionJobsCompleted, scrapRecordsMonthly, issuedBillets,
   ].map((r) => (r.error ? getErrorMessage(r.error) : "")).filter(Boolean);
 
   return (
@@ -290,7 +299,11 @@ export default async function CommandCenterPage() {
           totalInventoryCount: totalInventoryItems.count ?? 0,
           totalProduced,
           totalScrap,
-          recoveryPercent,
+          recoveryPercent: recovery.percent,
+          recoveryInputKg: recovery.issuedInputKg,
+          recoveryOutputKg: recovery.capturedOutputKg,
+          recoveryCapturedJobCount: recovery.capturedJobCount,
+          recoveryMissingJobCount: recovery.missingJobCount,
           qualityHoldCount: qualityHolds.count ?? 0,
           totalInspected,
           failedInspections,

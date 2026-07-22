@@ -8,14 +8,15 @@ import { LogoutButton } from "./logout-button";
 import { ModuleNavigator } from "./module-navigator";
 import { NavLink, type NavIconName } from "./nav-link";
 import { hasRouteAccess } from "@/lib/auth/route-permissions";
+import { getSearchResourceKeys } from "@/lib/auth/role-experience";
 import type { EnterpriseModuleName, UserRole } from "@/types/app";
 
 const nav = [
-  { href: "/dashboard", label: "Dashboard", icon: "BarChart3", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "dispatch_manager", "dispatch", "accounts", "quality", "viewer", "dealer_admin", "dealer_staff"] },
+  { href: "/dashboard", label: "Dashboard", icon: "BarChart3", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer", "dealer_admin", "dealer_staff"] },
   { href: "/command-center", label: "Command Center", icon: "Activity", roles: ["owner", "admin"] },
-  { href: "/customers", label: "Customers", icon: "Users", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "dispatch_manager", "accounts", "viewer"] },
+  { href: "/customers", label: "Customers", icon: "Users", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "factory_manager", "dispatch_manager", "accounts", "viewer"] },
   { href: "/crm", label: "CRM", icon: "Target", roles: ["owner", "admin", "sales_manager", "sales"], module: "crm" },
-  { href: "/profiles", label: "Profiles", icon: "Shapes", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "quality", "viewer"] },
+  { href: "/profiles", label: "Profiles", icon: "Shapes", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "inventory_manager", "quality", "viewer"] },
   { href: "/dies", label: "Dies", icon: "Wrench", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "quality", "viewer"] },
   { href: "/die-intelligence", label: "Die Intel", icon: "Activity", roles: ["owner", "admin", "production_manager", "quality"] },
   { href: "/quotes", label: "Quotes", icon: "FileText", roles: ["owner", "admin", "sales_manager", "sales", "accounts", "viewer", "dealer_admin", "dealer_staff"] },
@@ -23,22 +24,22 @@ const nav = [
   { href: "/systems-configurator", label: "Configurator", icon: "PackageCheck", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "viewer"] },
   { href: "/communications/whatsapp", label: "WhatsApp", icon: "FileText", roles: ["owner", "admin", "sales_manager", "sales"] },
   { href: "/barcode", label: "QR Gen", icon: "QrCode", roles: ["owner", "admin", "production_manager", "dispatch_manager"] },
-  { href: "/scan", label: "Scanner", icon: "Search", roles: ["owner", "admin", "production_manager", "production", "dispatch_manager", "dispatch"] },
-  { href: "/mobile", label: "Mobile", icon: "Smartphone", roles: ["owner", "admin", "production_manager", "production", "dispatch_manager", "dispatch", "quality"], module: "mobile_floor_app" },
+  { href: "/scan", label: "Scanner", icon: "Search", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "quality"] },
+  { href: "/mobile", label: "Mobile", icon: "Smartphone", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "quality"], module: "mobile_floor_app" },
   { href: "/documents", label: "Documents", icon: "FolderSearch", roles: ["owner", "admin", "sales_manager", "production_manager", "quality"] },
   { href: "/energy", label: "Energy", icon: "Zap", roles: ["owner", "admin", "production_manager"], module: "energy_monitoring" },
   { href: "/maintenance", label: "Maintenance", icon: "Wrench", roles: ["owner", "admin", "production_manager"], module: "machine_maintenance" },
   { href: "/machines", label: "Machines", icon: "Wrench", roles: ["owner", "admin", "production_manager", "production", "viewer"] },
-  { href: "/tasks", label: "Tasks", icon: "CheckSquare", roles: ["owner", "admin", "sales_manager", "factory_manager", "dealer_admin", "dealer_staff"] },
-  { href: "/orders", label: "Orders", icon: "Factory", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "dispatch_manager", "dispatch", "accounts", "quality", "viewer"] },
-  { href: "/production", label: "Production", icon: "CalendarRange", roles: ["owner", "admin", "production_manager", "production", "viewer"], module: "production_planning" },
-  { href: "/foundry", label: "Foundry", icon: "Factory", roles: ["owner", "admin", "production_manager", "production", "viewer"] },
-  { href: "/packaging", label: "Packaging", icon: "PackageCheck", roles: ["owner", "admin", "production_manager", "production", "dispatch_manager", "dispatch", "viewer"] },
+  { href: "/tasks", label: "Tasks", icon: "CheckSquare", roles: ["owner", "admin", "sales_manager", "factory_manager", "inventory_manager", "dealer_admin", "dealer_staff"] },
+  { href: "/orders", label: "Orders", icon: "Factory", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer"] },
+  { href: "/production", label: "Production", icon: "CalendarRange", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "viewer"], module: "production_planning" },
+  { href: "/foundry", label: "Foundry", icon: "Factory", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "viewer"] },
+  { href: "/packaging", label: "Packaging", icon: "PackageCheck", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "viewer"] },
   { href: "/quality", label: "Quality", icon: "ClipboardCheck", roles: ["owner", "admin", "production_manager", "quality", "viewer"], module: "quality_compliance" },
-  { href: "/inventory", label: "Inventory", icon: "Boxes", roles: ["owner", "admin", "production_manager", "production", "dispatch_manager", "viewer", "dealer_admin", "dealer_staff"], module: "advanced_inventory" },
+  { href: "/inventory", label: "Inventory", icon: "Boxes", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "inventory_manager", "viewer", "dealer_admin", "dealer_staff"], module: "advanced_inventory" },
   { href: "/dealer-inventory", label: "Dealer Stock", icon: "Boxes", roles: ["owner", "admin", "sales_manager", "factory_manager", "inventory_manager", "viewer"], module: "dealer_portal" },
   { href: "/vendors", label: "Vendors", icon: "Building2", roles: ["owner", "admin", "sales_manager", "production_manager", "accounts", "viewer"] },
-  { href: "/dispatches", label: "Dispatches", icon: "Truck", roles: ["owner", "admin", "sales_manager", "sales", "dispatch_manager", "dispatch", "accounts", "viewer"], aliases: ["/shipments"] },
+  { href: "/dispatches", label: "Dispatches", icon: "Truck", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "viewer"], aliases: ["/shipments"] },
   { href: "/dealer-orders", label: "Dealer Orders", icon: "Truck", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "inventory_manager", "dealer_admin", "dealer_staff"] },
   { href: "/discrepancies", label: "Discrepancies", icon: "ShieldCheck", roles: ["owner", "admin", "factory_manager", "inventory_manager", "dealer_admin", "dealer_staff"] },
   { href: "/tenders", label: "Tenders", icon: "Building2", roles: ["owner", "admin", "sales_manager"], module: "tender_management" },
@@ -49,6 +50,7 @@ const nav = [
   { href: "/analytics", label: "Analytics", icon: "BarChart3", roles: ["owner", "admin", "sales_manager", "accounts"] },
   { href: "/automation", label: "Automation", icon: "WandSparkles", roles: ["owner", "admin"], module: "automation" },
   { href: "/expenses", label: "Expenses", icon: "IndianRupee", roles: ["owner", "admin", "accounts", "viewer"] },
+  { href: "/invoices", label: "Invoices", icon: "FileText", roles: ["owner", "admin", "accounts", "viewer"] },
   { href: "/payments", label: "Payments", icon: "IndianRupee", roles: ["owner", "admin", "accounts", "viewer"] },
   { href: "/settings/integrations", label: "Integrations", icon: "PlugZap", roles: ["owner", "admin"], module: "accounting_integrations" },
   { href: "/settings/branding", label: "Branding", icon: "Palette", roles: ["owner", "admin"] },
@@ -60,7 +62,7 @@ const nav = [
   { href: "/settings", label: "Settings", icon: "Settings", roles: ["owner", "admin"] }
 ] satisfies { href: string; label: string; icon: NavIconName; roles: UserRole[]; module?: EnterpriseModuleName; aliases?: string[] }[];
 
-const primaryNavOrder = ["/dashboard", "/command-center", "/quotes", "/orders", "/tasks", "/dealer-orders", "/production", "/foundry", "/packaging", "/dispatches", "/inventory", "/dealer-inventory", "/discrepancies", "/dies", "/machines", "/customers", "/profiles", "/expenses", "/payments", "/vendors", "/reports", "/analytics", "/settings"];
+const primaryNavOrder = ["/dashboard", "/command-center", "/quotes", "/orders", "/tasks", "/dealer-orders", "/production", "/foundry", "/packaging", "/dispatches", "/inventory", "/dealer-inventory", "/discrepancies", "/dies", "/machines", "/customers", "/profiles", "/expenses", "/invoices", "/payments", "/vendors", "/reports", "/analytics", "/settings"];
 const adminNavOrder = ["/settings/access", "/audit-logs", "/settings/enterprise", "/settings/security", "/settings/branding", "/settings/data", "/settings/integrations"];
 
 function ordered(items: typeof nav, order: string[]) {
@@ -78,6 +80,10 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   ]);
   const notificationCount = notificationResult.count ?? 0;
   const taskCount = taskResult.count ?? 0;
+  const searchableResources = getSearchResourceKeys(context.role);
+  const searchPlaceholder = searchableResources.length
+    ? `Search ${searchableResources.slice(0, 4).join(", ")}...`
+    : "Search accessible records...";
   const visibleNav = nav.filter((item) => (item.roles as UserRole[]).includes(context.role) && hasRouteAccess(item.href, context.role) && (!item.module || isFeatureEnabled(featureFlags, item.module)));
   const primaryNav = ordered(visibleNav, primaryNavOrder);
   const adminNav = ordered(visibleNav, adminNavOrder);
@@ -137,7 +143,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:justify-end">
             <Link href="/search" className="hidden min-w-0 max-w-xl flex-1 items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-400 shadow-sm transition hover:border-neutral-300 hover:text-neutral-700 md:flex">
-              <Search className="h-4 w-4 shrink-0" /> <span className="truncate">Search quotes, orders, dies, customers...</span>
+              <Search className="h-4 w-4 shrink-0" /> <span className="truncate">{searchPlaceholder}</span>
             </Link>
             <Link href="/notifications" className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-neutral-200 bg-white text-neutral-600 shadow-sm transition hover:border-neutral-300 hover:text-neutral-950">
               <Bell className="h-4 w-4" />

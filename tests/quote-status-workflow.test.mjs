@@ -46,10 +46,10 @@ test("database rejects illegal quote jumps and conversion without an order", () 
   assert.match(transitionMigration, /before update of status on public\.quotes/);
 });
 
-test("accepted factory quotes use atomic line-preserving conversion", () => {
-  assert.match(quoteDetailPage, /convertQuoteToOrderAction, updateQuoteStatusAction/);
-  assert.match(quoteDetailPage, /async function convertAcceptedQuote/);
-  assert.match(quoteDetailPage, /<form action=\{convertAcceptedQuote\}>/);
-  assert.match(quoteDetailPage, /redirect\(\`\/orders\/\$\{result\.orderId\}\`\)/);
+test("accepted factory quotes enter the reviewed conversion workflow", () => {
+  assert.doesNotMatch(quoteDetailPage, /convertQuoteToOrderAction/);
+  assert.doesNotMatch(quoteDetailPage, /async function convertAcceptedQuote/);
+  assert.match(quoteDetailPage, /href=\{`\/orders\/new\?quoteId=\$\{quote\.id\}`\}/);
+  assert.match(quoteDetailPage, /Review &amp; Create Order/);
   assert.match(quoteActions, /rpc\("convert_quote_to_order_atomic"/);
 });

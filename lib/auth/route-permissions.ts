@@ -1,4 +1,5 @@
 import type { UserRole } from "@/types/app";
+import { canAccessMobileApp, canAccessMobileDestination } from "./role-experience.ts";
 
 export const protectedPrefixes = [
   "/ai",
@@ -127,6 +128,14 @@ export function isProtectedPath(pathname: string) {
 }
 
 export function hasRouteAccess(pathname: string, role: UserRole) {
+  if (startsWithPrefix(pathname, "/mobile/jobs")) return canAccessMobileDestination(role, "jobs");
+  if (startsWithPrefix(pathname, "/mobile/scan")) return canAccessMobileDestination(role, "scan");
+  if (startsWithPrefix(pathname, "/mobile/dispatch")) return canAccessMobileDestination(role, "dispatch");
+  if (startsWithPrefix(pathname, "/mobile/quality")) return canAccessMobileDestination(role, "quality");
+  if (startsWithPrefix(pathname, "/mobile/tasks")) return canAccessMobileDestination(role, "tasks");
+  if (startsWithPrefix(pathname, "/mobile")) return canAccessMobileApp(role);
+  if (startsWithPrefix(pathname, "/scan")) return canAccessMobileDestination(role, "scan");
+
   if (role === "dealer_admin" || role === "dealer_staff") {
     if (!dealerRouteAllowed(pathname)) return false;
     const dealerRule = matchingRule(pathname);

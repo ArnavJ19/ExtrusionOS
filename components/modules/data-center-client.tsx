@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { formatDate } from "@/lib/utils/format";
 import { recordsToCsv } from "@/lib/utils/csv";
 import { dataRetentionSettingsSchema } from "@/lib/validations/schemas";
+import { coreExportPlan, exportCoreTables } from "@/lib/data-export/core-export";
 
 type DeletedRecord = { table: string; id: string; label: string; deleted_at: string | null };
 type ExportJob = { id: string; module_name: string; status: string; created_at: string; completed_at: string | null; error_message: string | null };
@@ -38,11 +39,9 @@ const moduleTables: Record<string, string> = {
   production_jobs: "production_jobs",
   quality_inspections: "quality_inspections",
   vendors: "vendors",
-  purchase_orders: "purchase_orders",
   documents: "documents"
 };
 
-const coreExportTables = [...new Set(Object.values(moduleTables))];
 const EXPORT_PAGE_SIZE = 1000;
 const MAX_EXPORT_ROWS_PER_TABLE = 10_000;
 
@@ -120,22 +119,28 @@ export function DataCenterClient({ companyId, userId, retention, exportJobs, act
 
   async function exportCompanyData() {
     try {
-      const payload: Record<string, unknown> = {
+      const result = await exportCoreTables(coreExportPlan, fetchExportRows);
+      const payload = {
         exported_at: new Date().toISOString(),
         company_id: companyId,
         scope: "core_operational_tables",
         row_limit_per_table: MAX_EXPORT_ROWS_PER_TABLE,
-        data: {},
+        manifest: result.manifest,
+        data: result.data,
       };
 
-      for (const table of coreExportTables) {
-        const rows = await fetchExportRows(table);
-        payload.data = { ...(payload.data as Record<string, unknown>), [table]: rows };
-      }
-
       downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }), `core-company-data-${new Date().toISOString().slice(0, 10)}.json`);
-      await writeAudit("export_company_data", "backup", { mode: "json", modules: Object.keys((payload.data as Record<string, unknown>) || {}) });
-      toast.success("Core company data export downloaded");
+      await writeAudit("export_company_data", "backup", {
+        mode: "json",
+        successful: result.manifest.successful.map((entry) => entry.table),
+        skipped: result.manifest.skipped.map((entry) => entry.table),
+        errors: result.manifest.errors.map((entry) => entry.table),
+      });
+      if (result.manifest.errors.length || result.manifest.skipped.length) {
+        toast.warning(`Export downloaded with ${result.manifest.errors.length} error(s) and ${result.manifest.skipped.length} skipped module(s). Review the manifest.`);
+      } else {
+        toast.success("Core company data export downloaded");
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Export failed");
     }
@@ -188,7 +193,7 @@ export function DataCenterClient({ companyId, userId, retention, exportJobs, act
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Data Backup and Recovery" description="Export core operational data, configure retention, recover soft-deleted business records, and review backup activity. Use managed Supabase backups for a full database restore point." actions={<Button onClick={exportCompanyData}><Download className="h-4 w-4" /> Export core data</Button>} />
+      <PageHeader title="Data Backup and Recovery" description="Export core operational data with a per-table success, skip, and error manifest; configure retention; and recover soft-deleted records. Use managed Supabase backups for a full database restore point." actions={<Button onClick={exportCompanyData}><Download className="h-4 w-4" /> Export core data</Button>} />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Stat label="Deleted Records" value={deleted.length.toString()} icon={Trash2} />

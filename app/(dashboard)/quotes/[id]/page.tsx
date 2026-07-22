@@ -11,7 +11,7 @@ import { Download, Pencil } from "lucide-react";
 import { PcdaLineReportControls } from "@/components/modules/shared/pcda-line-report-controls";
 import { checkPcdaLineReadiness } from "@/lib/reports/pcda/readiness";
 import { getReportTemplate } from "@/lib/reports/pcda/templates";
-import { convertQuoteToOrderAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
+import { updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
 import { getAllowedQuoteStatusTransitions } from "@/lib/workflow/quote-status";
 import type { QuoteStatus } from "@/types/app";
 
@@ -22,7 +22,6 @@ const quoteStatusErrorMessages = {
   forbidden: "You do not have permission to update this quote.",
   not_found: "This quote could not be found for your company.",
   update_failed: "The quote status could not be updated. Please try again.",
-  conversion_failed: "The accepted quote could not be converted into an order. Check its drawings and line items, then try again.",
 } as const;
 
 type QuoteStatusErrorCode = keyof typeof quoteStatusErrorMessages;
@@ -62,15 +61,6 @@ export default async function QuoteDetailPage({
 
     redirect(`/quotes/${id}`);
   }
-  async function convertAcceptedQuote() {
-    "use server";
-    const result = await convertQuoteToOrderAction(id);
-    if (!result.success || !result.orderId) {
-      redirect(`/quotes/${id}?statusError=conversion_failed`);
-    }
-    redirect(`/orders/${result.orderId}`);
-  }
-
   if (!can(context.role, "read", "quotes")) redirect("/dashboard");
 
   const { data: quote, error } = await supabase
@@ -126,7 +116,7 @@ export default async function QuoteDetailPage({
         />
         <div className="flex items-center gap-3 pt-2">
           <Badge value={quote.status} />
-          {!linkedOrder && quote.status === "customer_approved" && !context.dealerId && can(context.role, "create", "orders") ? <form action={convertAcceptedQuote}><button type="submit" className="flex items-center gap-2 rounded-xl bg-charcoal px-3 py-2 text-sm font-bold text-white transition hover:bg-charcoal/90">Create Order</button></form> : null}
+          {!linkedOrder && quote.status === "customer_approved" && !context.dealerId && can(context.role, "create", "orders") ? <Link href={`/orders/new?quoteId=${quote.id}`} className="flex items-center gap-2 rounded-xl bg-charcoal px-3 py-2 text-sm font-bold text-white transition hover:bg-charcoal/90">Review &amp; Create Order</Link> : null}
           {!linkedOrder && quote.status === "customer_approved" && context.dealerId && can(context.role, "create", "dealer_orders") ? <Link href={`/dealer-orders/new?quoteId=${quote.id}`} className="flex items-center gap-2 rounded-xl bg-charcoal px-3 py-2 text-sm font-bold text-white transition hover:bg-charcoal/90">Create Dealer Order</Link> : null}
           {can(context.role, "update", "quotes") && quote.status !== "converted_to_order" ? <Link href={`/quotes/${quote.id}/edit`} className="flex items-center gap-2 rounded-xl bg-orange px-3 py-2 text-sm font-bold text-white shadow-lg shadow-orange/20 transition hover:bg-orange/90"><Pencil className="h-4 w-4" /> Edit</Link> : null}
           <a 

@@ -7,7 +7,8 @@ export async function getSessionContext(): Promise<SessionContext> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: appUser } = await supabase.from("app_users").select("*, companies(name)").eq("id", user.id).eq("is_active", true).single();
+  const { data: appUser } = await supabase.from("app_users").select("*, companies(name)").eq("id", user.id).single();
+  if (appUser && !appUser.is_active) redirect("/access-suspended");
   if (!appUser?.company_id) redirect("/onboarding");
 
   const company = appUser.companies as { name?: string } | null;

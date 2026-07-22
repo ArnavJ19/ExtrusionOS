@@ -12,6 +12,8 @@ const moduleConfig = readFileSync(join(repoRoot, "components/modules/operations/
 const schedulePage = readFileSync(join(repoRoot, "app/(dashboard)/production/schedule/page.tsx"), "utf8");
 const scheduleGrid = readFileSync(join(repoRoot, "components/modules/production-planning/press-schedule-grid.tsx"), "utf8");
 const migration = readFileSync(join(repoRoot, "supabase/migrations/0058_production_plan_slots.sql"), "utf8");
+const businessWorkflowMigration = readFileSync(join(repoRoot, "supabase/migrations/20260715000000_atomic_business_workflows.sql"), "utf8");
+const scheduleIntegrityMigration = readFileSync(join(repoRoot, "supabase/migrations/20260723010000_production_schedule_integrity.sql"), "utf8");
 
 const routePages = {
   orders: readFileSync(join(repoRoot, "app/(dashboard)/orders/page.tsx"), "utf8"),
@@ -43,11 +45,12 @@ test("production job writes derive company ownership on the server", () => {
   assert.doesNotMatch(createJob, /company_id\s*:/);
 
   assert.match(productionAction, /const context = await getSessionContext\(\)/);
-  assert.match(productionAction, /company_id:\s*context\.companyId/);
+  assert.doesNotMatch(productionAction, /company_id:\s*(context|input|parsed\.data)/);
   assert.match(productionAction, /\.eq\("company_id", context\.companyId\)/);
-  assert.doesNotMatch(productionAction, /company_id:\s*(input|parsed\.data)\.company_id/);
   assert.match(productionAction, /created_by:\s*currentJob\?\.created_by \?\? context\.userId/);
   assert.match(productionAction, /supabase\.rpc\("save_production_job_atomic"/);
+  assert.match(businessWorkflowMigration, /v_company_id uuid := private\.get_current_user_company_id\(\)/);
+  assert.match(businessWorkflowMigration, /jsonb_build_object\('company_id', v_company_id, 'order_id', v_order_id\)/);
   assert.doesNotMatch(productionAction, /\.from\("production_jobs"\)\.update\(payload\)/);
 });
 
@@ -79,6 +82,22 @@ test("press schedule table and billet allocation use server-owned guarded interf
   assert.match(billetAllocationClient, /allocateBilletToOrderAction/);
   assert.match(billetAllocationClient, /reallocateBilletToOrderAction/);
   assert.doesNotMatch(billetAllocationClient, /\.rpc\("allocate_billet_to_order"/);
+});
+
+test("press scheduling is atomic, non-overlapping, and releases the selected slot", () => {
+  assert.match(productionAction, /supabase\.rpc\("save_production_schedule_slot_atomic"/);
+  assert.match(productionAction, /supabase\.rpc\("release_production_schedule_slot_atomic"/);
+  assert.doesNotMatch(productionAction, /\.from\("production_plan_slots"\)\.insert/);
+  assert.match(scheduleGrid, /releaseJob\(slot\.id\)/);
+  assert.match(scheduleGrid, /Planned end is required|both a start and end time/);
+  assert.match(scheduleGrid, /!job\.machine_id/);
+  assert.match(scheduleGrid, /formatBusinessDateTime\(slot\.planned_start_at\)/);
+  assert.match(scheduleIntegrityMigration, /enforce_production_schedule_integrity/);
+  assert.match(scheduleIntegrityMigration, /already has an active press slot/);
+  assert.match(scheduleIntegrityMigration, /already has an overlapping active slot/);
+  assert.match(scheduleIntegrityMigration, /pg_advisory_xact_lock/);
+  assert.match(scheduleIntegrityMigration, /save_production_schedule_slot_atomic/);
+  assert.match(scheduleIntegrityMigration, /release_production_schedule_slot_atomic/);
 });
 
 test("production form lookups for machine, die, order, and profile are tenant scoped", () => {

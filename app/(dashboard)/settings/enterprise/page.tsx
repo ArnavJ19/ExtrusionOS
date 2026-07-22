@@ -9,7 +9,7 @@ export default async function EnterpriseFoundationPage() {
 
   const supabase = await createClient();
 
-  const [flags, branches, plans, subscriptions, notifications, tasks, auditLogs, exchangeJobs, users, invitations] = await Promise.all([
+  const [flags, branches, plans, subscriptions, notifications, tasks, auditLogs, exchangeJobs, users] = await Promise.all([
     supabase.from("feature_flags").select("*").eq("company_id", context.companyId).order("module_name"),
     supabase.from("branches").select("*").eq("company_id", context.companyId).order("branch_type").order("branch_name"),
     supabase.from("subscription_plans").select("*").eq("is_active", true).order("monthly_price"),
@@ -18,11 +18,10 @@ export default async function EnterpriseFoundationPage() {
     supabase.from("tasks").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(8),
     supabase.from("audit_logs").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(10),
     supabase.from("data_exchange_jobs").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(8),
-    supabase.from("app_users").select("id, full_name, email, role, is_active, branch_id").eq("company_id", context.companyId).order("full_name"),
-    supabase.from("user_invitations").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(10)
+    supabase.from("app_users").select("id, full_name, email, role, is_active, branch_id").eq("company_id", context.companyId).order("full_name")
   ]);
 
-  const errors = [flags, branches, plans, subscriptions, notifications, tasks, auditLogs, exchangeJobs, users, invitations]
+  const errors = [flags, branches, plans, subscriptions, notifications, tasks, auditLogs, exchangeJobs, users]
     .map((result) => result.error?.message ?? "")
     .filter(Boolean);
 
@@ -38,7 +37,6 @@ export default async function EnterpriseFoundationPage() {
       auditLogs={auditLogs.data ?? []}
       exchangeJobs={exchangeJobs.data ?? []}
       users={users.data ?? []}
-      invitations={invitations.data ?? []}
       queryErrors={errors}
     />
   );
