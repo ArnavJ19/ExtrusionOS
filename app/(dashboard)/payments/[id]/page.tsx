@@ -1,4 +1,4 @@
-import { RecordDetailClient } from "@/components/modules/operations/record-detail-client";
+import { PaymentDetailClient } from "@/components/modules/financials/payment-detail-client";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
@@ -7,5 +7,5 @@ export default async function PaymentDetailPage({ params }: { params: Promise<{ 
   const context = await getSessionContext();
   if (!can(context.role, "read", "financials")) redirect("/payments");
   const { id } = await params;
-  return <RecordDetailClient moduleKey="payments" recordId={id} context={context} canEdit={can(context.role, "update", "financials")} />;
+  return <PaymentDetailClient context={context} recordId={id} canReverse={can(context.role, "update", "financials")} />;
 }

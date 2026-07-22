@@ -46,20 +46,21 @@ export default async function DispatchesPage() {
 
   return (
     <div className="space-y-2">
-      <DispatchesDashboard
-        totalDispatches={rows.length}
-        inTransitCount={inTransit.length}
-        deliveredCount={delivered.length}
-        totalWeightMtd={totalWeightMtd}
-        pendingPickupCount={pendingPickup.length}
-        statusBreakdown={statusBreakdown}
-        recentDispatches={(recentDispatches.data ?? []) as any}
-        monthlyCount={monthlyDispatches.count ?? 0}
-        monthlyWeight={monthlyWeight}
-        weightTrend={weightTrend}
-        allDispatches={allDispatchesData}
-      />
-      <ModuleOverviewClient moduleKey="dispatches" context={context} canCreate={can(context.role, "create", "dispatches")} canUpdate={can(context.role, "update", "dispatches")} />
+      <ModuleOverviewClient moduleKey="dispatches" context={context} canCreate={can(context.role, "create", "dispatches")} canUpdate={can(context.role, "update", "dispatches")} hideMetricsAndCharts={true}>
+        <DispatchesDashboard
+          totalDispatches={rows.length}
+          inTransitCount={inTransit.length}
+          deliveredCount={delivered.length}
+          totalWeightMtd={totalWeightMtd}
+          pendingPickupCount={pendingPickup.length}
+          statusBreakdown={statusBreakdown}
+          recentDispatches={(recentDispatches.data ?? []) as any}
+          monthlyCount={monthlyDispatches.count ?? 0}
+          monthlyWeight={monthlyWeight}
+          weightTrend={weightTrend}
+          allDispatches={allDispatchesData}
+        />
+      </ModuleOverviewClient>
     </div>
   );
 }

@@ -20,7 +20,7 @@ type StatusColumnProps = {
   isDragTarget?: boolean;
 };
 
-export function StatusColumn({ status, count, emptyText, viewMoreHref, defaultExpanded = true, children, onDragOver, onDragLeave, onDrop, isDragTarget }: StatusColumnProps) {
+export function StatusColumn({ status, count, emptyText, viewMoreHref, defaultExpanded = false, children, onDragOver, onDragLeave, onDrop, isDragTarget }: StatusColumnProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   return (
@@ -33,6 +33,7 @@ export function StatusColumn({ status, count, emptyText, viewMoreHref, defaultEx
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
         className="mb-1 flex w-full items-center justify-between gap-3 rounded-xl px-1 py-1.5 text-left transition hover:bg-white"
       >
         <div className="flex items-center gap-2">
@@ -49,7 +50,7 @@ export function StatusColumn({ status, count, emptyText, viewMoreHref, defaultEx
           <div className="mt-2 space-y-2">
             {count === 0 ? <div className="empty-mini">{emptyText}</div> : children}
           </div>
-          {viewMoreHref && count > 10 ? <ViewMoreButton href={viewMoreHref} /> : null}
+          {viewMoreHref ? <ViewMoreButton href={viewMoreHref} /> : null}
         </>
       ) : (
         isDragTarget ? <div className="mt-2 flex h-16 items-center justify-center rounded-2xl border border-dashed border-violet-300 text-xs font-bold text-violet-600">Drop here</div> : null

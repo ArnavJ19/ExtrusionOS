@@ -5,7 +5,9 @@ import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getFeatureFlagsForCompany, isFeatureEnabled } from "@/lib/enterprise/features";
 import { LogoutButton } from "./logout-button";
+import { ModuleNavigator } from "./module-navigator";
 import { NavLink, type NavIconName } from "./nav-link";
+import { hasRouteAccess } from "@/lib/auth/route-permissions";
 import type { EnterpriseModuleName, UserRole } from "@/types/app";
 
 const nav = [
@@ -36,14 +38,14 @@ const nav = [
   { href: "/inventory", label: "Inventory", icon: "Boxes", roles: ["owner", "admin", "production_manager", "production", "dispatch_manager", "viewer", "dealer_admin", "dealer_staff"], module: "advanced_inventory" },
   { href: "/dealer-inventory", label: "Dealer Stock", icon: "Boxes", roles: ["owner", "admin", "sales_manager", "factory_manager", "inventory_manager", "viewer"], module: "dealer_portal" },
   { href: "/vendors", label: "Vendors", icon: "Building2", roles: ["owner", "admin", "sales_manager", "production_manager", "accounts", "viewer"] },
-  { href: "/dispatches", label: "Dispatches", icon: "Truck", roles: ["owner", "admin", "sales_manager", "sales", "dispatch_manager", "dispatch", "accounts", "viewer"] },
+  { href: "/dispatches", label: "Dispatches", icon: "Truck", roles: ["owner", "admin", "sales_manager", "sales", "dispatch_manager", "dispatch", "accounts", "viewer"], aliases: ["/shipments"] },
   { href: "/dealer-orders", label: "Dealer Orders", icon: "Truck", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "inventory_manager", "dealer_admin", "dealer_staff"] },
   { href: "/discrepancies", label: "Discrepancies", icon: "ShieldCheck", roles: ["owner", "admin", "factory_manager", "inventory_manager", "dealer_admin", "dealer_staff"] },
   { href: "/tenders", label: "Tenders", icon: "Building2", roles: ["owner", "admin", "sales_manager"], module: "tender_management" },
   { href: "/exports", label: "Exports", icon: "Factory", roles: ["owner", "admin", "sales_manager", "dispatch_manager"], module: "export_docs" },
   { href: "/compliance", label: "Compliance", icon: "ShieldCheck", roles: ["owner", "admin", "quality"], module: "bis_compliance" },
   { href: "/profitability", label: "Profitability", icon: "TrendingUp", roles: ["owner", "admin", "accounts"], module: "profitability_intelligence" },
-  { href: "/reports", label: "Reports", icon: "BarChart3", roles: ["owner", "admin", "sales_manager", "accounts"], module: "report_builder" },
+  { href: "/reports", label: "Reports", icon: "BarChart3", roles: ["owner", "admin", "sales_manager", "accounts"], module: "report_builder", aliases: ["/report-builder"] },
   { href: "/analytics", label: "Analytics", icon: "BarChart3", roles: ["owner", "admin", "sales_manager", "accounts"] },
   { href: "/automation", label: "Automation", icon: "WandSparkles", roles: ["owner", "admin"], module: "automation" },
   { href: "/expenses", label: "Expenses", icon: "IndianRupee", roles: ["owner", "admin", "accounts", "viewer"] },
@@ -56,7 +58,7 @@ const nav = [
   { href: "/settings/access", label: "Users & Roles", icon: "Users", roles: ["owner"] },
   { href: "/audit-logs", label: "Audit Logs", icon: "Activity", roles: ["owner", "admin", "viewer"] },
   { href: "/settings", label: "Settings", icon: "Settings", roles: ["owner", "admin"] }
-] satisfies { href: string; label: string; icon: NavIconName; roles: UserRole[]; module?: EnterpriseModuleName }[];
+] satisfies { href: string; label: string; icon: NavIconName; roles: UserRole[]; module?: EnterpriseModuleName; aliases?: string[] }[];
 
 const primaryNavOrder = ["/dashboard", "/command-center", "/quotes", "/orders", "/tasks", "/dealer-orders", "/production", "/foundry", "/packaging", "/dispatches", "/inventory", "/dealer-inventory", "/discrepancies", "/dies", "/machines", "/customers", "/profiles", "/expenses", "/payments", "/vendors", "/reports", "/analytics", "/settings"];
 const adminNavOrder = ["/settings/access", "/audit-logs", "/settings/enterprise", "/settings/security", "/settings/branding", "/settings/data", "/settings/integrations"];
@@ -76,11 +78,12 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   ]);
   const notificationCount = notificationResult.count ?? 0;
   const taskCount = taskResult.count ?? 0;
-  const visibleNav = nav.filter((item) => (item.roles as UserRole[]).includes(context.role) && (!item.module || isFeatureEnabled(featureFlags, item.module)));
+  const visibleNav = nav.filter((item) => (item.roles as UserRole[]).includes(context.role) && hasRouteAccess(item.href, context.role) && (!item.module || isFeatureEnabled(featureFlags, item.module)));
   const primaryNav = ordered(visibleNav, primaryNavOrder);
   const adminNav = ordered(visibleNav, adminNavOrder);
   const groupedHrefs = new Set([...primaryNavOrder, ...adminNavOrder]);
   const advancedNav = visibleNav.filter((item) => !groupedHrefs.has(item.href));
+  const moduleNavigation = [...primaryNav, ...advancedNav, ...adminNav].map(({ href, label, aliases }) => ({ href, label, aliases }));
 
   function renderLinks(items: typeof nav) {
     return items.map((item) => <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />);
@@ -150,7 +153,10 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <LogoutButton />
           </div>
         </header>
-        <div className="min-h-[calc(100vh-73px)] bg-[#f7f7f8] p-4 lg:p-8">{children}</div>
+        <div className="min-h-[calc(100vh-73px)] bg-[#f7f7f8] p-4 lg:p-8">
+          <ModuleNavigator items={moduleNavigation} />
+          {children}
+        </div>
       </main>
     </div>
   );

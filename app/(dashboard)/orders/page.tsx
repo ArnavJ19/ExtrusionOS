@@ -63,22 +63,23 @@ export default async function OrdersPage() {
 
   return (
     <div className="space-y-2">
-      <OrdersDashboard
-        totalOrderValue={totalOrderValue}
-        activeOrderCount={activeOrders.length}
-        delayedCount={delayedOrders.count ?? 0}
-        avgDaysToDispatch={avgDays}
-        highPriorityCount={highPriority.count ?? 0}
-        blockedFactoryCount={blockedFactoryCount}
-        stageBreakdown={stageBreakdown}
-        priorityBreakdown={priorityBreakdown}
-        recentOrders={(recentOrders.data ?? []) as any}
-        monthlyValue={monthlyValue}
-        monthlyCount={monthlyOrders.count ?? 0}
-        orderTrend={orderTrend}
-        allOrders={allOrdersData}
-      />
-      <ModuleOverviewClient moduleKey="orders" context={context} canCreate={can(context.role, "create", "orders")} canUpdate={can(context.role, "update", "orders")} />
+      <ModuleOverviewClient moduleKey="orders" context={context} canCreate={can(context.role, "create", "orders")} canUpdate={can(context.role, "update", "orders")} hideMetricsAndCharts={true}>
+        <OrdersDashboard
+          totalOrderValue={totalOrderValue}
+          activeOrderCount={activeOrders.length}
+          delayedCount={delayedOrders.count ?? 0}
+          avgDaysToDispatch={avgDays}
+          highPriorityCount={highPriority.count ?? 0}
+          blockedFactoryCount={blockedFactoryCount}
+          stageBreakdown={stageBreakdown}
+          priorityBreakdown={priorityBreakdown}
+          recentOrders={(recentOrders.data ?? []) as any}
+          monthlyValue={monthlyValue}
+          monthlyCount={monthlyOrders.count ?? 0}
+          orderTrend={orderTrend}
+          allOrders={allOrdersData}
+        />
+      </ModuleOverviewClient>
     </div>
   );
 }

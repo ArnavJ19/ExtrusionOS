@@ -18,7 +18,7 @@ import { formatCurrency, formatDate, formatMeters, formatWeight, todayIso } from
 import { getErrorMessage } from "@/lib/utils/errors";
 import { rowMatchesSearch } from "@/lib/utils/search";
 import { convertQuoteToOrderAction, saveQuoteAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
-import { dieAmortizationTypes, labelize, quoteStatuses, type DieAmortizationType, type FinishingChargeType, type FinishingType, type QuoteStatus, type SessionContext } from "@/types/app";
+import { dieAmortizationTypes, labelize, type DieAmortizationType, type FinishingChargeType, type FinishingType, type QuoteStatus, type SessionContext } from "@/types/app";
 
 type Customer = { id: string; customer_name: string; company_name: string | null; gst_number: string | null; billing_address: string | null; shipping_address: string | null };
 type Profile = {
@@ -357,7 +357,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
             })}
           </div>
           <Button type="button" variant="secondary" className="mt-4" onClick={() => setItems([...items, { ...emptyItem }])}>Add item</Button>
-          <div className="mt-5 grid gap-4 sm:grid-cols-3"><label className="block space-y-1.5"><span className="form-label">GST %</span><input className="form-input" type="number" value={form.gst_percent} onChange={(event) => setForm({ ...form, gst_percent: Number(event.target.value) })} /></label><label className="block space-y-1.5 sm:col-span-2"><span className="form-label">Workflow status</span><select className="form-input" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as QuoteStatus })}>{quoteStatuses.filter((value) => value !== "converted_to_order").map((value) => <option key={value} value={value}>{labelize(value)}</option>)}</select></label></div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-3"><label className="block space-y-1.5"><span className="form-label">GST %</span><input className="form-input" type="number" value={form.gst_percent} onChange={(event) => setForm({ ...form, gst_percent: Number(event.target.value) })} /></label><div className="space-y-1.5 sm:col-span-2"><span className="form-label">Workflow status</span><div className="flex min-h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4"><Badge value={editingId ? form.status : "draft"} /><span className="text-xs font-semibold text-slate-600">Use the workflow actions after saving. Changing an approved or sent quote creates a new draft revision.</span></div></div></div>
           {summary.low_margin_approval_required ? <div className="mt-4 rounded-3xl border border-orange-200 bg-orange-50 p-4 text-sm font-semibold text-orange-900">This quotation is below the configured minimum margin. Sales users can save it as draft/internal review, but owner/admin approval is required before sending.</div> : null}
           <label className="mt-4 block space-y-1.5"><span className="form-label">Terms and conditions</span><textarea className="form-input min-h-24" value={form.terms_and_conditions} onChange={(event) => setForm({ ...form, terms_and_conditions: event.target.value })} /></label>
           <label className="mt-4 block space-y-1.5"><span className="form-label">Approval/revision notes</span><textarea className="form-input min-h-16" value={form.approval_notes} onChange={(event) => setForm({ ...form, approval_notes: event.target.value })} /></label>

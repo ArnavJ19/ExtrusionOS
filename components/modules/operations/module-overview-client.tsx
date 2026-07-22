@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Plus, Table2 } from "lucide-react";
 import { toast } from "sonner";
@@ -56,7 +56,7 @@ export function ModuleOverviewClient({
   moduleKey,
   context,
   canCreate,
-  canUpdate = false,
+  hideHeaderActions = false,
   hideMetricsAndCharts = false,
   children,
 }: {
@@ -64,6 +64,7 @@ export function ModuleOverviewClient({
   context: SessionContext;
   canCreate: boolean;
   canUpdate?: boolean;
+  hideHeaderActions?: boolean;
   hideMetricsAndCharts?: boolean;
   children?: React.ReactNode;
 }) {
@@ -101,58 +102,13 @@ export function ModuleOverviewClient({
 
   const records = groups.flatMap((group) => group.rows);
 
-  /** Drag-and-drop status change handler */
-  const handleStatusChange = useCallback(async (recordId: string, newStatus: string) => {
-    if (!config.groupField) return;
-
-    // Optimistic local update
-    setGroups((prev) => {
-      const updated = prev.map((g) => ({
-        ...g,
-        rows: g.status === newStatus
-          ? [...g.rows, ...prev.flatMap((pg) => pg.rows.filter((r) => r.id === recordId)).map((r) => ({ ...r, [config.groupField!]: newStatus }))]
-          : g.rows.filter((r) => r.id !== recordId),
-        count: g.status === newStatus
-          ? g.count + 1
-          : g.rows.some((r) => r.id === recordId) ? g.count - 1 : g.count,
-      }));
-      return updated;
-    });
-
-    // Server update
-    const { error: updateError } = await supabase
-      .from(config.table as any)
-      .update({ [config.groupField]: newStatus })
-      .eq("id", recordId)
-      .eq("company_id", context.companyId);
-
-    if (updateError) {
-      toast.error(getErrorMessage(updateError, "Could not update status"));
-      // Revert optimistic update
-      loadOverview().catch(() => {});
-      return;
-    }
-
-    // For orders, log stage history
-    if (moduleKey === "orders") {
-      await supabase.from("order_stage_history").insert({
-        company_id: context.companyId,
-        order_id: recordId,
-        stage: newStatus,
-        changed_by: context.userId,
-        remarks: "Stage updated via drag-and-drop",
-      });
-    }
-
-    toast.success(`Moved to ${labelize(newStatus)}`);
-  }, [config, supabase, context, moduleKey]);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={config.title}
         description={config.description}
-        actions={(
+        actions={hideHeaderActions ? undefined : (
           <div className="flex flex-wrap gap-2">
             {canCreate && config.fields ? <Link href={`${config.basePath}/new`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800 hover:shadow-md"><Plus className="h-4 w-4" /> {config.primaryAction}</Link> : null}
             <Link href={`${config.basePath}/database`} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-950 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-50"><Table2 className="h-4 w-4" /> {config.databaseAction}</Link>
@@ -208,7 +164,7 @@ export function ModuleOverviewClient({
             <CardHeader>
               <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                 <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-400">Overview</p><h2 className="section-title mt-1">{config.groupField ? `${config.title} by ${labelize(config.groupField)}` : `Recent ${config.title}`}</h2></div>
-                <p className="text-sm font-medium text-neutral-500">Showing up to 10 records per group. Use the database for complete search and sorting.</p>
+                <p className="text-sm font-medium text-neutral-500">Showing up to 5 records per group. Use View More for the complete filtered database.</p>
               </div>
             </CardHeader>
             <CardContent>
@@ -220,7 +176,6 @@ export function ModuleOverviewClient({
                 emptyText="No records in this group."
                 sortRecords={(a, b) => moduleSort(moduleKey, a, b)}
                 getViewMoreHref={(status) => `${config.basePath}/database${config.groupField ? `?status=${status}` : ""}`}
-                onStatusChange={canUpdate && config.groupField ? handleStatusChange : undefined}
                 renderCard={(row) => (
                   <StatusCard
                     key={row.id}

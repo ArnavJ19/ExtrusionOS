@@ -4,6 +4,7 @@ import { can } from "@/lib/auth/permissions";
 import { logEnterpriseAuditEvent } from "@/lib/enterprise/audit";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
+import { recordsToCsv } from "@/lib/utils/csv";
 
 const columns = ["timestamp", "actor_name", "actor_role", "action_type", "module_name", "entity_type", "entity_reference_number", "change_summary", "status", "ip_address"];
 
@@ -16,18 +17,8 @@ export async function GET() {
     if (result.error) return NextResponse.json({ error: getErrorMessage(result.error, "Could not export audit logs") }, { status: 500 });
     await supabase.from("report_exports").insert({ company_id: context.companyId, report_type: "audit_logs", exported_by: context.userId, status: "completed" });
     await logEnterpriseAuditEvent(supabase, { companyId: context.companyId, actorUserId: context.userId, actorName: context.fullName ?? context.email, actorRole: context.role, actorDealerId: context.dealerId, actionType: "report_exported", moduleName: "reports", entityType: "audit_logs", changeSummary: "Audit logs exported to CSV" });
-    return new Response(toCsv(columns, result.data ?? []), { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": "attachment; filename=audit-logs.csv" } });
+    return new Response(recordsToCsv(columns, (result.data ?? []) as unknown as Record<string, unknown>[]), { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": "attachment; filename=audit-logs.csv" } });
   } catch (error) {
     return NextResponse.json({ error: getErrorMessage(error, "Audit export failed") }, { status: 500 });
   }
-}
-
-function toCsv(headers: string[], rows: Record<string, any>[]) {
-  return [headers.join(","), ...rows.map((row) => headers.map((header) => escapeCsv(row[header])).join(","))].join("\n");
-}
-
-function escapeCsv(value: unknown) {
-  if (value === null || value === undefined) return "";
-  const text = String(value);
-  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }

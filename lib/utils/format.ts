@@ -11,8 +11,8 @@ export function formatCurrency(value: number | string | null | undefined) {
 
 export function formatCompactCurrency(value: number | string | null | undefined) {
   const amount = safeNumber(value);
-  if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(2)}Cr`;
-  if (amount >= 100000) return `₹${(amount / 100000).toFixed(2)}L`;
+  if (amount >= 10000000) return `\u20B9${(amount / 10000000).toFixed(2)}Cr`;
+  if (amount >= 100000) return `\u20B9${(amount / 100000).toFixed(2)}L`;
   return formatCurrency(amount);
 }
 
@@ -35,6 +35,9 @@ export function formatDate(value: string | Date | null | undefined) {
   return format(date, "dd MMM yyyy");
 }
 
-export function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+export function todayIso(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }

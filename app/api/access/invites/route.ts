@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       entityReferenceNumber: parsed.data.email,
       newValue: { ...parsed.data, token: "redacted" },
       changeSummary: emailResult.success ? `Invite sent to ${parsed.data.email}` : `Invite created for ${parsed.data.email}; email delivery not configured`,
-      reason: emailResult.error ?? null
+      reason: emailResult.success ? null : emailResult.error
     });
 
     return NextResponse.json({ invite: inviteResult.data, email: emailResult });

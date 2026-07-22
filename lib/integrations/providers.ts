@@ -63,7 +63,11 @@ export interface CommunicationProvider {
 }
 
 export class ManualAccountingProvider implements AccountingProvider {
-  constructor(private readonly integration: IntegrationConfig) {}
+  private readonly integration: IntegrationConfig;
+
+  constructor(integration: IntegrationConfig) {
+    this.integration = integration;
+  }
 
   async exportInvoice(payload: InvoiceExportPayload): Promise<IntegrationResult> {
     return manualBridgeResult(this.integration.providerName, `Invoice ${payload.invoiceNumber} ready for manual export.`);
@@ -83,7 +87,11 @@ export class ManualAccountingProvider implements AccountingProvider {
 }
 
 export class ManualLeadProvider implements LeadProvider {
-  constructor(private readonly integration: IntegrationConfig) {}
+  private readonly integration: IntegrationConfig;
+
+  constructor(integration: IntegrationConfig) {
+    this.integration = integration;
+  }
 
   async importLeads(): Promise<IntegrationResult & { leads?: ImportedLead[] }> {
     return { ...manualBridgeResult(this.integration.providerName, "Lead import file can be uploaded through data exchange."), leads: [] };
@@ -102,7 +110,11 @@ export class ManualLeadProvider implements LeadProvider {
 }
 
 export class ManualCommunicationProvider implements CommunicationProvider {
-  constructor(private readonly integration: IntegrationConfig) {}
+  private readonly integration: IntegrationConfig;
+
+  constructor(integration: IntegrationConfig) {
+    this.integration = integration;
+  }
 
   async sendMessage(payload: { to: string; templateName: string; variables: Record<string, string> }): Promise<IntegrationResult> {
     return manualBridgeResult(this.integration.providerName, `Message ${payload.templateName} queued for manual send to ${payload.to}.`);
@@ -127,10 +139,10 @@ export function createCommunicationProvider(integration: IntegrationConfig): Com
 
 function manualBridgeResult(providerName: string, note: string): IntegrationResult {
   return {
-    success: true,
-    status: "completed",
+    success: false,
+    status: "failed",
     recordsProcessed: 0,
     recordsFailed: 0,
-    error: `${providerName} is configured in manual bridge mode. ${note}`
+    error: `${providerName} has no automated connector configured. ${note}`
   };
 }

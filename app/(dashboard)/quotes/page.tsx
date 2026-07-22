@@ -48,7 +48,7 @@ export default async function QuotesPage() {
 
   return (
     <div className="space-y-2">
-      <ModuleOverviewClient moduleKey="quotes" context={context} canCreate={can(context.role, "create", "quotes")} canUpdate={can(context.role, "update", "quotes")} hideMetricsAndCharts={true}>
+      <ModuleOverviewClient moduleKey="quotes" context={context} canCreate={can(context.role, "create", "quotes")} canUpdate={can(context.role, "update", "quotes")} hideHeaderActions={true} hideMetricsAndCharts={true}>
         <QuotesDashboard
           canCreate={can(context.role, "create", "quotes")}
           totalPipelineValue={totalPipelineValue}

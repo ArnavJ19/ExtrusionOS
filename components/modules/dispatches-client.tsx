@@ -22,7 +22,7 @@ export function DispatchesClient({ context }: { context: SessionContext }) {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ order_id: "", dispatch_date: todayIso(), number_of_bundles: 0, total_weight_kg: 0, transporter_name: "", vehicle_number: "", driver_name: "", driver_phone: "", eway_bill_number: "", lr_number: "", delivery_status: "dispatched", proof_of_delivery_url: "", packing_list_url: "", remarks: "" });
+  const [form, setForm] = useState({ order_id: "", dispatch_date: todayIso(), number_of_bundles: 1, total_weight_kg: 0, bundle_tare_weights_kg: "0", transporter_name: "", vehicle_number: "", driver_name: "", driver_phone: "", eway_bill_number: "", lr_number: "", delivery_status: "dispatched", proof_of_delivery_url: "", packing_list_url: "", remarks: "" });
 
   async function loadAll() {
     setLoading(true);
@@ -48,7 +48,7 @@ export function DispatchesClient({ context }: { context: SessionContext }) {
     setSaving(false);
     if (!result.success) return toast.error(result.error);
     toast.success("Dispatch recorded");
-    setForm({ order_id: "", dispatch_date: todayIso(), number_of_bundles: 0, total_weight_kg: 0, transporter_name: "", vehicle_number: "", driver_name: "", driver_phone: "", eway_bill_number: "", lr_number: "", delivery_status: "dispatched", proof_of_delivery_url: "", packing_list_url: "", remarks: "" });
+    setForm({ order_id: "", dispatch_date: todayIso(), number_of_bundles: 1, total_weight_kg: 0, bundle_tare_weights_kg: "0", transporter_name: "", vehicle_number: "", driver_name: "", driver_phone: "", eway_bill_number: "", lr_number: "", delivery_status: "dispatched", proof_of_delivery_url: "", packing_list_url: "", remarks: "" });
     await loadAll();
   }
 
@@ -69,7 +69,8 @@ export function DispatchesClient({ context }: { context: SessionContext }) {
           <label className="block space-y-1.5"><span className="form-label">Order *</span><select className="form-input" value={form.order_id} onChange={(event) => setForm({ ...form, order_id: event.target.value })}><option value="">Select order</option>{orders.map((order) => <option key={order.id} value={order.id}>{order.order_number} · {order.customers?.company_name || order.customers?.customer_name}</option>)}</select></label>
           <label className="block space-y-1.5"><span className="form-label">Dispatch date</span><input className="form-input" type="date" value={form.dispatch_date} onChange={(event) => setForm({ ...form, dispatch_date: event.target.value })} /></label>
           <label className="block space-y-1.5"><span className="form-label">Bundles</span><input className="form-input" type="number" inputMode="numeric" min="0" value={form.number_of_bundles} onChange={(event) => setForm({ ...form, number_of_bundles: Number(event.target.value) })} /></label>
-          <label className="block space-y-1.5"><span className="form-label">Total weight kg</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.001" value={form.total_weight_kg} onChange={(event) => setForm({ ...form, total_weight_kg: Number(event.target.value) })} /></label>
+          <label className="block space-y-1.5"><span className="form-label">Net aluminium weight kg</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.001" value={form.total_weight_kg} onChange={(event) => setForm({ ...form, total_weight_kg: Number(event.target.value) })} /></label>
+          <label className="block space-y-1.5"><span className="form-label">Bundle tare kg, one per line</span><textarea className="form-input min-h-24" value={form.bundle_tare_weights_kg} onChange={(event) => setForm({ ...form, bundle_tare_weights_kg: event.target.value })} /></label>
           <label className="block space-y-1.5"><span className="form-label">Transporter</span><input className="form-input" value={form.transporter_name} onChange={(event) => setForm({ ...form, transporter_name: event.target.value })} /></label>
           <label className="block space-y-1.5"><span className="form-label">Vehicle number</span><input className="form-input" value={form.vehicle_number} onChange={(event) => setForm({ ...form, vehicle_number: event.target.value.toUpperCase() })} /></label>
           <label className="block space-y-1.5"><span className="form-label">Driver name</span><input className="form-input" value={form.driver_name} onChange={(event) => setForm({ ...form, driver_name: event.target.value })} /></label>

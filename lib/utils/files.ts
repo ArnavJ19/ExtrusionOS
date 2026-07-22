@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/browser";
+import { getStorageObjectPath } from "@/lib/utils/storage-path";
+
+export { getStorageObjectPath } from "@/lib/utils/storage-path";
 
 const maxUploadBytes = 10 * 1024 * 1024;
 const allowedMimeTypes = new Set([
@@ -18,22 +21,23 @@ function assertSafeUpload(file: File) {
   if (file.type && !allowedMimeTypes.has(file.type)) throw new Error("Unsupported file type");
 }
 
-/**
- * Upload a file to a tenant-scoped storage bucket and return a signed URL.
- * 
- * All storage buckets are private (public=false), so we use createSignedUrl()
- * instead of getPublicUrl(). Signed URLs expire after the given TTL.
- */
-export async function uploadTenantFile(bucket: string, companyId: string, folder: string, file: File, signedUrlTtlSeconds = 604800) {
+/** Upload a file and return its durable object path, never an expiring URL. */
+export async function uploadTenantFile(bucket: string, companyId: string, folder: string, file: File) {
   assertSafeUpload(file);
   const supabase = createClient();
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const path = `${companyId}/${folder}/${crypto.randomUUID()}-${safeName}`;
   const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: false });
   if (error) throw error;
-  const { data: signedData, error: signedError } = await supabase.storage.from(bucket).createSignedUrl(path, signedUrlTtlSeconds);
-  if (signedError || !signedData?.signedUrl) throw signedError ?? new Error("Could not generate signed URL");
-  return signedData.signedUrl;
+  return path;
+}
+
+export async function removeTenantFile(bucket: string, pathOrUrl: string) {
+  const path = getStorageObjectPath(bucket, pathOrUrl);
+  if (!path) return;
+  const supabase = createClient();
+  const { error } = await supabase.storage.from(bucket).remove([path]);
+  if (error) throw error;
 }
 
 /**
@@ -41,11 +45,9 @@ export async function uploadTenantFile(bucket: string, companyId: string, folder
  * Use this when displaying files that were previously uploaded.
  */
 export async function getSignedFileUrl(bucket: string, path: string, ttlSeconds = 3600) {
+  const cleanPath = getStorageObjectPath(bucket, path);
+  if (!cleanPath) return path;
   const supabase = createClient();
-  // Extract the path from a full Supabase storage URL if needed
-  const cleanPath = path.includes("/object/sign/") || path.includes("/object/public/")
-    ? path.split(`/storage/v1/object/`).pop()?.replace(/^(sign|public)\/[^/]+\//, "") ?? path
-    : path;
   const { data, error } = await supabase.storage.from(bucket).createSignedUrl(cleanPath, ttlSeconds);
   if (error || !data?.signedUrl) throw error ?? new Error("Could not generate signed URL");
   return data.signedUrl;

@@ -8,5 +8,5 @@ export default async function OnboardingPage() {
   if (!user) redirect("/login");
   const { data: appUser } = await supabase.from("app_users").select("company_id").eq("id", user.id).maybeSingle();
   if (appUser?.company_id) redirect("/dashboard");
-  return <OnboardingForm userEmail={user.email ?? null} userId={user.id} />;
+  return <OnboardingForm />;
 }

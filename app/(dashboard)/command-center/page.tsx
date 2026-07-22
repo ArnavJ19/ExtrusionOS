@@ -189,7 +189,10 @@ export default async function CommandCenterPage() {
   const recoveryPercent = totalInput > 0 ? (totalProduced / totalInput) * 100 : 0;
 
   // Low stock filtering
-  const lowStockFiltered = (lowStockItems.data ?? []).filter((item: any) => Number(item.current_stock ?? 0) <= Number(item.reorder_level ?? 0));
+  const lowStockFiltered = (lowStockItems.data ?? []).filter((item: any) => {
+    const reorderLevel = Number(item.reorder_level ?? 0);
+    return reorderLevel > 0 && Number(item.current_stock ?? 0) <= reorderLevel;
+  });
 
   // Quality metrics
   const totalInspected = (qualityFails.data ?? []).length;

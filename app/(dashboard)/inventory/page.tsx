@@ -62,17 +62,18 @@ export default async function InventoryPage() {
 
   return (
     <div className="space-y-2">
-      <InventoryDashboard
-        totalItems={totalItems}
-        belowReorderCount={belowReorder.length}
-        outOfStockCount={outOfStock.length}
-        categoriesActive={Object.keys(catMap).length}
-        categoryBreakdown={categoryBreakdown}
-        lowStockItems={(lowStockItems.data ?? []) as any}
-        healthCounts={{ critical: outOfStock.length, low: belowReorder.length, healthy: healthy.length }}
-        allItems={allItemsData}
-      />
-      <ModuleOverviewClient moduleKey="inventory" context={context} canCreate={can(context.role, "create", "inventory")} />
+      <ModuleOverviewClient moduleKey="inventory" context={context} canCreate={can(context.role, "create", "inventory")} hideMetricsAndCharts={true}>
+        <InventoryDashboard
+          totalItems={totalItems}
+          belowReorderCount={belowReorder.length}
+          outOfStockCount={outOfStock.length}
+          categoriesActive={Object.keys(catMap).length}
+          categoryBreakdown={categoryBreakdown}
+          lowStockItems={(lowStockItems.data ?? []) as any}
+          healthCounts={{ critical: outOfStock.length, low: belowReorder.length, healthy: healthy.length }}
+          allItems={allItemsData}
+        />
+      </ModuleOverviewClient>
       <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div><p className="text-xs font-black uppercase tracking-[0.16em] text-orange">Reservation Ledger</p><h2 className="section-title mt-1">Reserved Profile Stock</h2><p className="mt-1 text-sm font-medium text-slate-500">{reservations.count ?? 0} active stock reservation{(reservations.count ?? 0) === 1 ? "" : "s"} are holding profile stock against customer orders.</p></div>

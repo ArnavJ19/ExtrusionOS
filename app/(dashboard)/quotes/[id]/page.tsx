@@ -8,34 +8,67 @@ import { formatCurrency, formatDate, formatWeight } from "@/lib/utils/format";
 import Link from "next/link";
 import { can } from "@/lib/auth/permissions";
 import { Download, Pencil } from "lucide-react";
-import { revalidatePath } from "next/cache";
 import { PcdaLineReportControls } from "@/components/modules/shared/pcda-line-report-controls";
 import { checkPcdaLineReadiness } from "@/lib/reports/pcda/readiness";
 import { getReportTemplate } from "@/lib/reports/pcda/templates";
+import { convertQuoteToOrderAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
+import { getAllowedQuoteStatusTransitions } from "@/lib/workflow/quote-status";
+import type { QuoteStatus } from "@/types/app";
 
-const quickQuoteStatuses = ["draft", "internal_review", "approved_for_sending", "sent", "customer_approved", "customer_rejected", "expired", "converted_to_order"];
+const quoteStatusErrorMessages = {
+  invalid_status: "Choose a valid quote status.",
+  invalid_transition: "That quote status change is not permitted from its current stage.",
+  approval_required: "This low-margin quote needs owner or admin approval before it can move forward.",
+  forbidden: "You do not have permission to update this quote.",
+  not_found: "This quote could not be found for your company.",
+  update_failed: "The quote status could not be updated. Please try again.",
+  conversion_failed: "The accepted quote could not be converted into an order. Check its drawings and line items, then try again.",
+} as const;
 
-export default async function QuoteDetailPage({ params }: { params: Promise<{ id: string }> }) {
+type QuoteStatusErrorCode = keyof typeof quoteStatusErrorMessages;
+
+function quoteStatusErrorCode(error?: string): QuoteStatusErrorCode {
+  if (error === "This low-margin quote needs owner/admin approval.") return "approval_required";
+  if (error === "You do not have permission to update quotations.") return "forbidden";
+  if (error === "Quote not found for this company.") return "not_found";
+  if (error === "Invalid quote status.") return "invalid_status";
+  if (error?.startsWith("Quote cannot move") || error?.startsWith("The quote changed")) return "invalid_transition";
+  return "update_failed";
+}
+
+export default async function QuoteDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ statusError?: string | string[] }>;
+}) {
   const { id } = await params;
+  const query = await searchParams;
+  const statusErrorCode = typeof query.statusError === "string" && query.statusError in quoteStatusErrorMessages
+    ? query.statusError as QuoteStatusErrorCode
+    : null;
+  const statusError = statusErrorCode ? quoteStatusErrorMessages[statusErrorCode] : null;
   const context = await getSessionContext();
   const supabase = await createClient();
 
   async function changeQuoteStatus(formData: FormData) {
     "use server";
-    const actionContext = await getSessionContext();
-    if (!can(actionContext.role, "update", "quotes")) redirect("/dashboard");
     const status = String(formData.get("status") ?? "");
-    if (!quickQuoteStatuses.includes(status)) throw new Error("Invalid quote status");
-    const serverSupabase = await createClient();
-    const { error: updateError } = await serverSupabase
-      .from("quotes")
-      .update({ status })
-      .eq("id", id)
-      .eq("company_id", actionContext.companyId);
-    if (updateError) throw updateError;
-    revalidatePath(`/quotes/${id}`);
-    revalidatePath("/quotes");
-    revalidatePath("/quotes/database");
+    const result = await updateQuoteStatusAction(id, status as QuoteStatus);
+    if (!result.success) {
+      redirect(`/quotes/${id}?statusError=${quoteStatusErrorCode(result.error)}`);
+    }
+
+    redirect(`/quotes/${id}`);
+  }
+  async function convertAcceptedQuote() {
+    "use server";
+    const result = await convertQuoteToOrderAction(id);
+    if (!result.success || !result.orderId) {
+      redirect(`/quotes/${id}?statusError=conversion_failed`);
+    }
+    redirect(`/orders/${result.orderId}`);
   }
 
   if (!can(context.role, "read", "quotes")) redirect("/dashboard");
@@ -82,18 +115,20 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
     reportRows = data ?? [];
   }
   const canGeneratePcda = getReportTemplate("quote_line")?.roles.includes(context.role) ?? false;
+  const allowedQuoteStatuses = getAllowedQuoteStatusTransitions(quote.status as QuoteStatus);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <PageHeader 
           title={`Quote ${quote.quote_number}`} 
-          description={`Revision ${quote.revision_number} • ${formatDate(quote.quote_date)} • ${quote.customers?.company_name || quote.customers?.customer_name}`}
+          description={`Revision ${quote.revision_number} | ${formatDate(quote.quote_date)} | ${quote.customers?.company_name || quote.customers?.customer_name}`}
         />
         <div className="flex items-center gap-3 pt-2">
           <Badge value={quote.status} />
-          {!linkedOrder && (can(context.role, "create", "orders") || can(context.role, "create", "dealer_orders")) ? <Link href={`${context.dealerId ? "/dealer-orders/new" : "/orders/new"}?quoteId=${quote.id}`} className="flex items-center gap-2 rounded-xl bg-charcoal px-3 py-2 text-sm font-bold text-white transition hover:bg-charcoal/90">Create Order</Link> : null}
-          {can(context.role, "update", "quotes") ? <Link href={`/quotes/${quote.id}/edit`} className="flex items-center gap-2 rounded-xl bg-orange px-3 py-2 text-sm font-bold text-white shadow-lg shadow-orange/20 transition hover:bg-orange/90"><Pencil className="h-4 w-4" /> Edit</Link> : null}
+          {!linkedOrder && quote.status === "customer_approved" && !context.dealerId && can(context.role, "create", "orders") ? <form action={convertAcceptedQuote}><button type="submit" className="flex items-center gap-2 rounded-xl bg-charcoal px-3 py-2 text-sm font-bold text-white transition hover:bg-charcoal/90">Create Order</button></form> : null}
+          {!linkedOrder && quote.status === "customer_approved" && context.dealerId && can(context.role, "create", "dealer_orders") ? <Link href={`/dealer-orders/new?quoteId=${quote.id}`} className="flex items-center gap-2 rounded-xl bg-charcoal px-3 py-2 text-sm font-bold text-white transition hover:bg-charcoal/90">Create Dealer Order</Link> : null}
+          {can(context.role, "update", "quotes") && quote.status !== "converted_to_order" ? <Link href={`/quotes/${quote.id}/edit`} className="flex items-center gap-2 rounded-xl bg-orange px-3 py-2 text-sm font-bold text-white shadow-lg shadow-orange/20 transition hover:bg-orange/90"><Pencil className="h-4 w-4" /> Edit</Link> : null}
           <a 
             href={`/api/pdf/quote/${quote.id}`} 
             target="_blank" 
@@ -104,6 +139,12 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
           </a>
         </div>
       </div>
+
+      {statusError ? (
+        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+          {statusError}
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
@@ -214,16 +255,16 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
                 <h3 className="font-bold tracking-tight text-slate-900">Change the Status of The Quote</h3>
               </CardHeader>
               <CardContent>
-                <form action={changeQuoteStatus} className="space-y-3">
+                {allowedQuoteStatuses.length ? <form action={changeQuoteStatus} className="space-y-3">
                   <label className="block space-y-1.5">
                     <span className="form-label">Quick status</span>
-                    <select name="status" defaultValue={quote.status} className="form-input">
-                      {quickQuoteStatuses.map((status) => <option key={status} value={status}>{status.replace(/_/g, " ")}</option>)}
+                    <select name="status" defaultValue={allowedQuoteStatuses[0]} className="form-input">
+                      {allowedQuoteStatuses.map((status) => <option key={status} value={status}>{status.replace(/_/g, " ")}</option>)}
                     </select>
                   </label>
                   <button type="submit" className="w-full rounded-xl bg-charcoal px-4 py-2.5 text-sm font-black text-white transition hover:bg-charcoal/90">Update Quote Status</button>
-                  <p className="text-xs font-semibold leading-5 text-slate-500">Use this for quick follow-up updates without opening the full edit screen.</p>
-                </form>
+                  <p className="text-xs font-semibold leading-5 text-slate-500">Only the next valid commercial workflow steps are available.</p>
+                </form> : <p className="text-sm font-semibold leading-6 text-slate-600">No manual status action is available. Edit a rejected or expired quote to create a new draft revision, or convert a customer-approved quote to an order.</p>}
               </CardContent>
             </Card>
           ) : null}

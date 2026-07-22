@@ -5,23 +5,58 @@ export type EmailPayload = {
   html?: string;
 };
 
-export async function sendEmail(payload: EmailPayload) {
+export type EmailResult =
+  | { success: true; provider: "webhook" | "resend"; id?: string | null }
+  | { success: false; error: string };
+
+export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
   const webhookUrl = process.env.EMAIL_WEBHOOK_URL;
-  if (!webhookUrl) {
-    return { success: false, error: "EMAIL_WEBHOOK_URL is not configured" };
+  const webhookSecret = process.env.EMAIL_WEBHOOK_SECRET;
+
+  if (webhookUrl && webhookSecret) {
+    try {
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-email-webhook-secret": webhookSecret
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) return { success: false, error: result.error ?? `Email webhook returned ${response.status}` };
+      return { success: true, provider: "webhook", id: result.id ?? null };
+    } catch (error) {
+      return { success: false, error: getEmailError(error, "Email webhook request failed") };
+    }
   }
 
-  const response = await fetch(webhookUrl, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      ...(process.env.EMAIL_WEBHOOK_SECRET ? { "x-email-webhook-secret": process.env.EMAIL_WEBHOOK_SECRET } : {})
-    },
-    body: JSON.stringify(payload)
-  });
+  return sendEmailWithResend(payload);
+}
 
-  if (!response.ok) return { success: false, error: `Email provider returned ${response.status}` };
-  return { success: true };
+export async function sendEmailWithResend(payload: EmailPayload): Promise<EmailResult> {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM;
+  if (!resendApiKey) return { success: false, error: "RESEND_API_KEY is not configured" };
+  if (!from) return { success: false, error: "EMAIL_FROM is not configured" };
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${resendApiKey}`,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ from, ...payload })
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) return { success: false, error: result.message ?? `Resend returned ${response.status}` };
+    return { success: true, provider: "resend", id: result.id ?? null };
+  } catch (error) {
+    return { success: false, error: getEmailError(error, "Resend request failed") };
+  }
 }
 
 export async function sendInviteEmail(input: { to: string; fullName: string; companyName: string; inviteLink: string; expiresAt: string }) {
@@ -35,4 +70,8 @@ export async function sendInviteEmail(input: { to: string; fullName: string; com
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char] ?? char);
+}
+
+function getEmailError(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
 }

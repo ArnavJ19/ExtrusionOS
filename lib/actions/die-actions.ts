@@ -1,9 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
+import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
-import { recordRevision } from "@/lib/pcda/version";
+import { getErrorMessage } from "@/lib/utils/errors";
+import { dieSchema, profileSchema } from "@/lib/validations/schemas";
+
+const entityIdSchema = z.string().uuid();
 
 /**
  * Server action to update a die with revision tracking.
@@ -13,39 +18,33 @@ export async function updateDieWithVersioning(
   dieId: string,
   payload: Record<string, unknown>
 ): Promise<{ success: boolean; error?: string }> {
-  const context = await getSessionContext();
-  const supabase = await createClient();
+  try {
+    const context = await getSessionContext();
+    if (!can(context.role, "update", "dies")) return { success: false, error: "You do not have permission to update dies." };
+    const parsedId = entityIdSchema.safeParse(dieId);
+    if (!parsedId.success) return { success: false, error: "Invalid die identifier." };
+    const parsedPayload = dieSchema.safeParse(payload);
+    if (!parsedPayload.success) return { success: false, error: parsedPayload.error.issues[0]?.message ?? "Please check die details." };
 
-  // Fetch current state for revision
-  const { data: currentDie, error: fetchError } = await supabase
-    .from("dies")
-    .select("*")
-    .eq("id", dieId)
-    .eq("company_id", context.companyId)
-    .single();
+    const supabase = await createClient();
+    const result = await supabase.rpc("update_versioned_entity_atomic", {
+      p_entity_type: "die",
+      p_entity_id: parsedId.data,
+      p_payload: {
+        ...parsedPayload.data,
+        customer_id: parsedPayload.data.customer_id || null,
+        die_vendor_id: parsedPayload.data.die_vendor_id || null
+      }
+    });
+    if (result.error) throw result.error;
 
-  if (fetchError || !currentDie) {
-    return { success: false, error: "Die not found or access denied" };
+    revalidatePath(`/dies/${parsedId.data}`);
+    revalidatePath("/dies");
+    revalidatePath("/die-intelligence");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error, "Could not update die") };
   }
-
-  // Record revision with prior state
-  await recordRevision(context.companyId, "die", dieId, currentDie, context.userId);
-
-  // Apply update
-  const { error: updateError } = await supabase
-    .from("dies")
-    .update({ ...payload, company_id: context.companyId })
-    .eq("id", dieId)
-    .eq("company_id", context.companyId);
-
-  if (updateError) {
-    return { success: false, error: updateError.message };
-  }
-
-  revalidatePath(`/dies/${dieId}`);
-  revalidatePath("/dies");
-  revalidatePath("/die-intelligence");
-  return { success: true };
 }
 
 /**
@@ -55,36 +54,30 @@ export async function updateProfileWithVersioning(
   profileId: string,
   payload: Record<string, unknown>
 ): Promise<{ success: boolean; error?: string }> {
-  const context = await getSessionContext();
-  const supabase = await createClient();
+  try {
+    const context = await getSessionContext();
+    if (!can(context.role, "update", "profiles")) return { success: false, error: "You do not have permission to update profiles." };
+    const parsedId = entityIdSchema.safeParse(profileId);
+    if (!parsedId.success) return { success: false, error: "Invalid profile identifier." };
+    const parsedPayload = profileSchema.safeParse(payload);
+    if (!parsedPayload.success) return { success: false, error: parsedPayload.error.issues[0]?.message ?? "Please check profile details." };
 
-  // Fetch current state for revision
-  const { data: currentProfile, error: fetchError } = await supabase
-    .from("aluminium_profiles")
-    .select("*")
-    .eq("id", profileId)
-    .eq("company_id", context.companyId)
-    .single();
+    const supabase = await createClient();
+    const result = await supabase.rpc("update_versioned_entity_atomic", {
+      p_entity_type: "profile",
+      p_entity_id: parsedId.data,
+      p_payload: {
+        ...parsedPayload.data,
+        primary_die_id: parsedPayload.data.primary_die_id || null,
+        backup_die_id: parsedPayload.data.backup_die_id || null
+      }
+    });
+    if (result.error) throw result.error;
 
-  if (fetchError || !currentProfile) {
-    return { success: false, error: "Profile not found or access denied" };
+    revalidatePath(`/profiles/${parsedId.data}`);
+    revalidatePath("/profiles");
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error, "Could not update profile") };
   }
-
-  // Record revision with prior state
-  await recordRevision(context.companyId, "profile", profileId, currentProfile, context.userId);
-
-  // Apply update
-  const { error: updateError } = await supabase
-    .from("aluminium_profiles")
-    .update({ ...payload, company_id: context.companyId })
-    .eq("id", profileId)
-    .eq("company_id", context.companyId);
-
-  if (updateError) {
-    return { success: false, error: updateError.message };
-  }
-
-  revalidatePath(`/profiles/${profileId}`);
-  revalidatePath("/profiles");
-  return { success: true };
 }

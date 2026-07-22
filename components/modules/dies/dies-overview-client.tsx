@@ -117,7 +117,7 @@ export function DiesOverviewClient({ context, canCreate }: { context: SessionCon
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-orange">Needs attention</p>
                   <h2 className="section-title mt-1">Die Status Board</h2>
                 </div>
-                <p className="text-sm font-medium text-slate-500">Showing up to 10 dies per status. Use the database for full search and sorting.</p>
+                <p className="text-sm font-medium text-slate-500">Showing up to 5 dies per status. Use View More for the complete filtered database.</p>
               </div>
             </CardHeader>
             <CardContent>

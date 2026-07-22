@@ -113,18 +113,17 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     numberField: "order_number",
     defaultValues: { customer_id: "", quote_id: "", production_profile_id: "", production_die_id: "", production_quantity_kg: 0, production_pieces: 0, billet_diameter_required_inch: "", order_date: new Date().toISOString().slice(0, 10), expected_dispatch_date: "", priority: "normal", current_stage: "order_confirmed", order_value: 0, production_notes: "", notes: "" },
     fields: [
-      { name: "customer_id", label: "Customer", type: "select", required: true, lookup: customerLookup },
-      { name: "quote_id", label: "Approved quote optional", type: "select", lookup: { table: "quotes", select: "id, quote_number", labelFields: ["quote_number"], orderBy: "quote_date" } },
-      { name: "production_profile_id", label: "Production profile", type: "select", lookup: profileLookup },
-      { name: "production_die_id", label: "Production die", type: "select", lookup: { table: "dies", select: "id, die_number, profile_id, die_status, billet_diameter_required_inch", labelFields: ["die_number"], orderBy: "die_number" } },
-      { name: "production_quantity_kg", label: "Production qty kg", type: "number", step: "0.001" },
-      { name: "production_pieces", label: "Production pieces", type: "number" },
+      { name: "customer_id", label: "Customer", type: "select", required: true, readOnly: true, lookup: customerLookup },
+      { name: "quote_id", label: "Approved quote", type: "select", readOnly: true, lookup: { table: "quotes", select: "id, quote_number", labelFields: ["quote_number"], orderBy: "quote_date" } },
+      { name: "production_profile_id", label: "Production profile", type: "select", readOnly: true, lookup: profileLookup },
+      { name: "production_die_id", label: "Production die", type: "select", readOnly: true, lookup: { table: "dies", select: "id, die_number, profile_id, die_status, billet_diameter_required_inch", labelFields: ["die_number"], orderBy: "die_number" } },
+      { name: "production_quantity_kg", label: "Production qty kg", type: "number", step: "0.001", readOnly: true },
+      { name: "production_pieces", label: "Production pieces", type: "number", readOnly: true },
       { name: "billet_diameter_required_inch", label: "Required billet diameter inch", type: "number", step: "0.01", readOnly: true },
-      { name: "order_date", label: "Order date", type: "date", required: true },
+      { name: "order_date", label: "Order date", type: "date", required: true, readOnly: true },
       { name: "expected_dispatch_date", label: "Expected dispatch", type: "date" },
       { name: "priority", label: "Priority", type: "select", options: options(orderPriorities) },
-      { name: "current_stage", label: "Stage", type: "select", options: options(orderStages) },
-      { name: "order_value", label: "Order value", type: "number" },
+      { name: "order_value", label: "Order value", type: "number", readOnly: true },
       { name: "production_notes", label: "Production notes", type: "textarea" },
       { name: "notes", label: "Notes", type: "textarea" }
     ]
@@ -190,17 +189,21 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     schema: dispatchSchema,
     numberPrefix: "D",
     numberField: "dispatch_number",
-    defaultValues: { order_id: "", dispatch_date: new Date().toISOString().slice(0, 10), number_of_bundles: 0, total_weight_kg: 0, transporter_name: "", vehicle_number: "", driver_name: "", driver_phone: "", eway_bill_number: "", lr_number: "", delivery_status: "dispatched", proof_of_delivery_url: "", packing_list_url: "", remarks: "" },
+    defaultValues: { order_id: "", dispatch_date: new Date().toISOString().slice(0, 10), number_of_bundles: 1, total_weight_kg: 0, bundle_tare_weights_kg: "0", transporter_name: "", vehicle_number: "", driver_name: "", driver_phone: "", eway_bill_number: "", lr_number: "", delivery_status: "dispatched", proof_of_delivery_url: "", packing_list_url: "", remarks: "" },
     fields: [
       { name: "order_id", label: "Order", type: "select", required: true, lookup: orderLookup },
       { name: "dispatch_date", label: "Dispatch date", type: "date", required: true },
-      { name: "number_of_bundles", label: "Bundles", type: "number" },
-      { name: "total_weight_kg", label: "Total weight kg", type: "number", step: "0.001" },
+      { name: "number_of_bundles", label: "Physical bundles", type: "number", required: true, step: "1" },
+      { name: "total_weight_kg", label: "Net aluminium weight kg", type: "number", required: true, step: "0.001" },
+      { name: "bundle_tare_weights_kg", label: "Bundle tare kg (one per line)", type: "textarea", required: true, placeholder: "1.250\n1.180\n1.320" },
       { name: "transporter_name", label: "Transporter" },
       { name: "vehicle_number", label: "Vehicle number" },
+      { name: "driver_name", label: "Driver name" },
+      { name: "driver_phone", label: "Driver phone" },
       { name: "eway_bill_number", label: "E-way bill" },
       { name: "lr_number", label: "LR number" },
-      { name: "delivery_status", label: "Status", type: "select", options: options(deliveryStatuses) },
+      { name: "packing_list_url", label: "Packing list URL" },
+      { name: "proof_of_delivery_url", label: "Proof of delivery URL" },
       { name: "remarks", label: "Remarks", type: "textarea" }
     ]
   },
@@ -250,7 +253,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { name: "planned_date", label: "Planned date", type: "date" },
       { name: "shift", label: "Shift" },
       { name: "operator_name", label: "Operator" },
-      { name: "status", label: "Status", type: "select", options: options(productionJobStatuses) },
+      { name: "status", label: "Planning status", type: "select", options: options(productionJobStatuses.filter((status) => status !== "completed")) },
       { name: "remarks", label: "Remarks", type: "textarea" }
     ]
   },
@@ -626,7 +629,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     fields: [
       { name: "packaging_number", label: "Packaging ID" },
       { name: "order_id", label: "Order waiting packaging", type: "select", required: true, lookup: orderLookup },
-      { name: "production_job_id", label: "Production job", type: "select", lookup: { table: "production_jobs", select: "id, job_number, order_id, status", labelFields: ["job_number"], orderBy: "created_at", filter: { status: "completed" } } },
+      { name: "production_job_id", label: "Completed production job", type: "select", required: true, lookup: { table: "production_jobs", select: "id, job_number, order_id, status", labelFields: ["job_number"], orderBy: "created_at", filter: { status: "completed" } } },
       { name: "scheduled_date", label: "Scheduled date", type: "date" },
       { name: "pieces", label: "Pieces", type: "number" },
       { name: "profile_weight_kg", label: "Profile weight kg", type: "number", step: "0.001" },
@@ -798,7 +801,51 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     key: "profiles", title: "Profiles", databaseTitle: "Profile Database", description: "Manage aluminium profile master data by category, section weight, alloy, temper, and finish options.", table: "aluminium_profiles", select: "*", basePath: "/profiles", resource: "profiles", primaryAction: "Add Profile", databaseAction: "View Profile Database", groupField: "application_category", groups: applicationCategories, searchPlaceholder: "Search profile code, name, category, alloy...", searchFields: ["profile_code", "profile_name", "application_category", "alloy", "temper"], dateFilterField: "created_at", secondaryFilter: { field: "is_active", label: "Status", options: [{ value: "true", label: "Active" }, { value: "false", label: "Inactive" }] }, defaultSort: { column: "profile_code", direction: "asc" }, columns: [{ id: "profile_code", header: "Profile Code", path: "profile_code", sortable: true }, { id: "profile_name", header: "Profile Name", path: "profile_name", sortable: true }, { id: "application_category", header: "Category", path: "application_category", type: "badge", sortable: true }, { id: "section_weight_kg_per_m", header: "Kg/m", path: "section_weight_kg_per_m", type: "weight", sortable: true }, { id: "alloy", header: "Alloy", path: "alloy" }, { id: "temper", header: "Temper", path: "temper" }], card: { titlePath: "profile_code", subtitlePath: "profile_name", badgePath: "application_category", meta: [{ label: "Weight", path: "section_weight_kg_per_m", type: "weight" }, { label: "Alloy", path: "alloy" }] }, schema: profileSchema, defaultValues: { profile_code: "", profile_name: "", application_category: "sliding_window", section_weight_kg_per_m: "", alloy: "6063", temper: "T6", finish_options: "mill_finish, powder_coating, anodizing", standard_length_m: "5.8", drawing_url: "", image_url: "", notes: "", is_active: true }, fields: [{ name: "profile_code", label: "Profile code", required: true }, { name: "profile_name", label: "Profile name", required: true }, { name: "application_category", label: "Category", type: "select", options: options(applicationCategories) }, { name: "section_weight_kg_per_m", label: "Section weight kg/m", type: "number", required: true, step: "0.001" }, { name: "alloy", label: "Alloy" }, { name: "temper", label: "Temper" }, { name: "finish_options", label: "Finish options" }, { name: "standard_length_m", label: "Standard length m", type: "number", step: "0.01" }, { name: "drawing_url", label: "Drawing URL" }, { name: "notes", label: "Notes", type: "textarea" }, { name: "is_active", label: "Active", type: "checkbox" }]
   },
   quality: {
-    key: "quality", title: "Quality", databaseTitle: "Quality Database", description: "Track quality inspections by status, profile, batch, surface result, dimensional variance, and hardness.", table: "quality_inspections", select: "*, aluminium_profiles(profile_code, profile_name)", basePath: "/quality", resource: "quality", primaryAction: "Add Inspection", databaseAction: "View Quality Database", groupField: "status", groups: qualityStatuses, searchPlaceholder: "Search batch, profile, inspector, status...", searchFields: ["batch_number", "status", "inspector_name", "dimensional_variance"], profileIdField: "profile_id", dateFilterField: "created_at", secondaryFilter: { field: "surface_finish_ok", label: "Surface", options: [{ value: "true", label: "OK" }, { value: "false", label: "Failed" }] }, defaultSort: { column: "created_at", direction: "desc" }, columns: [{ id: "batch_number", header: "Batch", path: "batch_number", sortable: true }, { id: "profile", header: "Profile", path: "aluminium_profiles.profile_code" }, { id: "status", header: "Status", path: "status", type: "badge", sortable: true }, { id: "quantity_checked_kg", header: "Qty", path: "quantity_checked_kg", type: "weight", sortable: true }, { id: "inspector_name", header: "Inspector", path: "inspector_name" }, { id: "created_at", header: "Created", path: "created_at", type: "date", sortable: true }], card: { titlePath: "batch_number", subtitlePath: "aluminium_profiles.profile_code", badgePath: "status", meta: [{ label: "Qty", path: "quantity_checked_kg", type: "weight" }, { label: "Inspector", path: "inspector_name" }] }, schema: qualityInspectionSchema, defaultValues: { production_job_id: "", profile_id: "", batch_number: "", quantity_checked_kg: 0, dimensional_variance: "", hardness_webster: "", surface_finish_ok: true, weight_per_meter_actual: "", status: "pending", inspector_name: "", notes: "" }, fields: [{ name: "profile_id", label: "Profile", type: "select", required: true, lookup: profileLookup }, { name: "batch_number", label: "Batch number" }, { name: "quantity_checked_kg", label: "Quantity checked kg", type: "number" }, { name: "dimensional_variance", label: "Dimensional variance" }, { name: "hardness_webster", label: "Hardness", type: "number", step: "0.01" }, { name: "weight_per_meter_actual", label: "Actual kg/m", type: "number", step: "0.001" }, { name: "surface_finish_ok", label: "Surface finish OK", type: "checkbox" }, { name: "status", label: "Status", type: "select", options: options(qualityStatuses) }, { name: "inspector_name", label: "Inspector" }, { name: "notes", label: "Notes", type: "textarea" }]
+    key: "quality",
+    title: "Quality",
+    databaseTitle: "Quality Database",
+    description: "Inspect completed production output before it is released for packaging and dispatch.",
+    table: "quality_inspections",
+    select: "*, aluminium_profiles(profile_code, profile_name), production_jobs(job_number), finishing_jobs(finishing_type, status)",
+    basePath: "/quality",
+    resource: "quality",
+    primaryAction: "Add Inspection",
+    databaseAction: "View Quality Database",
+    groupField: "status",
+    groups: qualityStatuses,
+    searchPlaceholder: "Search batch, production job, profile, inspector, status...",
+    searchFields: ["batch_number", "status", "inspector_name", "dimensional_variance"],
+    profileIdField: "profile_id",
+    dateFilterField: "inspection_date",
+    secondaryFilter: { field: "surface_finish_ok", label: "Surface", options: [{ value: "true", label: "OK" }, { value: "false", label: "Failed" }] },
+    defaultSort: { column: "inspection_date", direction: "desc" },
+    columns: [
+      { id: "batch_number", header: "Batch", path: "batch_number", sortable: true },
+      { id: "production_job", header: "Production Job", path: "production_jobs.job_number" },
+      { id: "profile", header: "Profile", path: "aluminium_profiles.profile_code" },
+      { id: "status", header: "Status", path: "status", type: "badge", sortable: true },
+      { id: "quantity_checked_kg", header: "Checked Qty", path: "quantity_checked_kg", type: "weight", sortable: true },
+      { id: "inspector_name", header: "Inspector", path: "inspector_name" },
+      { id: "inspection_date", header: "Inspected", path: "inspection_date", type: "date", sortable: true }
+    ],
+    card: { titlePath: "batch_number", subtitlePath: "production_jobs.job_number", badgePath: "status", meta: [{ label: "Profile", path: "aluminium_profiles.profile_code" }, { label: "Qty", path: "quantity_checked_kg", type: "weight" }, { label: "Inspector", path: "inspector_name" }] },
+    schema: qualityInspectionSchema,
+    defaultValues: { production_job_id: "", finishing_job_id: "", profile_id: "", inspection_date: new Date().toISOString().slice(0, 10), batch_number: "", quantity_checked_kg: 0, dimensional_variance: "", hardness_webster: "", surface_finish_ok: true, weight_per_meter_actual: "", status: "pending", inspector_name: "", notes: "" },
+    fields: [
+      { name: "production_job_id", label: "Completed production job", type: "select", required: true, lookup: { table: "production_jobs", select: "id, job_number, profile_id, order_id, status, finishing_type, actual_quantity_kg", labelFields: ["job_number"], orderBy: "created_at", filter: { status: "completed" } } },
+      { name: "finishing_job_id", label: "Completed finishing job", type: "select", lookup: { table: "finishing_jobs", select: "id, production_job_id, finishing_type, status, output_weight_kg", labelFields: ["finishing_type"], orderBy: "created_at", filter: { status: "completed" } } },
+      { name: "profile_id", label: "Profile", type: "select", required: true, readOnly: true, lookup: profileLookup },
+      { name: "inspection_date", label: "Inspection date", type: "date", required: true },
+      { name: "batch_number", label: "Batch number" },
+      { name: "quantity_checked_kg", label: "Quantity checked kg", type: "number", required: true, step: "0.001" },
+      { name: "dimensional_variance", label: "Dimensional variance" },
+      { name: "hardness_webster", label: "Hardness", type: "number", step: "0.01" },
+      { name: "weight_per_meter_actual", label: "Actual kg/m", type: "number", step: "0.001" },
+      { name: "surface_finish_ok", label: "Surface finish OK", type: "checkbox" },
+      { name: "status", label: "Inspection result", type: "select", options: options(qualityStatuses) },
+      { name: "inspector_name", label: "Inspector" },
+      { name: "notes", label: "Notes", type: "textarea" }
+    ]
   },
   invoices: {
     key: "invoices", title: "Payments", databaseTitle: "Payments & Invoices Database", description: "Track invoices, payment status, due date, customer, total amount, paid amount, and balance due.", table: "invoices", select: "*, customers(customer_name, company_name)", basePath: "/invoices", resource: "financials", primaryAction: "Create Invoice", databaseAction: "View Payments Database", groupField: "status", groups: invoiceStatuses, searchPlaceholder: "Search invoice number, customer, status...", searchFields: ["invoice_number", "status", "notes"], customerIdField: "customer_id", dateFilterField: "due_date", defaultSort: { column: "due_date", direction: "asc" }, columns: [{ id: "invoice_number", header: "Invoice Number", path: "invoice_number", sortable: true }, { id: "customer", header: "Customer", path: "customers.company_name" }, { id: "status", header: "Status", path: "status", type: "badge", sortable: true }, { id: "invoice_date", header: "Invoice Date", path: "invoice_date", type: "date", sortable: true }, { id: "due_date", header: "Due Date", path: "due_date", type: "date", sortable: true }, { id: "grand_total", header: "Total", path: "grand_total", type: "currency", sortable: true }, { id: "balance_due", header: "Balance", path: "balance_due", type: "currency", sortable: true }], card: { titlePath: "invoice_number", subtitlePath: "customers.company_name", badgePath: "status", meta: [{ label: "Due", path: "due_date", type: "date" }, { label: "Balance", path: "balance_due", type: "currency" }] }, schema: invoiceSchema, defaultValues: { customer_id: "", order_id: "", dispatch_id: "", invoice_number: "", invoice_date: new Date().toISOString().slice(0, 10), due_date: "", subtotal: 0, tax_total: 0, grand_total: 0, amount_paid: 0, status: "draft", notes: "" }, fields: [{ name: "customer_id", label: "Customer", type: "select", required: true, lookup: customerLookup }, { name: "invoice_number", label: "Invoice number" }, { name: "invoice_date", label: "Invoice date", type: "date", required: true }, { name: "due_date", label: "Due date", type: "date" }, { name: "subtotal", label: "Subtotal", type: "number" }, { name: "tax_total", label: "Tax", type: "number" }, { name: "grand_total", label: "Grand total", type: "number" }, { name: "amount_paid", label: "Amount paid", type: "number" }, { name: "status", label: "Status", type: "select", options: options(invoiceStatuses) }, { name: "notes", label: "Notes", type: "textarea" }]
@@ -1099,6 +1146,26 @@ moduleConfigs.invoices.detailSections = [
   { title: "Billing", fields: [{ label: "Customer", path: "customers.company_name" }, { label: "Status", path: "status", type: "badge" }, { label: "Invoice date", path: "invoice_date", type: "date" }, { label: "Due date", path: "due_date", type: "date" }] },
   { title: "Receivable", fields: [{ label: "Subtotal", path: "subtotal", type: "currency" }, { label: "Tax", path: "tax_total", type: "currency" }, { label: "Grand total", path: "grand_total", type: "currency" }, { label: "Balance due", path: "balance_due", type: "currency" }] }
 ];
+moduleConfigs.invoices.title = "Invoices";
+moduleConfigs.invoices.databaseTitle = "Invoice Database";
+moduleConfigs.invoices.databaseAction = "View Invoice Database";
+moduleConfigs.invoices.description = "Create dispatch-backed invoices, monitor due dates, and follow each receivable through posted customer receipts.";
+moduleConfigs.invoices.emptyState = {
+  title: "No dispatch invoices",
+  description: "Complete a packing list, then create one invoice for that packed dispatch. Proformas remain outside receivables."
+};
+// Financial values and statuses are written only by the invoice/payment RPCs.
+// Keeping these generic mutation definitions disabled prevents a future route
+// from accidentally reintroducing browser-owned totals or receipt statuses.
+moduleConfigs.invoices.schema = undefined;
+moduleConfigs.invoices.fields = undefined;
+moduleConfigs.invoices.relatedRecords = [
+  { label: "Customer Receipts", table: "payments", field: "invoice_id", href: "/payments/database", hint: "Posted and reversed receipts for this invoice" }
+];
+moduleConfigs.payments.title = "Customer Receipts";
+moduleConfigs.payments.databaseTitle = "Customer Receipt Ledger";
+moduleConfigs.payments.description = "Post immutable receipts against issued invoices and reverse mistakes with an audit reason.";
+moduleConfigs.payments.primaryAction = "Record Customer Receipt";
 
 moduleConfigs.vendors.emptyState = { title: "No vendors added", description: "Add billet suppliers, die makers, finishing vendors, hardware suppliers, transporters, and packing suppliers." };
 moduleConfigs.vendors.detailIntro = "Review one supplier’s category, contact readiness, GST details, service notes, and procurement suitability.";

@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
-import { buildAdvancedAnalyticsSnapshot } from "@/lib/analytics/advanced-dashboard";
+import { buildAdvancedAnalyticsSnapshot, parseAdvancedAnalyticsSnapshot } from "@/lib/analytics/advanced-dashboard";
 import { createClient } from "@/lib/supabase/server";
 import { formatCompactCurrency, formatCurrency, formatDate, formatPercent } from "@/lib/utils/format";
 import { labelize } from "@/types/app";
@@ -25,52 +25,29 @@ export default async function AnalyticsPage() {
   if (!can(context.role, "read", "reports")) redirect("/dashboard");
 
   const supabase = await createClient();
-  const companyId = context.companyId;
-
-  const [
-    ordersResult,
-    quotesResult,
-    productionResult,
-    dispatchesResult,
-    invoicesResult,
-    expensesResult,
-    qualityResult,
-    inventoryResult,
-    tasksResult,
-  ] = await Promise.all([
-    supabase.from("orders").select("id, order_date, order_value, current_stage, expected_dispatch_date, customers(company_name, customer_name)").eq("company_id", companyId).limit(1500),
-    supabase.from("quotes").select("id, status, grand_total, quote_date, created_at").eq("company_id", companyId).limit(1500),
-    supabase.from("production_jobs").select("id, status, planned_date, planned_quantity_kg, actual_quantity_kg").eq("company_id", companyId).limit(1500),
-    supabase.from("dispatches").select("id, dispatch_date, total_weight_kg, delivery_status").eq("company_id", companyId).limit(1500),
-    supabase.from("invoices").select("id, invoice_number, invoice_date, due_date, status, grand_total, balance_due, amount_paid, paid_date, customers(company_name, customer_name)").eq("company_id", companyId).limit(1500),
-    supabase.from("expense_ledger").select("id, total_amount, payment_status, approval_status, created_at, invoice_date").eq("company_id", companyId).is("deleted_at", null).limit(1500),
-    supabase.from("quality_inspections").select("id, status, quantity_checked_kg, inspection_date, created_at").eq("company_id", companyId).limit(1500),
-    supabase.from("inventory_items").select("id, item_code, item_name, unit, current_stock, reorder_level").eq("company_id", companyId).limit(1500),
-    supabase.from("tasks").select("id, status, priority, due_date").eq("company_id", companyId).limit(1500),
-  ]);
-
-  const snapshot = buildAdvancedAnalyticsSnapshot({
-    orders: (ordersResult.data ?? []) as any[],
-    quotes: (quotesResult.data ?? []) as any[],
-    productionJobs: (productionResult.data ?? []) as any[],
-    dispatches: (dispatchesResult.data ?? []) as any[],
-    invoices: (invoicesResult.data ?? []) as any[],
-    expenses: (expensesResult.data ?? []) as any[],
-    qualityInspections: (qualityResult.data ?? []) as any[],
-    inventoryItems: (inventoryResult.data ?? []) as any[],
-    tasks: (tasksResult.data ?? []) as any[],
+  const now = new Date();
+  const analyticsAsOf = now.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const analyticsResult = await supabase.rpc("get_advanced_analytics_snapshot" as any, {
+    p_as_of: analyticsAsOf,
+    p_months: 6,
   });
-
+  const emptySnapshot = buildAdvancedAnalyticsSnapshot({
+    orders: [],
+    quotes: [],
+    productionJobs: [],
+    dispatches: [],
+    invoices: [],
+    payments: [],
+    expenses: [],
+    qualityInspections: [],
+    inventoryItems: [],
+    tasks: [],
+  }, now);
+  const parsedSnapshot = parseAdvancedAnalyticsSnapshot(analyticsResult.data);
+  const snapshot = parsedSnapshot ?? emptySnapshot;
   const queryErrors = [
-    ordersResult.error ? `orders: ${ordersResult.error.message}` : null,
-    quotesResult.error ? `quotes: ${quotesResult.error.message}` : null,
-    productionResult.error ? `production_jobs: ${productionResult.error.message}` : null,
-    dispatchesResult.error ? `dispatches: ${dispatchesResult.error.message}` : null,
-    invoicesResult.error ? `invoices: ${invoicesResult.error.message}` : null,
-    expensesResult.error ? `expense_ledger: ${expensesResult.error.message}` : null,
-    qualityResult.error ? `quality_inspections: ${qualityResult.error.message}` : null,
-    inventoryResult.error ? `inventory_items: ${inventoryResult.error.message}` : null,
-    tasksResult.error ? `tasks: ${tasksResult.error.message}` : null,
+    analyticsResult.error ? `analytics: ${analyticsResult.error.message}` : null,
+    !analyticsResult.error && !parsedSnapshot ? "analytics: database returned an invalid snapshot" : null,
   ].filter(Boolean) as string[];
 
   const maxTrendValue = Math.max(

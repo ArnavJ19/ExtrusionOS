@@ -179,12 +179,6 @@ describe("Property 18: mergeComplianceSources deduplication", () => {
         fc.array(validRequirementArb, { minLength: 0, maxLength: 10 }),
         (textArray, detailedReqs) => {
           const merged = mergeComplianceSources(textArray, detailedReqs);
-          const seen = new Set();
-          for (const item of merged) {
-            const key = item.certificate_type.toLowerCase().trim();
-            // Note: detailed requirements may have duplicates among themselves
-            // (which is valid input). We only check that textArray doesn't re-add.
-          }
 
           // Specifically: items added from textArray should not duplicate detailed
           const detailedKeys = new Set(

@@ -24,6 +24,9 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     const result = mode === "login" ? await supabase.auth.signInWithPassword({ email, password }) : await supabase.auth.signUp({ email, password });
     setLoading(false);
     if (result.error) return toast.error(getErrorMessage(result.error));
+    if (mode === "login") {
+      await supabase.rpc("record_current_login_event", { p_event_type: "login_success" });
+    }
     toast.success(mode === "login" ? "Logged in" : "Account created");
     router.replace(mode === "login" ? "/dashboard" : "/onboarding");
     router.refresh();
@@ -58,7 +61,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   );
 }
 
-export function OnboardingForm({ userEmail, userId }: { userEmail: string | null; userId: string }) {
+export function OnboardingForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -81,35 +84,22 @@ export function OnboardingForm({ userEmail, userId }: { userEmail: string | null
       return toast.error(parsed.error.issues[0]?.message ?? "Please check company details");
     }
     const supabase = createClient();
-    const { data: company, error: companyError } = await supabase.from("companies").insert({
-      name: parsed.data.name,
-      legal_name: parsed.data.legal_name,
-      gst_number: parsed.data.gst_number,
-      phone: parsed.data.phone,
-      email: userEmail,
-      city: parsed.data.city,
-      state: parsed.data.state,
-      billing_address: parsed.data.billing_address
-    }).select("id").single();
-
-    if (companyError || !company) {
-      setLoading(false);
-      return toast.error(getErrorMessage(companyError, "Could not create company"));
-    }
-
-    const { error: profileError } = await supabase.from("app_users").insert({
-      id: userId,
-      company_id: company.id,
-      full_name: parsed.data.full_name,
-      email: userEmail,
-      phone: parsed.data.phone,
-      role: "owner",
-      is_active: true
+    const { error: onboardingError } = await supabase.rpc("onboard_company_atomic", {
+      p_company: {
+        name: parsed.data.name,
+        legal_name: parsed.data.legal_name,
+        gst_number: parsed.data.gst_number,
+        city: parsed.data.city,
+        state: parsed.data.state,
+        billing_address: parsed.data.billing_address
+      },
+      p_profile: {
+        full_name: parsed.data.full_name,
+        phone: parsed.data.phone
+      }
     });
-
-    const { error: settingsError } = await supabase.from("company_settings").insert({ company_id: company.id, default_quote_terms: "Prices are valid until the mentioned date. GST and transport as mentioned. Delivery depends on die, billet, and finishing availability." });
     setLoading(false);
-    if (profileError || settingsError) return toast.error(getErrorMessage(profileError ?? settingsError, "Could not finish onboarding"));
+    if (onboardingError) return toast.error(getErrorMessage(onboardingError, "Could not finish onboarding"));
     toast.success("Company created");
     router.replace("/dashboard");
     router.refresh();

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/browser";
 import { formatDate } from "@/lib/utils/format";
+import { recordsToCsv } from "@/lib/utils/csv";
 import { dataRetentionSettingsSchema } from "@/lib/validations/schemas";
 
 type DeletedRecord = { table: string; id: string; label: string; deleted_at: string | null };
@@ -30,9 +31,20 @@ const moduleTables: Record<string, string> = {
   dies: "dies",
   quotes: "quotes",
   orders: "orders",
+  dispatches: "dispatches",
   invoices: "invoices",
+  payments: "payments",
+  inventory: "inventory_items",
+  production_jobs: "production_jobs",
+  quality_inspections: "quality_inspections",
+  vendors: "vendors",
+  purchase_orders: "purchase_orders",
   documents: "documents"
 };
+
+const coreExportTables = [...new Set(Object.values(moduleTables))];
+const EXPORT_PAGE_SIZE = 1000;
+const MAX_EXPORT_ROWS_PER_TABLE = 10_000;
 
 export function DataCenterClient({ companyId, userId, retention, exportJobs, activityLogs, deletedRecords }: Props) {
   const supabase = createClient();
@@ -65,14 +77,7 @@ export function DataCenterClient({ companyId, userId, retention, exportJobs, act
   function toCsv(rows: Record<string, unknown>[]) {
     if (!rows.length) return "";
     const headers = Object.keys(rows[0]);
-    const escape = (value: unknown) => {
-      const text = String(value ?? "");
-      if (text.includes(",") || text.includes('"') || text.includes("\n")) return `"${text.replace(/"/g, '""')}"`;
-      return text;
-    };
-    const lines = [headers.join(",")];
-    for (const row of rows) lines.push(headers.map((header) => escape(row[header])).join(","));
-    return lines.join("\n");
+    return recordsToCsv(headers, rows);
   }
 
   async function writeAudit(action: string, entityType: string, metadata: Record<string, any>) {
@@ -86,19 +91,51 @@ export function DataCenterClient({ companyId, userId, retention, exportJobs, act
     if (!insert.error && insert.data) setLogs((current) => [insert.data as ActivityLog, ...current]);
   }
 
+  async function fetchExportRows(table: string, columns = "*") {
+    const rows: Record<string, unknown>[] = [];
+    while (rows.length < MAX_EXPORT_ROWS_PER_TABLE) {
+      const pageSize = Math.min(EXPORT_PAGE_SIZE, MAX_EXPORT_ROWS_PER_TABLE - rows.length);
+      const result = await supabase
+        .from(table)
+        .select(columns)
+        .eq("company_id", companyId)
+        .range(rows.length, rows.length + pageSize - 1);
+      if (result.error) throw new Error(`${table}: ${result.error.message || "export query failed"}`);
+      const page = (result.data ?? []) as unknown as Record<string, unknown>[];
+      rows.push(...page);
+      if (page.length < pageSize) return rows;
+    }
+
+    const overflow = await supabase
+      .from(table)
+      .select("id")
+      .eq("company_id", companyId)
+      .range(MAX_EXPORT_ROWS_PER_TABLE, MAX_EXPORT_ROWS_PER_TABLE);
+    if (overflow.error) throw new Error(`${table}: ${overflow.error.message || "export size check failed"}`);
+    if (overflow.data?.length) {
+      throw new Error(`${table} exceeds the ${MAX_EXPORT_ROWS_PER_TABLE.toLocaleString()} row safety limit. Export it through a managed database backup.`);
+    }
+    return rows;
+  }
+
   async function exportCompanyData() {
     try {
-      const tables = ["customers", "aluminium_profiles", "dies", "quotes", "orders", "invoices", "documents"];
-      const payload: Record<string, unknown> = { exported_at: new Date().toISOString(), company_id: companyId, data: {} };
+      const payload: Record<string, unknown> = {
+        exported_at: new Date().toISOString(),
+        company_id: companyId,
+        scope: "core_operational_tables",
+        row_limit_per_table: MAX_EXPORT_ROWS_PER_TABLE,
+        data: {},
+      };
 
-      for (const table of tables) {
-        const result = await supabase.from(table).select("*").eq("company_id", companyId).limit(500);
-        if (!result.error) payload.data = { ...(payload.data as Record<string, unknown>), [table]: result.data ?? [] };
+      for (const table of coreExportTables) {
+        const rows = await fetchExportRows(table);
+        payload.data = { ...(payload.data as Record<string, unknown>), [table]: rows };
       }
 
-      downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }), `company-data-${new Date().toISOString().slice(0, 10)}.json`);
+      downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }), `core-company-data-${new Date().toISOString().slice(0, 10)}.json`);
       await writeAudit("export_company_data", "backup", { mode: "json", modules: Object.keys((payload.data as Record<string, unknown>) || {}) });
-      toast.success("Company data export downloaded");
+      toast.success("Core company data export downloaded");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Export failed");
     }
@@ -107,21 +144,27 @@ export function DataCenterClient({ companyId, userId, retention, exportJobs, act
   async function exportModuleCsv(moduleName: string) {
     const table = moduleTables[moduleName];
     if (!table) return;
-    const result = await supabase.from(table).select("*").eq("company_id", companyId).limit(1000);
-    if (result.error) return toast.error(result.error.message || "Could not export module CSV");
-    const csv = toCsv((result.data ?? []) as Record<string, unknown>[]);
-    downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${moduleName}-${new Date().toISOString().slice(0, 10)}.csv`);
-    await writeAudit("export_module_csv", moduleName, { table, rows: result.data?.length ?? 0 });
-    toast.success(`${moduleName} CSV downloaded`);
+    try {
+      const rows = await fetchExportRows(table);
+      const csv = toCsv(rows);
+      downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${moduleName}-${new Date().toISOString().slice(0, 10)}.csv`);
+      await writeAudit("export_module_csv", moduleName, { table, rows: rows.length });
+      toast.success(`${moduleName} CSV downloaded`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not export module CSV");
+    }
   }
 
   async function exportDocumentIndex() {
-    const result = await supabase.from("documents").select("id, document_type, file_name, file_url, related_entity_type, related_entity_id, created_at").eq("company_id", companyId).limit(2000);
-    if (result.error) return toast.error(result.error.message || "Could not download document index");
-    const csv = toCsv((result.data ?? []) as Record<string, unknown>[]);
-    downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `document-index-${new Date().toISOString().slice(0, 10)}.csv`);
-    await writeAudit("export_document_index", "documents", { rows: result.data?.length ?? 0 });
-    toast.success("Document index downloaded");
+    try {
+      const rows = await fetchExportRows("documents", "id, document_type, file_name, file_url, related_entity_type, related_entity_id, created_at");
+      const csv = toCsv(rows);
+      downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `document-index-${new Date().toISOString().slice(0, 10)}.csv`);
+      await writeAudit("export_document_index", "documents", { rows: rows.length });
+      toast.success("Document index downloaded");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not download document index");
+    }
   }
 
   async function saveRetentionSettings() {
@@ -145,7 +188,7 @@ export function DataCenterClient({ companyId, userId, retention, exportJobs, act
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Data Backup and Recovery" description="Export company/module data, configure retention, recover soft-deleted business records, and review backup activity." actions={<Button onClick={exportCompanyData}><Download className="h-4 w-4" /> Export company data</Button>} />
+      <PageHeader title="Data Backup and Recovery" description="Export core operational data, configure retention, recover soft-deleted business records, and review backup activity. Use managed Supabase backups for a full database restore point." actions={<Button onClick={exportCompanyData}><Download className="h-4 w-4" /> Export core data</Button>} />
 
       <div className="grid gap-4 md:grid-cols-4">
         <Stat label="Deleted Records" value={deleted.length.toString()} icon={Trash2} />

@@ -23,7 +23,7 @@ type QuoteOption = {
   grand_total: number;
   customer_id: string;
   customers?: { customer_name?: string; company_name?: string } | null;
-  quote_items?: { profile_id: string | null; billing_weight_kg: number | null; total_weight_kg: number | null; aluminium_profiles?: { alloy?: string | null; temper?: string | null; billet_diameter_required_inch?: number | null } | null }[];
+  quote_items?: { id: string; profile_id: string | null; finishing_type: string | null; billing_weight_kg: number | null; total_weight_kg: number | null; aluminium_profiles?: { alloy?: string | null; temper?: string | null; billet_diameter_required_inch?: number | null } | null }[];
 };
 
 const factoryMinimumKg = 700;
@@ -50,9 +50,9 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
       const [quotesResult, ordersResult] = await Promise.all([
         supabase
           .from("quotes")
-          .select("id, dealer_id, quote_number, quote_date, grand_total, customer_id, customers(customer_name, company_name), quote_items(profile_id, billing_weight_kg, total_weight_kg, aluminium_profiles(alloy, temper, billet_diameter_required_inch))")
+          .select("id, dealer_id, quote_number, quote_date, grand_total, customer_id, customers(customer_name, company_name), quote_items(id, profile_id, finishing_type, billing_weight_kg, total_weight_kg, aluminium_profiles(alloy, temper, billet_diameter_required_inch))")
           .eq("company_id", context.companyId)
-          .in("status", ["customer_approved", "sent", "approved_for_sending", "converted_to_order"])
+          .eq("status", "customer_approved")
           .order("quote_date", { ascending: false })
           .limit(250),
         supabase.from("orders").select("order_number").eq("company_id", context.companyId),
@@ -94,18 +94,38 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
       if (!selectedQuote) return;
       const profileIds = Array.from(new Set((selectedQuote.quote_items ?? []).map((item) => item.profile_id).filter(Boolean))) as string[];
       if (!profileIds.length) return;
-      const stockQuery = supabase.from("profile_stock_batches").select("id, profile_id, total_weight_kg, status, dealer_id").eq("company_id", context.companyId).in("profile_id", profileIds).eq("status", "available");
-      if (context.dealerId) stockQuery.eq("dealer_id", context.dealerId);
+      const dealerId = context.dealerId ?? selectedQuote.dealer_id ?? null;
+      if (!dealerId) return;
+      const stockQuery = supabase.from("profile_stock_batches").select("id, profile_id, finish, total_weight_kg, status, dealer_id").eq("company_id", context.companyId).eq("dealer_id", dealerId).in("profile_id", profileIds).eq("status", "available");
       const [stockResult, reservationResult] = await Promise.all([
         stockQuery,
-        supabase.from("profile_stock_reservations").select("profile_id, reserved_weight_kg, status").eq("company_id", context.companyId).in("profile_id", profileIds).eq("status", "active"),
+        supabase.from("profile_stock_reservations").select("profile_stock_batch_id, reserved_weight_kg, status").eq("company_id", context.companyId).in("profile_id", profileIds).eq("status", "active"),
       ]);
       if (stockResult.error) return toast.error(stockResult.error.message);
       if (reservationResult.error) return toast.error(reservationResult.error.message);
-      const stockKg = (stockResult.data ?? []).reduce((sum: number, row: any) => sum + Number(row.total_weight_kg ?? 0), 0);
-      const reservedKg = (reservationResult.data ?? []).reduce((sum: number, row: any) => sum + Number(row.reserved_weight_kg ?? 0), 0);
-      setAvailableUnreservedKg(Math.max(stockKg - reservedKg, 0));
-      if (context.dealerId) setDealerFulfilledKg(Math.min(Math.max(stockKg - reservedKg, 0), quoteWeightKg));
+      const finishKey = (value: unknown) => String(value ?? "mill_finish").trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
+      const reservationsByBatch = (reservationResult.data ?? []).reduce<Record<string, number>>((totals, row: any) => {
+        totals[row.profile_stock_batch_id] = (totals[row.profile_stock_batch_id] ?? 0) + Number(row.reserved_weight_kg ?? 0);
+        return totals;
+      }, {});
+      const demandByProfileFinish = (selectedQuote.quote_items ?? []).reduce<Record<string, number>>((totals, item) => {
+        if (!item.profile_id) return totals;
+        const key = `${item.profile_id}:${finishKey(item.finishing_type)}`;
+        totals[key] = (totals[key] ?? 0) + Number(item.billing_weight_kg ?? item.total_weight_kg ?? 0);
+        return totals;
+      }, {});
+      const stockByProfileFinish = (stockResult.data ?? []).reduce<Record<string, number>>((totals, row: any) => {
+        const key = `${row.profile_id}:${finishKey(row.finish)}`;
+        const available = Math.max(Number(row.total_weight_kg ?? 0) - Number(reservationsByBatch[row.id] ?? 0), 0);
+        totals[key] = (totals[key] ?? 0) + available;
+        return totals;
+      }, {});
+      const compatibleStockKg = Object.entries(demandByProfileFinish).reduce(
+        (sum, [key, demand]) => sum + Math.min(demand, stockByProfileFinish[key] ?? 0),
+        0
+      );
+      setAvailableUnreservedKg(compatibleStockKg);
+      if (context.dealerId) setDealerFulfilledKg(Math.min(compatibleStockKg, quoteWeightKg));
     };
     loadAvailability();
   }, [context.companyId, context.dealerId, quoteWeightKg, selectedQuote, supabase]);
@@ -166,7 +186,7 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
             <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><input className="form-input pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search quote number or customer" /></div>
           </label>
           <label className="block space-y-1.5">
-            <span className="form-label">Latest approved/sent quotes</span>
+            <span className="form-label">Customer-approved quotes</span>
             <SearchableSelect value={quoteId} placeholder="Select quote" options={filteredQuotes.map((quote) => ({ value: quote.id, label: `${quote.quote_number} - ${quote.customers?.company_name || quote.customers?.customer_name || "Customer"} - ${quote.quote_date}` }))} onChange={setQuoteId} />
           </label>
           <div className="grid gap-4 md:grid-cols-3">

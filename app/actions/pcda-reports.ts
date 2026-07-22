@@ -28,5 +28,3 @@ export async function generateDieTechnicalSheet(dieId: string) {
 export async function generateProfileTechnicalSheet(profileId: string) {
   return generateProfileTechnicalSheetImpl(profileId);
 }
-
-export type { ReportFormat };

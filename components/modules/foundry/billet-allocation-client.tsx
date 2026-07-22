@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { allocateBilletToOrderAction, reallocateBilletToOrderAction } from "@/lib/actions/production";
 import { createClient } from "@/lib/supabase/browser";
 import { getErrorMessage } from "@/lib/utils/errors";
 import type { SessionContext } from "@/types/app";
@@ -75,10 +76,11 @@ export function BilletAllocationClient({ context, billetId }: { context: Session
   async function allocate() {
     if (!selectedOrderId) return toast.error("Select an order to allocate this billet.");
     setSaving(true);
-    const rpcName = billet?.order_id ? "reallocate_billet_to_order" : "allocate_billet_to_order";
-    const { error } = await supabase.rpc(rpcName, { p_billet_id: billetId, p_order_id: selectedOrderId });
+    const result = billet?.order_id
+      ? await reallocateBilletToOrderAction({ billet_id: billetId, order_id: selectedOrderId })
+      : await allocateBilletToOrderAction({ billet_id: billetId, order_id: selectedOrderId });
     setSaving(false);
-    if (error) return toast.error(getErrorMessage(error, "Could not allocate billet"));
+    if (!result.success) return toast.error(result.error);
     toast.success("Billet allocated to order");
     setSelectedOrderId("");
     await load();

@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { getSignedFileUrl } from "@/lib/utils/files";
+import { getErrorMessage } from "@/lib/utils/errors";
 
 type DieDetailTabsProps = {
   trials: Record<string, any>[];
@@ -18,6 +21,18 @@ type Tab = typeof TABS[number];
 
 export function DieDetailTabs({ trials, corrections, nitridings, documents }: DieDetailTabsProps) {
   const [tab, setTab] = useState<Tab>("Trials");
+
+  async function openDocument(document: Record<string, any>) {
+    try {
+      const signedUrl = await getSignedFileUrl(
+        document.storage_bucket ?? "documents",
+        document.storage_path ?? document.file_url
+      );
+      window.open(signedUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Could not open document"));
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -121,13 +136,13 @@ export function DieDetailTabs({ trials, corrections, nitridings, documents }: Di
             {!documents.length ? <EmptyState title="No documents linked" description="Technical documents (drawings, certificates, reports) will appear here." /> : (
               <div className="space-y-2">
                 {documents.map((doc) => (
-                  <a key={doc.id} href={doc.file_url} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-xl border border-slate-200 p-3 transition hover:border-orange/60">
+                  <button key={doc.id} type="button" onClick={() => void openDocument(doc)} className="flex w-full items-center justify-between rounded-xl border border-slate-200 p-3 text-left transition hover:border-orange/60">
                     <div>
                       <p className="font-bold text-slate-950">{doc.file_name}</p>
                       <p className="text-xs text-slate-500">{doc.document_type} · v{doc.version_number ?? 1} · {formatDate(doc.created_at)}</p>
                     </div>
                     <Badge value={doc.approval_status ?? "pending"} />
-                  </a>
+                  </button>
                 ))}
               </div>
             )}

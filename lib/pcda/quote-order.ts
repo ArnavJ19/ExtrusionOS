@@ -65,6 +65,10 @@ export function normalizeDrawingApprovalStatus(status: string | null | undefined
   return "Pending";
 }
 
+function positiveChargeOrNull(value: number | null | undefined): number | null {
+  return value != null && value > 0 ? value : null;
+}
+
 export function buildQuoteItemPcdaFields(input: QuoteItemPcdaInput) {
   const { companyId, profile, item, gstPercent, quoteRevisionNumber } = input;
   const validated = technicalLineItemSchema.parse({
@@ -95,24 +99,24 @@ export function buildQuoteItemPcdaFields(input: QuoteItemPcdaInput) {
     cut_length: item.length_per_piece_m,
     bundle_quantity: profile.bundle_quantity ?? null,
     pieces_per_m_per_kg_per_bundle: profile.pieces_per_m_per_kg_per_bundle ?? null,
-    material_price: item.billet_rate_per_kg || null,
-    value_added_service_price: (item.conversion_charge_per_kg + item.finishing_charge) || null,
-    other_charges: item.other_charges || null,
-    basic_price: item.price_per_kg || null,
-    packing_charge: item.packing_charge || null,
-    freight_charge: item.transport_charge || null,
-    die_cost: item.die_charge || null,
-    die_service_charge: item.die_amortization_amount || null,
+    material_price: item.billet_rate_per_kg ?? 0,
+    value_added_service_price: (item.conversion_charge_per_kg + item.finishing_charge) || 0,
+    other_charges: positiveChargeOrNull(item.other_charges),
+    basic_price: item.price_per_kg ?? 0,
+    packing_charge: positiveChargeOrNull(item.packing_charge),
+    freight_charge: positiveChargeOrNull(item.transport_charge),
+    die_cost: positiveChargeOrNull(item.die_charge),
+    die_service_charge: positiveChargeOrNull(item.die_amortization_amount),
     packing_in_conversion: false,
     include_packing_in_basic: false,
     gst_percent: gstPercent,
     discount: null,
-    margin: item.margin_amount,
-    net_rate: item.price_per_kg || null,
-    final_line_value: item.line_total_before_gst || null,
+    margin: item.margin_amount ?? 0,
+    net_rate: item.price_per_kg ?? 0,
+    final_line_value: item.line_total_before_gst ?? 0,
     theoretical_weight: item.total_weight_kg,
     actual_weight: null,
-    internal_cost: (item.raw_material_cost + item.conversion_cost + item.finishing_cost + item.die_amortization_amount) || null,
+    internal_cost: (item.raw_material_cost + item.conversion_cost + item.finishing_cost + item.die_amortization_amount) || 0,
     supplier_rate: null,
     internal_note: null,
     revision_number: quoteRevisionNumber ?? 1,

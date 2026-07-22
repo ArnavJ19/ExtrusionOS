@@ -81,6 +81,7 @@ export function AutomationClient({ companyId, initialRules, initialRuns }: Props
     setSaving(true);
     const insertResult = await supabase.from("automation_rules").insert({
       company_id: companyId,
+      created_by: (await supabase.auth.getUser()).data.user?.id,
       rule_name: parsed.data.rule_name,
       trigger_type: parsed.data.trigger_type,
       conditions_json: parsed.data.conditions_json,

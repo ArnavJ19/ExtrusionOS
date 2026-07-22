@@ -7,7 +7,7 @@ import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 const links = [
-  { href: "/mobile/jobs", label: "Today Jobs", icon: Factory, description: "Open production jobs and update them from the job detail workflow." },
+  { href: "/mobile/jobs", label: "Active Jobs", icon: Factory, description: "Open production jobs and update them from the job detail workflow." },
   { href: "/mobile/scan", label: "Scan Die/Bundle", icon: QrCode, description: "Use the real scanner workspace for QR, barcode, die tag, or bundle lookup." },
   { href: "/mobile/dispatch", label: "Dispatch Loading", icon: Truck, description: "Review active dispatches and open the dispatch workflow." },
   { href: "/mobile/quality", label: "Quality Checks", icon: ShieldCheck, description: "Open pending quality records for inspection updates." },
@@ -17,14 +17,15 @@ const links = [
 export default async function MobileHomePage() {
   const context = await getSessionContext();
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
 
   const [jobsResult, dispatchesResult, qualityResult, tasksResult] = await Promise.all([
-    supabase.from("production_jobs").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).gte("planned_start_date", today),
-    supabase.from("dispatches").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).not("delivery_status", "in", "(delivered,cancelled)"),
-    supabase.from("quality_tests").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).not("status", "eq", "approved"),
+    supabase.from("production_jobs").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).not("status", "in", "(completed,cancelled)"),
+    supabase.from("dispatches").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).not("delivery_status", "in", "(delivered,returned)"),
+    supabase.from("quality_inspections").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).not("status", "eq", "approved"),
     supabase.from("tasks").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).not("status", "eq", "completed")
   ]);
+  const queryError = [jobsResult, dispatchesResult, qualityResult, tasksResult].find((result) => result.error)?.error;
+  if (queryError) throw new Error(`Could not load mobile factory queues: ${queryError.message}`);
 
   return (
     <div className="mx-auto max-w-xl space-y-5">

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
-import { Badge } from "@/components/ui/badge";
+import { DealerOrdersOverviewBoard, type DealerOrderOverviewRow } from "@/components/modules/dealer-orders-overview-board";
 import { Card, CardContent } from "@/components/ui/card";
 import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 import { can } from "@/lib/auth/permissions";
@@ -31,7 +31,7 @@ export default async function DealerOrdersPage() {
     if (context.dealerId) return order.dealer_id === context.dealerId || order.created_by === context.userId || quote?.dealer_id === context.dealerId || quote?.created_by === context.userId;
     return Boolean(order.dealer_id || quote?.dealer_id || dealerUsersById.has(order.created_by) || (quote?.created_by && dealerUsersById.has(quote.created_by)) || dealerUserIds.length === 0);
   });
-  const rows = [
+  const rows: DealerOrderOverviewRow[] = [
     ...(dealerRequests.data ?? []).map((order: any) => ({ id: order.id, href: `/dealer-orders/${order.id}`, order_number: order.order_number, priority: order.priority, status: order.status, dealer: dealerName(order.dealers), source: "Dealer request", created_at: order.created_at })),
     ...visibleQuoteOrders.filter((order: any) => !linkedOrderIds.has(order.id)).map((order: any) => {
       const quote = Array.isArray(order.quotes) ? order.quotes[0] : order.quotes;
@@ -59,12 +59,7 @@ export default async function DealerOrdersPage() {
         <Card><CardContent><h2 className="section-title">Delayed Dealer Orders</h2><p className="mt-2 text-sm font-semibold text-neutral-500">{delayedRows.length} order{delayedRows.length === 1 ? "" : "s"} past factory committed ETA.</p></CardContent></Card>
         <Card><CardContent><h2 className="section-title">Needs Dealer Clarification</h2><p className="mt-2 text-sm font-semibold text-neutral-500">{clarificationRows.length} order{clarificationRows.length === 1 ? "" : "s"} waiting for dealer response.</p></CardContent></Card>
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
-        {statuses.map((status) => {
-          const statusRows = rows.filter((order) => order.status === status).slice(0, 10);
-          return <Card key={status}><CardContent><h2 className="text-sm font-black uppercase tracking-[0.12em] text-neutral-500">{status.replaceAll("_", " ")}</h2><div className="mt-4 space-y-3">{statusRows.map((order) => <a key={`${order.href}-${order.id}`} href={order.href} className="block rounded-2xl border border-neutral-200 bg-neutral-50 p-4 transition hover:border-neutral-300"><div className="flex items-center justify-between gap-3"><p className="font-bold text-neutral-950">{order.order_number}</p><Badge value={order.priority} /></div><p className="mt-2 text-sm font-medium text-neutral-500">{order.dealer}</p><p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-neutral-400">{order.source}</p></a>)}{!statusRows.length ? <p className="rounded-2xl border border-dashed border-neutral-200 p-4 text-sm font-semibold text-neutral-400">No orders.</p> : null}</div></CardContent></Card>;
-        })}
-      </div>
+      <DealerOrdersOverviewBoard statuses={statuses} records={rows} />
     </div>
   );
 }

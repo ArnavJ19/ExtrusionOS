@@ -1,10 +1,15 @@
-import { RecordFormClient } from "@/components/modules/operations/record-form-client";
+import { PaymentFormClient } from "@/components/modules/financials/payment-form-client";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 
-export default async function NewPaymentPage() {
+export default async function NewPaymentPage({
+  searchParams
+}: {
+  searchParams: Promise<{ invoice_id?: string }>;
+}) {
   const context = await getSessionContext();
   if (!can(context.role, "create", "financials")) redirect("/payments");
-  return <RecordFormClient moduleKey="payments" context={context} />;
+  const params = await searchParams;
+  return <PaymentFormClient context={context} initialInvoiceId={params.invoice_id ?? ""} />;
 }

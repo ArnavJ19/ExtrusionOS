@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import type { ReportModel } from "./builder";
+import { escapeCsvCell, neutralizeSpreadsheetFormula } from "../../utils/csv.ts";
 
 export type GeneratedReportFile = {
   bytes: Uint8Array;
@@ -9,11 +10,6 @@ export type GeneratedReportFile = {
 
 function normalizeCell(value: unknown): string {
   return String(value ?? "").replace(/\r?\n/g, " ").trim();
-}
-
-function csvEscape(value: unknown): string {
-  const cell = normalizeCell(value);
-  return /[",\n]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell;
 }
 
 function reportRows(model: ReportModel): string[][] {
@@ -100,7 +96,7 @@ export async function generatePDF(model: ReportModel): Promise<GeneratedReportFi
 }
 
 export function generateCSV(model: ReportModel): GeneratedReportFile {
-  const csv = reportRows(model).map((row) => row.map(csvEscape).join(",")).join("\n");
+  const csv = reportRows(model).map((row) => row.map((cell) => escapeCsvCell(normalizeCell(cell))).join(",")).join("\n");
   return {
     bytes: new TextEncoder().encode(csv),
     contentType: "text/csv;charset=utf-8",
@@ -110,7 +106,7 @@ export function generateCSV(model: ReportModel): GeneratedReportFile {
 
 export function generateExcel(model: ReportModel): GeneratedReportFile {
   const rows = reportRows(model)
-    .map((row) => `<tr>${row.map((cell) => `<td>${normalizeCell(cell).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</td>`).join("")}</tr>`)
+    .map((row) => `<tr>${row.map((cell) => `<td>${neutralizeSpreadsheetFormula(normalizeCell(cell)).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</td>`).join("")}</tr>`)
     .join("");
   const htmlWorkbook = `<!doctype html><html><head><meta charset="utf-8" /></head><body><table>${rows}</table></body></html>`;
   return {
@@ -131,6 +127,9 @@ export async function storeReport(
     upsert: true,
   });
   if (error) {
+    if (/bucket not found/i.test(error.message) && bucket === "reports") {
+      throw new Error("Report upload failed: missing private reports storage bucket. Apply migration 0059_reports_storage_bucket.sql.");
+    }
     throw new Error(`Report upload failed: ${error.message}`);
   }
 }

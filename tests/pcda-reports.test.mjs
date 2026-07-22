@@ -1,10 +1,14 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { sanitizeReportModelForCustomer } from "../lib/reports/pcda/customer-report.ts";
-import { generateCSV, generateExcel } from "../lib/reports/pcda/generator.ts";
+import { generateCSV, generateExcel, storeReport } from "../lib/reports/pcda/generator.ts";
 import { checkFieldsPresent, checkPcdaLineReadiness, checkQuoteLineReadiness, checkReportReadiness } from "../lib/reports/pcda/readiness.ts";
 import { sanitizeForCustomer } from "../lib/pcda/sanitize.ts";
+
+const repoRoot = process.cwd();
 
 const baseModel = {
   templateKey: "quote_line",
@@ -79,6 +83,40 @@ describe("PCDA report generators", () => {
     assert.equal(xls.extension, "xls");
     assert.match(new TextDecoder().decode(csv.bytes), /Quote Line Report/);
     assert.match(new TextDecoder().decode(xls.bytes), /<table>/);
+  });
+
+  it("stores generated reports in the private reports bucket", async () => {
+    let uploadedBucket = "";
+    let uploadedPath = "";
+    const supabase = {
+      storage: {
+        from(bucket) {
+          uploadedBucket = bucket;
+          return {
+            async upload(path) {
+              uploadedPath = path;
+              return { error: null };
+            },
+          };
+        },
+      },
+    };
+
+    await storeReport(
+      supabase,
+      { bytes: new Uint8Array([1, 2, 3]), contentType: "application/pdf", extension: "pdf" },
+      "company-1/reports/quote/line-1/report.pdf"
+    );
+
+    assert.equal(uploadedBucket, "reports");
+    assert.equal(uploadedPath.startsWith("company-1/reports/"), true);
+  });
+
+  it("keeps the reports storage bucket and tenant policies in migrations", () => {
+    const migration = readFileSync(join(repoRoot, "supabase/migrations/0059_reports_storage_bucket.sql"), "utf8");
+    assert.match(migration, /insert into storage\.buckets[\s\S]*\('reports', 'reports', false\)/);
+    assert.match(migration, /bucket_id in \('company-assets','profile-drawings','die-drawings','quote-pdfs','dispatch-documents','reports'\)/);
+    assert.match(migration, /\(storage\.foldername\(name\)\)\[1\] = public\.get_current_user_company_id\(\)::text/);
   });
 });
 

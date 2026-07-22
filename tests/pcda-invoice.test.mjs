@@ -11,7 +11,10 @@ describe("Invoice item PCDA propagation", () => {
     const sourceLines = [{
       id: "packing-1",
       dispatch_id: "disp-1",
+      order_item_id: "order-line-1",
+      quote_item_id: "quote-line-1",
       profile_id: "profile-1",
+      finishing_type: "anodizing",
       section_number: "SEC-001",
       section_code: "P-100",
       section_name: "Sliding Track",
@@ -41,6 +44,32 @@ describe("Invoice item PCDA propagation", () => {
     assert.equal(items[0].line_total, 71250);
     assert.equal(items[0].source_record_id, "disp-1");
     assert.equal(items[0].source_line_id, "packing-1");
+    assert.equal(items[0].order_item_id, "order-line-1");
+    assert.equal(items[0].quote_item_id, "quote-line-1");
+    assert.equal(items[0].finishing_type, "anodizing");
+  });
+
+  it("bills only the packed weight when a dispatch line carries the full order value", () => {
+    const sourceLines = [{
+      id: "packing-partial",
+      dispatch_id: "disp-partial",
+      order_item_id: "order-line-1",
+      profile_id: "profile-1",
+      actual_weight: 150,
+      gross_weight_kg: 40,
+      quantity_kg: 40,
+      net_rate: 200,
+      final_line_value: 30000,
+      revision_number: 1,
+      packing_in_conversion: false,
+      include_packing_in_basic: false,
+    }];
+
+    const items = buildInvoiceItems(sourceLines, invoiceId, companyId);
+    assert.equal(items[0].quantity, 40);
+    assert.equal(items[0].unit_rate, 200);
+    assert.equal(items[0].line_total, 8000);
+    assert.notEqual(items[0].line_total, sourceLines[0].final_line_value);
   });
 
   it("propagates from order_items when dispatch not available", () => {

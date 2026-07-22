@@ -29,7 +29,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       order_billet_requirements(id, alloy, temper, billet_diameter_inch, required_weight_kg, billets_required, billets_allocated, billets_short, status, aluminium_profiles(profile_code, profile_name)),
       foundry_billets(id, billet_code, source_type, alloy, billet_diameter_inch, status, production_job_id),
       order_stage_history(id, stage, changed_at, remarks, changed_by),
-      order_dealer_stock_fulfillments(id, fulfilled_weight_kg, fulfilled_length_m, notes, created_at, aluminium_profiles(profile_code, profile_name), profile_stock_batches(bundle_number, location, finish, length_m)),
+      order_dealer_stock_fulfillments(id, quote_item_id, order_item_id, finishing_type, unit_rate, fulfilled_weight_kg, fulfilled_length_m, notes, created_at, aluminium_profiles(profile_code, profile_name), profile_stock_batches(bundle_number, location, finish, length_m), quote_items(item_description)),
       dispatches(id, dispatch_number, dispatch_date, total_weight_kg, delivery_status)
     `)
     .eq("id", id)
@@ -266,6 +266,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                         <th>Profile</th>
                         <th>Batch / Location</th>
                         <th>Finish</th>
+                        <th>Quote Line</th>
+                        {canSeeValue ? <th className="text-right">Rate</th> : null}
                         <th className="text-right">Fulfilled kg</th>
                         <th className="text-right">Fulfilled m</th>
                         <th>Date</th>
@@ -283,7 +285,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                             {row.profile_stock_batches?.bundle_number ?? "-"}
                             <p className="text-xs font-semibold text-slate-500">{row.profile_stock_batches?.location ?? "No location"}</p>
                           </td>
-                          <td><Badge value={row.profile_stock_batches?.finish ?? "stock"} /></td>
+                          <td><Badge value={row.finishing_type ?? row.profile_stock_batches?.finish ?? "stock"} /></td>
+                          <td className="max-w-[220px] text-xs font-semibold text-slate-600">{row.quote_items?.item_description || (row.quote_item_id ? `Linked ${String(row.quote_item_id).slice(0, 8)}` : "Legacy line")}</td>
+                          {canSeeValue ? <td className="text-right font-semibold tabular-nums">{row.unit_rate ? `${formatCurrency(row.unit_rate)}/kg` : "-"}</td> : null}
                           <td className="text-right font-black tabular-nums text-slate-950">{formatWeight(row.fulfilled_weight_kg)}</td>
                           <td className="text-right font-semibold tabular-nums">{Number(row.fulfilled_length_m ?? 0).toFixed(3)}</td>
                           <td>{formatDate(row.created_at)}</td>
@@ -291,7 +295,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                         </tr>
                       ))}
                       <tr className="bg-slate-50 font-black text-slate-950">
-                        <td colSpan={3}>Total dealer stock deducted</td>
+                        <td colSpan={canSeeValue ? 5 : 4}>Total dealer stock deducted</td>
                         <td className="text-right tabular-nums">{formatWeight(dealerLedgerWeight)}</td>
                         <td className="text-right tabular-nums">{dealerLedgerLength.toFixed(3)}</td>
                         <td colSpan={2} />

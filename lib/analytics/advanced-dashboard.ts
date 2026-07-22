@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 type MaybeDate = string | null | undefined;
 type MaybeNumber = number | string | null | undefined;
 
@@ -31,6 +33,7 @@ export type AnalyticsDispatchRow = {
   dispatch_date?: MaybeDate;
   total_weight_kg?: MaybeNumber;
   delivery_status?: string | null;
+  orders?: { expected_dispatch_date?: MaybeDate } | null;
 };
 
 export type AnalyticsInvoiceRow = {
@@ -46,13 +49,21 @@ export type AnalyticsInvoiceRow = {
   customers?: { company_name?: string | null; customer_name?: string | null } | null;
 };
 
+export type AnalyticsPaymentRow = {
+  event_id: string;
+  payment_date?: MaybeDate;
+  amount?: MaybeNumber;
+};
+
 export type AnalyticsExpenseRow = {
   id: string;
   total_amount?: MaybeNumber;
+  amount_paid?: MaybeNumber;
   payment_status?: string | null;
   approval_status?: string | null;
   created_at?: MaybeDate;
   invoice_date?: MaybeDate;
+  paid_date?: MaybeDate;
 };
 
 export type AnalyticsQualityRow = {
@@ -85,6 +96,7 @@ export type AnalyticsInput = {
   productionJobs: AnalyticsProductionRow[];
   dispatches: AnalyticsDispatchRow[];
   invoices: AnalyticsInvoiceRow[];
+  payments: AnalyticsPaymentRow[];
   expenses: AnalyticsExpenseRow[];
   qualityInspections: AnalyticsQualityRow[];
   inventoryItems: AnalyticsInventoryRow[];
@@ -133,9 +145,77 @@ export type AdvancedAnalyticsSnapshot = {
   risks: string[];
 };
 
+const analyticsNumber = z.coerce.number().finite();
+const advancedAnalyticsSnapshotSchema: z.ZodType<AdvancedAnalyticsSnapshot> = z.object({
+  kpis: z.object({
+    bookedRevenueMtd: analyticsNumber,
+    quotePipelineValueMtd: analyticsNumber,
+    quoteConversionRateMtd: analyticsNumber,
+    activeOrders: analyticsNumber,
+    delayedOrders: analyticsNumber,
+    dispatchWeightMtd: analyticsNumber,
+    dispatchOnTimeRate: analyticsNumber,
+    productionPlannedKgMtd: analyticsNumber,
+    productionActualKgMtd: analyticsNumber,
+    productionAttainmentPctMtd: analyticsNumber,
+    receivableOutstanding: analyticsNumber,
+    overdueInvoices: analyticsNumber,
+    invoicedValueMtd: analyticsNumber,
+    collectionsMtd: analyticsNumber,
+    expenseRunRateMtd: analyticsNumber,
+    expensePaidRateMtd: analyticsNumber,
+    qualityPassRateMtd: analyticsNumber,
+    inventoryAtRiskCount: analyticsNumber,
+    inventoryOutOfStockCount: analyticsNumber,
+    openTasks: analyticsNumber,
+    urgentOpenTasks: analyticsNumber,
+  }),
+  trends: z.array(z.object({
+    key: z.string(),
+    label: z.string(),
+    ordersValue: analyticsNumber,
+    dispatchWeight: analyticsNumber,
+    invoicedValue: analyticsNumber,
+    expenseValue: analyticsNumber,
+    collectionValue: analyticsNumber,
+  })),
+  topCustomers: z.array(z.object({
+    name: z.string(),
+    orderCount: analyticsNumber,
+    value: analyticsNumber,
+  })),
+  stageBacklog: z.array(z.object({
+    stage: z.string(),
+    count: analyticsNumber,
+  })),
+  lowStock: z.array(z.object({
+    itemCode: z.string(),
+    itemName: z.string(),
+    unit: z.string(),
+    currentStock: analyticsNumber,
+    reorderLevel: analyticsNumber,
+    shortagePct: analyticsNumber,
+  })),
+  overdueInvoiceList: z.array(z.object({
+    invoiceNumber: z.string(),
+    customer: z.string(),
+    dueDate: z.string().nullable(),
+    balanceDue: analyticsNumber,
+    status: z.string(),
+  })),
+  risks: z.array(z.string()),
+});
+
+export function parseAdvancedAnalyticsSnapshot(value: unknown): AdvancedAnalyticsSnapshot | null {
+  const parsed = advancedAnalyticsSnapshotSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
 const CLOSED_ORDER_STAGES = new Set(["delivered", "closed", "cancelled"]);
-const CONVERTED_QUOTE_STATUSES = new Set(["converted_to_order", "customer_approved"]);
-const OPEN_INVOICE_STATUSES = new Set(["draft", "generated", "sent", "partially_paid", "overdue"]);
+const CONVERTED_QUOTE_STATUSES = new Set(["converted_to_order"]);
+const OPEN_PIPELINE_QUOTE_STATUSES = new Set(["approved_for_sending", "sent", "customer_approved"]);
+const ISSUED_INVOICE_STATUSES = new Set(["generated", "sent", "partially_paid", "paid", "overdue"]);
+const OPEN_INVOICE_STATUSES = new Set(["generated", "sent", "partially_paid", "overdue"]);
 
 export function toNumber(value: MaybeNumber) {
   const parsed = Number(value ?? 0);
@@ -217,32 +297,38 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
 
   const quoteMtd = input.quotes.filter((quote) => dateOnOrAfter(quote.quote_date ?? quote.created_at, startOfMonth));
   const quotePipelineValueMtd = quoteMtd
-    .filter((quote) => !["customer_rejected", "expired"].includes(String(quote.status ?? "")))
+    .filter((quote) => OPEN_PIPELINE_QUOTE_STATUSES.has(String(quote.status ?? "")))
     .reduce((sum, quote) => sum + toNumber(quote.grand_total), 0);
   const quoteEligibleMtd = quoteMtd.filter((quote) => !["draft", "internal_review"].includes(String(quote.status ?? "")));
   const quoteConvertedMtd = quoteEligibleMtd.filter((quote) => CONVERTED_QUOTE_STATUSES.has(String(quote.status ?? "")));
 
   const dispatchesMtd = input.dispatches.filter((dispatch) => dateOnOrAfter(dispatch.dispatch_date, startOfMonth));
-  const deliveredDispatchesMtd = dispatchesMtd.filter((dispatch) => String(dispatch.delivery_status ?? "") === "delivered");
-  const delayedDispatchesMtd = dispatchesMtd.filter((dispatch) => String(dispatch.delivery_status ?? "") === "delayed");
-  const dispatchDecisionMtd = deliveredDispatchesMtd.length + delayedDispatchesMtd.length;
+  const dispatchDecisionMtd = dispatchesMtd.filter((dispatch) => Boolean(dispatch.orders?.expected_dispatch_date));
+  const onTimeDispatchesMtd = dispatchDecisionMtd.filter((dispatch) => {
+    const actualDate = String(dispatch.dispatch_date ?? "").slice(0, 10);
+    const promisedDate = String(dispatch.orders?.expected_dispatch_date ?? "").slice(0, 10);
+    return Boolean(actualDate && promisedDate && actualDate <= promisedDate);
+  });
 
   const productionMtd = input.productionJobs.filter((job) => dateOnOrAfter(job.planned_date, startOfMonth) && String(job.status ?? "") !== "cancelled");
   const productionPlannedKgMtd = productionMtd.reduce((sum, job) => sum + toNumber(job.planned_quantity_kg), 0);
   const productionActualKgMtd = productionMtd.reduce((sum, job) => sum + toNumber(job.actual_quantity_kg), 0);
 
-  const invoiceMtd = input.invoices.filter((invoice) => dateOnOrAfter(invoice.invoice_date, startOfMonth));
+  const invoiceMtd = input.invoices.filter((invoice) => (
+    ISSUED_INVOICE_STATUSES.has(String(invoice.status ?? "")) && dateOnOrAfter(invoice.invoice_date, startOfMonth)
+  ));
   const invoicedValueMtd = invoiceMtd.reduce((sum, invoice) => sum + toNumber(invoice.grand_total), 0);
-  const collectionsMtd = input.invoices
-    .filter((invoice) => dateOnOrAfter(invoice.paid_date ?? invoice.invoice_date, startOfMonth))
-    .reduce((sum, invoice) => sum + toNumber(invoice.amount_paid), 0);
+  const collectionsMtd = input.payments
+    .filter((payment) => dateOnOrAfter(payment.payment_date, startOfMonth))
+    .reduce((sum, payment) => sum + toNumber(payment.amount), 0);
 
   const receivableOutstanding = input.invoices
-    .filter((invoice) => String(invoice.status ?? "") !== "cancelled")
+    .filter((invoice) => OPEN_INVOICE_STATUSES.has(String(invoice.status ?? "")))
     .reduce((sum, invoice) => sum + toNumber(invoice.balance_due), 0);
-  const overdueInvoiceList = input.invoices
+  const overdueInvoices = input.invoices
     .filter((invoice) => OPEN_INVOICE_STATUSES.has(String(invoice.status ?? "")) && toNumber(invoice.balance_due) > 0 && dateBefore(invoice.due_date, now))
-    .sort((a, b) => toNumber(b.balance_due) - toNumber(a.balance_due))
+    .sort((a, b) => toNumber(b.balance_due) - toNumber(a.balance_due));
+  const overdueInvoiceList = overdueInvoices
     .slice(0, 8)
     .map((invoice) => ({
       invoiceNumber: invoice.invoice_number || invoice.id.slice(0, 8),
@@ -254,15 +340,13 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
 
   const expenseMtd = input.expenses.filter((expense) => dateOnOrAfter(expense.invoice_date ?? expense.created_at, startOfMonth));
   const expenseRunRateMtd = expenseMtd.reduce((sum, expense) => sum + toNumber(expense.total_amount), 0);
-  const expensePaidMtd = expenseMtd
-    .filter((expense) => ["paid", "partially_paid"].includes(String(expense.payment_status ?? "")))
-    .reduce((sum, expense) => sum + toNumber(expense.total_amount), 0);
+  const expensePaidMtd = expenseMtd.reduce((sum, expense) => sum + toNumber(expense.amount_paid), 0);
 
   const qualityMtd = input.qualityInspections.filter((inspection) => dateOnOrAfter(inspection.inspection_date ?? inspection.created_at, startOfMonth));
   const qualityApprovedMtd = qualityMtd.filter((inspection) => String(inspection.status ?? "") === "approved");
   const qualityDecisionMtd = qualityMtd.filter((inspection) => ["approved", "rejected", "rework"].includes(String(inspection.status ?? "")));
 
-  const lowStock = input.inventoryItems
+  const atRiskInventory = input.inventoryItems
     .map((item) => {
       const currentStock = toNumber(item.current_stock);
       const reorderLevel = toNumber(item.reorder_level);
@@ -275,8 +359,9 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
         shortagePct: reorderLevel > 0 ? Math.max(0, ((reorderLevel - currentStock) / reorderLevel) * 100) : 0,
       };
     })
-    .filter((item) => item.currentStock <= item.reorderLevel)
-    .sort((a, b) => b.shortagePct - a.shortagePct)
+    .filter((item) => item.reorderLevel > 0 && item.currentStock <= item.reorderLevel)
+    .sort((a, b) => b.shortagePct - a.shortagePct);
+  const lowStock = atRiskInventory
     .slice(0, 10);
 
   const openTasks = input.tasks.filter((task) => ["open", "in_progress"].includes(String(task.status ?? "")));
@@ -311,7 +396,7 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
   const dispatchByMonth = groupByMonth(input.dispatches, (row) => row.dispatch_date, (row) => toNumber(row.total_weight_kg), axisKeys);
   const invoiceByMonth = groupByMonth(input.invoices, (row) => row.invoice_date, (row) => toNumber(row.grand_total), axisKeys);
   const expenseByMonth = groupByMonth(input.expenses, (row) => row.invoice_date ?? row.created_at, (row) => toNumber(row.total_amount), axisKeys);
-  const collectionByMonth = groupByMonth(input.invoices, (row) => row.paid_date ?? row.invoice_date, (row) => toNumber(row.amount_paid), axisKeys);
+  const collectionByMonth = groupByMonth(input.payments, (row) => row.payment_date, (row) => toNumber(row.amount), axisKeys);
 
   const trends = axis.map((point) => ({
     key: point.key,
@@ -325,8 +410,8 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
 
   const risks: string[] = [];
   if (delayedOrders.length > 0) risks.push(`${delayedOrders.length} delayed orders need dispatch recovery.`);
-  if (overdueInvoiceList.length > 0) risks.push(`${overdueInvoiceList.length} overdue invoices need receivable follow-up.`);
-  if (lowStock.length > 0) risks.push(`${lowStock.length} inventory items are at or below reorder level.`);
+  if (overdueInvoices.length > 0) risks.push(`${overdueInvoices.length} overdue invoices need receivable follow-up.`);
+  if (atRiskInventory.length > 0) risks.push(`${atRiskInventory.length} inventory items are at or below reorder level.`);
   if (urgentOpenTasks.length > 0) risks.push(`${urgentOpenTasks.length} urgent/high-priority tasks are still open.`);
   if (productionPlannedKgMtd > 0 && safePercent(productionActualKgMtd, productionPlannedKgMtd) < 85) {
     risks.push("Production attainment is below 85% of monthly plan.");
@@ -340,18 +425,18 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
       activeOrders: activeOrders.length,
       delayedOrders: delayedOrders.length,
       dispatchWeightMtd: dispatchesMtd.reduce((sum, dispatch) => sum + toNumber(dispatch.total_weight_kg), 0),
-      dispatchOnTimeRate: safePercent(deliveredDispatchesMtd.length, dispatchDecisionMtd),
+      dispatchOnTimeRate: safePercent(onTimeDispatchesMtd.length, dispatchDecisionMtd.length),
       productionPlannedKgMtd,
       productionActualKgMtd,
       productionAttainmentPctMtd: safePercent(productionActualKgMtd, productionPlannedKgMtd),
       receivableOutstanding,
-      overdueInvoices: overdueInvoiceList.length,
+      overdueInvoices: overdueInvoices.length,
       invoicedValueMtd,
       collectionsMtd,
       expenseRunRateMtd,
       expensePaidRateMtd: safePercent(expensePaidMtd, expenseRunRateMtd),
       qualityPassRateMtd: safePercent(qualityApprovedMtd.length, qualityDecisionMtd.length),
-      inventoryAtRiskCount: lowStock.length,
+      inventoryAtRiskCount: atRiskInventory.length,
       inventoryOutOfStockCount: input.inventoryItems.filter((item) => toNumber(item.current_stock) <= 0).length,
       openTasks: openTasks.length,
       urgentOpenTasks: urgentOpenTasks.length,
@@ -364,4 +449,3 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
     risks,
   };
 }
-

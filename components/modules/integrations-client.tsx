@@ -60,12 +60,16 @@ const iconByType: Record<string, typeof PlugZap> = {
   broker_transport_api: PlugZap
 };
 
+function isManualBridge(integration: Integration) {
+  return String(integration.config_json?.mode ?? integration.config_json?.bridge ?? "").toLowerCase().includes("manual");
+}
+
 export function IntegrationsClient({ integrations, syncLogs }: Props) {
   const [selectedType, setSelectedType] = useState("all");
   const filtered = useMemo(() => selectedType === "all" ? integrations : integrations.filter((item) => item.integration_type === selectedType), [integrations, selectedType]);
-  const connected = integrations.filter((item) => item.status === "connected").length;
+  const connected = integrations.filter((item) => item.status === "connected" && !isManualBridge(item)).length;
   const errors = integrations.filter((item) => item.status === "error").length;
-  const manualBridgeCount = integrations.filter((item) => String(item.config_json?.mode ?? item.config_json?.bridge ?? "").toLowerCase().includes("manual")).length;
+  const manualBridgeCount = integrations.filter(isManualBridge).length;
 
   return (
     <div className="space-y-6">
@@ -143,11 +147,12 @@ function Metric({ icon: Icon, label, value }: { icon: typeof PlugZap; label: str
 function IntegrationCard({ integration }: { integration: Integration }) {
   const Icon = iconByType[integration.integration_type] ?? PlugZap;
   const summary = String(integration.config_json?.summary ?? integration.config_json?.description ?? "No non-secret configuration summary recorded.");
+  const manualOnly = isManualBridge(integration);
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3"><div className="rounded-2xl bg-aluminium p-3"><Icon className="h-5 w-5 text-orange" /></div><div><p className="font-black text-slate-950">{integration.provider_name}</p><p className="text-sm font-medium capitalize text-slate-500">{integration.integration_type.replace(/_/g, " ")}</p></div></div>
-        <span className={`rounded-full px-2.5 py-1 text-xs font-black capitalize ${statusClass[integration.status]}`}>{integration.status.replace(/_/g, " ")}</span>
+        <span className={`rounded-full px-2.5 py-1 text-xs font-black capitalize ${manualOnly ? "bg-amber-100 text-amber-800" : statusClass[integration.status]}`}>{manualOnly ? "manual only" : integration.status.replace(/_/g, " ")}</span>
       </div>
       <p className="mt-4 text-sm font-medium leading-6 text-slate-700">{summary}</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2"><Info label="Last Sync" value={formatDate(integration.last_sync_at)} /><Info label="Secret Ref" value={integration.secret_reference || "Not required"} /></div>

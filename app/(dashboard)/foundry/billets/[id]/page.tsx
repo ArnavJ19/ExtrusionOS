@@ -10,7 +10,7 @@ export default async function FoundryBilletDetailPage(props: { params: Promise<{
   if (!can(context.role, "read", "foundry")) redirect("/dashboard");
   return (
     <div className="space-y-6">
-      <RecordDetailClient moduleKey="foundry_billets" recordId={params.id} context={context} canEdit={can(context.role, "update", "foundry")} />
+      <RecordDetailClient moduleKey="foundry_billets" recordId={params.id} context={context} canEdit={false} />
       {can(context.role, "update", "foundry") ? <BilletAllocationClient context={context} billetId={params.id} /> : null}
     </div>
   );

@@ -1,0 +1,11 @@
+{
+    "schema_version": 2,
+    "commit": "66dcdf01741cead4b8c3feb271a8d918df1f8ab3",
+    "indexed_at": "2026-07-11T17:38:10Z",
+    "project": "ExtrusionOS",
+    "nodes": 4314,
+    "edges": 11464,
+    "original_size": 7995392,
+    "compressed_size": 1931303,
+    "compression_level": 9
+}

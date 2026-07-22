@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Upload } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/browser";
-import { uploadTenantFile } from "@/lib/utils/files";
+import { removeTenantFile, uploadTenantFile } from "@/lib/utils/files";
 import { getErrorMessage } from "@/lib/utils/errors";
 import type { SessionContext } from "@/types/app";
 
@@ -36,8 +36,9 @@ export function TechnicalDocumentUpload({ context, entityType, entityId, onUploa
     if (!file) return;
     setUploading(true);
 
+    let storagePath: string | null = null;
     try {
-      const fileUrl = await uploadTenantFile("documents", context.companyId, `${entityType}/${entityId}`, file);
+      storagePath = await uploadTenantFile("documents", context.companyId, `${entityType}/${entityId}`, file);
 
       const { error } = await supabase.from("technical_documents").insert({
         company_id: context.companyId,
@@ -45,7 +46,9 @@ export function TechnicalDocumentUpload({ context, entityType, entityId, onUploa
         linked_entity_type: entityType,
         linked_entity_id: entityId,
         file_name: file.name,
-        file_url: fileUrl,
+        file_url: storagePath,
+        storage_bucket: "documents",
+        storage_path: storagePath,
         mime_type: file.type || null,
         uploaded_by: context.userId,
         approval_status: "pending",
@@ -53,7 +56,14 @@ export function TechnicalDocumentUpload({ context, entityType, entityId, onUploa
         notes: notes || null
       });
 
-      if (error) throw error;
+      if (error) {
+        try {
+          await removeTenantFile("documents", storagePath);
+        } catch (cleanupError) {
+          console.error("Could not remove orphaned technical document", cleanupError);
+        }
+        throw error;
+      }
       toast.success(`Document "${file.name}" uploaded`);
       setNotes("");
       onUploaded?.();

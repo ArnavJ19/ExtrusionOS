@@ -43,6 +43,7 @@ export const protectedPrefixes = [
   "/scan",
   "/search",
   "/settings",
+  "/shipments",
   "/systems-configurator",
   "/tasks",
   "/tenders",
@@ -91,6 +92,22 @@ const dealerAllowedPrefixes = [
   "/search",
 ];
 
+const defaultEmployeeRoles: UserRole[] = [
+  "owner",
+  "admin",
+  "sales_manager",
+  "sales",
+  "production_manager",
+  "production",
+  "factory_manager",
+  "dispatch_manager",
+  "dispatch",
+  "inventory_manager",
+  "accounts",
+  "quality",
+  "viewer",
+];
+
 function startsWithPrefix(pathname: string, prefix: string) {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
@@ -110,10 +127,12 @@ export function isProtectedPath(pathname: string) {
 }
 
 export function hasRouteAccess(pathname: string, role: UserRole) {
-  if ((role === "dealer_admin" || role === "dealer_staff") && !dealerRouteAllowed(pathname)) {
-    return false;
+  if (role === "dealer_admin" || role === "dealer_staff") {
+    if (!dealerRouteAllowed(pathname)) return false;
+    const dealerRule = matchingRule(pathname);
+    return dealerRule ? dealerRule.roles.includes(role) : true;
   }
   const rule = matchingRule(pathname);
-  if (!rule) return true;
+  if (!rule) return isProtectedPath(pathname) && defaultEmployeeRoles.includes(role);
   return rule.roles.includes(role);
 }

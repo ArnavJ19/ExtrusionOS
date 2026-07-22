@@ -261,8 +261,9 @@ export const orderSchema = z.object({
 export const dispatchSchema = z.object({
   order_id: z.string().uuid("Select an order"),
   dispatch_date: z.string().min(1),
-  number_of_bundles: z.coerce.number().int().nonnegative().max(100000, "Bundle count looks too high"),
-  total_weight_kg: z.coerce.number().nonnegative().max(10000000, "Dispatch weight looks too high"),
+  number_of_bundles: z.coerce.number().int().positive("Enter at least one physical bundle").max(100000, "Bundle count looks too high"),
+  total_weight_kg: z.coerce.number().positive("Dispatch weight must be greater than zero").max(10000000, "Dispatch weight looks too high"),
+  bundle_tare_weights_kg: z.string().trim().min(1, "Enter one measured tare weight for each bundle"),
   transporter_name: optionalText,
   vehicle_number: optionalText,
   driver_name: optionalText,
@@ -571,7 +572,7 @@ export const packagingMaterialPurchaseSchema = z.object({
 export const packagingJobSchema = z.object({
   packaging_number: optionalText,
   order_id: z.string().uuid("Select an order"),
-  production_job_id: z.string().uuid("Select production job").optional().nullable().or(z.literal("")),
+  production_job_id: z.string().uuid("Select a completed production job"),
   scheduled_date: optionalText,
   pieces: z.coerce.number().int().nonnegative("Pieces cannot be negative").default(0),
   profile_weight_kg: z.coerce.number().nonnegative("Weight cannot be negative").default(0),
@@ -587,8 +588,10 @@ export const packagingJobMaterialSchema = z.object({
 });
 
 export const qualityInspectionSchema = z.object({
-  production_job_id: z.string().uuid("Select a production job").optional().nullable(),
+  production_job_id: z.string().uuid("Select a completed production job"),
+  finishing_job_id: z.string().uuid("Select a completed finishing job").optional().nullable().or(z.literal("")),
   profile_id: z.string().uuid("Select a profile"),
+  inspection_date: z.string().min(1, "Inspection date is required"),
   batch_number: optionalText,
   quantity_checked_kg: z.coerce.number().nonnegative(),
   dimensional_variance: optionalText,

@@ -12,7 +12,6 @@ type StatusBoardProps<T> = {
   getCount?: (status: string) => number;
   renderCard: (record: T) => ReactNode;
   sortRecords?: (a: T, b: T) => number;
-  limitPerStatus?: number;
   emptyText?: string;
   getViewMoreHref?: (status: string) => string;
   isLoading?: boolean;
@@ -25,8 +24,9 @@ type StatusBoardProps<T> = {
 };
 
 const DRAG_TYPE = "application/x-status-board";
+export const STATUS_BOARD_PREVIEW_LIMIT = 5;
 
-export function StatusBoard<T>({ statuses, records, getStatus, getCount, renderCard, sortRecords, limitPerStatus = 10, emptyText = "No records in this status.", getViewMoreHref, isLoading, error, onRetry, onStatusChange, getRecordId }: StatusBoardProps<T>) {
+export function StatusBoard<T>({ statuses, records, getStatus, getCount, renderCard, sortRecords, emptyText = "No records in this status.", getViewMoreHref, isLoading, error, onRetry, onStatusChange, getRecordId }: StatusBoardProps<T>) {
   const [dragOverStatus, setDragOverStatus] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
@@ -78,7 +78,7 @@ export function StatusBoard<T>({ statuses, records, getStatus, getCount, renderC
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 items-start">
       {statuses.map((status) => {
         const matching = records.filter((record) => getStatus(record) === status);
-        const grouped = matching.sort(sortRecords).slice(0, limitPerStatus);
+        const grouped = matching.sort(sortRecords).slice(0, STATUS_BOARD_PREVIEW_LIMIT);
         const total = getCount?.(status) ?? matching.length;
         return (
           <StatusColumn
@@ -86,8 +86,8 @@ export function StatusBoard<T>({ statuses, records, getStatus, getCount, renderC
             status={status}
             count={total}
             emptyText={emptyText}
-            viewMoreHref={getViewMoreHref?.(status)}
-            defaultExpanded={total > 0}
+            viewMoreHref={total > STATUS_BOARD_PREVIEW_LIMIT ? getViewMoreHref?.(status) : undefined}
+            defaultExpanded={false}
             onDragOver={isDragEnabled ? (e) => handleDragOver(e, status) : undefined}
             onDragLeave={isDragEnabled ? handleDragLeave : undefined}
             onDrop={isDragEnabled ? (e) => handleDrop(e, status) : undefined}

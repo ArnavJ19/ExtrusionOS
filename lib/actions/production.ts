@@ -7,20 +7,46 @@ import { can } from "@/lib/auth/permissions";
 import { buildProductionJobPcdaFields, chooseProductionSourceLine } from "@/lib/pcda/production";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
-import { nextBusinessNumber } from "@/lib/utils/numbering";
 import { productionJobSchema } from "@/lib/validations/schemas";
 
 const productionStatusSchema = productionJobSchema.shape.status;
+const completeProductionJobSchema = z.object({
+  job_id: z.string().uuid("Select a production job"),
+  actual_weight_kg: z.coerce.number().positive("Actual output weight must be greater than zero"),
+  actual_pieces: z.coerce.number().int().nonnegative("Actual pieces cannot be negative"),
+  actual_meters: z.coerce.number().nonnegative("Actual metres cannot be negative").optional().nullable(),
+  scrap_weight_kg: z.coerce.number().nonnegative("Scrap weight cannot be negative").default(0),
+  remarks: z.string().trim().max(2000, "Completion remarks are too long").optional().nullable()
+});
+const scheduleSlotStatusSchema = z.enum(["draft", "scheduled", "released", "cancelled"]);
+const assignPressSchema = z.object({
+  production_job_id: z.string().uuid("Select a production job"),
+  machine_id: z.string().uuid("Select an extrusion press"),
+  planned_start_at: z.string().min(1, "Planned start is required"),
+  planned_end_at: z.string().optional().nullable(),
+  shift: z.string().trim().optional().nullable(),
+  sequence_number: z.coerce.number().int().nonnegative().default(0),
+  capacity_kg: z.coerce.number().nonnegative().optional().nullable()
+});
+const scheduleSlotSchema = assignPressSchema.extend({
+  id: z.string().uuid().optional().nullable(),
+  status: scheduleSlotStatusSchema.default("scheduled")
+});
+const billetAllocationSchema = z.object({
+  billet_id: z.string().uuid("Select a billet"),
+  order_id: z.string().uuid("Select an order")
+});
 
 type SaveProductionJobInput = z.input<typeof productionJobSchema> & {
   editing_id?: string | null;
   selected_billet_ids?: string[];
 };
-type ProductionActionResult = { success: true; jobId?: string } | { success: false; error: string };
+type ProductionActionResult = { success: true; jobId?: string; slotId?: string; requirementId?: string } | { success: false; error: string };
 
 function revalidateProductionPaths(jobId?: string) {
   revalidatePath("/production");
   revalidatePath("/production/database");
+  revalidatePath("/production/schedule");
   if (jobId) revalidatePath(`/production/${jobId}`);
 }
 
@@ -50,6 +76,59 @@ async function loadProductionSourceLine(supabase: any, companyId: string, orderI
   return chooseProductionSourceLine(quoteItems.data ?? [], profileId);
 }
 
+function isUsableDieStatus(status: unknown) {
+  return !["inactive", "dead", "blocked", "retired", "scrapped", "under_maintenance"].includes(String(status ?? ""));
+}
+
+function isAvailablePressStatus(status: unknown) {
+  return ["active", "operational", "idle"].includes(String(status ?? ""));
+}
+
+function isOpenOrderStage(stage: unknown) {
+  return !["closed", "cancelled", "dispatched", "delivered"].includes(String(stage ?? ""));
+}
+
+async function validateMachineForPlanning(supabase: any, companyId: string, machineId?: string | null) {
+  if (!machineId) return null;
+  const result = await supabase
+    .from("machines")
+    .select("id, machine_type, status, is_active, press_capacity_ton")
+    .eq("company_id", companyId)
+    .eq("id", machineId)
+    .maybeSingle();
+  if (result.error) throw result.error;
+  if (!result.data) return { error: "Selected press is not available for this company." };
+  if (result.data.machine_type !== "extrusion_press") return { error: "Selected machine is not an extrusion press." };
+  if (result.data.is_active === false || !isAvailablePressStatus(result.data.status)) return { error: "Selected extrusion press is not available for planning." };
+  return { machine: result.data };
+}
+
+async function validateSelectedBillets(supabase: any, companyId: string, orderId: string, jobId: string | null, selectedBilletIds: string[]) {
+  if (!selectedBilletIds.length) return null;
+  const billetsResult = await supabase
+    .from("foundry_billets")
+    .select("id, order_id, status, production_job_id, alloy, billet_diameter_inch, allocation_requirement_id, order_billet_requirements(order_id, alloy, billet_diameter_inch, status)")
+    .eq("company_id", companyId)
+    .in("id", selectedBilletIds);
+  if (billetsResult.error) throw billetsResult.error;
+  const billets = billetsResult.data ?? [];
+  if (billets.length !== selectedBilletIds.length) return { error: "One or more selected billets are not available for this company." };
+
+  const invalid = billets.find((billet: any) => {
+    const requirement = Array.isArray(billet.order_billet_requirements) ? billet.order_billet_requirements[0] : billet.order_billet_requirements;
+    if (billet.order_id !== orderId) return true;
+    if (!["allocated", "issued"].includes(String(billet.status))) return true;
+    if (billet.production_job_id && billet.production_job_id !== jobId) return true;
+    if (requirement?.order_id && requirement.order_id !== orderId) return true;
+    if (requirement?.status === "cancelled") return true;
+    if (requirement?.alloy && String(requirement.alloy).toLowerCase() !== String(billet.alloy ?? "").toLowerCase()) return true;
+    if (requirement?.billet_diameter_inch && Number(requirement.billet_diameter_inch) !== Number(billet.billet_diameter_inch)) return true;
+    return false;
+  });
+  if (invalid) return { error: "Selected billets must be allocated to this order, compatible with its alloy/diameter requirement, and not issued to another job." };
+  return { billets };
+}
+
 export async function saveProductionJobAction(input: SaveProductionJobInput): Promise<ProductionActionResult> {
   try {
     const context = await getSessionContext();
@@ -61,10 +140,11 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
     if (!parsed.data.die_id) return { success: false, error: "Production cannot be scheduled because no active die exists for this order/profile. Add the die in Die Master first." };
 
     const supabase = await createClient();
-    const [orderResult, profileResult, dieResult, currentJobResult] = await Promise.all([
-      supabase.from("orders").select("id").eq("company_id", context.companyId).eq("id", parsed.data.order_id).maybeSingle(),
-      supabase.from("aluminium_profiles").select("id").eq("company_id", context.companyId).eq("id", parsed.data.profile_id).maybeSingle(),
+    const [orderResult, profileResult, dieResult, machineValidation, currentJobResult] = await Promise.all([
+      supabase.from("orders").select("id, current_stage").eq("company_id", context.companyId).eq("id", parsed.data.order_id).maybeSingle(),
+      supabase.from("aluminium_profiles").select("id, is_active").eq("company_id", context.companyId).eq("id", parsed.data.profile_id).maybeSingle(),
       supabase.from("dies").select("id, profile_id, die_status").eq("company_id", context.companyId).eq("id", parsed.data.die_id).maybeSingle(),
+      validateMachineForPlanning(supabase, context.companyId, parsed.data.machine_id),
       editingId ? supabase.from("production_jobs").select("*").eq("company_id", context.companyId).eq("id", editingId).maybeSingle() : Promise.resolve({ data: null, error: null })
     ]);
     if (orderResult.error) throw orderResult.error;
@@ -72,21 +152,23 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
     if (dieResult.error) throw dieResult.error;
     if (currentJobResult.error) throw currentJobResult.error;
     if (!orderResult.data) return { success: false, error: "Selected order is not available for this company." };
+    if (!isOpenOrderStage(orderResult.data.current_stage)) return { success: false, error: "Selected order is not open for production planning." };
     if (!profileResult.data) return { success: false, error: "Selected profile is not available for this company." };
+    if (profileResult.data.is_active === false) return { success: false, error: "Selected profile is inactive and cannot be planned for production." };
     if (!dieResult.data || dieResult.data.profile_id !== parsed.data.profile_id) return { success: false, error: "Selected die does not match this profile." };
-    if (["inactive", "dead", "blocked", "retired", "scrapped"].includes(String(dieResult.data.die_status ?? ""))) return { success: false, error: `Die is ${String(dieResult.data.die_status).replace(/_/g, " ")} and cannot be used for production.` };
+    if (!isUsableDieStatus(dieResult.data.die_status)) return { success: false, error: `Die is ${String(dieResult.data.die_status).replace(/_/g, " ")} and cannot be used for production.` };
+    if (machineValidation?.error) return { success: false, error: machineValidation.error };
     if (editingId && !currentJobResult.data) return { success: false, error: "Production job not found for this company." };
 
-    const selectedBilletIds = Array.isArray(input.selected_billet_ids) ? input.selected_billet_ids.filter(Boolean) : [];
+    const selectedBilletIds = Array.isArray(input.selected_billet_ids) ? [...new Set(input.selected_billet_ids.filter(Boolean))] : [];
     if (Number(parsed.data.required_billet_count || 0) > 0 && selectedBilletIds.length === 0) {
       return { success: false, error: "Select at least one allocated billet for this production job. Partial production is allowed when billet supply is tight." };
     }
+    const billetValidation = await validateSelectedBillets(supabase, context.companyId, parsed.data.order_id, editingId, selectedBilletIds);
+    if (billetValidation?.error) return { success: false, error: billetValidation.error };
 
-    const existingNumbers = editingId ? null : await supabase.from("production_jobs").select("job_number").eq("company_id", context.companyId);
-    if (existingNumbers?.error) throw existingNumbers.error;
     const currentJob = currentJobResult.data;
-    const jobNumber = editingId ? currentJob?.job_number : (parsed.data.job_number || nextBusinessNumber("J", (existingNumbers?.data ?? []).map((row: any) => row.job_number)));
-    if (!jobNumber) return { success: false, error: "Could not identify the job number. Refresh and try again." };
+    const jobNumber = editingId ? currentJob?.job_number : (parsed.data.job_number || null);
 
     const sourceLine = await loadProductionSourceLine(supabase, context.companyId, parsed.data.order_id, parsed.data.profile_id);
     const payload = {
@@ -98,27 +180,19 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
       operator_name: parsed.data.operator_name || null,
       remarks: parsed.data.remarks || null,
       ...buildProductionJobPcdaFields(sourceLine, context.companyId),
-      company_id: context.companyId,
       job_number: jobNumber,
       created_by: currentJob?.created_by ?? context.userId
     };
 
-    const result = editingId
-      ? await supabase.from("production_jobs").update(payload).eq("id", editingId).eq("company_id", context.companyId).select("id").single()
-      : await supabase.from("production_jobs").insert(payload).select("id").single();
+    const result = await supabase.rpc("save_production_job_atomic", {
+      p_job_id: editingId,
+      p_job: payload,
+      p_billet_ids: selectedBilletIds
+    });
     if (result.error || !result.data) throw result.error ?? new Error("Could not save production job");
-
-    if (selectedBilletIds.length > 0) {
-      const billetResult = await supabase
-        .from("foundry_billets")
-        .update({ production_job_id: result.data.id, status: payload.status === "completed" ? "consumed" : "issued", order_id: payload.order_id })
-        .in("id", selectedBilletIds)
-        .eq("company_id", context.companyId);
-      if (billetResult.error) throw billetResult.error;
-    }
-
-    revalidateProductionPaths(result.data.id);
-    return { success: true, jobId: result.data.id };
+    const jobId = String(result.data);
+    revalidateProductionPaths(jobId);
+    return { success: true, jobId };
   } catch (error) {
     return { success: false, error: getErrorMessage(error, "Could not save production job") };
   }
@@ -130,7 +204,18 @@ export async function updateProductionJobStatusAction(jobId: string, status: str
     if (!can(context.role, "update", "production")) return { success: false, error: "You do not have permission to update production jobs." };
     const parsedStatus = productionStatusSchema.safeParse(status);
     if (!parsedStatus.success) return { success: false, error: "Invalid production job status." };
+    if (parsedStatus.data === "completed") return { success: false, error: "Use the actual output form to complete production." };
     const supabase = await createClient();
+    const existingJob = await supabase
+      .from("production_jobs")
+      .select("id, status, planned_quantity_kg, actual_quantity_kg, machine_id, die_id, order_id")
+      .eq("id", jobId)
+      .eq("company_id", context.companyId)
+      .maybeSingle();
+    if (existingJob.error) throw existingJob.error;
+    if (!existingJob.data) return { success: false, error: "Production job not found for this company." };
+    if (parsedStatus.data === "ready" && !existingJob.data.machine_id) return { success: false, error: "Assign an available extrusion press before marking this job ready." };
+
     const result = await supabase
       .from("production_jobs")
       .update({ status: parsedStatus.data })
@@ -144,5 +229,184 @@ export async function updateProductionJobStatusAction(jobId: string, status: str
     return { success: true, jobId };
   } catch (error) {
     return { success: false, error: getErrorMessage(error, "Could not update production job status") };
+  }
+}
+
+export async function completeProductionJobAction(
+  input: z.input<typeof completeProductionJobSchema>
+): Promise<ProductionActionResult> {
+  try {
+    const context = await getSessionContext();
+    if (!can(context.role, "update", "production")) {
+      return { success: false, error: "You do not have permission to complete production jobs." };
+    }
+    const parsed = completeProductionJobSchema.safeParse(input);
+    if (!parsed.success) {
+      return { success: false, error: parsed.error.issues[0]?.message ?? "Please check actual production output." };
+    }
+
+    const supabase = await createClient();
+    const result = await supabase.rpc("complete_production_job_atomic", {
+      p_job_id: parsed.data.job_id,
+      p_actual_weight_kg: parsed.data.actual_weight_kg,
+      p_actual_pieces: parsed.data.actual_pieces,
+      p_actual_meters: parsed.data.actual_meters ?? null,
+      p_scrap_weight_kg: parsed.data.scrap_weight_kg,
+      p_remarks: parsed.data.remarks || null
+    });
+    if (result.error || !result.data) {
+      throw result.error ?? new Error("Could not complete production job");
+    }
+
+    revalidateProductionPaths(parsed.data.job_id);
+    revalidatePath("/production/finishing");
+    revalidatePath("/packaging");
+    revalidatePath("/quality");
+    return { success: true, jobId: parsed.data.job_id };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error, "Could not complete production job") };
+  }
+}
+
+export async function saveProductionScheduleSlotAction(input: z.input<typeof scheduleSlotSchema>): Promise<ProductionActionResult> {
+  try {
+    const context = await getSessionContext();
+    if (!can(context.role, "update", "production")) return { success: false, error: "You do not have permission to schedule production jobs." };
+    const parsed = scheduleSlotSchema.safeParse(input);
+    if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check schedule details." };
+
+    const supabase = await createClient();
+    const [jobResult, machineValidation] = await Promise.all([
+      supabase
+        .from("production_jobs")
+        .select("id, order_id, profile_id, die_id, status, planned_quantity_kg, order:orders(current_stage), die:dies(profile_id, die_status)")
+        .eq("company_id", context.companyId)
+        .eq("id", parsed.data.production_job_id)
+        .maybeSingle(),
+      validateMachineForPlanning(supabase, context.companyId, parsed.data.machine_id)
+    ]);
+    if (jobResult.error) throw jobResult.error;
+    if (!jobResult.data) return { success: false, error: "Production job not found for this company." };
+    if (machineValidation?.error) return { success: false, error: machineValidation.error };
+    const order = Array.isArray(jobResult.data.order) ? jobResult.data.order[0] : jobResult.data.order;
+    const die = Array.isArray(jobResult.data.die) ? jobResult.data.die[0] : jobResult.data.die;
+    if (!isOpenOrderStage(order?.current_stage)) return { success: false, error: "This order is not open for press scheduling." };
+    if (!die || die.profile_id !== jobResult.data.profile_id || !isUsableDieStatus(die.die_status)) return { success: false, error: "This job does not have a usable die for press scheduling." };
+    if (parsed.data.planned_end_at && new Date(parsed.data.planned_end_at).getTime() <= new Date(parsed.data.planned_start_at).getTime()) {
+      return { success: false, error: "Planned end must be after planned start." };
+    }
+
+    const payload = {
+      company_id: context.companyId,
+      production_job_id: parsed.data.production_job_id,
+      machine_id: parsed.data.machine_id,
+      planned_start_at: parsed.data.planned_start_at,
+      planned_end_at: parsed.data.planned_end_at || null,
+      shift: parsed.data.shift || null,
+      sequence_number: parsed.data.sequence_number,
+      capacity_kg: parsed.data.capacity_kg ?? jobResult.data.planned_quantity_kg ?? null,
+      status: parsed.data.status,
+      locked_by: parsed.data.status === "released" ? context.userId : null,
+      locked_at: parsed.data.status === "released" ? new Date().toISOString() : null,
+      created_by: context.userId
+    };
+
+    const result = parsed.data.id
+      ? await supabase.from("production_plan_slots").update(payload).eq("id", parsed.data.id).eq("company_id", context.companyId).select("id").single()
+      : await supabase.from("production_plan_slots").insert(payload).select("id").single();
+    if (result.error || !result.data) throw result.error ?? new Error("Could not save schedule slot");
+
+    const plannedDate = parsed.data.planned_start_at.slice(0, 10);
+    const jobUpdate = await supabase
+      .from("production_jobs")
+      .update({ machine_id: parsed.data.machine_id, planned_date: plannedDate, shift: parsed.data.shift || null, status: parsed.data.status === "released" ? "ready" : "planned" })
+      .eq("id", parsed.data.production_job_id)
+      .eq("company_id", context.companyId);
+    if (jobUpdate.error) throw jobUpdate.error;
+
+    revalidateProductionPaths(parsed.data.production_job_id);
+    return { success: true, jobId: parsed.data.production_job_id, slotId: result.data.id };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error, "Could not save production schedule") };
+  }
+}
+
+export async function assignProductionJobToPressAction(input: z.input<typeof assignPressSchema>): Promise<ProductionActionResult> {
+  return saveProductionScheduleSlotAction({ ...input, status: "scheduled" });
+}
+
+export async function releaseProductionJobToPressAction(productionJobId: string): Promise<ProductionActionResult> {
+  try {
+    const context = await getSessionContext();
+    if (!can(context.role, "update", "production")) return { success: false, error: "You do not have permission to release production jobs." };
+    const parsedId = z.string().uuid().safeParse(productionJobId);
+    if (!parsedId.success) return { success: false, error: "Invalid production job." };
+    const supabase = await createClient();
+    const slotResult = await supabase
+      .from("production_plan_slots")
+      .select("id, machine_id, planned_start_at")
+      .eq("company_id", context.companyId)
+      .eq("production_job_id", parsedId.data)
+      .neq("status", "cancelled")
+      .order("planned_start_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (slotResult.error) throw slotResult.error;
+    if (!slotResult.data) return { success: false, error: "Schedule this job on an extrusion press before release." };
+
+    const updateSlot = await supabase
+      .from("production_plan_slots")
+      .update({ status: "released", locked_by: context.userId, locked_at: new Date().toISOString() })
+      .eq("id", slotResult.data.id)
+      .eq("company_id", context.companyId);
+    if (updateSlot.error) throw updateSlot.error;
+
+    const updateJob = await supabase
+      .from("production_jobs")
+      .update({ status: "ready", machine_id: slotResult.data.machine_id, planned_date: String(slotResult.data.planned_start_at).slice(0, 10) })
+      .eq("id", parsedId.data)
+      .eq("company_id", context.companyId);
+    if (updateJob.error) throw updateJob.error;
+
+    revalidateProductionPaths(parsedId.data);
+    return { success: true, jobId: parsedId.data, slotId: slotResult.data.id };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error, "Could not release production job to press") };
+  }
+}
+
+export async function allocateBilletToOrderAction(input: z.input<typeof billetAllocationSchema>): Promise<ProductionActionResult> {
+  try {
+    const context = await getSessionContext();
+    if (!can(context.role, "update", "foundry")) return { success: false, error: "You do not have permission to allocate billets." };
+    const parsed = billetAllocationSchema.safeParse(input);
+    if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check billet allocation details." };
+    const supabase = await createClient();
+    const result = await supabase.rpc("allocate_billet_to_order", { p_billet_id: parsed.data.billet_id, p_order_id: parsed.data.order_id });
+    if (result.error) throw result.error;
+    revalidatePath("/foundry");
+    revalidatePath("/foundry/billets");
+    revalidatePath(`/orders/${parsed.data.order_id}`);
+    return { success: true, requirementId: result.data as string };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error, "Could not allocate billet") };
+  }
+}
+
+export async function reallocateBilletToOrderAction(input: z.input<typeof billetAllocationSchema>): Promise<ProductionActionResult> {
+  try {
+    const context = await getSessionContext();
+    if (!can(context.role, "update", "foundry")) return { success: false, error: "You do not have permission to reallocate billets." };
+    const parsed = billetAllocationSchema.safeParse(input);
+    if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check billet allocation details." };
+    const supabase = await createClient();
+    const result = await supabase.rpc("reallocate_billet_to_order", { p_billet_id: parsed.data.billet_id, p_order_id: parsed.data.order_id });
+    if (result.error) throw result.error;
+    revalidatePath("/foundry");
+    revalidatePath("/foundry/billets");
+    revalidatePath(`/orders/${parsed.data.order_id}`);
+    return { success: true, requirementId: result.data as string };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error, "Could not reallocate billet") };
   }
 }

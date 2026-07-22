@@ -724,6 +724,9 @@ async function buildQualityInspectionReportModel(
     approvalStatus: d(inspection?.status),
   };
 
+  const checkedWeightKg = inspection?.quantity_checked_kg;
+  const dispositionStatus = String(inspection?.status ?? "");
+
   const sections: ReportSection[] = [
     {
       title: "Inspection Identity",
@@ -756,10 +759,9 @@ async function buildQualityInspectionReportModel(
       title: "Disposition",
       fields: [
         { label: "Status", value: d(inspection?.status) },
-        { label: "Accepted kg", value: mapNullableToDisplay(inspection?.accepted_kg) },
-        { label: "Rejected kg", value: mapNullableToDisplay(inspection?.rejected_kg) },
-        { label: "Rework kg", value: mapNullableToDisplay(inspection?.rework_kg) },
-        { label: "Scrap kg", value: mapNullableToDisplay(inspection?.scrap_kg) },
+        { label: "Accepted kg", value: mapNullableToDisplay(inspection?.accepted_kg ?? (dispositionStatus === "approved" ? checkedWeightKg : null)) },
+        { label: "Rejected kg", value: mapNullableToDisplay(inspection?.rejected_kg ?? (dispositionStatus === "rejected" ? checkedWeightKg : null)) },
+        { label: "Rework kg", value: mapNullableToDisplay(inspection?.rework_kg ?? (dispositionStatus === "rework" ? checkedWeightKg : null)) },
       ],
     },
     {

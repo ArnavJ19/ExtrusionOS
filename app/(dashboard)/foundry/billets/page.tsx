@@ -6,5 +6,5 @@ import { redirect } from "next/navigation";
 export default async function FoundryBilletsPage() {
   const context = await getSessionContext();
   if (!can(context.role, "read", "foundry")) redirect("/dashboard");
-  return <ModuleOverviewClient moduleKey="foundry_billets" context={context} canCreate={false} canUpdate={can(context.role, "update", "foundry")} />;
+  return <ModuleOverviewClient moduleKey="foundry_billets" context={context} canCreate={false} canUpdate={false} />;
 }

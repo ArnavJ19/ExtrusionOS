@@ -1,0 +1,377 @@
+-- Replace same-company FOR ALL policies on sensitive records with role-aware,
+-- operation-specific policies. Service-role processes continue to bypass RLS.
+
+-- Security events are append-only. Authenticated users may record only their
+-- own events; only company administrators may review them.
+drop policy if exists "login_events_tenant_isolation" on public.login_events;
+drop policy if exists "login_events_admin_read" on public.login_events;
+drop policy if exists "login_events_self_insert" on public.login_events;
+
+create policy "login_events_admin_read" on public.login_events
+  for select using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+create policy "login_events_self_insert" on public.login_events
+  for insert with check (
+    company_id = public.get_current_user_company_id()
+    and user_id = auth.uid()
+    and public.get_current_user_role() is not null
+  );
+
+drop policy if exists "sensitive_action_logs_tenant_isolation" on public.sensitive_action_logs;
+drop policy if exists "sensitive_action_logs_admin_read" on public.sensitive_action_logs;
+drop policy if exists "sensitive_action_logs_self_insert" on public.sensitive_action_logs;
+
+create policy "sensitive_action_logs_admin_read" on public.sensitive_action_logs
+  for select using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+create policy "sensitive_action_logs_self_insert" on public.sensitive_action_logs
+  for insert with check (
+    company_id = public.get_current_user_company_id()
+    and user_id = auth.uid()
+    and public.get_current_user_role() is not null
+  );
+
+-- Entity revisions are also append-only. The roles below are the internal
+-- roles that can update the versioned sales, production, and technical data.
+drop policy if exists "entity_revisions_tenant" on public.entity_revisions;
+drop policy if exists "entity_revisions_internal_read" on public.entity_revisions;
+drop policy if exists "entity_revisions_actor_insert" on public.entity_revisions;
+
+create policy "entity_revisions_internal_read" on public.entity_revisions
+  for select using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in (
+      'owner', 'admin', 'sales_manager', 'sales', 'factory_manager',
+      'production_manager', 'production', 'inventory_manager',
+      'dispatch_manager', 'dispatch', 'accounts', 'quality', 'viewer'
+    )
+  );
+
+create policy "entity_revisions_actor_insert" on public.entity_revisions
+  for insert with check (
+    company_id = public.get_current_user_company_id()
+    and actor_id = auth.uid()
+    and public.get_current_user_role() in (
+      'owner', 'admin', 'sales_manager', 'sales', 'factory_manager',
+      'production_manager', 'production', 'inventory_manager',
+      'dispatch_manager', 'dispatch', 'accounts', 'quality'
+    )
+  );
+
+-- Technical documents are readable by internal users who work with profiles,
+-- dies, quality, or costing. Only technical owners may create or change them.
+drop policy if exists "technical_documents_tenant" on public.technical_documents;
+drop policy if exists "technical_documents_internal_read" on public.technical_documents;
+drop policy if exists "technical_documents_technical_insert" on public.technical_documents;
+drop policy if exists "technical_documents_technical_update" on public.technical_documents;
+drop policy if exists "technical_documents_admin_delete" on public.technical_documents;
+
+create policy "technical_documents_internal_read" on public.technical_documents
+  for select using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in (
+      'owner', 'admin', 'sales_manager', 'sales', 'production_manager',
+      'production', 'accounts', 'quality', 'viewer'
+    )
+  );
+
+create policy "technical_documents_technical_insert" on public.technical_documents
+  for insert with check (
+    company_id = public.get_current_user_company_id()
+    and uploaded_by = auth.uid()
+    and public.get_current_user_role() in (
+      'owner', 'admin', 'sales_manager', 'production_manager', 'quality'
+    )
+  );
+
+create policy "technical_documents_technical_update" on public.technical_documents
+  for update using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in (
+      'owner', 'admin', 'sales_manager', 'production_manager', 'quality'
+    )
+  ) with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in (
+      'owner', 'admin', 'sales_manager', 'production_manager', 'quality'
+    )
+  );
+
+create policy "technical_documents_admin_delete" on public.technical_documents
+  for delete using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+-- Reports can be generated by the operational roles used by the PCDA report
+-- templates, while deletion remains an administrative action.
+drop policy if exists "technical_reports_tenant" on public.technical_reports;
+drop policy if exists "technical_reports_internal_read" on public.technical_reports;
+drop policy if exists "technical_reports_authorized_insert" on public.technical_reports;
+drop policy if exists "technical_reports_admin_delete" on public.technical_reports;
+
+create policy "technical_reports_internal_read" on public.technical_reports
+  for select using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in (
+      'owner', 'admin', 'sales_manager', 'sales', 'factory_manager',
+      'production_manager', 'production', 'inventory_manager',
+      'dispatch_manager', 'dispatch', 'accounts', 'quality', 'viewer'
+    )
+  );
+
+create policy "technical_reports_authorized_insert" on public.technical_reports
+  for insert with check (
+    company_id = public.get_current_user_company_id()
+    and generated_by = auth.uid()
+    and public.get_current_user_role() in (
+      'owner', 'admin', 'sales_manager', 'sales', 'factory_manager',
+      'production_manager', 'production', 'inventory_manager',
+      'dispatch_manager', 'dispatch', 'accounts', 'quality'
+    )
+  );
+
+create policy "technical_reports_admin_delete" on public.technical_reports
+  for delete using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+-- Integration records can contain provider configuration and secret references.
+drop policy if exists "integrations_tenant_isolation" on public.integrations;
+drop policy if exists "integrations_admin_read" on public.integrations;
+drop policy if exists "integrations_admin_insert" on public.integrations;
+drop policy if exists "integrations_admin_update" on public.integrations;
+drop policy if exists "integrations_owner_delete" on public.integrations;
+
+create policy "integrations_admin_read" on public.integrations
+  for select using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+create policy "integrations_admin_insert" on public.integrations
+  for insert with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+create policy "integrations_admin_update" on public.integrations
+  for update using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  ) with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+create policy "integrations_owner_delete" on public.integrations
+  for delete using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() = 'owner'
+  );
+
+drop policy if exists "sync_logs_tenant_isolation" on public.sync_logs;
+drop policy if exists "sync_logs_admin_read" on public.sync_logs;
+drop policy if exists "sync_logs_admin_insert" on public.sync_logs;
+drop policy if exists "sync_logs_admin_update" on public.sync_logs;
+
+create policy "sync_logs_admin_read" on public.sync_logs
+  for select using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+create policy "sync_logs_admin_insert" on public.sync_logs
+  for insert with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+create policy "sync_logs_admin_update" on public.sync_logs
+  for update using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  ) with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+-- Maintenance and energy pages are restricted to these roles at the route
+-- layer; enforce the same boundary in PostgreSQL for every direct API write.
+drop policy if exists "energy_readings_tenant_isolation" on public.energy_readings;
+drop policy if exists "energy_readings_operations_read" on public.energy_readings;
+drop policy if exists "energy_readings_operations_insert" on public.energy_readings;
+drop policy if exists "energy_readings_operations_update" on public.energy_readings;
+drop policy if exists "energy_readings_admin_delete" on public.energy_readings;
+
+create policy "energy_readings_operations_read" on public.energy_readings
+  for select using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "energy_readings_operations_insert" on public.energy_readings
+  for insert with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "energy_readings_operations_update" on public.energy_readings
+  for update using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  ) with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "energy_readings_admin_delete" on public.energy_readings
+  for delete using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+drop policy if exists "energy_sources_tenant_isolation" on public.energy_sources;
+drop policy if exists "energy_sources_operations_read" on public.energy_sources;
+drop policy if exists "energy_sources_operations_insert" on public.energy_sources;
+drop policy if exists "energy_sources_operations_update" on public.energy_sources;
+drop policy if exists "energy_sources_admin_delete" on public.energy_sources;
+
+create policy "energy_sources_operations_read" on public.energy_sources
+  for select using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "energy_sources_operations_insert" on public.energy_sources
+  for insert with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "energy_sources_operations_update" on public.energy_sources
+  for update using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  ) with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "energy_sources_admin_delete" on public.energy_sources
+  for delete using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+drop policy if exists "maintenance_schedules_tenant_isolation" on public.maintenance_schedules;
+drop policy if exists "maintenance_schedules_operations_read" on public.maintenance_schedules;
+drop policy if exists "maintenance_schedules_operations_insert" on public.maintenance_schedules;
+drop policy if exists "maintenance_schedules_operations_update" on public.maintenance_schedules;
+drop policy if exists "maintenance_schedules_admin_delete" on public.maintenance_schedules;
+
+create policy "maintenance_schedules_operations_read" on public.maintenance_schedules
+  for select using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "maintenance_schedules_operations_insert" on public.maintenance_schedules
+  for insert with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "maintenance_schedules_operations_update" on public.maintenance_schedules
+  for update using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  ) with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "maintenance_schedules_admin_delete" on public.maintenance_schedules
+  for delete using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+drop policy if exists "breakdown_logs_tenant_isolation" on public.breakdown_logs;
+drop policy if exists "breakdown_logs_operations_read" on public.breakdown_logs;
+drop policy if exists "breakdown_logs_operations_insert" on public.breakdown_logs;
+drop policy if exists "breakdown_logs_operations_update" on public.breakdown_logs;
+drop policy if exists "breakdown_logs_admin_delete" on public.breakdown_logs;
+
+create policy "breakdown_logs_operations_read" on public.breakdown_logs
+  for select using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "breakdown_logs_operations_insert" on public.breakdown_logs
+  for insert with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "breakdown_logs_operations_update" on public.breakdown_logs
+  for update using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  ) with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "breakdown_logs_admin_delete" on public.breakdown_logs
+  for delete using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+drop policy if exists "maintenance_spare_parts_tenant_isolation" on public.maintenance_spare_parts;
+drop policy if exists "maintenance_spare_parts_operations_read" on public.maintenance_spare_parts;
+drop policy if exists "maintenance_spare_parts_operations_insert" on public.maintenance_spare_parts;
+drop policy if exists "maintenance_spare_parts_operations_update" on public.maintenance_spare_parts;
+drop policy if exists "maintenance_spare_parts_admin_delete" on public.maintenance_spare_parts;
+
+create policy "maintenance_spare_parts_operations_read" on public.maintenance_spare_parts
+  for select using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "maintenance_spare_parts_operations_insert" on public.maintenance_spare_parts
+  for insert with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "maintenance_spare_parts_operations_update" on public.maintenance_spare_parts
+  for update using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  ) with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "maintenance_spare_parts_admin_delete" on public.maintenance_spare_parts
+  for delete using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );
+
+drop policy if exists "breakdown_spare_part_usage_tenant_isolation" on public.breakdown_spare_part_usage;
+drop policy if exists "breakdown_spare_part_usage_operations_read" on public.breakdown_spare_part_usage;
+drop policy if exists "breakdown_spare_part_usage_operations_insert" on public.breakdown_spare_part_usage;
+drop policy if exists "breakdown_spare_part_usage_admin_delete" on public.breakdown_spare_part_usage;
+
+create policy "breakdown_spare_part_usage_operations_read" on public.breakdown_spare_part_usage
+  for select using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "breakdown_spare_part_usage_operations_insert" on public.breakdown_spare_part_usage
+  for insert with check (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin', 'production_manager')
+  );
+create policy "breakdown_spare_part_usage_admin_delete" on public.breakdown_spare_part_usage
+  for delete using (
+    company_id = public.get_current_user_company_id()
+    and public.get_current_user_role() in ('owner', 'admin')
+  );

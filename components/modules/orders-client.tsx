@@ -13,8 +13,8 @@ import { createClient } from "@/lib/supabase/browser";
 import { formatCurrency, formatDate, todayIso } from "@/lib/utils/format";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { rowMatchesSearch } from "@/lib/utils/search";
-import { saveOrderAction, updateOrderStageAction } from "@/lib/actions/quotes-orders";
-import { labelize, orderPriorities, orderStages, type OrderStage, type SessionContext } from "@/types/app";
+import { saveOrderAction } from "@/lib/actions/quotes-orders";
+import { labelize, orderPriorities, orderStages, type SessionContext } from "@/types/app";
 
 export function OrdersClient({ context }: { context: SessionContext }) {
   const supabase = useMemo(() => createClient(), []);
@@ -31,7 +31,7 @@ export function OrdersClient({ context }: { context: SessionContext }) {
     setLoading(true);
     const [customerResult, quoteResult, orderResult] = await Promise.all([
       supabase.from("customers").select("id, customer_name, company_name").eq("company_id", context.companyId).order("customer_name"),
-      supabase.from("quotes").select("id, quote_number, customer_id, grand_total, status").eq("company_id", context.companyId).in("status", ["approved_for_sending", "customer_approved", "converted_to_order"]).order("quote_date", { ascending: false }),
+      supabase.from("quotes").select("id, quote_number, customer_id, grand_total, status").eq("company_id", context.companyId).eq("status", "customer_approved").order("quote_date", { ascending: false }),
       supabase.from("orders").select("*, customers(customer_name, company_name), quotes(quote_number)").eq("company_id", context.companyId).order("created_at", { ascending: false })
     ]);
     setLoading(false);
@@ -65,12 +65,6 @@ export function OrdersClient({ context }: { context: SessionContext }) {
     await loadAll();
   }
 
-  async function updateStage(order: Record<string, any>, stage: OrderStage) {
-    const result = await updateOrderStageAction(order.id, stage);
-    if (!result.success) return toast.error(result.error);
-    toast.success("Stage updated");
-    await loadAll();
-  }
 
   const filtered = orders.filter((order) => rowMatchesSearch(order, search));
   const today = todayIso();
@@ -85,7 +79,7 @@ export function OrdersClient({ context }: { context: SessionContext }) {
           <label className="block space-y-1.5"><span className="form-label">Order date</span><input className="form-input" type="date" value={form.order_date} onChange={(event) => setForm({ ...form, order_date: event.target.value })} /></label>
           <label className="block space-y-1.5"><span className="form-label">Expected dispatch</span><input className="form-input" type="date" value={form.expected_dispatch_date} onChange={(event) => setForm({ ...form, expected_dispatch_date: event.target.value })} /></label>
           <label className="block space-y-1.5"><span className="form-label">Priority</span><select className="form-input" value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })}>{orderPriorities.map((value) => <option key={value} value={value}>{labelize(value)}</option>)}</select></label>
-          <label className="block space-y-1.5"><span className="form-label">Stage</span><select className="form-input" value={form.current_stage} onChange={(event) => setForm({ ...form, current_stage: event.target.value })}>{orderStages.map((value) => <option key={value} value={value}>{labelize(value)}</option>)}</select></label>
+          <div className="space-y-1.5"><span className="form-label">Stage</span><div className="flex min-h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4"><Badge value={editingId ? form.current_stage : "order_confirmed"} /><span className="text-xs font-semibold text-slate-600">Production and dispatch events advance this stage.</span></div></div>
           <label className="block space-y-1.5"><span className="form-label">Order value</span><input className="form-input" type="number" inputMode="decimal" min="0" value={form.order_value} onChange={(event) => setForm({ ...form, order_value: Number(event.target.value) })} /></label>
           <label className="block space-y-1.5"><span className="form-label">Notes</span><textarea className="form-input min-h-24" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>
           <div className="flex gap-2"><Button disabled={saving || loading} onClick={saveOrder}>{saving ? "Saving..." : "Save order"}</Button>{editingId ? <Button variant="secondary" onClick={() => setEditingId(null)}>Cancel</Button> : null}</div>
@@ -110,9 +104,7 @@ export function OrdersClient({ context }: { context: SessionContext }) {
                         <Badge value={order.priority} />
                         <b className="text-sm text-slate-950">{formatCurrency(order.order_value)}</b>
                       </div>
-                      <select className="form-input mt-2" value={order.current_stage} onChange={(event) => updateStage(order, event.target.value as OrderStage)}>
-                        {orderStages.map((value) => <option key={value} value={value}>{labelize(value)}</option>)}
-                      </select>
+                      <p className="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">Stage updates when the linked factory workflow completes.</p>
                     </div>
                   ))}
                 </div>

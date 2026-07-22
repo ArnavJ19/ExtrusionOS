@@ -15,7 +15,16 @@ const rateLimitedPaths: { prefix: string; limit: number; windowSeconds: number }
 ];
 
 function getClientIp(request: NextRequest): string {
-  return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
+  return request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
+    || request.headers.get("x-real-ip")
+    || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || "unknown";
+}
+
+async function hashRateLimitIdentifier(value: string): Promise<string> {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 export async function proxy(request: NextRequest) {
@@ -25,13 +34,13 @@ export async function proxy(request: NextRequest) {
   const matchedLimit = rateLimitedPaths.find((rule) => pathname.startsWith(rule.prefix));
   if (matchedLimit) {
     const ip = getClientIp(request);
-    const identifier = `${ip}:${matchedLimit.prefix}`;
-    const result = checkRateLimit(identifier, { limit: matchedLimit.limit, windowSeconds: matchedLimit.windowSeconds });
+    const identifier = await hashRateLimitIdentifier(`${ip}:${matchedLimit.prefix}`);
+    const result = await checkRateLimit(identifier, { limit: matchedLimit.limit, windowSeconds: matchedLimit.windowSeconds });
     if (!result.allowed) {
       return NextResponse.json(
-        { error: "Too many requests. Please try again later." },
+        { error: result.available ? "Too many requests. Please try again later." : "Request protection is temporarily unavailable." },
         {
-          status: 429,
+          status: result.available ? 429 : 503,
           headers: {
             "Retry-After": String(Math.ceil((result.resetAt - Date.now()) / 1000)),
             "X-RateLimit-Limit": String(matchedLimit.limit),

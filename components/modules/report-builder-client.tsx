@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/browser";
 import { savedReportSchema } from "@/lib/validations/schemas";
 import { formatDate } from "@/lib/utils/format";
+import { recordsToCsv } from "@/lib/utils/csv";
 
 type SavedReportRow = {
   id: string;
@@ -28,15 +29,14 @@ const fieldMap: Record<string, string[]> = {
   dispatches: ["dispatch_date", "delivery_status", "vehicle_number", "total_weight_kg", "created_at"],
   invoices: ["invoice_number", "invoice_date", "status", "grand_total", "amount_paid", "created_at"],
   payments: ["payment_date", "payment_method", "amount", "invoice_id", "created_at"],
-  expenses: ["expense_number", "expense_category", "expense_subcategory", "total_amount", "amount_paid", "balance_amount", "payment_status", "approval_status", "invoice_number", "created_at"],
+  expenses: ["expense_number", "expense_category", "expense_subcategory", "invoice_date", "total_amount", "amount_paid", "balance_amount", "payment_status", "approval_status", "invoice_number", "created_at"],
   expense_payments: ["payment_date", "amount_paid", "payment_method", "reference_number", "expense_ledger_id", "created_at"],
   inventory: ["item_code", "item_name", "item_category", "current_stock", "reorder_level", "created_at"],
-  production_jobs: ["job_number", "planned_quantity_kg", "produced_quantity_kg", "status", "planned_date", "created_at"],
-  scrap_records: ["scrap_type", "quantity_kg", "scrap_value", "recorded_at", "production_job_id"],
+  production_jobs: ["job_number", "planned_quantity_kg", "actual_quantity_kg", "status", "planned_date", "created_at"],
+  scrap_records: ["scrap_type", "weight_kg", "reason", "recorded_date", "production_job_id", "created_at"],
   dies: ["die_number", "die_status", "total_production_kg", "total_runs", "last_used_date", "created_at"],
   quality_tests: ["inspection_date", "status", "batch_number", "quantity_checked_kg", "inspector_name", "created_at"],
   vendors: ["vendor_name", "vendor_type", "city", "state", "is_active", "created_at"],
-  purchases: ["purchase_number", "purchase_date", "vendor_id", "total_amount", "status", "created_at"],
   packaging_material_purchases: ["purchase_number", "received_date", "material_id", "vendor_id", "quantity", "rate", "total_amount", "payment_status", "invoice_number", "created_at"]
 };
 
@@ -57,9 +57,41 @@ const sourceTableMap: Record<string, string> = {
   dies: "dies",
   quality_tests: "quality_inspections",
   vendors: "vendors",
-  purchases: "purchase_orders",
   packaging_material_purchases: "packaging_material_purchases"
 };
+const sourceDateFieldMap: Record<string, string> = {
+  customers: "created_at",
+  quotes: "quote_date",
+  orders: "order_date",
+  dispatches: "dispatch_date",
+  invoices: "invoice_date",
+  payments: "payment_date",
+  expenses: "invoice_date",
+  expense_payments: "payment_date",
+  inventory: "created_at",
+  production_jobs: "planned_date",
+  scrap_records: "recorded_date",
+  dies: "last_used_date",
+  quality_tests: "inspection_date",
+  vendors: "created_at",
+  packaging_material_purchases: "received_date"
+};
+
+function filterOperatorsFor(field: string) {
+  const numeric = /(amount|weight|quantity|stock|level|rate|count|percent|pieces|total)/.test(field);
+  const dated = field.endsWith("_date") || field.endsWith("_at");
+  return numeric || dated ? ["equals", "gt", "lt", "between"] : ["equals", "contains"];
+}
+
+function nextIsoDate(dateValue: string) {
+  const date = new Date(`${dateValue}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return dateValue;
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().slice(0, 10);
+}
+
+
+const REPORT_EXPORT_MAX_ROWS = 5000;
 
 const idDisplayFieldMap: Record<string, { table: string; select: string; build: (row: Record<string, unknown>) => string }> = {
   customer_id: {
@@ -158,10 +190,28 @@ export function ReportBuilderClient({ companyId, role, initialReports }: Props) 
     };
     const parsed = savedReportSchema.safeParse(payload);
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Invalid report configuration");
+    const allowedFields = new Set(fieldMap[parsed.data.data_source] ?? []);
+    if (parsed.data.selected_fields.some((field) => !allowedFields.has(field))) {
+      return toast.error("One or more selected fields do not belong to this data source.");
+    }
+    if (parsed.data.grouping && !allowedFields.has(parsed.data.grouping)) {
+      return toast.error("The grouping field does not belong to this data source.");
+    }
+    for (const filter of parsed.data.filters) {
+      if (!allowedFields.has(filter.field)) return toast.error("A filter field does not belong to this data source.");
+      if (!filterOperatorsFor(filter.field).includes(filter.operator)) return toast.error(`The ${filter.operator} operator is not valid for ${filter.field}.`);
+      if (filter.operator === "between" && filter.value.split("|").filter(Boolean).length !== 2) {
+        return toast.error("Between filters require two values separated by |, for example 2026-07-01|2026-07-31.");
+      }
+    }
+    if (parsed.data.visibility === "owner_only" && !["owner", "admin"].includes(role)) {
+      return toast.error("Only owners and administrators can create owner-only reports.");
+    }
 
     setSaving(true);
     const result = await supabase.from("saved_reports").insert({
       company_id: companyId,
+      created_by: (await supabase.auth.getUser()).data.user?.id,
       report_name: parsed.data.report_name,
       data_source: parsed.data.data_source,
       visibility: parsed.data.visibility,
@@ -181,23 +231,29 @@ export function ReportBuilderClient({ companyId, role, initialReports }: Props) 
 
   async function fetchReportRows(report: SavedReportRow) {
     const config = report.config_json ?? {};
-    const allowedFields = new Set(fieldMap[report.data_source] ?? []);
+    const effectiveSource = report.data_source === "purchases" ? "packaging_material_purchases" : report.data_source;
+    const allowedFields = new Set(fieldMap[effectiveSource] ?? []);
     const selected: string[] = Array.isArray(config.selected_fields) && config.selected_fields.length
       ? config.selected_fields.filter((item: unknown): item is string => typeof item === "string" && allowedFields.has(item))
-      : fieldMap[report.data_source] ?? ["created_at"];
+      : fieldMap[effectiveSource] ?? ["created_at"];
     const filters = Array.isArray(config.filters) ? config.filters : [];
+    const grouping = typeof config.grouping === "string" && allowedFields.has(config.grouping) ? config.grouping : null;
     const dateRange = (config.date_range ?? {}) as { from?: string | null; to?: string | null };
-    const tableName = sourceTableMap[report.data_source] ?? report.data_source;
+    const tableName = sourceTableMap[effectiveSource] ?? effectiveSource;
+    const dateField = sourceDateFieldMap[effectiveSource] ?? "created_at";
+    const selectedFields = grouping && !selected.includes(grouping) ? [grouping, ...selected] : selected;
+    if (!selectedFields.length) throw new Error("This saved report has no valid fields. Edit it and select at least one field.");
 
-    const selectClause = selected.join(",");
-    let query: any = supabase.from(tableName).select(selectClause).eq("company_id", companyId).limit(300);
+    const selectClause = selectedFields.join(",");
+    let query: any = supabase.from(tableName).select(selectClause, { count: "exact" }).eq("company_id", companyId).limit(REPORT_EXPORT_MAX_ROWS);
 
     for (const filter of filters) {
-      if (!filter || typeof filter !== "object") continue;
+      if (!filter || typeof filter !== "object") throw new Error("This saved report contains an invalid filter. Edit and save it again.");
       const field = typeof filter.field === "string" ? filter.field : "";
       const operator = typeof filter.operator === "string" ? filter.operator : "equals";
       const value = typeof filter.value === "string" ? filter.value : "";
-      if (!field || !value || !allowedFields.has(field)) continue;
+      if (!field || !value || !allowedFields.has(field)) throw new Error("This saved report contains a filter for an unavailable field. Edit and save it again.");
+      if (!filterOperatorsFor(field).includes(operator)) throw new Error(`The saved ${operator} filter is not valid for ${field}.`);
 
       if (operator === "equals") query = query.eq(field, value);
       else if (operator === "contains") query = query.ilike(field, `%${value}%`);
@@ -205,18 +261,24 @@ export function ReportBuilderClient({ companyId, role, initialReports }: Props) 
       else if (operator === "lt") query = query.lt(field, value);
       else if (operator === "between") {
         const [a, b] = value.split("|").map((item: string) => item.trim()).filter(Boolean);
-        if (a) query = query.gte(field, a);
-        if (b) query = query.lte(field, b);
+        if (!a || !b) throw new Error("A saved between filter is missing its start or end value.");
+        query = query.gte(field, a).lte(field, b);
       }
     }
 
-    if (dateRange.from) query = query.gte("created_at", dateRange.from);
-    if (dateRange.to) query = query.lte("created_at", `${dateRange.to}T23:59:59Z`);
+    if (dateRange.from) query = query.gte(dateField, dateRange.from);
+    if (dateRange.to) query = query.lt(dateField, nextIsoDate(dateRange.to));
+    if (grouping) query = query.order(grouping, { ascending: true, nullsFirst: false });
+    if (grouping !== dateField) query = query.order(dateField, { ascending: true, nullsFirst: false });
 
     const result = await query;
     if (result.error) throw new Error(result.error.message || "Could not fetch report rows");
     const rows = (result.data ?? []) as unknown as Record<string, unknown>[];
-    return { rows, selectedFields: selected };
+    const rowCount = typeof result.count === "number" ? result.count : rows.length;
+    if (rowCount > rows.length) {
+      throw new Error(`This report matches ${rowCount.toLocaleString("en-IN")} rows, but only ${rows.length.toLocaleString("en-IN")} can be exported safely. Add a date range or filters and try again.`);
+    }
+    return { rows, selectedFields, grouping };
   }
 
   function downloadBlob(blob: Blob, fileName: string) {
@@ -232,12 +294,6 @@ export function ReportBuilderClient({ companyId, role, initialReports }: Props) 
 
   function sanitizeFileName(name: string) {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "report";
-  }
-
-  function escapeCsv(value: unknown) {
-    const text = String(value ?? "");
-    if (text.includes(",") || text.includes('"') || text.includes("\n")) return `"${text.replace(/"/g, '""')}"`;
-    return text;
   }
 
   function prettyFieldLabel(field: string) {
@@ -305,11 +361,8 @@ export function ReportBuilderClient({ companyId, role, initialReports }: Props) 
   async function exportCsv(report: SavedReportRow) {
     try {
       const { rows, selectedFields } = await fetchReportRows(report);
-      const lines = [selectedFields.join(",")];
-      for (const row of rows) {
-        lines.push(selectedFields.map((field) => escapeCsv(row[field])).join(","));
-      }
-      const csv = lines.join("\n");
+      const displayRows = await enrichRowsForStakeholders(rows, selectedFields);
+      const csv = recordsToCsv(selectedFields, displayRows);
       downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${sanitizeFileName(report.report_name)}.csv`);
       toast.success("CSV export downloaded");
     } catch (error) {
@@ -319,7 +372,7 @@ export function ReportBuilderClient({ companyId, role, initialReports }: Props) 
 
   async function exportPdf(report: SavedReportRow) {
     try {
-      const { rows, selectedFields } = await fetchReportRows(report);
+      const { rows, selectedFields, grouping } = await fetchReportRows(report);
       const displayRows = await enrichRowsForStakeholders(rows, selectedFields);
       const config = report.config_json ?? {};
       const fieldsForPdf = selectedFields.slice(0, 6);
@@ -352,6 +405,7 @@ export function ReportBuilderClient({ companyId, role, initialReports }: Props) 
       writeLine(report.report_name, 16, true);
       writeLine(`Source: ${prettyFieldLabel(report.data_source)}`);
       writeLine(`Visibility: ${report.visibility}`);
+      if (grouping) writeLine(`Grouped by: ${prettyFieldLabel(grouping)}`);
       writeLine(`Generated: ${new Date().toLocaleString("en-IN")}`);
       const dateRange = config.date_range as { from?: string | null; to?: string | null } | undefined;
       if (dateRange?.from || dateRange?.to) writeLine(`Date range: ${dateRange?.from || "-"} to ${dateRange?.to || "-"}`);
@@ -380,7 +434,22 @@ export function ReportBuilderClient({ companyId, role, initialReports }: Props) 
       if (!displayRows.length) {
         writeLine("No rows matched this report configuration.", 10);
       } else {
+        let activeGroupValue: string | null = null;
         for (const row of displayRows) {
+          if (grouping) {
+            const groupValue = prettyValue(row[grouping]);
+            if (groupValue !== activeGroupValue) {
+              if (y < margin + 36) {
+                page = pdf.addPage([842, 595]);
+                y = height - margin;
+                drawTableHeader();
+              }
+              page.drawRectangle({ x: margin, y: y - 13, width: tableWidth, height: 17, color: rgb(0.9, 0.94, 0.98) });
+              page.drawText(`${prettyFieldLabel(grouping)}: ${short(groupValue, 70)}`, { x: margin + 4, y: y - 9, size: 9, font: bold, color: rgb(0.1, 0.24, 0.4), maxWidth: tableWidth - 8 });
+              y -= 20;
+              activeGroupValue = groupValue;
+            }
+          }
           if (y < margin + 18) {
             page = pdf.addPage([842, 595]);
             y = height - margin;
@@ -409,21 +478,7 @@ export function ReportBuilderClient({ companyId, role, initialReports }: Props) 
       downloadBlob(new Blob([pdfBuffer], { type: "application/pdf" }), `${sanitizeFileName(report.report_name)}.pdf`);
       toast.success("PDF export downloaded");
     } catch (error) {
-      const fallback = await PDFDocument.create();
-      const page = fallback.addPage([595, 842]);
-      const font = await fallback.embedFont(StandardFonts.Helvetica);
-      const bold = await fallback.embedFont(StandardFonts.HelveticaBold);
-      const message = error instanceof Error ? error.message : "Unknown export error";
-      page.drawText(report.report_name, { x: 36, y: 800, size: 16, font: bold });
-      page.drawText("Report export fallback", { x: 36, y: 776, size: 11, font: font });
-      page.drawText(`Source: ${report.data_source}`, { x: 36, y: 752, size: 10, font: font });
-      page.drawText(`Generated: ${new Date().toISOString()}`, { x: 36, y: 736, size: 10, font: font });
-      page.drawText("Data query failed, but this PDF confirms export action and report metadata.", { x: 36, y: 708, size: 10, font: font, maxWidth: 520 });
-      page.drawText(`Error: ${message}`.slice(0, 220), { x: 36, y: 684, size: 10, font: font, maxWidth: 520 });
-      const bytes = await fallback.save();
-      const pdfBuffer = Uint8Array.from(bytes).buffer;
-      downloadBlob(new Blob([pdfBuffer], { type: "application/pdf" }), `${sanitizeFileName(report.report_name)}-fallback.pdf`);
-      toast.error("Data query failed. Downloaded fallback PDF with details.");
+      toast.error(error instanceof Error ? error.message : "PDF export failed");
     }
   }
 
@@ -437,7 +492,7 @@ export function ReportBuilderClient({ companyId, role, initialReports }: Props) 
           <CardContent className="space-y-5">
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block space-y-1.5"><span className="form-label inline-flex items-center gap-2"><BarChart3 className="h-4 w-4 text-orange" /> Report name</span><input className="form-input" value={reportName} onChange={(event) => setReportName(event.target.value)} /></label>
-              <label className="block space-y-1.5"><span className="form-label inline-flex items-center gap-2"><Database className="h-4 w-4 text-orange" /> Data source</span><select className="form-input" value={source} onChange={(event) => { setSource(event.target.value); setSelectedFields([]); setGrouping(""); }}>{dataSources.map((item) => <option key={item} value={item}>{item.replace(/_/g, " ")}</option>)}</select></label>
+              <label className="block space-y-1.5"><span className="form-label inline-flex items-center gap-2"><Database className="h-4 w-4 text-orange" /> Data source</span><select className="form-input" value={source} onChange={(event) => { setSource(event.target.value); setSelectedFields([]); setFilters([]); setGrouping(""); }}>{dataSources.map((item) => <option key={item} value={item}>{item.replace(/_/g, " ")}</option>)}</select></label>
             </div>
 
             <div>
@@ -453,8 +508,8 @@ export function ReportBuilderClient({ companyId, role, initialReports }: Props) 
                 {filters.map((item, index) => (
                   <div key={`filter-${index}`} className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-[1fr_140px_1fr_auto]">
                     <select className="form-input" value={item.field} onChange={(event) => updateFilter(index, "field", event.target.value)}>{sourceFields.map((field) => <option key={field} value={field}>{field}</option>)}</select>
-                    <select className="form-input" value={item.operator} onChange={(event) => updateFilter(index, "operator", event.target.value)}>{["equals", "contains", "gt", "lt", "between"].map((operator) => <option key={operator} value={operator}>{operator}</option>)}</select>
-                    <input className="form-input" value={item.value} onChange={(event) => updateFilter(index, "value", event.target.value)} placeholder="value" />
+                    <select className="form-input" value={item.operator} onChange={(event) => updateFilter(index, "operator", event.target.value)}>{filterOperatorsFor(item.field).map((operator) => <option key={operator} value={operator}>{operator}</option>)}</select>
+                    <input className="form-input" value={item.value} onChange={(event) => updateFilter(index, "value", event.target.value)} placeholder={item.operator === "between" ? "start|end" : "value"} />
                     <Button variant="ghost" onClick={() => removeFilter(index)}>Remove</Button>
                   </div>
                 ))}
@@ -463,7 +518,7 @@ export function ReportBuilderClient({ companyId, role, initialReports }: Props) 
 
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block space-y-1.5"><span className="form-label">Grouping</span><select className="form-input" value={grouping} onChange={(event) => setGrouping(event.target.value)}><option value="">No grouping</option>{sourceFields.map((field) => <option key={field} value={field}>{field}</option>)}</select></label>
-              <label className="block space-y-1.5"><span className="form-label inline-flex items-center gap-2"><Eye className="h-4 w-4 text-orange" /> Visibility</span><select className="form-input" value={visibility} onChange={(event) => setVisibility(event.target.value as "private" | "company" | "owner_only")}><option value="private">private</option><option value="company">company</option><option value="owner_only">owner_only</option></select></label>
+              <label className="block space-y-1.5"><span className="form-label inline-flex items-center gap-2"><Eye className="h-4 w-4 text-orange" /> Visibility</span><select className="form-input" value={visibility} onChange={(event) => setVisibility(event.target.value as "private" | "company" | "owner_only")}><option value="private">private</option><option value="company">company</option>{["owner", "admin"].includes(role) ? <option value="owner_only">owner_only</option> : null}</select></label>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">

@@ -4,6 +4,7 @@ import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { dataExchangeJobSchema } from "@/lib/validations/schemas";
 import { getErrorMessage } from "@/lib/utils/errors";
+import { recordsToCsv } from "@/lib/utils/csv";
 
 type ModuleConfig = {
   table: string;
@@ -45,6 +46,11 @@ const moduleConfigs: Record<string, ModuleConfig> = {
   }
 };
 
+const EXPORT_PAGE_SIZE = 1000;
+const MAX_EXPORT_ROWS = 25_000;
+
+class ExportLimitError extends Error {}
+
 export async function POST(request: Request) {
   try {
     const context = await getSessionContext();
@@ -71,11 +77,16 @@ export async function POST(request: Request) {
     if (jobResult.error || !jobResult.data) return NextResponse.json({ error: getErrorMessage(jobResult.error, "Could not create data exchange job") }, { status: 500 });
 
     if (parsed.data.job_type === "export") {
-      const result = await supabase.from(config.table as any).select(config.columns.join(",")).eq("company_id", context.companyId).order("created_at", { ascending: false });
-      if (result.error) throw result.error;
-      const csv = toCsv(config.columns, result.data ?? []);
-      const completedJob = await completeJob(supabase, jobResult.data.id, context.companyId, { rows: result.data?.length ?? 0 });
-      return NextResponse.json({ csv, filename: `${config.label}.csv`, job: completedJob, message: `Exported ${result.data?.length ?? 0} records` });
+      try {
+        const rows = await fetchExportRows(supabase, config, context.companyId);
+        const csv = recordsToCsv(config.columns, rows);
+        const completedJob = await completeJob(supabase, jobResult.data.id, context.companyId, { rows: rows.length });
+        return NextResponse.json({ csv, filename: `${config.label}.csv`, job: completedJob, message: `Exported ${rows.length} records` });
+      } catch (error) {
+        const message = getErrorMessage(error, "Could not export records");
+        const failedJob = await failJob(supabase, jobResult.data.id, context.companyId, message);
+        return NextResponse.json({ error: message, job: failedJob }, { status: error instanceof ExportLimitError ? 413 : 500 });
+      }
     }
 
     const csvText = String(body.csv ?? "").trim();
@@ -101,6 +112,38 @@ export async function POST(request: Request) {
   }
 }
 
+async function fetchExportRows(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  config: ModuleConfig,
+  companyId: string
+): Promise<Record<string, unknown>[]> {
+  const rows: Record<string, unknown>[] = [];
+  while (rows.length < MAX_EXPORT_ROWS) {
+    const pageSize = Math.min(EXPORT_PAGE_SIZE, MAX_EXPORT_ROWS - rows.length);
+    const result = await supabase
+      .from(config.table as any)
+      .select(config.columns.join(","))
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false })
+      .range(rows.length, rows.length + pageSize - 1);
+    if (result.error) throw result.error;
+    const page = (result.data ?? []) as unknown as Record<string, unknown>[];
+    rows.push(...page);
+    if (page.length < pageSize) return rows;
+  }
+
+  const overflow = await supabase
+    .from(config.table as any)
+    .select("id")
+    .eq("company_id", companyId)
+    .range(MAX_EXPORT_ROWS, MAX_EXPORT_ROWS);
+  if (overflow.error) throw overflow.error;
+  if (overflow.data?.length) {
+    throw new ExportLimitError(`Export exceeds ${MAX_EXPORT_ROWS.toLocaleString()} rows. Narrow the module data or use a managed database export.`);
+  }
+  return rows;
+}
+
 async function completeJob(supabase: Awaited<ReturnType<typeof createClient>>, jobId: string, companyId: string, result: Record<string, unknown>) {
   const { data } = await supabase.from("data_exchange_jobs").update({
     status: "completed",
@@ -117,18 +160,6 @@ async function failJob(supabase: Awaited<ReturnType<typeof createClient>>, jobId
     completed_at: new Date().toISOString()
   }).eq("id", jobId).eq("company_id", companyId).select().single();
   return data;
-}
-
-function toCsv(columns: string[], rows: Record<string, any>[]) {
-  const header = columns.join(",");
-  const body = rows.map((row) => columns.map((column) => escapeCsv(row[column])).join(","));
-  return [header, ...body].join("\n");
-}
-
-function escapeCsv(value: unknown) {
-  if (value === null || value === undefined) return "";
-  const text = String(value);
-  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
 function parseCsv(csv: string) {
