@@ -8,6 +8,7 @@ import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { getSearchResourceKeys, type SearchResourceKey } from "@/lib/auth/role-experience";
 
 type SearchParams = Promise<{ q?: string }>;
 
@@ -40,28 +41,32 @@ async function searchCustomers(supabase: any, companyId: string, query: string, 
 
 export default async function SearchPage({ searchParams }: { searchParams: SearchParams }) {
   const context = await getSessionContext();
+  const allowedResources = getSearchResourceKeys(context.role);
   const supabase = await createClient();
   const params = await searchParams;
   const query = (params.q ?? "").trim();
   const safeQuery = cleanSearch(query);
   const like = `*${safeQuery}*`;
 
-  const results = safeQuery.length >= 2 ? await Promise.all([
-    searchCustomers(supabase, context.companyId, safeQuery, like),
-    supabase.from("aluminium_profiles").select("id, profile_code, profile_name, application_category, section_weight_kg_per_m").eq("company_id", context.companyId).or(`profile_code.ilike.${like},profile_name.ilike.${like},application_category.ilike.${like}`).limit(8),
-    supabase.from("dies").select("id, die_number, die_status, rack_location").eq("company_id", context.companyId).or(`die_number.ilike.${like},rack_location.ilike.${like},die_status.ilike.${like}`).limit(8),
-    supabase.from("quotes").select("id, quote_number, status, quote_date, grand_total, customers(customer_name, company_name)").eq("company_id", context.companyId).or(`quote_number.ilike.${like},status.ilike.${like}`).limit(8),
-    supabase.from("orders").select("id, order_number, current_stage, order_date, order_value, customers(customer_name, company_name)").eq("company_id", context.companyId).or(`order_number.ilike.${like},current_stage.ilike.${like}`).limit(8),
-    supabase.from("dispatches").select("id, dispatch_number, delivery_status, dispatch_date, vehicle_number, orders(order_number)").eq("company_id", context.companyId).or(`dispatch_number.ilike.${like},vehicle_number.ilike.${like},delivery_status.ilike.${like}`).limit(8)
-  ]) : [];
-
-  const [customers, profiles, dies, quotes, orders, dispatches] = results;
-  const errors = results.map((result) => result.error?.message ?? "").filter(Boolean);
-  const total = results.reduce((sum, result) => sum + (result.data?.length ?? 0), 0);
+  const searchers: Record<SearchResourceKey, () => PromiseLike<any>> = {
+    customers: () => searchCustomers(supabase, context.companyId, safeQuery, like),
+    profiles: () => supabase.from("aluminium_profiles").select("id, profile_code, profile_name, application_category, section_weight_kg_per_m").eq("company_id", context.companyId).or(`profile_code.ilike.${like},profile_name.ilike.${like},application_category.ilike.${like}`).limit(8),
+    dies: () => supabase.from("dies").select("id, die_number, die_status, rack_location").eq("company_id", context.companyId).or(`die_number.ilike.${like},rack_location.ilike.${like},die_status.ilike.${like}`).limit(8),
+    quotes: () => supabase.from("quotes").select("id, quote_number, status, quote_date, grand_total, customers(customer_name, company_name)").eq("company_id", context.companyId).or(`quote_number.ilike.${like},status.ilike.${like}`).limit(8),
+    orders: () => supabase.from("orders").select("id, order_number, current_stage, order_date, order_value, customers(customer_name, company_name)").eq("company_id", context.companyId).or(`order_number.ilike.${like},current_stage.ilike.${like}`).limit(8),
+    dispatches: () => supabase.from("dispatches").select("id, dispatch_number, delivery_status, dispatch_date, vehicle_number, orders(order_number)").eq("company_id", context.companyId).or(`dispatch_number.ilike.${like},vehicle_number.ilike.${like},delivery_status.ilike.${like}`).limit(8),
+  };
+  const entries = safeQuery.length >= 2
+    ? await Promise.all(allowedResources.map(async (resource) => [resource, await searchers[resource]()] as const))
+    : [];
+  const results = Object.fromEntries(entries) as Partial<Record<SearchResourceKey, { data?: any[] | null; error?: { message?: string } | null }>>;
+  const errors = entries.map(([, result]) => result.error?.message ?? "").filter(Boolean);
+  const total = entries.reduce((sum, [, result]) => sum + (result.data?.length ?? 0), 0);
+  const has = (resource: SearchResourceKey) => allowedResources.includes(resource);
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Global Search" description="Search tenant-scoped customers, profiles, dies, quotes, orders, and dispatches from one place." />
+      <PageHeader title="Global Search" description={`Search only the ${allowedResources.join(", ") || "records"} available to your role.`} />
       <QueryErrorNotice messages={errors} />
       <Card>
         <CardContent>
@@ -76,12 +81,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
       {safeQuery.length >= 2 && total === 0 ? <EmptyState title="No matching records" description="Try a customer name, company, contact person, phone, GST, email, profile code, die rack, order number, or vehicle number." /> : null}
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <SearchSection title="Customers" count={customers?.data?.length ?? 0}>{customers?.data?.map((item: any) => <ResultCard key={item.id} href={`/customers/${item.id}`} title={item.company_name || item.customer_name} eyebrow={item.contact_person || item.phone || item.email || item.whatsapp_number || item.gst_number || item.city || "Customer"} badge={item.customer_type} />)}</SearchSection>
-        <SearchSection title="Profiles" count={profiles?.data?.length ?? 0}>{profiles?.data?.map((item: any) => <ResultCard key={item.id} href="/profiles" title={`${item.profile_code} - ${item.profile_name}`} eyebrow={`${item.section_weight_kg_per_m} kg/m`} badge={item.application_category} />)}</SearchSection>
-        <SearchSection title="Dies" count={dies?.data?.length ?? 0}>{dies?.data?.map((item: any) => <ResultCard key={item.id} href="/dies" title={item.die_number} eyebrow={item.rack_location || "Die library"} badge={item.die_status} />)}</SearchSection>
-        <SearchSection title="Quotes" count={quotes?.data?.length ?? 0}>{quotes?.data?.map((item: any) => <ResultCard key={item.id} href={`/quotes/${item.id}`} title={item.quote_number} eyebrow={`${item.customers?.company_name || item.customers?.customer_name || "Customer"} · ${formatDate(item.quote_date)} · ${formatCurrency(item.grand_total)}`} badge={item.status} />)}</SearchSection>
-        <SearchSection title="Orders" count={orders?.data?.length ?? 0}>{orders?.data?.map((item: any) => <ResultCard key={item.id} href={`/orders/${item.id}`} title={item.order_number} eyebrow={`${item.customers?.company_name || item.customers?.customer_name || "Customer"} · ${formatDate(item.order_date)} · ${formatCurrency(item.order_value)}`} badge={item.current_stage} />)}</SearchSection>
-        <SearchSection title="Dispatches" count={dispatches?.data?.length ?? 0}>{dispatches?.data?.map((item: any) => <ResultCard key={item.id} href="/dispatches" title={item.dispatch_number || "Dispatch"} eyebrow={`${item.orders?.order_number || "Order"} · ${formatDate(item.dispatch_date)} · ${item.vehicle_number || "Vehicle pending"}`} badge={item.delivery_status} />)}</SearchSection>
+        {has("customers") ? <SearchSection title="Customers" count={results.customers?.data?.length ?? 0}>{results.customers?.data?.map((item: any) => <ResultCard key={item.id} href={`/customers/${item.id}`} title={item.company_name || item.customer_name} eyebrow={item.contact_person || item.phone || item.email || item.whatsapp_number || item.gst_number || item.city || "Customer"} badge={item.customer_type} />)}</SearchSection> : null}
+        {has("profiles") ? <SearchSection title="Profiles" count={results.profiles?.data?.length ?? 0}>{results.profiles?.data?.map((item: any) => <ResultCard key={item.id} href={`/profiles/${item.id}`} title={`${item.profile_code} - ${item.profile_name}`} eyebrow={`${item.section_weight_kg_per_m} kg/m`} badge={item.application_category} />)}</SearchSection> : null}
+        {has("dies") ? <SearchSection title="Dies" count={results.dies?.data?.length ?? 0}>{results.dies?.data?.map((item: any) => <ResultCard key={item.id} href={`/dies/${item.id}`} title={item.die_number} eyebrow={item.rack_location || "Die library"} badge={item.die_status} />)}</SearchSection> : null}
+        {has("quotes") ? <SearchSection title="Quotes" count={results.quotes?.data?.length ?? 0}>{results.quotes?.data?.map((item: any) => <ResultCard key={item.id} href={`/quotes/${item.id}`} title={item.quote_number} eyebrow={`${item.customers?.company_name || item.customers?.customer_name || "Customer"} · ${formatDate(item.quote_date)} · ${formatCurrency(item.grand_total)}`} badge={item.status} />)}</SearchSection> : null}
+        {has("orders") ? <SearchSection title="Orders" count={results.orders?.data?.length ?? 0}>{results.orders?.data?.map((item: any) => <ResultCard key={item.id} href={`/orders/${item.id}`} title={item.order_number} eyebrow={`${item.customers?.company_name || item.customers?.customer_name || "Customer"} · ${formatDate(item.order_date)} · ${formatCurrency(item.order_value)}`} badge={item.current_stage} />)}</SearchSection> : null}
+        {has("dispatches") ? <SearchSection title="Dispatches" count={results.dispatches?.data?.length ?? 0}>{results.dispatches?.data?.map((item: any) => <ResultCard key={item.id} href={`/dispatches/${item.id}`} title={item.dispatch_number || "Dispatch"} eyebrow={`${item.orders?.order_number || "Order"} · ${formatDate(item.dispatch_date)} · ${item.vehicle_number || "Vehicle pending"}`} badge={item.delivery_status} />)}</SearchSection> : null}
       </div>
     </div>
   );

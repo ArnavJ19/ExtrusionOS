@@ -8,10 +8,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { NumberTicker, CompactTicker } from "@/components/ui/number-ticker";
 import { formatCompactCurrency, formatCurrency, formatDate } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
-
-type DashboardView = "owner" | "sales" | "production";
+import type { DashboardView } from "@/lib/auth/role-experience";
 
 export function DashboardTabs({
+  allowedViews,
+  initialView,
+  operationalResources,
+  operationsHref,
   quoteRows,
   orderRows,
   monthlyQuoteValue,
@@ -29,15 +32,16 @@ export function DashboardTabs({
   todayJobCount = 0,
   pendingQuoteCount = 0
 }: any) {
-  const [activeTab, setActiveTab] = useState<DashboardView>("owner");
+  const [activeTab, setActiveTab] = useState<DashboardView>(initialView);
   const attentionTotal = delayedOrders.length + lowInventoryRows.length + qualityHoldCount + pendingQuoteCount + dieCorrectionCount;
   const totalStatus = Math.max(productionCount + pendingDispatchCount + dispatchCount + delayedOrders.length, 1);
 
-  const tabs: { id: DashboardView; label: string }[] = [
+  const allTabs: { id: DashboardView; label: string }[] = [
     { id: "owner", label: "Owner View" },
     { id: "sales", label: "Sales Pipeline" },
-    { id: "production", label: "Production Floor" }
+    { id: "operations", label: "Operations" }
   ];
+  const tabs = allTabs.filter((tab) => allowedViews.includes(tab.id));
 
   return (
     <div className="space-y-6">
@@ -46,7 +50,7 @@ export function DashboardTabs({
           <h2 className="text-2xl font-bold tracking-tight text-neutral-950">Good morning</h2>
           <p className="mt-1 text-sm font-medium text-neutral-500">A clean operating snapshot across quotation, production, dispatch and inventory.</p>
         </div>
-        <div className="flex rounded-2xl border border-neutral-200 bg-neutral-50 p-1">
+        {tabs.length > 1 ? <div className="flex rounded-2xl border border-neutral-200 bg-neutral-50 p-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -60,15 +64,24 @@ export function DashboardTabs({
               {tab.label}
             </button>
           ))}
-        </div>
+        </div> : null}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={CircleDollarSign} label="Booked Revenue" rawValue={monthlyOrderValue} isCurrency change={monthlyOrderCount ? `${monthlyOrderCount} orders` : "No orders"} comparison={`${activeCustomerCount} active buying customers`} tone="green" />
-        <StatCard icon={FileText} label="Pipeline Value" rawValue={monthlyQuoteValue} isCurrency change={monthlyQuoteCount ? `${monthlyQuoteCount} quotes` : "No quotes"} comparison={`${monthlyQuoteCount} quotes created`} tone="purple" />
-        <StatCard icon={Factory} label="Floor Load" rawValue={productionCount} change="Live" comparison="Jobs in production" tone="blue" />
-        <StatCard icon={Truck} label="Dispatch Ready" rawValue={pendingDispatchCount} change={dispatchCount ? `+${dispatchCount}` : "0"} comparison="Moved this month" tone="yellow" />
-      </div>
+      {activeTab === "operations" ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {operationalResources.includes("production") ? <StatCard icon={Factory} label="Floor Load" rawValue={productionCount} change="Live" comparison="Orders in active production stages" tone="blue" /> : null}
+          {operationalResources.includes("dispatches") ? <StatCard icon={Truck} label="Dispatch Queue" rawValue={pendingDispatchCount} change={dispatchCount ? `${dispatchCount} moved` : "No movement"} comparison="Orders still pending movement" tone="yellow" /> : null}
+          {operationalResources.includes("quality") ? <StatCard icon={Check} label="Quality Holds" rawValue={qualityHoldCount} change={qualityHoldCount ? "Review" : "Clear"} comparison="Rejected or rework inspections" tone="purple" /> : null}
+          {operationalResources.includes("inventory") ? <StatCard icon={Boxes} label="Low Stock" rawValue={lowInventoryRows.length} change={lowInventoryRows.length ? "Reorder" : "Healthy"} comparison="Items at or below reorder level" tone="green" /> : null}
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard icon={CircleDollarSign} label="Booked Revenue" rawValue={monthlyOrderValue} isCurrency change={monthlyOrderCount ? `${monthlyOrderCount} orders` : "No orders"} comparison={`${activeCustomerCount} active buying customers`} tone="green" />
+          <StatCard icon={FileText} label="Pipeline Value" rawValue={monthlyQuoteValue} isCurrency change={monthlyQuoteCount ? `${monthlyQuoteCount} quotes` : "No quotes"} comparison={`${monthlyQuoteCount} quotes created`} tone="purple" />
+          <StatCard icon={Factory} label={activeTab === "sales" ? "Orders Converted" : "Floor Load"} rawValue={activeTab === "sales" ? monthlyOrderCount : productionCount} change={activeTab === "sales" ? "This month" : "Live"} comparison={activeTab === "sales" ? "Confirmed customer orders" : "Jobs in production"} tone="blue" />
+          <StatCard icon={activeTab === "sales" ? FileText : Truck} label={activeTab === "sales" ? "Quotes Pending" : "Dispatch Ready"} rawValue={activeTab === "sales" ? pendingQuoteCount : pendingDispatchCount} change={activeTab === "sales" ? "Follow up" : dispatchCount ? `+${dispatchCount}` : "0"} comparison={activeTab === "sales" ? "Open commercial follow-ups" : "Moved this month"} tone="yellow" />
+        </div>
+      )}
 
       {activeTab === "owner" ? (
         <div className="animate-in fade-in space-y-6">
@@ -190,20 +203,20 @@ export function DashboardTabs({
         </div>
       ) : null}
 
-      {activeTab === "production" ? (
+      {activeTab === "operations" ? (
         <div className="animate-in fade-in grid gap-6 xl:grid-cols-[1fr_1fr]">
           <Card>
             <CardContent>
-              <SectionHeading title="Production Floor" href="/production" />
+              <SectionHeading title="Operations Snapshot" href={operationsHref} />
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <MiniMetric label="In production" value={productionCount} />
-                <MiniMetric label="Pending dispatch" value={pendingDispatchCount} />
-                <MiniMetric label="Today's jobs" value={todayJobCount} />
+                {operationalResources.includes("production") ? <MiniMetric label="In production" value={productionCount} /> : null}
+                {operationalResources.includes("dispatches") ? <MiniMetric label="Pending dispatch" value={pendingDispatchCount} /> : null}
+                {operationalResources.includes("production") ? <MiniMetric label="Today's jobs" value={todayJobCount} /> : null}
                 <MiniMetric label="Attention items" value={attentionTotal} />
               </div>
             </CardContent>
           </Card>
-          <Card>
+          {operationalResources.includes("inventory") ? <Card>
             <CardContent>
               <SectionHeading title="Low Inventory Watchlist" href="/inventory" />
               <div className="mt-5 space-y-3">
@@ -224,7 +237,7 @@ export function DashboardTabs({
                 )) : <div className="empty-mini">No low inventory items right now.</div>}
               </div>
             </CardContent>
-          </Card>
+          </Card> : null}
         </div>
       ) : null}
     </div>

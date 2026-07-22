@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Building2, ClipboardList, Database, Flag, History, ShieldCheck, UserPlus, Users } from "lucide-react";
+import { Building2, ClipboardList, Database, Flag, History, ShieldCheck, Users } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/layout/page-header";
 import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 import { createClient } from "@/lib/supabase/browser";
-import { branchSchema, dataExchangeJobSchema, featureFlagSchema, notificationSchema, taskSchema, userInvitationSchema, userManagementSchema } from "@/lib/validations/schemas";
+import { branchSchema, dataExchangeJobSchema, featureFlagSchema, notificationSchema, taskSchema, userManagementSchema } from "@/lib/validations/schemas";
 import { branchTypes, dataExchangeJobTypes, enterpriseModules, enterpriseTaskPriorities, enterpriseTaskStatuses, labelize, notificationSeverities, type SessionContext, type UserRole } from "@/types/app";
 import { formatDate } from "@/lib/utils/format";
 
@@ -28,11 +29,10 @@ type Props = {
   auditLogs: Record<string, any>[];
   exchangeJobs: Record<string, any>[];
   users: Record<string, any>[];
-  invitations: Record<string, any>[];
   queryErrors: string[];
 };
 
-export function EnterpriseFoundationClient({ context, initialFlags, initialBranches, plans, subscriptions, initialNotifications, initialTasks, auditLogs, exchangeJobs, users, invitations, queryErrors }: Props) {
+export function EnterpriseFoundationClient({ context, initialFlags, initialBranches, plans, subscriptions, initialNotifications, initialTasks, auditLogs, exchangeJobs, users, queryErrors }: Props) {
   const supabase = useMemo(() => createClient(), []);
   const [flags, setFlags] = useState(initialFlags);
   const [branches, setBranches] = useState(initialBranches);
@@ -41,14 +41,12 @@ export function EnterpriseFoundationClient({ context, initialFlags, initialBranc
   const [tasks, setTasks] = useState(initialTasks);
   const [exchangeJobRows, setExchangeJobRows] = useState(exchangeJobs);
   const [userRows, setUserRows] = useState(users);
-  const [invitationRows, setInvitationRows] = useState(invitations);
   const [saving, setSaving] = useState(false);
   const [branchForm, setBranchForm] = useState({ branch_name: "", branch_type: "factory", address: "", city: "", state: "", pincode: "", phone: "", manager_name: "", is_active: true });
   const [taskForm, setTaskForm] = useState({ task_type: "general", title: "", description: "", priority: "normal", status: "open", assigned_to: "", due_date: "", related_entity_type: "", related_entity_id: "" });
   const [notificationForm, setNotificationForm] = useState({ recipient_user_id: "", notification_type: "system", severity: "info", title: "", body: "", related_entity_type: "", related_entity_id: "", is_read: false });
   const [exchangeForm, setExchangeForm] = useState({ job_type: "export", module_name: "customers", status: "queued", file_url: "", error_message: "" });
   const [csvText, setCsvText] = useState("");
-  const [invitationForm, setInvitationForm] = useState({ email: "", full_name: "", role: "viewer", branch_id: "", expires_at: "" });
 
   const enabledModules = new Set(flags.filter((flag) => flag.is_enabled).map((flag) => flag.module_name));
   const activeSubscription = subscriptionRows[0];
@@ -136,27 +134,6 @@ export function EnterpriseFoundationClient({ context, initialFlags, initialBranc
     toast.success("User updated");
   }
 
-  async function createInvitation() {
-    const parsed = userInvitationSchema.safeParse(invitationForm);
-    if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Check invitation details");
-    const expiresAt = parsed.data.expires_at || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
-    setSaving(true);
-    const { data, error } = await supabase.from("user_invitations").insert({
-      company_id: context.companyId,
-      email: parsed.data.email ?? "",
-      full_name: parsed.data.full_name,
-      role: parsed.data.role,
-      branch_id: parsed.data.branch_id || null,
-      expires_at: expiresAt,
-      invited_by: context.userId
-    }).select().single();
-    setSaving(false);
-    if (error) return toast.error(error.message);
-    setInvitationRows((current) => [data, ...current]);
-    setInvitationForm({ email: "", full_name: "", role: "viewer", branch_id: "", expires_at: "" });
-    toast.success("Invitation recorded. Send the signup link manually until email invites are configured.");
-  }
-
   async function saveTask() {
     const parsed = taskSchema.safeParse(taskForm);
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Check task details");
@@ -225,7 +202,7 @@ export function EnterpriseFoundationClient({ context, initialFlags, initialBranc
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Card><CardHeader><h2 className="section-title flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-orange" /> Subscription assignment</h2></CardHeader><CardContent className="space-y-3"><select className={input} value={selectedPlanId} onChange={(event) => setSelectedPlanId(event.target.value)}>{plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.plan_name} - Rs. {Number(plan.monthly_price ?? 0).toLocaleString("en-IN")}/month</option>)}</select><Button disabled={saving || !selectedPlanId} onClick={saveSubscription}>Save subscription</Button><div className="grid gap-3 sm:grid-cols-2">{plans.map((plan) => <div key={plan.id} className="rounded-2xl border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><p className="font-black text-slate-950">{plan.plan_name}</p><Badge value={plan.plan_type} /></div><p className="mt-1 text-sm font-bold text-slate-600">Rs. {Number(plan.monthly_price ?? 0).toLocaleString("en-IN")}/month</p></div>)}</div></CardContent></Card>
-        <Card><CardHeader><h2 className="section-title flex items-center gap-2"><UserPlus className="h-5 w-5 text-orange" /> Invite users</h2></CardHeader><CardContent className="space-y-3"><div className="grid gap-3 sm:grid-cols-2"><input className={input} placeholder="Email" value={invitationForm.email} onChange={(event) => setInvitationForm({ ...invitationForm, email: event.target.value })} /><input className={input} placeholder="Full name" value={invitationForm.full_name} onChange={(event) => setInvitationForm({ ...invitationForm, full_name: event.target.value })} /></div><div className="grid gap-3 sm:grid-cols-2"><select className={input} value={invitationForm.role} onChange={(event) => setInvitationForm({ ...invitationForm, role: event.target.value })}>{userRoles.map((role) => <option key={role} value={role}>{labelize(role)}</option>)}</select><select className={input} value={invitationForm.branch_id} onChange={(event) => setInvitationForm({ ...invitationForm, branch_id: event.target.value })}><option value="">No branch</option>{branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.branch_name}</option>)}</select></div><input className={input} type="date" value={invitationForm.expires_at} onChange={(event) => setInvitationForm({ ...invitationForm, expires_at: event.target.value })} /><Button disabled={saving} onClick={createInvitation}>Record invitation</Button><div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm font-medium text-slate-600">Auth email sending needs a server-side invite provider. For now, this records controlled pending invites and admins can send the normal signup link manually.</div>{invitationRows.length ? invitationRows.map((invite) => <div key={invite.id} className="rounded-2xl border border-slate-200 bg-white p-3"><div className="flex items-center justify-between gap-3"><p className="font-black text-slate-950">{invite.email}</p><Badge value={invite.status} /></div><p className="mt-1 text-xs font-medium text-slate-500">{labelize(invite.role)} · expires {formatDate(invite.expires_at)}</p></div>) : <div className="empty-mini">No pending invitations.</div>}</CardContent></Card>
+        <Card><CardHeader><h2 className="section-title flex items-center gap-2"><Users className="h-5 w-5 text-orange" /> Workspace access</h2></CardHeader><CardContent className="space-y-4"><p className="text-sm font-medium leading-6 text-slate-600">User invitations, pending invite status, roles, and access controls are managed in one secure workflow.</p><Link href="/settings/access" className="inline-flex items-center justify-center rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90">Open Access Management</Link></CardContent></Card>
       </div>
 
       <Card><CardHeader><h2 className="section-title flex items-center gap-2"><Users className="h-5 w-5 text-orange" /> User management</h2></CardHeader><CardContent>{userRows.length ? <div className="overflow-x-auto"><table className="industrial-table min-w-[900px]"><thead><tr><th>User</th><th>Role</th><th>Branch</th><th>Status</th><th>Actions</th></tr></thead><tbody>{userRows.map((user) => <tr key={user.id}><td><p className="font-black text-slate-950">{user.full_name || user.email || "User"}</p><p className="text-xs font-medium text-slate-500">{user.email}</p></td><td><select className={input} value={user.role} disabled={saving || user.id === context.userId} onChange={(event) => updateUser(user, { role: event.target.value })}>{userRoles.map((role) => <option key={role} value={role}>{labelize(role)}</option>)}</select></td><td><select className={input} value={user.branch_id ?? ""} disabled={saving} onChange={(event) => updateUser(user, { branch_id: event.target.value })}><option value="">No branch</option>{branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.branch_name}</option>)}</select></td><td><Badge value={user.is_active ? "active" : "inactive"} /></td><td><Button variant="ghost" disabled={saving || user.id === context.userId} onClick={() => updateUser(user, { is_active: !user.is_active })}>{user.is_active ? "Deactivate" : "Reactivate"}</Button></td></tr>)}</tbody></table></div> : <EmptyState title="No users found" description="Users appear after they join this company workspace." />}</CardContent></Card>

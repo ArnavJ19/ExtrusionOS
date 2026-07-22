@@ -23,7 +23,8 @@ type Metrics = {
   delayedOrderCount: number; pendingDispatchCount: number;
   totalReceivableValue: number; overdueInvoiceCount: number; monthlyPaymentValue: number;
   lowStockCount: number; totalInventoryCount: number;
-  totalProduced: number; totalScrap: number; recoveryPercent: number;
+  totalProduced: number; totalScrap: number; recoveryPercent: number | null;
+  recoveryInputKg: number; recoveryOutputKg: number; recoveryCapturedJobCount: number; recoveryMissingJobCount: number;
   qualityHoldCount: number; totalInspected: number; failedInspections: number;
   dieCorrectionCount: number; dieInactiveCount: number;
   unreadAlertCount: number; openTaskCount: number; urgentTaskCount: number;
@@ -65,7 +66,18 @@ export function CommandCenterClient({ metrics, delayedOrders, overdueInvoices, l
         <HeroCard label="Booked Revenue" rawValue={m.monthlyOrderValue} sub={`${m.monthlyOrderCount} orders this month`} growth={m.revenueGrowth} dark />
         <HeroCard label="Pipeline Value" rawValue={m.monthlyQuoteValue} sub={`${m.monthlyQuoteCount} quotes generated`} />
         <HeroCard label="Receivables" rawValue={m.totalReceivableValue} sub={`${m.overdueInvoiceCount} overdue`} alert={m.overdueInvoiceCount > 0} />
-        <HeroCard label="Recovery %" rawValue={m.recoveryPercent} isPercent sub={`${formatWeight(m.totalProduced)} produced`} alert={m.recoveryPercent > 0 && m.recoveryPercent < 85} />
+        <HeroCard
+          label="Recovery %"
+          rawValue={m.recoveryPercent}
+          isPercent
+          emptyLabel="Not captured"
+          sub={m.recoveryMissingJobCount > 0
+            ? `${m.recoveryMissingJobCount} completed job(s) missing issued billet input`
+            : m.recoveryCapturedJobCount > 0
+              ? `${formatWeight(m.recoveryOutputKg)} output from ${formatWeight(m.recoveryInputKg)} issued billet`
+              : "No completed jobs this month"}
+          alert={m.recoveryPercent !== null && m.recoveryPercent < 85}
+        />
       </div>
 
       {/* Attention Banner */}
@@ -322,7 +334,7 @@ export function CommandCenterClient({ metrics, delayedOrders, overdueInvoices, l
 
 /* ─── Sub-components ─── */
 
-function HeroCard({ label, rawValue, sub, growth, dark, alert, isPercent }: { label: string; rawValue: number; sub: string; growth?: number; dark?: boolean; alert?: boolean; isPercent?: boolean }) {
+function HeroCard({ label, rawValue, sub, growth, dark, alert, isPercent, emptyLabel = "—" }: { label: string; rawValue: number | null; sub: string; growth?: number; dark?: boolean; alert?: boolean; isPercent?: boolean; emptyLabel?: string }) {
   const base = dark
     ? "bg-charcoal text-white shadow-premium"
     : alert
@@ -333,8 +345,8 @@ function HeroCard({ label, rawValue, sub, growth, dark, alert, isPercent }: { la
       <p className={`relative z-[1] text-xs font-black uppercase tracking-[0.14em] ${dark ? "text-slate-400" : "text-slate-500"}`}>{label}</p>
       <p className={`relative z-[1] mt-3 text-3xl font-black tracking-tight ${dark ? "text-white" : alert ? "text-red-700" : "text-slate-950"}`}>
         {isPercent
-          ? (rawValue > 0 ? <NumberTicker value={rawValue} decimals={1} suffix="%" duration={1000} /> : "—")
-          : <CompactTicker value={rawValue} duration={1000} />
+          ? (rawValue !== null ? <NumberTicker value={rawValue} decimals={1} suffix="%" duration={1000} /> : emptyLabel)
+          : <CompactTicker value={rawValue ?? 0} duration={1000} />
         }
       </p>
       <div className="relative z-[1] mt-2 flex items-center gap-2">

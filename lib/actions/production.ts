@@ -18,12 +18,12 @@ const completeProductionJobSchema = z.object({
   scrap_weight_kg: z.coerce.number().nonnegative("Scrap weight cannot be negative").default(0),
   remarks: z.string().trim().max(2000, "Completion remarks are too long").optional().nullable()
 });
-const scheduleSlotStatusSchema = z.enum(["draft", "scheduled", "released", "cancelled"]);
+const scheduleSlotStatusSchema = z.enum(["draft", "scheduled"]);
 const assignPressSchema = z.object({
   production_job_id: z.string().uuid("Select a production job"),
   machine_id: z.string().uuid("Select an extrusion press"),
   planned_start_at: z.string().min(1, "Planned start is required"),
-  planned_end_at: z.string().optional().nullable(),
+  planned_end_at: z.string().min(1, "Planned end is required"),
   shift: z.string().trim().optional().nullable(),
   sequence_number: z.coerce.number().int().nonnegative().default(0),
   capacity_kg: z.coerce.number().nonnegative().optional().nullable()
@@ -292,40 +292,29 @@ export async function saveProductionScheduleSlotAction(input: z.input<typeof sch
     const die = Array.isArray(jobResult.data.die) ? jobResult.data.die[0] : jobResult.data.die;
     if (!isOpenOrderStage(order?.current_stage)) return { success: false, error: "This order is not open for press scheduling." };
     if (!die || die.profile_id !== jobResult.data.profile_id || !isUsableDieStatus(die.die_status)) return { success: false, error: "This job does not have a usable die for press scheduling." };
-    if (parsed.data.planned_end_at && new Date(parsed.data.planned_end_at).getTime() <= new Date(parsed.data.planned_start_at).getTime()) {
+    if (new Date(parsed.data.planned_end_at).getTime() <= new Date(parsed.data.planned_start_at).getTime()) {
       return { success: false, error: "Planned end must be after planned start." };
     }
 
     const payload = {
-      company_id: context.companyId,
       production_job_id: parsed.data.production_job_id,
       machine_id: parsed.data.machine_id,
       planned_start_at: parsed.data.planned_start_at,
-      planned_end_at: parsed.data.planned_end_at || null,
+      planned_end_at: parsed.data.planned_end_at,
       shift: parsed.data.shift || null,
       sequence_number: parsed.data.sequence_number,
       capacity_kg: parsed.data.capacity_kg ?? jobResult.data.planned_quantity_kg ?? null,
-      status: parsed.data.status,
-      locked_by: parsed.data.status === "released" ? context.userId : null,
-      locked_at: parsed.data.status === "released" ? new Date().toISOString() : null,
-      created_by: context.userId
+      status: parsed.data.status
     };
 
-    const result = parsed.data.id
-      ? await supabase.from("production_plan_slots").update(payload).eq("id", parsed.data.id).eq("company_id", context.companyId).select("id").single()
-      : await supabase.from("production_plan_slots").insert(payload).select("id").single();
+    const result = await supabase.rpc("save_production_schedule_slot_atomic", {
+      p_slot_id: parsed.data.id || null,
+      p_slot: payload
+    });
     if (result.error || !result.data) throw result.error ?? new Error("Could not save schedule slot");
 
-    const plannedDate = parsed.data.planned_start_at.slice(0, 10);
-    const jobUpdate = await supabase
-      .from("production_jobs")
-      .update({ machine_id: parsed.data.machine_id, planned_date: plannedDate, shift: parsed.data.shift || null, status: parsed.data.status === "released" ? "ready" : "planned" })
-      .eq("id", parsed.data.production_job_id)
-      .eq("company_id", context.companyId);
-    if (jobUpdate.error) throw jobUpdate.error;
-
     revalidateProductionPaths(parsed.data.production_job_id);
-    return { success: true, jobId: parsed.data.production_job_id, slotId: result.data.id };
+    return { success: true, jobId: parsed.data.production_job_id, slotId: String(result.data) };
   } catch (error) {
     return { success: false, error: getErrorMessage(error, "Could not save production schedule") };
   }
@@ -335,41 +324,19 @@ export async function assignProductionJobToPressAction(input: z.input<typeof ass
   return saveProductionScheduleSlotAction({ ...input, status: "scheduled" });
 }
 
-export async function releaseProductionJobToPressAction(productionJobId: string): Promise<ProductionActionResult> {
+export async function releaseProductionJobToPressAction(slotId: string): Promise<ProductionActionResult> {
   try {
     const context = await getSessionContext();
     if (!can(context.role, "update", "production")) return { success: false, error: "You do not have permission to release production jobs." };
-    const parsedId = z.string().uuid().safeParse(productionJobId);
-    if (!parsedId.success) return { success: false, error: "Invalid production job." };
+    const parsedId = z.string().uuid().safeParse(slotId);
+    if (!parsedId.success) return { success: false, error: "Invalid production schedule slot." };
     const supabase = await createClient();
-    const slotResult = await supabase
-      .from("production_plan_slots")
-      .select("id, machine_id, planned_start_at")
-      .eq("company_id", context.companyId)
-      .eq("production_job_id", parsedId.data)
-      .neq("status", "cancelled")
-      .order("planned_start_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (slotResult.error) throw slotResult.error;
-    if (!slotResult.data) return { success: false, error: "Schedule this job on an extrusion press before release." };
+    const result = await supabase.rpc("release_production_schedule_slot_atomic", { p_slot_id: parsedId.data });
+    if (result.error || !result.data) throw result.error ?? new Error("Could not release production schedule slot");
+    const productionJobId = String(result.data);
 
-    const updateSlot = await supabase
-      .from("production_plan_slots")
-      .update({ status: "released", locked_by: context.userId, locked_at: new Date().toISOString() })
-      .eq("id", slotResult.data.id)
-      .eq("company_id", context.companyId);
-    if (updateSlot.error) throw updateSlot.error;
-
-    const updateJob = await supabase
-      .from("production_jobs")
-      .update({ status: "ready", machine_id: slotResult.data.machine_id, planned_date: String(slotResult.data.planned_start_at).slice(0, 10) })
-      .eq("id", parsedId.data)
-      .eq("company_id", context.companyId);
-    if (updateJob.error) throw updateJob.error;
-
-    revalidateProductionPaths(parsedId.data);
-    return { success: true, jobId: parsedId.data, slotId: slotResult.data.id };
+    revalidateProductionPaths(productionJobId);
+    return { success: true, jobId: productionJobId, slotId: parsedId.data };
   } catch (error) {
     return { success: false, error: getErrorMessage(error, "Could not release production job to press") };
   }

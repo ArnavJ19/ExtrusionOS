@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarClock, LockKeyhole, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ReadinessBadge } from "@/components/modules/production-planning/readiness-badge";
 import { assignProductionJobToPressAction, releaseProductionJobToPressAction } from "@/lib/actions/production";
-import { formatDate, formatWeight } from "@/lib/utils/format";
+import { formatWeight } from "@/lib/utils/format";
+import { formatBusinessDateTime } from "@/lib/utils/business-date";
 
 type Press = {
   id: string;
@@ -49,7 +50,8 @@ function machineName(presses: Press[], id: string | null | undefined) {
 export function PressScheduleGrid({ presses, jobs, slots, canUpdate }: { presses: Press[]; jobs: Job[]; slots: Slot[]; canUpdate: boolean }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [selectedJobId, setSelectedJobId] = useState(jobs[0]?.id ?? "");
+  const schedulableJobs = useMemo(() => jobs.filter((job) => !job.machine_id && ["planned", "ready", "on_hold"].includes(job.status)), [jobs]);
+  const [selectedJobId, setSelectedJobId] = useState(schedulableJobs[0]?.id ?? "");
   const [selectedPressId, setSelectedPressId] = useState(presses[0]?.id ?? "");
   const [plannedStart, setPlannedStart] = useState(() => new Date().toISOString().slice(0, 16));
   const [plannedEnd, setPlannedEnd] = useState("");
@@ -70,15 +72,22 @@ export function PressScheduleGrid({ presses, jobs, slots, canUpdate }: { presses
     return grouped;
   }, [slots]);
 
+  useEffect(() => {
+    if (!schedulableJobs.some((job) => job.id === selectedJobId)) {
+      setSelectedJobId(schedulableJobs[0]?.id ?? "");
+    }
+  }, [schedulableJobs, selectedJobId]);
+
   async function scheduleJob() {
     if (!canUpdate) return toast.error("You do not have permission to schedule production.");
     if (!selectedJobId || !selectedPressId) return toast.error("Select a job and extrusion press.");
+    if (!plannedStart || !plannedEnd) return toast.error("Select both a start and end time for the press slot.");
     startTransition(async () => {
       const result = await assignProductionJobToPressAction({
         production_job_id: selectedJobId,
         machine_id: selectedPressId,
         planned_start_at: new Date(plannedStart).toISOString(),
-        planned_end_at: plannedEnd ? new Date(plannedEnd).toISOString() : null,
+        planned_end_at: plannedEnd ? new Date(plannedEnd).toISOString() : "",
         shift: shift || null,
         sequence_number: Number(sequence || 0)
       });
@@ -91,10 +100,10 @@ export function PressScheduleGrid({ presses, jobs, slots, canUpdate }: { presses
     });
   }
 
-  async function releaseJob(jobId: string) {
+  async function releaseJob(slotId: string) {
     if (!canUpdate) return toast.error("You do not have permission to release production.");
     startTransition(async () => {
-      const result = await releaseProductionJobToPressAction(jobId);
+      const result = await releaseProductionJobToPressAction(slotId);
       if (!result.success) {
         toast.error(result.error);
         return;
@@ -119,7 +128,7 @@ export function PressScheduleGrid({ presses, jobs, slots, canUpdate }: { presses
           <label className="block space-y-1.5 lg:col-span-2">
             <span className="form-label">Production job</span>
             <select className="form-input" value={selectedJobId} onChange={(event) => setSelectedJobId(event.target.value)} disabled={!canUpdate || isPending}>
-              {jobs.map((job) => <option key={job.id} value={job.id}>{job.job_number} · {job.order?.order_number ?? "Order"} · {job.profile?.profile_code ?? "Profile"}</option>)}
+              {schedulableJobs.map((job) => <option key={job.id} value={job.id}>{job.job_number} · {job.order?.order_number ?? "Order"} · {job.profile?.profile_code ?? "Profile"}</option>)}
             </select>
           </label>
           <label className="block space-y-1.5 lg:col-span-2">
@@ -134,7 +143,7 @@ export function PressScheduleGrid({ presses, jobs, slots, canUpdate }: { presses
           </label>
           <label className="block space-y-1.5">
             <span className="form-label">End</span>
-            <input className="form-input" type="datetime-local" value={plannedEnd} onChange={(event) => setPlannedEnd(event.target.value)} disabled={!canUpdate || isPending} />
+            <input className="form-input" type="datetime-local" value={plannedEnd} onChange={(event) => setPlannedEnd(event.target.value)} required disabled={!canUpdate || isPending} />
           </label>
           <label className="block space-y-1.5">
             <span className="form-label">Shift</span>
@@ -145,7 +154,7 @@ export function PressScheduleGrid({ presses, jobs, slots, canUpdate }: { presses
             <input className="form-input" type="number" min="0" value={sequence} onChange={(event) => setSequence(event.target.value)} disabled={!canUpdate || isPending} />
           </label>
           <div className="flex items-end lg:col-span-2">
-            <Button type="button" onClick={scheduleJob} disabled={!canUpdate || isPending || !jobs.length || !presses.length}>
+            <Button type="button" onClick={scheduleJob} disabled={!canUpdate || isPending || !schedulableJobs.length || !presses.length}>
               {isPending ? "Saving..." : "Schedule Job"}
             </Button>
           </div>
@@ -177,7 +186,8 @@ export function PressScheduleGrid({ presses, jobs, slots, canUpdate }: { presses
                         <ReadinessBadge status={slot.status} />
                       </div>
                       <div className="mt-3 grid gap-1 text-xs font-semibold text-slate-600">
-                        <span>Start: <b className="text-slate-950">{formatDate(slot.planned_start_at)}</b></span>
+                        <span>Start: <b className="text-slate-950">{formatBusinessDateTime(slot.planned_start_at)}</b></span>
+                        <span>End: <b className="text-slate-950">{formatBusinessDateTime(slot.planned_end_at)}</b></span>
                         <span>Shift: <b className="text-slate-950">{slot.shift || job?.shift || "Not set"}</b></span>
                         <span>Capacity: <b className="text-slate-950">{formatWeight(slot.capacity_kg ?? job?.planned_quantity_kg ?? 0)}</b></span>
                       </div>
@@ -185,7 +195,7 @@ export function PressScheduleGrid({ presses, jobs, slots, canUpdate }: { presses
                         {slot.status === "released" ? (
                           <span className="inline-flex items-center gap-2 text-xs font-black text-emerald-700"><LockKeyhole className="h-3.5 w-3.5" /> Released</span>
                         ) : (
-                          <Button type="button" variant="secondary" onClick={() => releaseJob(slot.production_job_id)} disabled={!canUpdate || isPending}>
+                          <Button type="button" variant="secondary" onClick={() => releaseJob(slot.id)} disabled={!canUpdate || isPending}>
                             <Send className="h-4 w-4" /> Release
                           </Button>
                         )}

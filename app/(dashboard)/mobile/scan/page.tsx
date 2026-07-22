@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { Camera, Keyboard, QrCode, ShieldCheck } from "lucide-react";
+import { getSessionContext } from "@/lib/auth";
+import { canAccessMobileDestination } from "@/lib/auth/role-experience";
+import { redirect } from "next/navigation";
 
-export default function MobileScanPage() {
+export default async function MobileScanPage() {
+  const context = await getSessionContext();
+  if (!canAccessMobileDestination(context.role, "scan")) redirect("/dashboard?denied=1");
   return (
     <div className="mx-auto max-w-xl space-y-4">
       <div className="rounded-3xl bg-slate-950 p-6 text-white"><QrCode className="h-8 w-8 text-orange" /><h1 className="mt-3 text-2xl font-black">Scan Die or Bundle</h1><p className="mt-1 text-sm font-medium text-slate-300">Camera-first workflow with manual fallback for low-end Android phones.</p></div>

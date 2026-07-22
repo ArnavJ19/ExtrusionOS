@@ -4,9 +4,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatWeight } from "@/lib/utils/format";
+import { canAccessMobileDestination } from "@/lib/auth/role-experience";
+import { redirect } from "next/navigation";
 
 export default async function MobileDispatchPage() {
   const context = await getSessionContext();
+  if (!canAccessMobileDestination(context.role, "dispatch")) redirect("/dashboard?denied=1");
   const supabase = await createClient();
   const { data: dispatches } = await supabase
     .from("dispatches")

@@ -94,7 +94,14 @@ export async function proxy(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (!appUser?.company_id || !appUser?.is_active) {
+    if (appUser && !appUser.is_active) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/access-suspended";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+
+    if (!appUser?.company_id) {
       const url = request.nextUrl.clone();
       url.pathname = "/onboarding";
       return NextResponse.redirect(url);
