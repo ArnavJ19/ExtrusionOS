@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 export default async function PaymentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const context = await getSessionContext();
-  if (!can(context.role, "read", "financials")) redirect("/payments");
+  if (!can(context.role, "read", "payments", context.permissions)) redirect("/payments");
   const { id } = await params;
-  return <PaymentDetailClient context={context} recordId={id} canReverse={can(context.role, "update", "financials")} />;
+  return <PaymentDetailClient context={context} recordId={id} canReverse={can(context.role, "update", "payments", context.permissions)} />;
 }

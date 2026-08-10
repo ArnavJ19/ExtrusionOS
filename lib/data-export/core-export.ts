@@ -24,6 +24,28 @@ export const coreExportPlan: CoreExportPlanItem[] = [
   { table: "vendors" },
   { table: "purchase_orders", skipReason: "Purchase orders are not supported by the current data model." },
   { table: "documents" },
+  // Material flow (foundry / billets / scrap)
+  { table: "foundry_batches" },
+  { table: "foundry_billets" },
+  { table: "foundry_aluminium_scrap" },
+  { table: "foundry_external_aluminium_sources" },
+  { table: "outsourced_billets" },
+  { table: "scrap_records" },
+  // Machines & packaging
+  { table: "machines" },
+  { table: "packaging_jobs" },
+  { table: "packaging_materials" },
+  { table: "packaging_material_purchases" },
+  // Finance ledgers
+  { table: "expense_ledger" },
+  { table: "expense_payments" },
+  // Dealer network & pipeline
+  { table: "dealer_orders" },
+  { table: "tenders" },
+  // Operations & utilities
+  { table: "energy_readings" },
+  { table: "breakdown_logs" },
+  { table: "tasks" },
 ];
 
 export async function exportCoreTables(

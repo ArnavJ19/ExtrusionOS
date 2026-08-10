@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { defaultRolePermissions } from "@/lib/auth/permissions";
 import { logEnterpriseAuditEvent } from "@/lib/enterprise/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getErrorMessage } from "@/lib/utils/errors";
@@ -30,7 +31,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invite has expired." }, { status: 400 });
     }
 
-    const roleKey = invite.roles?.role_key ?? "viewer";
+    // app_users.role must be one of the supported base roles: it is enforced by a DB
+    // CHECK constraint and is the sole key the authorization layer (can()) understands.
+    // Custom role_keys minted via /api/access/roles are not yet enforced by can(), so a
+    // role_key outside the base set would (a) violate the CHECK and 500, and (b) leave the
+    // user with no effective permissions. Fall back to a safe low-privilege base role and
+    // still record the intended role_id on user_roles below for when granular RBAC lands.
+    const requestedRoleKey = invite.roles?.role_key ?? "viewer";
+    const roleKey = requestedRoleKey in defaultRolePermissions ? requestedRoleKey : "viewer";
     const userResult = await getOrCreateInvitedAuthUser(admin, invite.email, parsed.data.password, invite.full_name);
     if (userResult.error || !userResult.userId) return NextResponse.json({ error: userResult.error ?? "Could not create invited user" }, { status: userResult.status ?? 500 });
     const userId = userResult.userId;

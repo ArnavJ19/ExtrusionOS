@@ -24,12 +24,20 @@ describe("server-owned order edits", () => {
     assert.doesNotMatch(actions, /updateOrderStageAction/);
   });
 
-  it("locks commercial and production identity after order creation", () => {
-    assert.match(actions, /immutableIdentityChanged/);
-    assert.match(actions, /Customer, quote, production requirement, order date, and value are fixed after order creation/);
+  it("locks commercial identity after order creation but allows production requirement to be set once", () => {
+    // Commercial identity is fully immutable; the production requirement may be populated
+    // once (null -> value) and then locked, so it is guarded server-side, not read-only in UI.
+    assert.match(actions, /identityChanged/);
+    assert.match(actions, /productionRequirementChanged/);
+    assert.match(actions, /Customer, source quote, order date, and value are fixed after order creation/);
+    assert.match(actions, /Production profile, die, quantity, pieces, and billet diameter cannot be changed once set/);
     const orderBlock = config.slice(config.indexOf("  orders:"), config.indexOf("  quotes:"));
-    for (const field of ["customer_id", "quote_id", "production_profile_id", "production_die_id", "production_quantity_kg", "production_pieces", "order_date", "order_value"]) {
+    for (const field of ["customer_id", "quote_id", "order_date", "order_value"]) {
       assert.match(orderBlock, new RegExp(`name: "${field}"[^\\n]*readOnly: true`));
+    }
+    // Production requirement fields must NOT be hard read-only, so they can be set after creation.
+    for (const field of ["production_profile_id", "production_die_id", "production_quantity_kg", "production_pieces", "billet_diameter_required_inch"]) {
+      assert.doesNotMatch(orderBlock, new RegExp(`name: "${field}"[^\\n]*readOnly: true`));
     }
   });
 });

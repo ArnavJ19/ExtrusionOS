@@ -8,7 +8,6 @@ import { calculateQuoteItem, calculateQuoteSummary } from "@/lib/calculations/qu
 import { buildQuoteItemPcdaFields, hasUnapprovedDrawing } from "@/lib/pcda/quote-order";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
-import { nextBusinessNumber } from "@/lib/utils/numbering";
 import { todayIso } from "@/lib/utils/format";
 import { orderSchema, quoteSchema } from "@/lib/validations/schemas";
 import { canTransitionQuoteStatus } from "@/lib/workflow/quote-status";
@@ -17,7 +16,7 @@ import type { QuoteStatus } from "@/types/app";
 const quoteStatusSchema = z.enum(["draft", "internal_review", "approved_for_sending", "sent", "customer_approved", "customer_rejected", "expired", "converted_to_order"]);
 const revisionLockedStatuses = ["approved_for_sending", "sent", "customer_approved", "customer_rejected", "expired", "converted_to_order"];
 const lowMarginApprovalRoles = ["owner", "admin", "sales_manager"];
-const profileSelect = "id, profile_code, profile_name, section_weight_kg_per_m, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle";
+const profileSelect = "id, profile_code, profile_name, section_weight_kg_per_m, surface_area_per_meter_sqm, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle";
 const unusableDieStatuses = ["inactive", "dead", "blocked", "retired", "scrapped", "under_maintenance"];
 
 type SaveQuoteInput = z.input<typeof quoteSchema> & { editing_id?: string | null };
@@ -52,8 +51,6 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
     if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check quote details." };
 
     const supabase = await createClient();
-    const calculatedItems = parsed.data.items.map((item) => calculateQuoteItem(item));
-    const summary = calculateQuoteSummary(calculatedItems, parsed.data.gst_percent);
 
     const customerResult = await supabase
       .from("customers")
@@ -84,6 +81,14 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
       return !profile || (item.die_id && (!die || die.profile_id !== item.profile_id));
     });
     if (invalidItem) return { success: false, error: "One quote item has a stale profile or die selection. Refresh and select it again." };
+
+    // Cost items only after profiles are loaded so per_sqft finishing uses the profile's
+    // authoritative surface area (sq.m/m) rather than any client-supplied value.
+    const calculatedItems = parsed.data.items.map((item) => calculateQuoteItem({
+      ...item,
+      surface_area_per_meter_sqm: (profilesById.get(item.profile_id) as any)?.surface_area_per_meter_sqm ?? null
+    }));
+    const summary = calculateQuoteSummary(calculatedItems, parsed.data.gst_percent);
 
     const currentQuote = currentQuoteResult.data;
     if (currentQuote?.status === "converted_to_order") {
@@ -219,16 +224,13 @@ export async function convertQuoteToOrderAction(quoteId: string): Promise<Action
     const unapprovedLine = (quoteItems.data ?? []).find(hasUnapprovedDrawing);
     if (unapprovedLine) return { success: false, error: `Drawing approval is pending for section ${unapprovedLine.section_number ?? unapprovedLine.section_code ?? "line item"}.` };
 
-    const existingOrders = await supabase.from("orders").select("order_number").eq("company_id", context.companyId);
-    if (existingOrders.error) throw existingOrders.error;
-    const orderNumber = nextBusinessNumber("O", (existingOrders.data ?? []).map((order: any) => order.order_number));
+    // Order number and stage are generated server-side by convert_quote_to_order_atomic
+    // under an advisory lock; do not compute them here (the RPC ignores extra keys).
     const atomicResult = await supabase.rpc("convert_quote_to_order_atomic", {
       p_quote_id: quote.id,
       p_order: {
-        order_number: orderNumber,
         order_date: todayIso(),
         priority: "normal",
-        current_stage: "order_confirmed",
         order_value: quote.grand_total
       }
     });
@@ -265,21 +267,33 @@ export async function saveOrderAction(input: SaveOrderInput): Promise<ActionResu
     if (currentOrder) {
       const sameOptionalId = (requested: unknown, stored: unknown) => String(requested || "") === String(stored || "");
       const sameNumber = (requested: unknown, stored: unknown) => Math.abs(Number(requested ?? 0) - Number(stored ?? 0)) < 0.000001;
-      const immutableIdentityChanged =
+      // Commercial identity is fully immutable after creation.
+      const identityChanged =
         !sameOptionalId(parsed.data.customer_id, currentOrder.customer_id)
         || !sameOptionalId(parsed.data.quote_id, currentOrder.quote_id)
-        || !sameOptionalId(parsed.data.production_profile_id, currentOrder.production_profile_id)
-        || !sameOptionalId(parsed.data.production_die_id, currentOrder.production_die_id)
-        || !sameNumber(parsed.data.production_quantity_kg, currentOrder.production_quantity_kg)
-        || !sameNumber(parsed.data.production_pieces, currentOrder.production_pieces)
-        || !sameNumber(parsed.data.billet_diameter_required_inch, currentOrder.billet_diameter_required_inch)
         || !sameNumber(parsed.data.order_value, currentOrder.order_value)
         || parsed.data.order_date !== currentOrder.order_date;
+      // Production requirement fields may be populated once (null/zero -> value) when
+      // engineering decides them after order creation, but cannot be changed once set.
+      const idLockedOnceSet = (requested: unknown, stored: unknown) => Boolean(String(stored || "")) && !sameOptionalId(requested, stored);
+      const numberLockedOnceSet = (requested: unknown, stored: unknown) => Number(stored ?? 0) !== 0 && !sameNumber(requested, stored);
+      const productionRequirementChanged =
+        idLockedOnceSet(parsed.data.production_profile_id, currentOrder.production_profile_id)
+        || idLockedOnceSet(parsed.data.production_die_id, currentOrder.production_die_id)
+        || numberLockedOnceSet(parsed.data.production_quantity_kg, currentOrder.production_quantity_kg)
+        || numberLockedOnceSet(parsed.data.production_pieces, currentOrder.production_pieces)
+        || numberLockedOnceSet(parsed.data.billet_diameter_required_inch, currentOrder.billet_diameter_required_inch);
 
-      if (immutableIdentityChanged) {
+      if (identityChanged) {
         return {
           success: false,
-          error: "Customer, quote, production requirement, order date, and value are fixed after order creation. Create a new order or revise the source quote instead."
+          error: "Customer, source quote, order date, and value are fixed after order creation. Create a new order or revise the source quote instead."
+        };
+      }
+      if (productionRequirementChanged) {
+        return {
+          success: false,
+          error: "Production profile, die, quantity, pieces, and billet diameter cannot be changed once set. Create a new order if the production requirement has to change."
         };
       }
     }

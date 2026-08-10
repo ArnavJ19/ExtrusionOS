@@ -2,49 +2,52 @@ import { PDFDocument, StandardFonts, rgb, PDFFont, PDFPage } from "pdf-lib/cjs";
 import { formatCurrency, formatDate, formatMeters, formatWeight } from "@/lib/utils/format";
 import { numberToWordsINR } from "@/lib/utils/number-to-words";
 
-const ORANGE = rgb(0.98, 0.45, 0.09);
-const DARK = rgb(0.07, 0.09, 0.13);
-const LIGHT_GRAY = rgb(0.96, 0.97, 0.98);
-const BORDER = rgb(0.90, 0.91, 0.93);
-const TEXT = rgb(0.07, 0.09, 0.13);
-const WHITE = rgb(1, 1, 1);
+// Professional, low-chroma palette: ink + greys, with a single restrained slate accent
+// used only for hairline rules (title, table header baseline, grand-total). No heavy
+// fills, no full-bleed colour bars — the document should read like a clean letterhead.
+const INK = rgb(0.11, 0.13, 0.17);
+const MUTED = rgb(0.42, 0.45, 0.5);
+const FAINT = rgb(0.6, 0.63, 0.68);
+const HAIRLINE = rgb(0.84, 0.86, 0.89);
+const PANEL = rgb(0.966, 0.972, 0.98);
+const ACCENT = rgb(0.16, 0.23, 0.34);
 
 const PAGE_WIDTH = 595.28;
 const PAGE_HEIGHT = 841.89;
-const MARGIN_X = 40;
-const MARGIN_TOP = 36;
-const MARGIN_BOTTOM = 42;
+const MARGIN_X = 46;
+const MARGIN_TOP = 46;
+const MARGIN_BOTTOM = 48;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_X * 2;
 
 function sanitizeText(text: string | null | undefined) {
   if (!text) return "";
   return text
-    .replace(/\u20B9/g, "Rs. ")
-    .replace(/[\u2018\u2019]/g, "'")
-    .replace(/[\u201C\u201D]/g, '"')
-    .replace(/[\u2013\u2014]/g, "-")
-    .replace(/\u2026/g, "...")
-    .replace(/[\u202F\u200B]/g, " ")
-    .replace(/[^\x00-\xFF]/g, ""); 
+    .replace(/₹/g, "Rs. ")
+    .replace(/[‘’]/g, "'")
+    .replace(/[“”]/g, '"')
+    .replace(/[–—]/g, "-")
+    .replace(/…/g, "...")
+    .replace(/[ ​]/g, " ")
+    .replace(/[^\x00-\xFF]/g, "");
 }
 
 function formatPdfCurrency(value: number | string | null | undefined) {
-  return formatCurrency(value).replace(/\u20B9/g, "Rs. ");
+  return formatCurrency(value).replace(/₹/g, "Rs. ");
 }
 
 function splitTextIntoLines(text: string, font: PDFFont, size: number, maxWidth: number) {
-  const lines = text.split('\n');
+  const lines = text.split("\n");
   const result: string[] = [];
   for (const line of lines) {
     if (!line.trim()) {
-      result.push('');
+      result.push("");
       continue;
     }
-    const words = line.split(' ');
-    let currentLine = words[0] || '';
+    const words = line.split(" ");
+    let currentLine = words[0] || "";
     for (let i = 1; i < words.length; i++) {
       const word = words[i];
-      const testLine = currentLine + ' ' + word;
+      const testLine = currentLine + " " + word;
       const width = font.widthOfTextAtSize(testLine, size);
       if (width > maxWidth) {
         result.push(currentLine);
@@ -62,7 +65,7 @@ export async function buildQuotePdf(data: { company: any; settings: any; quote: 
   const pdf = await PDFDocument.create();
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  
+
   let page!: PDFPage;
   let currentY = 0;
   const pages: PDFPage[] = [];
@@ -71,44 +74,45 @@ export async function buildQuotePdf(data: { company: any; settings: any; quote: 
     page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
     pages.push(page);
     currentY = PAGE_HEIGHT - MARGIN_TOP;
-    
-    // Draw orange sidebar
-    page.drawRectangle({ x: 0, y: 0, width: 16, height: PAGE_HEIGHT, color: ORANGE });
   };
 
-  addPage(); // First page
+  addPage();
 
-  // Drawing helpers
-  const drawText = (text: string, x: number, y: number, font: PDFFont, size: number, color = TEXT, align: 'left'|'right'|'center' = 'left', maxWidth?: number) => {
+  const drawText = (text: string, x: number, y: number, font: PDFFont, size: number, color = INK, align: "left" | "right" | "center" = "left", maxWidth?: number) => {
     const sanitized = sanitizeText(text);
-    
     let currentSize = size;
     let textWidth = font.widthOfTextAtSize(sanitized, currentSize);
-    
     if (maxWidth && textWidth > maxWidth) {
       currentSize = Math.max(4, size * (maxWidth / textWidth));
       textWidth = font.widthOfTextAtSize(sanitized, currentSize);
     }
-    
     let drawX = x;
-    if (align === 'right') {
-      drawX = x - textWidth;
-    } else if (align === 'center') {
-      drawX = x - textWidth / 2;
-    }
+    if (align === "right") drawX = x - textWidth;
+    else if (align === "center") drawX = x - textWidth / 2;
     page.drawText(sanitized, { x: drawX, y, font, size: currentSize, color });
   };
 
-  const drawWrappedText = (text: string, x: number, y: number, maxWidth: number, font: PDFFont, size: number, lineHeight: number, color = TEXT) => {
+  // Letter-spaced caps for section/eyebrow labels — cheap way to get a refined header look.
+  const drawLabel = (text: string, x: number, y: number, size: number, color = MUTED, spacing = 1.4, align: "left" | "right" = "left") => {
+    const chars = sanitizeText(text.toUpperCase()).split("");
+    const widths = chars.map((c) => bold.widthOfTextAtSize(c, size) + spacing);
+    const total = widths.reduce((s, w) => s + w, 0) - (chars.length ? spacing : 0);
+    let cx = align === "right" ? x - total : x;
+    for (let i = 0; i < chars.length; i++) {
+      page.drawText(chars[i], { x: cx, y, font: bold, size, color });
+      cx += widths[i];
+    }
+    return total;
+  };
+
+  const drawWrappedText = (text: string, x: number, y: number, maxWidth: number, font: PDFFont, size: number, lineHeight: number, color = INK) => {
     const lines = splitTextIntoLines(sanitizeText(text), font, size, maxWidth);
     let tempY = y;
     for (const line of lines) {
-      if (line) {
-        page.drawText(line, { x, y: tempY, font, size, color });
-      }
+      if (line) page.drawText(line, { x, y: tempY, font, size, color });
       tempY -= lineHeight;
     }
-    return lines.length * lineHeight; // returns total height used
+    return lines.length * lineHeight;
   };
 
   const measureWrappedTextHeight = (text: string, maxWidth: number, font: PDFFont, size: number, lineHeight: number) => {
@@ -116,307 +120,257 @@ export async function buildQuotePdf(data: { company: any; settings: any; quote: 
     return lines.length * lineHeight;
   };
 
+  const hairline = (y: number, x1 = MARGIN_X, x2 = PAGE_WIDTH - MARGIN_X, color = HAIRLINE, thickness = 0.75) => {
+    page.drawLine({ start: { x: x1, y }, end: { x: x2, y }, thickness, color });
+  };
+
   const ensureSpace = (requiredHeight: number, repeatingHeaderFn?: () => void) => {
-    // 60 is for the footer and bottom margin
-    if (currentY - requiredHeight < MARGIN_BOTTOM + 80) {
+    if (currentY - requiredHeight < MARGIN_BOTTOM + 70) {
       addPage();
-      if (repeatingHeaderFn) {
-        repeatingHeaderFn();
-      }
+      if (repeatingHeaderFn) repeatingHeaderFn();
     }
   };
 
-  // --- BEGIN DOCUMENT RENDER ---
-  
-  // 1. TOP DARK BANNER
-  const bannerHeight = 76;
-  page.drawRectangle({ x: 32, y: currentY - bannerHeight, width: PAGE_WIDTH - 32, height: bannerHeight, color: DARK });
-  page.drawRectangle({ x: 44, y: currentY - 56, width: 32, height: 32, color: ORANGE });
-  drawText("EO", 60, currentY - 35, bold, 11, WHITE, 'center');
-  drawText("Premium Aluminium Quotation", 88, currentY - 45, bold, 17, WHITE);
-  drawText("QUOTATION", PAGE_WIDTH - MARGIN_X, currentY - 45, bold, 20, ORANGE, 'right');
-  
-  currentY -= (bannerHeight + 20);
-
-  // 2. HEADER DETAILS
   const { company, quote, items, settings } = data;
   const customer = quote.customers ?? {};
 
-  // Company details
-  const companyLines = [];
-  if (company.legal_name) companyLines.push(company.legal_name);
-  if (company.gst_number) companyLines.push(`GSTIN: ${company.gst_number}`);
-  
-  const addrLine = `${company.billing_address || ""} ${company.city || ""} ${company.state || ""} ${company.pincode || ""}`.trim();
+  // ---------------------------------------------------------------- 1. LETTERHEAD
+  const companyName = company.name ?? "Company";
+  drawText(companyName, MARGIN_X, currentY, bold, 17, INK);
+
+  const companyLines: string[] = [];
+  if (company.legal_name && company.legal_name !== companyName) companyLines.push(company.legal_name);
+  const addrLine = `${company.billing_address || ""} ${company.city || ""} ${company.state || ""} ${company.pincode || ""}`.replace(/\s+/g, " ").trim();
   if (addrLine) companyLines.push(addrLine);
-  
-  const contactLine = `${company.phone || ""} ${company.email || ""}`.trim();
+  const contactLine = [company.phone, company.email].filter(Boolean).join("   ");
   if (contactLine) companyLines.push(contactLine);
+  if (company.gst_number) companyLines.push(`GSTIN  ${company.gst_number}`);
 
-  // Quote details
-  const quoteLines = [
-    { label: "Quote No:", value: `${quote.quote_number} Rev ${quote.revision_number ?? 1}` },
-    { label: "Date:", value: formatDate(quote.quote_date) },
-    { label: "Valid Until:", value: formatDate(quote.valid_until) }
-  ];
-
-  drawText(company.name ?? "Company", MARGIN_X, currentY, bold, 18, TEXT);
-  currentY -= 20;
-
-  let leftHeaderY = currentY;
+  let leftY = currentY - 16;
   for (const line of companyLines) {
-    const h = drawWrappedText(line, MARGIN_X, leftHeaderY, 300, regular, 9, 13, TEXT);
-    leftHeaderY -= h;
+    leftY -= drawWrappedText(line, MARGIN_X, leftY, 300, regular, 8.5, 12, MUTED);
   }
 
-  let rightHeaderY = currentY;
-  for (const item of quoteLines) {
-    drawText(item.label, PAGE_WIDTH - 160, rightHeaderY, regular, 9, TEXT);
-    drawText(item.value, PAGE_WIDTH - MARGIN_X, rightHeaderY, bold, 9, TEXT, 'right');
-    rightHeaderY -= 13;
+  // Right: document title + meta
+  drawLabel("QUOTATION", PAGE_WIDTH - MARGIN_X, currentY, 15, INK, 2.2, "right");
+  const metaRows = [
+    { label: "Quote No", value: `${quote.quote_number ?? "-"}  ·  Rev ${quote.revision_number ?? 1}` },
+    { label: "Date", value: formatDate(quote.quote_date) },
+    { label: "Valid Until", value: quote.valid_until ? formatDate(quote.valid_until) : "-" }
+  ];
+  let rightY = currentY - 22;
+  for (const row of metaRows) {
+    drawText(row.label, PAGE_WIDTH - MARGIN_X - 150, rightY, regular, 8.5, MUTED);
+    drawText(row.value, PAGE_WIDTH - MARGIN_X, rightY, bold, 8.5, INK, "right", 150);
+    rightY -= 13;
   }
 
-  currentY = Math.min(leftHeaderY, rightHeaderY) - 15;
-  
-  // Divider
-  page.drawLine({ start: { x: MARGIN_X, y: currentY }, end: { x: PAGE_WIDTH - MARGIN_X, y: currentY }, thickness: 1, color: BORDER });
-  currentY -= 20;
+  currentY = Math.min(leftY, rightY) - 8;
+  page.drawLine({ start: { x: MARGIN_X, y: currentY }, end: { x: PAGE_WIDTH - MARGIN_X, y: currentY }, thickness: 1.4, color: ACCENT });
+  currentY -= 22;
 
-  // 3. BILL TO / SHIP TO
-  ensureSpace(120);
-
-  const cardWidth = 248; // (PAGE_WIDTH - 80 - 19) / 2
-  const cardGap = 19;
+  // ---------------------------------------------------------------- 2. BILL TO / SHIP TO
+  const cardGap = 18;
+  const cardWidth = (CONTENT_WIDTH - cardGap) / 2;
   const leftCardX = MARGIN_X;
   const rightCardX = MARGIN_X + cardWidth + cardGap;
+  const padX = 12;
 
-  const billToLines = [];
+  const billToLines: { text: string; font: PDFFont; size: number; color?: any }[] = [];
   billToLines.push({ text: customer.company_name ?? customer.customer_name ?? "Customer", font: bold, size: 10 });
-  if (customer.customer_name && customer.customer_name !== customer.company_name) {
-    billToLines.push({ text: `Contact: ${customer.customer_name}`, font: regular, size: 9 });
-  }
-  if (customer.gst_number) {
-    billToLines.push({ text: `GSTIN: ${customer.gst_number}`, font: regular, size: 9 });
-  }
-  if (customer.billing_address) {
-    billToLines.push({ text: customer.billing_address, font: regular, size: 9 });
-  }
+  if (customer.customer_name && customer.customer_name !== customer.company_name) billToLines.push({ text: `Attn: ${customer.customer_name}`, font: regular, size: 8.5, color: MUTED });
+  if (customer.billing_address) billToLines.push({ text: customer.billing_address, font: regular, size: 8.5, color: MUTED });
+  if (customer.gst_number) billToLines.push({ text: `GSTIN  ${customer.gst_number}`, font: regular, size: 8.5, color: MUTED });
 
-  const shipToLines = [];
+  const shipToLines: { text: string; font: PDFFont; size: number; color?: any }[] = [];
   const shipAddr = customer.shipping_address ?? customer.billing_address;
-  if (shipAddr) {
-    shipToLines.push({ text: shipAddr, font: regular, size: 9 });
+  if (shipAddr) shipToLines.push({ text: shipAddr, font: regular, size: 8.5, color: MUTED });
+  else shipToLines.push({ text: "Same as billing address", font: regular, size: 8.5, color: FAINT });
+
+  const contentHeight = (lines: { text: string; font: PDFFont; size: number }[]) =>
+    lines.reduce((h, l) => h + measureWrappedTextHeight(l.text, cardWidth - padX * 2, l.font, l.size, l.size + 4), 0);
+  const cardHeight = Math.max(78, contentHeight(billToLines) + 34, contentHeight(shipToLines) + 34);
+
+  ensureSpace(cardHeight + 20);
+
+  for (const [x, title, lines] of [[leftCardX, "Bill To", billToLines], [rightCardX, "Ship To", shipToLines]] as const) {
+    page.drawRectangle({ x, y: currentY - cardHeight, width: cardWidth, height: cardHeight, color: PANEL, borderColor: HAIRLINE, borderWidth: 0.75 });
+    drawLabel(title, x + padX, currentY - 16, 8, ACCENT, 1.4);
+    let cy = currentY - 30;
+    for (const l of lines) cy -= drawWrappedText(l.text, x + padX, cy, cardWidth - padX * 2, l.font, l.size, l.size + 4, l.color ?? INK);
   }
+  currentY -= cardHeight + 20;
 
-  // Calculate card heights
-  let leftCardContentHeight = 25; // 15 for title + padding
-  for (const item of billToLines) {
-    leftCardContentHeight += measureWrappedTextHeight(item.text, cardWidth - 20, item.font, item.size, item.size + 4);
-  }
-  
-  let rightCardContentHeight = 25;
-  for (const item of shipToLines) {
-    rightCardContentHeight += measureWrappedTextHeight(item.text, cardWidth - 20, item.font, item.size, item.size + 4);
-  }
-
-  const cardHeight = Math.max(90, leftCardContentHeight, rightCardContentHeight) + 15;
-
-  page.drawRectangle({ x: leftCardX, y: currentY - cardHeight, width: cardWidth, height: cardHeight, color: LIGHT_GRAY });
-  page.drawRectangle({ x: rightCardX, y: currentY - cardHeight, width: cardWidth, height: cardHeight, color: LIGHT_GRAY });
-
-  // Bill To Content
-  let billToY = currentY - 15;
-  drawText("Bill To", leftCardX + 10, billToY, bold, 11, ORANGE);
-  billToY -= 16;
-  for (const item of billToLines) {
-    const h = drawWrappedText(item.text, leftCardX + 10, billToY, cardWidth - 20, item.font, item.size, item.size + 4, TEXT);
-    billToY -= h;
-  }
-
-  // Ship To Content
-  let shipToY = currentY - 15;
-  drawText("Ship To", rightCardX + 10, shipToY, bold, 11, ORANGE);
-  shipToY -= 16;
-  for (const item of shipToLines) {
-    const h = drawWrappedText(item.text, rightCardX + 10, shipToY, cardWidth - 20, item.font, item.size, item.size + 4, TEXT);
-    shipToY -= h;
-  }
-
-  currentY -= (cardHeight + 20);
-
-  // 4. SUMMARY STRIP
-  ensureSpace(40);
+  // ---------------------------------------------------------------- 3. SUMMARY STRIP
+  ensureSpace(34);
   const totalMeters = items.reduce((sum, item) => sum + Number(item.total_meters ?? 0), 0);
   const totalWeightKg = items.reduce((sum, item) => sum + Number(item.total_weight_kg ?? 0), 0);
   const totalBillingWeightKg = items.reduce((sum, item) => sum + Number(item.billing_weight_kg ?? item.total_weight_kg ?? 0), 0);
 
-  page.drawRectangle({ x: MARGIN_X, y: currentY - 30, width: CONTENT_WIDTH, height: 30, color: LIGHT_GRAY });
-  drawText(`Total meters: ${formatMeters(totalMeters)}`, MARGIN_X + 10, currentY - 12, bold, 9, TEXT);
-  drawText(`Physical weight: ${formatWeight(totalWeightKg)}`, MARGIN_X + 180, currentY - 12, bold, 9, TEXT);
-  drawText(`Billing weight: ${formatWeight(totalBillingWeightKg)}`, MARGIN_X + 350, currentY - 12, bold, 9, TEXT);
-  currentY -= 45;
-
-  // 5. ITEM TABLE
-  const cols = [
-    { title: "Sr", width: 25, align: 'left' },
-    { title: "Profile", width: 65, align: 'left' },
-    { title: "Description", width: 135, align: 'left' },
-    { title: "Qty", width: 35, align: 'right' },
-    { title: "Length", width: 45, align: 'right' },
-    { title: "Total Mtr", width: 55, align: 'right' },
-    { title: "Bill Kg", width: 50, align: 'right' },
-    { title: "Rate", width: 45, align: 'right' },
-    { title: "Amount", width: 60, align: 'right' },
+  const summaryCells = [
+    { label: "Total length", value: formatMeters(totalMeters) },
+    { label: "Physical weight", value: formatWeight(totalWeightKg) },
+    { label: "Billing weight", value: formatWeight(totalBillingWeightKg) },
+    { label: "Line items", value: String(items.length) }
   ];
+  const stripH = 30;
+  page.drawRectangle({ x: MARGIN_X, y: currentY - stripH, width: CONTENT_WIDTH, height: stripH, color: PANEL });
+  const cellW = CONTENT_WIDTH / summaryCells.length;
+  summaryCells.forEach((cell, i) => {
+    const cx = MARGIN_X + cellW * i + 12;
+    if (i > 0) page.drawLine({ start: { x: MARGIN_X + cellW * i, y: currentY - 6 }, end: { x: MARGIN_X + cellW * i, y: currentY - stripH + 6 }, thickness: 0.75, color: HAIRLINE });
+    drawText(cell.label, cx, currentY - 12, regular, 7, MUTED);
+    drawText(cell.value, cx, currentY - 23, bold, 9.5, INK);
+  });
+  currentY -= stripH + 18;
 
-  let currentX = MARGIN_X;
-  for (let i = 0; i < cols.length; i++) {
-    (cols as any)[i].x = currentX;
-    currentX += cols[i].width;
+  // ---------------------------------------------------------------- 4. ITEM TABLE
+  const cols: { title: string; width: number; align: "left" | "right"; x?: number }[] = [
+    { title: "#", width: 22, align: "left" },
+    { title: "Profile", width: 62, align: "left" },
+    { title: "Description", width: 132, align: "left" },
+    { title: "Qty", width: 32, align: "right" },
+    { title: "Length", width: 46, align: "right" },
+    { title: "Total m", width: 52, align: "right" },
+    { title: "Bill kg", width: 48, align: "right" },
+    { title: "Rate/kg", width: 48, align: "right" },
+    { title: "Amount", width: 61, align: "right" }
+  ];
+  let cx = MARGIN_X;
+  for (const col of cols) {
+    col.x = cx;
+    cx += col.width;
   }
 
   const drawTableHeader = () => {
-    page.drawRectangle({ x: MARGIN_X, y: currentY - 15, width: CONTENT_WIDTH, height: 20, color: LIGHT_GRAY });
-    page.drawRectangle({ x: MARGIN_X, y: currentY - 15, width: CONTENT_WIDTH, height: 2, color: ORANGE });
+    page.drawRectangle({ x: MARGIN_X, y: currentY - 18, width: CONTENT_WIDTH, height: 18, color: PANEL });
     for (const col of cols) {
-      let xPos = (col as any).x;
-      if (col.align === 'right') xPos += col.width - 5;
-      else if (col.align === 'left') xPos += 5;
-      drawText(col.title, xPos, currentY - 4, bold, 8, TEXT, col.align as 'left'|'right');
+      const xPos = col.align === "right" ? col.x! + col.width - 5 : col.x! + 5;
+      drawText(col.title, xPos, currentY - 12, bold, 7.5, INK, col.align);
     }
-    currentY -= 20;
+    page.drawLine({ start: { x: MARGIN_X, y: currentY - 18 }, end: { x: PAGE_WIDTH - MARGIN_X, y: currentY - 18 }, thickness: 1, color: ACCENT });
+    currentY -= 18;
   };
 
+  ensureSpace(40);
   drawTableHeader();
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     const profile = item.aluminium_profiles ?? {};
     const desc = sanitizeText(item.item_description ?? profile.profile_name ?? "-");
-    
+    const finish = item.finishing_type ? sanitizeText(String(item.finishing_type).replace(/_/g, " ")) : "";
     const descHeight = measureWrappedTextHeight(desc, cols[2].width - 10, regular, 8, 11);
-    const rowHeight = Math.max(20, descHeight + 10);
+    const rowHeight = Math.max(22, descHeight + (finish ? 20 : 12));
 
     ensureSpace(rowHeight, () => {
-      drawText(`${company.name ?? "Company"} - Quotation ${quote.quote_number} continued`, MARGIN_X, currentY - 10, bold, 10, ORANGE);
-      currentY -= 30;
+      drawText(`${companyName} — Quotation ${quote.quote_number ?? ""} (continued)`, MARGIN_X, currentY - 12, bold, 9, MUTED);
+      currentY -= 26;
       drawTableHeader();
     });
 
-    if (i % 2 === 0) {
-      page.drawRectangle({ x: MARGIN_X, y: currentY - rowHeight, width: CONTENT_WIDTH, height: rowHeight, color: rgb(0.985, 0.986, 0.988) });
-    }
-    page.drawLine({ start: { x: MARGIN_X, y: currentY - rowHeight }, end: { x: PAGE_WIDTH - MARGIN_X, y: currentY - rowHeight }, thickness: 0.5, color: BORDER });
-
-    const textY = currentY - 12;
-
-    drawText(String(i + 1), (cols as any)[0].x + 5, textY, regular, 8, TEXT, 'left', cols[0].width - 10);
-    drawText(sanitizeText(profile.profile_code ?? ""), (cols as any)[1].x + 5, textY, regular, 8, TEXT, 'left', cols[1].width - 10);
-    drawWrappedText(desc, (cols as any)[2].x + 5, textY, cols[2].width - 10, regular, 8, 11, TEXT);
-
-    drawText(String(item.quantity_pieces), (cols as any)[3].x + cols[3].width - 5, textY, regular, 8, TEXT, 'right', cols[3].width - 10);
-    drawText(`${Number(item.length_per_piece_m).toFixed(2)} m`, (cols as any)[4].x + cols[4].width - 5, textY, regular, 8, TEXT, 'right', cols[4].width - 10);
-    drawText(formatMeters(item.total_meters), (cols as any)[5].x + cols[5].width - 5, textY, regular, 8, TEXT, 'right', cols[5].width - 10);
-    drawText(formatWeight(item.billing_weight_kg ?? item.total_weight_kg), (cols as any)[6].x + cols[6].width - 5, textY, regular, 8, TEXT, 'right', cols[6].width - 10);
-    drawText(formatPdfCurrency(item.price_per_kg), (cols as any)[7].x + cols[7].width - 5, textY, regular, 8, TEXT, 'right', cols[7].width - 10);
-    drawText(formatPdfCurrency(item.line_total_before_gst), (cols as any)[8].x + cols[8].width - 5, textY, regular, 8, TEXT, 'right', cols[8].width - 10);
+    const textY = currentY - 13;
+    drawText(String(i + 1), cols[0].x! + 5, textY, regular, 8, MUTED, "left", cols[0].width - 8);
+    drawText(sanitizeText(profile.profile_code ?? "-"), cols[1].x! + 5, textY, bold, 8, INK, "left", cols[1].width - 8);
+    drawWrappedText(desc, cols[2].x! + 5, textY, cols[2].width - 10, regular, 8, 11, INK);
+    if (finish) drawText(finish, cols[2].x! + 5, textY - descHeight - 1, regular, 7, FAINT, "left", cols[2].width - 10);
+    drawText(String(item.quantity_pieces ?? "-"), cols[3].x! + cols[3].width - 5, textY, regular, 8, INK, "right", cols[3].width - 8);
+    drawText(`${Number(item.length_per_piece_m ?? 0).toFixed(2)} m`, cols[4].x! + cols[4].width - 5, textY, regular, 8, INK, "right", cols[4].width - 8);
+    drawText(formatMeters(item.total_meters), cols[5].x! + cols[5].width - 5, textY, regular, 8, INK, "right", cols[5].width - 8);
+    drawText(formatWeight(item.billing_weight_kg ?? item.total_weight_kg), cols[6].x! + cols[6].width - 5, textY, regular, 8, INK, "right", cols[6].width - 8);
+    drawText(formatPdfCurrency(item.price_per_kg), cols[7].x! + cols[7].width - 5, textY, regular, 8, MUTED, "right", cols[7].width - 8);
+    drawText(formatPdfCurrency(item.line_total_before_gst), cols[8].x! + cols[8].width - 5, textY, bold, 8, INK, "right", cols[8].width - 8);
 
     currentY -= rowHeight;
+    hairline(currentY);
   }
 
-  currentY -= 15;
+  currentY -= 18;
 
-  // 6. TOTALS BLOCK
-  const subtotal = Number(quote.subtotal || 0);
-  const gstAmount = Number(quote.gst_amount || 0);
-  const grandTotal = Number(quote.grand_total || 0);
-
+  // ---------------------------------------------------------------- 5. TOTALS
+  // Keep the printed document internally consistent: if the stored aggregate is missing or
+  // drifts from the sum of the printed lines, fall back to the line sum and re-derive GST so
+  // the lines always add up to the totals shown.
+  const lineSum = Math.round(items.reduce((sum, it) => sum + Number(it.line_total_before_gst ?? 0), 0) * 100) / 100;
+  const storedSubtotal = Number(quote.subtotal || 0);
+  const usesStored = storedSubtotal > 0 && Math.abs(storedSubtotal - lineSum) <= 0.5;
+  const subtotal = usesStored ? storedSubtotal : lineSum;
+  const gstPercentNum = Number(quote.gst_percent || 0);
+  const gstAmount = usesStored ? Number(quote.gst_amount || 0) : Math.round(subtotal * gstPercentNum) / 100;
+  const grandTotal = usesStored ? Number(quote.grand_total || 0) : Math.round((subtotal + gstAmount) * 100) / 100;
   const totals = [
-    { label: "Subtotal", value: subtotal, isGrand: false },
-    { label: `GST @ ${quote.gst_percent}%`, value: gstAmount, isGrand: false },
-    { label: "Grand Total", value: grandTotal, isGrand: true }
+    { label: "Subtotal", value: subtotal, grand: false },
+    { label: `GST @ ${quote.gst_percent ?? 0}%`, value: gstAmount, grand: false },
+    { label: "Grand Total", value: grandTotal, grand: true }
   ];
 
-  ensureSpace( totals.length * 22 + 20 );
-
-  const summaryWidth = 200;
+  ensureSpace(totals.length * 22 + 10);
+  const summaryWidth = 220;
   const summaryX = PAGE_WIDTH - MARGIN_X - summaryWidth;
-
   for (const t of totals) {
-    const h = 22;
-    page.drawRectangle({ x: summaryX, y: currentY - h, width: summaryWidth, height: h, color: t.isGrand ? DARK : LIGHT_GRAY });
-    if (t.isGrand) {
-      page.drawRectangle({ x: summaryX, y: currentY - h, width: 6, height: h, color: ORANGE });
+    const h = t.grand ? 26 : 20;
+    if (t.grand) {
+      page.drawRectangle({ x: summaryX, y: currentY - h, width: summaryWidth, height: h, color: PANEL });
+      page.drawLine({ start: { x: summaryX, y: currentY }, end: { x: summaryX + summaryWidth, y: currentY }, thickness: 1.2, color: ACCENT });
     }
-    
-    drawText(t.label, summaryX + 12, currentY - 14, bold, 9, t.isGrand ? WHITE : TEXT);
-    drawText(formatPdfCurrency(t.value), summaryX + summaryWidth - 10, currentY - 14, bold, 9, t.isGrand ? WHITE : TEXT, 'right');
-    
+    drawText(t.label, summaryX + 12, currentY - (t.grand ? 17 : 14), t.grand ? bold : regular, t.grand ? 10.5 : 9, t.grand ? INK : MUTED);
+    drawText(formatPdfCurrency(t.value), summaryX + summaryWidth - 12, currentY - (t.grand ? 17 : 14), bold, t.grand ? 10.5 : 9, INK, "right");
     currentY -= h;
   }
+  currentY -= 16;
 
-  currentY -= 15;
+  // ---------------------------------------------------------------- 6. AMOUNT IN WORDS
+  ensureSpace(28);
+  drawLabel("Amount in words", MARGIN_X, currentY, 7.5, MUTED, 1.2);
+  currentY -= 13;
+  currentY -= drawWrappedText(numberToWordsINR(grandTotal), MARGIN_X, currentY, CONTENT_WIDTH, bold, 9, 13, INK) + 18;
 
-  // 7. AMOUNT IN WORDS
-  ensureSpace(30);
-  const amountWords = `Amount in words: ${numberToWordsINR(grandTotal)}`;
-  const wordsHeight = drawWrappedText(amountWords, MARGIN_X, currentY, CONTENT_WIDTH, bold, 9, 13, TEXT);
-  currentY -= (wordsHeight + 20);
+  // ---------------------------------------------------------------- 7. TERMS
+  const sectionHeader = (title: string) => {
+    drawLabel(title, MARGIN_X, currentY, 8, ACCENT, 1.3);
+    currentY -= 14;
+  };
 
-  // 8. TERMS
-  const termsTitle1 = "Commercial Terms";
   const commercialLines = [
-    `Delivery timeline: ${quote.delivery_timeline || settings?.default_delivery_terms || "As mutually agreed"}`,
-    `Payment terms: ${quote.payment_terms || settings?.default_payment_terms || "As mutually agreed"}`
+    `Delivery timeline:  ${quote.delivery_timeline || settings?.default_delivery_terms || "As mutually agreed"}`,
+    `Payment terms:  ${quote.payment_terms || settings?.default_payment_terms || "As mutually agreed"}`
   ];
-  
-  const termsTitle2 = "Terms and Conditions";
-  const rawTerms = quote.terms_and_conditions || settings?.default_terms_and_conditions || settings?.default_quote_terms || "1. Prices are valid until the validity date mentioned above.\n2. GST extra/as mentioned.\n3. Delivery timeline depends on die availability, billet availability, and finishing requirements.\n4. Payment terms as mutually agreed.\n5. Transport charges as applicable unless included.";
-  const termLines = rawTerms.split("\n").slice(0, 5);
+  const rawTerms = quote.terms_and_conditions || settings?.default_terms_and_conditions || settings?.default_quote_terms ||
+    "1. Prices are valid until the validity date mentioned above.\n2. GST extra / as mentioned.\n3. Delivery timeline depends on die, billet, and finishing readiness.\n4. Payment terms as mutually agreed.\n5. Transport charges as applicable unless included.";
+  const termLines = rawTerms.split("\n").slice(0, 6);
 
-  const termsNeededHeight = 25 + commercialLines.length * 13 + 25 + termLines.length * 13;
-  ensureSpace(termsNeededHeight);
+  ensureSpace(30 + commercialLines.length * 13 + 30 + termLines.length * 12);
+  sectionHeader("Commercial Terms");
+  for (const line of commercialLines) currentY -= drawWrappedText(line, MARGIN_X, currentY, CONTENT_WIDTH, regular, 8.5, 13, INK);
+  currentY -= 12;
+  sectionHeader("Terms & Conditions");
+  for (const line of termLines) currentY -= drawWrappedText(line, MARGIN_X, currentY, CONTENT_WIDTH, regular, 8, 12, MUTED);
+  currentY -= 22;
 
-  drawText(termsTitle1, MARGIN_X, currentY, bold, 11, ORANGE);
-  currentY -= 16;
-  for (const line of commercialLines) {
-    const h = drawWrappedText(line, MARGIN_X, currentY, CONTENT_WIDTH, bold, 8, 12, TEXT);
-    currentY -= h;
-  }
-  currentY -= 10;
-
-  drawText(termsTitle2, MARGIN_X, currentY, bold, 11, ORANGE);
-  currentY -= 16;
-  for (const line of termLines) {
-    const h = drawWrappedText(line, MARGIN_X, currentY, CONTENT_WIDTH, regular, 8, 12, TEXT);
-    currentY -= h;
-  }
-  currentY -= 25;
-
-  // 9. BANK DETAILS AND SIGNATURE
-  const bankDetailsRaw = settings?.default_bank_details ?? settings?.bank_details ?? "Configure bank details in Settings";
-  const bankDetailsHeight = measureWrappedTextHeight(bankDetailsRaw, 250, regular, 8, 12);
-  const signatureHeight = 60;
-  const bottomSectionHeight = Math.max(bankDetailsHeight + 25, signatureHeight + 25);
-  
-  ensureSpace(bottomSectionHeight);
+  // ---------------------------------------------------------------- 8. BANK + SIGNATURE
+  const bankDetailsRaw = settings?.default_bank_details ?? settings?.bank_details ?? "Configure bank details in Settings.";
+  const bankHeight = measureWrappedTextHeight(bankDetailsRaw, cardWidth - 4, regular, 8, 12);
+  const bottomHeight = Math.max(bankHeight + 26, 64);
+  ensureSpace(bottomHeight);
 
   const sigY = currentY;
-  drawText(`For ${company.name ?? "Company"}`, MARGIN_X, sigY, bold, 9, TEXT);
-  drawText("Authorized Signatory", MARGIN_X, sigY - 45, regular, 8, TEXT);
+  drawLabel("Bank Details", MARGIN_X, sigY, 8, ACCENT, 1.3);
+  drawWrappedText(bankDetailsRaw, MARGIN_X, sigY - 15, cardWidth - 4, regular, 8, 12, MUTED);
 
-  const bankX = PAGE_WIDTH - MARGIN_X - 250;
-  drawText("Bank Details", bankX, sigY, bold, 10, ORANGE);
-  drawWrappedText(bankDetailsRaw, bankX, sigY - 15, 250, regular, 8, 12, TEXT);
+  const sigX = PAGE_WIDTH - MARGIN_X - 190;
+  drawText(`For ${companyName}`, PAGE_WIDTH - MARGIN_X, sigY, bold, 9, INK, "right", 190);
+  page.drawLine({ start: { x: sigX, y: sigY - 44 }, end: { x: PAGE_WIDTH - MARGIN_X, y: sigY - 44 }, thickness: 0.75, color: HAIRLINE });
+  drawText("Authorized Signatory", PAGE_WIDTH - MARGIN_X, sigY - 54, regular, 8, MUTED, "right");
+  currentY -= bottomHeight;
 
-  currentY -= bottomSectionHeight;
-
-  // FOOTER
+  // ---------------------------------------------------------------- FOOTER (every page)
+  const totalPages = pages.length;
   for (let i = 0; i < pages.length; i++) {
     const p = pages[i];
-    p.drawLine({ start: { x: MARGIN_X, y: 34 }, end: { x: PAGE_WIDTH - MARGIN_X, y: 34 }, thickness: 1.2, color: ORANGE });
-    p.drawText("Thank you for your business. Generated by ExtrusionOS Pro.", { x: MARGIN_X, y: 20, size: 7, font: regular, color: rgb(0.5, 0.5, 0.5) });
-    p.drawText(`Page ${i + 1} of ${pages.length}`, { x: PAGE_WIDTH - MARGIN_X - 40, y: 20, size: 7, font: regular, color: rgb(0.5, 0.5, 0.5) });
+    p.drawLine({ start: { x: MARGIN_X, y: 36 }, end: { x: PAGE_WIDTH - MARGIN_X, y: 36 }, thickness: 0.75, color: HAIRLINE });
+    p.drawText(sanitizeText(`${companyName}  ·  Quotation ${quote.quote_number ?? ""}`), { x: MARGIN_X, y: 24, size: 7, font: regular, color: FAINT });
+    const pageLabel = `Page ${i + 1} of ${totalPages}`;
+    p.drawText(pageLabel, { x: PAGE_WIDTH - MARGIN_X - regular.widthOfTextAtSize(pageLabel, 7), y: 24, size: 7, font: regular, color: FAINT });
   }
 
   return pdf.save();

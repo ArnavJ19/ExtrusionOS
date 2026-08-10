@@ -129,6 +129,45 @@ async function validateSelectedBillets(supabase: any, companyId: string, orderId
   return { billets };
 }
 
+// Ensures the chosen profile is one the order was actually placed for, preserving
+// quote -> order -> production traceability. The profile is accepted if it matches
+// the order's direct production_profile_id, or if an order_items line exists for it.
+// Legacy/unconstrained orders (no production_profile_id and no order_items) are allowed.
+async function validateProfileBelongsToOrder(
+  supabase: any,
+  companyId: string,
+  orderId: string,
+  profileId: string,
+  productionProfileId: string | null
+) {
+  if (productionProfileId && productionProfileId === profileId) return null;
+
+  const matchingItems = await supabase
+    .from("order_items")
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId)
+    .eq("order_id", orderId)
+    .eq("profile_id", profileId);
+  if (matchingItems.error) throw matchingItems.error;
+  if ((matchingItems.count ?? 0) > 0) return null;
+
+  // Profile is not on this order. Block only if the order is constrained
+  // (has a production_profile_id set and/or any order_items).
+  if (productionProfileId) {
+    return { error: "Selected profile is not part of this order. Choose a profile that the order was placed for." };
+  }
+  const anyItems = await supabase
+    .from("order_items")
+    .select("id", { count: "exact", head: true })
+    .eq("company_id", companyId)
+    .eq("order_id", orderId);
+  if (anyItems.error) throw anyItems.error;
+  if ((anyItems.count ?? 0) > 0) {
+    return { error: "Selected profile is not part of this order. Choose a profile that the order was placed for." };
+  }
+  return null;
+}
+
 export async function saveProductionJobAction(input: SaveProductionJobInput): Promise<ProductionActionResult> {
   try {
     const context = await getSessionContext();
@@ -141,7 +180,7 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
 
     const supabase = await createClient();
     const [orderResult, profileResult, dieResult, machineValidation, currentJobResult] = await Promise.all([
-      supabase.from("orders").select("id, current_stage").eq("company_id", context.companyId).eq("id", parsed.data.order_id).maybeSingle(),
+      supabase.from("orders").select("id, current_stage, production_profile_id").eq("company_id", context.companyId).eq("id", parsed.data.order_id).maybeSingle(),
       supabase.from("aluminium_profiles").select("id, is_active").eq("company_id", context.companyId).eq("id", parsed.data.profile_id).maybeSingle(),
       supabase.from("dies").select("id, profile_id, die_status").eq("company_id", context.companyId).eq("id", parsed.data.die_id).maybeSingle(),
       validateMachineForPlanning(supabase, context.companyId, parsed.data.machine_id),
@@ -159,6 +198,15 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
     if (!isUsableDieStatus(dieResult.data.die_status)) return { success: false, error: `Die is ${String(dieResult.data.die_status).replace(/_/g, " ")} and cannot be used for production.` };
     if (machineValidation?.error) return { success: false, error: machineValidation.error };
     if (editingId && !currentJobResult.data) return { success: false, error: "Production job not found for this company." };
+
+    const profileValidation = await validateProfileBelongsToOrder(
+      supabase,
+      context.companyId,
+      parsed.data.order_id,
+      parsed.data.profile_id,
+      orderResult.data.production_profile_id ?? null
+    );
+    if (profileValidation?.error) return { success: false, error: profileValidation.error };
 
     const selectedBilletIds = Array.isArray(input.selected_billet_ids) ? [...new Set(input.selected_billet_ids.filter(Boolean))] : [];
     if (Number(parsed.data.required_billet_count || 0) > 0 && selectedBilletIds.length === 0) {

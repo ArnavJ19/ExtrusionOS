@@ -37,7 +37,14 @@ const fieldMap: Record<string, string[]> = {
   dies: ["die_number", "die_status", "total_production_kg", "total_runs", "last_used_date", "created_at"],
   quality_tests: ["inspection_date", "status", "batch_number", "quantity_checked_kg", "inspector_name", "created_at"],
   vendors: ["vendor_name", "vendor_type", "city", "state", "is_active", "created_at"],
-  packaging_material_purchases: ["purchase_number", "received_date", "material_id", "vendor_id", "quantity", "rate", "total_amount", "payment_status", "invoice_number", "created_at"]
+  packaging_material_purchases: ["purchase_number", "received_date", "material_id", "vendor_id", "quantity", "rate", "total_amount", "payment_status", "invoice_number", "created_at"],
+  foundry_batches: ["batch_number", "furnace_number", "alloy", "temper", "status", "billet_count", "billet_diameter_inch", "production_date", "created_at"],
+  foundry_scrap: ["scrap_number", "scrap_source", "weight_kg", "available_weight_kg", "scrap_quality", "status", "total_amount", "payment_status", "received_date", "created_at"],
+  foundry_external_sources: ["source_number", "item_type", "weight_kg", "status", "total_amount", "payment_status", "received_date", "created_at"],
+  machines: ["machine_code", "machine_name", "machine_type", "status", "location", "is_active", "created_at"],
+  packaging_jobs: ["packaging_number", "status", "pieces", "profile_weight_kg", "profile_length_m", "scheduled_date", "created_at"],
+  packaging_materials: ["material_code", "material_name", "material_type", "current_stock", "reorder_level", "is_active", "created_at"],
+  dealer_orders: ["order_number", "status", "priority", "expected_delivery_date", "created_at"]
 };
 
 const dataSources = Object.keys(fieldMap);
@@ -57,7 +64,14 @@ const sourceTableMap: Record<string, string> = {
   dies: "dies",
   quality_tests: "quality_inspections",
   vendors: "vendors",
-  packaging_material_purchases: "packaging_material_purchases"
+  packaging_material_purchases: "packaging_material_purchases",
+  foundry_batches: "foundry_batches",
+  foundry_scrap: "foundry_aluminium_scrap",
+  foundry_external_sources: "foundry_external_aluminium_sources",
+  machines: "machines",
+  packaging_jobs: "packaging_jobs",
+  packaging_materials: "packaging_materials",
+  dealer_orders: "dealer_orders"
 };
 const sourceDateFieldMap: Record<string, string> = {
   customers: "created_at",
@@ -74,7 +88,14 @@ const sourceDateFieldMap: Record<string, string> = {
   dies: "last_used_date",
   quality_tests: "inspection_date",
   vendors: "created_at",
-  packaging_material_purchases: "received_date"
+  packaging_material_purchases: "received_date",
+  foundry_batches: "production_date",
+  foundry_scrap: "received_date",
+  foundry_external_sources: "received_date",
+  machines: "created_at",
+  packaging_jobs: "scheduled_date",
+  packaging_materials: "created_at",
+  dealer_orders: "created_at"
 };
 
 function filterOperatorsFor(field: string) {

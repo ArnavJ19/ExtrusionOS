@@ -53,7 +53,7 @@ export function hasPermission(role: UserRole, permission: GranularPermission, ex
   return extraPermissions.includes(permission) || (defaultRolePermissions[role] ?? []).includes(permission);
 }
 
-export function can(role: UserRole, action: Action, resource: Resource): boolean {
+export function can(role: UserRole, action: Action, resource: Resource, extraPermissions: string[] = []): boolean {
   if (resource === "roles") return role === "owner";
   if (resource === "users") {
     if (role === "owner") return true;
@@ -63,7 +63,7 @@ export function can(role: UserRole, action: Action, resource: Resource): boolean
   if (resource === "orders" && ["dealer_admin", "dealer_staff"].includes(role)) return false;
 
   const permission = actionPermissionMap[resource]?.[action];
-  if (permission && hasPermission(role, permission)) return true;
+  if (permission && hasPermission(role, permission, extraPermissions)) return true;
 
 
   if (role === "owner") return true;
