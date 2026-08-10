@@ -38,7 +38,9 @@ export async function POST(request: Request) {
     // user with no effective permissions. Fall back to a safe low-privilege base role and
     // still record the intended role_id on user_roles below for when granular RBAC lands.
     const requestedRoleKey = invite.roles?.role_key ?? "viewer";
-    const roleKey = requestedRoleKey in defaultRolePermissions ? requestedRoleKey : "viewer";
+    // Own-property check only: `in` would also match inherited keys like "toString",
+    // letting an invalid role_key through to the app_users.role CHECK and 500 at insert.
+    const roleKey = Object.prototype.hasOwnProperty.call(defaultRolePermissions, requestedRoleKey) ? requestedRoleKey : "viewer";
     const userResult = await getOrCreateInvitedAuthUser(admin, invite.email, parsed.data.password, invite.full_name);
     if (userResult.error || !userResult.userId) return NextResponse.json({ error: userResult.error ?? "Could not create invited user" }, { status: userResult.status ?? 500 });
     const userId = userResult.userId;

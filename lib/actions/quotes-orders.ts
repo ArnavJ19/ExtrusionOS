@@ -121,6 +121,11 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
           gstPercent: parsed.data.gst_percent,
           quoteRevisionNumber: nextRevisionNumber
         }),
+        // quote_items.other_charges / packing_charge are NOT NULL (default 0). The PCDA
+        // mapping validates them as positive-or-null (null for 0), so re-assert them as
+        // numbers here so a 0-charge line does not violate the NOT NULL constraint.
+        other_charges: Number(calculatedItem.other_charges ?? 0),
+        packing_charge: Number(calculatedItem.packing_charge ?? 0),
         profile_id: item.profile_id,
         die_id: item.die_id || null,
         item_description: item.item_description || null,
