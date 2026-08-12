@@ -31,9 +31,17 @@ export function calculateFoundryFurnaceMix(totalBilletWeightKg: number, furnaceE
   }
 
   const requiredFurnaceChargeKg = Number((totalBilletWeightKg / (furnaceEfficiencyPercent / 100)).toFixed(3));
+  // Normalize the mix so scrap + external always account for exactly the charge and can
+  // never exceed 100% (a caller passing e.g. 30% scrap + 100% external must not melt 130%).
+  // Valid inputs that already sum to 100 are unchanged.
+  const scrap = Math.max(0, scrapPercentage);
+  const external = Math.max(0, externalAluminiumPercentage);
+  const total = scrap + external;
+  const scrapFraction = total > 0 ? scrap / total : 0;
+  const externalFraction = total > 0 ? external / total : 1;
   return {
     requiredFurnaceChargeKg,
-    scrapAluminiumKg: Number((requiredFurnaceChargeKg * (scrapPercentage / 100)).toFixed(3)),
-    externalAluminiumKg: Number((requiredFurnaceChargeKg * (externalAluminiumPercentage / 100)).toFixed(3))
+    scrapAluminiumKg: Number((requiredFurnaceChargeKg * scrapFraction).toFixed(3)),
+    externalAluminiumKg: Number((requiredFurnaceChargeKg * externalFraction).toFixed(3))
   };
 }

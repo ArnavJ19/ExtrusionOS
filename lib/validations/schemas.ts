@@ -348,7 +348,7 @@ export const brandingSettingsSchema = z.object({
 
 export const savedReportSchema = z.object({
   report_name: z.string().trim().min(3, "Report name should be at least 3 characters"),
-  data_source: z.enum(["customers", "quotes", "orders", "dispatches", "invoices", "payments", "expenses", "expense_payments", "inventory", "production_jobs", "scrap_records", "dies", "quality_tests", "vendors", "purchases", "packaging_material_purchases"]),
+  data_source: z.enum(["customers", "quotes", "orders", "dispatches", "invoices", "payments", "expenses", "expense_payments", "inventory", "production_jobs", "scrap_records", "dies", "quality_tests", "vendors", "purchases", "packaging_material_purchases", "foundry_batches", "foundry_scrap", "foundry_external_sources", "machines", "packaging_jobs", "packaging_materials", "dealer_orders"]),
   selected_fields: z.array(z.string().trim()).min(1, "Select at least one field"),
   filters: z.array(z.object({ field: z.string().trim(), operator: z.enum(["equals", "contains", "gt", "lt", "between"]), value: z.string().trim() })).default([]),
   grouping: z.string().trim().nullable().optional(),

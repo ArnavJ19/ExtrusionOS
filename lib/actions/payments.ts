@@ -53,7 +53,7 @@ function revalidatePaymentPaths(paymentId: string, invoiceId: string) {
 export async function recordPaymentAction(input: RecordPaymentInput): Promise<PaymentActionResult> {
   try {
     const context = await getSessionContext();
-    if (!can(context.role, "create", "financials")) {
+    if (!can(context.role, "create", "payments", context.permissions)) {
       return { success: false, error: "You do not have permission to record payments." };
     }
 
@@ -102,7 +102,7 @@ export async function recordPaymentAction(input: RecordPaymentInput): Promise<Pa
 export async function reversePaymentAction(input: ReversePaymentInput): Promise<PaymentActionResult> {
   try {
     const context = await getSessionContext();
-    if (!can(context.role, "update", "financials")) {
+    if (!can(context.role, "update", "payments", context.permissions)) {
       return { success: false, error: "You do not have permission to reverse payments." };
     }
 

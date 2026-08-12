@@ -1,8 +1,7 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
-const action = readFileSync("lib/actions/stock-reservations.ts", "utf8");
 const detail = readFileSync("app/(dashboard)/dispatches/[id]/page.tsx", "utf8");
 const migration = readFileSync("supabase/migrations/20260721091307_physical_dispatch_stock_provenance.sql", "utf8");
 const dispatchAction = readFileSync("lib/actions/dispatches.ts", "utf8");
@@ -10,8 +9,11 @@ const moduleConfig = readFileSync("components/modules/operations/module-config.t
 
 describe("reservation consumption safety", () => {
   it("does not expose a second non-atomic consumption write path", () => {
-    assert.doesNotMatch(action, /profile_stock_consumptions"\)\.insert/);
-    assert.match(action, /redirect\(`\/dispatches\/\$\{dispatchId\}`\)/);
+    // The former lib/actions/stock-reservations.ts stub (a redirect-only no-op) was
+    // removed as dead/misleading code. Reservation consumption must remain solely in
+    // the atomic private.consume_dispatch_reservations RPC. Guard that the stub file
+    // does not come back as an alternative (non-atomic) write path.
+    assert.equal(existsSync("lib/actions/stock-reservations.ts"), false);
   });
 
   it("explains automatic source-linked consumption instead of presenting a manual button", () => {

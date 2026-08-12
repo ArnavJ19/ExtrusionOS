@@ -20,6 +20,8 @@ export type QuoteItemInput = {
   margin_percent: number;
   sales_price_override?: number | null;
   minimum_margin_percent?: number;
+  // Profile surface area (sq.m per running meter). Used only to price per_sqft finishing.
+  surface_area_per_meter_sqm?: number | null;
 };
 
 export type QuoteItemCalculated = QuoteItemInput & {
@@ -27,6 +29,8 @@ export type QuoteItemCalculated = QuoteItemInput & {
   total_weight_kg: number;
   effective_weight_kg: number;
   billing_weight_kg: number;
+  billet_input_weight_kg: number;
+  finishing_surface_area_sqft: number;
   raw_material_cost: number;
   conversion_cost: number;
   finishing_cost: number;
@@ -81,12 +85,12 @@ export function calculateFinishingCost(chargeType: FinishingChargeType, charge: 
   if (chargeType === "per_meter") return money(totalMeters * nonNegative(charge));
   if (chargeType === "fixed") return money(charge);
   if (chargeType === "per_sqft") {
-    // Use provided surface area, or estimate from weight/meters assuming typical profile perimeter
+    // Price strictly from the real surface area (derived from the profile's sq.m/m).
+    // No fabricated perimeter guess: without a captured surface area we cannot price
+    // per sq.ft, so the line contributes zero finishing cost and a warning is raised
+    // upstream (see getQuoteItemWarnings -> "surface_area_missing").
     const area = nonNegative(surfaceAreaSqft);
-    if (area > 0) return money(area * nonNegative(charge));
-    // Fallback: estimate sqft from total meters assuming ~0.3m perimeter average, converted to sqft
-    const estimatedSqft = totalMeters * 0.3 * 10.764;
-    return money(estimatedSqft * nonNegative(charge));
+    return area > 0 ? money(area * nonNegative(charge)) : 0;
   }
   return 0;
 }
@@ -117,9 +121,15 @@ export function calculateQuoteItem(input: QuoteItemInput): QuoteItemCalculated {
   const total_weight_kg = qty(total_meters * section_weight_kg_per_m);
   const effective_weight_kg = qty(total_weight_kg * (1 + scrap_allowance_percent / 100));
   const billing_weight_kg = qty(Math.max(effective_weight_kg, minimum_billing_weight_kg));
-  const raw_material_cost = money(billing_weight_kg * nonNegative(input.billet_rate_per_kg));
+  // Yield/recovery: at <100% expected recovery more billet is melted than is shipped,
+  // so raw material must be costed on the grossed-up billet INPUT, not the billed weight.
+  // Recovery of 0 or >=100 (or missing) means no adjustment (factor = 1).
+  const recovery_factor = expected_recovery_percent > 0 && expected_recovery_percent < 100 ? expected_recovery_percent / 100 : 1;
+  const billet_input_weight_kg = qty(billing_weight_kg / recovery_factor);
+  const finishing_surface_area_sqft = qty(nonNegative(input.surface_area_per_meter_sqm) * total_meters * 10.764);
+  const raw_material_cost = money(billet_input_weight_kg * nonNegative(input.billet_rate_per_kg));
   const conversion_cost = money(billing_weight_kg * nonNegative(input.conversion_charge_per_kg));
-  const finishing_cost = calculateFinishingCost(input.finishing_charge_type, input.finishing_charge, billing_weight_kg, total_meters);
+  const finishing_cost = calculateFinishingCost(input.finishing_charge_type, input.finishing_charge, billing_weight_kg, total_meters, finishing_surface_area_sqft);
   const die_amortization_amount = calculateDieAmortization({ dieCharge: input.die_charge, billingWeightKg: billing_weight_kg, type: die_amortization_type, quantityKg: die_amortization_quantity_kg });
   const line_subtotal = money(raw_material_cost + conversion_cost + finishing_cost + die_amortization_amount + nonNegative(input.packing_charge) + nonNegative(input.transport_charge) + nonNegative(input.other_charges));
   const margin_amount = money(line_subtotal * nonNegative(input.margin_percent) / 100);
@@ -127,7 +137,12 @@ export function calculateQuoteItem(input: QuoteItemInput): QuoteItemCalculated {
   const line_total_before_gst = sales_price_override ?? calculatedSellingBeforeGst;
   const estimated_profit_amount = signedMoney(line_total_before_gst - line_subtotal);
   const estimated_profit_percent = line_total_before_gst > 0 ? Math.round((estimated_profit_amount / line_total_before_gst) * 10000) / 100 : 0;
-  const approval_required = estimated_profit_percent < minimum_margin_percent || estimated_profit_amount < 0;
+  // A line that has metal (billing weight) but no billet rate reports raw material cost
+  // of zero and therefore a misleadingly large profit. This is legitimate only for
+  // conversion/job-work where the customer supplies billet, so require sign-off rather
+  // than hard-blocking: flag it for approval so it cannot be sent without an approver.
+  const missing_billet_cost = billing_weight_kg > 0 && nonNegative(input.billet_rate_per_kg) <= 0;
+  const approval_required = estimated_profit_percent < minimum_margin_percent || estimated_profit_amount < 0 || missing_billet_cost;
   return {
     ...input,
     quantity_pieces,
@@ -140,6 +155,8 @@ export function calculateQuoteItem(input: QuoteItemInput): QuoteItemCalculated {
     total_weight_kg,
     effective_weight_kg,
     billing_weight_kg,
+    billet_input_weight_kg,
+    finishing_surface_area_sqft,
     raw_material_cost,
     conversion_cost,
     finishing_cost,
@@ -199,7 +216,9 @@ export function getQuoteItemWarnings(input: QuoteItemCalculated, options: { dieS
   if (!options.customerGstNumber) warnings.push({ code: "missing_customer_gst", severity: "info", message: "Customer GST number is missing. Confirm whether GST details are required on the PDF." });
   if (options.defaultConversionChargePerKg && input.conversion_charge_per_kg < options.defaultConversionChargePerKg * 0.75) warnings.push({ code: "low_conversion_charge", severity: "warning", message: "Conversion charge is much lower than the company default." });
   if (input.sales_price_override !== null) warnings.push({ code: "manual_override", severity: "info", message: "Sales price is manually overridden. Profit is calculated from override." });
-  if (input.finishing_charge_type === "per_sqft") warnings.push({ code: "surface_area_missing", severity: "warning", message: "Per sqft finishing needs surface area data. This line uses zero finishing cost until surface area is added." });
+  if (input.finishing_charge_type === "per_sqft" && input.finishing_surface_area_sqft <= 0) warnings.push({ code: "surface_area_missing", severity: "warning", message: "Per sqft finishing needs the profile surface area (sq.m per meter). This line is costed at zero finishing until surface area is captured on the profile." });
+  const recoveryPercent = input.expected_recovery_percent ?? 100;
+  if (recoveryPercent > 0 && recoveryPercent < 100) warnings.push({ code: "recovery_applied", severity: "info", message: `Raw material is grossed up for ${recoveryPercent}% expected recovery (billet input ${input.billet_input_weight_kg.toFixed(3)} kg vs ${input.billing_weight_kg.toFixed(3)} kg billed).` });
   if (options.quoteValidUntil && new Date(options.quoteValidUntil) < new Date(new Date().toISOString().slice(0, 10))) warnings.push({ code: "expired_quote", severity: "warning", message: "Quote validity date has expired." });
   return warnings;
 }

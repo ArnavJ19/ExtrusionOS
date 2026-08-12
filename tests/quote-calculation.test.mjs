@@ -49,7 +49,34 @@ test("finishing modes are calculated centrally", () => {
   assert.equal(calculateFinishingCost("per_kg", 12, 100, 50), 1200);
   assert.equal(calculateFinishingCost("per_meter", 8, 100, 50), 400);
   assert.equal(calculateFinishingCost("fixed", 500, 100, 50), 500);
-  assert.equal(calculateFinishingCost("per_sqft", 500, 100, 50), 80730);
+  // per_sqft returns zero without a real surface area (no fabricated perimeter guess)...
+  assert.equal(calculateFinishingCost("per_sqft", 500, 100, 50), 0);
+  // ...and prices strictly from the supplied surface area (sq.ft) when present.
+  assert.equal(calculateFinishingCost("per_sqft", 500, 100, 50, 20), 10000);
+});
+
+test("expected recovery grosses up billet input and raw material cost", () => {
+  const item = calculateQuoteItem({ ...baseItem, expected_recovery_percent: 80 });
+  // 500 kg billed / 0.80 recovery = 625 kg of billet actually melted
+  assert.equal(item.billet_input_weight_kg, 625);
+  assert.equal(item.raw_material_cost, 156250); // 625 * 250
+  // conversion is charged on billed output weight and is unaffected by recovery
+  assert.equal(item.conversion_cost, 12500);
+});
+
+test("full recovery (100%) leaves raw material unchanged", () => {
+  const item = calculateQuoteItem({ ...baseItem, expected_recovery_percent: 100 });
+  assert.equal(item.billet_input_weight_kg, 500);
+  assert.equal(item.raw_material_cost, 125000);
+});
+
+test("per_sqft finishing uses profile surface area, zero when missing", () => {
+  const withArea = calculateQuoteItem({ ...baseItem, finishing_charge_type: "per_sqft", finishing_charge: 10, surface_area_per_meter_sqm: 0.5 });
+  // 500 m * 0.5 sq.m/m * 10.764 sq.ft/sq.m = 2691 sq.ft; * 10 = 26910
+  assert.equal(withArea.finishing_surface_area_sqft, 2691);
+  assert.equal(withArea.finishing_cost, 26910);
+  const withoutArea = calculateQuoteItem({ ...baseItem, finishing_charge_type: "per_sqft", finishing_charge: 10 });
+  assert.equal(withoutArea.finishing_cost, 0);
 });
 
 test("die amortization supports full, per kg, waived, and customer paid modes", () => {
@@ -65,6 +92,14 @@ test("manual selling override can trigger low margin approval", () => {
   assert.equal(item.line_total_before_gst, 130000);
   assert.equal(item.estimated_profit_amount, -7500);
   assert.equal(item.approval_required, true);
+});
+
+test("a line with metal but no billet rate requires approval before sending", () => {
+  const item = calculateQuoteItem({ ...baseItem, billet_rate_per_kg: 0 });
+  assert.equal(item.raw_material_cost, 0);
+  assert.equal(item.approval_required, true);
+  const summary = calculateQuoteSummary([item], 18);
+  assert.equal(summary.low_margin_approval_required, true);
 });
 
 test("quote summary aggregates profit and GST", () => {

@@ -30,6 +30,10 @@ export type SessionContext = {
   dealerId?: string | null;
   department?: string | null;
   salesRegion?: string | null;
+  // Effective granular permission keys granted to this user via custom roles
+  // (user_roles -> role_permissions). Base-role rights are resolved from `role`;
+  // these are additive grants on top. Empty for owner/admin (they have everything).
+  permissions?: string[];
 };
 
 export const customerTypes: CustomerType[] = ["fabricator", "dealer", "architect", "industrial", "solar", "government", "export", "contractor", "other"];

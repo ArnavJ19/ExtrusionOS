@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 export default async function PaymentsDatabasePage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const context = await getSessionContext();
-  if (!can(context.role, "read", "financials")) redirect("/dashboard");
+  if (!can(context.role, "read", "payments", context.permissions)) redirect("/dashboard");
   const params = await searchParams;
-  return <ModuleDatabaseClient moduleKey="payments" context={context} canCreate={can(context.role, "create", "financials")} initialStatus={params.status ?? ""} />;
+  return <ModuleDatabaseClient moduleKey="payments" context={context} canCreate={can(context.role, "create", "payments", context.permissions)} initialStatus={params.status ?? ""} />;
 }

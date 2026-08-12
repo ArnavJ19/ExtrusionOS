@@ -71,6 +71,14 @@ function positiveChargeOrNull(value: number | null | undefined): number | null {
 
 export function buildQuoteItemPcdaFields(input: QuoteItemPcdaInput) {
   const { companyId, profile, item, gstPercent, quoteRevisionNumber } = input;
+  // Reconcile the PCDA line so its report sections foot: Basic Price = Material + VAS + Other,
+  // and Quantity kg uses the billing weight that Net Rate is derived from (so Net Rate x Qty = Line Value).
+  const materialPricePerKg = item.billet_rate_per_kg ?? 0;
+  const finishingPerKg = Number(item.billing_weight_kg ?? 0) > 0 ? Number(item.finishing_cost ?? 0) / Number(item.billing_weight_kg) : 0;
+  const valueAddedServicePerKg = (Number(item.conversion_charge_per_kg ?? 0) + finishingPerKg) || 0;
+  const otherChargesTotal = positiveChargeOrNull(item.other_charges) ?? 0;
+  const basicPricePcda = Math.round((materialPricePerKg + valueAddedServicePerKg + otherChargesTotal) * 100) / 100;
+  const pcdaBillingQuantityKg = (item.billing_weight_kg ?? item.total_weight_kg) ?? 0;
   const validated = technicalLineItemSchema.parse({
     company_id: companyId,
     section_number: profile.section_number ?? profile.profile_code ?? null,
@@ -88,7 +96,7 @@ export function buildQuoteItemPcdaFields(input: QuoteItemPcdaInput) {
     cl_meter: item.length_per_piece_m,
     order_uom: "piece",
     order_quantity: item.quantity_pieces,
-    quantity_kg: item.total_weight_kg,
+    quantity_kg: pcdaBillingQuantityKg,
     section_weight_kg_per_m: item.section_weight_kg_per_m,
     min_weight: profile.min_weight ?? null,
     max_weight: profile.max_weight ?? null,
@@ -99,10 +107,14 @@ export function buildQuoteItemPcdaFields(input: QuoteItemPcdaInput) {
     cut_length: item.length_per_piece_m,
     bundle_quantity: profile.bundle_quantity ?? null,
     pieces_per_m_per_kg_per_bundle: profile.pieces_per_m_per_kg_per_bundle ?? null,
-    material_price: item.billet_rate_per_kg ?? 0,
-    value_added_service_price: (item.conversion_charge_per_kg + item.finishing_charge) || 0,
+    material_price: materialPricePerKg,
+    // Value-added service, expressed per kg (finishing cost normalized to per-kg, not a raw
+    // per_meter/fixed/per_sqft charge added to the per-kg conversion charge).
+    value_added_service_price: valueAddedServicePerKg,
     other_charges: positiveChargeOrNull(item.other_charges),
-    basic_price: item.price_per_kg ?? 0,
+    // Basic Price = Material + Value-Added Service + Other (so the Basic Price section foots),
+    // not the net selling rate.
+    basic_price: basicPricePcda,
     packing_charge: positiveChargeOrNull(item.packing_charge),
     freight_charge: positiveChargeOrNull(item.transport_charge),
     die_cost: positiveChargeOrNull(item.die_charge),
