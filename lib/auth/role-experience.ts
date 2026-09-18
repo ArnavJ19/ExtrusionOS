@@ -63,16 +63,17 @@ export const searchResourceDefinitions = [
   { key: "customers", resource: "customers" },
   { key: "profiles", resource: "profiles" },
   { key: "dies", resource: "dies" },
-  { key: "quotes", resource: "quotes" },
+  { key: "quotes", resource: "quotes", roles: ["owner", "admin", "sales_manager", "sales", "accounts", "viewer"] },
   { key: "orders", resource: "orders" },
   { key: "dispatches", resource: "dispatches" },
-] as const satisfies readonly { key: string; resource: Resource }[];
+  { key: "dealer_orders", resource: "dealer_orders", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "inventory_manager", "dealer_admin", "dealer_staff"] },
+] as const satisfies readonly { key: string; resource: Resource; roles?: readonly UserRole[] }[];
 
 export type SearchResourceKey = (typeof searchResourceDefinitions)[number]["key"];
 
 export function getSearchResourceKeys(role: UserRole): SearchResourceKey[] {
   return searchResourceDefinitions
-    .filter((definition) => can(role, "read", definition.resource))
+    .filter((definition) => (!("roles" in definition) || (definition.roles as readonly UserRole[]).includes(role)) && can(role, "read", definition.resource))
     .map((definition) => definition.key);
 }
 

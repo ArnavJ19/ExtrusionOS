@@ -11,7 +11,7 @@ export type FieldConfig = {
   type?: "text" | "number" | "date" | "textarea" | "select" | "checkbox";
   required?: boolean;
   options?: { value: string; label: string }[];
-  lookup?: { table: string; select: string; labelFields: string[]; orderBy: string; filter?: Record<string, string | boolean> };
+  lookup?: { table: string; select: string; labelFields: string[]; searchFields?: string[]; orderBy: string; filter?: Record<string, string | boolean> };
   step?: string;
   placeholder?: string;
   readOnly?: boolean;
@@ -66,9 +66,9 @@ function options(values: string[]) {
   return values.map((value) => ({ value, label: value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()) }));
 }
 
-const customerLookup = { table: "customers", select: "id, customer_name, company_name", labelFields: ["company_name", "customer_name"], orderBy: "customer_name" };
-const profileLookup = { table: "aluminium_profiles", select: "id, profile_code, profile_name, alloy, temper, billet_diameter_required_inch", labelFields: ["profile_code", "profile_name"], orderBy: "profile_code" };
-const orderLookup = { table: "orders", select: "id, order_number, priority, billets_required, billets_allocated, billets_short, billet_allocation_status, billet_diameter_required_inch", labelFields: ["order_number"], orderBy: "order_date" };
+const customerLookup = { table: "customers", select: "id, customer_name, company_name, gst_number", labelFields: ["company_name", "customer_name"], searchFields: ["customer_name", "company_name", "gst_number"], orderBy: "customer_name" };
+const profileLookup = { table: "aluminium_profiles", select: "id, profile_code, profile_name, alloy, temper, billet_diameter_required_inch", labelFields: ["profile_code", "profile_name"], searchFields: ["profile_code", "profile_name", "alloy", "temper"], orderBy: "profile_code" };
+const orderLookup = { table: "orders", select: "id, order_number, customer_po_number, priority, billets_required, billets_allocated, billets_short, billet_allocation_status, billet_diameter_required_inch", labelFields: ["order_number"], searchFields: ["order_number", "customer_po_number"], orderBy: "order_date" };
 const vendorLookup = { table: "vendors", select: "id, vendor_name, vendor_type, phone", labelFields: ["vendor_name", "vendor_type"], orderBy: "vendor_name" };
 const scrapLookup = { table: "foundry_aluminium_scrap", select: "id, scrap_number, scrap_quality, available_weight_kg, weight_kg, status", labelFields: ["scrap_number", "scrap_quality"], orderBy: "scrap_number", filter: { status: "available" } };
 const externalSourceLookup = { table: "foundry_external_aluminium_sources", select: "id, source_number, item_type, alloy, available_weight_kg, weight_kg, status", labelFields: ["source_number", "item_type", "alloy"], orderBy: "source_number", filter: { status: "available" } };
@@ -116,7 +116,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { name: "customer_id", label: "Customer", type: "select", required: true, readOnly: true, lookup: customerLookup },
       { name: "quote_id", label: "Approved quote", type: "select", readOnly: true, lookup: { table: "quotes", select: "id, quote_number", labelFields: ["quote_number"], orderBy: "quote_date" } },
       { name: "production_profile_id", label: "Production profile", type: "select", readOnly: true, lookup: profileLookup },
-      { name: "production_die_id", label: "Production die", type: "select", readOnly: true, lookup: { table: "dies", select: "id, die_number, profile_id, die_status, billet_diameter_required_inch", labelFields: ["die_number"], orderBy: "die_number" } },
+      { name: "production_die_id", label: "Production die", type: "select", readOnly: true, lookup: { table: "dies", select: "id, die_number, profile_id, die_status, rack_location, billet_diameter_required_inch", labelFields: ["die_number"], searchFields: ["die_number", "rack_location"], orderBy: "die_number" } },
       { name: "production_quantity_kg", label: "Production qty kg", type: "number", step: "0.001", readOnly: true },
       { name: "production_pieces", label: "Production pieces", type: "number", readOnly: true },
       { name: "billet_diameter_required_inch", label: "Required billet diameter inch", type: "number", step: "0.01", readOnly: true },
@@ -243,7 +243,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     fields: [
       { name: "order_id", label: "Order", type: "select", required: true, lookup: orderLookup },
       { name: "profile_id", label: "Profile", type: "select", required: true, lookup: profileLookup },
-      { name: "die_id", label: "Die", type: "select", required: true, lookup: { table: "dies", select: "id, die_number, profile_id, die_status", labelFields: ["die_number"], orderBy: "die_number" } },
+      { name: "die_id", label: "Die", type: "select", required: true, lookup: { table: "dies", select: "id, die_number, profile_id, die_status, rack_location", labelFields: ["die_number"], searchFields: ["die_number", "rack_location"], orderBy: "die_number" } },
       { name: "machine_id", label: "Machine", type: "select", lookup: { table: "machines", select: "id, machine_name", labelFields: ["machine_name"], orderBy: "machine_name" } },
       { name: "planned_quantity_kg", label: "Planned kg", type: "number", required: true, step: "0.001" },
       { name: "pieces", label: "Pieces", type: "number" },

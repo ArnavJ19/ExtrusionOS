@@ -9,6 +9,7 @@ const migration = read("supabase/migrations/20260721091620_quote_atomic_dealer_l
 const quoteActions = read("lib/actions/quotes-orders.ts");
 const quoteOrderForm = read("components/modules/orders/quote-order-form-client.tsx");
 const productionForm = read("components/modules/operations/record-form-client.tsx");
+const dealerHandoffMigration = read("supabase/migrations/20260723020000_atomic_dealer_quote_order_handoff.sql");
 
 test("quote header, snapshot, and items save inside one guarded transaction", () => {
   assert.match(quoteActions, /rpc\("save_quote_atomic"/);
@@ -43,4 +44,13 @@ test("availability and production planning respect finish and per-line factory b
   assert.match(quoteOrderForm, /demandByProfileFinish/);
   assert.match(quoteOrderForm, /stockByProfileFinish/);
   assert.match(productionForm, /item\.manufacturing_weight_kg \?\? item\.billing_weight_kg/);
+});
+
+test("dealer quote conversion creates the core and dealer orders in one transaction", () => {
+  assert.match(quoteOrderForm, /rpc\("create_order_from_quote_with_dealer_workflow_atomic"/);
+  assert.doesNotMatch(quoteOrderForm, /fetch\("\/api\/dealer-orders\/from-quote-order"/);
+  assert.match(dealerHandoffMigration, /v_order_id := private\.create_order_from_quote_with_dealer_stock/);
+  assert.match(dealerHandoffMigration, /perform private\.create_dealer_order_from_order_atomic\(v_order_id\)/);
+  assert.match(dealerHandoffMigration, /private\.get_current_user_dealer_id\(\) is not null/);
+  assert.match(dealerHandoffMigration, /create or replace function public\.create_order_from_quote_with_dealer_workflow_atomic/);
 });

@@ -77,7 +77,9 @@ async function loadProductionSourceLine(supabase: any, companyId: string, orderI
 }
 
 function isUsableDieStatus(status: unknown) {
-  return !["inactive", "dead", "blocked", "retired", "scrapped", "under_maintenance"].includes(String(status ?? ""));
+  const blockedDieStatuses = ["inactive", "dead", "blocked", "retired", "scrapped", "under_maintenance"];
+  if (blockedDieStatuses.includes(String(status ?? ""))) return false;
+  return ["active", "approved"].includes(String(status ?? ""));
 }
 
 function isAvailablePressStatus(status: unknown) {
@@ -107,7 +109,7 @@ async function validateSelectedBillets(supabase: any, companyId: string, orderId
   if (!selectedBilletIds.length) return null;
   const billetsResult = await supabase
     .from("foundry_billets")
-    .select("id, order_id, status, production_job_id, alloy, billet_diameter_inch, allocation_requirement_id, order_billet_requirements(order_id, alloy, billet_diameter_inch, status)")
+    .select("id, order_id, status, production_job_id, alloy, temper, billet_diameter_inch, allocation_requirement_id, order_billet_requirements(order_id, alloy, temper, billet_diameter_inch, status)")
     .eq("company_id", companyId)
     .in("id", selectedBilletIds);
   if (billetsResult.error) throw billetsResult.error;
@@ -122,6 +124,7 @@ async function validateSelectedBillets(supabase: any, companyId: string, orderId
     if (requirement?.order_id && requirement.order_id !== orderId) return true;
     if (requirement?.status === "cancelled") return true;
     if (requirement?.alloy && String(requirement.alloy).toLowerCase() !== String(billet.alloy ?? "").toLowerCase()) return true;
+    if (requirement?.temper && String(requirement.temper).toLowerCase() !== String(billet.temper ?? "").toLowerCase()) return true;
     if (requirement?.billet_diameter_inch && Number(requirement.billet_diameter_inch) !== Number(billet.billet_diameter_inch)) return true;
     return false;
   });
@@ -173,6 +176,7 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
     const sourceLine = await loadProductionSourceLine(supabase, context.companyId, parsed.data.order_id, parsed.data.profile_id);
     const payload = {
       ...parsed.data,
+      status: editingId ? currentJob?.status ?? "planned" : "planned",
       machine_id: parsed.data.machine_id || null,
       planned_date: parsed.data.planned_date || null,
       length_per_piece_m: parsed.data.length_per_piece_m || sourceLine?.length_per_piece_m || null,
@@ -198,7 +202,7 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
   }
 }
 
-export async function updateProductionJobStatusAction(jobId: string, status: string): Promise<ProductionActionResult> {
+export async function updateProductionJobStatusAction(jobId: string, status: string, reason?: string | null): Promise<ProductionActionResult> {
   try {
     const context = await getSessionContext();
     if (!can(context.role, "update", "production")) return { success: false, error: "You do not have permission to update production jobs." };
@@ -206,25 +210,12 @@ export async function updateProductionJobStatusAction(jobId: string, status: str
     if (!parsedStatus.success) return { success: false, error: "Invalid production job status." };
     if (parsedStatus.data === "completed") return { success: false, error: "Use the actual output form to complete production." };
     const supabase = await createClient();
-    const existingJob = await supabase
-      .from("production_jobs")
-      .select("id, status, planned_quantity_kg, actual_quantity_kg, machine_id, die_id, order_id")
-      .eq("id", jobId)
-      .eq("company_id", context.companyId)
-      .maybeSingle();
-    if (existingJob.error) throw existingJob.error;
-    if (!existingJob.data) return { success: false, error: "Production job not found for this company." };
-    if (parsedStatus.data === "ready" && !existingJob.data.machine_id) return { success: false, error: "Assign an available extrusion press before marking this job ready." };
-
-    const result = await supabase
-      .from("production_jobs")
-      .update({ status: parsedStatus.data })
-      .eq("id", jobId)
-      .eq("company_id", context.companyId)
-      .select("id")
-      .maybeSingle();
-    if (result.error) throw result.error;
-    if (!result.data) return { success: false, error: "Production job not found for this company." };
+    const result = await supabase.rpc("transition_production_job_atomic", {
+      p_job_id: jobId,
+      p_status: parsedStatus.data,
+      p_reason: reason?.trim() || null
+    });
+    if (result.error || !result.data) throw result.error ?? new Error("Could not transition production job");
     revalidateProductionPaths(jobId);
     return { success: true, jobId };
   } catch (error) {

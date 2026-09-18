@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/browser";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 
 type EnergyReading = {
   id: string;
@@ -80,7 +81,7 @@ export default function EnergyPage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const [filterType, setFilterType] = useState("all");
-  const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 10));
+  const [filterDate, setFilterDate] = useState(() => getBusinessDateBoundaries().today);
   const [showForm, setShowForm] = useState(false);
 
   const [fMachine, setFMachine] = useState("");

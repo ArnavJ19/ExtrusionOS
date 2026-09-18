@@ -71,7 +71,7 @@ export default async function AnalyticsPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white">
           <CardContent>
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-300">Booked Revenue MTD</p>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-300">Order Intake MTD</p>
             <p className="mt-3 text-3xl font-black">{formatCompactCurrency(snapshot.kpis.bookedRevenueMtd)}</p>
             <p className="mt-1 text-xs text-slate-300">{snapshot.kpis.activeOrders} active orders in pipeline</p>
           </CardContent>
@@ -193,7 +193,7 @@ export default async function AnalyticsPage() {
                 Expense payment coverage: {formatPercent(snapshot.kpis.expensePaidRateMtd)}
               </div>
               <div className={`rounded-xl border px-3 py-2 text-xs font-bold ${pctClass(snapshot.kpis.qualityPassRateMtd, 92)}`}>
-                Quality pass rate: {formatPercent(snapshot.kpis.qualityPassRateMtd)}
+                QC decision pass rate: {formatPercent(snapshot.kpis.qualityPassRateMtd)}
               </div>
             </div>
           </CardContent>
@@ -203,9 +203,9 @@ export default async function AnalyticsPage() {
       <div className="grid gap-6 xl:grid-cols-4">
         <Card>
           <CardContent>
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Production MTD</p>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Production Against MTD Plan</p>
             <p className="mt-2 text-2xl font-black text-slate-900">{Math.round(snapshot.kpis.productionActualKgMtd).toLocaleString("en-IN")} kg</p>
-            <p className="mt-1 text-xs text-slate-500">Planned: {Math.round(snapshot.kpis.productionPlannedKgMtd).toLocaleString("en-IN")} kg</p>
+            <p className="mt-1 text-xs text-slate-500">Planned this month: {Math.round(snapshot.kpis.productionPlannedKgMtd).toLocaleString("en-IN")} kg. Actual counts jobs completed this month.</p>
           </CardContent>
         </Card>
         <Card>

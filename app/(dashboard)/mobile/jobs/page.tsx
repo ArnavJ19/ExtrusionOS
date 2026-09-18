@@ -1,24 +1,28 @@
 import Link from "next/link";
 import { ArrowRight, Factory, Gauge } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatWeight } from "@/lib/utils/format";
 import { canAccessMobileDestination } from "@/lib/auth/role-experience";
 import { redirect } from "next/navigation";
+import { MobilePagination } from "@/components/ui/mobile-pagination";
 
-export default async function MobileJobsPage() {
+export default async function MobileJobsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const context = await getSessionContext();
   if (!canAccessMobileDestination(context.role, "jobs")) redirect("/dashboard?denied=1");
   const supabase = await createClient();
-  const { data: jobs, error } = await supabase
+  const page = Math.max(1, Number((await searchParams).page ?? 1) || 1);
+  const pageSize = 20;
+  const { data: jobs, error, count } = await supabase
     .from("production_jobs")
-    .select("id, job_number, status, planned_date, planned_quantity_kg, actual_quantity_kg, machines(machine_name), dies(die_number), orders(order_number, priority, customers(customer_name, company_name)), aluminium_profiles(profile_code, profile_name), scrap_records(weight_kg)")
+    .select("id, job_number, status, planned_date, planned_quantity_kg, actual_quantity_kg, machines(machine_name), dies(die_number), orders(order_number, priority, customers(customer_name, company_name)), aluminium_profiles(profile_code, profile_name), scrap_records(weight_kg)", { count: "exact" })
     .eq("company_id", context.companyId)
     .not("status", "in", "(completed,cancelled)")
     .order("planned_date", { ascending: true, nullsFirst: false })
-    .limit(20);
-  if (error) throw new Error(`Could not load active production jobs: ${error.message}`);
+    .range((page - 1) * pageSize, page * pageSize - 1);
+  if (error) return <div className="mx-auto max-w-xl space-y-4"><MobileTitle icon={Factory} title="Active Jobs" subtitle="Open real production jobs to record status, output, scrap, and proof from the job workflow." /><ErrorState description="Could not load active production jobs. Refresh and try again before assuming the queue is empty." /></div>;
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
@@ -31,6 +35,7 @@ export default async function MobileJobsPage() {
           <p className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white">Open job workflow <ArrowRight className="h-4 w-4" /></p>
         </Link>
       )) : <EmptyState title="No active production jobs" description="Production jobs appear here when they are planned or in progress." />}
+      <MobilePagination path="/mobile/jobs" page={page} pageSize={pageSize} totalCount={count ?? 0} />
     </div>
   );
 }

@@ -93,13 +93,19 @@ export async function saveInvoiceAction(input: SaveInvoiceInput): Promise<Invoic
     const dispatchId = parsed.data.dispatch_id;
     const { data: dispatch, error: dispatchError } = await supabase
       .from("dispatches")
-      .select("id, order_id")
+      .select("id, order_id, delivery_status")
       .eq("company_id", context.companyId)
       .eq("id", dispatchId)
       .maybeSingle();
     if (dispatchError) throw dispatchError;
     if (!dispatch || dispatch.order_id !== parsed.data.order_id) {
       return { success: false, error: "Selected dispatch does not belong to the source order." };
+    }
+    if (["returned", "damaged"].includes(dispatch.delivery_status)) {
+      return {
+        success: false,
+        error: "Returned or damaged dispatches cannot be invoiced. Resolve the return or damage and create a replacement dispatch first."
+      };
     }
 
     const sourceLines = await loadInvoiceSourceLines(

@@ -14,6 +14,7 @@ import { StatusBoard, StatusCard } from "@/components/status-board";
 import { createClient } from "@/lib/supabase/browser";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { getDieRisks } from "@/lib/calculations/operations";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { formatDate, formatWeight } from "@/lib/utils/format";
 import { dieStatuses, labelize, type SessionContext } from "@/types/app";
 import type { DieRow } from "./types";
@@ -51,7 +52,7 @@ export function DiesOverviewClient({ context, canCreate }: { context: SessionCon
     const [totalResult, customerOwnedResult, nitridingDueResult] = await Promise.all([
       supabase.from("dies").select("id", { count: "exact", head: true }).eq("company_id", context.companyId),
       supabase.from("dies").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).eq("ownership_type", "customer_owned"),
-      Promise.resolve(supabase.from("die_nitriding_history").select("die_id", { count: "exact", head: true }).eq("company_id", context.companyId).lte("next_nitriding_due_date", new Date().toISOString().slice(0, 10)).not("next_nitriding_due_date", "is", null)).catch(() => ({ count: 0, error: null, data: null }))
+      Promise.resolve(supabase.from("die_nitriding_history").select("die_id", { count: "exact", head: true }).eq("company_id", context.companyId).lte("next_nitriding_due_date", getBusinessDateBoundaries().today).not("next_nitriding_due_date", "is", null)).catch(() => ({ count: 0, error: null, data: null }))
     ]);
 
     if (totalResult.error) throw totalResult.error;

@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logEnterpriseAuditEvent } from "./audit";
-import { calculateDifference, classifyReceiptLine } from "./dealer-workflow-rules";
 export { calculateDifference, canAccessDealerRecord, classifyReceiptLine } from "./dealer-workflow-rules";
 
 export type ReceiptLineInput = {
@@ -34,100 +33,18 @@ export async function submitDealerReceipt(
     notes?: string | null;
   }
 ) {
-  const hasMismatch = input.lines.some((line) => classifyReceiptLine(line.expectedQuantity, line.reportedReceivedQuantity) === "discrepancy_reported");
-  const receiptStatus = hasMismatch ? "discrepancy_reported" : "confirmed";
-
-  const audit = await logEnterpriseAuditEvent(supabase, {
-    companyId: input.actor.companyId,
-    actorUserId: input.actor.userId,
-    actorName: input.actor.name,
-    actorRole: input.actor.role,
-    actorDealerId: input.actor.dealerId,
-    actionType: hasMismatch ? "dealer_reported_quantity_mismatch" : "dealer_confirmed_receipt",
-    moduleName: "dealer_inventory",
-    entityType: "shipment",
-    entityId: input.shipmentId,
-    changeSummary: hasMismatch ? "Dealer receipt submitted with quantity mismatch" : "Dealer receipt confirmed",
-    newValue: { lines: input.lines },
-    ipAddress: input.actor.ipAddress,
-    userAgent: input.actor.userAgent,
-    deviceSessionId: input.actor.deviceSessionId,
-    relatedShipmentId: input.shipmentId
+  const { data, error } = await supabase.rpc("submit_dealer_receipt_atomic", {
+    p_shipment_id: input.shipmentId,
+    p_dealer_id: input.dealerId,
+    p_dealer_order_id: input.dealerOrderId ?? null,
+    p_notes: input.notes ?? null,
+    p_lines: input.lines,
+    p_ip_address: input.actor.ipAddress ?? null,
+    p_user_agent: input.actor.userAgent ?? null,
+    p_device_session_id: input.actor.deviceSessionId ?? null
   });
-  if (audit.error) return { error: audit.error };
-
-  const receiptResult = await supabase.from("dealer_receipts").insert({
-    company_id: input.actor.companyId,
-    dealer_id: input.dealerId,
-    shipment_id: input.shipmentId,
-    received_by_user_id: input.actor.userId,
-    received_by_name: input.actor.name ?? null,
-    received_by_role: input.actor.role,
-    status: receiptStatus,
-    notes: input.notes ?? null,
-    ip_address: input.actor.ipAddress ?? null,
-    user_agent: input.actor.userAgent ?? null,
-    device_session_id: input.actor.deviceSessionId ?? null
-  }).select("id").single();
-  if (receiptResult.error || !receiptResult.data) return { error: receiptResult.error };
-
-  const receiptItems = input.lines.map((line) => ({
-    company_id: input.actor.companyId,
-    dealer_receipt_id: receiptResult.data.id,
-    shipment_item_id: line.shipmentItemId,
-    expected_quantity: line.expectedQuantity,
-    reported_received_quantity: line.reportedReceivedQuantity,
-    status: classifyReceiptLine(line.expectedQuantity, line.reportedReceivedQuantity),
-    notes: line.notes ?? null
-  }));
-  const receiptItemsResult = await supabase.from("dealer_receipt_items").insert(receiptItems);
-  if (receiptItemsResult.error) return { error: receiptItemsResult.error };
-
-  for (const line of input.lines) {
-    const lineStatus = classifyReceiptLine(line.expectedQuantity, line.reportedReceivedQuantity);
-    await supabase.from("shipment_items").update({ status: lineStatus }).eq("id", line.shipmentItemId).eq("company_id", input.actor.companyId);
-
-    if (lineStatus === "received_confirmed") {
-      await supabase.from("inventory_transactions").insert({
-        company_id: input.actor.companyId,
-        inventory_item_id: line.inventoryItemId,
-        item_type: "other",
-        quantity: line.reportedReceivedQuantity,
-        unit: line.unit,
-        inventory_state: "dealer_inventory_on_hand",
-        from_owner_type: "dealer",
-        from_owner_id: input.dealerId,
-        to_owner_type: "dealer",
-        to_owner_id: input.dealerId,
-        dealer_order_id: input.dealerOrderId ?? null,
-        shipment_id: input.shipmentId,
-        created_by_user_id: input.actor.userId,
-        created_by_role: input.actor.role,
-        reason: "Dealer confirmed receipt",
-        status: "posted",
-        audit_log_id: audit.data?.id ?? null
-      });
-    } else {
-      await supabase.from("inventory_discrepancies").insert({
-        company_id: input.actor.companyId,
-        dealer_id: input.dealerId,
-        dealer_order_id: input.dealerOrderId ?? null,
-        shipment_id: input.shipmentId,
-        shipment_item_id: line.shipmentItemId,
-        expected_quantity: line.expectedQuantity,
-        reported_quantity: line.reportedReceivedQuantity,
-        difference_quantity: calculateDifference(line.expectedQuantity, line.reportedReceivedQuantity),
-        status: "open",
-        reported_by_user_id: input.actor.userId,
-        reported_by_name: input.actor.name ?? null,
-        reported_by_role: input.actor.role
-      });
-    }
-  }
-
-  await supabase.from("shipments").update({ status: hasMismatch ? "discrepancy_reported" : "received_confirmed" }).eq("id", input.shipmentId).eq("company_id", input.actor.companyId);
-
-  return { data: { receiptId: receiptResult.data.id, status: receiptStatus } };
+  if (error) return { error };
+  return { data };
 }
 
 export async function submitDiscrepancyRecount(

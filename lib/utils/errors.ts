@@ -13,6 +13,7 @@ export function getErrorMessage(error: unknown, fallback = "Something went wrong
   if (candidate.code === "23503" || /foreign key/i.test(message)) return "One selected record is no longer available. Refresh and try again.";
   if (/row-level security/i.test(message) || /permission denied/i.test(message)) return "You do not have permission to perform this action for this company.";
   if (/invalid input syntax for type uuid/i.test(message)) return "Please select a valid record before saving.";
+  if (/jwt|invalid api key|supabase|postgres|postgrest|relation .* does not exist|column .* does not exist|syntax error|stack trace| at \w+\(/i.test(message)) return fallback;
 
-  return message;
+  return message.length <= 240 ? message : fallback;
 }

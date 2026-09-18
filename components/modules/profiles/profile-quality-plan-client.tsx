@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/browser";
-import { getErrorMessage } from "@/lib/utils/errors";
+import { replaceProfileQualityPlanAction } from "@/lib/actions/profile-configuration";
 import type { SessionContext } from "@/types/app";
 
 type QualityPlanItem = {
@@ -23,7 +23,7 @@ type QualityPlanItem = {
 const INSPECTION_STAGES = ["First Piece", "In Process", "Final", "Dimensional", "Surface", "Weight", "Hardness", "Coating", "Anodizing", "Mechanical", "Packing"];
 const DEFAULT_PARAMETERS = ["Weight per meter", "Dimensional tolerance", "Surface finish", "Straightness", "Twist", "Bow", "Hardness", "Coating thickness", "Anodizing microns", "Visual inspection"];
 
-export function ProfileQualityPlanClient({ context, profileId }: { context: SessionContext; profileId: string }) {
+export function ProfileQualityPlanClient({ context, profileId, canEdit }: { context: SessionContext; profileId: string; canEdit: boolean }) {
   const supabase = useMemo(() => createClient(), []);
   const [items, setItems] = useState<QualityPlanItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,24 +61,18 @@ export function ProfileQualityPlanClient({ context, profileId }: { context: Sess
     if (!valid.length) return toast.error("Add at least one quality parameter.");
     setSaving(true);
 
-    // Deactivate existing and insert fresh
-    await supabase.from("profile_quality_plans").update({ is_active: false }).eq("company_id", context.companyId).eq("profile_id", profileId);
-
     const rows = valid.map((item) => ({
-      company_id: context.companyId,
-      profile_id: profileId,
       inspection_stage: item.inspection_stage,
       parameter_name: item.parameter_name,
       acceptance_criteria: item.acceptance_criteria || null,
       rejection_criteria: item.rejection_criteria || null,
       inspection_frequency: item.inspection_frequency || null,
-      is_mandatory: item.is_mandatory,
-      is_active: true
+      is_mandatory: item.is_mandatory
     }));
 
-    const { error } = await supabase.from("profile_quality_plans").insert(rows);
+    const result = await replaceProfileQualityPlanAction(profileId, rows);
     setSaving(false);
-    if (error) return toast.error(getErrorMessage(error));
+    if (!result.success) return toast.error(result.error);
     toast.success("Quality plan saved");
     void loadPlan();
   }
@@ -90,7 +84,7 @@ export function ProfileQualityPlanClient({ context, profileId }: { context: Sess
       <CardHeader>
         <div className="flex items-center justify-between">
           <h2 className="section-title">Quality Inspection Plan</h2>
-          <Button type="button" variant="secondary" onClick={addItem}><Plus className="mr-1 h-3.5 w-3.5" /> Add Parameter</Button>
+          {canEdit && <Button type="button" variant="secondary" onClick={addItem}><Plus className="mr-1 h-3.5 w-3.5" /> Add Parameter</Button>}
         </div>
       </CardHeader>
       <CardContent>
@@ -103,25 +97,25 @@ export function ProfileQualityPlanClient({ context, profileId }: { context: Sess
             </div>
             {items.map((item, index) => (
               <div key={item.id} className="grid grid-cols-[140px_160px_1fr_1fr_100px_60px_40px] gap-2 items-center rounded-xl border border-slate-200 bg-white p-2">
-                <select className="form-input text-xs" value={item.inspection_stage} onChange={(e) => updateItem(index, "inspection_stage", e.target.value)}>
+                <select disabled={!canEdit} className="form-input text-xs" value={item.inspection_stage} onChange={(e) => updateItem(index, "inspection_stage", e.target.value)}>
                   <option value="">Stage...</option>
                   {INSPECTION_STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
-                <select className="form-input text-xs" value={item.parameter_name} onChange={(e) => updateItem(index, "parameter_name", e.target.value)}>
+                <select disabled={!canEdit} className="form-input text-xs" value={item.parameter_name} onChange={(e) => updateItem(index, "parameter_name", e.target.value)}>
                   <option value="">Parameter...</option>
                   {DEFAULT_PARAMETERS.map((p) => <option key={p} value={p}>{p}</option>)}
                   {item.parameter_name && !DEFAULT_PARAMETERS.includes(item.parameter_name) && <option value={item.parameter_name}>{item.parameter_name}</option>}
                 </select>
-                <input className="form-input text-xs" placeholder="Accept criteria" value={item.acceptance_criteria} onChange={(e) => updateItem(index, "acceptance_criteria", e.target.value)} />
-                <input className="form-input text-xs" placeholder="Reject criteria" value={item.rejection_criteria} onChange={(e) => updateItem(index, "rejection_criteria", e.target.value)} />
-                <input className="form-input text-xs" placeholder="Freq" value={item.inspection_frequency} onChange={(e) => updateItem(index, "inspection_frequency", e.target.value)} />
-                <input type="checkbox" checked={item.is_mandatory} onChange={(e) => updateItem(index, "is_mandatory", e.target.checked)} className="h-4 w-4 mx-auto" />
-                <button type="button" onClick={() => removeItem(index)} className="text-slate-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
+                <input disabled={!canEdit} className="form-input text-xs" placeholder="Accept criteria" value={item.acceptance_criteria} onChange={(e) => updateItem(index, "acceptance_criteria", e.target.value)} />
+                <input disabled={!canEdit} className="form-input text-xs" placeholder="Reject criteria" value={item.rejection_criteria} onChange={(e) => updateItem(index, "rejection_criteria", e.target.value)} />
+                <input disabled={!canEdit} className="form-input text-xs" placeholder="Freq" value={item.inspection_frequency} onChange={(e) => updateItem(index, "inspection_frequency", e.target.value)} />
+                <input disabled={!canEdit} type="checkbox" checked={item.is_mandatory} onChange={(e) => updateItem(index, "is_mandatory", e.target.checked)} className="h-4 w-4 mx-auto" />
+                {canEdit && <button type="button" onClick={() => removeItem(index)} className="text-slate-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>}
               </div>
             ))}
           </div>
         )}
-        {items.length > 0 && (
+        {canEdit && items.length > 0 && (
           <div className="mt-4 flex justify-end">
             <Button type="button" disabled={saving} onClick={savePlan}>{saving ? "Saving..." : "Save Quality Plan"}</Button>
           </div>

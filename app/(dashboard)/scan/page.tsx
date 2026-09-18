@@ -296,13 +296,13 @@ export default function QRScannerPage() {
               <div className="space-y-3 border-t border-slate-100 pt-4">
                 <p className="text-center text-xs font-bold uppercase tracking-wider text-slate-500">Record Scan Event</p>
                 <Button onClick={() => recordAction("loaded_for_dispatch")} className="flex h-12 w-full justify-between rounded-xl bg-slate-900 px-6 font-bold text-white hover:bg-slate-800">
-                  Load for Dispatch <ArrowRight className="h-5 w-5" />
+                  Log Dispatch Scan <ArrowRight className="h-5 w-5" />
                 </Button>
                 <Button onClick={() => recordAction("stock_checked")} variant="secondary" className="h-12 w-full rounded-xl border border-slate-200 font-bold">
-                  Mark as Audited
+                  Log Stock Audit Scan
                 </Button>
                 <Button onClick={() => recordAction("die_checked")} variant="secondary" className="h-12 w-full rounded-xl border border-slate-200 font-bold">
-                  Mark Die Checked
+                  Log Die Check Scan
                 </Button>
               </div>
             </CardContent>

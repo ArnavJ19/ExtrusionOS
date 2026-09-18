@@ -24,6 +24,7 @@ export type AnalyticsProductionRow = {
   id: string;
   status?: string | null;
   planned_date?: MaybeDate;
+  completed_at?: MaybeDate;
   planned_quantity_kg?: MaybeNumber;
   actual_quantity_kg?: MaybeNumber;
 };
@@ -76,6 +77,7 @@ export type AnalyticsQualityRow = {
 
 export type AnalyticsInventoryRow = {
   id: string;
+  is_active?: boolean | null;
   item_code?: string | null;
   item_name?: string | null;
   unit?: string | null;
@@ -310,9 +312,10 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
     return Boolean(actualDate && promisedDate && actualDate <= promisedDate);
   });
 
-  const productionMtd = input.productionJobs.filter((job) => dateOnOrAfter(job.planned_date, startOfMonth) && String(job.status ?? "") !== "cancelled");
-  const productionPlannedKgMtd = productionMtd.reduce((sum, job) => sum + toNumber(job.planned_quantity_kg), 0);
-  const productionActualKgMtd = productionMtd.reduce((sum, job) => sum + toNumber(job.actual_quantity_kg), 0);
+  const plannedProductionMtd = input.productionJobs.filter((job) => dateOnOrAfter(job.planned_date, startOfMonth) && String(job.status ?? "") !== "cancelled");
+  const completedProductionMtd = input.productionJobs.filter((job) => String(job.status ?? "") === "completed" && dateOnOrAfter(job.completed_at, startOfMonth));
+  const productionPlannedKgMtd = plannedProductionMtd.reduce((sum, job) => sum + toNumber(job.planned_quantity_kg), 0);
+  const productionActualKgMtd = completedProductionMtd.reduce((sum, job) => sum + toNumber(job.actual_quantity_kg), 0);
 
   const invoiceMtd = input.invoices.filter((invoice) => (
     ISSUED_INVOICE_STATUSES.has(String(invoice.status ?? "")) && dateOnOrAfter(invoice.invoice_date, startOfMonth)
@@ -346,7 +349,8 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
   const qualityApprovedMtd = qualityMtd.filter((inspection) => String(inspection.status ?? "") === "approved");
   const qualityDecisionMtd = qualityMtd.filter((inspection) => ["approved", "rejected", "rework"].includes(String(inspection.status ?? "")));
 
-  const atRiskInventory = input.inventoryItems
+  const activeInventoryItems = input.inventoryItems.filter((item) => item.is_active !== false);
+  const atRiskInventory = activeInventoryItems
     .map((item) => {
       const currentStock = toNumber(item.current_stock);
       const reorderLevel = toNumber(item.reorder_level);
@@ -437,7 +441,7 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
       expensePaidRateMtd: safePercent(expensePaidMtd, expenseRunRateMtd),
       qualityPassRateMtd: safePercent(qualityApprovedMtd.length, qualityDecisionMtd.length),
       inventoryAtRiskCount: atRiskInventory.length,
-      inventoryOutOfStockCount: input.inventoryItems.filter((item) => toNumber(item.current_stock) <= 0).length,
+      inventoryOutOfStockCount: activeInventoryItems.filter((item) => toNumber(item.current_stock) <= 0).length,
       openTasks: openTasks.length,
       urgentOpenTasks: urgentOpenTasks.length,
     },

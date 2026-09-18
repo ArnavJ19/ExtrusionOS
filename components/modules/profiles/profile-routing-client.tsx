@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/browser";
 import { getErrorMessage } from "@/lib/utils/errors";
+import { replaceProfileRoutingAction } from "@/lib/actions/profile-configuration";
 import type { SessionContext } from "@/types/app";
 
 type RoutingStep = {
@@ -33,7 +34,7 @@ const DEFAULT_STAGES = [
   "Dispatch"
 ];
 
-export function ProfileRoutingClient({ context, profileId }: { context: SessionContext; profileId: string }) {
+export function ProfileRoutingClient({ context, profileId, canEdit }: { context: SessionContext; profileId: string; canEdit: boolean }) {
   const supabase = useMemo(() => createClient(), []);
   const [steps, setSteps] = useState<RoutingStep[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,13 +86,7 @@ export function ProfileRoutingClient({ context, profileId }: { context: SessionC
     if (!valid.length) return toast.error("Add at least one routing step.");
     setSaving(true);
 
-    // Delete existing and re-insert
-    await supabase.from("profile_routing_steps").delete().eq("company_id", context.companyId).eq("profile_id", profileId);
-
-    const rows = valid.map((s, i) => ({
-      company_id: context.companyId,
-      profile_id: profileId,
-      step_order: i + 1,
+    const rows = valid.map((s) => ({
       stage_name: s.stage_name.trim(),
       is_required: s.is_required,
       department: s.department || null,
@@ -99,9 +94,9 @@ export function ProfileRoutingClient({ context, profileId }: { context: SessionC
       notes: s.notes || null
     }));
 
-    const { error } = await supabase.from("profile_routing_steps").insert(rows);
+    const result = await replaceProfileRoutingAction(profileId, rows);
     setSaving(false);
-    if (error) return toast.error(getErrorMessage(error));
+    if (!result.success) return toast.error(result.error);
     toast.success("Routing saved");
     void loadSteps();
   }
@@ -140,10 +135,10 @@ export function ProfileRoutingClient({ context, profileId }: { context: SessionC
       <CardHeader>
         <div className="flex items-center justify-between">
           <h2 className="section-title">Production Routing</h2>
-          <div className="flex gap-2">
+          {canEdit && <div className="flex gap-2">
             <Button type="button" variant="secondary" onClick={autoRoute}>Auto-Route</Button>
             <Button type="button" variant="secondary" onClick={addStep}><Plus className="mr-1 h-3.5 w-3.5" /> Add Step</Button>
-          </div>
+          </div>}
         </div>
       </CardHeader>
       <CardContent>
@@ -155,22 +150,22 @@ export function ProfileRoutingClient({ context, profileId }: { context: SessionC
               <div key={step.id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
                 <GripVertical className="h-4 w-4 text-slate-400" />
                 <span className="w-8 text-center text-xs font-black text-slate-500">{index + 1}</span>
-                <select className="form-input w-48" value={step.stage_name} onChange={(e) => updateStep(index, "stage_name", e.target.value)}>
+                <select disabled={!canEdit} className="form-input w-48" value={step.stage_name} onChange={(e) => updateStep(index, "stage_name", e.target.value)}>
                   <option value="">Select stage...</option>
                   {DEFAULT_STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
                   {step.stage_name && !DEFAULT_STAGES.includes(step.stage_name) && <option value={step.stage_name}>{step.stage_name}</option>}
                 </select>
-                <input className="form-input w-28" placeholder="Department" value={step.department ?? ""} onChange={(e) => updateStep(index, "department", e.target.value)} />
-                <input className="form-input w-20" type="number" placeholder="Hours" step="0.5" value={step.estimated_duration_hours ?? ""} onChange={(e) => updateStep(index, "estimated_duration_hours", e.target.value ? Number(e.target.value) : null)} />
+                <input disabled={!canEdit} className="form-input w-28" placeholder="Department" value={step.department ?? ""} onChange={(e) => updateStep(index, "department", e.target.value)} />
+                <input disabled={!canEdit} className="form-input w-20" type="number" placeholder="Hours" step="0.5" value={step.estimated_duration_hours ?? ""} onChange={(e) => updateStep(index, "estimated_duration_hours", e.target.value ? Number(e.target.value) : null)} />
                 <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
-                  <input type="checkbox" checked={step.is_required} onChange={(e) => updateStep(index, "is_required", e.target.checked)} className="h-3.5 w-3.5 rounded" /> Required
+                  <input disabled={!canEdit} type="checkbox" checked={step.is_required} onChange={(e) => updateStep(index, "is_required", e.target.checked)} className="h-3.5 w-3.5 rounded" /> Required
                 </label>
-                <button type="button" onClick={() => removeStep(index)} className="ml-auto text-slate-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
+                {canEdit && <button type="button" onClick={() => removeStep(index)} className="ml-auto text-slate-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>}
               </div>
             ))}
           </div>
         )}
-        {steps.length > 0 && (
+        {canEdit && steps.length > 0 && (
           <div className="mt-4 flex justify-end">
             <Button type="button" disabled={saving} onClick={saveSteps}>{saving ? "Saving..." : "Save Routing"}</Button>
           </div>

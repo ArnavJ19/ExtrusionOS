@@ -7,6 +7,7 @@ import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 import { can } from "@/lib/auth/permissions";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { getErrorMessage } from "@/lib/utils/errors";
 
 export default async function DealerOrdersPage() {
@@ -40,7 +41,7 @@ export default async function DealerOrdersPage() {
   ];
   const queryErrors = [dealerUsers.error, dealerRequests.error, quoteOrders.error].filter(Boolean).map((error) => getErrorMessage(error));
   const statuses = ["dealer_order_submitted", "accepted_by_factory", "production_scheduled", "in_production", "packed", "dispatched", "pending_dealer_count", "discrepancy_reported", "closed", "cancelled"];
-  const today = new Date().toISOString().slice(0, 10);
+  const { today } = getBusinessDateBoundaries();
   const nativeRows = dealerRequests.data ?? [];
   const delayedRows = nativeRows.filter((order: any) => order.factory_committed_date && order.factory_committed_date < today && !["closed", "cancelled", "delivered_to_dealer", "received_confirmed"].includes(order.status));
   const clarificationRows = nativeRows.filter((order: any) => order.clarification_required_at && !order.clarification_resolved_at);

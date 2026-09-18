@@ -4,10 +4,12 @@ import type { SessionContext, UserRole } from "@/types/app";
 
 export async function getSessionContext(): Promise<SessionContext> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) redirect("/account-unavailable");
   if (!user) redirect("/login");
 
-  const { data: appUser } = await supabase.from("app_users").select("*, companies(name)").eq("id", user.id).single();
+  const { data: appUser, error: appUserError } = await supabase.from("app_users").select("*, companies(name)").eq("id", user.id).maybeSingle();
+  if (appUserError) redirect("/account-unavailable");
   if (appUser && !appUser.is_active) redirect("/access-suspended");
   if (!appUser?.company_id) redirect("/onboarding");
 

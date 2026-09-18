@@ -71,8 +71,16 @@ export async function proxy(request: NextRequest) {
   );
 
   const {
-    data: { user }
+    data: { user },
+    error: authError
   } = await supabase.auth.getUser();
+
+  if (authError && isProtectedPath(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/account-unavailable";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
 
   // Redirect authenticated users from auth pages to dashboard
   if (user && (pathname === "/login" || pathname === "/signup")) {
@@ -88,11 +96,18 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && isProtectedPath(pathname)) {
-    const { data: appUser } = await supabase
+    const { data: appUser, error: appUserError } = await supabase
       .from("app_users")
       .select("role, company_id, is_active")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
+
+    if (appUserError) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/account-unavailable";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
 
     if (appUser && !appUser.is_active) {
       const url = request.nextUrl.clone();

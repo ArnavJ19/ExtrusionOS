@@ -197,15 +197,15 @@ begin
 
     for v_group in
       select qi.profile_id,
-             coalesce(nullif(p.alloy, ''), '6063') as alloy,
-             coalesce(nullif(p.temper, ''), 'T6') as temper,
-             coalesce(v_order.billet_diameter_required_inch, d.billet_diameter_required_inch, p.billet_diameter_required_inch, 6) as billet_diameter_inch,
+             nullif(p.alloy, '') as alloy,
+             nullif(p.temper, '') as temper,
+             coalesce(v_order.billet_diameter_required_inch, d.billet_diameter_required_inch, p.billet_diameter_required_inch) as billet_diameter_inch,
              round(sum(coalesce(qi.billing_weight_kg, qi.total_weight_kg, 0))::numeric, 3) as group_weight
       from public.quote_items qi
       join public.aluminium_profiles p on p.id = qi.profile_id and p.company_id = qi.company_id
       left join public.dies d on d.id = coalesce(qi.die_id, v_order.production_die_id) and d.company_id = qi.company_id
       where qi.company_id = v_order.company_id and qi.quote_id = v_order.quote_id and qi.profile_id is not null
-      group by qi.profile_id, coalesce(nullif(p.alloy, ''), '6063'), coalesce(nullif(p.temper, ''), 'T6'), coalesce(v_order.billet_diameter_required_inch, d.billet_diameter_required_inch, p.billet_diameter_required_inch, 6)
+      group by qi.profile_id, nullif(p.alloy, ''), nullif(p.temper, ''), coalesce(v_order.billet_diameter_required_inch, d.billet_diameter_required_inch, p.billet_diameter_required_inch)
     loop
       v_required_weight := case when coalesce(v_quote_total, 0) > 0 then round((v_group.group_weight * v_target_weight / v_quote_total)::numeric, 3) else 0 end;
       v_billet_weight := round((pi() * power(((v_group.billet_diameter_inch * 25.4) / 2000), 2) * (5800 / 1000.0) * 2700)::numeric, 3);
@@ -225,9 +225,9 @@ begin
     select coalesce(v_order.production_quantity_kg, v_order.manufacturing_weight_kg, 0) into v_required_weight;
     for v_group in
       select p.id as profile_id,
-             coalesce(nullif(p.alloy, ''), '6063') as alloy,
-             coalesce(nullif(p.temper, ''), 'T6') as temper,
-             coalesce(v_order.billet_diameter_required_inch, d.billet_diameter_required_inch, p.billet_diameter_required_inch, 6) as billet_diameter_inch
+             nullif(p.alloy, '') as alloy,
+             nullif(p.temper, '') as temper,
+             coalesce(v_order.billet_diameter_required_inch, d.billet_diameter_required_inch, p.billet_diameter_required_inch) as billet_diameter_inch
       from public.aluminium_profiles p
       left join public.dies d on d.id = v_order.production_die_id and d.company_id = p.company_id
       where p.id = v_order.production_profile_id and p.company_id = v_order.company_id
@@ -310,6 +310,7 @@ begin
         and order_id is null
         and allocation_requirement_id is null
         and lower(coalesce(alloy, '')) = lower(v_req.alloy)
+        and lower(coalesce(temper, '')) = lower(coalesce(v_req.temper, ''))
         and billet_diameter_inch = v_req.billet_diameter_inch
       order by case source_type when 'in_house' then 0 else 1 end, created_at, billet_code
       for update skip locked
@@ -372,6 +373,7 @@ begin
   where r.company_id = v_company_id
     and r.order_id = p_order_id
     and lower(r.alloy) = lower(coalesce(v_billet.alloy, ''))
+    and lower(coalesce(r.temper, '')) = lower(coalesce(v_billet.temper, ''))
     and r.billet_diameter_inch = v_billet.billet_diameter_inch
     and r.billets_allocated < r.billets_required
     and r.status <> 'cancelled'

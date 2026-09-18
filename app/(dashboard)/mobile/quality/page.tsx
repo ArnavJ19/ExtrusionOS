@@ -1,24 +1,28 @@
 import Link from "next/link";
 import { ArrowRight, Ruler, ShieldCheck } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatWeight } from "@/lib/utils/format";
 import { canAccessMobileDestination } from "@/lib/auth/role-experience";
 import { redirect } from "next/navigation";
+import { MobilePagination } from "@/components/ui/mobile-pagination";
 
-export default async function MobileQualityPage() {
+export default async function MobileQualityPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const context = await getSessionContext();
   if (!canAccessMobileDestination(context.role, "quality")) redirect("/dashboard?denied=1");
   const supabase = await createClient();
-  const { data: checks, error } = await supabase
+  const page = Math.max(1, Number((await searchParams).page ?? 1) || 1);
+  const pageSize = 20;
+  const { data: checks, error, count } = await supabase
     .from("quality_inspections")
-    .select("id, batch_number, quantity_checked_kg, dimensional_variance, hardness_webster, surface_finish_ok, weight_per_meter_actual, status, inspector_name, production_jobs(job_number), aluminium_profiles(profile_code, profile_name)")
+    .select("id, batch_number, quantity_checked_kg, dimensional_variance, hardness_webster, surface_finish_ok, weight_per_meter_actual, status, inspector_name, production_jobs(job_number), aluminium_profiles(profile_code, profile_name)", { count: "exact" })
     .eq("company_id", context.companyId)
     .not("status", "eq", "approved")
     .order("created_at", { ascending: false })
-    .limit(20);
-  if (error) throw new Error(`Could not load quality inspections: ${error.message}`);
+    .range((page - 1) * pageSize, page * pageSize - 1);
+  if (error) return <div className="mx-auto max-w-xl space-y-4"><div className="rounded-3xl bg-slate-950 p-6 text-white"><ShieldCheck className="h-8 w-8 text-orange" /><h1 className="mt-3 text-2xl font-black">Quality Checks</h1><p className="mt-1 text-sm font-medium text-slate-300">Open real inspection records for dimension, hardness, finish, NCR, and packing approval updates.</p></div><ErrorState description="Could not load quality inspections. Refresh and try again before assuming the queue is empty." /></div>;
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
@@ -30,6 +34,7 @@ export default async function MobileQualityPage() {
           <p className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white">Open inspection workflow <ArrowRight className="h-4 w-4" /></p>
         </Link>
       )) : <EmptyState title="No open quality checks" description="Pending and rework quality records appear here after inspections are created." />}
+      <MobilePagination path="/mobile/quality" page={page} pageSize={pageSize} totalCount={count ?? 0} />
     </div>
   );
 }

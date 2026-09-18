@@ -27,6 +27,16 @@ export async function POST(request: Request) {
     if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid inventory item" }, { status: 400 });
 
     const supabase = await createClient();
+    const profile = await supabase
+      .from("aluminium_profiles")
+      .select("id")
+      .eq("company_id", context.companyId)
+      .eq("id", parsed.data.profile_id)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (profile.error) return NextResponse.json({ error: getErrorMessage(profile.error, "Could not validate profile") }, { status: 500 });
+    if (!profile.data) return NextResponse.json({ error: "Profile not found in this company or is inactive." }, { status: 400 });
+
     const { data: batch, error } = await supabase
       .from("profile_stock_batches")
       .insert({

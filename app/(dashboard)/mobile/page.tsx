@@ -24,7 +24,7 @@ export default async function MobileHomePage() {
     jobs: () => supabase.from("production_jobs").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).not("status", "in", "(completed,cancelled)"),
     dispatch: () => supabase.from("dispatches").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).not("delivery_status", "in", "(delivered,returned)"),
     quality: () => supabase.from("quality_inspections").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).not("status", "eq", "approved"),
-    tasks: () => supabase.from("tasks").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).not("status", "eq", "completed"),
+    tasks: () => supabase.from("tasks").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).not("status", "eq", "completed").or(`assigned_to.eq.${context.userId},assigned_to.is.null`),
   };
   const countEntries = await Promise.all(
     allowedDestinations.filter((key) => countQueries[key]).map(async (key) => [key, await countQueries[key]!()] as const)

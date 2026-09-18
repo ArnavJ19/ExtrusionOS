@@ -1,4 +1,5 @@
 import type { DieAmortizationType, FinishingChargeType } from "@/types/app";
+import { getBusinessDateBoundaries } from "../utils/business-date.ts";
 
 export type QuoteItemInput = {
   quantity_pieces: number;
@@ -200,6 +201,6 @@ export function getQuoteItemWarnings(input: QuoteItemCalculated, options: { dieS
   if (options.defaultConversionChargePerKg && input.conversion_charge_per_kg < options.defaultConversionChargePerKg * 0.75) warnings.push({ code: "low_conversion_charge", severity: "warning", message: "Conversion charge is much lower than the company default." });
   if (input.sales_price_override !== null) warnings.push({ code: "manual_override", severity: "info", message: "Sales price is manually overridden. Profit is calculated from override." });
   if (input.finishing_charge_type === "per_sqft") warnings.push({ code: "surface_area_missing", severity: "warning", message: "Per sqft finishing needs surface area data. This line uses zero finishing cost until surface area is added." });
-  if (options.quoteValidUntil && new Date(options.quoteValidUntil) < new Date(new Date().toISOString().slice(0, 10))) warnings.push({ code: "expired_quote", severity: "warning", message: "Quote validity date has expired." });
+  if (options.quoteValidUntil && new Date(options.quoteValidUntil) < new Date(getBusinessDateBoundaries().today)) warnings.push({ code: "expired_quote", severity: "warning", message: "Quote validity date has expired." });
   return warnings;
 }

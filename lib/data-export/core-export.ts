@@ -17,6 +17,7 @@ export const coreExportPlan: CoreExportPlanItem[] = [
   { table: "orders" },
   { table: "dispatches" },
   { table: "invoices" },
+  { table: "credit_notes" },
   { table: "payments" },
   { table: "inventory_items" },
   { table: "production_jobs" },

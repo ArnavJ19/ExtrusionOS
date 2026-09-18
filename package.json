@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "node --no-warnings --test --experimental-strip-types tests/*.test.mjs",
+    "test:e2e:staging": "node --no-warnings --experimental-strip-types scripts/run-staging-e2e.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -20,7 +21,7 @@
     "date-fns": "^4.1.0",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^0.468.0",
-    "next": "^16.2.6",
+    "next": "^16.2.11",
     "pdf-lib": "^1.17.1",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.6",
@@ -31,19 +32,22 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.2",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.17.0",
-    "eslint-config-next": "^16.2.6",
+    "eslint-config-next": "^16.2.11",
     "fast-check": "^4.8.0",
-    "postcss": "^8.5.10",
+    "postcss": "^8.5.26",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.22.4",
     "typescript": "^5.7.2"
   },
   "overrides": {
-    "postcss": "^8.5.10"
+    "postcss": "^8.5.26",
+    "nanoid": "^3.3.18",
+    "sharp": "^0.35.3"
   }
 }

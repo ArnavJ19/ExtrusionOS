@@ -55,6 +55,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
     quotes: () => supabase.from("quotes").select("id, quote_number, status, quote_date, grand_total, customers(customer_name, company_name)").eq("company_id", context.companyId).or(`quote_number.ilike.${like},status.ilike.${like}`).limit(8),
     orders: () => supabase.from("orders").select("id, order_number, current_stage, order_date, order_value, customers(customer_name, company_name)").eq("company_id", context.companyId).or(`order_number.ilike.${like},current_stage.ilike.${like}`).limit(8),
     dispatches: () => supabase.from("dispatches").select("id, dispatch_number, delivery_status, dispatch_date, vehicle_number, orders(order_number)").eq("company_id", context.companyId).or(`dispatch_number.ilike.${like},vehicle_number.ilike.${like},delivery_status.ilike.${like}`).limit(8),
+    dealer_orders: () => supabase.from("dealer_orders").select("id, order_number, status, priority, expected_delivery_date, dealers(dealer_name)").eq("company_id", context.companyId).or(`order_number.ilike.${like},status.ilike.${like}`).limit(8),
   };
   const entries = safeQuery.length >= 2
     ? await Promise.all(allowedResources.map(async (resource) => [resource, await searchers[resource]()] as const))
@@ -87,6 +88,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
         {has("quotes") ? <SearchSection title="Quotes" count={results.quotes?.data?.length ?? 0}>{results.quotes?.data?.map((item: any) => <ResultCard key={item.id} href={`/quotes/${item.id}`} title={item.quote_number} eyebrow={`${item.customers?.company_name || item.customers?.customer_name || "Customer"} · ${formatDate(item.quote_date)} · ${formatCurrency(item.grand_total)}`} badge={item.status} />)}</SearchSection> : null}
         {has("orders") ? <SearchSection title="Orders" count={results.orders?.data?.length ?? 0}>{results.orders?.data?.map((item: any) => <ResultCard key={item.id} href={`/orders/${item.id}`} title={item.order_number} eyebrow={`${item.customers?.company_name || item.customers?.customer_name || "Customer"} · ${formatDate(item.order_date)} · ${formatCurrency(item.order_value)}`} badge={item.current_stage} />)}</SearchSection> : null}
         {has("dispatches") ? <SearchSection title="Dispatches" count={results.dispatches?.data?.length ?? 0}>{results.dispatches?.data?.map((item: any) => <ResultCard key={item.id} href={`/dispatches/${item.id}`} title={item.dispatch_number || "Dispatch"} eyebrow={`${item.orders?.order_number || "Order"} · ${formatDate(item.dispatch_date)} · ${item.vehicle_number || "Vehicle pending"}`} badge={item.delivery_status} />)}</SearchSection> : null}
+        {has("dealer_orders") ? <SearchSection title="Dealer Orders" count={results.dealer_orders?.data?.length ?? 0}>{results.dealer_orders?.data?.map((item: any) => <ResultCard key={item.id} href={`/dealer-orders/${item.id}`} title={item.order_number || "Dealer order"} eyebrow={`${item.dealers?.dealer_name || "Dealer"} · ${formatDate(item.expected_delivery_date)}`} badge={item.status || item.priority} />)}</SearchSection> : null}
       </div>
     </div>
   );

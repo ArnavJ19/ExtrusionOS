@@ -86,10 +86,10 @@ export type QualityStatus = "pending" | "approved" | "rejected" | "rework";
 export const qualityStatuses: QualityStatus[] = ["pending", "approved", "rejected", "rework"];
 
 // Phase 5 Financial Types
-export type InvoiceStatus = "draft" | "generated" | "sent" | "partially_paid" | "paid" | "overdue" | "cancelled";
+export type InvoiceStatus = "draft" | "generated" | "sent" | "partially_paid" | "paid" | "overdue" | "credited" | "cancelled";
 export type PaymentMethod = "bank_transfer" | "upi" | "cheque" | "cash" | "credit_note" | "other";
 
-export const invoiceStatuses: InvoiceStatus[] = ["draft", "generated", "sent", "partially_paid", "paid", "overdue", "cancelled"];
+export const invoiceStatuses: InvoiceStatus[] = ["draft", "generated", "sent", "partially_paid", "paid", "overdue", "credited", "cancelled"];
 export const paymentMethods: PaymentMethod[] = ["bank_transfer", "upi", "cheque", "cash", "credit_note", "other"];
 
 // Enterprise Phase 1 Foundation Types

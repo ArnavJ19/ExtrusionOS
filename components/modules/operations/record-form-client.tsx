@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
@@ -16,6 +16,7 @@ import { saveProductionJobAction } from "@/lib/actions/production";
 import { saveOrderAction } from "@/lib/actions/quotes-orders";
 import { createClient } from "@/lib/supabase/browser";
 import { getErrorMessage } from "@/lib/utils/errors";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { nextBusinessNumber, type NumberPrefix } from "@/lib/utils/numbering";
 import { calculateBilletWeightKg, calculateFoundryFurnaceMix, calculateRequiredBilletCount, calculateTotalBilletWeightKg, inchesToMm } from "@/lib/calculations/foundry";
 import { compositionToEditableRows, compositionsMatch, getStandardAlloyComposition, normalizeCompositionRows, type AlloyComposition } from "@/lib/calculations/alloy-composition";
@@ -45,16 +46,41 @@ function labelFor(row: Record<string, any>, fields: string[]) {
   return fields.map((field) => row[field]).filter(Boolean).join(" · ") || row.id;
 }
 
+function cleanLookupSearch(value: string) {
+  return value.replace(/[%*_,()"']/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+}
+
+function toLookupOptions(rows: Record<string, any>[], labelFields: string[]) {
+  const seen = new Set<string>();
+  return rows.flatMap((row) => {
+    if (!row.id || seen.has(row.id)) return [];
+    seen.add(row.id);
+    return [{ ...row, value: row.id, label: labelFor(row, labelFields) }];
+  });
+}
+
 function normalizeRow(row: Record<string, any>, defaults: Record<string, any>) {
   return Object.fromEntries(Object.entries(defaults).map(([key, fallback]) => [key, row[key] ?? (typeof fallback === "boolean" ? false : "")])) as Record<string, any>;
+}
+
+function initialFormValues(config: ReturnType<typeof getModuleConfig>) {
+  const defaults = { ...(config.defaultValues ?? {}) };
+  const businessToday = getBusinessDateBoundaries().today;
+  for (const field of config.fields ?? []) {
+    if (field.type === "date" && defaults[field.name]) defaults[field.name] = businessToday;
+  }
+  return defaults;
 }
 
 export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: ModuleKey; context: SessionContext; recordId?: string }) {
   const config = getModuleConfig(moduleKey);
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const [form, setForm] = useState<Record<string, any>>(config.defaultValues ?? {});
+  const [form, setForm] = useState<Record<string, any>>(() => initialFormValues(config));
   const [lookups, setLookups] = useState<LookupMap>({});
+  const [lookupSearching, setLookupSearching] = useState<Record<string, boolean>>({});
+  const lookupSearchTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const lookupRequestIds = useRef<Record<string, number>>({});
   const [productionOrderItems, setProductionOrderItems] = useState<ProductionOrderItem[]>([]);
   const [productionAutofillSummary, setProductionAutofillSummary] = useState<string | null>(null);
   const [productionAutofillLoading, setProductionAutofillLoading] = useState(false);
@@ -62,27 +88,91 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
   const [availableBillets, setAvailableBillets] = useState<any[]>([]);
   const [selectedBillets, setSelectedBillets] = useState<Set<string>>(new Set());
   const [billetsLoading, setBilletsLoading] = useState(false);
+  const [billetsLoadError, setBilletsLoadError] = useState<string | null>(null);
   const [availablePackagingMaterials, setAvailablePackagingMaterials] = useState<any[]>([]);
   const [selectedPackagingMaterials, setSelectedPackagingMaterials] = useState<{ id: string, material_id: string, quantity_required: number }[]>([]);
   const [materialsLoading, setMaterialsLoading] = useState(false);
+  const [materialsLoadError, setMaterialsLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [existingIds, setExistingIds] = useState<string[] | null>(null);
   const editing = Boolean(recordId);
 
+  function lookupRequest(field: FieldConfig, values: Record<string, any>) {
+    const lookup = field.lookup!;
+    let request: any = supabase.from(lookup.table as any).select(lookup.select).eq("company_id", context.companyId);
+    Object.entries(lookup.filter ?? {}).forEach(([key, value]) => { request = request.eq(key, value); });
+    if (lookup.table === "dies") {
+      const profileId = field.name === "production_die_id" ? values.production_profile_id : field.name === "die_id" ? values.profile_id : "";
+      if (profileId) request = request.eq("profile_id", profileId);
+    }
+    if (moduleKey === "quality" && field.name === "finishing_job_id" && values.production_job_id) {
+      request = request.eq("production_job_id", values.production_job_id);
+    }
+    return request;
+  }
+
+  async function fetchLookupOptions(field: FieldConfig, query: string, selectedValue: string, values: Record<string, any>) {
+    const lookup = field.lookup!;
+    const term = cleanLookupSearch(query);
+    let searchRequest = lookupRequest(field, values);
+    if (term) {
+      const searchFields = lookup.searchFields ?? lookup.labelFields;
+      searchRequest = searchRequest.or(searchFields.map((name) => `${name}.ilike.*${term}*`).join(","));
+    }
+    searchRequest = searchRequest.order(lookup.orderBy, { ascending: true }).limit(40);
+
+    const selectedRequest = selectedValue
+      ? supabase.from(lookup.table as any).select(lookup.select).eq("company_id", context.companyId).eq("id", selectedValue).limit(1)
+      : Promise.resolve({ data: [], error: null });
+    const [result, selectedResult] = await Promise.all([searchRequest, selectedRequest]);
+    const lookupError = result.error ?? selectedResult.error;
+    if (lookupError) throw lookupError;
+    return toLookupOptions([...(selectedResult.data ?? []), ...(result.data ?? [])], lookup.labelFields);
+  }
+
+  function searchLookup(field: FieldConfig, query: string, values = form) {
+    if (!field.lookup) return;
+    const fieldName = field.name;
+    if (lookupSearchTimers.current[fieldName]) clearTimeout(lookupSearchTimers.current[fieldName]);
+    const requestId = (lookupRequestIds.current[fieldName] ?? 0) + 1;
+    lookupRequestIds.current[fieldName] = requestId;
+    setLookupSearching((current) => ({ ...current, [fieldName]: true }));
+    lookupSearchTimers.current[fieldName] = setTimeout(async () => {
+      try {
+        const options = await fetchLookupOptions(field, query, String(values[fieldName] ?? ""), values);
+        if (lookupRequestIds.current[fieldName] === requestId) {
+          setLookups((current) => ({ ...current, [fieldName]: options }));
+        }
+      } catch (lookupError) {
+        if (lookupRequestIds.current[fieldName] === requestId) {
+          toast.error(getErrorMessage(lookupError, `Could not search ${field.label.toLowerCase()}`));
+        }
+      } finally {
+        if (lookupRequestIds.current[fieldName] === requestId) {
+          setLookupSearching((current) => ({ ...current, [fieldName]: false }));
+        }
+      }
+    }, 250);
+  }
+
   async function loadForm() {
     setLoading(true);
     setError(null);
+    let loadedForm = initialFormValues(config);
+    if (recordId) {
+      const { data, error: recordError } = await supabase.from(config.table as any).select("*").eq("id", recordId).eq("company_id", context.companyId).single();
+      if (recordError) throw recordError;
+      loadedForm = normalizeRow(data, config.defaultValues ?? {});
+      setForm(loadedForm);
+    }
+
     const lookupFields = (config.fields ?? []).filter((field) => field.lookup);
-    const lookupEntries = await Promise.all(lookupFields.map(async (field) => {
-      const lookup = field.lookup!;
-      let request = supabase.from(lookup.table as any).select(lookup.select).eq("company_id", context.companyId);
-      Object.entries(lookup.filter ?? {}).forEach(([key, value]) => { request = request.eq(key, value); });
-      const { data, error: lookupError } = await request.order(lookup.orderBy, { ascending: true }).limit(250);
-      if (lookupError) throw lookupError;
-      return [field.name, (data ?? []).map((row: any) => ({ ...row, value: row.id, label: labelFor(row, lookup.labelFields) }))] as const;
-    }));
+    const lookupEntries = await Promise.all(lookupFields.map(async (field) => [
+      field.name,
+      await fetchLookupOptions(field, "", String(loadedForm[field.name] ?? ""), loadedForm)
+    ] as const));
     setLookups(Object.fromEntries(lookupEntries));
 
     if (!editing && config.numberField && (config.generateNumber || config.numberPrefix)) {
@@ -90,12 +180,6 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       setExistingIds((data ?? []).map((row: any) => row[config.numberField!]).filter(Boolean));
     } else {
       setExistingIds([]);
-    }
-
-    if (recordId) {
-      const { data, error: recordError } = await supabase.from(config.table as any).select("*").eq("id", recordId).eq("company_id", context.companyId).single();
-      if (recordError) throw recordError;
-      setForm(normalizeRow(data, config.defaultValues ?? {}));
     }
   }
 
@@ -107,8 +191,13 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     }).finally(() => setLoading(false));
   }, [moduleKey, recordId]);
 
+  useEffect(() => () => {
+    Object.values(lookupSearchTimers.current).forEach((timer) => clearTimeout(timer));
+  }, []);
+
   async function loadAvailableBillets() {
     setBilletsLoading(true);
+    setBilletsLoadError(null);
     try {
       let orFilter = "status.eq.cast,status.eq.allocated";
       if (recordId) orFilter += `,production_job_id.eq.${recordId}`;
@@ -140,7 +229,10 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
         setSelectedBillets(new Set(filtered.filter((b: any) => b.production_job_id === recordId).map((b: any) => b.id)));
       }
     } catch (err) {
-      console.error("Billets fetch error:", err);
+      const message = getErrorMessage(err, "Could not load compatible billets");
+      setAvailableBillets([]);
+      setBilletsLoadError(message);
+      toast.error(message);
     } finally {
       setBilletsLoading(false);
     }
@@ -164,6 +256,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
 
   async function loadPackagingMaterials() {
     setMaterialsLoading(true);
+    setMaterialsLoadError(null);
     try {
       const { data, error } = await supabase
         .from("packaging_materials")
@@ -186,7 +279,10 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
         setSelectedPackagingMaterials([]);
       }
     } catch (err) {
-      console.error("Packaging materials fetch error:", err);
+      const message = getErrorMessage(err, "Could not load packaging materials");
+      setAvailablePackagingMaterials([]);
+      setMaterialsLoadError(message);
+      toast.error(message);
     } finally {
       setMaterialsLoading(false);
     }
@@ -355,25 +451,33 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
         .eq("order_id", orderId)
         .in("status", ["allocated", "issued"]);
       if (billetError) throw billetError;
+      const requiredBilletCount = Number(order?.billets_required ?? 0);
+      const allocatedBilletCount = Number(order?.billets_allocated ?? linkedBilletCount ?? 0);
 
       setProductionOrderItems(items);
       setForm((current) => ({
         ...current,
         order_id: orderId,
-        required_billet_count: Number(order?.billets_allocated ?? linkedBilletCount ?? order?.billets_required ?? current.required_billet_count ?? 0),
-        planned_date: order?.expected_dispatch_date ? String(order.expected_dispatch_date).slice(0, 10) : current.planned_date,
+        required_billet_count: requiredBilletCount > 0 ? requiredBilletCount : current.required_billet_count,
         remarks: order?.production_notes ? `Order production notes: ${order.production_notes}` : order?.notes ? `Order notes: ${order.notes}` : order?.priority === "urgent" || order?.priority === "high" ? `Priority order: ${order.priority}` : current.remarks
       }));
       applyProductionItemAutofill(items);
       setForm((current) => ({
         ...current,
-        required_billet_count: Number(order?.billets_allocated ?? linkedBilletCount ?? order?.billets_required ?? current.required_billet_count ?? 0)
+        required_billet_count: requiredBilletCount > 0 ? requiredBilletCount : current.required_billet_count
       }));
-      if (linkedBilletCount) {
-        setProductionAutofillSummary((current) => `${current ?? "Auto-filled production details."} ${linkedBilletCount} linked billet${linkedBilletCount === 1 ? "" : "s"} found for this order.`);
-      } else if (Number(order?.billets_short ?? 0) > 0) {
-        setProductionAutofillSummary((current) => `${current ?? "Auto-filled production details."} Billet shortage: ${order.billets_short} more billet${Number(order.billets_short) === 1 ? "" : "s"} required before full production.`);
-      }
+      const allocationSummary = requiredBilletCount > 0
+        ? ` Full-order requirement: ${requiredBilletCount}. Allocated to the order: ${allocatedBilletCount}. Linked and available for jobs: ${linkedBilletCount ?? 0}.`
+        : linkedBilletCount
+          ? ` ${linkedBilletCount} linked billet${linkedBilletCount === 1 ? "" : "s"} found for this order.`
+          : "";
+      const shortageSummary = Number(order?.billets_short ?? 0) > 0
+        ? ` Billet shortage: ${order.billets_short} more billet${Number(order.billets_short) === 1 ? "" : "s"} required before full production.`
+        : "";
+      const dispatchDeadlineSummary = order?.expected_dispatch_date
+        ? ` Customer dispatch is due ${String(order.expected_dispatch_date).slice(0, 10)}. Choose a production date early enough for finishing, quality, and packing.`
+        : "";
+      setProductionAutofillSummary((current) => `${current ?? "Auto-filled production details."}${allocationSummary}${shortageSummary}${dispatchDeadlineSummary}`);
     } catch (err) {
       const message = getErrorMessage(err, "Could not auto-fill production details from the selected order");
       setProductionAutofillSummary(message);
@@ -423,12 +527,16 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     }
     if (moduleKey === "production" && field.name === "profile_id" && typeof value === "string") {
       update(field.name, value);
+      const dieField = config.fields?.find((candidate) => candidate.name === "die_id");
+      if (dieField) searchLookup(dieField, "", { ...form, profile_id: value, die_id: "" });
       if (productionOrderItems.length) applyProductionItemAutofill(productionOrderItems, value);
       return;
     }
     if (moduleKey === "orders" && field.name === "production_profile_id" && typeof value === "string") {
       const profile = lookups.production_profile_id?.find((option) => option.value === value);
       setForm((current) => ({ ...current, production_profile_id: value, production_die_id: "", billet_diameter_required_inch: profile?.billet_diameter_required_inch ?? "" }));
+      const dieField = config.fields?.find((candidate) => candidate.name === "production_die_id");
+      if (dieField) searchLookup(dieField, "", { ...form, production_profile_id: value, production_die_id: "" });
       return;
     }
     if (moduleKey === "quality" && field.name === "production_job_id" && typeof value === "string") {
@@ -683,7 +791,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     return (
       <label key={field.name} className={field.type === "textarea" ? "block space-y-1.5 md:col-span-2" : "block space-y-1.5"}>
         <span className="form-label">{field.label}{field.required ? " *" : ""}</span>
-        {field.type === "textarea" ? <textarea className="form-input min-h-24" value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} /> : field.type === "select" ? <SearchableSelect value={String(value)} options={fieldOptions} placeholder="Select" onChange={(nextValue) => handleFieldChange(field, nextValue)} disabled={field.readOnly || (productionAutofillLoading && field.name === "order_id")} /> : field.type === "checkbox" ? <input className="form-input" type="checkbox" checked={Boolean(value)} disabled={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.checked)} /> : <input className="form-input" type={field.type ?? "text"} step={field.step} value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} />}
+        {field.type === "textarea" ? <textarea className="form-input min-h-24" value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} /> : field.type === "select" ? <SearchableSelect value={String(value)} options={fieldOptions} placeholder="Select" onChange={(nextValue) => handleFieldChange(field, nextValue)} onSearchChange={field.lookup ? (query) => searchLookup(field, query) : undefined} searching={Boolean(field.lookup && lookupSearching[field.name])} disabled={field.readOnly || (productionAutofillLoading && field.name === "order_id")} /> : field.type === "checkbox" ? <input className="form-input" type="checkbox" checked={Boolean(value)} disabled={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.checked)} /> : <input className="form-input" type={field.type ?? "text"} step={field.step} value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} />}
       </label>
     );
   }
@@ -738,6 +846,12 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
               <h3 className="mb-3 text-sm font-semibold text-slate-900">Allocate Billets for Production</h3>
               {billetsLoading ? (
                 <div className="text-sm text-slate-500">Loading available billets...</div>
+              ) : billetsLoadError ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  <p className="font-semibold">Billet availability was not loaded. Do not treat this as a stock shortage.</p>
+                  <p className="mt-1">{billetsLoadError}</p>
+                  <Button type="button" variant="secondary" className="mt-3 px-3 py-1.5 text-xs" onClick={() => void loadAvailableBillets()}>Retry billet lookup</Button>
+                </div>
               ) : availableBillets.length === 0 ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
                   No compatible cast billets available for this order and profile diameter. You cannot start production until billets are cast.
@@ -810,6 +924,12 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
               </div>
               {materialsLoading ? (
                 <div className="text-sm text-slate-500">Loading materials...</div>
+              ) : materialsLoadError ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  <p className="font-semibold">Packaging material stock was not loaded. Availability is unknown.</p>
+                  <p className="mt-1">{materialsLoadError}</p>
+                  <Button type="button" variant="secondary" className="mt-3 px-3 py-1.5 text-xs" onClick={() => void loadPackagingMaterials()}>Retry material lookup</Button>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {selectedPackagingMaterials.map((item, index) => (

@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
-import { nextBusinessNumber } from "@/lib/utils/numbering";
 import { calculateSystemConfiguration, type ComponentRole, type HardwareCategory, type PanelLayout, type SystemTemplate, type SystemType } from "./formula-engine";
 import { optimizeProfileCuts } from "./profile-optimization";
 import { buildProductionJobRemarks, getProductionHandoffReadiness, groupProfileCutsForProduction } from "./production-handoff";
@@ -14,6 +13,7 @@ import { buildSystemQuoteDescription } from "./quote-integration";
 import { hasCriticalWarnings } from "./warning-categories";
 import { assertSystemQuoteReady } from "./quote-readiness";
 import { getSystemsConfiguratorContext } from "./access";
+import { loadCompleteSystemProfileSeries } from "./profile-library";
 import {
   finishOptionSchema,
   glassItemSchema,
@@ -55,6 +55,30 @@ async function assertCanManageLibraries() {
   const context = await getSystemsConfiguratorContext("create");
   if (!["owner", "admin", "sales_manager"].includes(context.role)) redirect("/systems-configurator");
   return context;
+}
+
+export async function loadSystemProfilesForSeriesAction(seriesId: string) {
+  try {
+    const context = await getSystemsConfiguratorContext("read");
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(seriesId)) {
+      return { success: false as const, error: "Select a valid system series." };
+    }
+
+    const supabase = await createClient();
+    const { data: series, error: seriesError } = await supabase
+      .from("system_series")
+      .select("id")
+      .eq("company_id", context.companyId)
+      .eq("id", seriesId)
+      .maybeSingle();
+    if (seriesError) return { success: false as const, error: "Could not validate the selected system series." };
+    if (!series) return { success: false as const, error: "The selected system series is not available in your company." };
+
+    const data = await loadCompleteSystemProfileSeries(supabase, context.companyId, seriesId);
+    return { success: true as const, data };
+  } catch {
+    return { success: false as const, error: "Could not load the selected series profile library." };
+  }
 }
 
 export async function createSystemSeries(formData: FormData) {
@@ -294,7 +318,7 @@ export async function calculateSystemConfigurationProject(configurationId: strin
 
   const [series, systemProfiles, hardwareItems, glassItem, finishOption, template, settings] = await Promise.all([
     supabase.from("system_series").select("*").eq("id", configuration.series_id).eq("company_id", context.companyId).single(),
-    supabase.from("system_profiles").select("*, aluminium_profiles(id, profile_code, profile_name, section_weight_kg_per_m)").eq("company_id", context.companyId).eq("series_id", configuration.series_id).eq("is_active", true).order("sort_order", { ascending: true }),
+    loadCompleteSystemProfileSeries(supabase, context.companyId, configuration.series_id),
     supabase.from("hardware_items").select("*").eq("company_id", context.companyId).eq("is_active", true),
     configuration.glass_id ? supabase.from("glass_items").select("*").eq("id", configuration.glass_id).eq("company_id", context.companyId).single() : Promise.resolve({ data: null, error: null }),
     configuration.finish_id ? supabase.from("finish_options").select("*").eq("id", configuration.finish_id).eq("company_id", context.companyId).single() : Promise.resolve({ data: null, error: null }),
@@ -303,12 +327,13 @@ export async function calculateSystemConfigurationProject(configurationId: strin
   ]);
 
   if (series.error || !series.data) throw series.error ?? new Error("Series not found");
-  if (systemProfiles.error) throw systemProfiles.error;
   if (hardwareItems.error) throw hardwareItems.error;
   if (glassItem.error) throw glassItem.error;
   if (finishOption.error) throw finishOption.error;
   if (template.error) throw template.error;
   if (settings.error) throw settings.error;
+
+  const activeSystemProfiles = systemProfiles.filter((item: any) => item.is_active !== false);
 
   const panelLayout = (configuration.panel_layout_json && typeof configuration.panel_layout_json === "object" ? configuration.panel_layout_json : { panels: [] }) as PanelLayout;
   const options = (configuration.options_json && typeof configuration.options_json === "object" ? configuration.options_json : {}) as Record<string, number | string | boolean | null>;
@@ -319,9 +344,9 @@ export async function calculateSystemConfigurationProject(configurationId: strin
     quantity: toNumber(configuration.quantity, 1),
     systemType: configuration.system_type as SystemType,
     seriesId: configuration.series_id,
-    template: templateFromRows(template.data, configuration.system_type as SystemType, systemProfiles.data ?? []),
+    template: templateFromRows(template.data, configuration.system_type as SystemType, activeSystemProfiles),
     panelLayout,
-    selectedProfiles: (systemProfiles.data ?? []).map((item: any) => ({
+    selectedProfiles: activeSystemProfiles.map((item: any) => ({
       id: item.id,
       profileId: item.profile_id,
       profileCode: item.aluminium_profiles?.profile_code ?? item.display_name,
@@ -457,17 +482,13 @@ export async function handoffSystemConfigurationToProduction(configurationId: st
   const context = await getSessionContext();
   if (!can(context.role, "create", "production")) redirect("/dashboard");
   const supabase = await createClient();
-  const [configurationResult, cutsResult, existingOrdersResult, existingJobsResult] = await Promise.all([
+  const [configurationResult, cutsResult] = await Promise.all([
     supabase.from("system_configurations").select("id, company_id, configuration_number, project_name, design_reference, customer_id, quote_id, order_id, status, grand_total").eq("id", configurationId).eq("company_id", context.companyId).single(),
-    supabase.from("system_profile_cuts").select("profile_id, profile_code, profile_name, total_weight_kg, total_length_m").eq("company_id", context.companyId).eq("configuration_id", configurationId),
-    supabase.from("orders").select("order_number").eq("company_id", context.companyId),
-    supabase.from("production_jobs").select("id").eq("company_id", context.companyId)
+    supabase.from("system_profile_cuts").select("profile_id, profile_code, profile_name, total_weight_kg, total_length_m").eq("company_id", context.companyId).eq("configuration_id", configurationId)
   ]);
 
   if (configurationResult.error || !configurationResult.data) throw configurationResult.error ?? new Error("Configuration not found");
   if (cutsResult.error) throw cutsResult.error;
-  if (existingOrdersResult.error) throw existingOrdersResult.error;
-  if (existingJobsResult.error) throw existingJobsResult.error;
 
   const configuration = configurationResult.data;
   const jobGroups = groupProfileCutsForProduction(cutsResult.data ?? []);
@@ -486,48 +507,35 @@ export async function handoffSystemConfigurationToProduction(configurationId: st
 
   const readiness = getProductionHandoffReadiness({ status: configuration.status, customer_id: configuration.customer_id, order_id: existingOrderId }, jobGroups, existingJobsForConfiguration.data?.length ?? 0);
   if (!readiness.ready) throw new Error(readiness.reason ?? "Configuration is not ready for production handoff.");
-
-  const today = new Date().toISOString().slice(0, 10);
-  let orderId = existingOrderId;
-  if (!orderId) {
-    const orderNumber = nextBusinessNumber("O", (existingOrdersResult.data ?? []).map((order: any) => order.order_number).filter(Boolean));
-    const orderResult = await supabase.from("orders").insert({ company_id: context.companyId, order_number: orderNumber, quote_id: configuration.quote_id ?? null, customer_id: configuration.customer_id, order_date: today, priority: "normal", current_stage: "extrusion_planned", order_value: Number(configuration.grand_total ?? 0), notes: `Generated from ${remarks}`, created_by: context.userId }).select("id").single();
-    if (orderResult.error || !orderResult.data) throw orderResult.error ?? new Error("Could not create production order");
-    orderId = orderResult.data.id;
+  const profileIds = jobGroups.map((group) => group.profileId);
+  const diesResult = await supabase
+    .from("dies")
+    .select("id, profile_id, die_status")
+    .eq("company_id", context.companyId)
+    .in("profile_id", profileIds);
+  if (diesResult.error) throw diesResult.error;
+  const usableDies = new Map<string, string>();
+  for (const die of diesResult.data ?? []) {
+    if (!["inactive", "dead", "blocked", "retired", "scrapped", "under_maintenance"].includes(String(die.die_status ?? "")) && !usableDies.has(die.profile_id)) {
+      usableDies.set(die.profile_id, die.id);
+    }
   }
+  const missingDie = jobGroups.find((group) => !usableDies.has(group.profileId));
+  if (missingDie) throw new Error(`${missingDie.profileCode} ${missingDie.profileName} needs a usable die before production handoff.`);
 
-  const existingJobNumbersResult = await supabase.from("production_jobs").select("job_number").eq("company_id", context.companyId);
-  if (existingJobNumbersResult.error) throw existingJobNumbersResult.error;
-  const existingJobNumbers = (existingJobNumbersResult.data ?? []).map((job: any) => job.job_number).filter(Boolean);
-  const jobRows = jobGroups.map((group, index) => ({
-    company_id: context.companyId,
-    order_id: orderId,
-    job_number: `J-PENDING-${index + 1}`,
+  const jobRows = jobGroups.map((group) => ({
     profile_id: group.profileId,
+    die_id: usableDies.get(group.profileId),
     planned_quantity_kg: group.plannedQuantityKg,
     planned_meters: group.plannedMeters,
-    planned_date: today,
-    status: "planned",
     remarks: `${remarks} / ${group.profileCode} ${group.profileName}`
   }));
-
-  // Generate sequential job numbers without relying on database-specific sequences.
-  let sequenceNumbers = existingJobNumbers;
-  for (const row of jobRows) {
-    row.job_number = nextBusinessNumber("J", sequenceNumbers);
-    sequenceNumbers = [...sequenceNumbers, row.job_number];
-  }
-
-  const jobsResult = await supabase.from("production_jobs").insert(jobRows).select("id");
-  if (jobsResult.error) throw jobsResult.error;
-
-  const updates = [
-    supabase.from("system_configurations").update({ order_id: orderId, status: "in_production" }).eq("id", configurationId).eq("company_id", context.companyId),
-    supabase.from("orders").update({ current_stage: "extrusion_planned" }).eq("id", orderId).eq("company_id", context.companyId)
-  ];
-  if (configuration.quote_id) updates.push(supabase.from("quotes").update({ status: "converted_to_order" }).eq("id", configuration.quote_id).eq("company_id", context.companyId));
-  const updateResults = await Promise.all(updates);
-  for (const result of updateResults) if (result.error) throw result.error;
+  const handoffResult = await supabase.rpc("handoff_system_configuration_to_production_atomic", {
+    p_configuration_id: configurationId,
+    p_jobs: jobRows,
+    p_remarks: remarks
+  });
+  if (handoffResult.error || !handoffResult.data) throw handoffResult.error ?? new Error("Could not hand off configuration to production");
 
   revalidatePath(`/systems-configurator/projects/${configurationId}`);
   revalidatePath(`/systems-configurator/projects/${configurationId}/quote`);

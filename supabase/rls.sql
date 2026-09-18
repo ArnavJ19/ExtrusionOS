@@ -45,7 +45,7 @@ alter table public.company_settings enable row level security;
   drop policy if exists "companies select own" on public.companies;
   create policy "companies select own" on public.companies for select using (id = public.get_current_user_company_id() or created_by = auth.uid());
   drop policy if exists "companies insert authenticated" on public.companies;
-create policy "companies insert authenticated" on public.companies for insert with check (auth.uid() is not null);
+  create policy "companies insert authenticated" on public.companies for insert with check (auth.uid() is not null and created_by = auth.uid());
 drop policy if exists "companies update own admin" on public.companies;
 create policy "companies update own admin" on public.companies for update using (id = public.get_current_user_company_id() and public.get_current_user_role() in ('owner','admin')) with check (id = public.get_current_user_company_id());
 
@@ -84,9 +84,9 @@ create policy "customers tenant delete" on public.customers for delete using (co
 drop policy if exists "profiles tenant read" on public.aluminium_profiles;
 create policy "profiles tenant read" on public.aluminium_profiles for select using (company_id = public.get_current_user_company_id());
 drop policy if exists "profiles tenant insert" on public.aluminium_profiles;
-create policy "profiles tenant insert" on public.aluminium_profiles for insert with check (company_id = public.get_current_user_company_id() and public.get_current_user_role() in ('owner','admin','sales_manager','sales','production_manager'));
+create policy "profiles tenant insert" on public.aluminium_profiles for insert with check (company_id = public.get_current_user_company_id() and public.get_current_user_role() in ('owner','admin','sales_manager','sales','production_manager','production'));
 drop policy if exists "profiles tenant update" on public.aluminium_profiles;
-create policy "profiles tenant update" on public.aluminium_profiles for update using (company_id = public.get_current_user_company_id() and public.get_current_user_role() in ('owner','admin','sales_manager','sales','production_manager')) with check (company_id = public.get_current_user_company_id());
+create policy "profiles tenant update" on public.aluminium_profiles for update using (company_id = public.get_current_user_company_id() and public.get_current_user_role() in ('owner','admin','sales_manager','sales','production_manager','production')) with check (company_id = public.get_current_user_company_id());
 drop policy if exists "profiles tenant delete" on public.aluminium_profiles;
 create policy "profiles tenant delete" on public.aluminium_profiles for delete using (company_id = public.get_current_user_company_id() and public.is_owner_or_admin());
 

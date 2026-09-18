@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { buildPackingListItems } from "../lib/pcda/dispatch.ts";
+import { buildPackingListItems, buildVerifiedPackingListItems } from "../lib/pcda/dispatch.ts";
 
 describe("PCDA dispatch handoff", () => {
   it("builds packing list rows from real production job weights and PCDA snapshots", () => {
@@ -118,5 +118,53 @@ describe("PCDA dispatch handoff", () => {
       profile_id: "profile-1",
       actual_quantity_kg: 20
     }], "dispatch-6", "D-2026-0007", "company-1", 20, 2, [1]), /one tare weight for each/);
+  });
+
+  it("preserves scanned bundle identity and exact operator measurements", () => {
+    const result = buildVerifiedPackingListItems([{
+      id: "reservation-physical",
+      order_id: "order-1",
+      profile_id: "profile-1",
+      profile_stock_batch_id: "batch-17",
+      source_kind: "reservation",
+      available_weight_kg: 90,
+      actual_quantity_kg: 90,
+      quantity_pieces: 18
+    }], "company-1", [{
+      bundle_number: "SCAN-B17-004",
+      source_line_id: "reservation-physical",
+      number_of_pieces: 7,
+      gross_weight_kg: 41.625,
+      tare_weight_kg: 1.125
+    }]);
+
+    assert.equal(result.items[0].bundle_number, "SCAN-B17-004");
+    assert.equal(result.items[0].source_line_id, "reservation-physical");
+    assert.equal(result.items[0].profile_stock_batch_id, "batch-17");
+    assert.equal(result.items[0].number_of_pieces, 7);
+    assert.equal(result.items[0].gross_weight_kg, 41.625);
+    assert.equal(result.items[0].tare_weight_kg, 1.125);
+    assert.equal(result.items[0].net_weight_kg, 40.5);
+    assert.equal(result.totalNetWeightKg, 40.5);
+  });
+
+  it("rejects duplicate scans and measurements beyond the selected source", () => {
+    const source = [{
+      id: "job-exact",
+      job_number: "J-EXACT",
+      order_id: "order-1",
+      profile_id: "profile-1",
+      source_kind: "production",
+      available_weight_kg: 50,
+      actual_quantity_kg: 50,
+      actual_pieces: 10
+    }];
+    assert.throws(() => buildVerifiedPackingListItems(source, "company-1", [
+      { bundle_number: "B-01", source_line_id: "job-exact", number_of_pieces: 5, gross_weight_kg: 26, tare_weight_kg: 1 },
+      { bundle_number: "b-01", source_line_id: "job-exact", number_of_pieces: 5, gross_weight_kg: 26, tare_weight_kg: 1 }
+    ]), /entered more than once/);
+    assert.throws(() => buildVerifiedPackingListItems(source, "company-1", [
+      { bundle_number: "B-OVER", source_line_id: "job-exact", number_of_pieces: 11, gross_weight_kg: 52, tare_weight_kg: 1 }
+    ]), /only 50\.000 kg is available/);
   });
 });

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell, HelpCircle, Moon, Search, Settings } from "lucide-react";
+import { Bell, FolderSearch, Moon, Search, Settings } from "lucide-react";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getFeatureFlagsForCompany, isFeatureEnabled } from "@/lib/enterprise/features";
@@ -19,7 +19,7 @@ const nav = [
   { href: "/profiles", label: "Profiles", icon: "Shapes", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "inventory_manager", "quality", "viewer"] },
   { href: "/dies", label: "Dies", icon: "Wrench", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "quality", "viewer"] },
   { href: "/die-intelligence", label: "Die Intel", icon: "Activity", roles: ["owner", "admin", "production_manager", "quality"] },
-  { href: "/quotes", label: "Quotes", icon: "FileText", roles: ["owner", "admin", "sales_manager", "sales", "accounts", "viewer", "dealer_admin", "dealer_staff"] },
+  { href: "/quotes", label: "Quotes", icon: "FileText", roles: ["owner", "admin", "sales_manager", "sales", "accounts", "viewer"] },
   { href: "/ai/quotation-assistant", label: "AI Quotes", icon: "Bot", roles: ["owner", "admin", "sales_manager", "sales"], module: "ai_assistant" },
   { href: "/systems-configurator", label: "Configurator", icon: "PackageCheck", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "viewer"] },
   { href: "/communications/whatsapp", label: "WhatsApp", icon: "FileText", roles: ["owner", "admin", "sales_manager", "sales"] },
@@ -30,14 +30,14 @@ const nav = [
   { href: "/energy", label: "Energy", icon: "Zap", roles: ["owner", "admin", "production_manager"], module: "energy_monitoring" },
   { href: "/maintenance", label: "Maintenance", icon: "Wrench", roles: ["owner", "admin", "production_manager"], module: "machine_maintenance" },
   { href: "/machines", label: "Machines", icon: "Wrench", roles: ["owner", "admin", "production_manager", "production", "viewer"] },
-  { href: "/tasks", label: "Tasks", icon: "CheckSquare", roles: ["owner", "admin", "sales_manager", "factory_manager", "inventory_manager", "dealer_admin", "dealer_staff"] },
+  { href: "/tasks", label: "Tasks", icon: "CheckSquare", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer", "dealer_admin", "dealer_staff"] },
   { href: "/orders", label: "Orders", icon: "Factory", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer"] },
   { href: "/production", label: "Production", icon: "CalendarRange", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "viewer"], module: "production_planning" },
   { href: "/foundry", label: "Foundry", icon: "Factory", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "viewer"] },
   { href: "/packaging", label: "Packaging", icon: "PackageCheck", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "viewer"] },
   { href: "/quality", label: "Quality", icon: "ClipboardCheck", roles: ["owner", "admin", "production_manager", "quality", "viewer"], module: "quality_compliance" },
   { href: "/inventory", label: "Inventory", icon: "Boxes", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "inventory_manager", "viewer", "dealer_admin", "dealer_staff"], module: "advanced_inventory" },
-  { href: "/dealer-inventory", label: "Dealer Stock", icon: "Boxes", roles: ["owner", "admin", "sales_manager", "factory_manager", "inventory_manager", "viewer"], module: "dealer_portal" },
+  { href: "/dealer-inventory", label: "Dealer Ledger", icon: "Boxes", roles: ["owner", "admin", "sales_manager", "factory_manager", "inventory_manager", "viewer", "dealer_admin", "dealer_staff"], module: "dealer_portal" },
   { href: "/vendors", label: "Vendors", icon: "Building2", roles: ["owner", "admin", "sales_manager", "production_manager", "accounts", "viewer"] },
   { href: "/dispatches", label: "Dispatches", icon: "Truck", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "viewer"], aliases: ["/shipments"] },
   { href: "/dealer-orders", label: "Dealer Orders", icon: "Truck", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "inventory_manager", "dealer_admin", "dealer_staff"] },
@@ -74,11 +74,11 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   if (!context.companyId) redirect("/onboarding");
   const supabase = await createClient();
   const [notificationResult, taskResult, featureFlags] = await Promise.all([
-    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).eq("is_read", false),
-    supabase.from("tasks").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).in("status", ["open", "in_progress"]),
+    supabase.rpc("get_unread_notification_count"),
+    supabase.from("tasks").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).in("status", ["open", "in_progress"]).or(`assigned_to.eq.${context.userId},assigned_to.is.null`),
     getFeatureFlagsForCompany(supabase, context.companyId)
   ]);
-  const notificationCount = notificationResult.count ?? 0;
+  const notificationCount = Number(notificationResult.data ?? 0);
   const taskCount = taskResult.count ?? 0;
   const searchableResources = getSearchResourceKeys(context.role);
   const searchPlaceholder = searchableResources.length
@@ -129,8 +129,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </details>
           ) : null}
           <div className="mt-auto hidden space-y-1 lg:block">
-            <Link href="/settings" className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-neutral-500 transition hover:bg-white hover:text-neutral-950 hover:shadow-sm"><Settings className="h-4 w-4" /> Settings</Link>
-            <Link href="/documents" className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-neutral-500 transition hover:bg-white hover:text-neutral-950 hover:shadow-sm"><HelpCircle className="h-4 w-4" /> Help Center</Link>
+            {visibleNav.some((item) => item.href === "/settings") ? <Link href="/settings" className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-neutral-500 transition hover:bg-white hover:text-neutral-950 hover:shadow-sm"><Settings className="h-4 w-4" /> Settings</Link> : null}
+            {visibleNav.some((item) => item.href === "/documents") ? <Link href="/documents" className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-neutral-500 transition hover:bg-white hover:text-neutral-950 hover:shadow-sm"><FolderSearch className="h-4 w-4" /> Documents</Link> : null}
             <div className="flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-sm font-semibold text-neutral-400" aria-disabled="true"><span className="flex items-center gap-3"><Moon className="h-4 w-4" /> Dark mode</span><span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-neutral-400">Unavailable</span></div>
           </div>
         </nav>

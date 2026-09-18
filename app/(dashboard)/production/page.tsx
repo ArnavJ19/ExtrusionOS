@@ -7,7 +7,7 @@ import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { getFeatureFlagsForCompany, isFeatureEnabled } from "@/lib/enterprise/features";
 import { createClient } from "@/lib/supabase/server";
-import { todayIso } from "@/lib/utils/format";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { redirect } from "next/navigation";
 
 export default async function ProductionPage() {
@@ -18,14 +18,12 @@ export default async function ProductionPage() {
   if (!can(context.role, "read", "production")) redirect("/dashboard");
 
   const cid = context.companyId;
-  const now = new Date();
-  const monthStart = todayIso(new Date(now.getFullYear(), now.getMonth(), 1));
-  const today = todayIso(now);
+  const { monthStartIso, today, tomorrowStartIso } = getBusinessDateBoundaries();
 
   const [allJobs, recentJobs, monthlyCompleted, finishing, overdueJobs, noMachine, readinessOrders, todayScheduleJobs] = await Promise.all([
-    supabase.from("production_jobs").select("id, status, planned_quantity_kg, actual_quantity_kg, planned_date, machine_id, machine:machines(machine_name)", { count: "exact" }).eq("company_id", cid),
+    supabase.from("production_jobs").select("id, status, planned_quantity_kg, actual_quantity_kg, planned_date, completed_at, machine_id, machine:machines(machine_name)", { count: "exact" }).eq("company_id", cid),
     supabase.from("production_jobs").select("id, job_number, status, planned_date, planned_quantity_kg, actual_quantity_kg, machine:machines(machine_name), order:orders(order_number, customers(customer_name, company_name)), profile:aluminium_profiles(profile_code)").eq("company_id", cid).order("created_at", { ascending: false }).limit(5),
-    supabase.from("production_jobs").select("id, actual_quantity_kg", { count: "exact" }).eq("company_id", cid).eq("status", "completed").gte("planned_date", monthStart),
+    supabase.from("production_jobs").select("id, actual_quantity_kg", { count: "exact" }).eq("company_id", cid).eq("status", "completed").gte("completed_at", monthStartIso).lt("completed_at", tomorrowStartIso),
     supabase.from("finishing_jobs").select("id", { count: "exact", head: true }).eq("company_id", cid).in("status", ["planned", "sent_to_vendor", "in_process", "received", "rejected"]),
     supabase.from("production_jobs").select("id", { count: "exact", head: true }).eq("company_id", cid).in("status", ["planned", "in_progress"]).lt("planned_date", today),
     supabase.from("production_jobs").select("id", { count: "exact", head: true }).eq("company_id", cid).in("status", ["planned", "in_progress"]).is("machine_id", null),
@@ -64,7 +62,7 @@ export default async function ProductionPage() {
   const monthlyCompletedKg = completedRows.reduce((sum: number, r: any) => sum + Number(r.actual_quantity_kg ?? 0), 0);
 
   const productionTrend = rows.filter((j: any) => j.status === "completed").map((j: any) => ({
-    date: j.planned_date,
+    date: j.completed_at,
     value: Number(j.actual_quantity_kg ?? 0)
   }));
 
@@ -98,6 +96,12 @@ export default async function ProductionPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div><p className="text-xs font-black uppercase tracking-[0.16em] text-orange">Finishing Control</p><h2 className="section-title mt-1">Powder Coating / Anodizing Queue</h2><p className="mt-1 text-sm font-medium text-slate-500">{finishing.count ?? 0} open finishing job{(finishing.count ?? 0) === 1 ? "" : "s"} need vendor, receipt, rejection, or completion tracking.</p></div>
           <Link href="/production/finishing" className="inline-flex items-center justify-center rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90">Open Finishing Board</Link>
+        </div>
+      </div>
+      <div className="rounded-3xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-white p-5 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div><p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-700">Press Load Consolidation</p><h2 className="section-title mt-1">Sub-700 kg Production Queue</h2><p className="mt-1 text-sm font-medium text-slate-600">Combine compatible small jobs before press scheduling to reduce changeovers and improve practical batch size.</p></div>
+          <Link href="/production/consolidation" className="inline-flex items-center justify-center rounded-xl bg-cyan-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-cyan-800">Open Consolidation Queue</Link>
         </div>
       </div>
     </div>

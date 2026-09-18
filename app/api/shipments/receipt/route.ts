@@ -94,8 +94,8 @@ export async function POST(request: Request) {
       });
     }
 
-    if (!validatedLines.length) {
-      return NextResponse.json({ error: "At least one shipment line is required." }, { status: 400 });
+    if (validatedLines.length !== shipmentItems.length) {
+      return NextResponse.json({ error: "Receipt must include every shipment line before the shipment can be closed." }, { status: 400 });
     }
 
     const result = await submitDealerReceipt(supabase, {

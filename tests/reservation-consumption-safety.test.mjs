@@ -5,8 +5,9 @@ import assert from "node:assert/strict";
 const action = readFileSync("lib/actions/stock-reservations.ts", "utf8");
 const detail = readFileSync("app/(dashboard)/dispatches/[id]/page.tsx", "utf8");
 const migration = readFileSync("supabase/migrations/20260721091307_physical_dispatch_stock_provenance.sql", "utf8");
+const exactManifestMigration = readFileSync("supabase/migrations/20260723060000_exact_dispatch_manifest_and_consolidation.sql", "utf8");
 const dispatchAction = readFileSync("lib/actions/dispatches.ts", "utf8");
-const moduleConfig = readFileSync("components/modules/operations/module-config.ts", "utf8");
+const dispatchForm = readFileSync("components/modules/dispatch-form-client.tsx", "utf8");
 
 describe("reservation consumption safety", () => {
   it("does not expose a second non-atomic consumption write path", () => {
@@ -25,12 +26,17 @@ describe("reservation consumption safety", () => {
     assert.match(dispatchAction, /source_kind:\s*"reservation"/);
   });
 
-  it("captures a measured tare for every physical bundle while deriving stock identity", () => {
-    assert.match(moduleConfig, /bundle_tare_weights_kg/);
-    assert.match(moduleConfig, /Bundle tare kg \(one per line\)/);
-    assert.match(dispatchAction, /Enter exactly \$\{numberOfBundles\} bundle tare weights/);
+  it("requires the operator to scan and identify every physical bundle and source", () => {
+    assert.match(dispatchForm, /Scan \/ Bundle ID/);
+    assert.match(dispatchForm, /Exact material source/);
+    assert.match(dispatchForm, /Actual pieces/);
+    assert.match(dispatchForm, /Gross kg/);
+    assert.match(dispatchForm, /Tare kg/);
+    assert.match(dispatchAction, /buildVerifiedPackingListItems/);
     assert.match(dispatchAction, /profile_stock_batch_id/);
     assert.match(dispatchAction, /reservation_id/);
+    assert.match(exactManifestMigration, /operator_verified_at/);
+    assert.match(exactManifestMigration, /Scan or enter every physical bundle identifier/);
   });
 
   it("consumes reservations and decrements completed reservation stock in one transaction", () => {

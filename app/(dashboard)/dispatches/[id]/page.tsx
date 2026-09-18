@@ -1,5 +1,6 @@
 import { RecordDetailClient } from "@/components/modules/operations/record-detail-client";
 import { DispatchDeliveryWorkflow } from "@/components/modules/dispatch-delivery-workflow";
+import { DispatchCreditNoteClient } from "@/components/modules/dispatch-credit-note-client";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getSessionContext } from "@/lib/auth";
@@ -18,7 +19,21 @@ export default async function DispatchDetailPage({ params }: { params: Promise<{
     <DispatchDeliveryPanel dispatchId={id} canUpdate={canUpdate} />
     <DispatchPackingPanel dispatchId={id} />
     <DispatchReservationPanel dispatchId={id} />
+    <DispatchCreditNotePanel dispatchId={id} />
   </div>;
+}
+
+async function DispatchCreditNotePanel({ dispatchId }: { dispatchId: string }) {
+  const context = await getSessionContext();
+  if (!can(context.role, "read", "financials")) return null;
+  const supabase = await createClient();
+  const [dispatchResult, invoiceResult, creditResult] = await Promise.all([
+    supabase.from("dispatches").select("delivery_status").eq("company_id", context.companyId).eq("id", dispatchId).maybeSingle(),
+    supabase.from("invoices").select("id, invoice_number, grand_total, amount_paid, credited_amount, customer_credit_due, status").eq("company_id", context.companyId).eq("dispatch_id", dispatchId).neq("status", "cancelled").maybeSingle(),
+    supabase.from("credit_notes").select("id, credit_note_number, grand_total, status, reason, reversal_reason").eq("company_id", context.companyId).eq("dispatch_id", dispatchId).order("created_at", { ascending: false }).limit(1).maybeSingle()
+  ]);
+  if (dispatchResult.error || !dispatchResult.data) return null;
+  return <DispatchCreditNoteClient dispatchId={dispatchId} deliveryStatus={dispatchResult.data.delivery_status} invoice={(invoiceResult.data ?? null) as any} creditNote={(creditResult.data ?? null) as any} canManage={can(context.role, "create", "financials")} />;
 }
 
 async function DispatchDeliveryPanel({ dispatchId, canUpdate }: { dispatchId: string; canUpdate: boolean }) {

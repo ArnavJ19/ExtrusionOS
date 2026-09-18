@@ -1,3 +1,5 @@
+import { getBusinessDateBoundaries } from "../utils/business-date.ts";
+
 export type OperationalRisk = {
   label: string;
   severity: "critical" | "warning" | "info";
@@ -8,7 +10,7 @@ const closedOrderStages = new Set(["dispatched", "delivered", "closed", "cancell
 const closedInvoiceStatuses = new Set(["paid", "cancelled"]);
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return getBusinessDateBoundaries().today;
 }
 
 function daysBetween(from?: string | null, to = todayIso()) {

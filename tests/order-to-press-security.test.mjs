@@ -14,6 +14,7 @@ const scheduleGrid = readFileSync(join(repoRoot, "components/modules/production-
 const migration = readFileSync(join(repoRoot, "supabase/migrations/0058_production_plan_slots.sql"), "utf8");
 const businessWorkflowMigration = readFileSync(join(repoRoot, "supabase/migrations/20260715000000_atomic_business_workflows.sql"), "utf8");
 const scheduleIntegrityMigration = readFileSync(join(repoRoot, "supabase/migrations/20260723010000_production_schedule_integrity.sql"), "utf8");
+const recordForm = readFileSync(join(repoRoot, "components/modules/operations/record-form-client.tsx"), "utf8");
 
 const routePages = {
   orders: readFileSync(join(repoRoot, "app/(dashboard)/orders/page.tsx"), "utf8"),
@@ -106,6 +107,28 @@ test("production form lookups for machine, die, order, and profile are tenant sc
   assert.match(loadFormData, /supabase\.from\("aluminium_profiles"\)[\s\S]*\.eq\("company_id", context\.companyId\)[\s\S]*\.eq\("is_active", true\)/);
   assert.match(loadFormData, /supabase\.from\("machines"\)[\s\S]*\.eq\("company_id", context\.companyId\)/);
   assert.match(loadFormData, /supabase\.from\("dies"\)[\s\S]*\.eq\("company_id", context\.companyId\)[\s\S]*\.eq\("die_status", "active"\)/);
+});
+
+test("production autofill keeps full billet demand separate from current allocation", () => {
+  assert.match(recordForm, /requiredBilletCount = Number\(order\?\.billets_required \?\? 0\)/);
+  assert.match(recordForm, /allocatedBilletCount = Number\(order\?\.billets_allocated \?\? linkedBilletCount \?\? 0\)/);
+  assert.doesNotMatch(recordForm, /required_billet_count:\s*Number\(order\?\.billets_allocated/);
+  assert.match(recordForm, /Full-order requirement:/);
+  assert.match(recordForm, /Allocated to the order:/);
+});
+
+test("production autofill does not schedule pressing on the customer dispatch deadline", () => {
+  assert.doesNotMatch(recordForm, /planned_date:\s*order\?\.expected_dispatch_date/);
+  assert.match(recordForm, /Choose a production date early enough for finishing, quality, and packing/);
+});
+
+test("material lookup failures cannot masquerade as genuine stock shortages", () => {
+  assert.match(recordForm, /setBilletsLoadError\(message\)/);
+  assert.match(recordForm, /Do not treat this as a stock shortage/);
+  assert.match(recordForm, /Retry billet lookup/);
+  assert.match(recordForm, /setMaterialsLoadError\(message\)/);
+  assert.match(recordForm, /Packaging material stock was not loaded\. Availability is unknown/);
+  assert.match(recordForm, /Retry material lookup/);
 });
 
 test("order-to-press routes are protected and backed by page-level permissions", () => {

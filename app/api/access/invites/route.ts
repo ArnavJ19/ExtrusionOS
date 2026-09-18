@@ -32,6 +32,25 @@ export async function POST(request: Request) {
     const expiresAt = new Date(Date.now() + parsed.data.expires_in_days * 24 * 60 * 60 * 1000).toISOString();
     const supabase = await createClient();
 
+    const roleResult = await supabase.from("roles").select("id, role_key, is_system, is_active").eq("company_id", context.companyId).eq("id", parsed.data.role_id).maybeSingle();
+    if (roleResult.error) return NextResponse.json({ error: getErrorMessage(roleResult.error, "Could not validate invite role") }, { status: 500 });
+    if (!roleResult.data?.is_active) return NextResponse.json({ error: "Selected role is not available for this company." }, { status: 400 });
+    if (!roleResult.data.is_system || !CANONICAL_ROLE_KEYS.has(roleResult.data.role_key)) {
+      return NextResponse.json({ error: "Custom roles cannot be assigned by invitation yet. Select an active default role; the custom role remains available for configuration." }, { status: 400 });
+    }
+
+    if (parsed.data.dealer_id) {
+      const dealerResult = await supabase.from("dealers").select("id, is_active").eq("company_id", context.companyId).eq("id", parsed.data.dealer_id).maybeSingle();
+      if (dealerResult.error) return NextResponse.json({ error: getErrorMessage(dealerResult.error, "Could not validate invite dealership") }, { status: 500 });
+      if (!dealerResult.data?.is_active) return NextResponse.json({ error: "Selected dealership is not available for this company." }, { status: 400 });
+    }
+
+    if (parsed.data.branch_id) {
+      const branchResult = await supabase.from("branches").select("id, is_active").eq("company_id", context.companyId).eq("id", parsed.data.branch_id).maybeSingle();
+      if (branchResult.error) return NextResponse.json({ error: getErrorMessage(branchResult.error, "Could not validate invite branch") }, { status: 500 });
+      if (!branchResult.data?.is_active) return NextResponse.json({ error: "Selected branch is not available for this company." }, { status: 400 });
+    }
+
     const inviteResult = await supabase.from("invitations").insert({
       company_id: context.companyId,
       dealer_id: parsed.data.dealer_id ?? null,
@@ -95,3 +114,9 @@ export async function POST(request: Request) {
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
+
+const CANONICAL_ROLE_KEYS = new Set([
+  "owner", "admin", "sales_manager", "sales", "production_manager", "production",
+  "dispatch_manager", "dispatch", "accounts", "quality", "viewer", "factory_manager",
+  "inventory_manager", "dealer_admin", "dealer_staff"
+]);

@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { AlertTriangle, Calculator, CheckCircle2, FileText, Layers, Ruler, Save, Settings2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { saveSystemConfigurationDraft } from "@/lib/systems-configurator/actions";
+import { loadSystemProfilesForSeriesAction, saveSystemConfigurationDraft } from "@/lib/systems-configurator/actions";
 import { getConfigurationDataReadiness, type DataReadinessSummary } from "@/lib/systems-configurator/data-readiness";
 import { labelize, systemConfiguratorSystemTypes } from "@/types/app";
 import { SystemElevationPreview } from "./system-elevation-preview";
@@ -99,12 +99,43 @@ export function ConfiguratorForm({ customers, series, templates, systemProfiles,
   const [selectedGlassId, setSelectedGlassId] = useState(initialConfiguration?.glass_id ?? "");
   const [selectedFinishId, setSelectedFinishId] = useState(initialConfiguration?.finish_id ?? "");
   const [layoutTouched, setLayoutTouched] = useState(false);
+  const [loadedSystemProfiles, setLoadedSystemProfiles] = useState(systemProfiles);
+  const [loadedProfileSeriesId, setLoadedProfileSeriesId] = useState(initialSeriesId);
+  const [profileLibraryLoading, setProfileLibraryLoading] = useState(false);
+  const [profileLibraryError, setProfileLibraryError] = useState<string | null>(null);
+  const [profileLoadVersion, setProfileLoadVersion] = useState(0);
+
+  useEffect(() => {
+    if (selectedSeriesId === loadedProfileSeriesId && profileLoadVersion === 0) return;
+    if (!selectedSeriesId) {
+      setLoadedSystemProfiles([]);
+      setLoadedProfileSeriesId("");
+      setProfileLibraryError(null);
+      return;
+    }
+
+    let cancelled = false;
+    setProfileLibraryLoading(true);
+    setProfileLibraryError(null);
+    void loadSystemProfilesForSeriesAction(selectedSeriesId).then((result) => {
+      if (cancelled) return;
+      setProfileLibraryLoading(false);
+      if (!result.success) {
+        setProfileLibraryError(result.error);
+        return;
+      }
+      setLoadedSystemProfiles(result.data);
+      setLoadedProfileSeriesId(selectedSeriesId);
+      setProfileLoadVersion(0);
+    });
+    return () => { cancelled = true; };
+  }, [loadedProfileSeriesId, profileLoadVersion, selectedSeriesId]);
 
   const matchingSeries = series.filter((item) => item.system_type === systemType || item.system_type === "custom");
   const matchingTemplates = compatibleTemplates(templates, systemType, selectedSeriesId);
   const selectedSeries = (matchingSeries.length ? matchingSeries : series).find((item) => item.id === selectedSeriesId);
   const selectedTemplate = matchingTemplates.find((item) => item.id === selectedTemplateId) ?? templates.find((item) => item.id === selectedTemplateId);
-  const profileMappings = systemProfiles.filter((item) => item.series_id === selectedSeriesId && item.is_active !== false);
+  const profileMappings = loadedSystemProfiles.filter((item) => item.series_id === selectedSeriesId && item.is_active !== false);
   const requiredTemplateRoles = extractTemplateRoles(selectedTemplate);
   const missingRequiredRoles = requiredTemplateRoles.filter((role) => !profileMappings.some((profile) => profile.component_role === role));
   const mappedRoleCount = new Set(profileMappings.map((profile) => profile.component_role)).size;
@@ -115,7 +146,7 @@ export function ConfiguratorForm({ customers, series, templates, systemProfiles,
   const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
   const safePanelCount = Number.isFinite(panelCount) && panelCount > 0 ? Math.min(12, Math.max(1, Math.round(panelCount))) : systemDefaults[systemType]?.panelCount ?? 1;
   const safeTrackCount = Number.isFinite(trackCount) && trackCount > 0 ? Math.min(6, Math.max(1, Math.round(trackCount))) : systemDefaults[systemType]?.trackCount ?? 1;
-  const dataReadiness = getConfigurationDataReadiness({ seriesId: selectedSeriesId, template: selectedTemplate, systemProfiles, hardwareItems, glassItems, finishOptions, glassId: selectedGlassId, finishId: selectedFinishId });
+  const dataReadiness = getConfigurationDataReadiness({ seriesId: selectedSeriesId, template: selectedTemplate, systemProfiles: loadedSystemProfiles, hardwareItems, glassItems, finishOptions, glassId: selectedGlassId, finishId: selectedFinishId });
   const formWarnings = [
     safeWidthMm <= 0 ? "Width must be greater than 0 mm." : null,
     safeHeightMm <= 0 ? "Height must be greater than 0 mm." : null,
@@ -262,6 +293,8 @@ export function ConfiguratorForm({ customers, series, templates, systemProfiles,
               <LabeledField label="Series"><select name="series_id" className={inputClass()} value={selectedSeriesId} onChange={(event) => applySeries(event.target.value)} required><option value="">Select system series</option>{(matchingSeries.length ? matchingSeries : series).map((item) => <option key={item.id} value={item.id}>{item.series_code} - {item.series_name}</option>)}</select></LabeledField>
               <LabeledField label="Template"><select name="template_id" className={inputClass()} value={selectedTemplateId} onChange={(event) => setSelectedTemplateId(event.target.value)}><option value="">Use series role formulas</option>{matchingTemplates.map((item) => <option key={item.id} value={item.id}>{item.template_code} - {item.template_name}{item.is_default ? " (Default)" : ""}</option>)}</select></LabeledField>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs font-semibold text-slate-600"><p><span className="font-black text-slate-800">Series:</span> {selectedSeries ? `${selectedSeries.series_code} - ${selectedSeries.series_name}` : "Select a series to map profile roles."}</p><p className="mt-1"><span className="font-black text-slate-800">Template:</span> {selectedTemplate ? `${selectedTemplate.template_code} - ${selectedTemplate.template_name}` : "Series role formulas will be used if no template is selected."}</p><p className="mt-1"><span className="font-black text-slate-800">Mapped roles:</span> {mappedRoleCount} active role{mappedRoleCount === 1 ? "" : "s"}</p></div>
+              {profileLibraryLoading ? <p className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-500">Loading the complete profile library for this series...</p> : null}
+              {profileLibraryError ? <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700"><p>{profileLibraryError}</p><Button type="button" variant="ghost" className="mt-1 h-auto px-0 py-1 text-red-700" onClick={() => setProfileLoadVersion((value) => value + 1)}>Retry profile library</Button></div> : null}
               <ProfileMappingPanel mappings={profileMappings} requiredRoles={requiredTemplateRoles} missingRoles={missingRequiredRoles} />
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
                 <LabeledField label="Glass"><select name="glass_id" className={inputClass()} value={selectedGlassId} onChange={(event) => setSelectedGlassId(event.target.value)}><option value="">Select glass later</option>{glassItems.map((item) => <option key={item.id} value={item.id}>{item.glass_code} - {item.glass_name}</option>)}</select></LabeledField>

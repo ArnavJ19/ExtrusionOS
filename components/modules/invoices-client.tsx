@@ -5,6 +5,7 @@ import { Badge, MasterDataManager } from "./master-data-manager";
 import { invoiceSchema } from "@/lib/validations/schemas";
 import { invoiceStatuses, labelize, type SessionContext } from "@/types/app";
 import { createClient } from "@/lib/supabase/browser";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 
 export function InvoicesClient({ context }: { context: SessionContext }) {
   const supabase = useMemo(() => createClient(), []);
@@ -31,7 +32,7 @@ export function InvoicesClient({ context }: { context: SessionContext }) {
       context={context}
       schema={invoiceSchema}
       searchPlaceholder="Search invoice number, customer..."
-      defaultValues={{ invoice_date: new Date().toISOString().split('T')[0], status: "draft", subtotal: 0, tax_total: 0, grand_total: 0, amount_paid: 0 }}
+      defaultValues={{ invoice_date: getBusinessDateBoundaries().today, status: "draft", subtotal: 0, tax_total: 0, grand_total: 0, amount_paid: 0 }}
       fields={[
         { name: "customer_id", label: "Customer", type: "select", options: customers, required: true },
         { name: "invoice_number", label: "Invoice Number" },

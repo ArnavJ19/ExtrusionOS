@@ -4,30 +4,18 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
-import { buildPackingListItems } from "@/lib/pcda/dispatch";
+import { buildVerifiedPackingListItems, type VerifiedDispatchBundleInput } from "@/lib/pcda/dispatch";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { dispatchSchema } from "@/lib/validations/schemas";
 
 const deliveryStatusSchema = dispatchSchema.shape.delivery_status;
 
-type SaveDispatchInput = z.input<typeof dispatchSchema> & { editing_id?: string | null };
+type SaveDispatchInput = Omit<z.input<typeof dispatchSchema>, "number_of_bundles" | "total_weight_kg" | "bundle_tare_weights_kg"> & {
+  editing_id?: string | null;
+  bundles?: VerifiedDispatchBundleInput[];
+};
 type DispatchActionResult = { success: true; dispatchId?: string } | { success: false; error: string };
-
-function parseBundleTareWeights(value: string, numberOfBundles: number) {
-  const weights = value
-    .split(/[\n,]+/)
-    .map((entry) => entry.trim())
-    .filter(Boolean)
-    .map(Number);
-  if (weights.length !== numberOfBundles) {
-    throw new Error(`Enter exactly ${numberOfBundles} bundle tare weights, one per line.`);
-  }
-  if (weights.some((weight) => !Number.isFinite(weight) || weight < 0)) {
-    throw new Error("Every bundle tare weight must be a number equal to or greater than zero.");
-  }
-  return weights.map((weight) => Number(weight.toFixed(3)));
-}
 
 function revalidateDispatchPaths(dispatchId?: string, orderId?: string) {
   revalidatePath("/dispatches");
@@ -51,7 +39,7 @@ async function loadDispatchSourceLines(
   companyId: string,
   orderId: string,
   editingId: string | null,
-  requestedWeightKg: number
+  requestedWeightKg = 0
 ) {
   const [productionResult, fulfillmentResult, reservationResult, featureResult, dispatchResult] = await Promise.all([
     supabase
@@ -211,7 +199,7 @@ async function loadDispatchSourceLines(
 
   const readySources = [...reservationSources, ...stockSources, ...productionSources];
   const readyWeight = readySources.reduce((sum, source) => sum + Number(source.available_weight_kg ?? 0), 0);
-  if (readyWeight + 0.01 < requestedWeightKg) {
+  if (requestedWeightKg > 0 && readyWeight + 0.01 < requestedWeightKg) {
     const reason = blockers.slice(0, 3).join(" ");
     throw new Error(
       `Only ${readyWeight.toFixed(3)} kg is ready and unshipped for this order.${reason ? ` ${reason}` : ""}`
@@ -220,13 +208,79 @@ async function loadDispatchSourceLines(
   return readySources;
 }
 
+export async function getDispatchSourcesAction(orderId: string, editingId?: string | null) {
+  try {
+    const parsedOrderId = z.string().uuid().safeParse(orderId);
+    if (!parsedOrderId.success) return { success: false as const, error: "Select an order to load physical stock sources." };
+    const context = await getSessionContext();
+    if (!can(context.role, "create", "dispatches") && !can(context.role, "update", "dispatches")) {
+      return { success: false as const, error: "You do not have permission to prepare dispatch bundles." };
+    }
+    const supabase = await createClient();
+    const sourceLines = await loadDispatchSourceLines(supabase, context.companyId, parsedOrderId.data, editingId ?? null);
+    const profileIds = Array.from(new Set(sourceLines.map((line: any) => line.profile_id).filter(Boolean)));
+    const batchIds = Array.from(new Set(sourceLines.map((line: any) => line.profile_stock_batch_id).filter(Boolean)));
+    const [profilesResult, batchesResult] = await Promise.all([
+      profileIds.length
+        ? supabase.from("aluminium_profiles").select("id, profile_code, profile_name").eq("company_id", context.companyId).in("id", profileIds)
+        : Promise.resolve({ data: [], error: null }),
+      batchIds.length
+        ? supabase.from("profile_stock_batches").select("id, bundle_number, location, quantity_pieces, total_weight_kg").eq("company_id", context.companyId).in("id", batchIds)
+        : Promise.resolve({ data: [], error: null })
+    ]);
+    if (profilesResult.error) throw profilesResult.error;
+    if (batchesResult.error) throw batchesResult.error;
+    const profiles = new Map((profilesResult.data ?? []).map((row: any) => [row.id, row]));
+    const batches = new Map((batchesResult.data ?? []).map((row: any) => [row.id, row]));
+    return {
+      success: true as const,
+      sources: sourceLines.map((line: any) => {
+        const profile = profiles.get(line.profile_id) as any;
+        const batch = batches.get(line.profile_stock_batch_id) as any;
+        const availableWeightKg = Number(line.available_weight_kg ?? 0);
+        const sourcePieces = Number(line.actual_pieces ?? line.fulfilled_pieces ?? batch?.quantity_pieces ?? 0);
+        const sourceTotalWeight = Number(line.actual_quantity_kg ?? line.fulfilled_weight_kg ?? batch?.total_weight_kg ?? availableWeightKg);
+        const availablePieces = sourcePieces > 0 && sourceTotalWeight > 0
+          ? Math.max(1, Math.floor(sourcePieces * availableWeightKg / sourceTotalWeight))
+          : 0;
+        return {
+          id: String(line.id),
+          sourceKind: String(line.source_kind ?? "production"),
+          sourceLabel: String(line.job_number ?? line.bundle_number ?? line.id),
+          profileId: String(line.profile_id),
+          profileLabel: [profile?.profile_code, profile?.profile_name].filter(Boolean).join(" - ") || String(line.profile_id),
+          stockBatchId: line.profile_stock_batch_id ? String(line.profile_stock_batch_id) : null,
+          stockBatchLabel: batch?.bundle_number ? `${batch.bundle_number}${batch.location ? ` - ${batch.location}` : ""}` : null,
+          availableWeightKg,
+          availablePieces
+        };
+      })
+    };
+  } catch (error) {
+    return { success: false as const, error: getErrorMessage(error, "Could not load dispatch-ready sources") };
+  }
+}
+
 export async function saveDispatchAction(input: SaveDispatchInput): Promise<DispatchActionResult> {
   try {
     const context = await getSessionContext();
     const editingId = input.editing_id || null;
     if (!can(context.role, editingId ? "update" : "create", "dispatches")) return { success: false, error: "You do not have permission to save dispatches." };
 
-    const parsed = dispatchSchema.safeParse(input);
+    if (!input.bundles?.length) {
+      return { success: false, error: "Scan or enter every physical bundle before recording the dispatch." };
+    }
+    const measured = input.bundles.reduce((totals, bundle) => {
+      const gross = Number(bundle.gross_weight_kg ?? 0);
+      const tare = Number(bundle.tare_weight_kg ?? 0);
+      return { net: totals.net + gross - tare, tare: totals.tare + tare };
+    }, { net: 0, tare: 0 });
+    const parsed = dispatchSchema.safeParse({
+      ...input,
+      number_of_bundles: input.bundles.length,
+      total_weight_kg: Number(measured.net.toFixed(3)),
+      bundle_tare_weights_kg: input.bundles.map((bundle) => bundle.tare_weight_kg).join("\n")
+    });
     if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check dispatch details." };
 
     const supabase = await createClient();
@@ -240,8 +294,7 @@ export async function saveDispatchAction(input: SaveDispatchInput): Promise<Disp
     if (editingId && !currentDispatchResult.data) return { success: false, error: "Dispatch not found for this company." };
 
     const currentDispatch = currentDispatchResult.data;
-    const bundleTareWeightsKg = parseBundleTareWeights(parsed.data.bundle_tare_weights_kg, parsed.data.number_of_bundles);
-    const totalTareWeightKg = Number(bundleTareWeightsKg.reduce((sum, weight) => sum + weight, 0).toFixed(3));
+    const totalTareWeightKg = Number(measured.tare.toFixed(3));
     const payload = {
       ...parsed.data,
       total_tare_weight_kg: totalTareWeightKg,
@@ -263,22 +316,17 @@ export async function saveDispatchAction(input: SaveDispatchInput): Promise<Disp
       editingId,
       parsed.data.total_weight_kg
     );
-    const packingRows = buildPackingListItems(
-      sourceLines,
-      editingId ?? "00000000-0000-0000-0000-000000000000",
-      currentDispatch?.dispatch_number ?? "PENDING",
-      context.companyId,
-      parsed.data.total_weight_kg,
-      parsed.data.number_of_bundles,
-      bundleTareWeightsKg
-    );
+    const verifiedManifest = buildVerifiedPackingListItems(sourceLines, context.companyId, input.bundles);
+    if (Math.abs(verifiedManifest.totalNetWeightKg - parsed.data.total_weight_kg) > 0.001) {
+      return { success: false, error: "Bundle gross and tare measurements do not match the dispatch net weight." };
+    }
     const result = await supabase.rpc("save_ready_dispatch_atomic", {
       p_dispatch_id: editingId,
       p_dispatch: {
         ...payload,
         delivery_status: editingId ? currentDispatch?.delivery_status : "dispatched"
       },
-      p_items: packingRows
+      p_items: verifiedManifest.items
     });
     if (result.error || !result.data) throw result.error ?? new Error("Could not save dispatch");
     const dispatchId = String(result.data);
@@ -299,18 +347,19 @@ export async function updateDeliveryStatusAction(
   try {
     const context = await getSessionContext();
     if (!can(context.role, "update", "dispatches")) return { success: false, error: "You do not have permission to update dispatches." };
+    const parsedDispatchId = z.string().uuid().safeParse(dispatchId);
+    if (!parsedDispatchId.success) return { success: false, error: "Invalid dispatch." };
     const parsedStatus = deliveryStatusSchema.safeParse(status);
     if (!parsedStatus.success) return { success: false, error: "Invalid delivery status." };
     const proofPath = proofOfDeliveryUrl?.trim() || "";
-    const isExternalProof = /^https?:\/\//i.test(proofPath);
-    const expectedProofPrefix = `${context.companyId}/dispatches/${dispatchId}/proof-of-delivery/`;
-    if (proofPath && !isExternalProof && !proofPath.startsWith(expectedProofPrefix)) {
-      return { success: false, error: "Stored proof of delivery does not belong to this company and dispatch." };
+    const expectedProofPrefix = `${context.companyId}/dispatches/${parsedDispatchId.data}/proof-of-delivery/`;
+    if (proofPath && !proofPath.startsWith(expectedProofPrefix)) {
+      return { success: false, error: "Proof of delivery must be the private file stored for this company and dispatch." };
     }
 
     const supabase = await createClient();
     const transitionResult = await supabase.rpc("transition_dispatch_delivery_atomic", {
-      p_dispatch_id: dispatchId,
+      p_dispatch_id: parsedDispatchId.data,
       p_status: parsedStatus.data,
       p_proof_of_delivery_url: proofPath || null,
       p_remarks: remarks?.trim() || null
@@ -319,8 +368,8 @@ export async function updateDeliveryStatusAction(
       throw transitionResult.error ?? new Error("Dispatch not found for this company.");
     }
 
-    revalidateDispatchPaths(dispatchId, String(transitionResult.data));
-    return { success: true, dispatchId };
+    revalidateDispatchPaths(parsedDispatchId.data, String(transitionResult.data));
+    return { success: true, dispatchId: parsedDispatchId.data };
   } catch (error) {
     return { success: false, error: getErrorMessage(error, "Could not update delivery status") };
   }

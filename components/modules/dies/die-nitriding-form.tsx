@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/browser";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { getErrorMessage } from "@/lib/utils/errors";
 import type { SessionContext } from "@/types/app";
 
@@ -31,7 +32,7 @@ type NitridingFormValues = {
 const emptyForm: NitridingFormValues = {
   nitriding_cycle_number: 1,
   nitriding_vendor: "",
-  nitriding_date: new Date().toISOString().slice(0, 10),
+  nitriding_date: getBusinessDateBoundaries().today,
   nitriding_process_type: "",
   nitriding_temperature_c: "",
   nitriding_duration_hours: "",

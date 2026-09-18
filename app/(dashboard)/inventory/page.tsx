@@ -19,14 +19,14 @@ export default async function InventoryPage() {
 
   if (context.dealerId) {
     const [profiles, stock] = await Promise.all([
-      supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m").eq("company_id", context.companyId).eq("is_active", true).order("profile_code").limit(500),
+      supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m").eq("company_id", context.companyId).eq("is_active", true).order("profile_code").limit(40),
       supabase.from("profile_stock_batches").select("id, finish, length_m, quantity_pieces, total_weight_kg, bundle_number, location, status, aluminium_profiles(profile_code, profile_name)").eq("company_id", context.companyId).eq("dealer_id", context.dealerId).order("created_at", { ascending: false }).limit(100)
     ]);
 
     return (
       <div className="space-y-6">
         <PageHeader title="My Inventory" description="Dealer-scoped profile stock. Manual entries are saved only under your dealership and are not visible to other dealers." />
-        <DealerInventoryEntryClient profiles={(profiles.data ?? []) as any} stock={(stock.data ?? []) as any} />
+        <DealerInventoryEntryClient companyId={context.companyId} profiles={(profiles.data ?? []) as any} stock={(stock.data ?? []) as any} />
       </div>
     );
   }

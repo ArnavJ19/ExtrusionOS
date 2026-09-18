@@ -59,6 +59,7 @@ type RoleRule = {
 const roleRules: RoleRule[] = [
   { prefix: "/settings/access", roles: ["owner"] },
   { prefix: "/settings", roles: ["owner", "admin"] },
+  { prefix: "/dashboard", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer", "dealer_admin", "dealer_staff"] },
   { prefix: "/audit-logs", roles: ["owner", "admin", "viewer"] },
   { prefix: "/command-center", roles: ["owner", "admin"] },
   { prefix: "/automation", roles: ["owner", "admin"] },
@@ -77,36 +78,43 @@ const roleRules: RoleRule[] = [
   { prefix: "/exports", roles: ["owner", "admin", "sales_manager", "dispatch_manager"] },
   { prefix: "/die-intelligence", roles: ["owner", "admin", "production_manager", "quality"] },
   { prefix: "/expenses", roles: ["owner", "admin", "accounts", "viewer"] },
+  { prefix: "/invoices", roles: ["owner", "admin", "accounts", "viewer"] },
   { prefix: "/payments", roles: ["owner", "admin", "accounts", "viewer"] },
+  { prefix: "/documents", roles: ["owner", "admin", "sales_manager", "production_manager", "quality"] },
+  { prefix: "/customers", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "factory_manager", "dispatch_manager", "accounts", "viewer"] },
+  { prefix: "/profiles", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "inventory_manager", "quality", "viewer"] },
+  { prefix: "/dies", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "quality", "viewer"] },
+  { prefix: "/quotes", roles: ["owner", "admin", "sales_manager", "sales", "accounts", "viewer"] },
+  { prefix: "/systems-configurator", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "viewer"] },
+  { prefix: "/machines", roles: ["owner", "admin", "production_manager", "production", "viewer"] },
+  { prefix: "/tasks", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer", "dealer_admin", "dealer_staff"] },
+  { prefix: "/orders", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer"] },
+  { prefix: "/production", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "viewer"] },
+  { prefix: "/foundry", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "viewer"] },
+  { prefix: "/packaging", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "viewer"] },
+  { prefix: "/quality", roles: ["owner", "admin", "production_manager", "quality", "viewer"] },
+  { prefix: "/inventory", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "inventory_manager", "viewer", "dealer_admin", "dealer_staff"] },
+  { prefix: "/dealer-inventory", roles: ["owner", "admin", "sales_manager", "factory_manager", "inventory_manager", "viewer", "dealer_admin", "dealer_staff"] },
+  { prefix: "/vendors", roles: ["owner", "admin", "sales_manager", "production_manager", "accounts", "viewer"] },
+  { prefix: "/shipments", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "viewer"] },
+  { prefix: "/dispatches", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "viewer"] },
+  { prefix: "/dealer-orders", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "inventory_manager", "dealer_admin", "dealer_staff"] },
+  { prefix: "/discrepancies", roles: ["owner", "admin", "factory_manager", "inventory_manager", "dealer_admin", "dealer_staff"] },
+  { prefix: "/notifications", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer", "dealer_admin", "dealer_staff"] },
+  { prefix: "/search", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer", "dealer_admin", "dealer_staff"] },
   { prefix: "/portal", roles: ["owner", "admin", "dealer_admin", "dealer_staff"] },
 ];
 
 const dealerAllowedPrefixes = [
   "/dashboard",
-  "/quotes",
   "/tasks",
   "/inventory",
+  "/dealer-inventory",
   "/dealer-orders",
   "/discrepancies",
   "/portal",
   "/notifications",
   "/search",
-];
-
-const defaultEmployeeRoles: UserRole[] = [
-  "owner",
-  "admin",
-  "sales_manager",
-  "sales",
-  "production_manager",
-  "production",
-  "factory_manager",
-  "dispatch_manager",
-  "dispatch",
-  "inventory_manager",
-  "accounts",
-  "quality",
-  "viewer",
 ];
 
 function startsWithPrefix(pathname: string, prefix: string) {
@@ -142,6 +150,6 @@ export function hasRouteAccess(pathname: string, role: UserRole) {
     return dealerRule ? dealerRule.roles.includes(role) : true;
   }
   const rule = matchingRule(pathname);
-  if (!rule) return isProtectedPath(pathname) && defaultEmployeeRoles.includes(role);
+  if (!rule) return false;
   return rule.roles.includes(role);
 }

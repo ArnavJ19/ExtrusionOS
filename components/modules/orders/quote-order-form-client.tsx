@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { createClient } from "@/lib/supabase/browser";
 import { formatCurrency, formatWeight } from "@/lib/utils/format";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { nextBusinessNumber } from "@/lib/utils/numbering";
 import { calculateBilletWeightKg, calculateRequiredBilletCount } from "@/lib/calculations/foundry";
 import type { SessionContext } from "@/types/app";
@@ -36,12 +37,14 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
   const [existingOrderNumbers, setExistingOrderNumbers] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [quoteId, setQuoteId] = useState("");
-  const [orderDate, setOrderDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [orderDate, setOrderDate] = useState(() => getBusinessDateBoundaries().today);
   const [expectedDispatchDate, setExpectedDispatchDate] = useState("");
   const [priority, setPriority] = useState("normal");
   const [dealerFulfilledKg, setDealerFulfilledKg] = useState(0);
   const [availableUnreservedKg, setAvailableUnreservedKg] = useState(0);
   const [notes, setNotes] = useState("");
+  const [minimumHandling, setMinimumHandling] = useState<"queue" | "override">("queue");
+  const [overrideReason, setOverrideReason] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -54,7 +57,7 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
           .eq("company_id", context.companyId)
           .eq("status", "customer_approved")
           .order("quote_date", { ascending: false })
-          .limit(250),
+          .limit(50),
         supabase.from("orders").select("order_number").eq("company_id", context.companyId),
       ]);
       if (quotesResult.error) throw quotesResult.error;
@@ -134,11 +137,13 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
     if (!selectedQuote) return toast.error("Select a quote before creating an order.");
     if (dealerFulfilledKg > availableUnreservedKg) return toast.error("Dealer fulfillment cannot use reserved or unavailable stock.");
     if (dealerFulfilledKg > quoteWeightKg) return toast.error("Dealer fulfillment cannot exceed the quote weight.");
-    if (factoryBlocked) return toast.error(`Urgent: ${formatWeight(manufacturingWeightKg)} is below the ${formatWeight(factoryMinimumKg)} factory minimum. Fulfill locally or arrange stock from another dealer/manufacturer.`);
+    if (factoryBlocked && minimumHandling === "override" && overrideReason.trim().length < 8) {
+      return toast.error("Enter a clear manager reason for the below-minimum factory release.");
+    }
 
     setSaving(true);
     const orderNumber = nextBusinessNumber("O", existingOrderNumbers);
-    const { data, error } = await supabase.rpc("create_order_from_quote_with_dealer_stock", {
+    const { data, error } = await supabase.rpc("create_order_from_quote_with_dealer_workflow_atomic", {
       p_quote_id: selectedQuote.id,
       p_order_number: orderNumber,
       p_order_date: orderDate,
@@ -146,22 +151,12 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
       p_priority: priority,
       p_dealer_fulfilled_weight_kg: dealerFulfilledKg,
       p_notes: notes,
+      p_minimum_handling: factoryBlocked ? minimumHandling : "queue",
+      p_override_reason: factoryBlocked && minimumHandling === "override" ? overrideReason : null,
     });
     if (error || !data) {
       setSaving(false);
       return toast.error(error?.message ?? "Could not create order");
-    }
-    if (context.dealerId) {
-      const dealerOrderResult = await fetch("/api/dealer-orders/from-quote-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order_id: data })
-      });
-      const dealerOrderPayload = await dealerOrderResult.json().catch(() => ({}));
-      if (!dealerOrderResult.ok) {
-        setSaving(false);
-        return toast.error(dealerOrderPayload.error ?? "Order created, but dealer order workflow record could not be created.");
-      }
     }
     toast.success("Order created from quote");
     router.push(context.dealerId ? `/dealer-orders/quote-orders/${data}` : `/orders/${data}`);
@@ -206,7 +201,7 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
             <label className="block space-y-1.5"><span className="form-label">Dealer Stock Used (kg)</span><input className="form-input" type="number" step="0.001" min="0" max={Math.min(availableUnreservedKg, quoteWeightKg)} value={dealerFulfilledKg} onChange={(event) => setDealerFulfilledKg(Number(event.target.value))} disabled={Boolean(context.dealerId)} /></label>
             <ReadOnly label="Factory Manufacturing Weight" value={formatWeight(manufacturingWeightKg)} />
           </div>
-          {factoryBlocked ? <div className="flex gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800"><AlertTriangle className="h-5 w-5 shrink-0" /> Urgent: The remaining factory quantity is below 700 kg. This order cannot be sent for manufacturing. Fulfill it locally or arrange material from another dealer/manufacturer.</div> : null}
+          {factoryBlocked ? <div className="space-y-4 rounded-2xl border border-amber-200 bg-amber-50 p-4"><div className="flex gap-3 text-sm font-bold text-amber-900"><AlertTriangle className="h-5 w-5 shrink-0" /> The remaining factory quantity is below 700 kg. The order can be saved, but production cannot start until it is combined with other queued work or a manager approves an exception.</div><div className="grid gap-3 md:grid-cols-2"><label className="flex cursor-pointer gap-3 rounded-xl border border-amber-200 bg-white p-3"><input type="radio" checked={minimumHandling === "queue"} onChange={() => setMinimumHandling("queue")} /><span><strong className="block text-sm text-slate-950">Add to consolidation queue</strong><span className="text-xs font-medium text-slate-500">Recommended: combine compatible orders to reach the minimum.</span></span></label>{!context.dealerId && ["owner", "admin", "factory_manager", "production_manager"].includes(context.role) ? <label className="flex cursor-pointer gap-3 rounded-xl border border-amber-200 bg-white p-3"><input type="radio" checked={minimumHandling === "override"} onChange={() => setMinimumHandling("override")} /><span><strong className="block text-sm text-slate-950">Manager exception</strong><span className="text-xs font-medium text-slate-500">Release this order alone with an auditable reason.</span></span></label> : null}</div>{minimumHandling === "override" ? <label className="block space-y-1.5"><span className="form-label">Override reason *</span><textarea className="form-input min-h-20 bg-white" value={overrideReason} onChange={(event) => setOverrideReason(event.target.value)} /></label> : null}</div> : null}
         </CardContent>
       </Card>
 

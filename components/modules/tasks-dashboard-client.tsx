@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { labelize, type SessionContext } from "@/types/app";
 
 type UserOption = { id: string; full_name: string | null; email: string | null; role: string; dealer_id: string | null };
@@ -14,7 +15,7 @@ type TaskRow = { id: string; title: string; description?: string | null; priorit
 
 export function TasksDashboardClient({ context, tasks, users, dealers }: { context: SessionContext; tasks: TaskRow[]; users: UserOption[]; dealers: DealerOption[] }) {
   const router = useRouter();
-  const today = new Date().toISOString().slice(0, 10);
+  const { today } = getBusinessDateBoundaries();
   const defaultDealerId = context.dealerId ?? dealers[0]?.id ?? "";
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", assigned_to: "", due_date: today, priority: "normal", dealership_id: defaultDealerId });

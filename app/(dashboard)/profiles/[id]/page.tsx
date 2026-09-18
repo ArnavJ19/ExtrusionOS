@@ -78,6 +78,7 @@ export default async function ProfileDetailPage({ params }: { params: Promise<{ 
 
   const primaryDie = profile.primary_die as any;
   const backupDie = profile.backup_die as any;
+  const canEditProfileConfiguration = can(context.role, "update", "profiles");
 
   return (
     <div className="space-y-6">
@@ -235,10 +236,10 @@ export default async function ProfileDetailPage({ params }: { params: Promise<{ 
       )}
 
       {/* Production Routing */}
-      <ProfileRoutingClient context={context} profileId={id} />
+      <ProfileRoutingClient context={context} profileId={id} canEdit={canEditProfileConfiguration} />
 
       {/* Quality Inspection Plan */}
-      <ProfileQualityPlanClient context={context} profileId={id} />
+      <ProfileQualityPlanClient context={context} profileId={id} canEdit={canEditProfileConfiguration} />
 
       {/* Document Upload & Report Generation */}
       {can(context.role, "update", "profiles") && (

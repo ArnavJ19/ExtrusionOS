@@ -624,7 +624,7 @@ export const invoiceSchema = z.object({
   tax_total: z.coerce.number().nonnegative(),
   grand_total: z.coerce.number().nonnegative(),
   amount_paid: z.coerce.number().nonnegative().default(0),
-  status: z.enum(["draft", "generated", "sent", "partially_paid", "paid", "overdue", "cancelled"]).default("draft"),
+  status: z.enum(["draft", "generated", "sent", "partially_paid", "paid", "overdue", "credited", "cancelled"]).default("draft"),
   notes: optionalText
 });
 

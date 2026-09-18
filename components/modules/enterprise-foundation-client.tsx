@@ -15,7 +15,7 @@ import { branchSchema, dataExchangeJobSchema, featureFlagSchema, notificationSch
 import { branchTypes, dataExchangeJobTypes, enterpriseModules, enterpriseTaskPriorities, enterpriseTaskStatuses, labelize, notificationSeverities, type SessionContext, type UserRole } from "@/types/app";
 import { formatDate } from "@/lib/utils/format";
 
-const userRoles: UserRole[] = ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "dispatch_manager", "dispatch", "accounts", "quality", "viewer"];
+const userRoles: UserRole[] = ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer", "dealer_admin", "dealer_staff"];
 const exchangeModules = ["customers", "aluminium_profiles", "vendors", "inventory_items", "branches"];
 
 type Props = {
@@ -36,7 +36,6 @@ export function EnterpriseFoundationClient({ context, initialFlags, initialBranc
   const supabase = useMemo(() => createClient(), []);
   const [flags, setFlags] = useState(initialFlags);
   const [branches, setBranches] = useState(initialBranches);
-  const [subscriptionRows, setSubscriptionRows] = useState(subscriptions);
   const [notifications, setNotifications] = useState(initialNotifications);
   const [tasks, setTasks] = useState(initialTasks);
   const [exchangeJobRows, setExchangeJobRows] = useState(exchangeJobs);
@@ -49,10 +48,10 @@ export function EnterpriseFoundationClient({ context, initialFlags, initialBranc
   const [csvText, setCsvText] = useState("");
 
   const enabledModules = new Set(flags.filter((flag) => flag.is_enabled).map((flag) => flag.module_name));
-  const activeSubscription = subscriptionRows[0];
-  const [selectedPlanId, setSelectedPlanId] = useState(activeSubscription?.plan_id ?? plans[0]?.id ?? "");
+  const activeSubscription = subscriptions[0];
   const input = "form-input";
   const userOptions = userRows.filter((user) => user.is_active).map((user) => ({ value: user.id, label: user.full_name || user.email || user.role }));
+  const canManageUsers = context.role === "owner";
 
   async function toggleModule(moduleName: string) {
     const existing = flags.find((flag) => flag.module_name === moduleName);
@@ -76,19 +75,6 @@ export function EnterpriseFoundationClient({ context, initialFlags, initialBranc
     toast.success(`${labelize(moduleName)} ${nextEnabled ? "enabled" : "disabled"}`);
   }
 
-  async function saveSubscription() {
-    if (!selectedPlanId) return toast.error("Select a subscription plan");
-    setSaving(true);
-    const payload = { company_id: context.companyId, plan_id: selectedPlanId, status: "active", billing_cycle: "manual" };
-    const result = activeSubscription?.id
-      ? await supabase.from("company_subscriptions").update(payload).eq("id", activeSubscription.id).eq("company_id", context.companyId).select("*, subscription_plans(plan_name, plan_type)").single()
-      : await supabase.from("company_subscriptions").insert(payload).select("*, subscription_plans(plan_name, plan_type)").single();
-    setSaving(false);
-    if (result.error) return toast.error(result.error.message);
-    setSubscriptionRows((current) => [result.data, ...current.filter((row) => row.id !== result.data.id)]);
-    toast.success("Subscription assignment saved");
-  }
-
   async function saveBranch() {
     const parsed = branchSchema.safeParse(branchForm);
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Check branch details");
@@ -102,6 +88,7 @@ export function EnterpriseFoundationClient({ context, initialFlags, initialBranc
   }
 
   async function updateUser(user: Record<string, any>, patch: Record<string, any>) {
+    if (!canManageUsers) return toast.error("Only the company owner can manage workspace access.");
     if (user.id === context.userId) return toast.error("You cannot change your own role or active status.");
 
     const next = { role: patch.role ?? user.role, branch_id: patch.branch_id ?? user.branch_id ?? "", is_active: patch.is_active ?? user.is_active };
@@ -138,7 +125,7 @@ export function EnterpriseFoundationClient({ context, initialFlags, initialBranc
     const parsed = taskSchema.safeParse(taskForm);
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Check task details");
     setSaving(true);
-    const { data, error } = await supabase.from("tasks").insert({ ...parsed.data, company_id: context.companyId, created_by: context.userId }).select().single();
+    const { data, error } = await supabase.from("tasks").insert({ ...parsed.data, assigned_to: parsed.data.assigned_to || null, related_entity_id: parsed.data.related_entity_id || null, company_id: context.companyId, created_by: context.userId }).select().single();
     setSaving(false);
     if (error) return toast.error(error.message);
     setTasks((current) => [data, ...current]);
@@ -150,7 +137,7 @@ export function EnterpriseFoundationClient({ context, initialFlags, initialBranc
     const parsed = notificationSchema.safeParse(notificationForm);
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Check notification details");
     setSaving(true);
-    const { data, error } = await supabase.from("notifications").insert({ ...parsed.data, company_id: context.companyId, created_by: context.userId }).select().single();
+    const { data, error } = await supabase.from("notifications").insert({ ...parsed.data, recipient_user_id: parsed.data.recipient_user_id || null, related_entity_id: parsed.data.related_entity_id || null, company_id: context.companyId, created_by: context.userId }).select().single();
     setSaving(false);
     if (error) return toast.error(error.message);
     setNotifications((current) => [data, ...current]);
@@ -201,11 +188,11 @@ export function EnterpriseFoundationClient({ context, initialFlags, initialBranc
       </Card>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card><CardHeader><h2 className="section-title flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-orange" /> Subscription assignment</h2></CardHeader><CardContent className="space-y-3"><select className={input} value={selectedPlanId} onChange={(event) => setSelectedPlanId(event.target.value)}>{plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.plan_name} - Rs. {Number(plan.monthly_price ?? 0).toLocaleString("en-IN")}/month</option>)}</select><Button disabled={saving || !selectedPlanId} onClick={saveSubscription}>Save subscription</Button><div className="grid gap-3 sm:grid-cols-2">{plans.map((plan) => <div key={plan.id} className="rounded-2xl border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><p className="font-black text-slate-950">{plan.plan_name}</p><Badge value={plan.plan_type} /></div><p className="mt-1 text-sm font-bold text-slate-600">Rs. {Number(plan.monthly_price ?? 0).toLocaleString("en-IN")}/month</p></div>)}</div></CardContent></Card>
-        <Card><CardHeader><h2 className="section-title flex items-center gap-2"><Users className="h-5 w-5 text-orange" /> Workspace access</h2></CardHeader><CardContent className="space-y-4"><p className="text-sm font-medium leading-6 text-slate-600">User invitations, pending invite status, roles, and access controls are managed in one secure workflow.</p><Link href="/settings/access" className="inline-flex items-center justify-center rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90">Open Access Management</Link></CardContent></Card>
+        <Card><CardHeader><h2 className="section-title flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-orange" /> Subscription</h2></CardHeader><CardContent className="space-y-3"><div className="rounded-2xl border border-slate-200 bg-slate-50 p-4"><p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Current plan</p><p className="mt-2 text-lg font-black text-slate-950">{activeSubscription?.subscription_plans?.plan_name ?? "No active plan"}</p><p className="mt-1 text-sm font-semibold text-slate-600">{activeSubscription ? labelize(activeSubscription.status ?? "active") : "Contact support to activate billing."}</p></div><p className="text-sm font-medium leading-6 text-slate-600">Plan and billing changes are managed through the billing service so workspace users cannot grant their own entitlements.</p><div className="grid gap-3 sm:grid-cols-2">{plans.map((plan) => <div key={plan.id} className="rounded-2xl border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><p className="font-black text-slate-950">{plan.plan_name}</p><Badge value={plan.plan_type} /></div><p className="mt-1 text-sm font-bold text-slate-600">Rs. {Number(plan.monthly_price ?? 0).toLocaleString("en-IN")}/month</p></div>)}</div></CardContent></Card>
+        <Card><CardHeader><h2 className="section-title flex items-center gap-2"><Users className="h-5 w-5 text-orange" /> Workspace access</h2></CardHeader><CardContent className="space-y-4"><p className="text-sm font-medium leading-6 text-slate-600">User invitations, pending invite status, roles, and access controls are managed in one secure workflow.</p>{canManageUsers ? <Link href="/settings/access" className="inline-flex items-center justify-center rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90">Open Access Management</Link> : <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">Company owner access is required to invite users or change roles.</p>}</CardContent></Card>
       </div>
 
-      <Card><CardHeader><h2 className="section-title flex items-center gap-2"><Users className="h-5 w-5 text-orange" /> User management</h2></CardHeader><CardContent>{userRows.length ? <div className="overflow-x-auto"><table className="industrial-table min-w-[900px]"><thead><tr><th>User</th><th>Role</th><th>Branch</th><th>Status</th><th>Actions</th></tr></thead><tbody>{userRows.map((user) => <tr key={user.id}><td><p className="font-black text-slate-950">{user.full_name || user.email || "User"}</p><p className="text-xs font-medium text-slate-500">{user.email}</p></td><td><select className={input} value={user.role} disabled={saving || user.id === context.userId} onChange={(event) => updateUser(user, { role: event.target.value })}>{userRoles.map((role) => <option key={role} value={role}>{labelize(role)}</option>)}</select></td><td><select className={input} value={user.branch_id ?? ""} disabled={saving} onChange={(event) => updateUser(user, { branch_id: event.target.value })}><option value="">No branch</option>{branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.branch_name}</option>)}</select></td><td><Badge value={user.is_active ? "active" : "inactive"} /></td><td><Button variant="ghost" disabled={saving || user.id === context.userId} onClick={() => updateUser(user, { is_active: !user.is_active })}>{user.is_active ? "Deactivate" : "Reactivate"}</Button></td></tr>)}</tbody></table></div> : <EmptyState title="No users found" description="Users appear after they join this company workspace." />}</CardContent></Card>
+      <Card><CardHeader><h2 className="section-title flex items-center gap-2"><Users className="h-5 w-5 text-orange" /> User directory</h2><p className="mt-1 text-sm font-medium text-slate-500">{canManageUsers ? "Change roles, branch assignments, and access status." : "User access is read-only for administrators; the company owner manages roles and status."}</p></CardHeader><CardContent>{userRows.length ? <div className="overflow-x-auto"><table className="industrial-table min-w-[900px]"><thead><tr><th>User</th><th>Role</th><th>Branch</th><th>Status</th><th>Actions</th></tr></thead><tbody>{userRows.map((user) => <tr key={user.id}><td><p className="font-black text-slate-950">{user.full_name || user.email || "User"}</p><p className="text-xs font-medium text-slate-500">{user.email}</p></td><td><select className={input} value={user.role} disabled={saving || !canManageUsers || user.id === context.userId} onChange={(event) => updateUser(user, { role: event.target.value })}>{userRoles.map((role) => <option key={role} value={role}>{labelize(role)}</option>)}</select></td><td><select className={input} value={user.branch_id ?? ""} disabled={saving || !canManageUsers} onChange={(event) => updateUser(user, { branch_id: event.target.value })}><option value="">No branch</option>{branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.branch_name}</option>)}</select></td><td><Badge value={user.is_active ? "active" : "inactive"} /></td><td><Button variant="ghost" disabled={saving || !canManageUsers || user.id === context.userId} onClick={() => updateUser(user, { is_active: !user.is_active })}>{user.is_active ? "Deactivate" : "Reactivate"}</Button></td></tr>)}</tbody></table></div> : <EmptyState title="No users found" description="Users appear after they join this company workspace." />}</CardContent></Card>
 
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
         <Card><CardHeader><h2 className="section-title">Branches, plants and warehouses</h2></CardHeader><CardContent className="space-y-3"><input className={input} placeholder="Branch name" value={branchForm.branch_name} onChange={(event) => setBranchForm({ ...branchForm, branch_name: event.target.value })} /><select className={input} value={branchForm.branch_type} onChange={(event) => setBranchForm({ ...branchForm, branch_type: event.target.value })}>{branchTypes.map((type) => <option key={type} value={type}>{labelize(type)}</option>)}</select><div className="grid gap-3 sm:grid-cols-2"><input className={input} placeholder="City" value={branchForm.city} onChange={(event) => setBranchForm({ ...branchForm, city: event.target.value })} /><input className={input} placeholder="State" value={branchForm.state} onChange={(event) => setBranchForm({ ...branchForm, state: event.target.value })} /></div><input className={input} placeholder="Phone" value={branchForm.phone} onChange={(event) => setBranchForm({ ...branchForm, phone: event.target.value })} /><input className={input} placeholder="Manager name" value={branchForm.manager_name} onChange={(event) => setBranchForm({ ...branchForm, manager_name: event.target.value })} /><textarea className={`${input} min-h-20`} placeholder="Address" value={branchForm.address} onChange={(event) => setBranchForm({ ...branchForm, address: event.target.value })} /><Button disabled={saving} onClick={saveBranch}>Save branch</Button></CardContent></Card>

@@ -8,3 +8,5 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .codex-dev*.log
+playwright-report/
+test-results/

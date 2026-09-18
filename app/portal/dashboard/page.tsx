@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { getErrorMessage } from "@/lib/utils/errors";
 
 export default async function PortalDashboardPage() {
@@ -18,7 +19,7 @@ export default async function PortalDashboardPage() {
   }
 
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const { today } = getBusinessDateBoundaries();
 
   const [dealerOrders, openTasks, discrepancies, lowStock, recentOrders] = await Promise.all([
     supabase

@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/browser";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { maintenanceBillUploadRules, validateUploadFile } from "@/lib/validations/uploads";
 
 type Schedule = {
@@ -112,7 +113,7 @@ export default function MaintenancePage() {
   const [fMaintenanceType, setFMaintenanceType] = useState("preventive");
   const [fDescription, setFDescription] = useState("");
   const [fFrequency, setFFrequency] = useState("monthly");
-  const [fDueDate, setFDueDate] = useState(new Date().toISOString().slice(0, 10));
+  const [fDueDate, setFDueDate] = useState(() => getBusinessDateBoundaries().today);
   const [fAssignedTo, setFAssignedTo] = useState("");
 
   const [bIssue, setBIssue] = useState("");
@@ -307,7 +308,7 @@ export default function MaintenancePage() {
         company_id: companyId,
         machine_id: fMachine.trim(),
         machine_type: fMachineType,
-        breakdown_date: new Date().toISOString().slice(0, 10),
+        breakdown_date: getBusinessDateBoundaries().today,
         start_time: new Date().toISOString(),
         issue_description: bIssue.trim(),
         root_cause: bRootCause.trim() || null,

@@ -105,6 +105,7 @@ export function InvoiceFormClient({
           .from("dispatches")
           .select("id, order_id, dispatch_number, dispatch_date, delivery_status, total_weight_kg")
           .eq("company_id", context.companyId)
+          .not("delivery_status", "in", "(returned,damaged)")
           .order("dispatch_date", { ascending: false })
           .limit(500),
         supabase

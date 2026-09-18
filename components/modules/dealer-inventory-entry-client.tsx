@@ -1,20 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { SearchableSelect } from "@/components/ui/searchable-select";
+import { createClient } from "@/lib/supabase/browser";
+import { getErrorMessage } from "@/lib/utils/errors";
 import { formatWeight } from "@/lib/utils/format";
 
 type ProfileOption = { id: string; profile_code: string; profile_name: string; section_weight_kg_per_m?: number | null };
 type StockRow = { id: string; finish: string; length_m: number; quantity_pieces: number; total_weight_kg: number; bundle_number?: string | null; location?: string | null; status: string; aluminium_profiles?: { profile_code?: string; profile_name?: string } | null };
 
-export function DealerInventoryEntryClient({ profiles, stock }: { profiles: ProfileOption[]; stock: StockRow[] }) {
+function cleanProfileSearch(value: string) {
+  return value.replace(/[%*_,()"']/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+}
+
+export function DealerInventoryEntryClient({ companyId, profiles, stock }: { companyId: string; profiles: ProfileOption[]; stock: StockRow[] }) {
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
   const [saving, setSaving] = useState(false);
+  const [profileOptions, setProfileOptions] = useState(profiles);
+  const [profileSearch, setProfileSearch] = useState("");
+  const [profileSearching, setProfileSearching] = useState(false);
   const [form, setForm] = useState({ profile_id: "", finish: "mill_finish", length_m: "5.8", quantity_pieces: "", total_weight_kg: "", bundle_number: "", location: "Dealer warehouse", notes: "" });
+
+  useEffect(() => {
+    const term = cleanProfileSearch(profileSearch);
+    if (!term) return;
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setProfileSearching(true);
+      const { data, error } = await supabase
+        .from("aluminium_profiles")
+        .select("id, profile_code, profile_name, section_weight_kg_per_m")
+        .eq("company_id", companyId)
+        .eq("is_active", true)
+        .or(`profile_code.ilike.*${term}*,profile_name.ilike.*${term}*`)
+        .order("profile_code")
+        .limit(30);
+      if (cancelled) return;
+      setProfileSearching(false);
+      if (error) return toast.error(getErrorMessage(error, "Could not search profiles"));
+      setProfileOptions((current) => {
+        const selected = current.find((profile) => profile.id === form.profile_id);
+        const next = selected && !(data ?? []).some((profile) => profile.id === selected.id) ? [selected, ...(data ?? [])] : (data ?? []);
+        return next as ProfileOption[];
+      });
+    }, 250);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [companyId, form.profile_id, profileSearch, supabase]);
 
   async function submit() {
     setSaving(true);
@@ -37,7 +77,7 @@ export function DealerInventoryEntryClient({ profiles, stock }: { profiles: Prof
         <CardHeader><h2 className="section-title">Add Dealer Inventory</h2></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
-            <label className="block space-y-1.5"><span className="form-label">Profile *</span><select className="form-input" value={form.profile_id} onChange={(event) => setForm({ ...form, profile_id: event.target.value })}><option value="">Select profile</option>{profiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.profile_code} - {profile.profile_name}</option>)}</select></label>
+            <label className="block space-y-1.5"><span className="form-label">Profile *</span><SearchableSelect value={form.profile_id} options={profileOptions.map((profile) => ({ value: profile.id, label: `${profile.profile_code} - ${profile.profile_name}` }))} placeholder="Search profile code or name" onChange={(profileId) => setForm({ ...form, profile_id: profileId })} onSearchChange={setProfileSearch} searching={profileSearching} /></label>
             <label className="block space-y-1.5"><span className="form-label">Finish *</span><select className="form-input" value={form.finish} onChange={(event) => setForm({ ...form, finish: event.target.value })}><option value="mill_finish">Mill finish</option><option value="powder_coating">Powder coating</option><option value="anodizing">Anodizing</option><option value="wood_finish">Wood finish</option></select></label>
             <label className="block space-y-1.5"><span className="form-label">Length m *</span><input className="form-input" type="number" min="0" step="0.001" value={form.length_m} onChange={(event) => setForm({ ...form, length_m: event.target.value })} /></label>
             <label className="block space-y-1.5"><span className="form-label">Pieces *</span><input className="form-input" type="number" min="1" step="1" value={form.quantity_pieces} onChange={(event) => setForm({ ...form, quantity_pieces: event.target.value })} /></label>

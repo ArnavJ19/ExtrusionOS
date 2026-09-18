@@ -3,6 +3,7 @@ import { OrdersDashboard } from "@/components/modules/dashboards/orders-dashboar
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { redirect } from "next/navigation";
 
 export default async function OrdersPage() {
@@ -11,9 +12,7 @@ export default async function OrdersPage() {
 
   const supabase = await createClient();
   const cid = context.companyId;
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-  const today = now.toISOString().slice(0, 10);
+  const { monthStart, today } = getBusinessDateBoundaries();
 
   const closedStages = ["dispatched", "delivered", "closed", "cancelled"];
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
+import { can } from "@/lib/auth/permissions";
 import { logEnterpriseAuditEvent } from "@/lib/enterprise/audit";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
@@ -10,6 +11,9 @@ const schema = z.object({ comment_text: z.string().trim().min(1), visibility: z.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const context = await getSessionContext();
+    if (!can(context.role, "create", "dealer_orders")) {
+      return NextResponse.json({ error: "You do not have permission to add dealer order comments." }, { status: 403 });
+    }
     const { id } = await params;
     const parsed = schema.safeParse(await request.json());
     if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid comment" }, { status: 400 });

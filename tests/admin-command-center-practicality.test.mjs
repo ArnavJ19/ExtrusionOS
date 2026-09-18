@@ -54,6 +54,43 @@ test("business boundaries default to India and do not follow the UTC calendar da
   assert.equal(resolveBusinessTimeZone("Invalid/Zone"), "Asia/Kolkata");
 });
 
+test("tenant users cannot assign their own subscription entitlements", () => {
+  const component = read("components/modules/enterprise-foundation-client.tsx");
+  const migration = read("supabase/migrations/20260723050000_subscription_entitlement_guard.sql");
+
+  assert.doesNotMatch(component, /saveSubscription|Subscription assignment saved|company_subscriptions"\)\.update|company_subscriptions"\)\.insert/);
+  assert.match(component, /managed through the billing service/);
+  assert.match(migration, /drop policy if exists "company subscriptions tenant insert admin"/);
+  assert.match(migration, /drop policy if exists "company subscriptions tenant update admin"/);
+  assert.match(migration, /revoke insert, update, delete on table public\.company_subscriptions from anon, authenticated/);
+});
+
+test("factory date defaults use the shared business calendar", () => {
+  const businessDateConsumers = [
+    "app/(dashboard)/dealer-orders/page.tsx",
+    "app/(dashboard)/die-intelligence/page.tsx",
+    "app/(dashboard)/energy/page.tsx",
+    "app/(dashboard)/maintenance/page.tsx",
+    "app/(dashboard)/orders/page.tsx",
+    "app/portal/dashboard/page.tsx",
+    "components/modules/tasks-dashboard-client.tsx",
+    "components/modules/dies/die-nitriding-form.tsx",
+    "components/modules/dies/dies-overview-client.tsx",
+    "components/modules/orders/quote-order-form-client.tsx",
+    "components/modules/operations/record-form-client.tsx",
+    "components/modules/invoices-client.tsx",
+    "lib/calculations/quote.ts",
+    "lib/calculations/operations.ts",
+    "app/api/dealer-orders/[id]/workflow/route.ts",
+  ];
+
+  for (const path of businessDateConsumers) {
+    const source = read(path);
+    assert.match(source, /getBusinessDateBoundaries/);
+    assert.doesNotMatch(source, /new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/);
+  }
+});
+
 test("recovery uses linked issued billet input and becomes not captured when any job lacks input", () => {
   const captured = calculateIssuedBilletRecovery(
     [{ id: "job-1", actual_quantity_kg: 900 }],

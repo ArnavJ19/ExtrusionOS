@@ -2,10 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
-import { logEnterpriseAuditEvent } from "@/lib/enterprise/audit";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
-import { nextBusinessNumber } from "@/lib/utils/numbering";
 
 const dealerOrderSchema = z.object({
   dealer_id: z.string().uuid().optional(),
@@ -37,63 +35,18 @@ export async function POST(request: Request) {
     if (context.dealerId && dealerId !== context.dealerId) return NextResponse.json({ error: "Dealer users can only create orders for their own dealership." }, { status: 403 });
 
     const supabase = await createClient();
-    const existingNumbers = await supabase.from("dealer_orders").select("order_number").eq("company_id", context.companyId);
-    if (existingNumbers.error) return NextResponse.json({ error: getErrorMessage(existingNumbers.error, "Could not generate order number") }, { status: 500 });
-    const orderNumber = nextBusinessNumber("DO", (existingNumbers.data ?? []).map((r: any) => r.order_number));
-    const orderResult = await supabase.from("dealer_orders").insert({
-      company_id: context.companyId,
-      dealer_id: dealerId,
-      order_number: orderNumber,
-      created_by_dealer_user_id: context.userId,
-      priority: parsed.data.priority,
-      delivery_address: parsed.data.delivery_address ?? null,
-      expected_delivery_date: parsed.data.expected_delivery_date ?? null,
-      notes: parsed.data.notes ?? null,
-      status: "dealer_order_submitted"
-    }).select("id, order_number, status").single();
-    if (orderResult.error || !orderResult.data) return NextResponse.json({ error: getErrorMessage(orderResult.error, "Could not create dealer order") }, { status: 500 });
-
-    const items = parsed.data.items.map((item) => ({ ...item, company_id: context.companyId, dealer_order_id: orderResult.data.id }));
-    const itemsResult = await supabase.from("dealer_order_items").insert(items);
-    if (itemsResult.error) return NextResponse.json({ error: getErrorMessage(itemsResult.error, "Could not add dealer order items") }, { status: 500 });
-
-    await supabase.from("dealer_order_status_history").insert({
-      company_id: context.companyId,
-      dealer_order_id: orderResult.data.id,
-      new_status: "dealer_order_submitted",
-      changed_by: context.userId,
-      notes: parsed.data.notes ?? null
+    const orderResult = await supabase.rpc("create_dealer_order_atomic", {
+      p_dealer_id: dealerId,
+      p_priority: parsed.data.priority,
+      p_delivery_address: parsed.data.delivery_address ?? null,
+      p_expected_delivery_date: parsed.data.expected_delivery_date ?? null,
+      p_notes: parsed.data.notes ?? null,
+      p_items: parsed.data.items
     });
-
-    await supabase.from("notifications").insert({
-      company_id: context.companyId,
-      dealer_id: dealerId,
-      recipient_role: "factory_manager",
-      notification_type: "dealer_order_submitted",
-      severity: "info",
-      title: "New dealer order submitted",
-      body: `${orderNumber} is waiting for factory review.`,
-      related_entity_type: "dealer_order",
-      related_entity_id: orderResult.data.id,
-      entity_reference: orderNumber,
-      action_link: `/dealer-orders/${orderResult.data.id}`,
-      created_by: context.userId
-    });
-
-    await logEnterpriseAuditEvent(supabase, {
-      companyId: context.companyId,
-      actorUserId: context.userId,
-      actorName: context.fullName ?? context.email,
-      actorRole: context.role,
-      actorDealerId: context.dealerId,
-      actionType: "dealer_order_submitted",
-      moduleName: "dealer_orders",
-      entityType: "dealer_order",
-      entityId: orderResult.data.id,
-      entityReferenceNumber: orderNumber,
-      newValue: parsed.data,
-      changeSummary: `${orderNumber} submitted by dealer user`
-    });
+    if (orderResult.error || !orderResult.data) {
+      const message = getErrorMessage(orderResult.error, "Could not create dealer order");
+      return NextResponse.json({ error: message }, { status: orderResult.error?.code === "42501" ? 403 : 500 });
+    }
 
     return NextResponse.json({ order: orderResult.data });
   } catch (error) {

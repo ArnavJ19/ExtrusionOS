@@ -16,6 +16,8 @@ export default async function TasksPage() {
     taskQuery.or(`dealership_id.eq.${context.dealerId},assigned_to.eq.${context.userId},created_by.eq.${context.userId}`);
     userQuery.eq("dealer_id", context.dealerId);
     dealerQuery.eq("id", context.dealerId);
+  } else if (!["owner", "admin", "sales_manager", "factory_manager", "inventory_manager"].includes(context.role)) {
+    taskQuery.or(`assigned_to.eq.${context.userId},assigned_to.is.null`);
   }
   const [tasksResult, usersResult, dealersResult] = await Promise.all([taskQuery, userQuery, dealerQuery]);
   const usersById = new Map((usersResult.data ?? []).map((user: any) => [user.id, user]));

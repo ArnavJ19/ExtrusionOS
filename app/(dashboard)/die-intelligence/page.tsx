@@ -3,6 +3,7 @@ import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 import { DieIntelligenceClient } from "@/components/modules/die-intelligence-client";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { getErrorMessage } from "@/lib/utils/errors";
 
 export default async function DieIntelligencePage() {
@@ -51,7 +52,7 @@ export default async function DieIntelligencePage() {
     if (!nitridingDueByDie.has(n.die_id)) nitridingDueByDie.set(n.die_id, n.next_nitriding_due_date);
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const { today } = getBusinessDateBoundaries();
 
   const dies = (diesResult.data ?? []).map((die: any) => {
     const metric = metricsByDieId.get(die.id) as any | undefined;

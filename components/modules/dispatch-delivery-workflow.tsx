@@ -28,8 +28,8 @@ const nextStatuses: Record<DeliveryStatus, DeliveryStatus[]> = {
   dispatched: ["in_transit", "delivered", "delayed", "damaged", "returned"],
   in_transit: ["delivered", "delayed", "damaged", "returned"],
   delayed: ["dispatched", "in_transit", "delivered", "damaged", "returned"],
-  damaged: ["dispatched", "in_transit", "returned"],
-  returned: ["dispatched"],
+  damaged: ["returned"],
+  returned: [],
   delivered: ["returned"]
 };
 
@@ -125,7 +125,7 @@ export function DispatchDeliveryWorkflow({
 
   function transition(status: DeliveryStatus) {
     if (status === "delivered" && !proofUrl.trim()) {
-      toast.error("Upload or link the signed proof of delivery before confirming delivery.");
+      toast.error("Upload the proof of delivery before confirming delivery.");
       return;
     }
     if (["delivered", "damaged", "returned"].includes(status)) {
@@ -171,7 +171,7 @@ export function DispatchDeliveryWorkflow({
             </label>
             {proofUrl ? <Button type="button" variant="secondary" onClick={openProof} disabled={uploading}><ExternalLink className="h-4 w-4" />View proof</Button> : null}
           </div>
-          <input className="form-input" value={proofUrl} onChange={(event) => setProofUrl(event.target.value)} placeholder="Or paste an existing signed POD link" disabled={!canUpdate || isPending || uploading} />
+          <input className="form-input" value={proofUrl} readOnly aria-label="Stored proof-of-delivery path" placeholder="Upload a photo or PDF to create durable evidence" />
           <p className="text-xs font-semibold text-slate-500">Photos and PDFs are stored privately under this company and dispatch.</p>
         </div>
         <label className="block space-y-1.5">
@@ -197,6 +197,11 @@ export function DispatchDeliveryWorkflow({
           </Button>
         ))}
       </div>
+      {nextStatuses[dispatch.delivery_status].length === 0 ? (
+        <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+          Returned shipments cannot be re-dispatched directly. Complete the return or credit workflow and create a replacement dispatch if required.
+        </p>
+      ) : null}
 
       <div className="mt-5 border-t border-slate-100 pt-4">
         <h3 className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Recent movement history</h3>

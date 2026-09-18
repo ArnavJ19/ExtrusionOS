@@ -9,6 +9,7 @@ const read = (path) => readFileSync(join(root, path), "utf8");
 const migration = read("supabase/migrations/20260718010000_financial_closure.sql");
 const analyticsMigration = read("supabase/migrations/20260718010100_financial_collection_analytics.sql");
 const aggregateAnalyticsMigration = read("supabase/migrations/20260721091327_advanced_analytics_aggregates.sql");
+const returnedDispatchGuard = read("supabase/migrations/20260723040000_returned_dispatch_invoice_guard.sql");
 const invoiceActions = read("lib/actions/invoices.ts");
 const paymentActions = read("lib/actions/payments.ts");
 const paymentApi = read("app/api/payments/route.ts");
@@ -30,6 +31,16 @@ test("invoice totals are derived from the selected dispatch lines inside one ato
   assert.doesNotMatch(invoiceActions, /subtotal\s*:/);
   assert.doesNotMatch(invoiceActions, /grand_total\s*:/);
   assert.match(invoiceForm, /Full-order proformas are intentionally kept out of receivables/);
+});
+
+test("returned and damaged dispatches cannot enter receivables", () => {
+  assert.match(invoiceForm, /\.not\("delivery_status", "in", "\(returned,damaged\)"\)/);
+  assert.match(invoiceActions, /select\("id, order_id, delivery_status"\)/);
+  assert.match(invoiceActions, /\["returned", "damaged"\]\.includes\(dispatch\.delivery_status\)/);
+  assert.match(invoiceActions, /Returned or damaged dispatches cannot be invoiced/);
+  assert.match(returnedDispatchGuard, /create or replace function public\.validate_invoice_dispatch_billable/);
+  assert.match(returnedDispatchGuard, /v_dispatch\.delivery_status in \('returned', 'damaged'\)/);
+  assert.match(returnedDispatchGuard, /before insert or update of company_id, order_id, dispatch_id, status/);
 });
 
 test("receipt posting is idempotent, locked, lineage checked, and prevents overpayment", () => {
@@ -76,4 +87,12 @@ test("collection analytics use dated receipt events rather than cumulative invoi
   assert.match(analyticsPage, /rpc\("get_advanced_analytics_snapshot"/);
   assert.match(analyticsLibrary, /const collectionsMtd = input\.payments/);
   assert.match(analyticsLibrary, /groupByMonth\(input\.payments/);
+});
+
+test("owner analytics labels match the business facts they aggregate", () => {
+  assert.match(analyticsPage, /Order Intake MTD/);
+  assert.doesNotMatch(analyticsPage, /Booked Revenue MTD/);
+  assert.match(analyticsPage, /QC decision pass rate/);
+  assert.match(analyticsPage, /Actual counts jobs completed this month/);
+  assert.doesNotMatch(analyticsPage, /completion time is not captured/);
 });

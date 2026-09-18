@@ -12,8 +12,9 @@ test("production overview joins the real profile relation", () => {
 });
 
 test("production overview uses local business dates", () => {
-  assert.match(page, /todayIso\(new Date\(now\.getFullYear\(\), now\.getMonth\(\), 1\)\)/);
-  assert.match(page, /const today = todayIso\(now\)/);
+  assert.match(page, /getBusinessDateBoundaries\(\)/);
+  assert.match(page, /gte\("completed_at", monthStartIso\)/);
+  assert.match(page, /lt\("completed_at", tomorrowStartIso\)/);
   assert.doesNotMatch(page, /toISOString\(\)\.slice\(0, 10\)/);
 });
 
@@ -27,4 +28,11 @@ test("production completion shows the billet input target used by mass-balance v
   assert.match(detailPage, /linked_billet_input_kg/);
   assert.match(outputWorkflow, /Linked billet input/);
   assert.match(outputWorkflow, /Good output plus process scrap must reconcile/);
+});
+
+test("production managers can reach consolidation without losing finishing control", () => {
+  assert.match(page, /href="\/production\/consolidation"/);
+  assert.match(page, /Sub-700 kg Production Queue/);
+  assert.match(page, /href="\/production\/finishing"/);
+  assert.match(page, /Open Finishing Board/);
 });

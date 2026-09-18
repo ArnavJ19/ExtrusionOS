@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { addDays } from "date-fns";
 import { toast } from "sonner";
 import { Copy, Download } from "lucide-react";
@@ -45,7 +45,7 @@ type Profile = {
   meter_per_bundle?: number | null;
   kg_per_bundle?: number | null;
 };
-type Die = { id: string; die_number: string; profile_id: string; die_status: string };
+type Die = { id: string; die_number: string; profile_id: string; die_status: string; rack_location?: string | null };
 type QuoteRow = Record<string, any>;
 type CompanySettingsRow = Record<string, any>;
 
@@ -96,6 +96,19 @@ function mergeCustomers(current: Customer[], incoming: Customer[]) {
   return merged;
 }
 
+function mergeLookupRows<T extends { id: string }>(incoming: T[], current: T[], preservedIds: string[], limit = 60) {
+  const preserved = new Set(preservedIds.filter(Boolean));
+  const rows: T[] = [];
+  const seen = new Set<string>();
+  for (const row of [...current.filter((candidate) => preserved.has(candidate.id)), ...incoming, ...current]) {
+    if (seen.has(row.id)) continue;
+    seen.add(row.id);
+    rows.push(row);
+    if (rows.length >= limit && preservedIds.every((id) => !id || seen.has(id))) break;
+  }
+  return rows;
+}
+
 export function QuotesClient({ context, mode = "full", initialEditId }: { context: SessionContext; mode?: "full" | "form"; initialEditId?: string }) {
   const supabase = useMemo(() => createClient(), []);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -107,6 +120,10 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
   const [search, setSearch] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
   const [customerSearchLoading, setCustomerSearchLoading] = useState(false);
+  const [profileSearchLoading, setProfileSearchLoading] = useState(false);
+  const [dieSearchLoading, setDieSearchLoading] = useState(false);
+  const profileSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dieSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ customer_id: "", quote_date: todayIso(), valid_until: "", status: "draft" as QuoteStatus, gst_percent: 18, terms_and_conditions: "", delivery_timeline: "", payment_terms: "", approval_notes: "", notes: "" });
@@ -119,16 +136,17 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
     const term = customerSearch.trim().toLowerCase();
     const uniqueCustomers = mergeCustomers(customers, []);
     const matches = term ? uniqueCustomers.filter((customer) => customerLabel(customer).toLowerCase().includes(term)) : uniqueCustomers;
-    return selectedCustomer && !matches.some((customer) => customer.id === selectedCustomer.id) ? [selectedCustomer, ...matches] : matches;
+    const limitedMatches = matches.slice(0, 40);
+    return selectedCustomer && !limitedMatches.some((customer) => customer.id === selectedCustomer.id) ? [selectedCustomer, ...limitedMatches] : limitedMatches;
   }, [customerSearch, customers, selectedCustomer]);
   const canApproveLowMargin = ["owner", "admin", "sales_manager"].includes(context.role);
 
   async function loadAll() {
     setLoading(true);
     const [customerResult, profileResult, dieResult, quoteResult, settingsResult] = await Promise.all([
-      supabase.from("customers").select("id, customer_name, company_name, gst_number, billing_address, shipping_address").eq("company_id", context.companyId).order("customer_name"),
-      supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle").eq("company_id", context.companyId).eq("is_active", true).order("profile_code"),
-      supabase.from("dies").select("id, die_number, profile_id, die_status").eq("company_id", context.companyId).order("die_number"),
+      supabase.from("customers").select("id, customer_name, company_name, gst_number, billing_address, shipping_address").eq("company_id", context.companyId).order("customer_name").limit(40),
+      supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle").eq("company_id", context.companyId).eq("is_active", true).order("profile_code").limit(40),
+      supabase.from("dies").select("id, die_number, profile_id, die_status, rack_location").eq("company_id", context.companyId).order("die_number").limit(40),
       supabase.from("quotes").select("*, customers(customer_name, company_name)").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(100),
       supabase.from("company_settings").select("*").eq("company_id", context.companyId).maybeSingle()
     ]);
@@ -194,16 +212,61 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
       setCustomerSearchLoading(false);
       const error = broadResult.error ?? gstExactResult.error ?? gstPartialResult.error;
       if (error) return toast.error(getErrorMessage(error, "Could not search customers"));
-      setCustomers((current) => mergeCustomers(current, [...(gstExactResult.data ?? []), ...(gstPartialResult.data ?? []), ...(broadResult.data ?? [])]));
+      const incoming = [...(gstExactResult.data ?? []), ...(gstPartialResult.data ?? []), ...(broadResult.data ?? [])];
+      setCustomers((current) => mergeLookupRows(incoming, current, [form.customer_id], 60));
     }, 250);
 
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [customerSearch, context.companyId, supabase]);
+  }, [customerSearch, context.companyId, form.customer_id, supabase]);
+
+  function searchProfiles(query: string) {
+    if (profileSearchTimer.current) clearTimeout(profileSearchTimer.current);
+    const term = cleanCustomerSearch(query);
+    if (!term) return setProfileSearchLoading(false);
+    setProfileSearchLoading(true);
+    profileSearchTimer.current = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from("aluminium_profiles")
+        .select("id, profile_code, profile_name, section_weight_kg_per_m, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle")
+        .eq("company_id", context.companyId)
+        .eq("is_active", true)
+        .or(`profile_code.ilike.*${term}*,profile_name.ilike.*${term}*,section_number.ilike.*${term}*,section_code.ilike.*${term}*`)
+        .order("profile_code")
+        .limit(30);
+      setProfileSearchLoading(false);
+      if (error) return toast.error(getErrorMessage(error, "Could not search profiles"));
+      setProfiles((current) => mergeLookupRows<Profile>((data ?? []) as Profile[], current, items.map((item) => item.profile_id), 70));
+    }, 250);
+  }
+
+  function searchDies(query: string, profileId: string) {
+    if (dieSearchTimer.current) clearTimeout(dieSearchTimer.current);
+    const term = cleanCustomerSearch(query);
+    setDieSearchLoading(true);
+    dieSearchTimer.current = setTimeout(async () => {
+      let request = supabase
+        .from("dies")
+        .select("id, die_number, profile_id, die_status, rack_location")
+        .eq("company_id", context.companyId);
+      if (profileId) request = request.eq("profile_id", profileId);
+      if (term) request = request.or(`die_number.ilike.*${term}*,rack_location.ilike.*${term}*`);
+      const { data, error } = await request.order("die_number").limit(30);
+      setDieSearchLoading(false);
+      if (error) return toast.error(getErrorMessage(error, "Could not search dies"));
+      setDies((current) => mergeLookupRows<Die>((data ?? []) as Die[], current, items.map((item) => item.die_id), 70));
+    }, 250);
+  }
+
+  useEffect(() => () => {
+    if (profileSearchTimer.current) clearTimeout(profileSearchTimer.current);
+    if (dieSearchTimer.current) clearTimeout(dieSearchTimer.current);
+  }, []);
 
   function updateItem(index: number, key: keyof FormItem, value: string | number) {
+    if (key === "profile_id") searchDies("", String(value));
     setItems((current) => current.map((item, itemIndex) => {
       if (itemIndex !== index) return item;
       const next = { ...item, [key]: value } as FormItem;
@@ -211,6 +274,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
         const profile = profiles.find((candidate) => candidate.id === value);
         next.section_weight_kg_per_m = profile?.section_weight_kg_per_m ?? 0;
         next.item_description = profile ? `${profile.profile_code} - ${profile.profile_name}` : "";
+        next.die_id = "";
       }
       if (key === "die_id") {
         const die = dies.find((candidate) => candidate.id === value);
@@ -247,11 +311,29 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
   async function editQuote(quote: QuoteRow) {
     const { data, error } = await supabase.from("quote_items").select("*").eq("quote_id", quote.id).eq("company_id", context.companyId).order("created_at");
     if (error) return toast.error(getErrorMessage(error));
+    const quoteItems = data ?? [];
+    const profileIds = Array.from(new Set(quoteItems.map((item: any) => item.profile_id).filter(Boolean))) as string[];
+    const dieIds = Array.from(new Set(quoteItems.map((item: any) => item.die_id).filter(Boolean))) as string[];
+    const [customerResult, profileResult, dieResult] = await Promise.all([
+      supabase.from("customers").select("id, customer_name, company_name, gst_number, billing_address, shipping_address").eq("company_id", context.companyId).eq("id", quote.customer_id).maybeSingle(),
+      profileIds.length
+        ? supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle").eq("company_id", context.companyId).in("id", profileIds)
+        : Promise.resolve({ data: [], error: null }),
+      dieIds.length
+        ? supabase.from("dies").select("id, die_number, profile_id, die_status, rack_location").eq("company_id", context.companyId).in("id", dieIds)
+        : Promise.resolve({ data: [], error: null })
+    ]);
+    const selectedLookupError = customerResult.error ?? profileResult.error ?? dieResult.error;
+    if (selectedLookupError) return toast.error(getErrorMessage(selectedLookupError, "Could not load the quote's selected records"));
+    const selectedCustomerRow = customerResult.data as Customer | null;
+    if (selectedCustomerRow) setCustomers((current) => mergeLookupRows<Customer>([selectedCustomerRow], current, [quote.customer_id], 60));
+    setProfiles((current) => mergeLookupRows<Profile>((profileResult.data ?? []) as Profile[], current, profileIds, 70));
+    setDies((current) => mergeLookupRows<Die>((dieResult.data ?? []) as Die[], current, dieIds, 70));
     setEditingId(quote.id);
     setForm({ customer_id: quote.customer_id, quote_date: quote.quote_date, valid_until: quote.valid_until ?? "", status: quote.status, gst_percent: quote.gst_percent, terms_and_conditions: quote.terms_and_conditions ?? "", delivery_timeline: quote.delivery_timeline ?? "", payment_terms: quote.payment_terms ?? "", approval_notes: quote.approval_notes ?? "", notes: quote.notes ?? "" });
-    const customer = customers.find((candidate) => candidate.id === quote.customer_id);
+    const customer = selectedCustomerRow ?? customers.find((candidate) => candidate.id === quote.customer_id);
     setCustomerSearch(customer ? customerLabel(customer) : "");
-    setItems((data ?? []).map((item: any) => ({ ...emptyItem, ...item, die_id: item.die_id ?? "", item_description: item.item_description ?? "", sales_price_override: item.sales_price_override ?? null, die_amortization_type: item.die_amortization_type ?? "full_die_charge" })));
+    setItems(quoteItems.map((item: any) => ({ ...emptyItem, ...item, die_id: item.die_id ?? "", item_description: item.item_description ?? "", sales_price_override: item.sales_price_override ?? null, die_amortization_type: item.die_amortization_type ?? "full_die_charge" })));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -324,8 +406,8 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
               return <div key={index} className="rounded-3xl border border-slate-200 bg-gradient-to-br from-aluminium/70 to-white p-4 shadow-sm">
                 <div className="mb-4 flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-orange">Extrusion item</p><h3 className="mt-1 font-black text-slate-950">Item {index + 1}</h3></div>{items.length > 1 ? <Button variant="ghost" type="button" onClick={() => setItems(items.filter((_, itemIndex) => itemIndex !== index))}>Remove</Button> : null}</div>
                 <div className="grid gap-3 md:grid-cols-4">
-                  <label className="block space-y-1.5 md:col-span-2"><span className="form-label">Profile *</span><SearchableSelect value={item.profile_id} placeholder="Select profile" options={profiles.map((profile) => ({ value: profile.id, label: `${profile.profile_code} · ${profile.profile_name}` }))} onChange={(nextValue) => updateItem(index, "profile_id", nextValue)} /></label>
-                  <label className="block space-y-1.5"><span className="form-label">Die</span><SearchableSelect value={item.die_id} placeholder="No die" options={compatibleDies.map((die) => ({ value: die.id, label: `${die.die_number} · ${labelize(die.die_status)}` }))} onChange={(nextValue) => updateItem(index, "die_id", nextValue)} /></label>
+                  <label className="block space-y-1.5 md:col-span-2"><span className="form-label">Profile *</span><SearchableSelect value={item.profile_id} placeholder="Search profile code or name" options={profiles.map((profile) => ({ value: profile.id, label: `${profile.profile_code} · ${profile.profile_name}` }))} onChange={(nextValue) => updateItem(index, "profile_id", nextValue)} onSearchChange={searchProfiles} searching={profileSearchLoading} /></label>
+                  <label className="block space-y-1.5"><span className="form-label">Die</span><SearchableSelect value={item.die_id} placeholder={item.profile_id ? "Search compatible die" : "Select a profile first"} options={compatibleDies.map((die) => ({ value: die.id, label: `${die.die_number} · ${labelize(die.die_status)}` }))} onChange={(nextValue) => updateItem(index, "die_id", nextValue)} onSearchChange={(query) => searchDies(query, item.profile_id)} searching={dieSearchLoading} disabled={!item.profile_id} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Qty pcs</span><input className="form-input" type="number" inputMode="numeric" min="1" value={item.quantity_pieces} onChange={(event) => updateItem(index, "quantity_pieces", Number(event.target.value))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Length m</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.001" value={item.length_per_piece_m} onChange={(event) => updateItem(index, "length_per_piece_m", Number(event.target.value))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Kg/m</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.001" value={item.section_weight_kg_per_m} onChange={(event) => updateItem(index, "section_weight_kg_per_m", Number(event.target.value))} /></label>

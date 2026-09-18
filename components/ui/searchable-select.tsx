@@ -18,9 +18,11 @@ type SearchableSelectProps = {
   disabled?: boolean;
   className?: string;
   emptyText?: string;
+  onSearchChange?: (query: string) => void;
+  searching?: boolean;
 };
 
-export function SearchableSelect({ value, options, onChange, placeholder = "Select", disabled, className, emptyText = "No matching options" }: SearchableSelectProps) {
+export function SearchableSelect({ value, options, onChange, placeholder = "Select", disabled, className, emptyText = "No matching options", onSearchChange, searching = false }: SearchableSelectProps) {
   const selected = options.find((option) => option.value === value) ?? null;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(selected?.label ?? "");
@@ -65,6 +67,7 @@ export function SearchableSelect({ value, options, onChange, placeholder = "Sele
           onChange={(event) => {
             setQuery(event.target.value);
             setOpen(true);
+            onSearchChange?.(event.target.value);
           }}
           onKeyDown={(event) => {
             if (event.key === "Escape") setOpen(false);
@@ -95,7 +98,7 @@ export function SearchableSelect({ value, options, onChange, placeholder = "Sele
             >
               {option.label}
             </button>
-          )) : <div className="px-3 py-4 text-sm font-semibold text-neutral-500">{emptyText}</div>}
+          )) : <div className="px-3 py-4 text-sm font-semibold text-neutral-500">{searching ? "Searching..." : emptyText}</div>}
         </div>
       ) : null}
     </div>

@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { buildAdvancedAnalyticsSnapshot, parseAdvancedAnalyticsSnapshot, safePercent, toNumber } from "../lib/analytics/advanced-dashboard.ts";
+
+const completionAnalyticsMigration = readFileSync(
+  new URL("../supabase/migrations/20260723080000_production_completion_analytics.sql", import.meta.url),
+  "utf8",
+);
 
 test("toNumber safely normalizes null, undefined, and invalid numeric values", () => {
   assert.equal(toNumber(null), 0);
@@ -78,7 +84,7 @@ test("advanced analytics snapshot computes conversion, delay, receivable, and ri
       { id: "q5", status: "customer_approved", grand_total: 30000, quote_date: "2026-06-10" },
     ],
     productionJobs: [
-      { id: "p1", status: "completed", planned_date: "2026-06-07", planned_quantity_kg: 1000, actual_quantity_kg: 900 },
+      { id: "p1", status: "completed", planned_date: "2026-06-07", completed_at: "2026-06-12T08:30:00.000Z", planned_quantity_kg: 1000, actual_quantity_kg: 900 },
       { id: "p2", status: "in_progress", planned_date: "2026-06-09", planned_quantity_kg: 500, actual_quantity_kg: 300 },
     ],
     dispatches: [
@@ -127,6 +133,7 @@ test("advanced analytics snapshot computes conversion, delay, receivable, and ri
       { id: "it2", item_code: "PR-002", item_name: "Profile B", unit: "kg", current_stock: 0, reorder_level: 50 },
       { id: "it3", item_code: "PR-003", item_name: "Profile C", unit: "kg", current_stock: 300, reorder_level: 100 },
       { id: "it4", item_code: "PR-004", item_name: "Unmonitored item", unit: "kg", current_stock: 0, reorder_level: 0 },
+      { id: "it5", item_code: "PR-005", item_name: "Retired item", unit: "kg", current_stock: 0, reorder_level: 100, is_active: false },
     ],
     tasks: [
       { id: "t1", status: "open", priority: "urgent", due_date: "2026-06-16" },
@@ -141,7 +148,7 @@ test("advanced analytics snapshot computes conversion, delay, receivable, and ri
   assert.equal(snapshot.kpis.quotePipelineValueMtd, 120000);
   assert.ok(Math.abs(snapshot.kpis.quoteConversionRateMtd - (100 / 3)) < 0.000001);
   assert.equal(snapshot.kpis.dispatchOnTimeRate, 50);
-  assert.equal(snapshot.kpis.productionAttainmentPctMtd, 80);
+  assert.equal(snapshot.kpis.productionAttainmentPctMtd, 60);
   assert.equal(snapshot.kpis.receivableOutstanding, 150000);
   assert.equal(snapshot.kpis.overdueInvoices, 2);
   assert.equal(snapshot.kpis.collectionsMtd, 120000);
@@ -158,6 +165,47 @@ test("advanced analytics snapshot computes conversion, delay, receivable, and ri
   assert.equal(snapshot.lowStock.some((item) => item.itemCode === "PR-004"), false);
   assert.equal(snapshot.overdueInvoiceList[0].invoiceNumber, "INV-002");
   assert.ok(snapshot.risks.length >= 4);
+});
+
+test("production actuals follow completion time and inactive inventory is excluded", () => {
+  const snapshot = buildAdvancedAnalyticsSnapshot({
+    orders: [],
+    quotes: [],
+    productionJobs: [
+      { id: "prior-plan", status: "completed", planned_date: "2026-05-28", completed_at: "2026-06-02T06:00:00.000Z", planned_quantity_kg: 700, actual_quantity_kg: 700 },
+      { id: "prior-completion", status: "completed", planned_date: "2026-06-03", completed_at: "2026-05-31T17:00:00.000Z", planned_quantity_kg: 1000, actual_quantity_kg: 900 },
+      { id: "current", status: "completed", planned_date: "2026-06-05", completed_at: "2026-06-06T06:00:00.000Z", planned_quantity_kg: 1000, actual_quantity_kg: 800 },
+      { id: "running", status: "in_progress", planned_date: "2026-06-08", planned_quantity_kg: 500, actual_quantity_kg: 450 },
+    ],
+    dispatches: [],
+    invoices: [],
+    payments: [],
+    expenses: [],
+    qualityInspections: [],
+    inventoryItems: [
+      { id: "active", item_code: "ACTIVE", current_stock: 0, reorder_level: 100, is_active: true },
+      { id: "inactive", item_code: "INACTIVE", current_stock: 0, reorder_level: 100, is_active: false },
+    ],
+    tasks: [],
+  }, new Date("2026-06-15T00:00:00.000Z"));
+
+  assert.equal(snapshot.kpis.productionPlannedKgMtd, 2500);
+  assert.equal(snapshot.kpis.productionActualKgMtd, 1500);
+  assert.equal(snapshot.kpis.productionAttainmentPctMtd, 60);
+  assert.equal(snapshot.kpis.inventoryAtRiskCount, 1);
+  assert.equal(snapshot.kpis.inventoryOutOfStockCount, 1);
+  assert.deepEqual(snapshot.lowStock.map((item) => item.itemCode), ["ACTIVE"]);
+});
+
+test("analytics migration owns completion timestamps and active-stock truth", () => {
+  assert.match(completionAnalyticsMigration, /add column if not exists completed_at timestamptz/);
+  assert.match(completionAnalyticsMigration, /where status = 'completed'\s+and completed_at is null/);
+  assert.match(completionAnalyticsMigration, /create trigger maintain_production_completed_at/);
+  assert.match(completionAnalyticsMigration, /revoke all on function public\.maintain_production_completed_at\(\)\s+from public, anon, authenticated/);
+  assert.match(completionAnalyticsMigration, /p_as_of date default \(\(now\(\) at time zone 'Asia\/Kolkata'\)::date\)/);
+  assert.match(completionAnalyticsMigration, /completion_date >= v_month_start[\s\S]*status = 'completed'/);
+  assert.match(completionAnalyticsMigration, /production_jobs_company_completed_at_idx/);
+  assert.equal((completionAnalyticsMigration.match(/and is_active = true/g) ?? []).length, 2);
 });
 
 test("dashboard queue limits do not undercount lifetime risk totals", () => {

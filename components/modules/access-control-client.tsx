@@ -61,6 +61,7 @@ function InviteUserCard({ roles, dealers }: { roles: Record<string, any>[]; deal
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const activeRoles = roles.filter((role) => role.is_active !== false);
+  const assignableRoles = activeRoles.filter((role) => role.is_system === true);
   const activeDealers = dealers.filter((dealer) => dealer.is_active !== false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -100,7 +101,7 @@ function InviteUserCard({ roles, dealers }: { roles: Record<string, any>[]; deal
       <CardHeader>
         <div>
           <h2 className="text-lg font-bold text-neutral-950">Invite User</h2>
-          <p className="mt-1 text-sm font-medium text-neutral-500">Send an employee or dealer user a secure 7-day invite link.</p>
+          <p className="mt-1 text-sm font-medium text-neutral-500">Send an employee or dealer user a secure 7-day invite link. Custom roles remain configurable but cannot be assigned by invitation yet.</p>
         </div>
       </CardHeader>
       <CardContent>
@@ -108,11 +109,11 @@ function InviteUserCard({ roles, dealers }: { roles: Record<string, any>[]; deal
           <label className="block space-y-1.5 lg:col-span-2"><span className="form-label">Name</span><input className="form-input" name="full_name" required placeholder="Team member name" /></label>
           <label className="block space-y-1.5 lg:col-span-2"><span className="form-label">Email</span><input className="form-input" name="email" type="email" required placeholder="name@company.com" /></label>
           <label className="block space-y-1.5 lg:col-span-2"><span className="form-label">Phone optional</span><input className="form-input" name="phone" /></label>
-          <label className="block space-y-1.5 lg:col-span-2"><span className="form-label">Role</span><select className="form-input" name="role_id" required><option value="">Select role</option>{activeRoles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}</select></label>
+          <label className="block space-y-1.5 lg:col-span-2"><span className="form-label">Role</span><select className="form-input" name="role_id" required><option value="">Select role</option>{activeRoles.map((role) => <option key={role.id} value={role.id} disabled={!role.is_system}>{role.name}{role.is_system ? "" : " (custom, not inviteable)"}</option>)}</select></label>
           <label className="block space-y-1.5 lg:col-span-2"><span className="form-label">Dealer optional</span><select className="form-input" name="dealer_id"><option value="">Factory / company user</option>{activeDealers.map((dealer) => <option key={dealer.id} value={dealer.id}>{dealer.dealer_name}</option>)}</select></label>
           <label className="block space-y-1.5"><span className="form-label">Region</span><input className="form-input" name="sales_region" placeholder="West" /></label>
           <label className="block space-y-1.5"><span className="form-label">Department</span><input className="form-input" name="department" placeholder="Sales" /></label>
-          <div className="flex items-end lg:col-span-6"><Button disabled={loading || !activeRoles.length} type="submit">{loading ? "Sending..." : "Send invite"}</Button></div>
+          <div className="flex items-end lg:col-span-6"><Button disabled={loading || !assignableRoles.length} type="submit">{loading ? "Sending..." : "Send invite"}</Button></div>
         </form>
       </CardContent>
     </Card>

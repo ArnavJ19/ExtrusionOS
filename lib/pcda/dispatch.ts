@@ -6,6 +6,14 @@ export type DispatchSourceAllocation = {
   pieces: number;
 };
 
+export type VerifiedDispatchBundleInput = {
+  bundle_number: string;
+  source_line_id: string;
+  number_of_pieces: number;
+  gross_weight_kg: number;
+  tare_weight_kg: number;
+};
+
 type PhysicalBundleAllocation = DispatchSourceAllocation & {
   bundleWeightKg: number;
   bundlePieces: number;
@@ -176,4 +184,89 @@ export function buildPackingListItems(
       notes: `Allocated from ${sourceKind} ${line.job_number ?? line.id}`
     };
   });
+}
+
+export function buildVerifiedPackingListItems(
+  sourceLines: Record<string, any>[],
+  companyId: string,
+  bundles: VerifiedDispatchBundleInput[]
+) {
+  if (!bundles.length) throw new Error("Scan or enter at least one physical bundle.");
+
+  const sourceById = new Map(sourceLines.map((line) => [String(line.id), line]));
+  const bundleNumbers = new Set<string>();
+  const usedWeightBySource = new Map<string, number>();
+  const usedPiecesBySource = new Map<string, number>();
+
+  const items = bundles.map((bundle) => {
+    const bundleNumber = bundle.bundle_number.trim();
+    if (!bundleNumber) throw new Error("Every row needs the physical bundle identifier from its tag or scan.");
+    const normalizedBundleNumber = bundleNumber.toUpperCase();
+    if (bundleNumbers.has(normalizedBundleNumber)) throw new Error(`Bundle ${bundleNumber} is entered more than once.`);
+    bundleNumbers.add(normalizedBundleNumber);
+
+    const line = sourceById.get(bundle.source_line_id);
+    if (!line) throw new Error(`Bundle ${bundleNumber} does not select an available source for this order.`);
+
+    const grossWeightKg = Number(Number(bundle.gross_weight_kg).toFixed(3));
+    const tareWeightKg = Number(Number(bundle.tare_weight_kg).toFixed(3));
+    const numberOfPieces = Number(bundle.number_of_pieces);
+    if (!Number.isFinite(grossWeightKg) || !Number.isFinite(tareWeightKg) || grossWeightKg <= tareWeightKg || tareWeightKg < 0) {
+      throw new Error(`Bundle ${bundleNumber} gross weight must be greater than its non-negative tare weight.`);
+    }
+    if (!Number.isInteger(numberOfPieces) || numberOfPieces <= 0) {
+      throw new Error(`Bundle ${bundleNumber} needs its actual positive piece count.`);
+    }
+
+    const netWeightKg = Number((grossWeightKg - tareWeightKg).toFixed(3));
+    const sourceId = String(line.id);
+    usedWeightBySource.set(sourceId, Number(((usedWeightBySource.get(sourceId) ?? 0) + netWeightKg).toFixed(3)));
+    usedPiecesBySource.set(sourceId, (usedPiecesBySource.get(sourceId) ?? 0) + numberOfPieces);
+
+    const sourceKind = line.source_kind === "dealer_stock"
+      ? "dealer stock fulfillment"
+      : line.source_kind === "reservation"
+        ? "reserved stock"
+        : "production job";
+    return {
+      ...buildProductionJobPcdaFields(line, companyId),
+      company_id: companyId,
+      profile_id: line.profile_id,
+      source_record_id: line.order_id,
+      source_line_id: line.id,
+      order_item_id: line.order_item_id ?? null,
+      quote_item_id: line.quote_item_id ?? null,
+      finishing_type: line.finishing_type ?? null,
+      net_rate: line.unit_rate ?? line.net_rate ?? null,
+      source_kind: line.source_kind ?? "production",
+      reservation_id: line.source_kind === "reservation" ? (line.reservation_id ?? line.id) : null,
+      profile_stock_batch_id: line.profile_stock_batch_id ?? null,
+      bundle_number: bundleNumber,
+      number_of_pieces: numberOfPieces,
+      gross_weight_kg: grossWeightKg,
+      tare_weight_kg: tareWeightKg,
+      net_weight_kg: netWeightKg,
+      notes: `Operator verified from ${sourceKind} ${line.job_number ?? line.id}`
+    };
+  });
+
+  for (const [sourceId, usedWeight] of usedWeightBySource) {
+    const line = sourceById.get(sourceId)!;
+    const availableWeight = sourceWeight(line);
+    if (usedWeight > availableWeight + 0.01) {
+      throw new Error(`Selected bundles use ${usedWeight.toFixed(3)} kg from ${line.job_number ?? sourceId}, but only ${availableWeight.toFixed(3)} kg is available.`);
+    }
+    const availablePieces = Number(line.available_pieces ?? sourcePieceCount(line));
+    const usedPieces = usedPiecesBySource.get(sourceId) ?? 0;
+    if (availablePieces > 0 && usedPieces > availablePieces) {
+      throw new Error(`Selected bundles use ${usedPieces} pieces from ${line.job_number ?? sourceId}, but only ${availablePieces} are available.`);
+    }
+  }
+
+  return {
+    items,
+    totalNetWeightKg: Number(items.reduce((sum, item) => sum + item.net_weight_kg, 0).toFixed(3)),
+    totalTareWeightKg: Number(items.reduce((sum, item) => sum + item.tare_weight_kg, 0).toFixed(3)),
+    totalGrossWeightKg: Number(items.reduce((sum, item) => sum + item.gross_weight_kg, 0).toFixed(3))
+  };
 }
