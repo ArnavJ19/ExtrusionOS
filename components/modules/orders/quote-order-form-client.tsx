@@ -12,7 +12,6 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { createClient } from "@/lib/supabase/browser";
 import { formatCurrency, formatWeight } from "@/lib/utils/format";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
-import { nextBusinessNumber } from "@/lib/utils/numbering";
 import { calculateBilletWeightKg, calculateRequiredBilletCount } from "@/lib/calculations/foundry";
 import type { SessionContext } from "@/types/app";
 
@@ -34,7 +33,6 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
   const [quotes, setQuotes] = useState<QuoteOption[]>([]);
-  const [existingOrderNumbers, setExistingOrderNumbers] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [quoteId, setQuoteId] = useState("");
   const [orderDate, setOrderDate] = useState(() => getBusinessDateBoundaries().today);
@@ -50,7 +48,7 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
 
   useEffect(() => {
     const load = async () => {
-      const [quotesResult, ordersResult] = await Promise.all([
+      const [quotesResult] = await Promise.all([
         supabase
           .from("quotes")
           .select("id, dealer_id, quote_number, quote_date, grand_total, customer_id, customers(customer_name, company_name), quote_items(id, profile_id, finishing_type, billing_weight_kg, total_weight_kg, aluminium_profiles(alloy, temper, billet_diameter_required_inch))")
@@ -58,14 +56,11 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
           .eq("status", "customer_approved")
           .order("quote_date", { ascending: false })
           .limit(50),
-        supabase.from("orders").select("order_number").eq("company_id", context.companyId),
       ]);
       if (quotesResult.error) throw quotesResult.error;
-      if (ordersResult.error) throw ordersResult.error;
       setQuotes((quotesResult.data ?? []) as QuoteOption[]);
       const preselectedQuoteId = searchParams.get("quoteId");
       if (preselectedQuoteId && (quotesResult.data ?? []).some((quote: any) => quote.id === preselectedQuoteId)) setQuoteId(preselectedQuoteId);
-      setExistingOrderNumbers((ordersResult.data ?? []).map((order: any) => order.order_number).filter(Boolean));
     };
     load().catch((error) => toast.error(error.message ?? "Could not load quotes")).finally(() => setLoading(false));
   }, [context.companyId, searchParams, supabase]);
@@ -142,10 +137,9 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
     }
 
     setSaving(true);
-    const orderNumber = nextBusinessNumber("O", existingOrderNumbers);
     const { data, error } = await supabase.rpc("create_order_from_quote_with_dealer_workflow_atomic", {
       p_quote_id: selectedQuote.id,
-      p_order_number: orderNumber,
+      p_order_number: null,
       p_order_date: orderDate,
       p_expected_dispatch_date: expectedDispatchDate || null,
       p_priority: priority,

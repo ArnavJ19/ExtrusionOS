@@ -5,10 +5,12 @@ import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { buildInvoiceItems } from "@/lib/pcda/invoice";
+import { isGstStateCode } from "@/lib/calculations/gst";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
 
 const saveInvoiceInputSchema = z.object({
+  place_of_supply_state_code: z.string().refine(isGstStateCode, "Select a supported domestic place of supply"),
   editing_id: z.string().uuid().optional().nullable(),
   order_id: z.string().uuid("Select a source order"),
   dispatch_id: z.string().uuid("Select the packed dispatch to invoice"),
@@ -133,6 +135,7 @@ export async function saveInvoiceAction(input: SaveInvoiceInput): Promise<Invoic
       p_invoice_id: editingId,
       p_invoice: {
         customer_id: order.customer_id,
+        place_of_supply_state_code: parsed.data.place_of_supply_state_code,
         order_id: parsed.data.order_id,
         dispatch_id: dispatchId,
         invoice_number: parsed.data.invoice_number || null,

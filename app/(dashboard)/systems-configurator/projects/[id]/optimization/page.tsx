@@ -37,7 +37,7 @@ export default async function ProfileOptimizationPage({ params }: { params: Prom
 
       <div className="space-y-4">
         {profiles.map((profile: any) => (
-          <Card key={profile.profileCode}>
+          <Card key={JSON.stringify([profile.profileCode, profile.profileName, profile.stockLengthMm])}>
             <CardHeader>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div><h3 className="font-black text-slate-950">{profile.profileCode} - {profile.profileName}</h3><p className="text-sm font-semibold text-slate-500">{profile.totalStockBars} bars · {Number(profile.totalWasteMm).toFixed(0)}mm waste · {Number(profile.wastePercent).toFixed(2)}%</p></div>
@@ -45,6 +45,7 @@ export default async function ProfileOptimizationPage({ params }: { params: Prom
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
+              {(profile.unplacedCuts ?? []).length ? <p className="text-sm font-semibold text-red-700">{profile.unplacedCuts.length} cuts exceed the available stock length and remain unplaced. Revise the cutting plan before production.</p> : null}
               {(profile.bars ?? []).map((bar: any) => (
                 <div key={bar.barNumber} className="rounded-2xl border border-slate-200 bg-white p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-black text-slate-950">Bar {bar.barNumber}</p><p className="text-sm font-bold text-slate-500">Used {bar.usedLengthMm}mm · Waste {bar.wasteMm}mm{bar.reusableLeftoverMm ? ` · Reusable ${bar.reusableLeftoverMm}mm` : ""}</p></div>

@@ -25,7 +25,11 @@ export function calculateRequiredBilletCount(requiredKg: number, billetWeightKg:
   return Math.ceil((requiredKg / (efficiencyPercent / 100)) / billetWeightKg);
 }
 
-export function calculateFoundryFurnaceMix(totalBilletWeightKg: number, furnaceEfficiencyPercent = 80, scrapPercentage = 0, externalAluminiumPercentage = 100) {
+export function calculateFoundryFurnaceMix(totalBilletWeightKg: number, furnaceEfficiencyPercent = 80, scrapPercentage = 0, externalAluminiumPercentage = 100 - scrapPercentage) {
+  if (![scrapPercentage, externalAluminiumPercentage].every((value) => Number.isFinite(value) && value >= 0 && value <= 100)
+    || Math.abs(scrapPercentage + externalAluminiumPercentage - 100) > 0.000001) {
+    throw new Error("Scrap and external aluminium percentages must total 100%.");
+  }
   if (totalBilletWeightKg <= 0 || furnaceEfficiencyPercent <= 0) {
     return { requiredFurnaceChargeKg: 0, scrapAluminiumKg: 0, externalAluminiumKg: 0 };
   }
@@ -34,6 +38,6 @@ export function calculateFoundryFurnaceMix(totalBilletWeightKg: number, furnaceE
   return {
     requiredFurnaceChargeKg,
     scrapAluminiumKg: Number((requiredFurnaceChargeKg * (scrapPercentage / 100)).toFixed(3)),
-    externalAluminiumKg: Number((requiredFurnaceChargeKg * (externalAluminiumPercentage / 100)).toFixed(3))
+    externalAluminiumKg: Number((requiredFurnaceChargeKg - Number((requiredFurnaceChargeKg * (scrapPercentage / 100)).toFixed(3))).toFixed(3))
   };
 }

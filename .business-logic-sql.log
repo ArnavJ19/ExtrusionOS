@@ -1,0 +1,13 @@
+PASS migration compiles and quote calculation matches TypeScript across 24 variants
+PASS missing perimeter yields zero cost and blocks quote sending
+PASS invalid recovery and margin are rejected in the database
+PASS line GST overrides and paise rounding match quote summary
+PASS browser-supplied numbers are replaced and allocation rolls back atomically
+PASS conversion preserves exact source line IDs and ignores forged order values
+PASS direct orders ignore client totals and track item edits
+PASS domestic invoice splits and unknown supply rejection
+PASS invoice line HSN and GST come from tenant-scoped source, with per-line rounding
+PASS new trigger functions cannot be invoked directly by anonymous or authenticated users
+PASS allocated numbers cannot be overwritten
+PASS payment plus credit settles invoice and later refund reopens it
+12 SQL checks passed. Fixture verification only; no live database was touched.

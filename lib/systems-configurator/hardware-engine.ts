@@ -1,5 +1,6 @@
-import type { ConfiguratorWarning, FormulaVariables, HardwareBomItem, HardwareCategory, HardwareRule, SystemConfigurationInput } from "./types.ts";
+import type { ConfiguratorWarning, FormulaVariables, GlassCut, HardwareBomItem, HardwareCategory, HardwareRule, SystemConfigurationInput } from "./types.ts";
 import { round } from "./types.ts";
+import { generateGlassCuts } from "./glass-engine.ts";
 
 type FormulaEvaluator = (expression: string, variables: FormulaVariables) => number;
 
@@ -96,10 +97,8 @@ function generateDefaultHardwareBom(input: SystemConfigurationInput, warnings: C
   return aggregateHardwareBom(bom);
 }
 
-export function generateHardwareBom(input: SystemConfigurationInput, warnings: ConfiguratorWarning[], variables: FormulaVariables, evaluateFormula: FormulaEvaluator) {
-  const glassPerimeterM = input.panelLayout.panels
-    .filter((panel) => panel.function === "glass")
-    .reduce((sum, panel) => sum + (((input.widthMm * panel.widthRatio) - Number(input.options?.glass_deduction_width ?? 90) + (input.heightMm * panel.heightRatio) - Number(input.options?.glass_deduction_height ?? 90)) * 2 * input.quantity) / 1000, 0);
+export function generateHardwareBom(input: SystemConfigurationInput, warnings: ConfiguratorWarning[], variables: FormulaVariables, evaluateFormula: FormulaEvaluator, glassCuts: GlassCut[] = generateGlassCuts(input, warnings, variables, evaluateFormula)) {
+  const glassPerimeterM = glassCuts.reduce((sum, cut) => sum + 2 * (cut.widthMm + cut.heightMm) * cut.quantity / 1000, 0);
   const rules = normalizeHardwareRules(input);
   if (!rules.length) return generateDefaultHardwareBom(input, warnings, glassPerimeterM);
 

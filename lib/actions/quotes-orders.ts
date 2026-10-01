@@ -8,7 +8,6 @@ import { calculateQuoteItem, calculateQuoteSummary } from "@/lib/calculations/qu
 import { buildQuoteItemPcdaFields, hasUnapprovedDrawing } from "@/lib/pcda/quote-order";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
-import { nextBusinessNumber } from "@/lib/utils/numbering";
 import { todayIso } from "@/lib/utils/format";
 import { orderSchema, quoteSchema } from "@/lib/validations/schemas";
 import { canTransitionQuoteStatus } from "@/lib/workflow/quote-status";
@@ -17,7 +16,7 @@ import type { QuoteStatus } from "@/types/app";
 const quoteStatusSchema = z.enum(["draft", "internal_review", "approved_for_sending", "sent", "customer_approved", "customer_rejected", "expired", "converted_to_order"]);
 const revisionLockedStatuses = ["approved_for_sending", "sent", "customer_approved", "customer_rejected", "expired", "converted_to_order"];
 const lowMarginApprovalRoles = ["owner", "admin", "sales_manager"];
-const profileSelect = "id, profile_code, profile_name, section_weight_kg_per_m, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle";
+const profileSelect = "id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, hsn_code, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle";
 const unusableDieStatuses = ["inactive", "dead", "blocked", "retired", "scrapped", "under_maintenance"];
 
 type SaveQuoteInput = z.input<typeof quoteSchema> & { editing_id?: string | null };
@@ -52,8 +51,6 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
     if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check quote details." };
 
     const supabase = await createClient();
-    const calculatedItems = parsed.data.items.map((item) => calculateQuoteItem(item));
-    const summary = calculateQuoteSummary(calculatedItems, parsed.data.gst_percent);
 
     const customerResult = await supabase
       .from("customers")
@@ -84,6 +81,8 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
       return !profile || (item.die_id && (!die || die.profile_id !== item.profile_id));
     });
     if (invalidItem) return { success: false, error: "One quote item has a stale profile or die selection. Refresh and select it again." };
+    const calculatedItems = parsed.data.items.map((item) => calculateQuoteItem({ ...item, perimeter_mm: profilesById.get(item.profile_id)?.section_perimeter_mm ?? null }));
+    const summary = calculateQuoteSummary(calculatedItems, parsed.data.gst_percent);
 
     const currentQuote = currentQuoteResult.data;
     if (currentQuote?.status === "converted_to_order") {
@@ -113,13 +112,14 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
           companyId: context.companyId,
           profile,
           item: { ...calculatedItem, item_description: item.item_description || null },
-          gstPercent: parsed.data.gst_percent,
+          gstPercent: item.gst_percent ?? parsed.data.gst_percent,
           quoteRevisionNumber: nextRevisionNumber
         }),
         profile_id: item.profile_id,
         die_id: item.die_id || null,
         item_description: item.item_description || null,
-        finishing_type: item.finishing_type
+        finishing_type: item.finishing_type,
+        hsn_code: profile.hsn_code || null
       };
     });
     const quoteResult = await supabase.rpc("save_quote_atomic", {
@@ -219,13 +219,9 @@ export async function convertQuoteToOrderAction(quoteId: string): Promise<Action
     const unapprovedLine = (quoteItems.data ?? []).find(hasUnapprovedDrawing);
     if (unapprovedLine) return { success: false, error: `Drawing approval is pending for section ${unapprovedLine.section_number ?? unapprovedLine.section_code ?? "line item"}.` };
 
-    const existingOrders = await supabase.from("orders").select("order_number").eq("company_id", context.companyId);
-    if (existingOrders.error) throw existingOrders.error;
-    const orderNumber = nextBusinessNumber("O", (existingOrders.data ?? []).map((order: any) => order.order_number));
     const atomicResult = await supabase.rpc("convert_quote_to_order_atomic", {
       p_quote_id: quote.id,
       p_order: {
-        order_number: orderNumber,
         order_date: todayIso(),
         priority: "normal",
         current_stage: "order_confirmed",

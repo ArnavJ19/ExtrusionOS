@@ -36,4 +36,11 @@ describe("PCDA production handoff", () => {
     assert.equal(chooseProductionSourceLine(lines, "profile-b")?.id, "b");
     assert.equal(chooseProductionSourceLine(lines, "profile-c"), null);
   });
+
+  it("requires an explicit source line when the same profile appears more than once", () => {
+    const lines = [{ id: "a", profile_id: "profile-a" }, { id: "b", profile_id: "profile-a" }];
+    assert.equal(chooseProductionSourceLine(lines, "profile-a"), null);
+    assert.equal(chooseProductionSourceLine(lines, "profile-a", "b")?.id, "b");
+    assert.equal(chooseProductionSourceLine(lines, "profile-a", "missing"), null);
+  });
 });

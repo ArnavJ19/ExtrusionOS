@@ -75,6 +75,7 @@ export function ProfileFormTabs({ form, update, dies }: Props) {
               <SelectField label="Complexity rating" value={form.complexity_rating} onChange={(v) => update("complexity_rating", v)} options={profileComplexities.map((c) => ({ value: c, label: labelize(c) }))} />
               <Field label="Tolerance class" value={form.tolerance_class} onChange={(v) => update("tolerance_class", v)} />
               <NumField label="Section perimeter (mm)" value={form.section_perimeter_mm} onChange={(v) => update("section_perimeter_mm", v)} step="0.01" />
+              <Field label="HSN code" value={form.hsn_code} onChange={(v) => update("hsn_code", v)} />
               <NumField label="CCD (mm)" value={form.circumscribing_circle_diameter_mm} onChange={(v) => update("circumscribing_circle_diameter_mm", v)} step="0.01" />
               <NumField label="Nominal wall thickness (mm)" value={form.nominal_wall_thickness_mm} onChange={(v) => update("nominal_wall_thickness_mm", v)} step="0.01" />
               <NumField label="Min wall thickness (mm)" value={form.min_wall_thickness_mm} onChange={(v) => update("min_wall_thickness_mm", v)} step="0.01" />

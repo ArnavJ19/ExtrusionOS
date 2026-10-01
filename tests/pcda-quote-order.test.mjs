@@ -2,7 +2,6 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
 import {
-  buildOrderItemFromQuoteItem,
   buildQuoteItemPcdaFields,
   hasUnapprovedDrawing,
   normalizeDrawingApprovalStatus,
@@ -64,35 +63,6 @@ describe("PCDA quote/order mapping", () => {
     assert.equal(fields.final_line_value, 30300);
     assert.equal(fields.revision_number, 2);
     assert.equal(Object.hasOwn(fields, "company_id"), false);
-  });
-
-  it("copies only canonical/common fields from quote item to order item", () => {
-    const orderItem = buildOrderItemFromQuoteItem(
-      {
-        id: "33333333-3333-4333-8333-333333333333",
-        quote_id: "44444444-4444-4444-8444-444444444444",
-        profile_id: "11111111-1111-4111-8111-111111111111",
-        die_id: null,
-        item_description: "Line",
-        quantity_pieces: 10,
-        length_per_piece_m: 5.8,
-        total_meters: 58,
-        section_number: "SEC-1",
-        raw_material_cost: 999,
-        created_at: "2026-06-02T00:00:00.000Z",
-      },
-      "55555555-5555-4555-8555-555555555555",
-      "44444444-4444-4444-8444-444444444444",
-      "22222222-2222-4222-8222-222222222222"
-    );
-
-    assert.equal(orderItem.order_id, "55555555-5555-4555-8555-555555555555");
-    assert.equal(orderItem.source_record_id, "44444444-4444-4444-8444-444444444444");
-    assert.equal(orderItem.source_line_id, "33333333-3333-4333-8333-333333333333");
-    assert.equal(orderItem.section_number, "SEC-1");
-    assert.equal(Object.hasOwn(orderItem, "quote_id"), false);
-    assert.equal(Object.hasOwn(orderItem, "raw_material_cost"), false);
-    assert.equal(Object.hasOwn(orderItem, "created_at"), false);
   });
 
   it("flags quote lines with missing or pending drawing approval", () => {

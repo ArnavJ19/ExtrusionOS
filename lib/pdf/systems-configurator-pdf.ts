@@ -236,11 +236,12 @@ export async function buildSystemConfiguratorPdf(data: ReportData) {
     const output = run.optimized_output_json ?? {};
     const profiles = Array.isArray(output.profiles) ? output.profiles : [];
     section("Optimization Summary");
-    table(["Metric", "Value"], [["Run", run.run_number ? `#${run.run_number}` : "-"], ["Stock length", `${run.stock_length_mm ?? output.stockLengthMm ?? "-"} mm`], ["Stock bars", run.total_stock_bars ?? output.totalStockBars ?? 0], ["Used length", `${run.total_used_length_mm ?? output.totalUsedLengthMm ?? 0} mm`], ["Waste", `${run.total_waste_mm ?? output.totalWasteMm ?? 0} mm`], ["Waste %", `${run.waste_percent ?? output.wastePercent ?? 0}%`]], [180, 180]);
+    const stockLengths = [...new Set(profiles.map((profile: any) => profile.stockLengthMm))];
+    table(["Metric", "Value"], [["Run", run.run_number ? `#${run.run_number}` : "-"], ["Stock lengths", stockLengths.length ? stockLengths.map((length) => `${length} mm`).join(", ") : "-"], ["Stock bars", run.total_stock_bars ?? output.totalStockBars ?? 0], ["Used length", `${run.total_used_length_mm ?? output.totalUsedLengthMm ?? 0} mm`], ["Waste", `${run.total_waste_mm ?? output.totalWasteMm ?? 0} mm`], ["Waste %", `${run.waste_percent ?? output.wastePercent ?? 0}%`]], [180, 180]);
     section("Profile Bar Allocation");
     for (const profile of profiles) {
       ensureSpace(120);
-      page.drawText(`${profile.profileCode} - ${profile.profileName}`, { x: 40, y, size: 10, font: bold, color: orange, maxWidth: 500 });
+      page.drawText(`${profile.profileCode} - ${profile.profileName} | Stock ${profile.stockLengthMm} mm`, { x: 40, y, size: 10, font: bold, color: orange, maxWidth: 500 });
       y -= 14;
       table(["Bar", "Cuts", "Used", "Waste", "Reusable"], (profile.bars ?? []).map((bar: any) => [bar.barNumber, (bar.cuts ?? []).map((cut: any) => `${cut.cutLengthMm}`).join(" + "), `${bar.usedLengthMm} mm`, `${bar.wasteMm} mm`, bar.reusableLeftoverMm ? `${bar.reusableLeftoverMm} mm` : "-"]), [45, 235, 70, 70, 80]);
     }

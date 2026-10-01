@@ -4,9 +4,10 @@ export function makeBusinessNumber(prefix: NumberPrefix, year: number, sequence:
   return `${prefix}-${year}-${String(sequence).padStart(4, "0")}`;
 }
 
-export function nextBusinessNumber(prefix: NumberPrefix, existingNumbers: string[], date = new Date()) {
-  const year = date.getFullYear();
-  const pattern = new RegExp(`^${prefix}-${year}-(\\d{4})$`);
+/** Display preview only. Persisted numbers are allocated by the database. */
+export function previewBusinessNumber(prefix: NumberPrefix, existingNumbers: string[], date = new Date()) {
+  const year = Number(new Intl.DateTimeFormat("en", { timeZone: "Asia/Kolkata", year: "numeric" }).format(date));
+  const pattern = new RegExp(`^${prefix}-${year}-(\\d+)$`);
   const max = existingNumbers.reduce((current, value) => {
     const match = value.match(pattern);
     return match ? Math.max(current, Number(match[1])) : current;

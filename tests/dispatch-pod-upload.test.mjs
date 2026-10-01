@@ -19,7 +19,7 @@ test("dispatch users can capture private POD evidence from the delivery workflow
 
 test("server rejects cross-company or cross-dispatch storage paths", () => {
   assert.match(action, /expectedProofPrefix/);
-  assert.match(action, /Stored proof of delivery does not belong to this company and dispatch/);
+  assert.match(action, /Proof of delivery must be the private file stored for this company and dispatch/);
 });
 
 test("RLS grants dispatch roles only dispatch-scoped POD inserts", () => {

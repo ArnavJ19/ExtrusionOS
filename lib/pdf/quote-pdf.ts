@@ -333,7 +333,7 @@ export async function buildQuotePdf(data: { company: any; settings: any; quote: 
 
   const totals = [
     { label: "Subtotal", value: subtotal, isGrand: false },
-    { label: `GST @ ${quote.gst_percent}%`, value: gstAmount, isGrand: false },
+    { label: "GST (line rates)", value: gstAmount, isGrand: false },
     { label: "Grand Total", value: grandTotal, isGrand: true }
   ];
 

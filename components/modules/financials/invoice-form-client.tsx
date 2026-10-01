@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, FileText, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 import { saveInvoiceAction } from "@/lib/actions/invoices";
+import { gstStates } from "@/lib/calculations/gst";
 import { createClient } from "@/lib/supabase/browser";
 import { formatCurrency, formatWeight, todayIso } from "@/lib/utils/format";
 import type { SessionContext } from "@/types/app";
@@ -34,6 +35,7 @@ type DispatchOption = {
 };
 
 type InvoiceRecord = {
+  place_of_supply_state_code: string | null;
   id: string;
   order_id: string | null;
   dispatch_id: string | null;
@@ -46,6 +48,7 @@ type InvoiceRecord = {
 };
 
 type FormState = {
+  place_of_supply_state_code: string;
   order_id: string;
   dispatch_id: string;
   invoice_number: string;
@@ -56,6 +59,7 @@ type FormState = {
 };
 
 const initialForm: FormState = {
+  place_of_supply_state_code: "",
   order_id: "",
   dispatch_id: "",
   invoice_number: "",
@@ -117,7 +121,7 @@ export function InvoiceFormClient({
         recordId
           ? supabase
               .from("invoices")
-              .select("id, order_id, dispatch_id, invoice_number, invoice_date, due_date, status, notes, amount_paid")
+              .select("id, order_id, dispatch_id, invoice_number, invoice_date, due_date, status, notes, amount_paid, place_of_supply_state_code")
               .eq("company_id", context.companyId)
               .eq("id", recordId)
               .maybeSingle()
@@ -144,6 +148,7 @@ export function InvoiceFormClient({
       setRecord(loadedRecord);
       if (loadedRecord) {
         setForm({
+          place_of_supply_state_code: loadedRecord.place_of_supply_state_code ?? "",
           order_id: loadedRecord.order_id ?? "",
           dispatch_id: loadedRecord.dispatch_id ?? "",
           invoice_number: loadedRecord.invoice_number ?? "",
@@ -272,7 +277,12 @@ export function InvoiceFormClient({
             </label>
             <label className="block space-y-1.5">
               <span className="form-label">Invoice number</span>
-              <input className="form-input" value={form.invoice_number} placeholder="Generated automatically" readOnly={Boolean(recordId)} onChange={(event) => setForm((current) => ({ ...current, invoice_number: event.target.value }))} />
+              <input className="form-input" value={form.invoice_number} placeholder="Generated automatically on save" readOnly />
+            </label>
+            <label className="block space-y-1.5">
+              <span className="form-label">Place of supply: GST state code *</span>
+              <select className="form-input" value={form.place_of_supply_state_code} onChange={(event) => setForm((current) => ({ ...current, place_of_supply_state_code: event.target.value }))}><option value="">Select supply state</option>{Object.entries(gstStates).map(([code, name]) => <option key={code} value={code}>{name} ({code})</option>)}</select>
+              <span className="text-xs text-slate-500">Confirm the supply destination; billing and delivery states can differ. Domestic supplies only.</span>
             </label>
             <label className="block space-y-1.5">
               <span className="form-label">Workflow status *</span>

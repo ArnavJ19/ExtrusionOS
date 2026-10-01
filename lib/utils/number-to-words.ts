@@ -25,6 +25,14 @@ function threeDigitWords(n: number): string {
   return twoDigitWords(r);
 }
 
+function integerWords(value: number): string {
+  if (value < 1000) return threeDigitWords(value);
+  for (const [size, label] of [[10000000, "Crore"], [100000, "Lakh"], [1000, "Thousand"]] as const) {
+    if (value >= size) return `${integerWords(Math.floor(value / size))} ${label}${value % size ? ` ${integerWords(value % size)}` : ""}`;
+  }
+  return "";
+}
+
 export function numberToWordsINR(amount: number): string {
   if (!Number.isFinite(amount) || amount < 0) return "Zero";
 
@@ -41,7 +49,7 @@ export function numberToWordsINR(amount: number): string {
   const remainder = rupees % 1000;
 
   const parts: string[] = [];
-  if (crore > 0) parts.push(twoDigitWords(crore) + " Crore");
+  if (crore > 0) parts.push(integerWords(crore) + " Crore");
   if (lakh > 0) parts.push(twoDigitWords(lakh) + " Lakh");
   if (thousand > 0) parts.push(twoDigitWords(thousand) + " Thousand");
   if (remainder > 0) parts.push(threeDigitWords(remainder));

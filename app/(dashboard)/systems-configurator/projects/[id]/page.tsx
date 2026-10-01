@@ -67,6 +67,11 @@ export default async function SystemProjectDetailPage({ params }: { params: Prom
   const existingProductionJobs = configuration.order_id ? await supabase.from("production_jobs").select("id, order_id, job_number, status, planned_quantity_kg, actual_quantity_kg, planned_meters, actual_meters, remarks, profile:aluminium_profiles(profile_code, profile_name)").eq("company_id", context.companyId).eq("order_id", configuration.order_id).ilike("remarks", `%${configuration.configuration_number ?? "System configuration"}%`) : { data: [] };
   const productionJobs = (existingProductionJobs.data ?? []).filter((job: any) => productionJobMatchesConfiguration(job, configuration));
   const productionJobGroups = groupProfileCutsForProduction(profileCuts);
+  const linkedOrder = configuration.order_id ? { data: { id: configuration.order_id }, error: null } : configuration.quote_id
+    ? await supabase.from("orders").select("id").eq("company_id", context.companyId).eq("quote_id", configuration.quote_id).maybeSingle()
+    : { data: null, error: null };
+  const handoffLines = linkedOrder.data ? await supabase.from("order_items").select("id, profile_id, item_description, quantity_kg, total_meters").eq("company_id", context.companyId).eq("order_id", linkedOrder.data.id) : { data: [], error: null };
+  const editable = !configuration.order_id && !configuration.quote_id && !["in_production", "converted_to_order"].includes(configuration.status);
   const productionReadiness = getProductionHandoffReadiness(configuration, productionJobGroups, productionJobs.length);
   const productionProgress = summarizeProductionProgress(productionJobs);
   const workflowStatus = getConfiguratorWorkflowStatus({ configurationStatus: configuration.status, quoteId: configuration.quote_id, dataReadiness, outputStatus, quoteReadiness, productionReadiness, productionProgress });
@@ -80,11 +85,23 @@ export default async function SystemProjectDetailPage({ params }: { params: Prom
             <PageHeader title={`${configuration.design_reference ?? "System"} · ${configuration.project_name ?? "Project"}`} description={`${configuration.customers?.customer_name ?? "Walk-in"} · ${labelize(configuration.system_type ?? "custom")} · Created ${createdDate}`} />
           </div>
           <div className="flex flex-wrap gap-2">
-          {can(context.role, "update", "systems_configurator") ? <form action={calculateAction}><button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-orange px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange/20 transition hover:bg-orange/90"><Calculator className="h-4 w-4" /> Calculate</button></form> : null}
-          {can(context.role, "update", "systems_configurator") ? <form action={optimizeAction}><button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90"><Calculator className="h-4 w-4 text-orange" /> Optimize</button></form> : null}
+          {editable && can(context.role, "update", "systems_configurator") ? <form action={calculateAction}><button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-orange px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange/20 transition hover:bg-orange/90"><Calculator className="h-4 w-4" /> Calculate</button></form> : null}
+          {editable && can(context.role, "update", "systems_configurator") ? <form action={optimizeAction}><button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90"><Calculator className="h-4 w-4 text-orange" /> Optimize</button></form> : null}
           {configuration.quote_id ? <Link href={`/quotes/${configuration.quote_id}`} className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100">View Quote</Link> : can(context.role, "create", "quotes") ? <form action={quoteAction}><button type="submit" disabled={!quoteReadiness.ready} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-orange hover:text-orange disabled:cursor-not-allowed disabled:opacity-50">Generate Quote</button></form> : null}
-          {can(context.role, "create", "production") ? <form action={handoffAction}><button type="submit" disabled={!productionReadiness.ready} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-orange hover:text-orange disabled:cursor-not-allowed disabled:opacity-50">Production Handoff</button></form> : null}
-          <Link href={`/systems-configurator/projects/${id}/edit`} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-orange hover:text-orange"><Edit className="h-4 w-4" /> Edit</Link>
+          {can(context.role, "create", "production") ? <form action={handoffAction} className="space-y-2">
+            {productionJobGroups.map((group) => {
+              const lines = (handoffLines.data ?? []).filter((line: any) => line.profile_id === group.profileId);
+              return lines.length > 1 ? <label key={group.profileId} className="block text-sm">{group.profileCode}: select exact order line
+                <select name={`source_line_${group.profileId}`} required defaultValue="" className="block rounded-lg border p-2">
+                  <option value="" disabled>Select order line</option>
+                  {lines.map((line: any, index: number) => <option key={line.id} value={line.id}>{index + 1}. {line.item_description || group.profileName} | {line.quantity_kg ?? 0} kg | {line.total_meters ?? 0} m | {line.id.slice(0, 8)}</option>)}
+                </select>
+              </label> : null;
+            })}
+            {linkedOrder.error || handoffLines.error ? <p className="text-sm text-red-700">Could not load order lines. Reload before production handoff.</p> : null}
+            <button type="submit" disabled={!productionReadiness.ready || Boolean(linkedOrder.error || handoffLines.error)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-orange hover:text-orange disabled:cursor-not-allowed disabled:opacity-50">Production Handoff</button>
+          </form> : null}
+          {editable ? <Link href={`/systems-configurator/projects/${id}/edit`} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-orange hover:text-orange"><Edit className="h-4 w-4" /> Edit</Link> : <span className="p-2 text-sm text-slate-600">Linked configuration is locked. Create a new configuration for revisions.</span>}
           <Link href={`/api/pdf/systems-configurator/${id}/production_sheet`} target="_blank" className="inline-flex items-center gap-2 rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90"><Download className="h-4 w-4 text-orange" /> Production Sheet</Link>
           </div>
         </div>

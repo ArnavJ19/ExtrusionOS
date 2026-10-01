@@ -20,6 +20,10 @@ export default async function EditSystemProjectPage({ params }: { params: Promis
     return <PageHeader title="Configuration Not Found" description="The requested system configuration does not exist or is outside your company workspace." />;
   }
 
+  if (configuration.order_id || configuration.quote_id || ["in_production", "converted_to_order"].includes(configuration.status)) {
+    return <PageHeader title="Configuration Locked" description="This configuration is linked to a quote or production order. Create a new configuration for revisions so the approved documents and production outputs remain consistent." />;
+  }
+
   const [customers, series, selectedSeries, templates, systemProfiles, hardwareItems, glassItems, finishOptions] = await Promise.all([
     supabase.from("customers").select("id, customer_name, company_name").eq("company_id", context.companyId).order("customer_name", { ascending: true }).limit(200),
     supabase.from("system_series").select("id, series_code, series_name, system_type, stock_length_mm, is_active").eq("company_id", context.companyId).order("series_code", { ascending: true }).limit(200),

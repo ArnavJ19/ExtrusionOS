@@ -21,6 +21,7 @@ export const customerSchema = z.object({
 });
 
 export const profileSchema = z.object({
+  hsn_code: z.string().trim().regex(/^(\d{4}|\d{6}|\d{8})?$/, "Enter a 4, 6 or 8 digit HSN").optional().nullable(),
   profile_code: z.string().trim().min(1, "Profile code is required"),
   profile_name: z.string().trim().min(1, "Profile name is required"),
   section_number: optionalText,
@@ -198,6 +199,8 @@ export const dieSchema = z.object({
 });
 
 export const quoteItemSchema = z.object({
+  perimeter_mm: z.coerce.number().nonnegative().max(100000).optional().nullable(),
+  gst_percent: z.coerce.number().nonnegative().max(100).optional().nullable(),
   profile_id: z.string().uuid("Select a profile"),
   die_id: z.string().uuid().optional().nullable().or(z.literal("")),
   item_description: optionalText,
@@ -205,7 +208,7 @@ export const quoteItemSchema = z.object({
   length_per_piece_m: z.coerce.number().positive().max(1000, "Length looks too high"),
   section_weight_kg_per_m: z.coerce.number().positive().max(1000, "Section weight looks too high"),
   scrap_allowance_percent: z.coerce.number().nonnegative().max(100, "Scrap allowance looks too high").default(0),
-  expected_recovery_percent: z.coerce.number().nonnegative().max(100, "Recovery percent cannot exceed 100").default(100),
+  expected_recovery_percent: z.coerce.number().positive("Recovery must be above zero").max(100, "Recovery percent cannot exceed 100").default(100),
   minimum_billing_weight_kg: z.coerce.number().nonnegative().max(10000000, "Minimum billing weight looks too high").default(0),
   billet_rate_per_kg: z.coerce.number().nonnegative().max(1000000, "Billet rate looks too high"),
   conversion_charge_per_kg: z.coerce.number().nonnegative().max(1000000, "Conversion charge looks too high"),
@@ -218,9 +221,9 @@ export const quoteItemSchema = z.object({
   packing_charge: z.coerce.number().nonnegative().max(10000000, "Packing charge looks too high"),
   transport_charge: z.coerce.number().nonnegative().max(10000000, "Transport charge looks too high"),
   other_charges: z.coerce.number().nonnegative().max(10000000, "Other charge looks too high"),
-  margin_percent: z.coerce.number().nonnegative().max(1000, "Margin percent looks too high"),
+  margin_percent: z.coerce.number().nonnegative().lt(100, "Margin on selling price must be below 100%"),
   sales_price_override: z.coerce.number().nonnegative().max(1000000000, "Sales price override looks too high").optional().nullable().transform((value) => value || null),
-  minimum_margin_percent: z.coerce.number().nonnegative().max(1000, "Minimum margin percent looks too high").default(0)
+  minimum_margin_percent: z.coerce.number().nonnegative().lt(100, "Minimum margin must be below 100%").default(0)
 }).superRefine((value, ctx) => {
   if (value.die_amortization_type === "per_kg" && value.die_charge > 0 && value.die_amortization_quantity_kg <= 0) {
     ctx.addIssue({ code: "custom", path: ["die_amortization_quantity_kg"], message: "Enter expected kg when spreading die charge per kg" });
@@ -278,6 +281,7 @@ export const dispatchSchema = z.object({
 
 export const companySettingsSchema = z.object({
   company: z.object({
+    gst_state_code: z.string().trim().regex(/^(0[1-9]|[12][0-9]|3[0-8])?$/, "Enter a two-digit GST state code").optional().nullable(),
     name: z.string().trim().min(1, "Company name is required"),
     legal_name: optionalText,
     logo_url: optionalText,
@@ -293,12 +297,12 @@ export const companySettingsSchema = z.object({
   settings: z.object({
     id: z.string().uuid().optional().nullable(),
     default_gst_percent: z.coerce.number().nonnegative().max(100, "Default GST percent looks too high"),
-    default_margin_percent: z.coerce.number().nonnegative().max(1000, "Default margin percent looks too high"),
+    default_margin_percent: z.coerce.number().nonnegative().lt(100, "Default margin must be below 100%"),
     default_conversion_charge_per_kg: z.coerce.number().nonnegative().max(1000000, "Conversion charge looks too high"),
     default_packing_charge: z.coerce.number().nonnegative().max(10000000, "Packing charge looks too high"),
     default_transport_charge: z.coerce.number().nonnegative().max(10000000, "Transport charge looks too high"),
     default_quote_validity_days: z.coerce.number().int().positive().max(365, "Quote validity should be within one year"),
-    minimum_margin_percent: z.coerce.number().nonnegative().max(1000, "Minimum margin percent looks too high").default(8),
+    minimum_margin_percent: z.coerce.number().nonnegative().lt(100, "Minimum margin must be below 100%").default(8),
     require_approval_below_margin: z.coerce.boolean().default(true),
     quote_prefix: z.string().trim().min(1).max(12).default("Q"),
     order_prefix: z.string().trim().min(1).max(12).default("O"),
@@ -424,6 +428,7 @@ export const machineSchema = z.object({
 export const productionJobSchema = z.object({
   job_number: optionalText,
   order_id: z.string().uuid("Select an order"),
+  source_line_id: z.string().uuid("Select an order line").optional().nullable(),
   profile_id: z.string().uuid("Select a profile"),
   die_id: z.string().uuid("Select a die"),
   machine_id: z.string().uuid("Select a machine").optional().nullable(),

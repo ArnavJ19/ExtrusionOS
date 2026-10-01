@@ -125,5 +125,8 @@ export function normalizeCompositionRows(rows: { element: string; min: string | 
 }
 
 export function compositionsMatch(a: AlloyComposition, b: AlloyComposition) {
-  return JSON.stringify(a) === JSON.stringify(b);
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every((key) =>
+    Object.hasOwn(b, key) && a[key].min === b[key].min && a[key].max === b[key].max
+  );
 }

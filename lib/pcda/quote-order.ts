@@ -1,5 +1,5 @@
 import { technicalLineItemSchema } from "../validations/pcda/line-item.ts";
-import { TECHNICAL_LINE_ITEM_FIELDS } from "./field-map.ts";
+import { roundMoney } from "../calculations/pcda/rounding.ts";
 
 type QuoteProfileSnapshot = {
   id: string;
@@ -88,7 +88,7 @@ export function buildQuoteItemPcdaFields(input: QuoteItemPcdaInput) {
     cl_meter: item.length_per_piece_m,
     order_uom: "piece",
     order_quantity: item.quantity_pieces,
-    quantity_kg: item.total_weight_kg,
+    quantity_kg: item.billing_weight_kg,
     section_weight_kg_per_m: item.section_weight_kg_per_m,
     min_weight: profile.min_weight ?? null,
     max_weight: profile.max_weight ?? null,
@@ -99,24 +99,24 @@ export function buildQuoteItemPcdaFields(input: QuoteItemPcdaInput) {
     cut_length: item.length_per_piece_m,
     bundle_quantity: profile.bundle_quantity ?? null,
     pieces_per_m_per_kg_per_bundle: profile.pieces_per_m_per_kg_per_bundle ?? null,
-    material_price: item.billet_rate_per_kg ?? 0,
-    value_added_service_price: (item.conversion_charge_per_kg + item.finishing_charge) || 0,
+    material_price: item.raw_material_cost,
+    value_added_service_price: roundMoney(item.conversion_cost + item.finishing_cost),
     other_charges: positiveChargeOrNull(item.other_charges),
-    basic_price: item.price_per_kg ?? 0,
+    basic_price: roundMoney(item.raw_material_cost + item.conversion_cost + item.finishing_cost + item.other_charges),
     packing_charge: positiveChargeOrNull(item.packing_charge),
     freight_charge: positiveChargeOrNull(item.transport_charge),
     die_cost: positiveChargeOrNull(item.die_charge),
     die_service_charge: positiveChargeOrNull(item.die_amortization_amount),
-    packing_in_conversion: false,
+    packing_in_conversion: true,
     include_packing_in_basic: false,
     gst_percent: gstPercent,
     discount: null,
-    margin: item.margin_amount ?? 0,
+    margin: roundMoney(item.line_total_before_gst - item.raw_material_cost - item.conversion_cost - item.finishing_cost - item.die_amortization_amount - item.packing_charge - item.transport_charge - item.other_charges),
     net_rate: item.price_per_kg ?? 0,
     final_line_value: item.line_total_before_gst ?? 0,
     theoretical_weight: item.total_weight_kg,
     actual_weight: null,
-    internal_cost: (item.raw_material_cost + item.conversion_cost + item.finishing_cost + item.die_amortization_amount) || 0,
+    internal_cost: roundMoney(item.raw_material_cost + item.conversion_cost + item.finishing_cost + item.die_amortization_amount + item.packing_charge + item.transport_charge + item.other_charges),
     supplier_rate: null,
     internal_note: null,
     revision_number: quoteRevisionNumber ?? 1,
@@ -126,29 +126,6 @@ export function buildQuoteItemPcdaFields(input: QuoteItemPcdaInput) {
   delete lineFields.id;
   delete lineFields.company_id;
   return lineFields;
-}
-
-export function buildOrderItemFromQuoteItem(quoteItem: Record<string, unknown>, orderId: string, quoteId: string, companyId: string) {
-  const orderItem: Record<string, unknown> = {
-    order_id: orderId,
-    company_id: companyId,
-    profile_id: quoteItem.profile_id ?? null,
-    die_id: quoteItem.die_id ?? null,
-    item_description: quoteItem.item_description ?? null,
-    quantity_pieces: quoteItem.quantity_pieces ?? null,
-    length_per_piece_m: quoteItem.length_per_piece_m ?? null,
-    total_meters: quoteItem.total_meters ?? null,
-    source_record_id: quoteId,
-    source_line_id: quoteItem.id,
-    revision_number: 1,
-  };
-
-  for (const field of TECHNICAL_LINE_ITEM_FIELDS) {
-    if (field === "id" || field === "company_id" || field === "source_record_id" || field === "source_line_id" || field === "revision_number") continue;
-    if (field in quoteItem) orderItem[field] = quoteItem[field];
-  }
-
-  return orderItem;
 }
 
 export function hasUnapprovedDrawing(line: { drawing_approval_status?: string | null }) {

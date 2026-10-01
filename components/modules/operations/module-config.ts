@@ -53,7 +53,6 @@ export type ModuleConfig = {
   fields?: FieldConfig[];
   numberPrefix?: string;
   numberField?: string;
-  generateNumber?: (payload: any, existingNumbers: string[]) => string;
   uniqueField?: string;
   uniqueLabel?: string;
   emptyState?: { title: string; description: string };
@@ -239,10 +238,10 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     schema: productionJobSchema,
     numberPrefix: "J",
     numberField: "job_number",
-    defaultValues: { job_number: "", order_id: "", profile_id: "", die_id: "", machine_id: "", planned_quantity_kg: 0, pieces: 0, required_billet_count: 0, extrusion_efficiency_percent: 75, length_per_piece_m: "", planned_date: "", shift: "", operator_name: "", status: "planned", remarks: "" },
+    defaultValues: { job_number: "", order_id: "", source_line_id: "", profile_id: "", die_id: "", machine_id: "", planned_quantity_kg: 0, pieces: 0, required_billet_count: 0, extrusion_efficiency_percent: 75, length_per_piece_m: "", planned_date: "", shift: "", operator_name: "", status: "planned", remarks: "" },
     fields: [
       { name: "order_id", label: "Order", type: "select", required: true, lookup: orderLookup },
-      { name: "profile_id", label: "Profile", type: "select", required: true, lookup: profileLookup },
+      { name: "profile_id", label: "Profile", type: "select", required: true, lookup: profileLookup, readOnly: true },
       { name: "die_id", label: "Die", type: "select", required: true, lookup: { table: "dies", select: "id, die_number, profile_id, die_status, rack_location", labelFields: ["die_number"], searchFields: ["die_number", "rack_location"], orderBy: "die_number" } },
       { name: "machine_id", label: "Machine", type: "select", lookup: { table: "machines", select: "id, machine_name", labelFields: ["machine_name"], orderBy: "machine_name" } },
       { name: "planned_quantity_kg", label: "Planned kg", type: "number", required: true, step: "0.001" },
@@ -451,18 +450,6 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     card: { titlePath: "machine_name", subtitlePath: "machine_code", badgePath: "status", meta: [{ label: "Type", path: "machine_type", type: "badge" }, { label: "Manufacturer", path: "manufacturer" }] },
     schema: machineSchema,
     numberField: "machine_code",
-    generateNumber: (payload, existing) => {
-      const typeMap: Record<string, string> = { extrusion_press: "EM", aging_oven: "AO", powder_coating_line: "PCL", anodizing_line: "AL", cutting_machine: "CM", packing_station: "PS", cnc: "CNC", other: "MACH" };
-      const prefix = typeMap[payload.machine_type] || "MACH";
-      const max = existing.reduce((current, val) => {
-        if (val.startsWith(prefix)) {
-          const num = parseInt(val.slice(prefix.length), 10);
-          return !isNaN(num) ? Math.max(current, num) : current;
-        }
-        return current;
-      }, 0);
-      return `${prefix}${max + 1}`;
-    },
     defaultValues: { status: "active", machine_name: "", machine_type: "extrusion_press", manufacturer: "", purchase_date: "", maintenance_connected: false },
     fields: [
       { name: "machine_code", label: "Machine ID (Auto-generated)", type: "text", readOnly: true, placeholder: "Auto-filled on save" },
@@ -674,21 +661,6 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     card: { titlePath: "material_code", subtitlePath: "material_name", badgePath: "material_type", meta: [{ label: "Stock", path: "current_stock", type: "number" }, { label: "Reorder", path: "reorder_level", type: "number" }, { label: "Vendor", path: "vendors.vendor_name" }] },
     schema: packagingMaterialSchema,
     numberField: "material_code",
-    generateNumber: (payload, existing) => {
-      const typeMap: Record<string, string> = {
-        stretch_film: "SF", bubble_wrap: "BW", paper: "PAPER", hdpe: "HDPE",
-        pp_woven_sheet: "PPWS", wooden_crate: "WC", strapping: "STRAP", corner_protector: "CP"
-      };
-      const prefix = typeMap[payload.material_type] || "PKG";
-      const max = existing.reduce((current, val) => {
-        if (val && val.startsWith(prefix + "-")) {
-          const num = parseInt(val.slice(prefix.length + 1), 10);
-          if (!isNaN(num) && num > current) return num;
-        }
-        return current;
-      }, 0);
-      return `${prefix}-${(max + 1).toString().padStart(3, "0")}`;
-    },
     defaultValues: { material_code: "", material_name: "", material_type: "stretch_film", unit: "meter", current_stock: 0, reorder_level: 0, calculation_method: "per_profile_meter", consumption_rate: 1, vendor_id: "", location: "", is_active: true },
     fields: [
       { name: "material_code", label: "Material code (auto-generated)", readOnly: true },
@@ -1143,6 +1115,7 @@ moduleConfigs.invoices.uniqueLabel = "Invoice number";
 moduleConfigs.invoices.emptyState = { title: "No invoices or payments", description: "Create invoices against customers, orders, or dispatches to track due dates, paid amount, and overdue receivables." };
 moduleConfigs.invoices.detailIntro = "Track billing value, due date, paid amount, balance due, and customer payment status.";
 moduleConfigs.invoices.detailSections = [
+  { title: "GST", fields: [{ label: "Supplier state code", path: "supplier_state_code" }, { label: "Place of supply state code", path: "place_of_supply_state_code" }, { label: "CGST", path: "cgst_amount", type: "currency" }, { label: "SGST", path: "sgst_amount", type: "currency" }, { label: "UTGST", path: "utgst_amount", type: "currency" }, { label: "IGST", path: "igst_amount", type: "currency" }] },
   { title: "Billing", fields: [{ label: "Customer", path: "customers.company_name" }, { label: "Status", path: "status", type: "badge" }, { label: "Invoice date", path: "invoice_date", type: "date" }, { label: "Due date", path: "due_date", type: "date" }] },
   { title: "Receivable", fields: [{ label: "Subtotal", path: "subtotal", type: "currency" }, { label: "Tax", path: "tax_total", type: "currency" }, { label: "Grand total", path: "grand_total", type: "currency" }, { label: "Balance due", path: "balance_due", type: "currency" }] }
 ];

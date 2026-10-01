@@ -35,7 +35,7 @@ export function ProductionClient({ context }: { context: SessionContext }) {
   const [saving, setSaving] = useState(false);
 
   // Form state for creating a new production job
-  const [form, setForm] = useState({ order_id: "", profile_id: "", machine_id: "", die_id: "", planned_quantity_kg: 0, planned_date: "", shift: "", operator_name: "", remarks: "" });
+  const [form, setForm] = useState({ order_id: "", source_line_id: "", profile_id: "", machine_id: "", die_id: "", planned_quantity_kg: 0, planned_date: "", shift: "", operator_name: "", remarks: "" });
   const [orders, setOrders] = useState<{ id: string; order_number: string }[]>([]);
   const [profiles, setProfiles] = useState<{ id: string; profile_code: string; profile_name: string }[]>([]);
   const [machines, setMachines] = useState<{ id: string; machine_name: string }[]>([]);
@@ -100,6 +100,7 @@ export function ProductionClient({ context }: { context: SessionContext }) {
     const result = await saveProductionJobAction({
       job_number: "",
       order_id: form.order_id,
+      source_line_id: form.source_line_id || null,
       profile_id: form.profile_id,
       machine_id: form.machine_id || null,
       die_id: form.die_id,
@@ -118,7 +119,7 @@ export function ProductionClient({ context }: { context: SessionContext }) {
     if (!result.success) return toast.error(result.error);
     toast.success("Production job planned");
     setShowForm(false);
-    setForm({ order_id: "", profile_id: "", machine_id: "", die_id: "", planned_quantity_kg: 0, planned_date: "", shift: "", operator_name: "", remarks: "" });
+    setForm({ order_id: "", source_line_id: "", profile_id: "", machine_id: "", die_id: "", planned_quantity_kg: 0, planned_date: "", shift: "", operator_name: "", remarks: "" });
     await loadJobs();
   }
 

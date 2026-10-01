@@ -5,6 +5,7 @@ export type OptimizationCutInput = {
   componentRole: string;
   cutLengthMm: number;
   quantity: number;
+  stockLengthMm?: number;
 };
 
 export type OptimizationSettings = {
@@ -41,6 +42,7 @@ export type ProfileOptimizationResult = {
   wastePercent: number;
   reusableLeftoversMm: number[];
   bars: OptimizedStockBar[];
+  unplacedCuts: OptimizedCut[];
   warnings: string[];
 };
 
@@ -75,29 +77,35 @@ function expandCuts(cuts: OptimizationCutInput[]) {
 export function optimizeProfileCutsForStock(cuts: OptimizationCutInput[], settings: OptimizationSettings): ProfileOptimizationResult[] {
   const grouped = new Map<string, OptimizationCutInput[]>();
   for (const cut of cuts) {
-    const key = `${cut.profileCode}|${cut.profileName}`;
+    const stockLengthMm = cut.stockLengthMm ?? settings.stockLengthMm;
+    if (!Number.isFinite(stockLengthMm) || stockLengthMm <= 0) throw new Error("Stock length must be positive.");
+    const key = JSON.stringify([cut.profileCode, cut.profileName, stockLengthMm]);
     grouped.set(key, [...(grouped.get(key) ?? []), cut]);
   }
 
   return Array.from(grouped.entries()).map(([key, profileCuts]) => {
-    const [profileCode, profileName] = key.split("|");
+    const [profileCode, profileName, stockLengthMm] = JSON.parse(key) as [string, string, number];
+    const profileSettings = { ...settings, stockLengthMm };
     const warnings: string[] = [];
     const bars: OptimizedStockBar[] = [];
+    const unplacedCuts: OptimizedCut[] = [];
     const expanded = expandCuts(profileCuts);
 
     for (const cut of expanded) {
-      if (cut.cutLengthMm > settings.stockLengthMm) {
-        warnings.push(`${profileCode} cut ${cut.cutLengthMm}mm exceeds stock length ${settings.stockLengthMm}mm.`);
+      if (cut.cutLengthMm > profileSettings.stockLengthMm) {
+        warnings.push(`${profileCode} cut ${cut.cutLengthMm}mm exceeds stock length ${profileSettings.stockLengthMm}mm.`);
+        unplacedCuts.push(cut);
+        continue;
       }
 
       let placed = false;
       for (const bar of bars) {
         const kerfBeforeMm = bar.cuts.length ? settings.sawKerfMm : 0;
-        if (bar.usedLengthMm + kerfBeforeMm + cut.cutLengthMm <= settings.stockLengthMm) {
+        if (bar.usedLengthMm + kerfBeforeMm + cut.cutLengthMm <= stockLengthMm) {
           const placedCut = { ...cut, kerfBeforeMm };
           bar.cuts.push(placedCut);
           bar.usedLengthMm = round(bar.usedLengthMm + kerfBeforeMm + cut.cutLengthMm, 2);
-          bar.wasteMm = round(Math.max(settings.stockLengthMm - bar.usedLengthMm, 0), 2);
+          bar.wasteMm = round(Math.max(stockLengthMm - bar.usedLengthMm, 0), 2);
           bar.reusableLeftoverMm = bar.wasteMm >= settings.minimumReusableLeftoverMm ? bar.wasteMm : 0;
           placed = true;
           break;
@@ -108,29 +116,34 @@ export function optimizeProfileCutsForStock(cuts: OptimizationCutInput[], settin
         const usedLengthMm = cut.cutLengthMm;
         bars.push({
           barNumber: bars.length + 1,
-          stockLengthMm: settings.stockLengthMm,
+          stockLengthMm,
           cuts: [{ ...cut, kerfBeforeMm: 0 }],
           usedLengthMm: round(usedLengthMm, 2),
-          wasteMm: round(Math.max(settings.stockLengthMm - usedLengthMm, 0), 2),
-          reusableLeftoverMm: settings.stockLengthMm - usedLengthMm >= settings.minimumReusableLeftoverMm ? round(settings.stockLengthMm - usedLengthMm, 2) : 0
+          wasteMm: round(Math.max(stockLengthMm - usedLengthMm, 0), 2),
+          reusableLeftoverMm: stockLengthMm - usedLengthMm >= settings.minimumReusableLeftoverMm ? round(stockLengthMm - usedLengthMm, 2) : 0
         });
       }
     }
 
-    const totalUsedLengthMm = round(bars.reduce((sum, bar) => sum + bar.usedLengthMm, 0), 2);
+    for (const bar of bars) {
+      const kerf = bar.cuts.reduce((sum, cut) => sum + cut.kerfBeforeMm, 0);
+      bar.wasteMm = round(bar.wasteMm - bar.reusableLeftoverMm + kerf, 2);
+    }
+    const totalUsedLengthMm = round(bars.reduce((sum, bar) => sum + bar.cuts.reduce((length, cut) => length + cut.cutLengthMm, 0), 0), 2);
     const totalWasteMm = round(bars.reduce((sum, bar) => sum + bar.wasteMm, 0), 2);
-    const totalStockLengthMm = bars.length * settings.stockLengthMm;
+    const totalStockLengthMm = bars.length * stockLengthMm;
 
     return {
       profileCode,
       profileName,
-      stockLengthMm: settings.stockLengthMm,
+      stockLengthMm,
       totalStockBars: bars.length,
       totalUsedLengthMm,
       totalWasteMm,
       wastePercent: round(totalStockLengthMm > 0 ? (totalWasteMm / totalStockLengthMm) * 100 : 0, 3),
       reusableLeftoversMm: bars.map((bar) => bar.reusableLeftoverMm).filter((value) => value > 0),
       bars,
+      unplacedCuts,
       warnings
     };
   }).sort((a, b) => a.profileCode.localeCompare(b.profileCode));
@@ -141,7 +154,7 @@ export function optimizeProfileCuts(cuts: OptimizationCutInput[], settings: Opti
   const totalStockBars = profiles.reduce((sum, profile) => sum + profile.totalStockBars, 0);
   const totalUsedLengthMm = round(profiles.reduce((sum, profile) => sum + profile.totalUsedLengthMm, 0), 2);
   const totalWasteMm = round(profiles.reduce((sum, profile) => sum + profile.totalWasteMm, 0), 2);
-  const totalStockLengthMm = totalStockBars * settings.stockLengthMm;
+  const totalStockLengthMm = profiles.reduce((sum, profile) => sum + profile.totalStockBars * profile.stockLengthMm, 0);
 
   return {
     ...settings,

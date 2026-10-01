@@ -50,7 +50,7 @@ function revalidateProductionPaths(jobId?: string) {
   if (jobId) revalidatePath(`/production/${jobId}`);
 }
 
-async function loadProductionSourceLine(supabase: any, companyId: string, orderId: string, profileId: string) {
+async function loadProductionSourceLine(supabase: any, companyId: string, orderId: string, profileId: string, sourceLineId?: string | null) {
   const orderItems = await supabase
     .from("order_items")
     .select("*")
@@ -59,21 +59,18 @@ async function loadProductionSourceLine(supabase: any, companyId: string, orderI
     .eq("profile_id", profileId)
     .order("created_at", { ascending: true });
   if (orderItems.error) throw orderItems.error;
-  const orderLine = chooseProductionSourceLine(orderItems.data ?? [], profileId);
+  const orderLine = chooseProductionSourceLine(orderItems.data ?? [], profileId, sourceLineId);
   if (orderLine) return orderLine;
+  if ((orderItems.data ?? []).length > 0) {
+    throw new Error(sourceLineId
+      ? "Selected order line does not match this order and profile."
+      : "Select the exact order line before planning production.");
+  }
 
   const order = await supabase.from("orders").select("id, quote_id").eq("company_id", companyId).eq("id", orderId).maybeSingle();
   if (order.error) throw order.error;
   if (!order.data?.quote_id) return null;
-  const quoteItems = await supabase
-    .from("quote_items")
-    .select("*")
-    .eq("company_id", companyId)
-    .eq("quote_id", order.data.quote_id)
-    .eq("profile_id", profileId)
-    .order("created_at", { ascending: true });
-  if (quoteItems.error) throw quoteItems.error;
-  return chooseProductionSourceLine(quoteItems.data ?? [], profileId);
+  throw new Error("This converted order has no order lines. Repair the quote-to-order conversion before planning production.");
 }
 
 function isUsableDieStatus(status: unknown) {
@@ -173,7 +170,13 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
     const currentJob = currentJobResult.data;
     const jobNumber = editingId ? currentJob?.job_number : (parsed.data.job_number || null);
 
-    const sourceLine = await loadProductionSourceLine(supabase, context.companyId, parsed.data.order_id, parsed.data.profile_id);
+    const sourceLine = await loadProductionSourceLine(
+      supabase,
+      context.companyId,
+      parsed.data.order_id,
+      parsed.data.profile_id,
+      parsed.data.source_line_id
+    );
     const payload = {
       ...parsed.data,
       status: editingId ? currentJob?.status ?? "planned" : "planned",

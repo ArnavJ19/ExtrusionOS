@@ -20,6 +20,7 @@ export type ProfileRow = Record<string, any> & {
 export type ProfileFormValues = Record<string, any>;
 
 export const emptyProfileForm: ProfileFormValues = {
+  hsn_code: "",
   profile_code: "",
   profile_name: "",
   section_number: "",

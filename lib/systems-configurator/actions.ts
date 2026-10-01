@@ -31,16 +31,6 @@ function formEntries(formData: FormData) {
   return Object.fromEntries(formData.entries());
 }
 
-function nextConfigurationNumber(existingNumbers: string[], date = new Date()) {
-  const year = date.getFullYear();
-  const pattern = new RegExp(`^SC-${year}-(\\d{4})$`);
-  const max = existingNumbers.reduce((current, value) => {
-    const match = value.match(pattern);
-    return match ? Math.max(current, Number(match[1])) : current;
-  }, 0);
-  return `SC-${year}-${String(max + 1).padStart(4, "0")}`;
-}
-
 function nextQuoteNumber(existingNumbers: string[], date = new Date()) {
   const year = date.getFullYear();
   const pattern = new RegExp(`^Q-${year}-(\\d{4})$`);
@@ -178,9 +168,6 @@ export async function saveSystemConfigurationDraft(formData: FormData) {
   const panelLayoutJson = parseJsonObject(parsed.panel_layout_json, "Panel layout JSON");
   const optionsJson = parseJsonObject(parsed.options_json, "Options JSON");
   const supabase = await createClient();
-  const existing = await supabase.from("system_configurations").select("configuration_number").eq("company_id", context.companyId);
-  if (existing.error) throw existing.error;
-  const configurationNumber = nextConfigurationNumber((existing.data ?? []).map((row: any) => row.configuration_number).filter(Boolean));
   const noOfPanels = parsed.panel_count;
 
   const { data, error } = await supabase
@@ -188,7 +175,6 @@ export async function saveSystemConfigurationDraft(formData: FormData) {
     .insert({
       company_id: context.companyId,
       created_by: context.userId,
-      configuration_number: configurationNumber,
       project_name: parsed.project_name,
       customer_id: parsed.customer_id || null,
       system_type: parsed.system_type,
@@ -218,15 +204,18 @@ export async function saveSystemConfigurationDraft(formData: FormData) {
 }
 
 export async function updateSystemConfigurationDraft(configurationId: string, formData: FormData) {
-  const context = await getSystemsConfiguratorContext("update");
+  await getSystemsConfiguratorContext("update");
   const parsed = systemConfigurationDraftSchema.parse(formEntries(formData));
   const panelLayoutJson = parseJsonObject(parsed.panel_layout_json, "Panel layout JSON");
   const optionsJson = parseJsonObject(parsed.options_json, "Options JSON");
   const supabase = await createClient();
 
-  const { error } = await supabase
-    .from("system_configurations")
-    .update({
+  const { error } = await supabase.rpc("save_system_configuration_atomic", {
+    p_configuration_id: configurationId,
+    p_mode: "draft",
+    p_expected_updated_at: null,
+    p_rows: {},
+    p_header: {
       project_name: parsed.project_name,
       customer_id: parsed.customer_id || null,
       system_type: parsed.system_type,
@@ -252,20 +241,10 @@ export async function updateSystemConfigurationDraft(configurationId: string, fo
       selling_price: 0,
       quote_id: null,
       notes: parsed.notes || null
-    })
-    .eq("id", configurationId)
-    .eq("company_id", context.companyId);
+    }
+  });
 
   if (error) throw error;
-
-  await Promise.all([
-    supabase.from("system_profile_cuts").delete().eq("company_id", context.companyId).eq("configuration_id", configurationId),
-    supabase.from("system_glass_cuts").delete().eq("company_id", context.companyId).eq("configuration_id", configurationId),
-    supabase.from("system_beading_cuts").delete().eq("company_id", context.companyId).eq("configuration_id", configurationId),
-    supabase.from("system_hardware_bom").delete().eq("company_id", context.companyId).eq("configuration_id", configurationId),
-    supabase.from("system_material_summary").delete().eq("company_id", context.companyId).eq("configuration_id", configurationId),
-    supabase.from("profile_optimization_runs").delete().eq("company_id", context.companyId).eq("configuration_id", configurationId)
-  ]);
 
   revalidatePath(`/systems-configurator/projects/${configurationId}`);
   revalidatePath(`/systems-configurator/projects/${configurationId}/edit`);
@@ -377,46 +356,22 @@ export async function calculateSystemConfigurationProject(configurationId: strin
     options
   });
 
-  await Promise.all([
-    supabase.from("system_profile_cuts").delete().eq("company_id", context.companyId).eq("configuration_id", configurationId),
-    supabase.from("system_glass_cuts").delete().eq("company_id", context.companyId).eq("configuration_id", configurationId),
-    supabase.from("system_beading_cuts").delete().eq("company_id", context.companyId).eq("configuration_id", configurationId),
-    supabase.from("system_hardware_bom").delete().eq("company_id", context.companyId).eq("configuration_id", configurationId),
-    supabase.from("system_material_summary").delete().eq("company_id", context.companyId).eq("configuration_id", configurationId)
-  ]);
-
-  if (result.profileCuts.length) {
-    const { error } = await supabase.from("system_profile_cuts").insert(result.profileCuts.map((cut, index) => ({ company_id: context.companyId, configuration_id: configurationId, profile_id: cut.profileId ?? null, component_role: cut.componentRole, profile_code: cut.profileCode, profile_name: cut.profileName, cut_length_mm: cut.cutLengthMm, quantity: cut.quantity, total_length_m: cut.totalLengthM, section_weight_kg_per_m: cut.sectionWeightKgPerM, total_weight_kg: cut.totalWeightKg, angle_left: cut.angleLeft, angle_right: cut.angleRight, deduction_mm: cut.deductionMm, addition_mm: cut.additionMm, stock_length_mm: cut.stockLengthMm, wastage_percent: cut.wastagePercent, remarks: cut.remarks ?? null, sort_order: index })));
-    if (error) throw error;
-  }
-
-  if (result.glassCuts.length) {
-    const { error } = await supabase.from("system_glass_cuts").insert(result.glassCuts.map((cut) => ({ company_id: context.companyId, configuration_id: configurationId, glass_id: cut.glassId ?? null, panel_index: cut.panelIndex, glass_label: cut.glassLabel, width_mm: cut.widthMm, height_mm: cut.heightMm, quantity: cut.quantity, area_sqft: cut.areaSqft, area_sqm: cut.areaSqm, glass_type: cut.glassType ?? null, thickness_mm: cut.thicknessMm ?? 0, rate: cut.rate, amount: cut.amount, deduction_width_mm: cut.deductionWidthMm, deduction_height_mm: cut.deductionHeightMm, remarks: cut.remarks ?? null })));
-    if (error) throw error;
-  }
-
-  if (result.beadingCuts.length) {
-    const { error } = await supabase.from("system_beading_cuts").insert(result.beadingCuts.map((cut) => ({ company_id: context.companyId, configuration_id: configurationId, profile_id: cut.profileId ?? null, panel_index: cut.panelIndex, bead_position: cut.beadPosition, cut_length_mm: cut.cutLengthMm, quantity: cut.quantity, total_length_m: cut.totalLengthM, remarks: cut.remarks ?? `${cut.profileCode ?? "Bead"} ${cut.profileName ?? ""}`.trim() })));
-    if (error) throw error;
-  }
-
-  if (result.hardwareBom.length) {
-    const { error } = await supabase.from("system_hardware_bom").insert(result.hardwareBom.map((item) => ({ company_id: context.companyId, configuration_id: configurationId, hardware_item_id: item.hardwareItemId ?? null, item_code: item.itemCode, item_name: item.itemName, hardware_category: item.hardwareCategory, quantity: item.quantity, unit: item.unit, rate: item.rate, amount: item.amount, remarks: item.remarks ?? null })));
-    if (error) throw error;
-  }
-
-  if (result.materialSummary.length) {
-    const { error } = await supabase.from("system_material_summary").insert(result.materialSummary.map((item) => ({ company_id: context.companyId, configuration_id: configurationId, material_type: item.materialType, item_id: item.itemId ?? null, item_code: item.itemCode ?? null, item_name: item.itemName, quantity: item.quantity, unit: item.unit, total_weight_kg: item.totalWeightKg, total_length_m: item.totalLengthM, total_area_sqft: item.totalAreaSqft, total_area_sqm: item.totalAreaSqm, rate: item.rate, amount: item.amount })));
-    if (error) throw error;
-  }
-
+  const rows = {
+    system_profile_cuts: result.profileCuts.map((cut, index) => ({ profile_id: cut.profileId ?? null, component_role: cut.componentRole, profile_code: cut.profileCode, profile_name: cut.profileName, cut_length_mm: cut.cutLengthMm, quantity: cut.quantity, total_length_m: cut.totalLengthM, section_weight_kg_per_m: cut.sectionWeightKgPerM, total_weight_kg: cut.totalWeightKg, angle_left: cut.angleLeft, angle_right: cut.angleRight, deduction_mm: cut.deductionMm, addition_mm: cut.additionMm, stock_length_mm: cut.stockLengthMm, wastage_percent: cut.wastagePercent, remarks: cut.remarks ?? null, sort_order: index })),
+    system_glass_cuts: result.glassCuts.map((cut) => ({ glass_id: cut.glassId ?? null, panel_index: cut.panelIndex, glass_label: cut.glassLabel, width_mm: cut.widthMm, height_mm: cut.heightMm, quantity: cut.quantity, area_sqft: cut.areaSqft, area_sqm: cut.areaSqm, glass_type: cut.glassType ?? null, thickness_mm: cut.thicknessMm ?? 0, rate: cut.rate, amount: cut.amount, deduction_width_mm: cut.deductionWidthMm, deduction_height_mm: cut.deductionHeightMm, remarks: cut.remarks ?? null })),
+    system_beading_cuts: result.beadingCuts.map((cut) => ({ profile_id: cut.profileId ?? null, panel_index: cut.panelIndex, bead_position: cut.beadPosition, cut_length_mm: cut.cutLengthMm, quantity: cut.quantity, total_length_m: cut.totalLengthM, remarks: cut.remarks ?? `${cut.profileCode ?? "Bead"} ${cut.profileName ?? ""}`.trim() })),
+    system_hardware_bom: result.hardwareBom.map((item) => ({ hardware_item_id: item.hardwareItemId ?? null, item_code: item.itemCode, item_name: item.itemName, hardware_category: item.hardwareCategory, quantity: item.quantity, unit: item.unit, rate: item.rate, amount: item.amount, remarks: item.remarks ?? null })),
+    system_material_summary: result.materialSummary.map((item) => ({ material_type: item.materialType, item_id: item.itemId ?? null, item_code: item.itemCode ?? null, item_name: item.itemName, quantity: item.quantity, unit: item.unit, total_weight_kg: item.totalWeightKg, total_length_m: item.totalLengthM, total_area_sqft: item.totalAreaSqft, total_area_sqm: item.totalAreaSqm, rate: item.rate, amount: item.amount }))
+  };
   const costing = result.costingSummary;
   const hasCriticalCalculationWarnings = hasCriticalWarnings(result.warnings);
-  const { error: updateError } = await supabase
-    .from("system_configurations")
-    .update({ status: hasCriticalCalculationWarnings ? "draft" : "calculated", subtotal: costing?.subtotalBeforeGst ?? 0, gst_amount: costing?.gstAmount ?? 0, grand_total: costing?.grandTotal ?? 0, internal_cost: costing?.internalCost ?? 0, selling_price: costing?.grandTotal ?? 0, margin_percent: toNumber(options.margin_percent, configuration.margin_percent || settings.data?.default_margin_percent || 15), gst_percent: toNumber(options.gst_percent, configuration.gst_percent || settings.data?.default_gst_percent || 18) })
-    .eq("id", configurationId)
-    .eq("company_id", context.companyId);
+  const { error: updateError } = await supabase.rpc("save_system_configuration_atomic", {
+    p_configuration_id: configurationId,
+    p_mode: "calculation",
+    p_expected_updated_at: configuration.updated_at,
+    p_rows: rows,
+    p_header: { status: hasCriticalCalculationWarnings ? "draft" : "calculated", subtotal: costing?.subtotalBeforeGst ?? 0, gst_amount: costing?.gstAmount ?? 0, grand_total: costing?.grandTotal ?? 0, internal_cost: costing?.internalCost ?? 0, selling_price: costing?.grandTotal ?? 0, margin_percent: toNumber(options.margin_percent, configuration.margin_percent || settings.data?.default_margin_percent || 15), gst_percent: toNumber(options.gst_percent, configuration.gst_percent || settings.data?.default_gst_percent || 18) }
+  });
   if (updateError) throw updateError;
 
   revalidatePath(`/systems-configurator/projects/${configurationId}`);
@@ -443,13 +398,14 @@ export async function runProfileOptimization(configurationId: string) {
 
   const options = configurationResult.data.options_json && typeof configurationResult.data.options_json === "object" ? configurationResult.data.options_json as Record<string, unknown> : {};
   const configurationSeries = configurationResult.data.system_series as any;
-  const stockLengthMm = toNumber((cutsResult.data ?? [])[0]?.stock_length_mm, toNumber(configurationSeries?.stock_length_mm, 6000));
+  const stockLengthMm = toNumber(configurationSeries?.stock_length_mm, 6000);
   const result = optimizeProfileCuts((cutsResult.data ?? []).map((cut: any) => ({
     id: cut.id,
     profileCode: cut.profile_code,
     profileName: cut.profile_name,
     componentRole: cut.component_role,
     cutLengthMm: toNumber(cut.cut_length_mm),
+    stockLengthMm: cut.stock_length_mm == null ? stockLengthMm : toNumber(cut.stock_length_mm),
     quantity: toNumber(cut.quantity)
   })), {
     stockLengthMm,
@@ -478,7 +434,7 @@ export async function runProfileOptimization(configurationId: string) {
   revalidatePath("/systems-configurator/reports");
 }
 
-export async function handoffSystemConfigurationToProduction(configurationId: string) {
+export async function handoffSystemConfigurationToProduction(configurationId: string, formData?: FormData) {
   const context = await getSessionContext();
   if (!can(context.role, "create", "production")) redirect("/dashboard");
   const supabase = await createClient();
@@ -525,6 +481,7 @@ export async function handoffSystemConfigurationToProduction(configurationId: st
 
   const jobRows = jobGroups.map((group) => ({
     profile_id: group.profileId,
+    source_line_id: String(formData?.get(`source_line_${group.profileId}`) ?? "") || null,
     die_id: usableDies.get(group.profileId),
     planned_quantity_kg: group.plannedQuantityKg,
     planned_meters: group.plannedMeters,

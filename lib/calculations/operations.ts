@@ -102,7 +102,7 @@ export function getDieRisks(row: Record<string, any>, today = todayIso()): Opera
   return risks;
 }
 
-export function calculateProductionYield(plannedKg: unknown, actualKg: unknown) {
+export function planAttainmentPercent(plannedKg: unknown, actualKg: unknown) {
   const planned = Number(plannedKg ?? 0);
   const actual = Number(actualKg ?? 0);
   if (planned <= 0) return null;

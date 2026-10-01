@@ -25,7 +25,9 @@ test("optimization accounts for saw kerf and reusable leftovers", () => {
 
   assert.equal(result.profiles[0].totalStockBars, 1);
   assert.equal(result.profiles[0].bars[0].usedLengthMm, 4005);
-  assert.equal(result.profiles[0].bars[0].wasteMm, 995);
+  assert.equal(result.profiles[0].bars[0].wasteMm, 5);
+  assert.equal(result.totalUsedLengthMm, 4000);
+  assert.equal(result.totalWasteMm, 5);
   assert.deepEqual(result.profiles[0].reusableLeftoversMm, [995]);
 });
 
@@ -35,5 +37,7 @@ test("optimization warns when a cut exceeds stock length", () => {
   ], { stockLengthMm: 6000, sawKerfMm: 3, minimumReusableLeftoverMm: 300 });
 
   assert.equal(result.warnings.length, 1);
+  assert.equal(result.totalStockBars, 0);
+  assert.equal(result.profiles[0].unplacedCuts.length, 1);
   assert.match(result.warnings[0], /exceeds stock length/);
 });

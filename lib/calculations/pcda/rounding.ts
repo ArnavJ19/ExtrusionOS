@@ -19,9 +19,13 @@ function roundHalfUp(value: number, decimals: number): number {
   if (!Number.isFinite(value)) return value;
   // Shift the decimal using exponential notation string conversion,
   // which avoids precision loss from multiplying by a power of 10.
-  const shifted = Number(value + "e" + decimals);
+  const [coefficient, exponent = "0"] = Math.abs(value).toString().split("e");
+  const shifted = Number(`${coefficient}e${Number(exponent) + decimals}`);
+  if (!Number.isFinite(shifted)) return value;
   const rounded = Math.round(shifted);
-  return Number(rounded + "e-" + decimals);
+  const [result, resultExponent = "0"] = rounded.toString().split("e");
+  const magnitude = Number(`${result}e${Number(resultExponent) - decimals}`);
+  return magnitude === 0 ? 0 : Math.sign(value) * magnitude;
 }
 
 /** Round weight values to 3 decimal places (half-up) */

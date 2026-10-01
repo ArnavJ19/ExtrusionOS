@@ -17,7 +17,6 @@ import { saveOrderAction } from "@/lib/actions/quotes-orders";
 import { createClient } from "@/lib/supabase/browser";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
-import { nextBusinessNumber, type NumberPrefix } from "@/lib/utils/numbering";
 import { calculateBilletWeightKg, calculateFoundryFurnaceMix, calculateRequiredBilletCount, calculateTotalBilletWeightKg, inchesToMm } from "@/lib/calculations/foundry";
 import { compositionToEditableRows, compositionsMatch, getStandardAlloyComposition, normalizeCompositionRows, type AlloyComposition } from "@/lib/calculations/alloy-composition";
 import type { SessionContext } from "@/types/app";
@@ -28,6 +27,7 @@ type LookupMap = Record<string, LookupOption[]>;
 type ChemistryField = "element" | "min" | "max";
 
 type ProductionOrderItem = {
+  id: string | null;
   profile_id: string | null;
   die_id: string | null;
   item_description: string | null;
@@ -96,7 +96,6 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [existingIds, setExistingIds] = useState<string[] | null>(null);
   const editing = Boolean(recordId);
 
   function lookupRequest(field: FieldConfig, values: Record<string, any>) {
@@ -175,12 +174,6 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     ] as const));
     setLookups(Object.fromEntries(lookupEntries));
 
-    if (!editing && config.numberField && (config.generateNumber || config.numberPrefix)) {
-      const { data } = await supabase.from(config.table as any).select(config.numberField).eq("company_id", context.companyId);
-      setExistingIds((data ?? []).map((row: any) => row[config.numberField!]).filter(Boolean));
-    } else {
-      setExistingIds([]);
-    }
   }
 
   useEffect(() => {
@@ -238,21 +231,6 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     }
   }
 
-  useEffect(() => {
-    if (!editing && existingIds !== null && config.numberField) {
-      let newNumber: string | undefined;
-      if (config.generateNumber) {
-        newNumber = config.generateNumber(form, existingIds);
-      } else if (config.numberPrefix && !form[config.numberField]) {
-        // Fallback to basic nextBusinessNumber for simple prefixed ones if it's not set
-        newNumber = nextBusinessNumber(config.numberPrefix as NumberPrefix, existingIds);
-      }
-      
-      if (newNumber && form[config.numberField] !== newNumber) {
-        setForm((prev) => ({ ...prev, [config.numberField!]: newNumber }));
-      }
-    }
-  }, [editing, existingIds, config, form]);
 
   async function loadPackagingMaterials() {
     setMaterialsLoading(true);
@@ -306,7 +284,12 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
 
   function foundryMixFor(values: Record<string, any>) {
     const totalWeight = calculateTotalBilletWeightKg(Number(values.billet_length_mm ?? 0), Number(values.billet_diameter_mm ?? 0), Number(values.billet_count ?? 0), Number(values.alloy_density_kg_m3 ?? 2700));
-    return calculateFoundryFurnaceMix(totalWeight, Number(values.furnace_efficiency_percent ?? 80), Number(values.scrap_percentage ?? 0), Number(values.external_aluminium_percentage ?? 100));
+    try {
+      return calculateFoundryFurnaceMix(totalWeight, Number(values.furnace_efficiency_percent ?? 80), Number(values.scrap_percentage ?? 0), Number(values.external_aluminium_percentage ?? 100));
+    } catch {
+      // Invalid intermediate typing must not crash the form; schema validation blocks saving.
+      return { requiredFurnaceChargeKg: 0, scrapAluminiumKg: 0, externalAluminiumKg: 0 };
+    }
   }
 
   function applyFoundryMix(values: Record<string, any>) {
@@ -366,12 +349,16 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     const pieces = item.quantity_pieces ? `, ${item.quantity_pieces} pcs` : "";
     const length = item.length_per_piece_m ? ` x ${item.length_per_piece_m} m` : "";
     const location = item.dies?.rack_location || dieLookup?.rack_location ? ` Die location: ${item.dies?.rack_location ?? dieLookup?.rack_location}.` : "";
-    const multiple = itemCount > 1 ? ` This order has ${itemCount} profile lines; change Profile to plan another line.` : "";
+    const multiple = itemCount > 1 ? ` This order has ${itemCount} production lines; choose the exact order line below.` : "";
     return `Auto-filled ${profile}${die}${pieces}${length}.${location}${multiple}`;
   }
 
-  function applyProductionItemAutofill(items: ProductionOrderItem[], profileId?: string | null) {
-    const item = (profileId ? items.find((entry) => entry.profile_id === profileId) : items[0]) ?? null;
+  function applyProductionItemAutofill(items: ProductionOrderItem[], profileId?: string | null, sourceLineId?: string | null) {
+    const item = (sourceLineId
+      ? items.find((entry) => entry.id === sourceLineId)
+      : profileId
+        ? items.find((entry) => entry.profile_id === profileId)
+        : items[0]) ?? null;
     if (!item?.profile_id) {
       setProductionAutofillSummary("No quote or direct-order production profile was found. Select profile, die, and planned kg manually.");
       return;
@@ -383,6 +370,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     const estimatedBillets = calculateRequiredBilletCount(plannedWeight, billetWeight, Number(form.extrusion_efficiency_percent ?? 75));
     setForm((current) => ({
       ...current,
+      source_line_id: item.id ?? "",
       profile_id: item.profile_id ?? current.profile_id,
       die_id: dieId ?? "",
       planned_quantity_kg: plannedWeight > 0 ? plannedWeight : current.planned_quantity_kg,
@@ -398,7 +386,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     if (!orderId) {
       setProductionOrderItems([]);
       setProductionAutofillSummary(null);
-      setForm((current) => ({ ...current, order_id: "", profile_id: "", die_id: "", planned_quantity_kg: 0, remarks: "" }));
+      setForm((current) => ({ ...current, order_id: "", source_line_id: "", profile_id: "", die_id: "", planned_quantity_kg: 0, remarks: "" }));
       return;
     }
 
@@ -415,24 +403,18 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       let items: ProductionOrderItem[] = [];
       const { data: orderItems, error: orderItemsError } = await supabase
         .from("order_items")
-        .select("profile_id, die_id, item_description, quantity_pieces, length_per_piece_m, total_weight_kg, billing_weight_kg, dealer_fulfilled_weight_kg, manufacturing_weight_kg, aluminium_profiles(profile_code, profile_name), dies(die_number, rack_location)")
+        .select("id, profile_id, die_id, item_description, quantity_pieces, length_per_piece_m, total_weight_kg, billing_weight_kg, dealer_fulfilled_weight_kg, manufacturing_weight_kg, aluminium_profiles(profile_code, profile_name), dies(die_number, rack_location)")
         .eq("company_id", context.companyId)
         .eq("order_id", orderId)
         .order("created_at", { ascending: true });
       if (orderItemsError) throw orderItemsError;
       items = (orderItems ?? []) as unknown as ProductionOrderItem[];
       if (!items.length && order?.quote_id) {
-        const { data: quoteItems, error: itemsError } = await supabase
-          .from("quote_items")
-          .select("profile_id, die_id, item_description, quantity_pieces, length_per_piece_m, total_weight_kg, billing_weight_kg, aluminium_profiles(profile_code, profile_name), dies(die_number, rack_location)")
-          .eq("company_id", context.companyId)
-          .eq("quote_id", order.quote_id)
-          .order("created_at", { ascending: true });
-        if (itemsError) throw itemsError;
-        items = (quoteItems ?? []) as unknown as ProductionOrderItem[];
+        throw new Error("This converted order has no order lines. Repair the quote-to-order conversion before planning production.");
       }
       if (!items.length && order?.production_profile_id) {
         items = [{
+          id: null,
           profile_id: order.production_profile_id,
           die_id: order.production_die_id ?? null,
           item_description: order.production_notes || order.notes || "Direct order production requirement",
@@ -761,12 +743,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     if (moduleKey === "foundry_scrap" && !payload.available_weight_kg) payload.available_weight_kg = payload.weight_kg;
     if (moduleKey === "foundry_external_sources" && !editing && !payload.available_weight_kg) payload.available_weight_kg = payload.weight_kg;
     if (!editing && config.numberField) {
-      const { data: existing } = await supabase.from(config.table as any).select(config.numberField).eq("company_id", context.companyId);
-      if (config.generateNumber) {
-        payload = { ...payload, [config.numberField]: config.generateNumber(payload, (existing ?? []).map((row: any) => row[config.numberField!]).filter(Boolean)) };
-      } else if (config.numberPrefix) {
-        payload = { ...payload, [config.numberField]: nextBusinessNumber(config.numberPrefix as NumberPrefix, (existing ?? []).map((row: any) => row[config.numberField!]).filter(Boolean)) };
-      }
+      delete payload[config.numberField];
     }
     const result = editing
       ? await supabase.from(config.table as any).update(payload).eq("id", recordId).eq("company_id", context.companyId).select("id").single()
@@ -840,6 +817,23 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
             <div className="mt-4 rounded-2xl border border-orange/20 bg-orange/5 px-4 py-3 text-sm font-semibold text-slate-700">
               {productionAutofillLoading ? "Loading order details for production autofill..." : productionAutofillSummary}
             </div>
+          ) : null}
+          {moduleKey === "production" && productionOrderItems.some((item) => item.id) ? (
+            <label className="mt-4 block space-y-1.5">
+              <span className="form-label">Order line *</span>
+              <select
+                className="form-input"
+                value={String(form.source_line_id ?? "")}
+                onChange={(event) => applyProductionItemAutofill(productionOrderItems, null, event.target.value)}
+              >
+                <option value="">Select the exact order line</option>
+                {productionOrderItems.filter((item) => item.id).map((item) => (
+                  <option key={item.id!} value={item.id!}>
+                    {[item.aluminium_profiles?.profile_code, item.item_description, `${Number(item.manufacturing_weight_kg ?? item.billing_weight_kg ?? item.total_weight_kg ?? 0).toLocaleString("en-IN")} kg`].filter(Boolean).join(" · ")}
+                  </option>
+                ))}
+              </select>
+            </label>
           ) : null}
           {moduleKey === "production" ? (
             <div className="mt-6 border-t border-slate-200 pt-5">

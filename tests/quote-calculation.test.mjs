@@ -33,8 +33,8 @@ test("quote item uses physical weight, billing weight, GST-ready selling value",
   assert.equal(item.raw_material_cost, 125000);
   assert.equal(item.conversion_cost, 12500);
   assert.equal(item.line_subtotal, 137500);
-  assert.equal(item.line_total_before_gst, 151250);
-  assert.equal(item.estimated_profit_percent, 9.09);
+  assert.equal(item.line_total_before_gst, 152777.78);
+  assert.equal(item.estimated_profit_percent, 10);
 });
 
 test("scrap allowance and minimum billing weight increase billable kg", () => {
@@ -49,7 +49,8 @@ test("finishing modes are calculated centrally", () => {
   assert.equal(calculateFinishingCost("per_kg", 12, 100, 50), 1200);
   assert.equal(calculateFinishingCost("per_meter", 8, 100, 50), 400);
   assert.equal(calculateFinishingCost("fixed", 500, 100, 50), 500);
-  assert.equal(calculateFinishingCost("per_sqft", 500, 100, 50), 80730);
+  assert.equal(calculateFinishingCost("per_sqft", 500, 100, 50), 0);
+  assert.equal(calculateFinishingCost("per_sqft", 500, 100, 50, 80), 40000);
 });
 
 test("die amortization supports full, per kg, waived, and customer paid modes", () => {
@@ -71,8 +72,8 @@ test("quote summary aggregates profit and GST", () => {
   const item = calculateQuoteItem(baseItem);
   const summary = calculateQuoteSummary([item], 18);
 
-  assert.equal(summary.subtotal, 151250);
-  assert.equal(summary.gst_amount, 27225);
-  assert.equal(summary.grand_total, 178475);
-  assert.equal(summary.estimated_profit_amount, 13750);
+  assert.equal(summary.subtotal, 152777.78);
+  assert.equal(summary.gst_amount, 27500);
+  assert.equal(summary.grand_total, 180277.78);
+  assert.equal(summary.estimated_profit_amount, 15277.78);
 });

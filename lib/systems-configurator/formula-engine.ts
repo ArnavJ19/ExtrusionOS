@@ -1,6 +1,7 @@
 import { generateBeadingCuts } from "./beading-engine.ts";
 import { calculateSystemCosting } from "./costing-engine.ts";
 import { generateGlassCuts } from "./glass-engine.ts";
+import { glassDeductions } from "./glass-deductions.ts";
 import { generateHardwareBom } from "./hardware-engine.ts";
 import { buildMaterialSummary } from "./material-summary.ts";
 import { optimizeProfileCuts } from "./profile-optimization.ts";
@@ -233,8 +234,7 @@ export function buildBaseFormulaVariables(input: SystemConfigurationInput): Form
   const overlapMm = optionNumber(input, "overlap_mm", 0);
   const frameDeductionMm = optionNumber(input, "frame_deduction_mm", optionNumber(input, "frame_deduction", 0));
   const sashHeightDeductionMm = optionNumber(input, "sash_height_deduction_mm", optionNumber(input, "sash_deduction", 0));
-  const glassDeductionWidthMm = optionNumber(input, "glass_deduction_width_mm", optionNumber(input, "glass_deduction_width", 0));
-  const glassDeductionHeightMm = optionNumber(input, "glass_deduction_height_mm", optionNumber(input, "glass_deduction_height", 0));
+  const { width: glassDeductionWidthMm, height: glassDeductionHeightMm } = glassDeductions(input);
   const shutterWidth = (input.widthMm + overlapMm) / Math.max(shutterCount, 1);
   const shutterHeight = input.heightMm - sashHeightDeductionMm;
   const glassWidth = shutterWidth - glassDeductionWidthMm;
@@ -369,7 +369,7 @@ export function calculateSystemConfiguration(input: SystemConfigurationInput): C
   const profileCuts = generateProfileCuts(input, variables, warnings);
   const glassCuts = generateGlassCuts(input, warnings, variables, evaluateFormulaExpression);
   const beadingCuts = generateBeadingCuts(input, glassCuts, warnings);
-  const hardwareBom = generateHardwareBom(input, warnings, variables, evaluateFormulaExpression);
+  const hardwareBom = generateHardwareBom(input, warnings, variables, evaluateFormulaExpression, glassCuts);
   const materialSummary = buildMaterialSummary(input, profileCuts, beadingCuts, glassCuts, hardwareBom);
   const totalProfileWeightKg = profileCuts.reduce((sum, cut) => sum + cut.totalWeightKg, 0) + beadingCuts.reduce((sum, cut) => sum + cut.totalWeightKg, 0);
   const totalProfileLengthM = profileCuts.reduce((sum, cut) => sum + cut.totalLengthM, 0) + beadingCuts.reduce((sum, cut) => sum + cut.totalLengthM, 0);
@@ -395,7 +395,7 @@ export function calculateSystemConfiguration(input: SystemConfigurationInput): C
     discountAmount: input.costing.discountAmount,
     gstPercent: input.costing.gstPercent
   }) ?? emptyCostingSummary();
-  const optimizationSummary = profileCuts.length ? optimizeProfileCuts(profileCuts.map((cut) => ({ id: cut.profileId, profileCode: cut.profileCode, profileName: cut.profileName, componentRole: cut.componentRole, cutLengthMm: cut.cutLengthMm, quantity: cut.quantity })), { stockLengthMm: input.companySettings.stockLengthMm, sawKerfMm: input.companySettings.sawKerfMm, minimumReusableLeftoverMm: input.companySettings.minimumReusableLeftoverMm }) : emptyOptimizationSummary(input);
+  const optimizationSummary = profileCuts.length ? optimizeProfileCuts(profileCuts.map((cut) => ({ id: cut.profileId, profileCode: cut.profileCode, profileName: cut.profileName, componentRole: cut.componentRole, cutLengthMm: cut.cutLengthMm, quantity: cut.quantity, stockLengthMm: cut.stockLengthMm })), { stockLengthMm: input.companySettings.stockLengthMm, sawKerfMm: input.companySettings.sawKerfMm, minimumReusableLeftoverMm: input.companySettings.minimumReusableLeftoverMm }) : emptyOptimizationSummary(input);
   const errors = warnings.filter((warning) => warning.severity === "error");
 
   return { profileCuts, glassCuts, beadingCuts, hardwareBom, materialSummary, costingSummary, optimizationSummary, warnings, errors };

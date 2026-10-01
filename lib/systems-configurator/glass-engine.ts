@@ -1,5 +1,6 @@
 import type { ConfiguratorWarning, FormulaVariables, GlassCut, GlassRule, SystemConfigurationInput } from "./types.ts";
-import { optionNumber, round } from "./types.ts";
+import { round } from "./types.ts";
+import { glassDeductions } from "./glass-deductions.ts";
 
 type FormulaEvaluator = (expression: string, variables: FormulaVariables) => number;
 
@@ -23,8 +24,7 @@ export function generateGlassCuts(input: SystemConfigurationInput, warnings: Con
   }
 
   const glassRule = getGlassRule(input);
-  const glassDeductionWidth = optionNumber(input, "glass_deduction_width_mm", optionNumber(input, "glass_deduction_width", 90));
-  const glassDeductionHeight = optionNumber(input, "glass_deduction_height_mm", optionNumber(input, "glass_deduction_height", 90));
+  const { width: glassDeductionWidth, height: glassDeductionHeight } = glassDeductions(input);
 
   for (const panel of input.panelLayout.panels) {
     if (panel.function !== "glass") continue;

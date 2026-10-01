@@ -81,6 +81,7 @@ export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { 
         {canEdit && config.fields && !(moduleKey === "expenses" && String(row.approval_status || "").toLowerCase() === "approved") ? <Link href={`${config.basePath}/${recordId}/edit`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"><Pencil className="h-4 w-4" /> Edit</Link> : null}
       </div>
 
+      {moduleKey === "invoices" ? <a className="inline-flex rounded-xl border border-neutral-200 px-4 py-2 text-sm font-semibold" href={`/api/pdf/invoice/${recordId}`} target="_blank" rel="noreferrer">Open Invoice PDF</a> : null}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {config.card.meta.slice(0, 4).map((item) => <div key={item.label} className="metric-card"><p className="relative z-[1] text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">{item.label}</p><p className="relative z-[1] mt-3 text-xl font-bold text-neutral-950">{displayValue(row, item.path, item.type)}</p></div>)}
       </div>

@@ -13,6 +13,11 @@ export function buildProductionJobPcdaFields(sourceLine: Record<string, any> | n
   return copied;
 }
 
-export function chooseProductionSourceLine(lines: Record<string, any>[], profileId: string) {
-  return lines.find((line) => line.profile_id === profileId) ?? null;
+export function chooseProductionSourceLine(lines: Record<string, any>[], profileId: string, sourceLineId?: string | null) {
+  if (sourceLineId) {
+    return lines.find((line) => line.id === sourceLineId && line.profile_id === profileId) ?? null;
+  }
+
+  const matchingLines = lines.filter((line) => line.profile_id === profileId);
+  return matchingLines.length === 1 ? matchingLines[0] : null;
 }

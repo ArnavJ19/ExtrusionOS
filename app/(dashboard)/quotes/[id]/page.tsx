@@ -220,7 +220,7 @@ export default async function QuoteDetailPage({
                 <span className="font-bold">{formatCurrency(quote.subtotal)}</span>
               </div>
               <div className="flex justify-between items-center pb-4 border-b border-white/10">
-                <span className="text-slate-400 font-medium">GST ({quote.gst_percent}%)</span>
+                <span className="text-slate-400 font-medium">GST (line rates)</span>
                 <span className="font-bold">{formatCurrency(quote.gst_amount)}</span>
               </div>
               <div className="flex justify-between items-center pt-2 text-lg">

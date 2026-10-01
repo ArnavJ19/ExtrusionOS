@@ -79,7 +79,7 @@ export function can(role: UserRole, action: Action, resource: Resource): boolean
 
   if (role === "sales") {
     if (["quotes", "customers"].includes(resource) && ["create", "read", "update"].includes(action)) return true;
-    if (resource === "systems_configurator" && ["create", "read", "update"].includes(action)) return true;
+    if (resource === "systems_configurator" && action === "read") return true;
     if (resource === "ai_assistant" && ["create", "read"].includes(action)) return true;
     if (["orders", "dies"].includes(resource) && action === "read") return true;
   }

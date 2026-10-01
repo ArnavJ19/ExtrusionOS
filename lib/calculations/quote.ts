@@ -1,5 +1,6 @@
 import type { DieAmortizationType, FinishingChargeType } from "@/types/app";
 import { getBusinessDateBoundaries } from "../utils/business-date.ts";
+import { roundMoney, roundWeight } from "./pcda/rounding.ts";
 
 export type QuoteItemInput = {
   quantity_pieces: number;
@@ -7,6 +8,8 @@ export type QuoteItemInput = {
   section_weight_kg_per_m: number;
   scrap_allowance_percent?: number;
   expected_recovery_percent?: number;
+  perimeter_mm?: number | null;
+  gst_percent?: number | null;
   minimum_billing_weight_kg?: number;
   billet_rate_per_kg: number;
   conversion_charge_per_kg: number;
@@ -28,6 +31,9 @@ export type QuoteItemCalculated = QuoteItemInput & {
   total_weight_kg: number;
   effective_weight_kg: number;
   billing_weight_kg: number;
+  billet_input_kg: number;
+  surface_area_sqft: number;
+  costing_complete: boolean;
   raw_material_cost: number;
   conversion_cost: number;
   finishing_cost: number;
@@ -73,21 +79,16 @@ export type QuoteWarning = {
 
 const n = (value: number | null | undefined) => Number.isFinite(Number(value)) ? Number(value) : 0;
 const nonNegative = (value: number | null | undefined) => Math.max(0, n(value));
-const money = (value: number) => Math.round(nonNegative(value) * 100) / 100;
-const signedMoney = (value: number) => Math.round(n(value) * 100) / 100;
-const qty = (value: number) => Math.round(nonNegative(value) * 1000) / 1000;
+const money = (value: number) => roundMoney(nonNegative(value));
+const signedMoney = (value: number) => roundMoney(n(value));
+const qty = (value: number) => roundWeight(nonNegative(value));
 
 export function calculateFinishingCost(chargeType: FinishingChargeType, charge: number, billingWeightKg: number, totalMeters: number, surfaceAreaSqft?: number) {
   if (chargeType === "per_kg") return money(billingWeightKg * nonNegative(charge));
   if (chargeType === "per_meter") return money(totalMeters * nonNegative(charge));
   if (chargeType === "fixed") return money(charge);
   if (chargeType === "per_sqft") {
-    // Use provided surface area, or estimate from weight/meters assuming typical profile perimeter
-    const area = nonNegative(surfaceAreaSqft);
-    if (area > 0) return money(area * nonNegative(charge));
-    // Fallback: estimate sqft from total meters assuming ~0.3m perimeter average, converted to sqft
-    const estimatedSqft = totalMeters * 0.3 * 10.764;
-    return money(estimatedSqft * nonNegative(charge));
+    return money(nonNegative(surfaceAreaSqft) * nonNegative(charge));
   }
   return 0;
 }
@@ -118,13 +119,19 @@ export function calculateQuoteItem(input: QuoteItemInput): QuoteItemCalculated {
   const total_weight_kg = qty(total_meters * section_weight_kg_per_m);
   const effective_weight_kg = qty(total_weight_kg * (1 + scrap_allowance_percent / 100));
   const billing_weight_kg = qty(Math.max(effective_weight_kg, minimum_billing_weight_kg));
-  const raw_material_cost = money(billing_weight_kg * nonNegative(input.billet_rate_per_kg));
+  const recoveryValid = expected_recovery_percent > 0 && expected_recovery_percent <= 100;
+  const billetInput = recoveryValid ? billing_weight_kg / (expected_recovery_percent / 100) : 0;
+  const billet_input_kg = qty(billetInput);
+  const surface_area_sqft = total_meters * nonNegative(input.perimeter_mm) / 1000 * 10.76391041671;
+  const costing_complete = recoveryValid && input.margin_percent >= 0 && input.margin_percent < 100
+    && (input.finishing_charge_type !== "per_sqft" || surface_area_sqft > 0);
+  const raw_material_cost = money(billetInput * nonNegative(input.billet_rate_per_kg));
   const conversion_cost = money(billing_weight_kg * nonNegative(input.conversion_charge_per_kg));
-  const finishing_cost = calculateFinishingCost(input.finishing_charge_type, input.finishing_charge, billing_weight_kg, total_meters);
+  const finishing_cost = calculateFinishingCost(input.finishing_charge_type, input.finishing_charge, billing_weight_kg, total_meters, surface_area_sqft);
   const die_amortization_amount = calculateDieAmortization({ dieCharge: input.die_charge, billingWeightKg: billing_weight_kg, type: die_amortization_type, quantityKg: die_amortization_quantity_kg });
   const line_subtotal = money(raw_material_cost + conversion_cost + finishing_cost + die_amortization_amount + nonNegative(input.packing_charge) + nonNegative(input.transport_charge) + nonNegative(input.other_charges));
-  const margin_amount = money(line_subtotal * nonNegative(input.margin_percent) / 100);
-  const calculatedSellingBeforeGst = money(line_subtotal + margin_amount);
+  const calculatedSellingBeforeGst = input.margin_percent < 100 ? money(line_subtotal / (1 - nonNegative(input.margin_percent) / 100)) : 0;
+  const margin_amount = signedMoney(calculatedSellingBeforeGst - line_subtotal);
   const line_total_before_gst = sales_price_override ?? calculatedSellingBeforeGst;
   const estimated_profit_amount = signedMoney(line_total_before_gst - line_subtotal);
   const estimated_profit_percent = line_total_before_gst > 0 ? Math.round((estimated_profit_amount / line_total_before_gst) * 10000) / 100 : 0;
@@ -141,6 +148,9 @@ export function calculateQuoteItem(input: QuoteItemInput): QuoteItemCalculated {
     total_weight_kg,
     effective_weight_kg,
     billing_weight_kg,
+    billet_input_kg,
+    surface_area_sqft,
+    costing_complete,
     raw_material_cost,
     conversion_cost,
     finishing_cost,
@@ -166,7 +176,7 @@ export function calculateQuoteSummary(items: QuoteItemCalculated[], gstPercent: 
   const total_weight_kg = qty(items.reduce((sum, item) => sum + item.total_weight_kg, 0));
   const total_billing_weight_kg = qty(items.reduce((sum, item) => sum + item.billing_weight_kg, 0));
   const total_meters = qty(items.reduce((sum, item) => sum + item.total_meters, 0));
-  const gst_amount = money(subtotal * n(gstPercent) / 100);
+  const gst_amount = money(items.reduce((sum, item) => sum + money(item.line_total_before_gst * nonNegative(item.gst_percent ?? gstPercent) / 100), 0));
   const grand_total = money(subtotal + gst_amount);
   const estimated_profit_amount = total_margin_amount;
   const estimated_profit_percent = subtotal > 0 ? Math.round((estimated_profit_amount / subtotal) * 10000) / 100 : 0;
@@ -200,7 +210,8 @@ export function getQuoteItemWarnings(input: QuoteItemCalculated, options: { dieS
   if (!options.customerGstNumber) warnings.push({ code: "missing_customer_gst", severity: "info", message: "Customer GST number is missing. Confirm whether GST details are required on the PDF." });
   if (options.defaultConversionChargePerKg && input.conversion_charge_per_kg < options.defaultConversionChargePerKg * 0.75) warnings.push({ code: "low_conversion_charge", severity: "warning", message: "Conversion charge is much lower than the company default." });
   if (input.sales_price_override !== null) warnings.push({ code: "manual_override", severity: "info", message: "Sales price is manually overridden. Profit is calculated from override." });
-  if (input.finishing_charge_type === "per_sqft") warnings.push({ code: "surface_area_missing", severity: "warning", message: "Per sqft finishing needs surface area data. This line uses zero finishing cost until surface area is added." });
+  if (input.finishing_charge_type === "per_sqft" && input.surface_area_sqft <= 0) warnings.push({ code: "surface_area_missing", severity: "critical", message: "Add the profile perimeter before sending. This line is not fully costed and finishing cost is zero." });
+  if (!input.costing_complete && input.finishing_charge_type !== "per_sqft") warnings.push({ code: "invalid_costing", severity: "critical", message: "Recovery must be above 0 and at most 100%; margin must be below 100%." });
   if (options.quoteValidUntil && new Date(options.quoteValidUntil) < new Date(getBusinessDateBoundaries().today)) warnings.push({ code: "expired_quote", severity: "warning", message: "Quote validity date has expired." });
   return warnings;
 }

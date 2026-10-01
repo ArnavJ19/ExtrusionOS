@@ -26,6 +26,7 @@ type Profile = {
   profile_code: string;
   profile_name: string;
   section_weight_kg_per_m: number;
+  section_perimeter_mm?: number | null;
   section_number?: string | null;
   section_code?: string | null;
   section_name?: string | null;
@@ -129,7 +130,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
   const [form, setForm] = useState({ customer_id: "", quote_date: todayIso(), valid_until: "", status: "draft" as QuoteStatus, gst_percent: 18, terms_and_conditions: "", delivery_timeline: "", payment_terms: "", approval_notes: "", notes: "" });
   const [items, setItems] = useState<FormItem[]>([{ ...emptyItem }]);
 
-  const calculatedItems = items.map((item) => calculateQuoteItem(item));
+  const calculatedItems = items.map((item) => calculateQuoteItem({ ...item, perimeter_mm: profiles.find((profile) => profile.id === item.profile_id)?.section_perimeter_mm ?? item.perimeter_mm }));
   const summary = calculateQuoteSummary(calculatedItems, Number(form.gst_percent));
   const selectedCustomer = customers.find((customer) => customer.id === form.customer_id);
   const filteredCustomers = useMemo(() => {
@@ -145,7 +146,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
     setLoading(true);
     const [customerResult, profileResult, dieResult, quoteResult, settingsResult] = await Promise.all([
       supabase.from("customers").select("id, customer_name, company_name, gst_number, billing_address, shipping_address").eq("company_id", context.companyId).order("customer_name").limit(40),
-      supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle").eq("company_id", context.companyId).eq("is_active", true).order("profile_code").limit(40),
+      supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle").eq("company_id", context.companyId).eq("is_active", true).order("profile_code").limit(40),
       supabase.from("dies").select("id, die_number, profile_id, die_status, rack_location").eq("company_id", context.companyId).order("die_number").limit(40),
       supabase.from("quotes").select("*, customers(customer_name, company_name)").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(100),
       supabase.from("company_settings").select("*").eq("company_id", context.companyId).maybeSingle()
@@ -230,7 +231,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
     profileSearchTimer.current = setTimeout(async () => {
       const { data, error } = await supabase
         .from("aluminium_profiles")
-        .select("id, profile_code, profile_name, section_weight_kg_per_m, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle")
+        .select("id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle")
         .eq("company_id", context.companyId)
         .eq("is_active", true)
         .or(`profile_code.ilike.*${term}*,profile_name.ilike.*${term}*,section_number.ilike.*${term}*,section_code.ilike.*${term}*`)
@@ -273,6 +274,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
       if (key === "profile_id") {
         const profile = profiles.find((candidate) => candidate.id === value);
         next.section_weight_kg_per_m = profile?.section_weight_kg_per_m ?? 0;
+        next.perimeter_mm = profile?.section_perimeter_mm ?? null;
         next.item_description = profile ? `${profile.profile_code} - ${profile.profile_name}` : "";
         next.die_id = "";
       }
@@ -317,7 +319,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
     const [customerResult, profileResult, dieResult] = await Promise.all([
       supabase.from("customers").select("id, customer_name, company_name, gst_number, billing_address, shipping_address").eq("company_id", context.companyId).eq("id", quote.customer_id).maybeSingle(),
       profileIds.length
-        ? supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle").eq("company_id", context.companyId).in("id", profileIds)
+        ? supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle").eq("company_id", context.companyId).in("id", profileIds)
         : Promise.resolve({ data: [], error: null }),
       dieIds.length
         ? supabase.from("dies").select("id, die_number, profile_id, die_status, rack_location").eq("company_id", context.companyId).in("id", dieIds)
@@ -411,7 +413,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
                   <label className="block space-y-1.5"><span className="form-label">Qty pcs</span><input className="form-input" type="number" inputMode="numeric" min="1" value={item.quantity_pieces} onChange={(event) => updateItem(index, "quantity_pieces", Number(event.target.value))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Length m</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.001" value={item.length_per_piece_m} onChange={(event) => updateItem(index, "length_per_piece_m", Number(event.target.value))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Kg/m</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.001" value={item.section_weight_kg_per_m} onChange={(event) => updateItem(index, "section_weight_kg_per_m", Number(event.target.value))} /></label>
-                  <label className="block space-y-1.5"><span className="form-label">Scrap allowance %</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.01" value={item.scrap_allowance_percent ?? 0} onChange={(event) => updateItem(index, "scrap_allowance_percent", Number(event.target.value))} /></label>
+                  <label className="block space-y-1.5"><span className="form-label">Additional handling/offcut allowance %</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.01" value={item.scrap_allowance_percent ?? 0} onChange={(event) => updateItem(index, "scrap_allowance_percent", Number(event.target.value))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Recovery %</span><input className="form-input" type="number" inputMode="decimal" min="0" max="100" step="0.01" value={item.expected_recovery_percent ?? 100} onChange={(event) => updateItem(index, "expected_recovery_percent", Number(event.target.value))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Min billing kg</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.001" value={item.minimum_billing_weight_kg ?? 0} onChange={(event) => updateItem(index, "minimum_billing_weight_kg", Number(event.target.value))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Billet rate/kg</span><input className="form-input" type="number" inputMode="decimal" min="0" value={item.billet_rate_per_kg} onChange={(event) => updateItem(index, "billet_rate_per_kg", Number(event.target.value))} /></label>
@@ -425,7 +427,8 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
                   <label className="block space-y-1.5"><span className="form-label">Packing</span><input className="form-input" type="number" inputMode="decimal" min="0" value={item.packing_charge} onChange={(event) => updateItem(index, "packing_charge", Number(event.target.value))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Transport</span><input className="form-input" type="number" inputMode="decimal" min="0" value={item.transport_charge} onChange={(event) => updateItem(index, "transport_charge", Number(event.target.value))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Other</span><input className="form-input" type="number" inputMode="decimal" min="0" value={item.other_charges} onChange={(event) => updateItem(index, "other_charges", Number(event.target.value))} /></label>
-                  <label className="block space-y-1.5"><span className="form-label">Margin %</span><input className="form-input" type="number" inputMode="decimal" min="0" value={item.margin_percent} onChange={(event) => updateItem(index, "margin_percent", Number(event.target.value))} /></label>
+                  <label className="block space-y-1.5"><span className="form-label">Margin on selling price %</span><input className="form-input" type="number" inputMode="decimal" min="0" max="99.99" step="0.01" value={item.margin_percent} onChange={(event) => updateItem(index, "margin_percent", Number(event.target.value))} /></label>
+                  <label className="block space-y-1.5"><span className="form-label">Line GST % (blank uses quote rate)</span><input className="form-input" type="number" min="0" max="100" step="0.01" value={item.gst_percent ?? ""} onChange={(event) => setItems((current) => current.map((line, i) => i === index ? { ...line, gst_percent: event.target.value === "" ? null : Number(event.target.value) } : line))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Min margin %</span><input className="form-input" type="number" inputMode="decimal" min="0" value={item.minimum_margin_percent ?? 0} onChange={(event) => updateItem(index, "minimum_margin_percent", Number(event.target.value))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Sales override</span><input className="form-input" type="number" inputMode="decimal" min="0" value={item.sales_price_override ?? ""} onChange={(event) => updateItem(index, "sales_price_override", event.target.value === "" ? 0 : Number(event.target.value))} /></label>
                   <label className="block space-y-1.5 md:col-span-4"><span className="form-label">Description</span><input className="form-input" value={item.item_description} onChange={(event) => updateItem(index, "item_description", event.target.value)} /></label>
