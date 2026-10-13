@@ -23,13 +23,13 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const supabase = await createClient();
     const [companyResult, settingsResult, configurationResult, profileCutsResult, glassCutsResult, beadingCutsResult, hardwareBomResult, materialSummaryResult, optimizationRunResult] = await Promise.all([
       supabase.from("companies").select("name, legal_name, gst_number, billing_address, city, state, pincode, phone, email").eq("id", context.companyId).single(),
-      supabase.from("company_settings").select("default_quote_terms, default_terms_and_conditions, default_payment_terms, default_delivery_terms, bank_details, default_bank_details").eq("company_id", context.companyId).maybeSingle(),
-      supabase.from("system_configurations").select("*, customers(customer_name, company_name, gst_number, billing_address, shipping_address), system_series(series_code, series_name), glass_items(glass_code, glass_name), finish_options(finish_code, finish_name)").eq("id", id).eq("company_id", context.companyId).single(),
+      supabase.from("company_settings_authorized").select("default_quote_terms, default_terms_and_conditions, default_payment_terms, default_delivery_terms, bank_details, default_bank_details").eq("company_id", context.companyId).maybeSingle(),
+      supabase.from("system_configurations_authorized").select("*, customers(customer_name, company_name, gst_number, billing_address, shipping_address), system_series(series_code, series_name), glass_items:glass_items_authorized(glass_code, glass_name), finish_options:finish_options_authorized(finish_code, finish_name)").eq("id", id).eq("company_id", context.companyId).single(),
       supabase.from("system_profile_cuts").select("*").eq("company_id", context.companyId).eq("configuration_id", id).order("profile_code", { ascending: true }).order("sort_order", { ascending: true }),
-      supabase.from("system_glass_cuts").select("*").eq("company_id", context.companyId).eq("configuration_id", id).order("panel_index", { ascending: true }),
+      supabase.from("system_glass_cuts_authorized").select("*").eq("company_id", context.companyId).eq("configuration_id", id).order("panel_index", { ascending: true }),
       supabase.from("system_beading_cuts").select("*").eq("company_id", context.companyId).eq("configuration_id", id).order("panel_index", { ascending: true }),
-      supabase.from("system_hardware_bom").select("*").eq("company_id", context.companyId).eq("configuration_id", id).order("hardware_category", { ascending: true }),
-      supabase.from("system_material_summary").select("*").eq("company_id", context.companyId).eq("configuration_id", id).order("material_type", { ascending: true }),
+      supabase.from("system_hardware_bom_authorized").select("*").eq("company_id", context.companyId).eq("configuration_id", id).order("hardware_category", { ascending: true }),
+      supabase.from("system_material_summary_authorized").select("*").eq("company_id", context.companyId).eq("configuration_id", id).order("material_type", { ascending: true }),
       supabase.from("profile_optimization_runs").select("*").eq("company_id", context.companyId).eq("configuration_id", id).order("run_number", { ascending: false }).limit(1).maybeSingle()
     ]);
 

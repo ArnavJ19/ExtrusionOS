@@ -22,7 +22,7 @@ describe("reservation consumption safety", () => {
 
   it("passes exact reservation and stock-batch provenance into packing rows", () => {
     assert.match(dispatchAction, /profile_stock_batch_id/);
-    assert.match(dispatchAction, /profile_stock_consumptions\(consumed_weight_kg\)/);
+    assert.match(dispatchAction, /profile_stock_consumptions\(consumed_weight_kg, consumed_length_m, consumed_pieces\)/);
     assert.match(dispatchAction, /source_kind:\s*"reservation"/);
   });
 

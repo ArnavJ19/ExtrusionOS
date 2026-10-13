@@ -16,6 +16,7 @@ import { quoteSchema } from "@/lib/validations/schemas";
 import { createClient } from "@/lib/supabase/browser";
 import { formatCurrency, formatDate, formatMeters, formatWeight, todayIso } from "@/lib/utils/format";
 import { getErrorMessage } from "@/lib/utils/errors";
+import { can } from "@/lib/auth/permissions";
 import { rowMatchesSearch } from "@/lib/utils/search";
 import { saveQuoteAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
 import { dieAmortizationTypes, labelize, type DieAmortizationType, type FinishingChargeType, type FinishingType, type QuoteStatus, type SessionContext } from "@/types/app";
@@ -140,7 +141,10 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
     const limitedMatches = matches.slice(0, 40);
     return selectedCustomer && !limitedMatches.some((customer) => customer.id === selectedCustomer.id) ? [selectedCustomer, ...limitedMatches] : limitedMatches;
   }, [customerSearch, customers, selectedCustomer]);
-  const canApproveLowMargin = ["owner", "admin", "sales_manager"].includes(context.role);
+  const canApproveLowMargin = ["owner", "admin"].includes(context.role);
+  const canManageQuoteCosting = ["owner", "admin"].includes(context.role);
+  const canReadQuoteCosting = ["owner", "admin", "accounts"].includes(context.role);
+  const canUpdateQuoteWorkflow = can(context.role, "update", "quotes");
 
   async function loadAll() {
     setLoading(true);
@@ -148,8 +152,8 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
       supabase.from("customers").select("id, customer_name, company_name, gst_number, billing_address, shipping_address").eq("company_id", context.companyId).order("customer_name").limit(40),
       supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle").eq("company_id", context.companyId).eq("is_active", true).order("profile_code").limit(40),
       supabase.from("dies").select("id, die_number, profile_id, die_status, rack_location").eq("company_id", context.companyId).order("die_number").limit(40),
-      supabase.from("quotes").select("*, customers(customer_name, company_name)").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(100),
-      supabase.from("company_settings").select("*").eq("company_id", context.companyId).maybeSingle()
+      supabase.from("quotes_authorized").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(100),
+      supabase.from("company_settings_authorized").select("*").eq("company_id", context.companyId).maybeSingle()
     ]);
     setLoading(false);
     if (customerResult.error) toast.error(getErrorMessage(customerResult.error));
@@ -159,7 +163,14 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
     setCustomers(customerResult.data ?? []);
     setProfiles(profileResult.data ?? []);
     setDies(dieResult.data ?? []);
-    setQuotes(quoteResult.data ?? []);
+    const quoteRows = quoteResult.data ?? [];
+    const quoteCustomerIds = Array.from(new Set(quoteRows.map((quote: any) => quote.customer_id).filter(Boolean)));
+    const quoteCustomersResult = quoteCustomerIds.length
+      ? await supabase.from("customers").select("id, customer_name, company_name").eq("company_id", context.companyId).in("id", quoteCustomerIds)
+      : { data: [], error: null };
+    if (quoteCustomersResult.error) toast.error(getErrorMessage(quoteCustomersResult.error));
+    const quoteCustomers = new Map((quoteCustomersResult.data ?? []).map((customer: any) => [customer.id, customer]));
+    setQuotes(quoteRows.map((quote: any) => ({ ...quote, customers: quoteCustomers.get(quote.customer_id) ?? null })));
     const loadedSettings = settingsResult.data;
     setSettings(loadedSettings ?? null);
     if (loadedSettings) {
@@ -311,7 +322,8 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
   }
 
   async function editQuote(quote: QuoteRow) {
-    const { data, error } = await supabase.from("quote_items").select("*").eq("quote_id", quote.id).eq("company_id", context.companyId).order("created_at");
+    if (!canManageQuoteCosting) return toast.error("Only owners and admins can edit priced quote lines. Ask an owner or admin to revise this quote.");
+    const { data, error } = await supabase.from("quote_items_authorized").select("*").eq("quote_id", quote.id).eq("company_id", context.companyId).order("created_at");
     if (error) return toast.error(getErrorMessage(error));
     const quoteItems = data ?? [];
     const profileIds = Array.from(new Set(quoteItems.map((item: any) => item.profile_id).filter(Boolean))) as string[];
@@ -344,7 +356,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
     async function loadInitialEdit() {
       const existing = quotes.find((quote) => quote.id === initialEditId);
       if (existing) return editQuote(existing);
-      const { data, error } = await supabase.from("quotes").select("*, customers(customer_name, company_name)").eq("id", initialEditId).eq("company_id", context.companyId).single();
+      const { data, error } = await supabase.from("quotes_authorized").select("*").eq("id", initialEditId).eq("company_id", context.companyId).single();
       if (error || !data) return toast.error(getErrorMessage(error, "Could not load quote for editing"));
       await editQuote(data);
     }
@@ -380,8 +392,8 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
 
   return (
     <div>
-      <PageHeader title={mode === "form" ? "Create Quote" : "Quotations"} description="Create accurate aluminium extrusion quotations with live kg/m, billet, conversion, finishing, margin, GST, and PDF output." />
-      {loading ? <LoadingState title="Loading quotations" description="Fetching customers, profiles, dies, defaults, and saved quotes." /> : <div className="grid gap-6 2xl:grid-cols-[1fr_440px]">
+      <PageHeader title={mode === "form" ? "Create Quote" : "Quotations"} description={canManageQuoteCosting ? "Prepare priced aluminium extrusion quotations with controlled costing, GST, and PDF output." : "Review company quotations, continue approved workflow steps, and share customer-ready PDFs."} />
+      {loading ? <LoadingState title="Loading quotations" description="Fetching customers, profiles, dies, defaults, and saved quotes." /> : canManageQuoteCosting ? <div className="grid gap-6 2xl:grid-cols-[1fr_440px]">
         <Card><CardContent>
           <div className="mb-5 flex flex-col gap-2 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -447,9 +459,9 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
           <div className="mt-5 flex gap-2"><Button disabled={saving || loading} onClick={saveQuote}>{saving ? "Saving..." : editingId ? "Update quote" : "Save quote"}</Button>{editingId ? <Button variant="secondary" onClick={() => setEditingId(null)}>Cancel edit</Button> : null}</div>
         </CardContent></Card>
         <Card className="h-fit 2xl:sticky 2xl:top-24"><CardContent><p className="text-xs font-black uppercase tracking-[0.16em] text-orange">Commercial summary</p><h2 className="section-title mt-1">Quote Summary</h2><div className="mt-4 space-y-3 text-sm font-medium"><div className="flex justify-between"><span className="text-slate-500">Physical weight</span><b>{formatWeight(summary.total_weight_kg)}</b></div><div className="flex justify-between"><span className="text-slate-500">Billing weight</span><b>{formatWeight(summary.total_billing_weight_kg)}</b></div><div className="flex justify-between"><span className="text-slate-500">Total meters</span><b>{formatMeters(summary.total_meters)}</b></div><div className="flex justify-between"><span className="text-slate-500">Subtotal</span><b>{formatCurrency(summary.subtotal)}</b></div><div className="flex justify-between"><span className="text-slate-500">Est. profit</span><b className={summary.estimated_profit_amount < 0 ? "text-red-700" : "text-slate-950"}>{formatCurrency(summary.estimated_profit_amount)} ({summary.estimated_profit_percent.toFixed(2)}%)</b></div><div className="flex justify-between"><span className="text-slate-500">GST</span><b>{formatCurrency(summary.gst_amount)}</b></div><div className="rounded-2xl bg-charcoal p-4 text-white shadow-premium"><div className="flex justify-between text-xl"><span>Grand total</span><b>{formatCurrency(summary.grand_total)}</b></div></div><div className="flex justify-between"><span className="text-slate-500">Avg price/kg</span><b>{formatCurrency(summary.average_price_per_kg)}</b></div><div className="flex justify-between"><span className="text-slate-500">Avg price/m</span><b>{formatCurrency(summary.average_price_per_meter)}</b></div>{summary.low_margin_approval_required ? <div className="rounded-2xl border border-orange-200 bg-orange-50 p-3 text-xs font-bold text-orange-800">Approval required below minimum margin</div> : null}</div></CardContent></Card>
-      </div>}
+      </div> : <Card><CardContent><h2 className="section-title">Pricing access</h2><p className="mt-2 text-sm font-medium text-slate-600">Only owners and admins can create or reprice quotations because quote line inputs include confidential material, conversion, finishing, and margin data. You can review existing quotes and use the approved workflow actions below.</p></CardContent></Card>}
       {mode === "form" ? null : (
-      <Card className="mt-6"><CardContent><div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><h2 className="section-title">Saved quotes</h2><input className="form-input max-w-md" placeholder="Search quote number, customer, status..." value={search} onChange={(event) => setSearch(event.target.value)} /></div>{loading ? <LoadingState title="Loading saved quotes" description="Fetching quotation history for this company." /> : filteredQuotes.length ? <div className="overflow-x-auto"><table className="industrial-table min-w-[980px]"><thead><tr><th>Quote</th><th>Customer</th><th>Date</th><th>Valid until</th><th>Status</th><th>Profit</th><th>Total</th><th>Actions</th></tr></thead><tbody>{filteredQuotes.map((quote) => <tr key={quote.id}><td className="font-black text-slate-950">{quote.quote_number}<span className="ml-2 text-xs font-bold text-slate-400">Rev {quote.revision_number ?? 1}</span></td><td>{quote.customers?.company_name || quote.customers?.customer_name}</td><td>{formatDate(quote.quote_date)}</td><td>{formatDate(quote.valid_until)}</td><td><Badge value={quote.status} /> {quote.low_margin_approval_required ? <Badge value="internal_review" className="ml-1" /> : null}</td><td className={Number(quote.estimated_profit_amount ?? 0) < 0 ? "font-black text-red-700" : "font-black text-slate-950"}>{formatCurrency(quote.estimated_profit_amount ?? quote.total_margin_amount)}</td><td className="font-black text-slate-950">{formatCurrency(quote.grand_total)}</td><td className="space-x-1 whitespace-nowrap"><Button variant="ghost" onClick={() => editQuote(quote)}>Edit</Button><Button variant="ghost" onClick={() => updateStatus(quote, "internal_review")}>Review</Button><Button variant="ghost" onClick={() => updateStatus(quote, "approved_for_sending")}>Approve</Button><Button variant="ghost" onClick={() => updateStatus(quote, "sent")}>Sent</Button><Button variant="ghost" onClick={() => updateStatus(quote, "customer_approved")}>Won</Button><Button variant="ghost" onClick={() => convertToOrder(quote)}>Convert</Button><Button variant="ghost" onClick={() => copyWhatsapp(quote)}><Copy className="h-4 w-4" /></Button><a className="inline-flex rounded-xl px-3 py-2 text-sm font-bold text-slate-700 hover:bg-orange/10 hover:text-orange" href={`/api/pdf/quote/${quote.id}`} target="_blank"><Download className="h-4 w-4" /></a></td></tr>)}</tbody></table></div> : <EmptyState title="No quotes yet" description="Create a quotation with at least one profile item to start tracking sales value." />}</CardContent></Card>
+      <Card className="mt-6"><CardContent><div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><h2 className="section-title">Saved quotes</h2><input className="form-input max-w-md" placeholder="Search quote number, customer, status..." value={search} onChange={(event) => setSearch(event.target.value)} /></div>{loading ? <LoadingState title="Loading saved quotes" description="Fetching quotation history for this company." /> : filteredQuotes.length ? <div className="overflow-x-auto"><table className="industrial-table min-w-[980px]"><thead><tr><th>Quote</th><th>Customer</th><th>Date</th><th>Valid until</th><th>Status</th>{canReadQuoteCosting ? <th>Profit</th> : null}<th>Total</th><th>Actions</th></tr></thead><tbody>{filteredQuotes.map((quote) => <tr key={quote.id}><td className="font-black text-slate-950">{quote.quote_number}<span className="ml-2 text-xs font-bold text-slate-400">Rev {quote.revision_number ?? 1}</span></td><td>{quote.customers?.company_name || quote.customers?.customer_name}</td><td>{formatDate(quote.quote_date)}</td><td>{formatDate(quote.valid_until)}</td><td><Badge value={quote.status} /> {quote.low_margin_approval_required ? <Badge value="internal_review" className="ml-1" /> : null}</td>{canReadQuoteCosting ? <td className={Number(quote.estimated_profit_amount ?? 0) < 0 ? "font-black text-red-700" : "font-black text-slate-950"}>{formatCurrency(quote.estimated_profit_amount ?? quote.total_margin_amount)}</td> : null}<td className="font-black text-slate-950">{formatCurrency(quote.grand_total)}</td><td className="space-x-1 whitespace-nowrap">{canManageQuoteCosting ? <Button variant="ghost" onClick={() => editQuote(quote)}>Edit</Button> : null}{canUpdateQuoteWorkflow ? <><Button variant="ghost" onClick={() => updateStatus(quote, "internal_review")}>Review</Button><Button variant="ghost" onClick={() => updateStatus(quote, "approved_for_sending")}>Approve</Button><Button variant="ghost" onClick={() => updateStatus(quote, "sent")}>Sent</Button><Button variant="ghost" onClick={() => updateStatus(quote, "customer_approved")}>Won</Button></> : null}{can(context.role, "create", "orders") ? <Button variant="ghost" onClick={() => convertToOrder(quote)}>Convert</Button> : null}<Button variant="ghost" onClick={() => copyWhatsapp(quote)}><Copy className="h-4 w-4" /></Button><a className="inline-flex rounded-xl px-3 py-2 text-sm font-bold text-slate-700 hover:bg-orange/10 hover:text-orange" href={`/api/pdf/quote/${quote.id}`} target="_blank"><Download className="h-4 w-4" /></a></td></tr>)}</tbody></table></div> : <EmptyState title="No quotes yet" description="Create a quotation with at least one profile item to start tracking sales value." />}</CardContent></Card>
       )}
     </div>
   );

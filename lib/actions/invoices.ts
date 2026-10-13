@@ -49,7 +49,7 @@ async function loadInvoiceSourceLines(
 ) {
   if (dispatchId) {
     const packingResult = await supabase
-      .from("packing_list_items")
+      .from("packing_list_items_authorized")
       .select("*")
       .eq("company_id", companyId)
       .eq("dispatch_id", dispatchId)
@@ -59,7 +59,7 @@ async function loadInvoiceSourceLines(
   }
 
   const orderItemsResult = await supabase
-    .from("order_items")
+    .from("order_items_authorized")
     .select("*")
     .eq("company_id", companyId)
     .eq("order_id", orderId)

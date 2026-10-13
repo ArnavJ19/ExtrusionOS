@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid assistant request" }, { status: 400 });
 
     const settingsResult = await supabase
-      .from("company_settings")
+      .from("company_settings_authorized")
       .select("default_gst_percent, default_margin_percent, default_conversion_charge_per_kg, default_packing_charge, default_transport_charge, minimum_margin_percent, default_payment_terms, default_delivery_terms, ai_enabled, ai_provider, ai_model, allow_external_ai, redact_sensitive_data, max_context_records")
       .eq("company_id", context.companyId)
       .maybeSingle();
@@ -36,12 +36,19 @@ export async function POST(request: Request) {
     const [customersResult, profilesResult, quotesResult] = await Promise.all([
       supabase.from("customers").select("id, customer_name, company_name, customer_type, phone, whatsapp_number, gst_number").eq("company_id", context.companyId).eq("is_active", true).limit(maxRecords),
       supabase.from("aluminium_profiles").select("id, profile_code, profile_name, application_category, section_weight_kg_per_m, finish_options").eq("company_id", context.companyId).eq("is_active", true).limit(maxRecords),
-      supabase.from("quotes").select("id, quote_number, status, quote_date, grand_total, customers(customer_name, company_name)").eq("company_id", context.companyId).order("quote_date", { ascending: false }).limit(maxRecords)
+      supabase.from("quotes_authorized").select("id, customer_id, quote_number, status, quote_date, grand_total").eq("company_id", context.companyId).order("quote_date", { ascending: false }).limit(maxRecords)
     ]);
 
     if (customersResult.error) throw customersResult.error;
     if (profilesResult.error) throw profilesResult.error;
     if (quotesResult.error) throw quotesResult.error;
+
+    const quoteCustomerIds = [...new Set((quotesResult.data ?? []).map((quote: any) => quote.customer_id).filter(Boolean))];
+    const quoteCustomersResult = quoteCustomerIds.length
+      ? await supabase.from("customers").select("id, customer_name, company_name").eq("company_id", context.companyId).in("id", quoteCustomerIds)
+      : { data: [], error: null };
+    if (quoteCustomersResult.error) throw quoteCustomersResult.error;
+    const quoteCustomers = new Map((quoteCustomersResult.data ?? []).map((customer: any) => [customer.id, customer]));
 
     const similarQuotes = (quotesResult.data ?? []).map((quote: any) => ({
       id: quote.id,
@@ -49,7 +56,7 @@ export async function POST(request: Request) {
       status: quote.status,
       quote_date: quote.quote_date,
       grand_total: quote.grand_total,
-      customer_name: quote.customers?.company_name || quote.customers?.customer_name || null
+      customer_name: quoteCustomers.get(quote.customer_id)?.company_name || quoteCustomers.get(quote.customer_id)?.customer_name || null
     }));
 
     const output = buildQuotationAssistantOutput(parsed.data.input_text, {

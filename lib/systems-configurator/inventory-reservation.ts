@@ -10,6 +10,9 @@ export type ProfileReservationStatus = ProfileReservationRequirement & {
   totalStockWeightKg: number;
   availableWeightKg: number;
   reservedWeightKg: number;
+  totalStockLengthM: number;
+  availableLengthM: number;
+  reservedLengthM: number;
   shortageKg: number;
   ready: boolean;
 };
@@ -31,18 +34,52 @@ export function buildProfileReservationStatus(requirements: ProfileReservationRe
     const batches = stockBatches.filter((batch) => batch.profile_id === requirement.profileId);
     const activeReservations = reservations.filter((reservation) => reservation.profile_id === requirement.profileId && reservation.status === "active");
     const totalStockWeightKg = round3(batches.filter((batch) => !["dispatched", "rejected", "scrap"].includes(batch.status)).reduce((sum, batch) => sum + Number(batch.total_weight_kg ?? 0), 0));
-    const reservedWeightKg = round3(activeReservations.reduce((sum, reservation) => sum + Number(reservation.reserved_weight_kg ?? 0), 0));
+    const reservedWeightKg = round3(activeReservations.reduce((sum, reservation) => sum + Math.max(Number(reservation.reserved_weight_kg ?? 0) - Number(reservation.consumed_weight_kg ?? 0), 0), 0));
+    const totalStockLengthM = round3(batches.filter((batch) => !["dispatched", "rejected", "scrap"].includes(batch.status)).reduce((sum, batch) => sum + Number(batch.length_m ?? 0), 0));
+    const reservedLengthM = round3(activeReservations.reduce((sum, reservation) => sum + Math.max(Number(reservation.reserved_length_m ?? 0) - Number(reservation.consumed_length_m ?? 0), 0), 0));
     const availableWeightKg = round3(Math.max(totalStockWeightKg - reservedWeightKg, 0));
+    const availableLengthM = round3(Math.max(totalStockLengthM - reservedLengthM, 0));
     const shortageKg = round3(Math.max(requirement.requiredWeightKg - availableWeightKg, 0));
-    return { ...requirement, totalStockWeightKg, availableWeightKg, reservedWeightKg, shortageKg, ready: shortageKg === 0 };
+    return { ...requirement, totalStockWeightKg, availableWeightKg, reservedWeightKg, totalStockLengthM, availableLengthM, reservedLengthM, shortageKg, ready: shortageKg === 0 };
   });
 }
 
 export function getBatchAvailableWeightKg(batch: Record<string, any>, reservations: Record<string, any>[]) {
   const reserved = reservations
     .filter((reservation) => reservation.profile_stock_batch_id === batch.id && reservation.status === "active")
-    .reduce((sum, reservation) => sum + Number(reservation.reserved_weight_kg ?? 0), 0);
+    .reduce((sum, reservation) => sum + Math.max(Number(reservation.reserved_weight_kg ?? 0) - Number(reservation.consumed_weight_kg ?? 0), 0), 0);
   return round3(Math.max(Number(batch.total_weight_kg ?? 0) - reserved, 0));
+}
+
+export function getBatchAvailablePieces(batch: Record<string, any>, reservations: Record<string, any>[]) {
+  const reserved = reservations
+    .filter((reservation) => reservation.profile_stock_batch_id === batch.id && reservation.status === "active")
+    .reduce((sum, reservation) => sum + Math.max(Number(reservation.reserved_pieces ?? 0) - Number(reservation.consumed_pieces ?? 0), 0), 0);
+  return Math.max(Number(batch.quantity_pieces ?? 0) - reserved, 0);
+}
+
+export function getBatchAvailableLengthM(batch: Record<string, any>, reservations: Record<string, any>[]) {
+  const reserved = reservations
+    .filter((reservation) => reservation.profile_stock_batch_id === batch.id && reservation.status === "active")
+    .reduce((sum, reservation) => sum + Math.max(Number(reservation.reserved_length_m ?? 0) - Number(reservation.consumed_length_m ?? 0), 0), 0);
+  return round3(Math.max(Number(batch.length_m ?? 0) - reserved, 0));
+}
+
+export function getBatchReservationAllocation(batch: Record<string, any>, availablePieces: number, requiredWeightKg: number, requiredLengthM: number) {
+  const batchPieces = Number(batch.quantity_pieces ?? 0);
+  const batchWeight = Number(batch.total_weight_kg ?? 0);
+  const batchLength = Number(batch.length_m ?? 0);
+  if (batchPieces <= 0 || batchWeight <= 0 || batchLength <= 0 || availablePieces <= 0) return null;
+
+  const unitWeightKg = batchWeight / batchPieces;
+  const unitLengthM = batchLength / batchPieces;
+  const neededPieces = Math.max(1, Math.ceil(Math.max(requiredWeightKg / unitWeightKg, requiredLengthM / unitLengthM)));
+  const pieces = Math.min(availablePieces, neededPieces);
+  return {
+    pieces,
+    weightKg: round3(unitWeightKg * pieces),
+    lengthM: round3(unitLengthM * pieces),
+  };
 }
 
 function round3(value: number) {

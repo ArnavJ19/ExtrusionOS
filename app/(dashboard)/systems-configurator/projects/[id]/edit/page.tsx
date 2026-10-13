@@ -10,7 +10,7 @@ export default async function EditSystemProjectPage({ params }: { params: Promis
   const context = await getSystemsConfiguratorContext("update");
   const supabase = await createClient();
   const { data: configuration, error } = await supabase
-    .from("system_configurations")
+    .from("system_configurations_authorized")
     .select("*")
     .eq("id", id)
     .eq("company_id", context.companyId)
@@ -30,11 +30,11 @@ export default async function EditSystemProjectPage({ params }: { params: Promis
     configuration.series_id
       ? supabase.from("system_series").select("id, series_code, series_name, system_type, stock_length_mm, is_active").eq("company_id", context.companyId).eq("id", configuration.series_id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
-    supabase.from("system_templates").select("id, template_code, template_name, system_type, series_id, is_default, is_active, formula_json").eq("company_id", context.companyId).order("is_default", { ascending: false }).limit(200),
+    supabase.from("system_templates_authorized").select("id, template_code, template_name, system_type, series_id, is_default, is_active, formula_json").eq("company_id", context.companyId).order("is_default", { ascending: false }).limit(200),
     loadCompleteSystemProfileSeries(supabase, context.companyId, configuration.series_id ?? ""),
-    supabase.from("hardware_items").select("id, item_code, item_name, hardware_category, default_rate, unit, is_active").eq("company_id", context.companyId).order("item_code", { ascending: true }).limit(300),
-    supabase.from("glass_items").select("id, glass_code, glass_name, glass_type, thickness_mm, rate_per_sqft, rate_per_sqm, is_active").eq("company_id", context.companyId).order("glass_code", { ascending: true }).limit(200),
-    supabase.from("finish_options").select("id, finish_code, finish_name, finish_type, color_code, rate, is_active").eq("company_id", context.companyId).order("finish_code", { ascending: true }).limit(200)
+    supabase.from("hardware_items_authorized").select("id, item_code, item_name, hardware_category, default_rate, unit, is_active").eq("company_id", context.companyId).order("item_code", { ascending: true }).limit(300),
+    supabase.from("glass_items_authorized").select("id, glass_code, glass_name, glass_type, thickness_mm, rate_per_sqft, rate_per_sqm, is_active").eq("company_id", context.companyId).order("glass_code", { ascending: true }).limit(200),
+    supabase.from("finish_options_authorized").select("id, finish_code, finish_name, finish_type, color_code, rate, is_active").eq("company_id", context.companyId).order("finish_code", { ascending: true }).limit(200)
   ]);
   const availableSeries = [...(series.data ?? [])];
   const selectedSeriesRow = selectedSeries.data;

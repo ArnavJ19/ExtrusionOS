@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { getBusinessDateBoundaries } from "../utils/business-date.ts";
 
 type MaybeDate = string | null | undefined;
 type MaybeNumber = number | string | null | undefined;
 
 export type AnalyticsOrderRow = {
   id: string;
+  customer_id?: string | null;
   order_date?: MaybeDate;
   order_value?: MaybeNumber;
   current_stage?: string | null;
@@ -18,6 +20,7 @@ export type AnalyticsQuoteRow = {
   grand_total?: MaybeNumber;
   quote_date?: MaybeDate;
   created_at?: MaybeDate;
+  valid_until?: MaybeDate;
 };
 
 export type AnalyticsProductionRow = {
@@ -34,6 +37,8 @@ export type AnalyticsDispatchRow = {
   dispatch_date?: MaybeDate;
   total_weight_kg?: MaybeNumber;
   delivery_status?: string | null;
+  actual_dispatched_at?: MaybeDate;
+  movement_weight_kg?: MaybeNumber;
   orders?: { expected_dispatch_date?: MaybeDate } | null;
 };
 
@@ -140,15 +145,16 @@ export type AdvancedAnalyticsSnapshot = {
     urgentOpenTasks: number;
   };
   trends: AnalyticsTrendPoint[];
-  topCustomers: { name: string; orderCount: number; value: number }[];
+  topCustomers: { customerId?: string | null; name: string; orderCount: number; value: number }[];
   stageBacklog: { stage: string; count: number }[];
   lowStock: { itemCode: string; itemName: string; unit: string; currentStock: number; reorderLevel: number; shortagePct: number }[];
   overdueInvoiceList: { invoiceNumber: string; customer: string; dueDate: string | null; balanceDue: number; status: string }[];
   risks: string[];
+  dataQuality?: { version: string; asOf: string; generatedAt: string; currentStateAt: string; unknownShipmentCount: number };
 };
 
-const analyticsNumber = z.coerce.number().finite();
-const advancedAnalyticsSnapshotSchema: z.ZodType<AdvancedAnalyticsSnapshot> = z.object({
+const analyticsNumber = z.union([z.number(), z.string().min(1)]).pipe(z.coerce.number().finite());
+const advancedAnalyticsSnapshotSchema = z.object({
   kpis: z.object({
     bookedRevenueMtd: analyticsNumber,
     quotePipelineValueMtd: analyticsNumber,
@@ -182,6 +188,7 @@ const advancedAnalyticsSnapshotSchema: z.ZodType<AdvancedAnalyticsSnapshot> = z.
     collectionValue: analyticsNumber,
   })),
   topCustomers: z.array(z.object({
+    customerId: z.string().nullable().optional(),
     name: z.string(),
     orderCount: analyticsNumber,
     value: analyticsNumber,
@@ -206,11 +213,26 @@ const advancedAnalyticsSnapshotSchema: z.ZodType<AdvancedAnalyticsSnapshot> = z.
     status: z.string(),
   })),
   risks: z.array(z.string()),
+  dataQuality: z.object({
+    version: z.literal("20261008"),
+    asOf: z.string(),
+    generatedAt: z.string().datetime({ offset: true }),
+    currentStateAt: z.string().datetime({ offset: true }),
+    unknownShipmentCount: z.number().int().nonnegative(),
+  }).optional(),
 });
 
 export function parseAdvancedAnalyticsSnapshot(value: unknown): AdvancedAnalyticsSnapshot | null {
   const parsed = advancedAnalyticsSnapshotSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
+}
+
+export function getAnalyticsEvidenceState(snapshot: AdvancedAnalyticsSnapshot | null, asOf: string, now = new Date()) {
+  const quality = snapshot?.dataQuality;
+  if (!quality || quality.version !== "20261008" || quality.asOf !== asOf) return "unavailable";
+  const ages = [quality.generatedAt, quality.currentStateAt].map((time) => now.getTime() - new Date(time).getTime());
+  if (ages.some((age) => !Number.isFinite(age) || age < -60_000 || age > 15 * 60_000)) return "stale";
+  return quality.unknownShipmentCount > 0 ? "partial" : "verified";
 }
 
 const CLOSED_ORDER_STAGES = new Set(["delivered", "closed", "cancelled"]);
@@ -237,46 +259,34 @@ function validDate(value: MaybeDate) {
   return date;
 }
 
-function monthKey(date: Date) {
-  const m = `${date.getMonth() + 1}`.padStart(2, "0");
-  return `${date.getFullYear()}-${m}`;
-}
+function monthKey(date: Date) { return getBusinessDateBoundaries(date).today.slice(0, 7); }
 
 function monthLabel(date: Date) {
-  return date.toLocaleString("en-IN", { month: "short", year: "2-digit" });
-}
-
-function monthStart(now: Date) {
-  return new Date(now.getFullYear(), now.getMonth(), 1);
-}
-
-function dateOnOrAfter(dateValue: MaybeDate, boundary: Date) {
-  const date = validDate(dateValue);
-  if (!date) return false;
-  return date >= boundary;
+  return date.toLocaleString("en-IN", { month: "short", year: "2-digit", timeZone: "Asia/Kolkata" });
 }
 
 function dateBefore(dateValue: MaybeDate, boundary: Date) {
-  const date = validDate(dateValue);
-  if (!date) return false;
-  return date < boundary;
+  const date = businessDate(dateValue);
+  return date !== null && date < getBusinessDateBoundaries(boundary).today;
 }
 
 function trendAxis(now: Date, months: number) {
   const axis: { key: string; label: string }[] = [];
+  const [year, month] = getBusinessDateBoundaries(now).today.split("-").map(Number);
   for (let i = months - 1; i >= 0; i -= 1) {
-    const cursor = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const cursor = new Date(Date.UTC(year, month - i - 1, 1, 12));
     axis.push({ key: monthKey(cursor), label: monthLabel(cursor) });
   }
   return axis;
 }
 
-function groupByMonth<T>(rows: T[], getDate: (row: T) => MaybeDate, getValue: (row: T) => number, axisKeys: string[]) {
+function groupByMonth<T>(rows: T[], getDate: (row: T) => MaybeDate, getValue: (row: T) => number, axisKeys: string[], asOf: string) {
   const map = new Map<string, number>();
   for (const key of axisKeys) map.set(key, 0);
   for (const row of rows) {
     const date = validDate(getDate(row));
     if (!date) continue;
+    if (businessDate(getDate(row))! > asOf) continue;
     const key = monthKey(date);
     if (!map.has(key)) continue;
     map.set(key, (map.get(key) ?? 0) + getValue(row));
@@ -284,45 +294,55 @@ function groupByMonth<T>(rows: T[], getDate: (row: T) => MaybeDate, getValue: (r
   return map;
 }
 
+function businessDate(value: MaybeDate): string | null {
+  if (!value) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const date = validDate(value);
+  return date ? getBusinessDateBoundaries(date).today : null;
+}
+
 function customerLabel(order: AnalyticsOrderRow) {
   return order.customers?.company_name || order.customers?.customer_name || "Unknown Customer";
 }
 
 export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new Date()): AdvancedAnalyticsSnapshot {
-  const startOfMonth = monthStart(now);
+  const { today, monthStart: monthStartDate } = getBusinessDateBoundaries(now);
+  const throughAsOf = (value: MaybeDate) => { const date = businessDate(value); return date !== null && date <= today; };
+  const inMtd = (value: MaybeDate) => throughAsOf(value) && businessDate(value)! >= monthStartDate;
   const axis = trendAxis(now, 6);
   const axisKeys = axis.map((point) => point.key);
 
-  const activeOrders = input.orders.filter((order) => !CLOSED_ORDER_STAGES.has(String(order.current_stage ?? "")));
+  const activeOrders = input.orders.filter((order) => !CLOSED_ORDER_STAGES.has(String(order.current_stage ?? "")) && (!order.order_date || throughAsOf(order.order_date)));
   const delayedOrders = activeOrders.filter((order) => dateBefore(order.expected_dispatch_date, now));
-  const ordersMtd = input.orders.filter((order) => dateOnOrAfter(order.order_date, startOfMonth) && String(order.current_stage ?? "") !== "cancelled");
+  const ordersMtd = input.orders.filter((order) => inMtd(order.order_date) && String(order.current_stage ?? "") !== "cancelled");
 
-  const quoteMtd = input.quotes.filter((quote) => dateOnOrAfter(quote.quote_date ?? quote.created_at, startOfMonth));
-  const quotePipelineValueMtd = quoteMtd
-    .filter((quote) => OPEN_PIPELINE_QUOTE_STATUSES.has(String(quote.status ?? "")))
+  const quoteMtd = input.quotes.filter((quote) => inMtd(quote.quote_date ?? quote.created_at));
+  const quotePipelineValueMtd = input.quotes
+    .filter((quote) => throughAsOf(quote.quote_date ?? quote.created_at) && OPEN_PIPELINE_QUOTE_STATUSES.has(String(quote.status ?? "")) && (!quote.valid_until || businessDate(quote.valid_until)! >= today))
     .reduce((sum, quote) => sum + toNumber(quote.grand_total), 0);
   const quoteEligibleMtd = quoteMtd.filter((quote) => !["draft", "internal_review"].includes(String(quote.status ?? "")));
   const quoteConvertedMtd = quoteEligibleMtd.filter((quote) => CONVERTED_QUOTE_STATUSES.has(String(quote.status ?? "")));
 
-  const dispatchesMtd = input.dispatches.filter((dispatch) => dateOnOrAfter(dispatch.dispatch_date, startOfMonth));
+  const verifiedDispatches = input.dispatches.filter((dispatch) => dispatch.delivery_status && dispatch.delivery_status !== "pending" && dispatch.actual_dispatched_at && toNumber(dispatch.movement_weight_kg) > 0);
+  const dispatchesMtd = verifiedDispatches.filter((dispatch) => inMtd(dispatch.actual_dispatched_at));
   const dispatchDecisionMtd = dispatchesMtd.filter((dispatch) => Boolean(dispatch.orders?.expected_dispatch_date));
   const onTimeDispatchesMtd = dispatchDecisionMtd.filter((dispatch) => {
-    const actualDate = String(dispatch.dispatch_date ?? "").slice(0, 10);
+    const actualDate = businessDate(dispatch.actual_dispatched_at);
     const promisedDate = String(dispatch.orders?.expected_dispatch_date ?? "").slice(0, 10);
     return Boolean(actualDate && promisedDate && actualDate <= promisedDate);
   });
 
-  const plannedProductionMtd = input.productionJobs.filter((job) => dateOnOrAfter(job.planned_date, startOfMonth) && String(job.status ?? "") !== "cancelled");
-  const completedProductionMtd = input.productionJobs.filter((job) => String(job.status ?? "") === "completed" && dateOnOrAfter(job.completed_at, startOfMonth));
+  const plannedProductionMtd = input.productionJobs.filter((job) => inMtd(job.planned_date) && String(job.status ?? "") !== "cancelled");
+  const completedProductionMtd = input.productionJobs.filter((job) => String(job.status ?? "") === "completed" && inMtd(job.completed_at));
   const productionPlannedKgMtd = plannedProductionMtd.reduce((sum, job) => sum + toNumber(job.planned_quantity_kg), 0);
   const productionActualKgMtd = completedProductionMtd.reduce((sum, job) => sum + toNumber(job.actual_quantity_kg), 0);
 
   const invoiceMtd = input.invoices.filter((invoice) => (
-    ISSUED_INVOICE_STATUSES.has(String(invoice.status ?? "")) && dateOnOrAfter(invoice.invoice_date, startOfMonth)
+    ISSUED_INVOICE_STATUSES.has(String(invoice.status ?? "")) && inMtd(invoice.invoice_date)
   ));
   const invoicedValueMtd = invoiceMtd.reduce((sum, invoice) => sum + toNumber(invoice.grand_total), 0);
   const collectionsMtd = input.payments
-    .filter((payment) => dateOnOrAfter(payment.payment_date, startOfMonth))
+    .filter((payment) => inMtd(payment.payment_date))
     .reduce((sum, payment) => sum + toNumber(payment.amount), 0);
 
   const receivableOutstanding = input.invoices
@@ -341,11 +361,11 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
       status: String(invoice.status ?? "sent"),
     }));
 
-  const expenseMtd = input.expenses.filter((expense) => dateOnOrAfter(expense.invoice_date ?? expense.created_at, startOfMonth));
+  const expenseMtd = input.expenses.filter((expense) => inMtd(expense.invoice_date ?? expense.created_at));
   const expenseRunRateMtd = expenseMtd.reduce((sum, expense) => sum + toNumber(expense.total_amount), 0);
   const expensePaidMtd = expenseMtd.reduce((sum, expense) => sum + toNumber(expense.amount_paid), 0);
 
-  const qualityMtd = input.qualityInspections.filter((inspection) => dateOnOrAfter(inspection.inspection_date ?? inspection.created_at, startOfMonth));
+  const qualityMtd = input.qualityInspections.filter((inspection) => inMtd(inspection.inspection_date ?? inspection.created_at));
   const qualityApprovedMtd = qualityMtd.filter((inspection) => String(inspection.status ?? "") === "approved");
   const qualityDecisionMtd = qualityMtd.filter((inspection) => ["approved", "rejected", "rework"].includes(String(inspection.status ?? "")));
 
@@ -371,18 +391,21 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
   const openTasks = input.tasks.filter((task) => ["open", "in_progress"].includes(String(task.status ?? "")));
   const urgentOpenTasks = openTasks.filter((task) => ["urgent", "high"].includes(String(task.priority ?? "")));
 
-  const customerTotals = new Map<string, { orderCount: number; value: number }>();
+  const customerTotals = new Map<string, { customerId: string | null; name: string; orderCount: number; value: number }>();
   for (const order of input.orders) {
     if (String(order.current_stage ?? "") === "cancelled") continue;
+    if (!throughAsOf(order.order_date)) continue;
     const label = customerLabel(order);
-    const existing = customerTotals.get(label) ?? { orderCount: 0, value: 0 };
-    customerTotals.set(label, {
+    const key = order.customer_id ?? `unlinked-${order.id}`;
+    const existing = customerTotals.get(key) ?? { orderCount: 0, value: 0 };
+    customerTotals.set(key, {
+      customerId: order.customer_id ?? null,
+      name: label,
       orderCount: existing.orderCount + 1,
       value: existing.value + toNumber(order.order_value),
     });
   }
-  const topCustomers = [...customerTotals.entries()]
-    .map(([name, value]) => ({ name, orderCount: value.orderCount, value: value.value }))
+  const topCustomers = [...customerTotals.values()]
     .sort((a, b) => b.value - a.value)
     .slice(0, 8);
 
@@ -396,11 +419,11 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
     .sort((a, b) => b.count - a.count)
     .slice(0, 8);
 
-  const ordersByMonth = groupByMonth(input.orders, (row) => row.order_date, (row) => toNumber(row.order_value), axisKeys);
-  const dispatchByMonth = groupByMonth(input.dispatches, (row) => row.dispatch_date, (row) => toNumber(row.total_weight_kg), axisKeys);
-  const invoiceByMonth = groupByMonth(input.invoices, (row) => row.invoice_date, (row) => toNumber(row.grand_total), axisKeys);
-  const expenseByMonth = groupByMonth(input.expenses, (row) => row.invoice_date ?? row.created_at, (row) => toNumber(row.total_amount), axisKeys);
-  const collectionByMonth = groupByMonth(input.payments, (row) => row.payment_date, (row) => toNumber(row.amount), axisKeys);
+  const ordersByMonth = groupByMonth(input.orders.filter((row) => row.current_stage !== "cancelled"), (row) => row.order_date, (row) => toNumber(row.order_value), axisKeys, today);
+  const dispatchByMonth = groupByMonth(verifiedDispatches, (row) => row.actual_dispatched_at, (row) => toNumber(row.movement_weight_kg), axisKeys, today);
+  const invoiceByMonth = groupByMonth(input.invoices.filter((row) => ISSUED_INVOICE_STATUSES.has(String(row.status))), (row) => row.invoice_date, (row) => toNumber(row.grand_total), axisKeys, today);
+  const expenseByMonth = groupByMonth(input.expenses, (row) => row.invoice_date ?? row.created_at, (row) => toNumber(row.total_amount), axisKeys, today);
+  const collectionByMonth = groupByMonth(input.payments, (row) => row.payment_date, (row) => toNumber(row.amount), axisKeys, today);
 
   const trends = axis.map((point) => ({
     key: point.key,
@@ -428,7 +451,7 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
       quoteConversionRateMtd: safePercent(quoteConvertedMtd.length, quoteEligibleMtd.length),
       activeOrders: activeOrders.length,
       delayedOrders: delayedOrders.length,
-      dispatchWeightMtd: dispatchesMtd.reduce((sum, dispatch) => sum + toNumber(dispatch.total_weight_kg), 0),
+      dispatchWeightMtd: dispatchesMtd.reduce((sum, dispatch) => sum + toNumber(dispatch.movement_weight_kg), 0),
       dispatchOnTimeRate: safePercent(onTimeDispatchesMtd.length, dispatchDecisionMtd.length),
       productionPlannedKgMtd,
       productionActualKgMtd,

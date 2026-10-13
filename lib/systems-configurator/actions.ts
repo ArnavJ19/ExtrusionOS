@@ -2,16 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { calculateSystemConfiguration, type ComponentRole, type HardwareCategory, type PanelLayout, type SystemTemplate, type SystemType } from "./formula-engine";
 import { optimizeProfileCuts } from "./profile-optimization";
 import { buildProductionJobRemarks, getProductionHandoffReadiness, groupProfileCutsForProduction } from "./production-handoff";
-import { getBatchAvailableWeightKg, groupProfileReservationRequirements } from "./inventory-reservation";
-import { buildSystemQuoteDescription } from "./quote-integration";
+import { getBatchAvailablePieces, getBatchReservationAllocation, groupProfileReservationRequirements } from "./inventory-reservation";
 import { hasCriticalWarnings } from "./warning-categories";
-import { assertSystemQuoteReady } from "./quote-readiness";
 import { getSystemsConfiguratorContext } from "./access";
 import { loadCompleteSystemProfileSeries } from "./profile-library";
 import {
@@ -29,16 +28,6 @@ import {
 
 function formEntries(formData: FormData) {
   return Object.fromEntries(formData.entries());
-}
-
-function nextQuoteNumber(existingNumbers: string[], date = new Date()) {
-  const year = date.getFullYear();
-  const pattern = new RegExp(`^Q-${year}-(\\d{4})$`);
-  const max = existingNumbers.reduce((current, value) => {
-    const match = value.match(pattern);
-    return match ? Math.max(current, Number(match[1])) : current;
-  }, 0);
-  return `Q-${year}-${String(max + 1).padStart(4, "0")}`;
 }
 
 async function assertCanManageLibraries() {
@@ -285,10 +274,11 @@ function templateFromRows(templateRow: any, systemType: SystemType, systemProfil
 }
 
 export async function calculateSystemConfigurationProject(configurationId: string) {
-  const context = await getSystemsConfiguratorContext("update");
+  const context = await getSystemsConfiguratorContext("read");
+  if (!['owner', 'admin'].includes(context.role)) throw new Error("Only owners and admins can calculate internal system costing.");
   const supabase = await createClient();
   const { data: configuration, error: configurationError } = await supabase
-    .from("system_configurations")
+    .from("system_configurations_authorized")
     .select("*")
     .eq("id", configurationId)
     .eq("company_id", context.companyId)
@@ -298,11 +288,11 @@ export async function calculateSystemConfigurationProject(configurationId: strin
   const [series, systemProfiles, hardwareItems, glassItem, finishOption, template, settings] = await Promise.all([
     supabase.from("system_series").select("*").eq("id", configuration.series_id).eq("company_id", context.companyId).single(),
     loadCompleteSystemProfileSeries(supabase, context.companyId, configuration.series_id),
-    supabase.from("hardware_items").select("*").eq("company_id", context.companyId).eq("is_active", true),
-    configuration.glass_id ? supabase.from("glass_items").select("*").eq("id", configuration.glass_id).eq("company_id", context.companyId).single() : Promise.resolve({ data: null, error: null }),
-    configuration.finish_id ? supabase.from("finish_options").select("*").eq("id", configuration.finish_id).eq("company_id", context.companyId).single() : Promise.resolve({ data: null, error: null }),
-    configuration.template_id ? supabase.from("system_templates").select("*").eq("id", configuration.template_id).eq("company_id", context.companyId).single() : Promise.resolve({ data: null, error: null }),
-    supabase.from("company_settings").select("default_gst_percent, default_margin_percent, default_conversion_charge_per_kg, default_transport_charge").eq("company_id", context.companyId).maybeSingle()
+    supabase.from("hardware_items_authorized").select("*").eq("company_id", context.companyId).eq("is_active", true),
+    configuration.glass_id ? supabase.from("glass_items_authorized").select("*").eq("id", configuration.glass_id).eq("company_id", context.companyId).single() : Promise.resolve({ data: null, error: null }),
+    configuration.finish_id ? supabase.from("finish_options_authorized").select("*").eq("id", configuration.finish_id).eq("company_id", context.companyId).single() : Promise.resolve({ data: null, error: null }),
+    configuration.template_id ? supabase.from("system_templates_authorized").select("*").eq("id", configuration.template_id).eq("company_id", context.companyId).single() : Promise.resolve({ data: null, error: null }),
+    supabase.from("company_settings_authorized").select("default_gst_percent, default_margin_percent, default_conversion_charge_per_kg, default_transport_charge").eq("company_id", context.companyId).maybeSingle()
   ]);
 
   if (series.error || !series.data) throw series.error ?? new Error("Series not found");
@@ -386,7 +376,7 @@ export async function runProfileOptimization(configurationId: string) {
   const context = await getSystemsConfiguratorContext("update");
   const supabase = await createClient();
   const [configurationResult, cutsResult, previousRunsResult] = await Promise.all([
-    supabase.from("system_configurations").select("id, options_json, system_series(stock_length_mm)").eq("id", configurationId).eq("company_id", context.companyId).single(),
+    supabase.from("system_configurations_authorized").select("id, options_json, system_series(stock_length_mm)").eq("id", configurationId).eq("company_id", context.companyId).single(),
     supabase.from("system_profile_cuts").select("id, profile_code, profile_name, component_role, cut_length_mm, quantity, stock_length_mm").eq("company_id", context.companyId).eq("configuration_id", configurationId),
     supabase.from("profile_optimization_runs").select("run_number").eq("company_id", context.companyId).eq("configuration_id", configurationId).order("run_number", { ascending: false }).limit(1)
   ]);
@@ -438,22 +428,27 @@ export async function handoffSystemConfigurationToProduction(configurationId: st
   const context = await getSessionContext();
   if (!can(context.role, "create", "production")) redirect("/dashboard");
   const supabase = await createClient();
-  const [configurationResult, cutsResult] = await Promise.all([
-    supabase.from("system_configurations").select("id, company_id, configuration_number, project_name, design_reference, customer_id, quote_id, order_id, status, grand_total").eq("id", configurationId).eq("company_id", context.companyId).single(),
-    supabase.from("system_profile_cuts").select("profile_id, profile_code, profile_name, total_weight_kg, total_length_m").eq("company_id", context.companyId).eq("configuration_id", configurationId)
+  const [configurationResult, cutsResult, beadingResult] = await Promise.all([
+    supabase.from("system_configurations_authorized").select("id, company_id, configuration_number, project_name, design_reference, customer_id, quote_id, order_id, status, grand_total").eq("id", configurationId).eq("company_id", context.companyId).single(),
+    supabase.from("system_profile_cuts").select("profile_id, profile_code, profile_name, total_weight_kg, total_length_m").eq("company_id", context.companyId).eq("configuration_id", configurationId),
+    supabase.from("system_beading_cuts").select("profile_id, total_length_m, aluminium_profiles(profile_code, profile_name, section_weight_kg_per_m)").eq("company_id", context.companyId).eq("configuration_id", configurationId)
   ]);
 
   if (configurationResult.error || !configurationResult.data) throw configurationResult.error ?? new Error("Configuration not found");
   if (cutsResult.error) throw cutsResult.error;
+  if (beadingResult.error) throw beadingResult.error;
 
   const configuration = configurationResult.data;
-  const jobGroups = groupProfileCutsForProduction(cutsResult.data ?? []);
+  const beadingCuts = (beadingResult.data ?? []).map((cut: any) => ({ ...cut, profile_code: cut.aluminium_profiles?.profile_code, profile_name: cut.aluminium_profiles?.profile_name, total_weight_kg: Math.round(Number(cut.total_length_m) * Number(cut.aluminium_profiles?.section_weight_kg_per_m) * 1000) / 1000 }));
+  if (beadingCuts.some((cut: any) => !Number.isFinite(cut.total_weight_kg) || cut.total_weight_kg <= 0)) throw new Error("Every beading cut needs a verified profile weight before production handoff.");
+  const jobGroups = groupProfileCutsForProduction([...(cutsResult.data ?? []), ...beadingCuts]);
   let existingOrderId = configuration.order_id as string | null;
   if (!existingOrderId && configuration.quote_id) {
     const existingOrderResult = await supabase.from("orders").select("id").eq("company_id", context.companyId).eq("quote_id", configuration.quote_id).maybeSingle();
     if (existingOrderResult.error) throw existingOrderResult.error;
     existingOrderId = existingOrderResult.data?.id ?? null;
   }
+  if (configuration.quote_id && !existingOrderId) throw new Error("Convert the approved quote to an order before production handoff.");
 
   const remarks = buildProductionJobRemarks(configuration.configuration_number, configuration.design_reference);
   const existingJobsForConfiguration = existingOrderId
@@ -505,148 +500,27 @@ export async function handoffSystemConfigurationToProduction(configurationId: st
 
 export async function generateSystemQuote(configurationId: string) {
   const context = await getSystemsConfiguratorContext("create");
+  if (!["owner", "admin"].includes(context.role)) throw new Error("An owner or admin must price this configuration.");
+  const parsedId = z.string().uuid().parse(configurationId);
   const supabase = await createClient();
-  const [configurationResult, profileCutsResult, materialSummaryResult, settingsResult, quoteNumbersResult] = await Promise.all([
-    supabase.from("system_configurations").select("*, customers(customer_name, company_name), system_series(series_code, series_name), glass_items(glass_code, glass_name), finish_options(finish_code, finish_name)").eq("id", configurationId).eq("company_id", context.companyId).single(),
-    supabase.from("system_profile_cuts").select("*").eq("company_id", context.companyId).eq("configuration_id", configurationId).order("sort_order", { ascending: true }),
-    supabase.from("system_material_summary").select("*").eq("company_id", context.companyId).eq("configuration_id", configurationId),
-    supabase.from("company_settings").select("default_quote_validity_days, default_terms_and_conditions, default_quote_terms, default_payment_terms, default_delivery_terms, minimum_margin_percent").eq("company_id", context.companyId).maybeSingle(),
-    supabase.from("quotes").select("quote_number").eq("company_id", context.companyId)
-  ]);
-
-  if (configurationResult.error || !configurationResult.data) throw configurationResult.error ?? new Error("Configuration not found");
-  if (profileCutsResult.error) throw profileCutsResult.error;
-  if (materialSummaryResult.error) throw materialSummaryResult.error;
-  if (settingsResult.error) throw settingsResult.error;
-  if (quoteNumbersResult.error) throw quoteNumbersResult.error;
-
-  const configuration = configurationResult.data;
-  if (configuration.quote_id) redirect(`/quotes/${configuration.quote_id}`);
-  assertSystemQuoteReady(configuration, profileCutsResult.data ?? [], true);
-  const firstCut = (profileCutsResult.data ?? []).find((cut: any) => cut.profile_id && Number(cut.total_length_m ?? 0) > 0 && Number(cut.total_weight_kg ?? 0) > 0);
-  if (!firstCut) throw new Error("At least one calculated profile cut with a profile is required to create a quote item.");
-
-  const aluminiumMaterialRows = (materialSummaryResult.data ?? []).filter((item: any) => item.material_type === "aluminium_profile");
-  const totalMeters = aluminiumMaterialRows.length ? aluminiumMaterialRows.reduce((sum: number, item: any) => sum + Number(item.total_length_m ?? 0), 0) : (profileCutsResult.data ?? []).reduce((sum: number, cut: any) => sum + Number(cut.total_length_m ?? 0), 0);
-  const totalWeightKg = aluminiumMaterialRows.length ? aluminiumMaterialRows.reduce((sum: number, item: any) => sum + Number(item.total_weight_kg ?? 0), 0) : (profileCutsResult.data ?? []).reduce((sum: number, cut: any) => sum + Number(cut.total_weight_kg ?? 0), 0);
-  const materialCost = (materialSummaryResult.data ?? []).reduce((sum: number, item: any) => sum + Number(item.amount ?? 0), 0);
-  const subtotal = Number(configuration.subtotal ?? configuration.selling_price ?? 0);
-  const internalCost = Number(configuration.internal_cost ?? materialCost);
-  const profitAmount = subtotal - internalCost;
-  const estimatedProfitPercent = subtotal > 0 ? Math.round((profitAmount / subtotal) * 10000) / 100 : 0;
-  const quoteNumber = nextQuoteNumber((quoteNumbersResult.data ?? []).map((quote: any) => quote.quote_number).filter(Boolean));
-  const today = new Date();
-  const validityDays = Number(settingsResult.data?.default_quote_validity_days ?? 15);
-  const validUntil = new Date(today);
-  validUntil.setDate(today.getDate() + validityDays);
-  const description = buildSystemQuoteDescription({
-    configurationNumber: configuration.configuration_number,
-    projectName: configuration.project_name,
-    designReference: configuration.design_reference,
-    systemType: configuration.system_type,
-    widthMm: Number(configuration.width_mm),
-    heightMm: Number(configuration.height_mm),
-    quantity: Number(configuration.quantity),
-    finishName: configuration.finish_options?.finish_name,
-    glassName: configuration.glass_items?.glass_name,
-    grandTotal: Number(configuration.grand_total),
-    gstAmount: Number(configuration.gst_amount),
-    customerName: configuration.customers?.customer_name
-  });
-
-  const quotePayload = {
-    company_id: context.companyId,
-    quote_number: quoteNumber,
-    customer_id: configuration.customer_id,
-    quote_date: today.toISOString().slice(0, 10),
-    valid_until: validUntil.toISOString().slice(0, 10),
-    status: "draft",
-    subtotal,
-    total_margin_amount: profitAmount,
-    total_before_gst: subtotal,
-    gst_percent: Number(configuration.gst_percent ?? 18),
-    gst_amount: Number(configuration.gst_amount ?? 0),
-    grand_total: Number(configuration.grand_total ?? 0),
-    low_margin_approval_required: estimatedProfitPercent < Number(settingsResult.data?.minimum_margin_percent ?? 0),
-    estimated_profit_amount: profitAmount,
-    estimated_profit_percent: estimatedProfitPercent,
-    terms_and_conditions: settingsResult.data?.default_terms_and_conditions ?? settingsResult.data?.default_quote_terms ?? null,
-    delivery_timeline: settingsResult.data?.default_delivery_terms ?? null,
-    payment_terms: settingsResult.data?.default_payment_terms ?? null,
-    notes: `Generated from system configuration ${configuration.configuration_number ?? configurationId}`,
-    created_by: context.userId
-  };
-
-  const quoteResult = await supabase.from("quotes").insert(quotePayload).select("id").single();
-  if (quoteResult.error || !quoteResult.data) throw quoteResult.error ?? new Error("Could not create quote");
-  const quoteId = quoteResult.data.id;
-  const quantityPieces = Math.max(1, Number(configuration.quantity ?? 1));
-  const lengthPerPieceM = Math.max(0.001, totalMeters / quantityPieces);
-  const sectionWeightKgPerM = Math.max(0.001, totalWeightKg / Math.max(totalMeters, 0.001));
-  const marginPercent = Number(configuration.margin_percent ?? 0);
-
-  const itemResult = await supabase.from("quote_items").insert({
-    company_id: context.companyId,
-    quote_id: quoteId,
-    profile_id: firstCut.profile_id,
-    die_id: null,
-    item_description: description,
-    quantity_pieces: quantityPieces,
-    length_per_piece_m: lengthPerPieceM,
-    total_meters: totalMeters,
-    section_weight_kg_per_m: sectionWeightKgPerM,
-    total_weight_kg: totalWeightKg,
-    billet_rate_per_kg: totalWeightKg > 0 ? materialCost / totalWeightKg : 0,
-    raw_material_cost: materialCost,
-    conversion_charge_per_kg: 0,
-    conversion_cost: 0,
-    finishing_type: configuration.finish_options?.finish_code ? "other" : "mill_finish",
-    finishing_charge_type: "fixed",
-    finishing_charge: 0,
-    finishing_cost: 0,
-    die_charge: 0,
-    scrap_allowance_percent: 0,
-    expected_recovery_percent: 100,
-    effective_weight_kg: totalWeightKg,
-    minimum_billing_weight_kg: 0,
-    billing_weight_kg: totalWeightKg,
-    die_amortization_type: "waived",
-    die_amortization_quantity_kg: 0,
-    die_amortization_amount: 0,
-    packing_charge: 0,
-    transport_charge: 0,
-    other_charges: Math.max(0, internalCost - materialCost),
-    margin_percent: marginPercent,
-    margin_amount: profitAmount,
-    sales_price_override: subtotal,
-    minimum_margin_percent: Number(settingsResult.data?.minimum_margin_percent ?? 0),
-    approval_required: estimatedProfitPercent < Number(settingsResult.data?.minimum_margin_percent ?? 0),
-    estimated_profit_amount: profitAmount,
-    estimated_profit_percent: estimatedProfitPercent,
-    line_subtotal: internalCost,
-    line_total_before_gst: subtotal,
-    price_per_kg: totalWeightKg > 0 ? subtotal / totalWeightKg : 0,
-    price_per_meter: totalMeters > 0 ? subtotal / totalMeters : 0
-  });
-  if (itemResult.error) throw itemResult.error;
-
-  const updateResult = await supabase.from("system_configurations").update({ quote_id: quoteId, status: "quoted" }).eq("id", configurationId).eq("company_id", context.companyId);
-  if (updateResult.error) throw updateResult.error;
-
-  revalidatePath(`/systems-configurator/projects/${configurationId}`);
-  revalidatePath(`/systems-configurator/projects/${configurationId}/quote`);
+  const result = await supabase.rpc("generate_system_quote_atomic", { p_configuration_id: parsedId });
+  if (result.error) throw result.error;
+  const quoteId = z.string().uuid().parse(result.data);
+  revalidatePath(`/systems-configurator/projects/${parsedId}`);
+  revalidatePath(`/systems-configurator/projects/${parsedId}/quote`);
   revalidatePath("/quotes");
+  revalidatePath("/quotes/database");
   redirect(`/quotes/${quoteId}`);
 }
 
 export async function reserveSystemBomProfileStock(configurationId: string) {
-  const context = await getSystemsConfiguratorContext("update");
-  if (!can(context.role, "update", "inventory") && !can(context.role, "update", "production")) redirect(`/systems-configurator/projects/${configurationId}/bom`);
+  const context = await getSystemsConfiguratorContext("read");
+  if (!can(context.role, "reserve", "inventory_reservations")) redirect(`/systems-configurator/projects/${configurationId}/bom`);
   const supabase = await createClient();
   const [configurationResult, cutsResult, materialSummaryResult] = await Promise.all([
-    supabase.from("system_configurations").select("id, order_id, configuration_number").eq("id", configurationId).eq("company_id", context.companyId).single(),
+    supabase.from("system_configurations_authorized").select("id, order_id, configuration_number").eq("id", configurationId).eq("company_id", context.companyId).single(),
     supabase.from("system_profile_cuts").select("profile_id, profile_code, profile_name, total_weight_kg, total_length_m").eq("company_id", context.companyId).eq("configuration_id", configurationId),
-    supabase.from("system_material_summary").select("item_id, item_code, item_name, total_weight_kg, total_length_m, material_type").eq("company_id", context.companyId).eq("configuration_id", configurationId).eq("material_type", "aluminium_profile")
+    supabase.from("system_material_summary_authorized").select("item_id, item_code, item_name, total_weight_kg, total_length_m, material_type").eq("company_id", context.companyId).eq("configuration_id", configurationId).eq("material_type", "aluminium_profile")
   ]);
   if (configurationResult.error || !configurationResult.data) throw configurationResult.error ?? new Error("Configuration not found");
   if (cutsResult.error) throw cutsResult.error;
@@ -661,14 +535,14 @@ export async function reserveSystemBomProfileStock(configurationId: string) {
   const [stockResult, reservationsResult] = await Promise.all([
     supabase
     .from("profile_stock_batches")
-    .select("id, profile_id, total_weight_kg, length_m, bundle_number, created_at, status")
+      .select("id, profile_id, total_weight_kg, length_m, quantity_pieces, bundle_number, created_at, status")
     .eq("company_id", context.companyId)
     .in("status", ["available", "reserved"])
     .in("profile_id", profileIds)
     .order("created_at", { ascending: true }),
     supabase
       .from("profile_stock_reservations")
-      .select("id, profile_stock_batch_id, profile_id, order_id, configuration_id, reserved_weight_kg, status")
+      .select("id, profile_stock_batch_id, profile_id, order_id, configuration_id, reserved_weight_kg, reserved_pieces, status")
       .eq("company_id", context.companyId)
       .eq("status", "active")
       .in("profile_id", profileIds)
@@ -676,36 +550,59 @@ export async function reserveSystemBomProfileStock(configurationId: string) {
   if (stockResult.error) throw stockResult.error;
   if (reservationsResult.error) throw reservationsResult.error;
 
-  const existingForConfiguration = (reservationsResult.data ?? []).filter((reservation: any) => reservation.configuration_id === configurationId && reservation.order_id === configuration.order_id);
+  const activeReservations = reservationsResult.data ?? [];
+  const reservationIds = activeReservations.map((reservation: any) => reservation.id);
+  const consumptionResult = reservationIds.length
+    ? await supabase.rpc("get_profile_stock_consumption_totals", { p_reservation_ids: reservationIds })
+    : { data: [], error: null };
+  if (consumptionResult.error) throw consumptionResult.error;
+  const consumptionByReservation = new Map<string, { weightKg: number; lengthM: number; pieces: number }>();
+  for (const consumption of consumptionResult.data ?? []) {
+    const current = consumptionByReservation.get(consumption.reservation_id) ?? { weightKg: 0, lengthM: 0, pieces: 0 };
+    current.weightKg += Number(consumption.consumed_weight_kg ?? 0);
+    current.lengthM += Number(consumption.consumed_length_m ?? 0);
+    current.pieces += Number(consumption.consumed_pieces ?? 0);
+    consumptionByReservation.set(consumption.reservation_id, current);
+  }
+  const reservationsWithConsumption = activeReservations.map((reservation: any) => ({
+    ...reservation,
+    consumed_weight_kg: consumptionByReservation.get(reservation.id)?.weightKg ?? 0,
+    consumed_length_m: consumptionByReservation.get(reservation.id)?.lengthM ?? 0,
+    consumed_pieces: consumptionByReservation.get(reservation.id)?.pieces ?? 0
+  }));
+
+  const existingForConfiguration = reservationsWithConsumption.filter((reservation: any) => reservation.configuration_id === configurationId && reservation.order_id === configuration.order_id);
   if (existingForConfiguration.length) throw new Error("Profile stock is already reserved for this configuration and order.");
 
   const reservationRows: Record<string, any>[] = [];
   for (const requirement of requirements) {
+    let remainingLength = requirement.requiredLengthM;
     let remainingWeight = requirement.requiredWeightKg;
     const batches = (stockResult.data ?? []).filter((batch: any) => batch.profile_id === requirement.profileId);
     for (const batch of batches) {
-      if (remainingWeight <= 0) break;
-      const availableWeight = getBatchAvailableWeightKg(batch, reservationsResult.data ?? []);
-      if (availableWeight <= 0) continue;
-      const reserveWeight = Math.min(remainingWeight, availableWeight);
-      const batchWeight = Number(batch.total_weight_kg ?? 0);
-      const batchLength = Number(batch.length_m ?? 0);
+      if (remainingWeight <= 0 && remainingLength <= 0) break;
+      const availablePieces = getBatchAvailablePieces(batch, reservationsWithConsumption);
+      if (availablePieces <= 0) continue;
+      const allocation = getBatchReservationAllocation(batch, availablePieces, remainingWeight, remainingLength);
+      if (!allocation) continue;
       reservationRows.push({
         company_id: context.companyId,
         profile_stock_batch_id: batch.id,
         profile_id: requirement.profileId,
         order_id: configuration.order_id,
         configuration_id: configurationId,
-        reserved_weight_kg: reserveWeight,
-        reserved_length_m: batchWeight > 0 ? (batchLength * reserveWeight) / batchWeight : 0,
+        reserved_weight_kg: allocation.weightKg,
+        reserved_pieces: allocation.pieces,
+        reserved_length_m: allocation.lengthM,
         status: "active",
         notes: `Reserved from system configuration ${configuration.configuration_number ?? configurationId}`,
         created_by: context.userId
       });
-      remainingWeight = Math.round((remainingWeight - reserveWeight + Number.EPSILON) * 1000) / 1000;
+      remainingWeight = Math.round((remainingWeight - allocation.weightKg + Number.EPSILON) * 1000) / 1000;
+      remainingLength = Math.round((remainingLength - allocation.lengthM + Number.EPSILON) * 1000) / 1000;
     }
-    if (remainingWeight > 0) {
-      throw new Error(`${requirement.profileCode} has insufficient available stock. Required ${requirement.requiredWeightKg.toFixed(3)} kg, shortage ${remainingWeight.toFixed(3)} kg.`);
+    if (remainingWeight > 0.001 || remainingLength > 0.001) {
+      throw new Error(`${requirement.profileCode} has insufficient available stock for ${requirement.requiredWeightKg.toFixed(3)} kg and ${requirement.requiredLengthM.toFixed(3)} m of configured demand.`);
     }
   }
 

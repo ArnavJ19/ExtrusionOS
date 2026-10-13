@@ -18,25 +18,27 @@ export default async function DealerOrdersPage() {
   if (context.dealerId) dealerUsersQuery.or(`dealer_id.eq.${context.dealerId},id.eq.${context.userId}`);
   const dealerUsers = await dealerUsersQuery;
   const dealerUsersById = new Map((dealerUsers.data ?? []).map((user: any) => [user.id, { dealer_id: user.dealer_id, dealer_name: dealerName(user.dealers) }]));
+  for (const user of dealerUsers.data ?? []) {
+    if (user.dealer_id && !dealerUsersById.has(user.dealer_id)) dealerUsersById.set(user.dealer_id, { dealer_id: user.dealer_id, dealer_name: dealerName(user.dealers) });
+  }
   const dealerUserIds = Array.from(dealerUsersById.keys());
 
   const dealerRequestQuery = supabase.from("dealer_orders").select("id, dealer_id, linked_order_id, order_number, priority, status, expected_delivery_date, factory_committed_date, clarification_required_at, clarification_resolved_at, created_at, dealers(dealer_name)").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(250);
-  const quoteOrderQuery = supabase.from("orders").select("id, dealer_id, created_by, order_number, order_value, priority, current_stage, expected_dispatch_date, created_at, dealers(dealer_name), quotes(quote_number, dealer_id, created_by)").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(250);
+  const quoteOrderQuery = supabase.from("orders_authorized").select("id, dealer_id, created_by, order_number, order_value, priority, current_stage, expected_dispatch_date, created_at, quote_number").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(250);
   if (context.dealerId) {
     dealerRequestQuery.eq("dealer_id", context.dealerId);
   }
   const [dealerRequests, quoteOrders] = await Promise.all([dealerRequestQuery, quoteOrderQuery]);
   const linkedOrderIds = new Set((dealerRequests.data ?? []).map((order: any) => order.linked_order_id).filter(Boolean));
   const visibleQuoteOrders = (quoteOrders.data ?? []).filter((order: any) => {
-    const quote = Array.isArray(order.quotes) ? order.quotes[0] : order.quotes;
-    if (context.dealerId) return order.dealer_id === context.dealerId || order.created_by === context.userId || quote?.dealer_id === context.dealerId || quote?.created_by === context.userId;
-    return Boolean(order.dealer_id || quote?.dealer_id || dealerUsersById.has(order.created_by) || (quote?.created_by && dealerUsersById.has(quote.created_by)) || dealerUserIds.length === 0);
+    if (context.dealerId) return order.dealer_id === context.dealerId || order.created_by === context.userId;
+    return Boolean(order.dealer_id || dealerUsersById.has(order.created_by) || dealerUserIds.length === 0);
   });
   const rows: DealerOrderOverviewRow[] = [
     ...(dealerRequests.data ?? []).map((order: any) => ({ id: order.id, href: `/dealer-orders/${order.id}`, order_number: order.order_number, priority: order.priority, status: order.status, dealer: dealerName(order.dealers), source: "Dealer request", created_at: order.created_at })),
     ...visibleQuoteOrders.filter((order: any) => !linkedOrderIds.has(order.id)).map((order: any) => {
-      const quote = Array.isArray(order.quotes) ? order.quotes[0] : order.quotes;
-      return { id: order.id, href: `/dealer-orders/quote-orders/${order.id}`, order_number: order.order_number, priority: order.priority, status: mapOrderStage(order.current_stage), dealer: dealerName(order.dealers) === "Dealer" ? dealerUsersById.get(order.created_by)?.dealer_name ?? dealerUsersById.get(quote?.created_by)?.dealer_name ?? "Dealer" : dealerName(order.dealers), source: quote?.quote_number ? `Quote ${quote.quote_number}` : "Quote order", created_at: order.created_at, value: Number(order.order_value ?? 0) };
+      const dealer = dealerUsersById.get(order.dealer_id) ?? dealerUsersById.get(order.created_by);
+      return { id: order.id, href: `/dealer-orders/quote-orders/${order.id}`, order_number: order.order_number, priority: order.priority, status: mapOrderStage(order.current_stage), dealer: dealer?.dealer_name ?? "Dealer", source: order.quote_number ? `Quote ${order.quote_number}` : "Quote order", created_at: order.created_at, value: Number(order.order_value ?? 0) };
     })
   ];
   const queryErrors = [dealerUsers.error, dealerRequests.error, quoteOrders.error].filter(Boolean).map((error) => getErrorMessage(error));

@@ -50,17 +50,42 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
     const load = async () => {
       const [quotesResult] = await Promise.all([
         supabase
-          .from("quotes")
-          .select("id, dealer_id, quote_number, quote_date, grand_total, customer_id, customers(customer_name, company_name), quote_items(id, profile_id, finishing_type, billing_weight_kg, total_weight_kg, aluminium_profiles(alloy, temper, billet_diameter_required_inch))")
+          .from("quotes_authorized")
+          .select("id, dealer_id, quote_number, quote_date, grand_total, customer_id")
           .eq("company_id", context.companyId)
           .eq("status", "customer_approved")
           .order("quote_date", { ascending: false })
           .limit(50),
       ]);
       if (quotesResult.error) throw quotesResult.error;
-      setQuotes((quotesResult.data ?? []) as QuoteOption[]);
+      const quoteIds = (quotesResult.data ?? []).map((quote: any) => quote.id);
+      const [linesResult, customersResult] = await Promise.all([
+        quoteIds.length ? supabase.from("quote_items_authorized").select("id, quote_id, profile_id, finishing_type, billing_weight_kg, total_weight_kg").eq("company_id", context.companyId).in("quote_id", quoteIds).order("created_at", { ascending: true }) : { data: [], error: null },
+        quoteIds.length ? supabase.from("customers").select("id, customer_name, company_name").eq("company_id", context.companyId).in("id", [...new Set((quotesResult.data ?? []).map((quote: any) => quote.customer_id).filter(Boolean))]) : { data: [], error: null },
+      ]);
+      if (linesResult.error) throw linesResult.error;
+      if (customersResult.error) throw customersResult.error;
+      const profileIds = [...new Set((linesResult.data ?? []).map((line: any) => line.profile_id).filter(Boolean))];
+      const profilesResult = profileIds.length
+        ? await supabase.from("aluminium_profiles").select("id, alloy, temper, billet_diameter_required_inch").eq("company_id", context.companyId).in("id", profileIds)
+        : { data: [], error: null };
+      if (profilesResult.error) throw profilesResult.error;
+      const customersById = new Map((customersResult.data ?? []).map((customer: any) => [customer.id, customer]));
+      const profilesById = new Map((profilesResult.data ?? []).map((profile: any) => [profile.id, profile]));
+      const linesByQuoteId = new Map<string, any[]>();
+      for (const line of linesResult.data ?? []) {
+        const lines = linesByQuoteId.get(line.quote_id) ?? [];
+        lines.push({ ...line, aluminium_profiles: profilesById.get(line.profile_id) ?? null });
+        linesByQuoteId.set(line.quote_id, lines);
+      }
+      const loadedQuotes = (quotesResult.data ?? []).map((quote: any) => ({
+        ...quote,
+        customers: customersById.get(quote.customer_id) ?? null,
+        quote_items: linesByQuoteId.get(quote.id) ?? [],
+      })) as QuoteOption[];
+      setQuotes(loadedQuotes);
       const preselectedQuoteId = searchParams.get("quoteId");
-      if (preselectedQuoteId && (quotesResult.data ?? []).some((quote: any) => quote.id === preselectedQuoteId)) setQuoteId(preselectedQuoteId);
+      if (preselectedQuoteId && loadedQuotes.some((quote) => quote.id === preselectedQuoteId)) setQuoteId(preselectedQuoteId);
     };
     load().catch((error) => toast.error(error.message ?? "Could not load quotes")).finally(() => setLoading(false));
   }, [context.companyId, searchParams, supabase]);

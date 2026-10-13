@@ -8,7 +8,7 @@ export default async function SystemTemplatesPage() {
   const supabase = await createClient();
   const canManage = ["owner", "admin", "sales_manager"].includes(context.role);
   const [templates, series] = await Promise.all([
-    supabase.from("system_templates").select("*, system_series(series_code, series_name)").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(100),
+    supabase.from("system_templates_authorized").select("*, system_series(series_code, series_name)").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(100),
     supabase.from("system_series").select("id, series_code, series_name").eq("company_id", context.companyId).eq("is_active", true).order("series_code", { ascending: true }).limit(100)
   ]);
 

@@ -11,9 +11,10 @@ import { labelize } from "@/types/app";
 export default async function SystemGlassListPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const context = await getSystemsConfiguratorContext("read");
+  const canSeeCost = ["owner", "admin", "accounts"].includes(context.role);
   const supabase = await createClient();
   const [{ data: glassCuts }, { data: beadingCuts }] = await Promise.all([
-    supabase.from("system_glass_cuts").select("*").eq("company_id", context.companyId).eq("configuration_id", id).order("panel_index", { ascending: true }),
+    supabase.from("system_glass_cuts_authorized").select("*").eq("company_id", context.companyId).eq("configuration_id", id).order("panel_index", { ascending: true }),
     supabase.from("system_beading_cuts").select("*").eq("company_id", context.companyId).eq("configuration_id", id).order("panel_index", { ascending: true })
   ]);
   const glassRows = glassCuts ?? [];
@@ -27,14 +28,14 @@ export default async function SystemGlassListPage({ params }: { params: Promise<
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><PageHeader title="Glass & Beading" description="Glass panel cutting sizes and beading cuts around each glass panel." /><Link href={`/api/pdf/systems-configurator/${id}/glass_list`} target="_blank" className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange/20 transition hover:bg-orange/90"><Download className="h-4 w-4" /> PDF</Link></div>
       <ConfiguratorOutputNav projectId={id} active="glass" />
       <div className="grid gap-3 md:grid-cols-3"><Metric label="Glass Area" value={`${areaSqft.toFixed(3)} sqft`} /><Metric label="Glass Area" value={`${areaSqm.toFixed(3)} sqm`} /><Metric label="Beading Length" value={`${beadLength.toFixed(3)} m`} highlight /></div>
-      <OutputCard title="Glass List"><GlassTable rows={glassRows} id={id} /></OutputCard>
+      <OutputCard title="Glass List"><GlassTable rows={glassRows} id={id} canSeeCost={canSeeCost} /></OutputCard>
       <OutputCard title="Beading Cuts"><BeadingTable rows={beadRows} id={id} /></OutputCard>
     </div>
   );
 }
 
-function GlassTable({ rows, id }: { rows: any[]; id: string }) {
-  return <div className="overflow-x-auto"><table className="w-full min-w-[860px] text-sm"><thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-black uppercase tracking-[0.12em] text-slate-500"><tr><th className="px-4 py-3">Panel</th><th className="px-4 py-3">Glass Type</th><th className="px-4 py-3 text-right">Width mm</th><th className="px-4 py-3 text-right">Height mm</th><th className="px-4 py-3 text-right">Qty</th><th className="px-4 py-3 text-right">Area sq ft</th><th className="px-4 py-3 text-right">Amount</th><th className="px-4 py-3">Explanation</th></tr></thead><tbody className="divide-y divide-slate-100">{rows.map((cut) => <tr key={cut.id} className="hover:bg-orange/5"><td className="px-4 py-3 font-black text-slate-950">{cut.glass_label}</td><td className="px-4 py-3 font-semibold text-slate-700">{labelize(cut.glass_type ?? "glass")} · {cut.thickness_mm}mm</td><td className="px-4 py-3 text-right font-semibold tabular-nums">{Number(cut.width_mm ?? 0).toFixed(0)}</td><td className="px-4 py-3 text-right font-semibold tabular-nums">{Number(cut.height_mm ?? 0).toFixed(0)}</td><td className="px-4 py-3 text-right font-semibold tabular-nums">{cut.quantity}</td><td className="px-4 py-3 text-right font-semibold tabular-nums">{Number(cut.area_sqft ?? 0).toFixed(3)}</td><td className="px-4 py-3 text-right font-black tabular-nums">Rs. {Number(cut.amount ?? 0).toLocaleString("en-IN")}</td><td className="max-w-[280px] px-4 py-3 text-xs font-bold leading-5 text-slate-500">{cut.remarks ?? "Panel size minus glass deductions"}</td></tr>)}{!rows.length ? <EmptyRow colSpan={8} id={id} label="No glass list yet." /> : null}</tbody></table></div>;
+function GlassTable({ rows, id, canSeeCost }: { rows: any[]; id: string; canSeeCost: boolean }) {
+  return <div className="overflow-x-auto"><table className="w-full min-w-[860px] text-sm"><thead className="border-b border-slate-200 bg-slate-50 text-left text-xs font-black uppercase tracking-[0.12em] text-slate-500"><tr><th className="px-4 py-3">Panel</th><th className="px-4 py-3">Glass Type</th><th className="px-4 py-3 text-right">Width mm</th><th className="px-4 py-3 text-right">Height mm</th><th className="px-4 py-3 text-right">Qty</th><th className="px-4 py-3 text-right">Area sq ft</th>{canSeeCost ? <th className="px-4 py-3 text-right">Amount</th> : null}<th className="px-4 py-3">Explanation</th></tr></thead><tbody className="divide-y divide-slate-100">{rows.map((cut) => <tr key={cut.id} className="hover:bg-orange/5"><td className="px-4 py-3 font-black text-slate-950">{cut.glass_label}</td><td className="px-4 py-3 font-semibold text-slate-700">{labelize(cut.glass_type ?? "glass")} · {cut.thickness_mm}mm</td><td className="px-4 py-3 text-right font-semibold tabular-nums">{Number(cut.width_mm ?? 0).toFixed(0)}</td><td className="px-4 py-3 text-right font-semibold tabular-nums">{Number(cut.height_mm ?? 0).toFixed(0)}</td><td className="px-4 py-3 text-right font-semibold tabular-nums">{cut.quantity}</td><td className="px-4 py-3 text-right font-semibold tabular-nums">{Number(cut.area_sqft ?? 0).toFixed(3)}</td>{canSeeCost ? <td className="px-4 py-3 text-right font-black tabular-nums">Rs. {Number(cut.amount ?? 0).toLocaleString("en-IN")}</td> : null}<td className="max-w-[280px] px-4 py-3 text-xs font-bold leading-5 text-slate-500">{cut.remarks ?? "Panel size minus glass deductions"}</td></tr>)}{!rows.length ? <EmptyRow colSpan={canSeeCost ? 8 : 7} id={id} label="No glass list yet." /> : null}</tbody></table></div>;
 }
 
 function BeadingTable({ rows, id }: { rows: any[]; id: string }) {

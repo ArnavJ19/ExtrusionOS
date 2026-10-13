@@ -115,7 +115,7 @@ export async function checkReportReadiness(
   const supabase = supabaseClient ?? await import("@/lib/supabase/server").then((mod) => mod.createClient());
 
   if (templateKey === "quote_line") {
-    const { data, error } = await supabase.from("quote_items").select("*").eq("id", recordId).eq("company_id", companyId).single();
+    const { data, error } = await supabase.from("quote_items_authorized").select("*").eq("id", recordId).eq("company_id", companyId).single();
     if (error || !data) return { ready: false, missingFields: ["Quote line"] };
     const lineReadiness = checkPcdaLineReadiness(data, "quote");
     if (!lineReadiness.ready) return lineReadiness;
@@ -126,7 +126,7 @@ export async function checkReportReadiness(
   }
 
   if (templateKey === "order_line") {
-    const { data, error } = await supabase.from("order_items").select("*").eq("id", recordId).eq("company_id", companyId).single();
+    const { data, error } = await supabase.from("order_items_authorized").select("*").eq("id", recordId).eq("company_id", companyId).single();
     if (error || !data) return { ready: false, missingFields: ["Order line"] };
     const lineReadiness = checkPcdaLineReadiness(data, "order");
     if (!lineReadiness.ready) return lineReadiness;
@@ -149,7 +149,7 @@ export async function checkReportReadiness(
   }
 
   if (templateKey === "production_batch") {
-    const { data, error } = await supabase.from("production_jobs").select("*").eq("id", recordId).eq("company_id", companyId).single();
+    const { data, error } = await supabase.from("production_jobs_authorized").select("*").eq("id", recordId).eq("company_id", companyId).single();
     if (error || !data) return { ready: false, missingFields: ["Production job"] };
     return checkProductionBatchReadiness(data);
   }
@@ -185,7 +185,7 @@ export async function checkReportReadiness(
   }
 
   if (templateKey === "packing") {
-    const { data, error } = await supabase.from("packing_list_items").select("*").eq("id", recordId).eq("company_id", companyId).single();
+    const { data, error } = await supabase.from("packing_list_items_authorized").select("*").eq("id", recordId).eq("company_id", companyId).single();
     if (error || !data) return { ready: false, missingFields: ["Packing list item"] };
     return checkFieldsPresent(data, [
       { field: "dispatch_id", label: "Linked dispatch" },

@@ -35,9 +35,10 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
   };
 
   const canUpdate = can(context.role, "update", "production");
+  const canCorrect = ["owner", "admin", "production_manager"].includes(context.role);
   return (
     <div className="space-y-6">
-      <ProductionOutputWorkflow job={floorJob} canUpdate={canUpdate} />
+      <ProductionOutputWorkflow job={floorJob} canUpdate={canUpdate} canCorrect={canCorrect} />
       <RecordDetailClient moduleKey="production" context={context} recordId={id} canEdit={canUpdate} />
     </div>
   );

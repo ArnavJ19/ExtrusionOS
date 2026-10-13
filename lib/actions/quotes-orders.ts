@@ -15,7 +15,7 @@ import type { QuoteStatus } from "@/types/app";
 
 const quoteStatusSchema = z.enum(["draft", "internal_review", "approved_for_sending", "sent", "customer_approved", "customer_rejected", "expired", "converted_to_order"]);
 const revisionLockedStatuses = ["approved_for_sending", "sent", "customer_approved", "customer_rejected", "expired", "converted_to_order"];
-const lowMarginApprovalRoles = ["owner", "admin", "sales_manager"];
+const lowMarginApprovalRoles = ["owner", "admin"];
 const profileSelect = "id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, hsn_code, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle";
 const unusableDieStatuses = ["inactive", "dead", "blocked", "retired", "scrapped", "under_maintenance"];
 
@@ -45,6 +45,7 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
   try {
     const context = await getSessionContext();
     const editingId = input.editing_id || null;
+    if (!['owner', 'admin'].includes(context.role)) return { success: false, error: "Only owners and admins can create or reprice quotations. Ask an owner or admin to prepare the priced quote." };
     if (!can(context.role, editingId ? "update" : "create", "quotes")) return { success: false, error: "You do not have permission to save quotations." };
 
     const parsed = quoteSchema.safeParse(input);
@@ -66,7 +67,7 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
     const [profilesResult, diesResult, currentQuoteResult] = await Promise.all([
       supabase.from("aluminium_profiles").select(profileSelect).eq("company_id", context.companyId).in("id", profileIds),
       dieIds.length ? supabase.from("dies").select("id, profile_id").eq("company_id", context.companyId).in("id", dieIds) : Promise.resolve({ data: [], error: null }),
-      editingId ? supabase.from("quotes").select("*").eq("company_id", context.companyId).eq("id", editingId).maybeSingle() : Promise.resolve({ data: null, error: null })
+      editingId ? supabase.from("quotes_authorized").select("*").eq("company_id", context.companyId).eq("id", editingId).maybeSingle() : Promise.resolve({ data: null, error: null })
     ]);
     if (profilesResult.error) throw profilesResult.error;
     if (diesResult.error) throw diesResult.error;
@@ -149,7 +150,7 @@ export async function updateQuoteStatusAction(quoteId: string, status: QuoteStat
 
     const supabase = await createClient();
     const quoteResult = await supabase
-      .from("quotes")
+      .from("quotes_authorized")
       .select("id, status, low_margin_approval_required")
       .eq("id", quoteId)
       .eq("company_id", context.companyId)
@@ -196,7 +197,7 @@ export async function convertQuoteToOrderAction(quoteId: string): Promise<Action
 
     const supabase = await createClient();
     const quoteResult = await supabase
-      .from("quotes")
+      .from("quotes_authorized")
       .select("*")
       .eq("id", quoteId)
       .eq("company_id", context.companyId)
@@ -213,7 +214,7 @@ export async function convertQuoteToOrderAction(quoteId: string): Promise<Action
     }
     if (quote.status !== "customer_approved") return { success: false, error: "Only customer-approved quotes can be converted to orders." };
 
-    const quoteItems = await supabase.from("quote_items").select("*").eq("quote_id", quote.id).eq("company_id", context.companyId).order("created_at");
+    const quoteItems = await supabase.from("quote_items_authorized").select("*").eq("quote_id", quote.id).eq("company_id", context.companyId).order("created_at");
     if (quoteItems.error) throw quoteItems.error;
     if (!(quoteItems.data ?? []).length) return { success: false, error: "Quote has no line items to convert." };
     const unapprovedLine = (quoteItems.data ?? []).find(hasUnapprovedDrawing);
@@ -250,7 +251,7 @@ export async function saveOrderAction(input: SaveOrderInput): Promise<ActionResu
     const supabase = await createClient();
     const [customerResult, currentOrderResult] = await Promise.all([
       supabase.from("customers").select("id").eq("company_id", context.companyId).eq("id", parsed.data.customer_id).maybeSingle(),
-      editingId ? supabase.from("orders").select("*").eq("company_id", context.companyId).eq("id", editingId).maybeSingle() : Promise.resolve({ data: null, error: null })
+      editingId ? supabase.from("orders_authorized").select("*").eq("company_id", context.companyId).eq("id", editingId).maybeSingle() : Promise.resolve({ data: null, error: null })
     ]);
     if (customerResult.error) throw customerResult.error;
     if (currentOrderResult.error) throw currentOrderResult.error;
@@ -282,7 +283,7 @@ export async function saveOrderAction(input: SaveOrderInput): Promise<ActionResu
 
     const selectedQuoteResult = parsed.data.quote_id
       ? await supabase
-        .from("quotes")
+        .from("quotes_authorized")
         .select("id, customer_id, dealer_id, status")
         .eq("company_id", context.companyId)
         .eq("id", parsed.data.quote_id)

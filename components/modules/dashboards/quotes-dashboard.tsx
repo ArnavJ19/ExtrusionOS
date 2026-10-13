@@ -13,6 +13,7 @@ type QuoteRow = { id: string; quote_number: string; grand_total: number; quote_d
 
 type Props = {
   canCreate: boolean;
+  showQuoteValues: boolean;
   totalPipelineValue: number;
   activeQuoteCount: number;
   convertedCount: number;
@@ -34,6 +35,7 @@ const statusColors: Record<string, string> = {
 
 export function QuotesDashboard({
   canCreate,
+  showQuoteValues,
   totalPipelineValue,
   activeQuoteCount,
   convertedCount,
@@ -105,7 +107,7 @@ export function QuotesDashboard({
 
       {/* Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={CircleDollarSign} label="Active Pipeline Value" rawValue={totalPipelineValue} isCurrency change={`${monthlyCount} quotes this month`} comparison="Open quotes only" tone="purple" />
+        {showQuoteValues ? <StatCard icon={CircleDollarSign} label="Active Pipeline Value" rawValue={totalPipelineValue} isCurrency change={`${monthlyCount} quotes this month`} comparison="Open quotes only" tone="purple" /> : null}
         <StatCard icon={FileText} label="Active Quotes" rawValue={activeQuoteCount} change="Live" comparison="Quotes in progress" tone="blue" />
         <StatCard icon={TrendingUp} label="Conversion Rate" rawValue={conversionRate} change={`${convertedCount} converted`} comparison={`Of ${totalQuoteCount} total quotes`} tone="green" />
         <StatCard icon={Clock} label="Expiring Soon" rawValue={expiringCount} change={expiringCount > 0 ? "Attention" : "Clear"} comparison="Quotes expiring within 7 days" tone={expiringCount > 0 ? "yellow" : "green"} />
@@ -113,7 +115,7 @@ export function QuotesDashboard({
 
       {/* Main Charts Row */}
       <div className="grid gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
+        {showQuoteValues ? <div className="xl:col-span-2">
           <TogglableBarChart
             data={salesHistory}
             title="Sales Performance"
@@ -122,7 +124,7 @@ export function QuotesDashboard({
             color="#059669"
             hoverColor="#10b981"
           />
-        </div>
+        </div> : null}
 
         {/* Quote Conversion Funnel */}
         <CollapsibleCard>
@@ -187,7 +189,7 @@ export function QuotesDashboard({
         </CollapsibleCard>
 
         {/* Value Distribution */}
-        <CollapsibleCard>
+        {showQuoteValues ? <CollapsibleCard>
           <CardHeader>
             <div className="flex items-center gap-2">
               <BarChart3 className="h-4.5 w-4.5 text-slate-500" />
@@ -210,7 +212,7 @@ export function QuotesDashboard({
               ))}
             </div>
           </CardContent>
-        </CollapsibleCard>
+        </CollapsibleCard> : null}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_1.5fr]">
@@ -238,7 +240,7 @@ export function QuotesDashboard({
                   </div>
                   <div className="shrink-0 text-right">
                     <Badge value={quote.status} />
-                    <p className="mt-2 text-sm font-bold text-neutral-950">{formatCurrency(quote.grand_total)}</p>
+                    {showQuoteValues ? <p className="mt-2 text-sm font-bold text-neutral-950">{formatCurrency(quote.grand_total)}</p> : null}
                   </div>
                 </Link>
               )) : <div className="empty-mini">No recent quotes.</div>}

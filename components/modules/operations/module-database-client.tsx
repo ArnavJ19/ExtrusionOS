@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
@@ -15,18 +15,13 @@ import { displayValue } from "./value";
 import { getModuleConfig, type ModuleKey } from "./module-config";
 
 const pageSize = 10;
-const relationFilterFields = ["customer_id", "profile_id", "order_id", "quote_id", "production_job_id", "inventory_item_id", "expense_ledger_id", "source_record_id", "material_id"];
+const relationFilterFields = ["customer_id", "profile_id", "order_id", "quote_id", "production_job_id", "inventory_item_id", "expense_ledger_id", "source_record_id", "material_id", "job_id"];
 
 function cleanSearch(value: string) {
   return value.replace(/[%*_,()]/g, " ").replace(/\s+/g, " ").trim();
 }
 
-function mergeRows(rows: Record<string, any>[], fallbackRows: Record<string, any>[]) {
-  const seen = new Set(rows.map((row) => row.id));
-  return [...fallbackRows.filter((row) => !seen.has(row.id)), ...rows];
-}
-
-export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialStatus = "" }: { moduleKey: ModuleKey; context: SessionContext; canCreate: boolean; initialStatus?: string }) {
+export function ModuleDatabaseClient({ moduleKey, canCreate, initialStatus = "" }: { moduleKey: ModuleKey; context: SessionContext; canCreate: boolean; initialStatus?: string }) {
   const config = getModuleConfig(moduleKey);
   const supabase = useMemo(() => createClient(), []);
   const searchParams = useSearchParams();
@@ -43,66 +38,42 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestVersion = useRef(0);
   const relationFilters = useMemo(() => relationFilterFields.map((field) => ({ field, value: searchParams.get(field) ?? "" })).filter((item) => item.value), [searchParams]);
 
-  async function resolveIds(query: string) {
-    const result: { customerIds: string[]; profileIds: string[]; orderIds: string[] } = { customerIds: [], profileIds: [], orderIds: [] };
-    if (!query) return result;
-    const like = `*${query}*`;
-    const lookups = [];
-    if (config.customerIdField) lookups.push(supabase.from("customers").select("id").eq("company_id", context.companyId).or(`customer_name.ilike.${like},company_name.ilike.${like}`).limit(50).then(({ data, error }) => { if (error) throw error; result.customerIds = (data ?? []).map((row: any) => row.id); }));
-    if (config.profileIdField) lookups.push(supabase.from("aluminium_profiles").select("id").eq("company_id", context.companyId).or(`profile_code.ilike.${like},profile_name.ilike.${like}`).limit(50).then(({ data, error }) => { if (error) throw error; result.profileIds = (data ?? []).map((row: any) => row.id); }));
-    if (config.orderIdField) lookups.push(supabase.from("orders").select("id").eq("company_id", context.companyId).ilike("order_number", like).limit(50).then(({ data, error }) => { if (error) throw error; result.orderIds = (data ?? []).map((row: any) => row.id); }));
-    await Promise.all(lookups);
-    return result;
-  }
-
   async function loadRows() {
+    const version = ++requestVersion.current;
     setLoading(true);
     setError(null);
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
+    try {
     const query = cleanSearch(debouncedSearch);
-    const ids = await resolveIds(query);
-    let request = supabase.from(config.table as any).select(config.select, { count: "exact" }).eq("company_id", context.companyId);
-    for (const filter of relationFilters) request = request.eq(filter.field, filter.value);
-    if (status && config.groupField) request = request.eq(config.groupField, status);
-    if (secondary && config.secondaryFilter) request = request.eq(config.secondaryFilter.field, secondary === "true" ? true : secondary === "false" ? false : secondary);
-    if (dateFrom && config.dateFilterField) request = request.gte(config.dateFilterField, dateFrom);
-    if (dateTo && config.dateFilterField) request = request.lte(config.dateFilterField, dateTo);
-    if (query) {
-      const like = `*${query}*`;
-      const orParts = config.searchFields.map((field) => `${field}.ilike.${like}`);
-      if (config.customerIdField && ids.customerIds.length) orParts.push(`${config.customerIdField}.in.(${ids.customerIds.join(",")})`);
-      if (config.profileIdField && ids.profileIds.length) orParts.push(`${config.profileIdField}.in.(${ids.profileIds.join(",")})`);
-      if (config.orderIdField && ids.orderIds.length) orParts.push(`${config.orderIdField}.in.(${ids.orderIds.join(",")})`);
-      if (orParts.length) request = request.or(orParts.join(","));
-    }
-    const { data, error: queryError, count } = await request.order(sortColumn, { ascending: sortDirection === "asc", nullsFirst: false }).range(from, to);
+    const filters = Object.fromEntries(relationFilters.map((filter) => [filter.field, filter.value]));
+    if (status && config.groupField) filters.status = status;
+    if (secondary && config.secondaryFilter) filters.secondary = secondary;
+    const { data, error: queryError } = await supabase.rpc("get_operation_database_page" as any, {
+      p_module: moduleKey, p_search: query, p_filters: filters, p_sort: sortColumn,
+      p_direction: sortDirection, p_page: page, p_date_from: dateFrom || null, p_date_to: dateTo || null
+    });
+    if (version !== requestVersion.current) return;
     if (queryError) throw queryError;
-    let finalRows: Record<string, any>[] = (data ?? []) as Record<string, any>[];
-    let finalCount = count ?? null;
-    if (moduleKey === "customers" && query) {
-      let gstRequest = supabase.from(config.table as any).select(config.select).eq("company_id", context.companyId).ilike("gst_number", `%${query}%`);
-      if (status && config.groupField) gstRequest = gstRequest.eq(config.groupField, status);
-      if (secondary && config.secondaryFilter) gstRequest = gstRequest.eq(config.secondaryFilter.field, secondary === "true" ? true : secondary === "false" ? false : secondary);
-      if (dateFrom && config.dateFilterField) gstRequest = gstRequest.gte(config.dateFilterField, dateFrom);
-      if (dateTo && config.dateFilterField) gstRequest = gstRequest.lte(config.dateFilterField, dateTo);
-      const { data: gstRows, error: gstError } = await gstRequest.limit(pageSize);
-      if (gstError) throw gstError;
-      finalRows = mergeRows(finalRows, (gstRows ?? []) as Record<string, any>[]);
-      finalCount = finalCount === null ? finalRows.length : Math.max(finalCount, finalRows.length);
+    if (!data || !Array.isArray(data.rows) || data.rows.length > pageSize || !Number.isSafeInteger(data.count) || data.count < 0) throw new Error("The database returned an invalid page.");
+    setRows(data.rows);
+    setTotalCount(data.count);
+    } catch (err) {
+      if (version !== requestVersion.current) return;
+      const message = getErrorMessage(err, `Could not load ${config.databaseTitle.toLowerCase()}`);
+      setRows([]);
+      setTotalCount(null);
+      setError(message);
+      toast.error(message);
+    } finally {
+      if (version === requestVersion.current) setLoading(false);
     }
-    setRows(finalRows);
-    setTotalCount(finalCount);
   }
 
   useEffect(() => {
-    loadRows().catch((err) => {
-      const message = getErrorMessage(err, `Could not load ${config.databaseTitle.toLowerCase()}`);
-      setError(message);
-      toast.error(message);
-    }).finally(() => setLoading(false));
+    void loadRows();
+    return () => { requestVersion.current++; };
   }, [moduleKey, page, debouncedSearch, status, secondary, dateFrom, dateTo, sortColumn, sortDirection, relationFilters]);
   useEffect(() => setPage(1), [debouncedSearch, status, secondary, dateFrom, dateTo, relationFilters]);
 

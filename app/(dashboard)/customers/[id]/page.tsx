@@ -40,7 +40,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   const [quotesResult, ordersResult] = await Promise.all([
     can(context.role, "read", "quotes")
       ? supabase
-        .from("quotes")
+        .from("quotes_authorized")
         .select("id, quote_number, revision_number, quote_date, status, grand_total")
         .eq("customer_id", id)
         .eq("company_id", context.companyId)
@@ -49,7 +49,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
       : Promise.resolve({ data: [], error: null }),
     can(context.role, "read", "orders")
       ? supabase
-        .from("orders")
+        .from("orders_authorized")
         .select("id, order_number, order_date, current_stage, order_value")
         .eq("customer_id", id)
         .eq("company_id", context.companyId)
@@ -65,7 +65,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
 
   if (quotes.length > 0) {
     const { data: quoteItems, error: quoteItemsQueryError } = await supabase
-      .from("quote_items")
+      .from("quote_items_authorized")
       .select("quote_id, billing_weight_kg, total_weight_kg")
       .eq("company_id", context.companyId)
       .in("quote_id", quotes.map((quote: any) => quote.id));

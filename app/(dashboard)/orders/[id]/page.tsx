@@ -19,29 +19,61 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   if (!can(context.role, "read", "orders")) redirect("/dashboard");
 
-  const { data: order, error } = await supabase
-    .from("orders")
-    .select(`
-      *,
-      customers(customer_name, company_name),
-      quotes(quote_number, revision_number),
-      order_items(*, aluminium_profiles(profile_code, profile_name)),
-      order_billet_requirements(id, alloy, temper, billet_diameter_inch, required_weight_kg, billets_required, billets_allocated, billets_short, status, aluminium_profiles(profile_code, profile_name)),
-      foundry_billets(id, billet_code, source_type, alloy, billet_diameter_inch, status, production_job_id),
-      order_stage_history(id, stage, changed_at, remarks, changed_by),
-      order_dealer_stock_fulfillments(id, quote_item_id, order_item_id, finishing_type, unit_rate, fulfilled_weight_kg, fulfilled_length_m, notes, created_at, aluminium_profiles(profile_code, profile_name), profile_stock_batches(bundle_number, location, finish, length_m), quote_items(item_description)),
-      dispatches(id, dispatch_number, dispatch_date, total_weight_kg, delivery_status)
-    `)
+  const { data: orderRow, error } = await supabase
+    .from("orders_authorized")
+    .select("*")
     .eq("id", id)
     .eq("company_id", context.companyId)
     .single();
 
-  if (error || !order) {
+  if (error || !orderRow) {
     return (
       <div>
         <PageHeader title="Order not found" description="The requested order does not exist or you do not have permission." />
       </div>
     );
+  }
+
+  const [itemsResult, billetRequirementsResult, billetsResult, historyResult, fulfillmentsResult, dispatchesResult] = await Promise.all([
+    supabase.from("order_items_authorized").select("*").eq("company_id", context.companyId).eq("order_id", id),
+    supabase.from("order_billet_requirements").select("id, alloy, temper, billet_diameter_inch, required_weight_kg, billets_required, billets_allocated, billets_short, status, profile_id").eq("company_id", context.companyId).eq("order_id", id),
+    supabase.from("foundry_billets").select("id, billet_code, source_type, alloy, billet_diameter_inch, status, production_job_id").eq("company_id", context.companyId).eq("order_id", id),
+    supabase.from("order_stage_history").select("id, stage, changed_at, remarks, changed_by").eq("company_id", context.companyId).eq("order_id", id),
+    supabase.from("order_dealer_stock_fulfillments_authorized").select("id, quote_item_id, order_item_id, finishing_type, unit_rate, fulfilled_weight_kg, fulfilled_length_m, notes, created_at, profile_id, profile_stock_batch_id").eq("company_id", context.companyId).eq("order_id", id),
+    supabase.from("dispatches").select("id, dispatch_number, dispatch_date, total_weight_kg, delivery_status").eq("company_id", context.companyId).eq("order_id", id)
+  ]);
+  const fulfillmentQuoteItemIds = [...new Set((fulfillmentsResult.data ?? []).map((row: any) => row.quote_item_id).filter(Boolean))];
+  const fulfillmentQuoteItems = fulfillmentQuoteItemIds.length
+    ? await supabase.from("quote_items_authorized").select("id, item_description").eq("company_id", context.companyId).in("id", fulfillmentQuoteItemIds)
+    : { data: [], error: null };
+  const profileIds = [...new Set([
+    ...(itemsResult.data ?? []).map((row: any) => row.profile_id),
+    ...(billetRequirementsResult.data ?? []).map((row: any) => row.profile_id),
+    ...(fulfillmentsResult.data ?? []).map((row: any) => row.profile_id)
+  ].filter(Boolean))];
+  const profilesResult = profileIds.length
+    ? await supabase.from("aluminium_profiles").select("id, profile_code, profile_name").eq("company_id", context.companyId).in("id", profileIds)
+    : { data: [], error: null };
+  const profilesById = new Map((profilesResult.data ?? []).map((profile: any) => [profile.id, profile]));
+  const quoteItemsById = new Map((fulfillmentQuoteItems.data ?? []).map((item: any) => [item.id, item]));
+  const order = {
+    ...orderRow,
+    customers: { customer_name: orderRow.customer_name, company_name: orderRow.company_name },
+    quotes: orderRow.quote_id ? { quote_number: orderRow.quote_number, revision_number: orderRow.quote_revision_number } : null,
+    order_items: (itemsResult.data ?? []).map((row: any) => ({ ...row, aluminium_profiles: profilesById.get(row.profile_id) ?? null })),
+    order_billet_requirements: (billetRequirementsResult.data ?? []).map((row: any) => ({ ...row, aluminium_profiles: profilesById.get(row.profile_id) ?? null })),
+    foundry_billets: billetsResult.data ?? [],
+    order_stage_history: historyResult.data ?? [],
+    order_dealer_stock_fulfillments: (fulfillmentsResult.data ?? []).map((row: any) => ({
+      ...row,
+      aluminium_profiles: profilesById.get(row.profile_id) ?? null,
+      quote_items: quoteItemsById.get(row.quote_item_id) ?? null
+    })),
+    dispatches: dispatchesResult.data ?? []
+  };
+  const relatedQueryError = itemsResult.error ?? billetRequirementsResult.error ?? billetsResult.error ?? historyResult.error ?? fulfillmentsResult.error ?? dispatchesResult.error ?? fulfillmentQuoteItems.error ?? profilesResult.error;
+  if (relatedQueryError) {
+    return <div><PageHeader title="Order unavailable" description="Order details could not be loaded for this company." /></div>;
   }
 
   const history = order.order_stage_history || [];
@@ -50,7 +82,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const billetRequirements = order.order_billet_requirements || [];
   const allocatedBillets = order.foundry_billets || [];
   const items = order.order_items || [];
-  const canSeeValue = can(context.role, "read", "quotes");
+  const canSeeValue = ["owner", "admin", "sales_manager", "sales", "accounts", "dealer_admin", "dealer_staff"].includes(context.role);
   const lineIds = items.map((item: any) => item.id);
   let reportRows: { id: string; record_id: string; generated_at: string }[] = [];
   if (lineIds.length) {

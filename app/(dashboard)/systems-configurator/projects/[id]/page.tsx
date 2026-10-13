@@ -22,17 +22,17 @@ export default async function SystemProjectDetailPage({ params }: { params: Prom
   const context = await getSystemsConfiguratorContext("read");
   const supabase = await createClient();
   const [configurationResult, profileCutsResult, glassCutsResult, beadingCutsResult, hardwareResult, materialResult, templateResult, systemProfilesResult, hardwareItemsResult, glassItemsResult, finishOptionsResult] = await Promise.all([
-    supabase.from("system_configurations").select("*, system_series(series_code, series_name), customers(customer_name, company_name), glass_items(glass_code, glass_name), finish_options(finish_code, finish_name)").eq("id", id).eq("company_id", context.companyId).single(),
+    supabase.from("system_configurations_authorized").select("*, system_series(series_code, series_name), customers(customer_name, company_name), glass_items:glass_items_authorized(glass_code, glass_name), finish_options:finish_options_authorized(finish_code, finish_name)").eq("id", id).eq("company_id", context.companyId).single(),
     supabase.from("system_profile_cuts").select("id, profile_id, profile_code, profile_name, total_length_m, total_weight_kg").eq("company_id", context.companyId).eq("configuration_id", id),
-    supabase.from("system_glass_cuts").select("id, area_sqft, area_sqm").eq("company_id", context.companyId).eq("configuration_id", id),
+    supabase.from("system_glass_cuts_authorized").select("id, area_sqft, area_sqm").eq("company_id", context.companyId).eq("configuration_id", id),
     supabase.from("system_beading_cuts").select("id").eq("company_id", context.companyId).eq("configuration_id", id),
-    supabase.from("system_hardware_bom").select("id, quantity").eq("company_id", context.companyId).eq("configuration_id", id),
-    supabase.from("system_material_summary").select("id, material_type, amount").eq("company_id", context.companyId).eq("configuration_id", id),
-    supabase.from("system_templates").select("id, formula_json").eq("company_id", context.companyId).eq("is_active", true).limit(200),
+    supabase.from("system_hardware_bom_authorized").select("id, quantity").eq("company_id", context.companyId).eq("configuration_id", id),
+    supabase.from("system_material_summary_authorized").select("id, material_type, amount").eq("company_id", context.companyId).eq("configuration_id", id),
+    supabase.from("system_templates_authorized").select("id, formula_json").eq("company_id", context.companyId).eq("is_active", true).limit(200),
     supabase.from("system_profiles").select("id, series_id, profile_id, component_role, display_name, is_active, aluminium_profiles(profile_code, profile_name, section_weight_kg_per_m)").eq("company_id", context.companyId).eq("is_active", true),
-    supabase.from("hardware_items").select("id, item_code, item_name, hardware_category, default_rate, unit, is_active").eq("company_id", context.companyId).eq("is_active", true),
-    supabase.from("glass_items").select("id, glass_code, glass_name, rate_per_sqft, rate_per_sqm, is_active").eq("company_id", context.companyId).eq("is_active", true),
-    supabase.from("finish_options").select("id, finish_code, finish_name, rate, is_active").eq("company_id", context.companyId).eq("is_active", true)
+    supabase.from("hardware_items_authorized").select("id, item_code, item_name, hardware_category, default_rate, unit, is_active").eq("company_id", context.companyId).eq("is_active", true),
+    supabase.from("glass_items_authorized").select("id, glass_code, glass_name, rate_per_sqft, rate_per_sqm, is_active").eq("company_id", context.companyId).eq("is_active", true),
+    supabase.from("finish_options_authorized").select("id, finish_code, finish_name, rate, is_active").eq("company_id", context.companyId).eq("is_active", true)
   ]);
   const configuration = configurationResult.data;
   const error = configurationResult.error;
@@ -72,6 +72,8 @@ export default async function SystemProjectDetailPage({ params }: { params: Prom
     : { data: null, error: null };
   const handoffLines = linkedOrder.data ? await supabase.from("order_items").select("id, profile_id, item_description, quantity_kg, total_meters").eq("company_id", context.companyId).eq("order_id", linkedOrder.data.id) : { data: [], error: null };
   const editable = !configuration.order_id && !configuration.quote_id && !["in_production", "converted_to_order"].includes(configuration.status);
+  const canCalculateCosting = ["owner", "admin"].includes(context.role);
+  const canGenerateSystemQuote = context.role === "owner" || context.role === "admin";
   const productionReadiness = getProductionHandoffReadiness(configuration, productionJobGroups, productionJobs.length);
   const productionProgress = summarizeProductionProgress(productionJobs);
   const workflowStatus = getConfiguratorWorkflowStatus({ configurationStatus: configuration.status, quoteId: configuration.quote_id, dataReadiness, outputStatus, quoteReadiness, productionReadiness, productionProgress });
@@ -85,9 +87,9 @@ export default async function SystemProjectDetailPage({ params }: { params: Prom
             <PageHeader title={`${configuration.design_reference ?? "System"} · ${configuration.project_name ?? "Project"}`} description={`${configuration.customers?.customer_name ?? "Walk-in"} · ${labelize(configuration.system_type ?? "custom")} · Created ${createdDate}`} />
           </div>
           <div className="flex flex-wrap gap-2">
-          {editable && can(context.role, "update", "systems_configurator") ? <form action={calculateAction}><button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-orange px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange/20 transition hover:bg-orange/90"><Calculator className="h-4 w-4" /> Calculate</button></form> : null}
+          {editable && canCalculateCosting ? <form action={calculateAction}><button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-orange px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange/20 transition hover:bg-orange/90"><Calculator className="h-4 w-4" /> Calculate</button></form> : null}
           {editable && can(context.role, "update", "systems_configurator") ? <form action={optimizeAction}><button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90"><Calculator className="h-4 w-4 text-orange" /> Optimize</button></form> : null}
-          {configuration.quote_id ? <Link href={`/quotes/${configuration.quote_id}`} className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100">View Quote</Link> : can(context.role, "create", "quotes") ? <form action={quoteAction}><button type="submit" disabled={!quoteReadiness.ready} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-orange hover:text-orange disabled:cursor-not-allowed disabled:opacity-50">Generate Quote</button></form> : null}
+          {configuration.quote_id ? <Link href={`/quotes/${configuration.quote_id}`} className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100">View Quote</Link> : canGenerateSystemQuote ? <form action={quoteAction}><button type="submit" disabled={!quoteReadiness.ready} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-orange hover:text-orange disabled:cursor-not-allowed disabled:opacity-50">Generate Quote</button></form> : null}
           {can(context.role, "create", "production") ? <form action={handoffAction} className="space-y-2">
             {productionJobGroups.map((group) => {
               const lines = (handoffLines.data ?? []).filter((line: any) => line.profile_id === group.profileId);

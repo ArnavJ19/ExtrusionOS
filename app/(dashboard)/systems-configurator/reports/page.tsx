@@ -19,7 +19,7 @@ export default async function SystemReportsPage() {
   const supabase = await createClient();
   const canSeeInternal = can(context.role, "read", "financials") || ["owner", "admin", "accounts"].includes(context.role);
   const { data: configurations } = await supabase
-    .from("system_configurations")
+    .from("system_configurations_authorized")
     .select("id, configuration_number, project_name, design_reference, customer_id, status, quote_id, order_id, grand_total, system_type, width_mm, height_mm, quantity, created_at, system_series(series_code), customers(customer_name, company_name)")
     .eq("company_id", context.companyId)
     .order("created_at", { ascending: false })
@@ -31,9 +31,9 @@ export default async function SystemReportsPage() {
   const [profileCuts, glassCuts, beadingCuts, hardwareBom, optimizationRuns, productionJobs] = ids.length
     ? await Promise.all([
         supabase.from("system_profile_cuts").select("configuration_id, profile_id, total_length_m, total_weight_kg").eq("company_id", context.companyId).in("configuration_id", ids),
-        supabase.from("system_glass_cuts").select("configuration_id").eq("company_id", context.companyId).in("configuration_id", ids),
+        supabase.from("system_glass_cuts_authorized").select("configuration_id").eq("company_id", context.companyId).in("configuration_id", ids),
         supabase.from("system_beading_cuts").select("configuration_id").eq("company_id", context.companyId).in("configuration_id", ids),
-        supabase.from("system_hardware_bom").select("configuration_id").eq("company_id", context.companyId).in("configuration_id", ids),
+        supabase.from("system_hardware_bom_authorized").select("configuration_id").eq("company_id", context.companyId).in("configuration_id", ids),
         supabase.from("profile_optimization_runs").select("configuration_id").eq("company_id", context.companyId).in("configuration_id", ids),
         orderIds.length ? supabase.from("production_jobs").select("order_id, status, planned_quantity_kg, actual_quantity_kg, planned_meters, actual_meters, remarks").eq("company_id", context.companyId).in("order_id", orderIds) : Promise.resolve({ data: [] })
       ])

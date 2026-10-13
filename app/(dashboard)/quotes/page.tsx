@@ -3,6 +3,7 @@ import { QuotesDashboard } from "@/components/modules/dashboards/quotes-dashboar
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 import { redirect } from "next/navigation";
 
 export default async function QuotesPage() {
@@ -17,13 +18,24 @@ export default async function QuotesPage() {
   const today = now.toISOString().slice(0, 10);
 
   const [allQuotes, recentQuotes, monthlyQuotes, expiringQuotes, pendingApproval, salesQuery] = await Promise.all([
-    supabase.from("quotes").select("id, status, grand_total", { count: "exact" }).eq("company_id", cid),
-    supabase.from("quotes").select("id, quote_number, grand_total, quote_date, valid_until, status, customers(customer_name, company_name)").eq("company_id", cid).order("quote_date", { ascending: false }).limit(5),
-    supabase.from("quotes").select("id, grand_total", { count: "exact" }).eq("company_id", cid).gte("quote_date", monthStart),
-    supabase.from("quotes").select("id", { count: "exact", head: true }).eq("company_id", cid).in("status", ["approved_for_sending", "sent", "customer_approved"]).lte("valid_until", sevenDays).gte("valid_until", today),
-    supabase.from("quotes").select("id", { count: "exact", head: true }).eq("company_id", cid).in("status", ["internal_review", "approved_for_sending"]),
-    supabase.from("orders").select("order_value, order_date").eq("company_id", cid).not("quote_id", "is", null).neq("current_stage", "cancelled"),
+    supabase.from("quotes_authorized").select("id, status, grand_total", { count: "exact" }).eq("company_id", cid),
+    supabase.from("quotes_authorized").select("id, customer_id, quote_number, grand_total, quote_date, valid_until, status").eq("company_id", cid).order("quote_date", { ascending: false }).limit(5),
+    supabase.from("quotes_authorized").select("id, grand_total", { count: "exact" }).eq("company_id", cid).gte("quote_date", monthStart),
+    supabase.from("quotes_authorized").select("id", { count: "exact", head: true }).eq("company_id", cid).in("status", ["approved_for_sending", "sent", "customer_approved"]).lte("valid_until", sevenDays).gte("valid_until", today),
+    supabase.from("quotes_authorized").select("id", { count: "exact", head: true }).eq("company_id", cid).in("status", ["internal_review", "approved_for_sending"]),
+    supabase.from("orders_authorized").select("order_value, order_date").eq("company_id", cid).not("quote_id", "is", null).neq("current_stage", "cancelled"),
   ]);
+
+  const recentCustomerIds = [...new Set((recentQuotes.data ?? []).map((quote: any) => quote.customer_id).filter(Boolean))];
+  const customersResult = recentCustomerIds.length
+    ? await supabase.from("customers").select("id, customer_name, company_name").eq("company_id", cid).in("id", recentCustomerIds)
+    : { data: [], error: null };
+  const customerById = new Map((customersResult.data ?? []).map((customer: any) => [customer.id, customer]));
+  const recentQuoteRows = (recentQuotes.data ?? []).map((quote: any) => ({
+    ...quote,
+    customers: customerById.get(quote.customer_id) ?? null
+  }));
+  const queryErrors = [allQuotes.error, recentQuotes.error, monthlyQuotes.error, expiringQuotes.error, pendingApproval.error, salesQuery.error, customersResult.error].filter(Boolean).map((error) => error?.message ?? "Quote data could not be loaded.");
 
   const rows = allQuotes.data ?? [];
   const activeStatuses = ["draft", "internal_review", "approved_for_sending", "sent", "customer_approved"];
@@ -49,8 +61,10 @@ export default async function QuotesPage() {
   return (
     <div className="space-y-2">
       <ModuleOverviewClient moduleKey="quotes" context={context} canCreate={can(context.role, "create", "quotes")} canUpdate={can(context.role, "update", "quotes")} hideHeaderActions={true} hideMetricsAndCharts={true}>
+        <QueryErrorNotice messages={queryErrors} />
         <QuotesDashboard
           canCreate={can(context.role, "create", "quotes")}
+          showQuoteValues={["owner", "admin", "sales_manager", "sales", "accounts", "dealer_admin", "dealer_staff"].includes(context.role)}
           totalPipelineValue={totalPipelineValue}
           activeQuoteCount={activeQuotes.length}
           convertedCount={convertedQuotes.length}
@@ -58,7 +72,7 @@ export default async function QuotesPage() {
           expiringCount={expiringQuotes.count ?? 0}
           pendingApprovalCount={pendingApproval.count ?? 0}
           statusBreakdown={statusBreakdown}
-          recentQuotes={(recentQuotes.data ?? []) as any}
+          recentQuotes={recentQuoteRows as any}
           monthlyCount={monthlyQuotes.count ?? 0}
           salesHistory={salesHistory}
           allQuotes={allQuotesData}

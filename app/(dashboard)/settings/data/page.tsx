@@ -16,8 +16,8 @@ export default async function DataCenterPage() {
     supabase.from("customers").select("id, customer_name, company_name, deleted_at").eq("company_id", context.companyId).not("deleted_at", "is", null).order("deleted_at", { ascending: false }).limit(30),
     supabase.from("aluminium_profiles").select("id, profile_code, profile_name, deleted_at").eq("company_id", context.companyId).not("deleted_at", "is", null).order("deleted_at", { ascending: false }).limit(30),
     supabase.from("dies").select("id, die_number, deleted_at").eq("company_id", context.companyId).not("deleted_at", "is", null).order("deleted_at", { ascending: false }).limit(30),
-    supabase.from("quotes").select("id, quote_number, deleted_at").eq("company_id", context.companyId).not("deleted_at", "is", null).order("deleted_at", { ascending: false }).limit(30),
-    supabase.from("orders").select("id, order_number, deleted_at").eq("company_id", context.companyId).not("deleted_at", "is", null).order("deleted_at", { ascending: false }).limit(30),
+    supabase.from("quotes_authorized").select("id, quote_number, deleted_at").eq("company_id", context.companyId).not("deleted_at", "is", null).order("deleted_at", { ascending: false }).limit(30),
+    supabase.from("orders_authorized").select("id, order_number, deleted_at").eq("company_id", context.companyId).not("deleted_at", "is", null).order("deleted_at", { ascending: false }).limit(30),
     supabase.from("invoices").select("id, invoice_number, deleted_at").eq("company_id", context.companyId).not("deleted_at", "is", null).order("deleted_at", { ascending: false }).limit(30),
     supabase.from("documents").select("id, file_name, document_type, deleted_at").eq("company_id", context.companyId).not("deleted_at", "is", null).order("deleted_at", { ascending: false }).limit(30)
   ]);

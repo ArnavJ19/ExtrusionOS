@@ -40,7 +40,8 @@ test("dashboard defaults operational roles to non-commercial operations views", 
 
   assert.equal(getDashboardExperience("owner").initialView, "owner");
   assert.equal(getDashboardExperience("sales").initialView, "sales");
-  assert.match(dashboardPage, /commercial \? supabase\.from\("quotes"\)/);
+  assert.match(dashboardPage, /rpc\("get_dashboard_snapshot"/);
+  assert.doesNotMatch(dashboardPage, /supabase\.from\("(?:orders|quotes)"\)/);
   assert.match(dashboardPage, /getBusinessDateBoundaries\(now\)/);
   assert.match(dashboardPage, /operationalResources=\{experience\.operationalResources\}/);
   assert.match(dashboardClient, /activeTab === "operations"/);

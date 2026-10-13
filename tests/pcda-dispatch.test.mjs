@@ -128,12 +128,15 @@ describe("PCDA dispatch handoff", () => {
       profile_stock_batch_id: "batch-17",
       source_kind: "reservation",
       available_weight_kg: 90,
+      available_length_m: 120,
+      available_pieces: 18,
       actual_quantity_kg: 90,
       quantity_pieces: 18
     }], "company-1", [{
       bundle_number: "SCAN-B17-004",
       source_line_id: "reservation-physical",
       number_of_pieces: 7,
+      net_length_m: 48.25,
       gross_weight_kg: 41.625,
       tare_weight_kg: 1.125
     }]);
@@ -156,15 +159,18 @@ describe("PCDA dispatch handoff", () => {
       profile_id: "profile-1",
       source_kind: "production",
       available_weight_kg: 50,
+      available_length_m: 50,
+      available_pieces: 10,
       actual_quantity_kg: 50,
+      actual_meters: 50,
       actual_pieces: 10
     }];
     assert.throws(() => buildVerifiedPackingListItems(source, "company-1", [
-      { bundle_number: "B-01", source_line_id: "job-exact", number_of_pieces: 5, gross_weight_kg: 26, tare_weight_kg: 1 },
-      { bundle_number: "b-01", source_line_id: "job-exact", number_of_pieces: 5, gross_weight_kg: 26, tare_weight_kg: 1 }
+      { bundle_number: "B-01", source_line_id: "job-exact", number_of_pieces: 5, net_length_m: 25, gross_weight_kg: 26, tare_weight_kg: 1 },
+      { bundle_number: "b-01", source_line_id: "job-exact", number_of_pieces: 5, net_length_m: 25, gross_weight_kg: 26, tare_weight_kg: 1 }
     ]), /entered more than once/);
     assert.throws(() => buildVerifiedPackingListItems(source, "company-1", [
-      { bundle_number: "B-OVER", source_line_id: "job-exact", number_of_pieces: 11, gross_weight_kg: 52, tare_weight_kg: 1 }
+      { bundle_number: "B-OVER", source_line_id: "job-exact", number_of_pieces: 11, net_length_m: 55, gross_weight_kg: 52, tare_weight_kg: 1 }
     ]), /only 50\.000 kg is available/);
   });
 });

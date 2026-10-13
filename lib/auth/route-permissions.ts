@@ -85,7 +85,7 @@ const roleRules: RoleRule[] = [
   { prefix: "/profiles", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "inventory_manager", "quality", "viewer"] },
   { prefix: "/dies", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "quality", "viewer"] },
   { prefix: "/quotes", roles: ["owner", "admin", "sales_manager", "sales", "accounts", "viewer"] },
-  { prefix: "/systems-configurator", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "viewer"] },
+  { prefix: "/systems-configurator", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "inventory_manager", "accounts", "viewer"] },
   { prefix: "/machines", roles: ["owner", "admin", "production_manager", "production", "viewer"] },
   { prefix: "/tasks", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer", "dealer_admin", "dealer_staff"] },
   { prefix: "/orders", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer"] },

@@ -10,6 +10,7 @@ export type VerifiedDispatchBundleInput = {
   bundle_number: string;
   source_line_id: string;
   number_of_pieces: number;
+  net_length_m: number;
   gross_weight_kg: number;
   tare_weight_kg: number;
 };
@@ -197,6 +198,7 @@ export function buildVerifiedPackingListItems(
   const bundleNumbers = new Set<string>();
   const usedWeightBySource = new Map<string, number>();
   const usedPiecesBySource = new Map<string, number>();
+  const usedLengthBySource = new Map<string, number>();
 
   const items = bundles.map((bundle) => {
     const bundleNumber = bundle.bundle_number.trim();
@@ -211,17 +213,27 @@ export function buildVerifiedPackingListItems(
     const grossWeightKg = Number(Number(bundle.gross_weight_kg).toFixed(3));
     const tareWeightKg = Number(Number(bundle.tare_weight_kg).toFixed(3));
     const numberOfPieces = Number(bundle.number_of_pieces);
+    const netLengthM = Number(Number(bundle.net_length_m).toFixed(3));
     if (!Number.isFinite(grossWeightKg) || !Number.isFinite(tareWeightKg) || grossWeightKg <= tareWeightKg || tareWeightKg < 0) {
       throw new Error(`Bundle ${bundleNumber} gross weight must be greater than its non-negative tare weight.`);
     }
     if (!Number.isInteger(numberOfPieces) || numberOfPieces <= 0) {
       throw new Error(`Bundle ${bundleNumber} needs its actual positive piece count.`);
     }
+    if (!Number.isFinite(netLengthM) || netLengthM <= 0) {
+      throw new Error(`Bundle ${bundleNumber} needs its actual positive length in metres.`);
+    }
 
     const netWeightKg = Number((grossWeightKg - tareWeightKg).toFixed(3));
+    const sourcePiecesRemaining = Number(line.available_pieces ?? sourcePieceCount(line));
+    const sourceLengthRemaining = Number(line.available_length_m ?? line.actual_meters ?? line.fulfilled_length_m ?? line.reserved_length_m ?? 0);
+    if (!Number.isInteger(sourcePiecesRemaining) || sourcePiecesRemaining <= 0 || !Number.isFinite(sourceLengthRemaining) || sourceLengthRemaining <= 0) {
+      throw new Error(`Source ${line.job_number ?? line.id} lacks exact remaining pieces and metres. Repair its stock provenance before dispatch.`);
+    }
     const sourceId = String(line.id);
     usedWeightBySource.set(sourceId, Number(((usedWeightBySource.get(sourceId) ?? 0) + netWeightKg).toFixed(3)));
     usedPiecesBySource.set(sourceId, (usedPiecesBySource.get(sourceId) ?? 0) + numberOfPieces);
+    usedLengthBySource.set(sourceId, Number(((usedLengthBySource.get(sourceId) ?? 0) + netLengthM).toFixed(3)));
 
     const sourceKind = line.source_kind === "dealer_stock"
       ? "dealer stock fulfillment"
@@ -243,6 +255,7 @@ export function buildVerifiedPackingListItems(
       profile_stock_batch_id: line.profile_stock_batch_id ?? null,
       bundle_number: bundleNumber,
       number_of_pieces: numberOfPieces,
+      net_length_m: netLengthM,
       gross_weight_kg: grossWeightKg,
       tare_weight_kg: tareWeightKg,
       net_weight_kg: netWeightKg,
@@ -258,8 +271,16 @@ export function buildVerifiedPackingListItems(
     }
     const availablePieces = Number(line.available_pieces ?? sourcePieceCount(line));
     const usedPieces = usedPiecesBySource.get(sourceId) ?? 0;
-    if (availablePieces > 0 && usedPieces > availablePieces) {
+    if (!Number.isInteger(availablePieces) || availablePieces <= 0) {
+      throw new Error(`Source ${line.job_number ?? sourceId} lacks an exact remaining piece count.`);
+    }
+    if (usedPieces > availablePieces) {
       throw new Error(`Selected bundles use ${usedPieces} pieces from ${line.job_number ?? sourceId}, but only ${availablePieces} are available.`);
+    }
+    const availableLengthM = Number(line.available_length_m ?? line.actual_meters ?? line.fulfilled_length_m ?? line.reserved_length_m ?? 0);
+    const usedLengthM = usedLengthBySource.get(sourceId) ?? 0;
+    if (usedLengthM > availableLengthM + 0.001) {
+      throw new Error(`Selected bundles use ${usedLengthM.toFixed(3)} m from ${line.job_number ?? sourceId}, but only ${availableLengthM.toFixed(3)} m is available.`);
     }
   }
 

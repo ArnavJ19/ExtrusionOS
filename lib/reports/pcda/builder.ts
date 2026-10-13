@@ -530,7 +530,7 @@ async function buildProductionBatchReportModel(
   ctx: BuildContext
 ): Promise<ReportModel> {
   const { data: job } = await supabase
-    .from("production_jobs")
+    .from("production_jobs_authorized")
     .select("*")
     .eq("id", recordId)
     .eq("company_id", companyId)
@@ -793,7 +793,7 @@ async function buildPackingReportModel(
   ctx: BuildContext
 ): Promise<ReportModel> {
   const { data: pack } = await supabase
-    .from("packing_list_items")
+    .from("packing_list_items_authorized")
     .select("*")
     .eq("id", recordId)
     .eq("company_id", companyId)

@@ -27,7 +27,7 @@ test("invoice totals are derived from the selected dispatch lines inside one ato
   assert.match(migration, /invoices_company_dispatch_active_unique/);
   assert.match(invoiceActions, /dispatch_id: z\.string\(\)\.uuid\("Select the packed dispatch to invoice"\)/);
   assert.match(invoiceActions, /rpc\("save_invoice_atomic"/);
-  assert.match(invoiceActions, /from\("packing_list_items"\)/);
+  assert.match(invoiceActions, /from\("packing_list_items_authorized"\)/);
   assert.doesNotMatch(invoiceActions, /subtotal\s*:/);
   assert.doesNotMatch(invoiceActions, /grand_total\s*:/);
   assert.match(invoiceForm, /Full-order proformas are intentionally kept out of receivables/);
@@ -93,6 +93,6 @@ test("owner analytics labels match the business facts they aggregate", () => {
   assert.match(analyticsPage, /Order Intake MTD/);
   assert.doesNotMatch(analyticsPage, /Booked Revenue MTD/);
   assert.match(analyticsPage, /QC decision pass rate/);
-  assert.match(analyticsPage, /Actual counts jobs completed this month/);
+  assert.match(analyticsPage, /Actual counts jobs completed through that date/);
   assert.doesNotMatch(analyticsPage, /completion time is not captured/);
 });

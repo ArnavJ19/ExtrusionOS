@@ -135,7 +135,7 @@ export function CommandCenterClient({ metrics, delayedOrders, overdueInvoices, l
                     <div key={o.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                       <div className="min-w-0">
                         <Link href={`/orders/${o.id}`} className="font-black text-slate-950 hover:text-orange hover:underline">{o.order_number}</Link>
-                        <p className="mt-0.5 truncate text-xs text-slate-500">{o.customers?.company_name || o.customers?.customer_name}</p>
+                        <p className="mt-0.5 truncate text-xs text-slate-500">{o.company_name || o.customer_name}</p>
                       </div>
                       <div className="text-right shrink-0">
                         <Badge value={o.current_stage} />
@@ -187,7 +187,7 @@ export function CommandCenterClient({ metrics, delayedOrders, overdueInvoices, l
                       <div key={o.id} className="flex items-center justify-between rounded-xl border border-red-100 bg-white p-3">
                         <div>
                           <Link href={`/orders/${o.id}`} className="font-bold text-slate-900 hover:underline">{o.order_number}</Link>
-                          <p className="text-xs text-slate-500">{o.customers?.company_name || o.customers?.customer_name}</p>
+                          <p className="text-xs text-slate-500">{o.company_name || o.customer_name}</p>
                         </div>
                         <p className="text-xs font-bold text-red-600">Due {formatDate(o.expected_dispatch_date)}</p>
                       </div>

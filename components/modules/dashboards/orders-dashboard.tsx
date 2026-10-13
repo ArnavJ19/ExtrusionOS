@@ -12,6 +12,7 @@ import { formatCurrency, formatDate, formatWeight } from "@/lib/utils/format";
 type OrderRow = { id: string; order_number: string; order_value: number; order_date: string; expected_dispatch_date?: string; current_stage: string; priority: string; manufacturing_weight_kg?: number; dealer_fulfilled_weight_kg?: number; customers?: { customer_name?: string; company_name?: string } };
 
 type Props = {
+  showOrderValues: boolean;
   totalOrderValue: number;
   activeOrderCount: number;
   delayedCount: number;
@@ -37,6 +38,7 @@ const stageColors: Record<string, string> = {
 };
 
 export function OrdersDashboard({
+  showOrderValues,
   totalOrderValue,
   activeOrderCount,
   delayedCount,
@@ -82,7 +84,7 @@ export function OrdersDashboard({
     <div className="space-y-6 mb-8">
       {/* Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={CircleDollarSign} label="Booked Revenue" rawValue={totalOrderValue} isCurrency change={`${monthlyCount} this month`} comparison="Total active order value" tone="green" />
+        {showOrderValues ? <StatCard icon={CircleDollarSign} label="Booked Revenue" rawValue={totalOrderValue} isCurrency change={`${monthlyCount} this month`} comparison="Total active order value" tone="green" /> : null}
         <StatCard icon={ShoppingCart} label="Active Orders" rawValue={activeOrderCount} change="Live" comparison="Orders in pipeline" tone="blue" />
         <StatCard icon={Clock} label="Avg Days to Dispatch" rawValue={avgDaysToDispatch} change="days" comparison="Average from order to dispatch" tone="purple" />
         <StatCard icon={AlertTriangle} label="Delayed Orders" rawValue={delayedCount} change={delayedCount > 0 ? "Attention" : "Clear"} comparison="Past expected dispatch date" tone={delayedCount > 0 ? "rose" : "green"} />
@@ -90,7 +92,7 @@ export function OrdersDashboard({
 
       {/* Main Charts Row */}
       <div className="grid gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2">
+        {showOrderValues ? <div className="xl:col-span-2">
           <TogglableBarChart
             data={orderTrend}
             title="Revenue Booking Trend"
@@ -99,7 +101,7 @@ export function OrdersDashboard({
             color="#4338ca"
             hoverColor="#4f46e5"
           />
-        </div>
+        </div> : null}
 
         {/* Priority Mix */}
         <CollapsibleCard>
@@ -156,7 +158,7 @@ export function OrdersDashboard({
         </CollapsibleCard>
 
         {/* Order Value Distribution */}
-        <CollapsibleCard>
+        {showOrderValues ? <CollapsibleCard>
           <CardHeader>
             <div className="flex items-center gap-2">
               <BarChart3 className="h-4.5 w-4.5 text-slate-500" />
@@ -179,7 +181,7 @@ export function OrdersDashboard({
               ))}
             </div>
           </CardContent>
-        </CollapsibleCard>
+        </CollapsibleCard> : null}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_1.5fr]">
@@ -209,7 +211,7 @@ export function OrdersDashboard({
                   </div>
                   <div className="shrink-0 text-right">
                     <Badge value={order.current_stage} />
-                    <p className="mt-2 text-sm font-bold text-neutral-950">{formatCurrency(order.order_value)}</p>
+                    {showOrderValues ? <p className="mt-2 text-sm font-bold text-neutral-950">{formatCurrency(order.order_value)}</p> : null}
                   </div>
                 </Link>
               )) : <div className="empty-mini">No recent orders.</div>}

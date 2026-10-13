@@ -86,6 +86,8 @@ export function calculateSystemCosting(input: CostingEngineInput): CostingSummar
   const subtotalBeforeGst = Math.max(internalCost + marginAmount - input.discountAmount, 0);
   const gstAmount = subtotalBeforeGst * (input.gstPercent / 100);
   const grandTotal = subtotalBeforeGst + gstAmount;
+  const realizedProfitAmount = roundMoney(subtotalBeforeGst - internalCost);
+  const costMarkupPercent = roundMoney(internalCost > 0 ? (realizedProfitAmount / internalCost) * 100 : 0);
   const openingAreaSqm = (input.openingWidthMm * input.openingHeightMm * input.quantity) / 1_000_000;
   const openingAreaSqft = openingAreaSqm * 10.7639;
 
@@ -108,6 +110,9 @@ export function calculateSystemCosting(input: CostingEngineInput): CostingSummar
     pricePerSqft: roundMoney(openingAreaSqft > 0 ? grandTotal / openingAreaSqft : 0),
     pricePerSqm: roundMoney(openingAreaSqm > 0 ? grandTotal / openingAreaSqm : 0),
     pricePerUnit: roundMoney(input.quantity > 0 ? grandTotal / input.quantity : 0),
-    profitPercent: roundMoney(internalCost > 0 ? (marginAmount / internalCost) * 100 : 0)
+    realizedProfitAmount,
+    costMarkupPercent,
+    salesMarginPercent: roundMoney(subtotalBeforeGst > 0 ? (realizedProfitAmount / subtotalBeforeGst) * 100 : 0),
+    profitPercent: costMarkupPercent
   };
 }

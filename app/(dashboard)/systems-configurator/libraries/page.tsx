@@ -12,9 +12,9 @@ export default async function SystemLibrariesPage() {
     supabase.from("system_series").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(50),
     supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m").eq("company_id", context.companyId).eq("is_active", true).order("profile_code", { ascending: true }).limit(200),
     supabase.from("system_profiles").select("*, system_series(series_code, series_name), aluminium_profiles(profile_code, profile_name, section_weight_kg_per_m)").eq("company_id", context.companyId).order("sort_order", { ascending: true }).limit(100),
-    supabase.from("hardware_items").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(50),
-    supabase.from("glass_items").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(50),
-    supabase.from("finish_options").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(50),
+    supabase.from("hardware_items_authorized").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(50),
+    supabase.from("glass_items_authorized").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(50),
+    supabase.from("finish_options_authorized").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(50),
     supabase.from("vendors").select("id, vendor_name").eq("company_id", context.companyId).eq("is_active", true).order("vendor_name", { ascending: true }).limit(100)
   ]);
 

@@ -34,6 +34,14 @@ function usedWeightBySource(rows: Record<string, any>[]) {
   }, {});
 }
 
+function usedAmountBySource(rows: Record<string, any>[], field: "number_of_pieces" | "net_length_m") {
+  return rows.reduce<Record<string, number>>((totals, row) => {
+    if (!row.source_line_id) return totals;
+    totals[row.source_line_id] = (totals[row.source_line_id] ?? 0) + Number(row[field] ?? 0);
+    return totals;
+  }, {});
+}
+
 async function loadDispatchSourceLines(
   supabase: any,
   companyId: string,
@@ -43,22 +51,22 @@ async function loadDispatchSourceLines(
 ) {
   const [productionResult, fulfillmentResult, reservationResult, featureResult, dispatchResult] = await Promise.all([
     supabase
-      .from("production_jobs")
+      .from("production_jobs_authorized")
       .select("*")
       .eq("company_id", companyId)
       .eq("order_id", orderId)
       .eq("status", "completed")
       .order("updated_at", { ascending: true }),
     supabase
-      .from("order_dealer_stock_fulfillments")
-      .select("id, order_id, profile_id, profile_stock_batch_id, quote_item_id, order_item_id, finishing_type, unit_rate, fulfilled_weight_kg, fulfilled_pieces, fulfilled_length_m, credited_at, created_at")
+      .from("order_dealer_stock_fulfillments_authorized")
+      .select("id, order_id, profile_id, profile_stock_batch_id, quote_item_id, order_item_id, finishing_type, fulfilled_weight_kg, fulfilled_pieces, fulfilled_length_m, credited_at, created_at")
       .eq("company_id", companyId)
       .eq("order_id", orderId)
       .is("credited_at", null)
       .order("created_at", { ascending: true }),
     supabase
       .from("profile_stock_reservations")
-      .select("id, order_id, profile_id, profile_stock_batch_id, reserved_weight_kg, reserved_length_m, status, created_at, profile_stock_consumptions(consumed_weight_kg)")
+      .select("id, order_id, profile_id, profile_stock_batch_id, reserved_weight_kg, reserved_length_m, reserved_pieces, status, created_at, profile_stock_consumptions(consumed_weight_kg, consumed_length_m, consumed_pieces)")
       .eq("company_id", companyId)
       .eq("order_id", orderId)
       .eq("status", "active")
@@ -96,7 +104,7 @@ async function loadDispatchSourceLines(
       ? supabase.from("packaging_jobs").select("id, production_job_id, status").eq("company_id", companyId).eq("order_id", orderId).in("production_job_id", jobIds)
       : Promise.resolve({ data: [], error: null }),
     dispatchIds.length
-      ? supabase.from("packing_list_items").select("source_line_id, net_weight_kg").eq("company_id", companyId).in("dispatch_id", dispatchIds)
+      ? supabase.from("packing_list_items").select("source_line_id, net_weight_kg, number_of_pieces, net_length_m").eq("company_id", companyId).in("dispatch_id", dispatchIds)
       : Promise.resolve({ data: [], error: null })
   ]);
   for (const result of [qualityResult, finishingResult, packagingResult, usedPackingResult]) {
@@ -115,6 +123,8 @@ async function loadDispatchSourceLines(
   if (materialsResult.error) throw materialsResult.error;
 
   const usedBySource = usedWeightBySource(usedPackingResult.data ?? []);
+  const usedPiecesBySource = usedAmountBySource(usedPackingResult.data ?? [], "number_of_pieces");
+  const usedLengthBySource = usedAmountBySource(usedPackingResult.data ?? [], "net_length_m");
   const qualityRequired = featureResult.data?.is_enabled ?? true;
   const blockers: string[] = [];
   const reservationSources = (reservationResult.data ?? []).flatMap((reservation: any) => {
@@ -122,6 +132,8 @@ async function loadDispatchSourceLines(
       (sum: number, row: any) => sum + Number(row.consumed_weight_kg ?? 0),
       0
     );
+    const consumedLength = (reservation.profile_stock_consumptions ?? []).reduce((sum: number, row: any) => sum + Number(row.consumed_length_m ?? 0), 0);
+    const consumedPieces = (reservation.profile_stock_consumptions ?? []).reduce((sum: number, row: any) => sum + Number(row.consumed_pieces ?? 0), 0);
     const availableWeight = Math.max(Number(reservation.reserved_weight_kg ?? 0) - consumedWeight, 0);
     return availableWeight > 0 && reservation.profile_id && reservation.profile_stock_batch_id
       ? [{
@@ -129,6 +141,8 @@ async function loadDispatchSourceLines(
         reservation_id: reservation.id,
         source_kind: "reservation",
         available_weight_kg: availableWeight,
+        available_length_m: Math.max(Number(reservation.reserved_length_m ?? 0) - consumedLength, 0),
+        available_pieces: Math.max(Number(reservation.reserved_pieces ?? 0) - consumedPieces, 0),
         actual_quantity_kg: Number(reservation.reserved_weight_kg ?? 0)
       }]
       : [];
@@ -139,7 +153,13 @@ async function loadDispatchSourceLines(
       0
     );
     return availableWeight > 0 && fulfillment.profile_id
-      ? [{ ...fulfillment, source_kind: "dealer_stock", available_weight_kg: availableWeight }]
+      ? [{
+        ...fulfillment,
+        source_kind: "dealer_stock",
+        available_weight_kg: availableWeight,
+        available_pieces: Math.max(Number(fulfillment.fulfilled_pieces ?? 0) - Number(usedPiecesBySource[fulfillment.id] ?? 0), 0),
+        available_length_m: Math.max(Number(fulfillment.fulfilled_length_m ?? 0) - Number(usedLengthBySource[fulfillment.id] ?? 0), 0)
+      }]
       : [];
   });
   const productionSources = jobs.flatMap((job: any) => {
@@ -193,7 +213,13 @@ async function loadDispatchSourceLines(
       0
     );
     return availableWeight > 0
-      ? [{ ...job, source_kind: "production", available_weight_kg: availableWeight }]
+      ? [{
+        ...job,
+        source_kind: "production",
+        available_weight_kg: availableWeight,
+        available_pieces: Math.max(Number(job.actual_pieces ?? 0) - Number(usedPiecesBySource[job.id] ?? 0), 0),
+        available_length_m: Math.max(Number(job.actual_meters ?? 0) - Number(usedLengthBySource[job.id] ?? 0), 0)
+      }]
       : [];
   });
 
@@ -238,11 +264,8 @@ export async function getDispatchSourcesAction(orderId: string, editingId?: stri
         const profile = profiles.get(line.profile_id) as any;
         const batch = batches.get(line.profile_stock_batch_id) as any;
         const availableWeightKg = Number(line.available_weight_kg ?? 0);
-        const sourcePieces = Number(line.actual_pieces ?? line.fulfilled_pieces ?? batch?.quantity_pieces ?? 0);
-        const sourceTotalWeight = Number(line.actual_quantity_kg ?? line.fulfilled_weight_kg ?? batch?.total_weight_kg ?? availableWeightKg);
-        const availablePieces = sourcePieces > 0 && sourceTotalWeight > 0
-          ? Math.max(1, Math.floor(sourcePieces * availableWeightKg / sourceTotalWeight))
-          : 0;
+        const availablePieces = Number(line.available_pieces ?? line.actual_pieces ?? line.fulfilled_pieces ?? batch?.quantity_pieces ?? 0);
+        const availableLengthM = Number(line.available_length_m ?? line.actual_meters ?? line.fulfilled_length_m ?? line.reserved_length_m ?? 0);
         return {
           id: String(line.id),
           sourceKind: String(line.source_kind ?? "production"),
@@ -252,7 +275,8 @@ export async function getDispatchSourcesAction(orderId: string, editingId?: stri
           stockBatchId: line.profile_stock_batch_id ? String(line.profile_stock_batch_id) : null,
           stockBatchLabel: batch?.bundle_number ? `${batch.bundle_number}${batch.location ? ` - ${batch.location}` : ""}` : null,
           availableWeightKg,
-          availablePieces
+          availablePieces,
+          availableLengthM
         };
       })
     };

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   completeProductionJobAction,
+  correctCompletedProductionOutputAction,
   updateProductionJobStatusAction
 } from "@/lib/actions/production";
 import { formatWeight } from "@/lib/utils/format";
@@ -33,10 +34,12 @@ function routeLabel(finishingType: string | null) {
 
 export function ProductionOutputWorkflow({
   job,
-  canUpdate
+  canUpdate,
+  canCorrect = false
 }: {
   job: ProductionFloorJob;
   canUpdate: boolean;
+  canCorrect?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -45,6 +48,10 @@ export function ProductionOutputWorkflow({
   const [actualMeters, setActualMeters] = useState("");
   const [scrapWeight, setScrapWeight] = useState("0");
   const [remarks, setRemarks] = useState("");
+  const [correctedWeight, setCorrectedWeight] = useState(String(job.actual_quantity_kg ?? ""));
+  const [correctedPieces, setCorrectedPieces] = useState(String(job.actual_pieces ?? ""));
+  const [correctedMeters, setCorrectedMeters] = useState(String(job.actual_meters ?? ""));
+  const [correctionReason, setCorrectionReason] = useState("");
 
   const derivedMeters = Number(actualPieces || 0) * Number(job.length_per_piece_m || 0);
   const isTerminal = ["completed", "cancelled"].includes(job.status);
@@ -89,6 +96,22 @@ export function ProductionOutputWorkflow({
     });
   }
 
+  function correctOutput() {
+    if (!window.confirm("Save this audited correction to completed production output? Downstream work must still be untouched.")) return;
+    startTransition(async () => {
+      const result = await correctCompletedProductionOutputAction({
+        job_id: job.id,
+        actual_weight_kg: Number(correctedWeight),
+        actual_pieces: Number(correctedPieces || 0),
+        actual_meters: Number(correctedMeters || 0),
+        reason: correctionReason
+      });
+      if (!result.success) { toast.error(result.error); return; }
+      toast.success("Output correction recorded and pending handoffs reconciled.");
+      router.refresh();
+    });
+  }
+
   return (
     <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -123,6 +146,19 @@ export function ProductionOutputWorkflow({
               <span>Actual weight: <b className="text-slate-950">{formatWeight(job.actual_quantity_kg ?? 0)}</b></span>
               <span>Actual pieces: <b className="text-slate-950">{job.actual_pieces ?? 0}</b></span>
               <span>Actual metres: <b className="text-slate-950">{Number(job.actual_meters ?? 0).toFixed(2)} m</b></span>
+            </div>
+          ) : null}
+          {job.status === "completed" && canCorrect ? (
+            <div className="mt-4 border-t border-slate-200 pt-4">
+              <p className="text-sm font-bold text-slate-800">Audited output correction</p>
+              <p className="mt-1 text-xs text-slate-500">Available only before QC disposition, finishing start, packaging issue, or dispatch. Input plus scrap must still reconcile.</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-4">
+                <input aria-label="Corrected output kilograms" className="form-input" type="number" min="0.001" step="0.001" value={correctedWeight} onChange={(event) => setCorrectedWeight(event.target.value)} />
+                <input aria-label="Corrected output pieces" className="form-input" type="number" min="0" step="1" value={correctedPieces} onChange={(event) => setCorrectedPieces(event.target.value)} />
+                <input aria-label="Corrected output metres" className="form-input" type="number" min="0" step="0.001" value={correctedMeters} onChange={(event) => setCorrectedMeters(event.target.value)} />
+                <input aria-label="Correction reason" className="form-input" minLength={8} value={correctionReason} onChange={(event) => setCorrectionReason(event.target.value)} placeholder="Reason (at least 8 characters)" />
+              </div>
+              <Button type="button" className="mt-3" variant="secondary" onClick={correctOutput} disabled={isPending || !correctedWeight || correctionReason.trim().length < 8}>Record audited correction</Button>
             </div>
           ) : null}
         </div>

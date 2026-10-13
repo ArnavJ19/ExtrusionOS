@@ -4,6 +4,7 @@ import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
+import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 import { redirect } from "next/navigation";
 
 export default async function OrdersPage() {
@@ -17,12 +18,13 @@ export default async function OrdersPage() {
   const closedStages = ["dispatched", "delivered", "closed", "cancelled"];
 
   const [allOrders, recentOrders, monthlyOrders, delayedOrders, highPriority] = await Promise.all([
-    supabase.from("orders").select("id, current_stage, priority, order_value, order_date, expected_dispatch_date, manufacturing_weight_kg", { count: "exact" }).eq("company_id", cid),
-    supabase.from("orders").select("id, order_number, order_value, order_date, expected_dispatch_date, current_stage, priority, manufacturing_weight_kg, dealer_fulfilled_weight_kg, customers(customer_name, company_name)").eq("company_id", cid).order("created_at", { ascending: false }).limit(5),
-    supabase.from("orders").select("id, order_value", { count: "exact" }).eq("company_id", cid).gte("order_date", monthStart).neq("current_stage", "cancelled"),
-    supabase.from("orders").select("id", { count: "exact", head: true }).eq("company_id", cid).lt("expected_dispatch_date", today).not("current_stage", "in", `(${closedStages.join(",")})`),
-    supabase.from("orders").select("id", { count: "exact", head: true }).eq("company_id", cid).in("priority", ["urgent", "high"]).not("current_stage", "in", `(${closedStages.join(",")})`),
+    supabase.from("orders_authorized").select("id, current_stage, priority, order_value, order_date, expected_dispatch_date, manufacturing_weight_kg", { count: "exact" }).eq("company_id", cid),
+    supabase.from("orders_authorized").select("id, order_number, order_value, order_date, expected_dispatch_date, current_stage, priority, manufacturing_weight_kg, dealer_fulfilled_weight_kg, customer_name, company_name").eq("company_id", cid).order("created_at", { ascending: false }).limit(5),
+    supabase.from("orders_authorized").select("id, order_value", { count: "exact" }).eq("company_id", cid).gte("order_date", monthStart).neq("current_stage", "cancelled"),
+    supabase.from("orders_authorized").select("id", { count: "exact", head: true }).eq("company_id", cid).lt("expected_dispatch_date", today).not("current_stage", "in", `(${closedStages.join(",")})`),
+    supabase.from("orders_authorized").select("id", { count: "exact", head: true }).eq("company_id", cid).in("priority", ["urgent", "high"]).not("current_stage", "in", `(${closedStages.join(",")})`),
   ]);
+  const queryErrors = [allOrders.error, recentOrders.error, monthlyOrders.error, delayedOrders.error, highPriority.error].filter(Boolean).map((error) => error?.message ?? "Order data could not be loaded.");
 
   const rows = allOrders.data ?? [];
   const activeOrders = rows.filter((r: any) => !closedStages.includes(r.current_stage));
@@ -63,7 +65,9 @@ export default async function OrdersPage() {
   return (
     <div className="space-y-2">
       <ModuleOverviewClient moduleKey="orders" context={context} canCreate={can(context.role, "create", "orders")} canUpdate={can(context.role, "update", "orders")} hideMetricsAndCharts={true}>
+        <QueryErrorNotice messages={queryErrors} />
         <OrdersDashboard
+          showOrderValues={["owner", "admin", "sales_manager", "sales", "accounts", "dealer_admin", "dealer_staff"].includes(context.role)}
           totalOrderValue={totalOrderValue}
           activeOrderCount={activeOrders.length}
           delayedCount={delayedOrders.count ?? 0}
@@ -72,7 +76,7 @@ export default async function OrdersPage() {
           blockedFactoryCount={blockedFactoryCount}
           stageBreakdown={stageBreakdown}
           priorityBreakdown={priorityBreakdown}
-          recentOrders={(recentOrders.data ?? []) as any}
+          recentOrders={(recentOrders.data ?? []).map((order: any) => ({ ...order, customers: { customer_name: order.customer_name, company_name: order.company_name } })) as any}
           monthlyValue={monthlyValue}
           monthlyCount={monthlyOrders.count ?? 0}
           orderTrend={orderTrend}

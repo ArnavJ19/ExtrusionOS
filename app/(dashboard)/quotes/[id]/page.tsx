@@ -63,28 +63,41 @@ export default async function QuoteDetailPage({
   }
   if (!can(context.role, "read", "quotes")) redirect("/dashboard");
 
-  const { data: quote, error } = await supabase
-    .from("quotes")
-    .select(`
-      *,
-      customers(customer_name, company_name),
-      quote_items(
-        *,
-        aluminium_profiles(profile_code, profile_name)
-      ),
-      orders(id, order_number),
-      quote_revisions(id, revision_number, revised_at, reason)
-    `)
+  const { data: quoteRow, error } = await supabase
+    .from("quotes_authorized")
+    .select("*")
     .eq("id", id)
     .eq("company_id", context.companyId)
     .single();
 
-  if (error || !quote) {
+  if (error || !quoteRow) {
     return (
       <div>
         <PageHeader title="Quote not found" description="The requested quote does not exist or you do not have permission." />
       </div>
     );
+  }
+
+  const [customerResult, itemsResult, orderResult, revisionsResult] = await Promise.all([
+    supabase.from("customers").select("customer_name, company_name").eq("company_id", context.companyId).eq("id", quoteRow.customer_id).maybeSingle(),
+    supabase.from("quote_items_authorized").select("*").eq("company_id", context.companyId).eq("quote_id", id).order("created_at"),
+    supabase.from("orders_authorized").select("id, order_number").eq("company_id", context.companyId).eq("quote_id", id).maybeSingle(),
+    supabase.from("quote_revisions").select("id, revision_number, revised_at, reason").eq("company_id", context.companyId).eq("quote_id", id).order("revision_number", { ascending: false })
+  ]);
+  const profileIds = [...new Set((itemsResult.data ?? []).map((item: any) => item.profile_id).filter(Boolean))];
+  const profilesResult = profileIds.length
+    ? await supabase.from("aluminium_profiles").select("id, profile_code, profile_name").eq("company_id", context.companyId).in("id", profileIds)
+    : { data: [], error: null };
+  const profileById = new Map((profilesResult.data ?? []).map((profile: any) => [profile.id, profile]));
+  const quote = {
+    ...quoteRow,
+    customers: customerResult.data,
+    quote_items: (itemsResult.data ?? []).map((item: any) => ({ ...item, aluminium_profiles: profileById.get(item.profile_id) ?? null })),
+    orders: orderResult.data ? [orderResult.data] : [],
+    quote_revisions: revisionsResult.data ?? []
+  };
+  if (customerResult.error || itemsResult.error || orderResult.error || revisionsResult.error || profilesResult.error) {
+    return <div><PageHeader title="Quote unavailable" description="Quote details could not be loaded for this company." /></div>;
   }
 
   const items = quote.quote_items || [];

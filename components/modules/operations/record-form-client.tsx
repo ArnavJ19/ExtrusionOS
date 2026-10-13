@@ -11,6 +11,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { saveDispatchAction } from "@/lib/actions/dispatches";
+import { saveFoundryBatchAction } from "@/lib/actions/foundry";
 import { savePackagingJobAction } from "@/lib/actions/packaging";
 import { saveProductionJobAction } from "@/lib/actions/production";
 import { saveOrderAction } from "@/lib/actions/quotes-orders";
@@ -393,7 +394,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     setProductionAutofillLoading(true);
     try {
       const { data: order, error: orderError } = await supabase
-        .from("orders")
+        .from("orders_authorized")
         .select("id, order_number, quote_id, expected_dispatch_date, priority, notes, production_profile_id, production_die_id, production_quantity_kg, production_pieces, production_notes, billets_required, billets_allocated, billets_short, billet_allocation_status")
         .eq("company_id", context.companyId)
         .eq("id", orderId)
@@ -402,13 +403,29 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
 
       let items: ProductionOrderItem[] = [];
       const { data: orderItems, error: orderItemsError } = await supabase
-        .from("order_items")
-        .select("id, profile_id, die_id, item_description, quantity_pieces, length_per_piece_m, total_weight_kg, billing_weight_kg, dealer_fulfilled_weight_kg, manufacturing_weight_kg, aluminium_profiles(profile_code, profile_name), dies(die_number, rack_location)")
+        .from("order_items_authorized")
+        .select("id, profile_id, die_id, item_description, quantity_pieces, length_per_piece_m, quantity_kg, dealer_fulfilled_weight_kg, manufacturing_weight_kg")
         .eq("company_id", context.companyId)
         .eq("order_id", orderId)
         .order("created_at", { ascending: true });
       if (orderItemsError) throw orderItemsError;
-      items = (orderItems ?? []) as unknown as ProductionOrderItem[];
+      const profileIds = [...new Set((orderItems ?? []).map((item: any) => item.profile_id).filter(Boolean))];
+      const dieIds = [...new Set((orderItems ?? []).map((item: any) => item.die_id).filter(Boolean))];
+      const [profilesResult, diesResult] = await Promise.all([
+        profileIds.length ? supabase.from("aluminium_profiles").select("id, profile_code, profile_name").eq("company_id", context.companyId).in("id", profileIds) : { data: [], error: null },
+        dieIds.length ? supabase.from("dies").select("id, die_number, rack_location").eq("company_id", context.companyId).in("id", dieIds) : { data: [], error: null },
+      ]);
+      if (profilesResult.error) throw profilesResult.error;
+      if (diesResult.error) throw diesResult.error;
+      const profilesById = new Map((profilesResult.data ?? []).map((profile: any) => [profile.id, profile]));
+      const diesById = new Map((diesResult.data ?? []).map((die: any) => [die.id, die]));
+      items = (orderItems ?? []).map((item: any) => ({
+        ...item,
+        total_weight_kg: item.quantity_kg,
+        billing_weight_kg: item.manufacturing_weight_kg ?? item.quantity_kg,
+        aluminium_profiles: profilesById.get(item.profile_id) ?? null,
+        dies: diesById.get(item.die_id) ?? null,
+      })) as unknown as ProductionOrderItem[];
       if (!items.length && order?.quote_id) {
         throw new Error("This converted order has no order lines. Repair the quote-to-order conversion before planning production.");
       }
@@ -607,13 +624,14 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       });
     }
     const parsed = config.schema.safeParse(formForSubmit);
-    if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Please check the form");
+    if (!parsed.success) {
+      const messages = moduleKey === "foundry"
+        ? [...new Set(parsed.error.issues.map((issue) => issue.message))].join(" ")
+        : parsed.error.issues[0]?.message;
+      return toast.error(messages ?? "Please check the form");
+    }
     setSaving(true);
     const sanitized = Object.fromEntries(Object.entries(parsed.data as Record<string, unknown>).map(([key, value]) => [key, value === "" ? null : value]));
-    if (moduleKey === "foundry" && Number(sanitized.scrap_percentage ?? 0) > 0 && !sanitized.scrap_id) {
-      setSaving(false);
-      return toast.error("Select a scrap batch when scrap percentage is greater than zero.");
-    }
     if (moduleKey === "foundry" && sanitized.scrap_id && !Number(sanitized.scrap_aluminium_kg ?? 0)) {
       setSaving(false);
       return toast.error("Calculated scrap kg is zero. Increase scrap percentage or clear the selected scrap batch.");
@@ -712,6 +730,15 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       router.refresh();
       return;
     }
+    if (moduleKey === "foundry") {
+      const result = await saveFoundryBatchAction({ ...sanitized, editing_id: editing ? recordId : null } as any);
+      setSaving(false);
+      if (!result.success) return toast.error(result.error);
+      toast.success(editing ? `${config.title} updated` : `${config.title} saved`);
+      router.push(`${config.basePath}/${result.batchId}`);
+      router.refresh();
+      return;
+    }
     if (moduleKey === "foundry_external_sources" || moduleKey === "foundry_scrap") {
       const qty = Number(payload.weight_kg ?? 0);
       const rate = Number(payload.rate ?? 0);
@@ -760,7 +787,9 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     const options: LookupOption[] = field.lookup ? lookups[field.name] ?? [] : field.options ?? [];
     const dieProfileId = moduleKey === "production" && field.name === "die_id" ? form.profile_id : moduleKey === "orders" && field.name === "production_die_id" ? form.production_profile_id : "";
     const qualityJobId = moduleKey === "quality" && field.name === "finishing_job_id" ? form.production_job_id : "";
-    const fieldOptions = dieProfileId
+    const fieldOptions = moduleKey === "foundry" && !editing && field.name === "status"
+      ? options.filter((option) => option.value === "planned")
+      : dieProfileId
       ? options.filter((option) => (!option.profile_id || option.profile_id === dieProfileId) && !["inactive", "dead"].includes(String(option.die_status ?? "")))
       : qualityJobId
         ? options.filter((option) => option.production_job_id === qualityJobId)
@@ -812,6 +841,11 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       <Card>
         <CardHeader><h2 className="section-title">Record Details</h2></CardHeader>
         <CardContent>
+          {moduleKey === "foundry" ? (
+            <p className="mb-4 rounded-xl border border-orange/20 bg-orange/5 px-4 py-3 text-sm font-medium leading-6 text-slate-700">
+              New batches start as planned. Select a same-company source for each mix percentage above 0%; planned batches reserve those materials. Once processing starts or billets are allocated, material, count, and physical dimensions are locked. Cancelling an uncommitted planned batch releases its reservations.
+            </p>
+          ) : null}
           <div className="grid gap-4 md:grid-cols-2">{(config.fields ?? []).map(renderField)}</div>
           {moduleKey === "production" && (productionAutofillLoading || productionAutofillSummary) ? (
             <div className="mt-4 rounded-2xl border border-orange/20 bg-orange/5 px-4 py-3 text-sm font-semibold text-slate-700">

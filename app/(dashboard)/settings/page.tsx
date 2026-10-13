@@ -7,7 +7,7 @@ export default async function SettingsPage() {
   const supabase = await createClient();
   const [companyResult, settingsResult] = await Promise.all([
     supabase.from("companies").select("*").eq("id", context.companyId).single(),
-    supabase.from("company_settings").select("*").eq("company_id", context.companyId).maybeSingle()
+    supabase.from("company_settings_authorized").select("*").eq("company_id", context.companyId).maybeSingle()
   ]);
   return <SettingsClient context={context} company={companyResult.data ?? { id: context.companyId, name: context.companyName }} settings={settingsResult.data} />;
 }

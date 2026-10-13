@@ -9,7 +9,7 @@ export default async function SystemTemplateDetailPage({ params }: { params: Pro
   const { id } = await params;
   const context = await getSystemsConfiguratorContext("read");
   const supabase = await createClient();
-  const { data: template, error } = await supabase.from("system_templates").select("*, system_series(series_code, series_name)").eq("id", id).eq("company_id", context.companyId).single();
+  const { data: template, error } = await supabase.from("system_templates_authorized").select("*").eq("id", id).eq("company_id", context.companyId).single();
 
   if (error || !template) {
     return (
@@ -20,10 +20,15 @@ export default async function SystemTemplateDetailPage({ params }: { params: Pro
     );
   }
 
+  const { data: series } = template.series_id
+    ? await supabase.from("system_series").select("series_code, series_name").eq("id", template.series_id).eq("company_id", context.companyId).maybeSingle()
+    : { data: null };
+  const templateWithSeries = { ...template, system_series: series };
+
   return (
     <div className="space-y-6">
       <PageHeader title={template.template_name} description="Review formula JSON, validation rules, preview config, and template metadata." />
-      <SystemTemplateDetail template={template} canManage={canManageSystemTemplates(context.role)} />
+      <SystemTemplateDetail template={templateWithSeries} canManage={canManageSystemTemplates(context.role)} />
     </div>
   );
 }

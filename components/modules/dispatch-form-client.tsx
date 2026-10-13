@@ -25,18 +25,20 @@ type DispatchSource = {
   stockBatchLabel: string | null;
   availableWeightKg: number;
   availablePieces: number;
+  availableLengthM: number;
 };
 type BundleRow = {
   key: string;
   bundle_number: string;
   source_line_id: string;
   number_of_pieces: string;
+  net_length_m: string;
   gross_weight_kg: string;
   tare_weight_kg: string;
 };
 
 function newBundle(): BundleRow {
-  return { key: crypto.randomUUID(), bundle_number: "", source_line_id: "", number_of_pieces: "", gross_weight_kg: "", tare_weight_kg: "" };
+  return { key: crypto.randomUUID(), bundle_number: "", source_line_id: "", number_of_pieces: "", net_length_m: "", gross_weight_kg: "", tare_weight_kg: "" };
 }
 
 export function DispatchFormClient({ context }: { context: SessionContext }) {
@@ -64,20 +66,20 @@ export function DispatchFormClient({ context }: { context: SessionContext }) {
     const timer = setTimeout(async () => {
       setSearchingOrders(true);
       let query = supabase
-        .from("orders")
-        .select("id, order_number, customer_po_number, customers(customer_name, company_name)")
+        .from("orders_authorized")
+        .select("id, order_number, customer_name, company_name, quote_number")
         .eq("company_id", context.companyId)
         .neq("current_stage", "cancelled")
         .order("order_date", { ascending: false })
         .limit(50);
       const search = orderSearch.trim().replace(/[^a-zA-Z0-9 _\-/]/g, "");
-      if (search) query = query.or(`order_number.ilike.%${search}%,customer_po_number.ilike.%${search}%`);
+      if (search) query = query.or(`order_number.ilike.%${search}%,quote_number.ilike.%${search}%`);
       const { data, error } = await query;
       setSearchingOrders(false);
       if (error) return toast.error(error.message);
       setOrders((data ?? []).map((order: any) => ({
         value: order.id,
-        label: `${order.order_number} - ${order.customers?.company_name || order.customers?.customer_name || "Customer"}`
+        label: `${order.order_number} - ${order.company_name || order.customer_name || "Customer"}`
       })));
     }, 250);
     return () => clearTimeout(timer);
@@ -138,6 +140,7 @@ export function DispatchFormClient({ context }: { context: SessionContext }) {
           bundle_number: bundle.bundle_number,
           source_line_id: bundle.source_line_id,
           number_of_pieces: Number(bundle.number_of_pieces),
+          net_length_m: Number(bundle.net_length_m),
           gross_weight_kg: Number(bundle.gross_weight_kg),
           tare_weight_kg: Number(bundle.tare_weight_kg)
         }))
@@ -186,11 +189,12 @@ export function DispatchFormClient({ context }: { context: SessionContext }) {
               <label className="block space-y-1.5"><span className="form-label">Scan / Bundle ID *</span><input className="form-input font-mono font-bold uppercase" value={bundle.bundle_number} onChange={(event) => updateBundle(bundle.key, "bundle_number", event.target.value.toUpperCase())} autoFocus={index === 0} /></label>
               <label className="block space-y-1.5 md:col-span-2"><span className="form-label">Exact material source *</span><SearchableSelect value={bundle.source_line_id} options={sourceOptions} onChange={(value) => updateBundle(bundle.key, "source_line_id", value)} placeholder="Select production job or stock batch" /></label>
               <label className="block space-y-1.5"><span className="form-label">Actual pieces *</span><input className="form-input" type="number" min="1" step="1" value={bundle.number_of_pieces} onChange={(event) => updateBundle(bundle.key, "number_of_pieces", event.target.value)} /></label>
+              <label className="block space-y-1.5"><span className="form-label">Actual metres *</span><input className="form-input" type="number" min="0.001" step="0.001" value={bundle.net_length_m} onChange={(event) => updateBundle(bundle.key, "net_length_m", event.target.value)} /></label>
               <div className="rounded-xl border border-slate-200 bg-white px-3 py-2"><p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Stock batch</p><p className="mt-1 text-sm font-bold text-slate-800">{selectedSource?.stockBatchLabel ?? (selectedSource ? "Production output" : "Select source")}</p></div>
               <label className="block space-y-1.5"><span className="form-label">Gross kg *</span><input className="form-input" type="number" min="0" step="0.001" value={bundle.gross_weight_kg} onChange={(event) => updateBundle(bundle.key, "gross_weight_kg", event.target.value)} /></label>
               <label className="block space-y-1.5"><span className="form-label">Tare kg *</span><input className="form-input" type="number" min="0" step="0.001" value={bundle.tare_weight_kg} onChange={(event) => updateBundle(bundle.key, "tare_weight_kg", event.target.value)} /></label>
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2"><p className="text-[11px] font-black uppercase tracking-wider text-emerald-700">Measured net</p><p className="mt-1 text-lg font-black text-emerald-950">{formatWeight(net)}</p></div>
-              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 md:col-span-2"><p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Availability</p><p className="mt-1 text-sm font-bold text-slate-800">{selectedSource ? `${formatWeight(selectedSource.availableWeightKg)}${selectedSource.availablePieces ? ` | approx. ${selectedSource.availablePieces} pcs` : ""}` : "Select source"}</p></div>
+              <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 md:col-span-2"><p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Remaining recorded stock</p><p className="mt-1 text-sm font-bold text-slate-800">{selectedSource ? `${formatWeight(selectedSource.availableWeightKg)} | ${selectedSource.availablePieces} pcs | ${selectedSource.availableLengthM.toFixed(3)} m` : "Select source"}</p></div>
             </div></div>;
           })}
           <div className="grid gap-3 rounded-2xl bg-slate-950 p-4 text-white sm:grid-cols-4"><Metric label="Bundles" value={String(bundles.length)} /><Metric label="Pieces" value={totals.pieces.toLocaleString("en-IN")} /><Metric label="Gross" value={formatWeight(totals.gross)} /><Metric label="Tare / Net" value={`${formatWeight(totals.tare)} / ${formatWeight(totals.net)}`} /></div>

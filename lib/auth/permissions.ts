@@ -1,7 +1,7 @@
 import type { UserRole } from "@/types/app";
 
-export type Resource = "quotes" | "orders" | "inventory" | "dealer_inventory" | "dealer_orders" | "shipments" | "production" | "foundry" | "packaging" | "dies" | "dispatches" | "settings" | "quality" | "customers" | "profiles" | "financials" | "vendors" | "enterprise" | "branches" | "feature_flags" | "audit_logs" | "notifications" | "tasks" | "data_exchange" | "search" | "ai_assistant" | "systems_configurator" | "users" | "roles" | "reports" | "payments" | "machine_maintenance";
-export type Action = "create" | "read" | "update" | "delete" | "approve";
+export type Resource = "quotes" | "orders" | "inventory" | "dealer_inventory" | "dealer_orders" | "shipments" | "production" | "foundry" | "packaging" | "dies" | "dispatches" | "settings" | "quality" | "customers" | "profiles" | "financials" | "vendors" | "enterprise" | "branches" | "feature_flags" | "audit_logs" | "notifications" | "tasks" | "data_exchange" | "search" | "ai_assistant" | "systems_configurator" | "inventory_reservations" | "users" | "roles" | "reports" | "payments" | "machine_maintenance";
+export type Action = "create" | "read" | "update" | "delete" | "approve" | "reserve";
 
 export const granularPermissions = [
   "view_quotes", "create_quotes", "edit_quotes", "delete_quotes", "approve_quotes",
@@ -54,6 +54,9 @@ export function hasPermission(role: UserRole, permission: GranularPermission, ex
 }
 
 export function can(role: UserRole, action: Action, resource: Resource): boolean {
+  if (resource === "inventory_reservations") {
+    return action === "reserve" && ["owner", "admin", "production_manager", "factory_manager", "inventory_manager"].includes(role);
+  }
   if (resource === "roles") return role === "owner";
   if (resource === "users") {
     if (role === "owner") return true;
@@ -92,12 +95,14 @@ export function can(role: UserRole, action: Action, resource: Resource): boolean
 
   if (role === "factory_manager") {
     if (resource === "tasks" && ["read", "create", "update"].includes(action)) return true;
+    if (resource === "systems_configurator" && action === "read") return true;
     if (["production", "foundry", "packaging", "orders", "inventory", "dealer_orders", "shipments", "dispatches"].includes(resource) && action !== "delete") return true;
     if (["customers", "profiles"].includes(resource) && action === "read") return true;
   }
 
   if (role === "inventory_manager") {
     if (["inventory", "dealer_inventory", "shipments", "dispatches"].includes(resource) && action !== "delete") return true;
+    if (resource === "systems_configurator" && action === "read") return true;
     if (["orders", "profiles"].includes(resource) && action === "read") return true;
   }
 
@@ -130,6 +135,7 @@ export function can(role: UserRole, action: Action, resource: Resource): boolean
   }
 
   if (role === "accounts") {
+    if (resource === "systems_configurator" && action === "read") return true;
     if (resource === "settings" && action === "read") return true;
     if (resource === "financials" && ["read", "create", "update"].includes(action)) return true;
     if (["customers", "orders", "dispatches", "dies", "financials", "vendors", "notifications", "tasks", "search"].includes(resource) && action === "read") return true;

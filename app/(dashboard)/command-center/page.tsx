@@ -73,39 +73,39 @@ export default async function CommandCenterPage() {
     scrapRecordsMonthly,
   ] = await Promise.all([
     // Monthly quotes
-    supabase.from("quotes").select("id, grand_total, status", { count: "exact" })
+    supabase.from("quotes_authorized").select("id, grand_total, status", { count: "exact" })
       .eq("company_id", context.companyId).gte("quote_date", monthStart).lte("quote_date", today),
     // Monthly orders
-    supabase.from("orders").select("id, order_value, current_stage", { count: "exact" })
+    supabase.from("orders_authorized").select("id, order_value, current_stage", { count: "exact" })
       .eq("company_id", context.companyId).gte("order_date", monthStart).lte("order_date", today).neq("current_stage", "cancelled"),
     // Last month orders
-    supabase.from("orders").select("id, order_value", { count: "exact" })
+    supabase.from("orders_authorized").select("id, order_value", { count: "exact" })
       .eq("company_id", context.companyId).gte("order_date", lastMonthStart).lte("order_date", lastMonthEnd).neq("current_stage", "cancelled"),
     // Pending quotes (draft/review)
-    supabase.from("quotes").select("id", { count: "exact", head: true })
+    supabase.from("quotes_authorized").select("id", { count: "exact", head: true })
       .eq("company_id", context.companyId).in("status", ["draft", "internal_review", "approved_for_sending"]),
     // Sent quotes
-    supabase.from("quotes").select("id, grand_total", { count: "exact" })
+    supabase.from("quotes_authorized").select("id, grand_total", { count: "exact" })
       .eq("company_id", context.companyId).eq("status", "sent"),
     // Converted quotes
-    supabase.from("quotes").select("id", { count: "exact", head: true })
+    supabase.from("quotes_authorized").select("id", { count: "exact", head: true })
       .eq("company_id", context.companyId).eq("status", "converted_to_order").gte("quote_date", monthStart).lte("quote_date", today),
 
     // Active production orders
-    supabase.from("orders").select("id", { count: "exact", head: true })
+    supabase.from("orders_authorized").select("id", { count: "exact", head: true })
       .eq("company_id", context.companyId).in("current_stage", activeProductionStages),
     // Planned production jobs
     supabase.from("production_jobs").select("id, job_number, planned_quantity_kg, status, planned_date", { count: "exact" })
       .eq("company_id", context.companyId).in("status", ["planned", "ready"]).order("planned_date", { ascending: true }).limit(10),
     // Pending dispatch
-    supabase.from("orders").select("id, order_number, customer_id, expected_dispatch_date, order_value, customers(customer_name, company_name)", { count: "exact" })
+    supabase.from("orders_authorized").select("id, order_number, customer_id, expected_dispatch_date, order_value, customer_name, company_name", { count: "exact" })
       .eq("company_id", context.companyId).not("current_stage", "in", "(dispatched,delivered,closed,cancelled)")
       .order("expected_dispatch_date", { ascending: true }).limit(10),
     // Monthly dispatches
     supabase.from("dispatches").select("id, total_weight_kg", { count: "exact" })
       .eq("company_id", context.companyId).gte("dispatch_date", monthStart).lte("dispatch_date", today),
     // Delayed orders
-    supabase.from("orders").select("id, order_number, expected_dispatch_date, order_value, customers(customer_name, company_name)")
+    supabase.from("orders_authorized").select("id, order_number, expected_dispatch_date, order_value, customer_name, company_name")
       .eq("company_id", context.companyId).lt("expected_dispatch_date", today)
       .not("current_stage", "in", "(dispatched,delivered,closed,cancelled)")
       .order("expected_dispatch_date", { ascending: true }).limit(10),
@@ -153,13 +153,13 @@ export default async function CommandCenterPage() {
       .eq("company_id", context.companyId).eq("priority", "urgent").in("status", ["open", "in_progress"]),
 
     // Active customers
-    supabase.from("orders").select("customer_id")
+    supabase.from("orders_authorized").select("customer_id")
       .eq("company_id", context.companyId).gte("order_date", monthStart).lte("order_date", today).neq("current_stage", "cancelled"),
     // Recent orders
-    supabase.from("orders").select("id, order_number, order_value, order_date, current_stage, priority, customers(customer_name, company_name)")
+    supabase.from("orders_authorized").select("id, order_number, order_value, order_date, current_stage, priority, customer_name, company_name")
       .eq("company_id", context.companyId).order("order_date", { ascending: false }).limit(5),
     // Top customers by order value
-    supabase.from("orders").select("customer_id, order_value, customers(customer_name, company_name)")
+    supabase.from("orders_authorized").select("customer_id, order_value, customer_name, company_name")
       .eq("company_id", context.companyId).gte("order_date", monthStart).lte("order_date", today).neq("current_stage", "cancelled"),
 
     // Completed production jobs for weight calculation
@@ -209,7 +209,7 @@ export default async function CommandCenterPage() {
   // Top customers aggregation
   const customerMap = new Map<string, { name: string; value: number }>();
   (topCustomers.data ?? []).forEach((o: any) => {
-    const name = o.customers?.company_name || o.customers?.customer_name || "Unknown";
+    const name = o.company_name || o.customer_name || "Unknown";
     const existing = customerMap.get(o.customer_id) || { name, value: 0 };
     existing.value += Number(o.order_value ?? 0);
     customerMap.set(o.customer_id, existing);

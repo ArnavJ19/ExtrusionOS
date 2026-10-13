@@ -73,7 +73,7 @@ export default async function ProfileDetailPage({ params }: { params: Promise<{ 
   const [diesCount, productionCount, ordersCount] = await Promise.all([
     supabase.from("dies").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).eq("profile_id", id),
     supabase.from("production_jobs").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).eq("profile_id", id),
-    supabase.from("quote_items").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).eq("profile_id", id),
+    supabase.from("quote_items_authorized").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).eq("profile_id", id),
   ]);
 
   const primaryDie = profile.primary_die as any;

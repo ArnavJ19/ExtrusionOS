@@ -11,7 +11,7 @@ export default async function SystemFormulaEditorPage({ params }: { params: Prom
   if (!canManageSystemTemplates(context.role)) redirect(`/systems-configurator/templates/${id}`);
 
   const supabase = await createClient();
-  const { data: template, error } = await supabase.from("system_templates").select("*").eq("id", id).eq("company_id", context.companyId).single();
+  const { data: template, error } = await supabase.from("system_templates_authorized").select("*").eq("id", id).eq("company_id", context.companyId).single();
 
   if (error || !template) {
     return (

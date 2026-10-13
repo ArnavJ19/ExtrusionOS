@@ -31,6 +31,7 @@ export type ModuleConfig = {
   databaseTitle: string;
   description: string;
   table: string;
+  readTable?: string;
   select: string;
   basePath: string;
   resource: Resource;
@@ -79,7 +80,8 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     databaseTitle: "Orders Database",
     description: "Track customer orders by production stage, priority, expected dispatch, and value.",
     table: "orders",
-    select: "*, customers(customer_name, company_name), quotes(quote_number), production_profile:aluminium_profiles!orders_production_profile_id_fkey(profile_code, profile_name, billet_diameter_required_inch), production_die:dies!orders_production_die_id_fkey(die_number, billet_diameter_required_inch)",
+    readTable: "orders_authorized",
+    select: "id, company_id, order_number, quote_id, customer_id, order_date, expected_dispatch_date, priority, current_stage, order_value, notes, created_at, created_by, deleted_at, dealer_id, requested_weight_kg, dealer_fulfilled_weight_kg, manufacturing_weight_kg, fulfillment_notes, production_profile_id, production_die_id, production_quantity_kg, production_notes, production_pieces, billet_diameter_required_inch, billets_required, billets_allocated, billets_short, billet_allocation_status, branch_id, plant_id, order_origin, customer_name, company_name, quote_number, quote_revision_number, production_profile_code, production_profile_name, production_die_number",
     basePath: "/orders",
     resource: "orders",
     primaryAction: "Create Order",
@@ -94,9 +96,9 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     defaultSort: { column: "expected_dispatch_date", direction: "asc" },
     columns: [
       { id: "order_number", header: "Order Number", path: "order_number", sortable: true },
-      { id: "customer", header: "Customer", path: "customers.company_name" },
+      { id: "customer", header: "Customer", path: "company_name" },
       { id: "order_origin", header: "Origin", path: "order_origin", type: "badge", sortable: true },
-      { id: "order_source_label", header: "Source", path: "order_source_label", sortable: true },
+      { id: "order_source_label", header: "Source", path: "order_origin", sortable: true },
       { id: "current_stage", header: "Stage", path: "current_stage", type: "badge", sortable: true },
       { id: "priority", header: "Priority", path: "priority", type: "badge", sortable: true },
       { id: "billets_required", header: "Billets Req", path: "billets_required", type: "number", sortable: true },
@@ -106,7 +108,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { id: "expected_dispatch_date", header: "Expected Dispatch", path: "expected_dispatch_date", type: "date", sortable: true },
       { id: "order_value", header: "Order Value", path: "order_value", type: "currency", sortable: true }
     ],
-    card: { titlePath: "order_number", subtitlePath: "customers.company_name", badgePath: "priority", meta: [{ label: "Expected", path: "expected_dispatch_date", type: "date" }, { label: "Billets", path: "billets_required", type: "number" }, { label: "Allocated", path: "billets_allocated", type: "number" }, { label: "Value", path: "order_value", type: "currency" }] },
+    card: { titlePath: "order_number", subtitlePath: "company_name", badgePath: "priority", meta: [{ label: "Expected", path: "expected_dispatch_date", type: "date" }, { label: "Billets", path: "billets_required", type: "number" }, { label: "Allocated", path: "billets_allocated", type: "number" }, { label: "Value", path: "order_value", type: "currency" }] },
     schema: orderSchema,
     numberPrefix: "O",
     numberField: "order_number",

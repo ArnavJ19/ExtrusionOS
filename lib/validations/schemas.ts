@@ -449,7 +449,6 @@ export const foundryBatchSchema = z.object({
   furnace_number: z.string().trim().min(1, "Furnace number is required"),
   furnace_name: optionalText,
   batch_sequence: z.coerce.number().int().positive("Batch number is required").default(1),
-  order_id: z.string().uuid("Select an order").optional().nullable().or(z.literal("")),
   production_date: optionalText,
   scrap_id: z.string().uuid("Select a scrap batch").optional().nullable().or(z.literal("")),
   external_source_id: z.string().uuid("Select an external aluminium source").optional().nullable().or(z.literal("")),
@@ -477,6 +476,12 @@ export const foundryBatchSchema = z.object({
 }).superRefine((value, ctx) => {
   if (Math.abs(value.scrap_percentage + value.external_aluminium_percentage - 100) > 0.001) {
     ctx.addIssue({ code: "custom", path: ["external_aluminium_percentage"], message: "Scrap % and external aluminium % must total 100" });
+  }
+  if (value.scrap_percentage > 0 && !value.scrap_id) {
+    ctx.addIssue({ code: "custom", path: ["scrap_id"], message: "Select a scrap batch when scrap percentage is greater than zero." });
+  }
+  if (value.external_aluminium_percentage > 0 && !value.external_source_id) {
+    ctx.addIssue({ code: "custom", path: ["external_source_id"], message: "Select an external aluminium source when its percentage is greater than zero." });
   }
 });
 
@@ -613,6 +618,7 @@ export const packingListItemSchema = z.object({
   profile_id: z.string().uuid("Select a profile"),
   bundle_number: z.string().trim().min(1, "Bundle number is required"),
   number_of_pieces: z.coerce.number().int().positive(),
+  net_length_m: z.coerce.number().positive(),
   gross_weight_kg: z.coerce.number().positive(),
   tare_weight_kg: z.coerce.number().nonnegative().default(0),
   notes: optionalText

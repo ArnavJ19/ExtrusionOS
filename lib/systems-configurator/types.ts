@@ -329,6 +329,10 @@ export type CostingSummary = {
   pricePerSqft: number;
   pricePerSqm: number;
   pricePerUnit: number;
+  realizedProfitAmount: number;
+  costMarkupPercent: number;
+  salesMarginPercent: number;
+  /** Backward-compatible realized profit as a percentage of internal cost. */
   profitPercent: number;
 };
 

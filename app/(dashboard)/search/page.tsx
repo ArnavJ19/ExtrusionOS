@@ -39,6 +39,19 @@ async function searchCustomers(supabase: any, companyId: string, query: string, 
   };
 }
 
+async function searchQuotes(supabase: any, companyId: string, like: string) {
+  const result = await supabase.from("quotes_authorized").select("id, quote_number, status, quote_date, grand_total, customer_id").eq("company_id", companyId).or(`quote_number.ilike.${like},status.ilike.${like}`).limit(8);
+  const customerIds = [...new Set((result.data ?? []).map((item: any) => item.customer_id).filter(Boolean))];
+  const customers = customerIds.length
+    ? await supabase.from("customers").select("id, customer_name, company_name").eq("company_id", companyId).in("id", customerIds)
+    : { data: [], error: null };
+  const byId = new Map((customers.data ?? []).map((customer: any) => [customer.id, customer]));
+  return {
+    data: (result.data ?? []).map((item: any) => ({ ...item, customers: byId.get(item.customer_id) ?? null })),
+    error: result.error ?? customers.error,
+  };
+}
+
 export default async function SearchPage({ searchParams }: { searchParams: SearchParams }) {
   const context = await getSessionContext();
   const allowedResources = getSearchResourceKeys(context.role);
@@ -52,8 +65,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
     customers: () => searchCustomers(supabase, context.companyId, safeQuery, like),
     profiles: () => supabase.from("aluminium_profiles").select("id, profile_code, profile_name, application_category, section_weight_kg_per_m").eq("company_id", context.companyId).or(`profile_code.ilike.${like},profile_name.ilike.${like},application_category.ilike.${like}`).limit(8),
     dies: () => supabase.from("dies").select("id, die_number, die_status, rack_location").eq("company_id", context.companyId).or(`die_number.ilike.${like},rack_location.ilike.${like},die_status.ilike.${like}`).limit(8),
-    quotes: () => supabase.from("quotes").select("id, quote_number, status, quote_date, grand_total, customers(customer_name, company_name)").eq("company_id", context.companyId).or(`quote_number.ilike.${like},status.ilike.${like}`).limit(8),
-    orders: () => supabase.from("orders").select("id, order_number, current_stage, order_date, order_value, customers(customer_name, company_name)").eq("company_id", context.companyId).or(`order_number.ilike.${like},current_stage.ilike.${like}`).limit(8),
+    quotes: () => searchQuotes(supabase, context.companyId, like),
+    orders: () => supabase.from("orders_authorized").select("id, order_number, current_stage, order_date, order_value, customer_name, company_name").eq("company_id", context.companyId).or(`order_number.ilike.${like},current_stage.ilike.${like}`).limit(8),
     dispatches: () => supabase.from("dispatches").select("id, dispatch_number, delivery_status, dispatch_date, vehicle_number, orders(order_number)").eq("company_id", context.companyId).or(`dispatch_number.ilike.${like},vehicle_number.ilike.${like},delivery_status.ilike.${like}`).limit(8),
     dealer_orders: () => supabase.from("dealer_orders").select("id, order_number, status, priority, expected_delivery_date, dealers(dealer_name)").eq("company_id", context.companyId).or(`order_number.ilike.${like},status.ilike.${like}`).limit(8),
   };
@@ -85,8 +98,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
         {has("customers") ? <SearchSection title="Customers" count={results.customers?.data?.length ?? 0}>{results.customers?.data?.map((item: any) => <ResultCard key={item.id} href={`/customers/${item.id}`} title={item.company_name || item.customer_name} eyebrow={item.contact_person || item.phone || item.email || item.whatsapp_number || item.gst_number || item.city || "Customer"} badge={item.customer_type} />)}</SearchSection> : null}
         {has("profiles") ? <SearchSection title="Profiles" count={results.profiles?.data?.length ?? 0}>{results.profiles?.data?.map((item: any) => <ResultCard key={item.id} href={`/profiles/${item.id}`} title={`${item.profile_code} - ${item.profile_name}`} eyebrow={`${item.section_weight_kg_per_m} kg/m`} badge={item.application_category} />)}</SearchSection> : null}
         {has("dies") ? <SearchSection title="Dies" count={results.dies?.data?.length ?? 0}>{results.dies?.data?.map((item: any) => <ResultCard key={item.id} href={`/dies/${item.id}`} title={item.die_number} eyebrow={item.rack_location || "Die library"} badge={item.die_status} />)}</SearchSection> : null}
-        {has("quotes") ? <SearchSection title="Quotes" count={results.quotes?.data?.length ?? 0}>{results.quotes?.data?.map((item: any) => <ResultCard key={item.id} href={`/quotes/${item.id}`} title={item.quote_number} eyebrow={`${item.customers?.company_name || item.customers?.customer_name || "Customer"} · ${formatDate(item.quote_date)} · ${formatCurrency(item.grand_total)}`} badge={item.status} />)}</SearchSection> : null}
-        {has("orders") ? <SearchSection title="Orders" count={results.orders?.data?.length ?? 0}>{results.orders?.data?.map((item: any) => <ResultCard key={item.id} href={`/orders/${item.id}`} title={item.order_number} eyebrow={`${item.customers?.company_name || item.customers?.customer_name || "Customer"} · ${formatDate(item.order_date)} · ${formatCurrency(item.order_value)}`} badge={item.current_stage} />)}</SearchSection> : null}
+        {has("quotes") ? <SearchSection title="Quotes" count={results.quotes?.data?.length ?? 0}>{results.quotes?.data?.map((item: any) => <ResultCard key={item.id} href={`/quotes/${item.id}`} title={item.quote_number} eyebrow={`${item.customers?.company_name || item.customers?.customer_name || "Customer"} · ${formatDate(item.quote_date)}${item.grand_total == null ? "" : ` · ${formatCurrency(item.grand_total)}`}`} badge={item.status} />)}</SearchSection> : null}
+        {has("orders") ? <SearchSection title="Orders" count={results.orders?.data?.length ?? 0}>{results.orders?.data?.map((item: any) => <ResultCard key={item.id} href={`/orders/${item.id}`} title={item.order_number} eyebrow={`${item.company_name || item.customer_name || "Customer"} · ${formatDate(item.order_date)}${item.order_value == null ? "" : ` · ${formatCurrency(item.order_value)}`}`} badge={item.current_stage} />)}</SearchSection> : null}
         {has("dispatches") ? <SearchSection title="Dispatches" count={results.dispatches?.data?.length ?? 0}>{results.dispatches?.data?.map((item: any) => <ResultCard key={item.id} href={`/dispatches/${item.id}`} title={item.dispatch_number || "Dispatch"} eyebrow={`${item.orders?.order_number || "Order"} · ${formatDate(item.dispatch_date)} · ${item.vehicle_number || "Vehicle pending"}`} badge={item.delivery_status} />)}</SearchSection> : null}
         {has("dealer_orders") ? <SearchSection title="Dealer Orders" count={results.dealer_orders?.data?.length ?? 0}>{results.dealer_orders?.data?.map((item: any) => <ResultCard key={item.id} href={`/dealer-orders/${item.id}`} title={item.order_number || "Dealer order"} eyebrow={`${item.dealers?.dealer_name || "Dealer"} · ${formatDate(item.expected_delivery_date)}`} badge={item.status || item.priority} />)}</SearchSection> : null}
       </div>

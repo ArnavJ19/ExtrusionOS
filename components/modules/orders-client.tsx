@@ -31,8 +31,8 @@ export function OrdersClient({ context }: { context: SessionContext }) {
     setLoading(true);
     const [customerResult, quoteResult, orderResult] = await Promise.all([
       supabase.from("customers").select("id, customer_name, company_name").eq("company_id", context.companyId).order("customer_name"),
-      supabase.from("quotes").select("id, quote_number, customer_id, grand_total, status").eq("company_id", context.companyId).eq("status", "customer_approved").order("quote_date", { ascending: false }),
-      supabase.from("orders").select("*, customers(customer_name, company_name), quotes(quote_number)").eq("company_id", context.companyId).order("created_at", { ascending: false })
+      supabase.from("quotes_authorized").select("id, quote_number, customer_id, grand_total, status").eq("company_id", context.companyId).eq("status", "customer_approved").order("quote_date", { ascending: false }),
+      supabase.from("orders_authorized").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false })
     ]);
     setLoading(false);
     if (customerResult.error) toast.error(getErrorMessage(customerResult.error));
@@ -98,7 +98,7 @@ export function OrdersClient({ context }: { context: SessionContext }) {
                   {orders.filter((order) => order.current_stage === stage).map((order) => (
                     <div key={order.id} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
                       <p className="font-black text-slate-950">{order.order_number}</p>
-                      <p className="text-xs font-medium text-slate-500">{order.customers?.company_name || order.customers?.customer_name}</p>
+                      <p className="text-xs font-medium text-slate-500">{order.company_name || order.customer_name}</p>
                       <p className="mt-1 text-xs font-semibold text-slate-600">Dispatch: {formatDate(order.expected_dispatch_date)}</p>
                       <div className="mt-2 flex items-center justify-between">
                         <Badge value={order.priority} />

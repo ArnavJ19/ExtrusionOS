@@ -17,7 +17,7 @@ const allowedFunctions = new Set(["min", "max", "round", "ceil", "floor"]);
 const unsafeIdentifiers = new Set(["eval", "Function", "window", "document", "global", "globalThis", "process", "require", "import", "constructor", "prototype", "__proto__"]);
 
 function emptyCostingSummary() {
-  return { aluminiumCost: 0, finishCost: 0, glassCost: 0, hardwareCost: 0, gasketCost: 0, fabricationCost: 0, installationCost: 0, transportCost: 0, wastageAmount: 0, internalCost: 0, marginAmount: 0, discountAmount: 0, subtotalBeforeGst: 0, gstAmount: 0, grandTotal: 0, pricePerSqft: 0, pricePerSqm: 0, pricePerUnit: 0, profitPercent: 0 };
+  return { aluminiumCost: 0, finishCost: 0, glassCost: 0, hardwareCost: 0, gasketCost: 0, fabricationCost: 0, installationCost: 0, transportCost: 0, wastageAmount: 0, internalCost: 0, marginAmount: 0, discountAmount: 0, subtotalBeforeGst: 0, gstAmount: 0, grandTotal: 0, pricePerSqft: 0, pricePerSqm: 0, pricePerUnit: 0, realizedProfitAmount: 0, costMarkupPercent: 0, salesMarginPercent: 0, profitPercent: 0 };
 }
 
 function emptyOptimizationSummary(input: SystemConfigurationInput) {

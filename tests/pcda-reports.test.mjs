@@ -147,14 +147,14 @@ describe("PCDA report readiness", () => {
 
   it("checks the tenant-scoped parent before allowing quote or order generation", async () => {
     const supabase = fakeSupabase({
-      quote_items: {
+      quote_items_authorized: {
         quote_id: "quote-1",
         profile_id: "profile-1",
         order_quantity: 10,
         net_rate: 250,
       },
       quotes: { id: "quote-1" },
-      order_items: {
+      order_items_authorized: {
         order_id: "order-1",
         profile_id: "profile-1",
         order_quantity: 10,
@@ -180,7 +180,7 @@ describe("PCDA report readiness", () => {
     const supabase = fakeSupabase({
       die_trials: { die_id: "die-1", trial_date: "2026-06-06", trial_result: "pass" },
       quality_inspections: { profile_id: "profile-1", inspection_date: "2026-06-06", status: "approved" },
-      packing_list_items: { dispatch_id: "dispatch-1", bundle_number: "B-1", profile_id: "profile-1" },
+      packing_list_items_authorized: { dispatch_id: "dispatch-1", bundle_number: "B-1", profile_id: "profile-1" },
       export_orders: { export_customer_name: "ACME", destination_country: "UAE", incoterm: "FOB", status: "draft" },
       compliance_standards: { standard_code: "IS-733", standard_name: "Aluminium Bar", product_category: "extrusion" },
       order_cost_breakdown: { customer_name: "ACME", month_key: "2026-06", revenue: 1000 },

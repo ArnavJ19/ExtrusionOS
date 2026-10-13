@@ -21,7 +21,7 @@ type OrderOption = {
   order_number: string;
   customer_id: string;
   current_stage: string;
-  order_value: number;
+  order_value: number | null;
   customers?: { customer_name?: string | null; company_name?: string | null } | null;
 };
 
@@ -99,8 +99,8 @@ export function InvoiceFormClient({
       setError(null);
       const [ordersResult, dispatchesResult, usedDispatchesResult, recordResult] = await Promise.all([
         supabase
-          .from("orders")
-          .select("id, order_number, customer_id, current_stage, order_value, customers(customer_name, company_name)")
+          .from("orders_authorized")
+          .select("id, order_number, customer_id, current_stage, order_value, customer_name, company_name")
           .eq("company_id", context.companyId)
           .neq("current_stage", "cancelled")
           .order("order_date", { ascending: false })
@@ -139,7 +139,10 @@ export function InvoiceFormClient({
           .filter((row: any) => row.id !== recordId && row.dispatch_id)
           .map((row: any) => String(row.dispatch_id))
       );
-      setOrders((ordersResult.data ?? []) as unknown as OrderOption[]);
+      setOrders((ordersResult.data ?? []).map((order: any) => ({
+        ...order,
+        customers: { customer_name: order.customer_name, company_name: order.company_name },
+      })) as OrderOption[]);
       setDispatches(
         ((dispatchesResult.data ?? []) as DispatchOption[]).filter(
           (dispatch) => !usedDispatchIds.has(dispatch.id) || dispatch.id === loadedRecord?.dispatch_id

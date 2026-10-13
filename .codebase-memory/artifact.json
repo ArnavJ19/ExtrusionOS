@@ -1,11 +1,11 @@
 {
     "schema_version": 2,
-    "commit": "ba83d9e815b51f57ce13b5face26f60b370f5a4f",
-    "indexed_at": "2026-07-22T18:44:03Z",
+    "commit": "f77bfb29f9eed955f1ba206acfcf6cecf9c194f5",
+    "indexed_at": "2026-10-13T17:58:05Z",
     "project": "ExtrusionOS",
-    "nodes": 4862,
-    "edges": 12640,
-    "original_size": 12058624,
-    "compressed_size": 2725176,
+    "nodes": 5028,
+    "edges": 12843,
+    "original_size": 9306112,
+    "compressed_size": 1417624,
     "compression_level": 3
 }

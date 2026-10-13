@@ -88,8 +88,8 @@ test("advanced analytics snapshot computes conversion, delay, receivable, and ri
       { id: "p2", status: "in_progress", planned_date: "2026-06-09", planned_quantity_kg: 500, actual_quantity_kg: 300 },
     ],
     dispatches: [
-      { id: "d1", dispatch_date: "2026-06-09", total_weight_kg: 700, delivery_status: "delivered", orders: { expected_dispatch_date: "2026-06-10" } },
-      { id: "d2", dispatch_date: "2026-06-11", total_weight_kg: 450, delivery_status: "delayed", orders: { expected_dispatch_date: "2026-06-10" } },
+      { id: "d1", dispatch_date: "2026-06-09", actual_dispatched_at: "2026-06-09T08:00:00Z", movement_weight_kg: 700, total_weight_kg: 700, delivery_status: "delivered", orders: { expected_dispatch_date: "2026-06-10" } },
+      { id: "d2", dispatch_date: "2026-06-11", actual_dispatched_at: "2026-06-11T08:00:00Z", movement_weight_kg: 450, total_weight_kg: 450, delivery_status: "delayed", orders: { expected_dispatch_date: "2026-06-10" } },
     ],
     invoices: [
       {

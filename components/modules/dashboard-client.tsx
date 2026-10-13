@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Boxes, CalendarDays, Check, ChevronDown, CircleDollarSign, Factory, FileText, PackageCheck, Truck, Wrench } from "lucide-react";
+import { ArrowRight, Boxes, Check, ChevronDown, CircleDollarSign, Factory, FileText, Truck, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { NumberTicker, CompactTicker } from "@/components/ui/number-ticker";
@@ -21,20 +21,24 @@ export function DashboardTabs({
   monthlyOrderValue,
   productionCount,
   pendingDispatchCount,
-  delayedOrders,
   activeCustomerCount,
   monthlyQuoteCount,
   monthlyOrderCount,
   dispatchCount,
   dieCorrectionCount,
   lowInventoryRows = [],
+  lowInventoryCount = 0,
+  delayedOrderCount = 0,
+  orderStageDistribution = [],
   qualityHoldCount = 0,
   todayJobCount = 0,
   pendingQuoteCount = 0
 }: any) {
   const [activeTab, setActiveTab] = useState<DashboardView>(initialView);
-  const attentionTotal = delayedOrders.length + lowInventoryRows.length + qualityHoldCount + pendingQuoteCount + dieCorrectionCount;
-  const totalStatus = Math.max(productionCount + pendingDispatchCount + dispatchCount + delayedOrders.length, 1);
+  const attentionTotal = [delayedOrderCount, lowInventoryCount, qualityHoldCount, pendingQuoteCount, dieCorrectionCount]
+    .filter((value): value is number => typeof value === "number").reduce((total, value) => total + value, 0);
+  const orderDistributionTotal = orderStageDistribution.reduce((total: number, row: { count: number }) => total + row.count, 0);
+  const totalStatus = Math.max(orderDistributionTotal, 1);
 
   const allTabs: { id: DashboardView; label: string }[] = [
     { id: "owner", label: "Owner View" },
@@ -69,17 +73,17 @@ export function DashboardTabs({
 
       {activeTab === "operations" ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {operationalResources.includes("production") ? <StatCard icon={Factory} label="Floor Load" rawValue={productionCount} change="Live" comparison="Orders in active production stages" tone="blue" /> : null}
-          {operationalResources.includes("dispatches") ? <StatCard icon={Truck} label="Dispatch Queue" rawValue={pendingDispatchCount} change={dispatchCount ? `${dispatchCount} moved` : "No movement"} comparison="Orders still pending movement" tone="yellow" /> : null}
+          {operationalResources.includes("production") ? <StatCard icon={Factory} label="Active Production Jobs" rawValue={productionCount} change="Current" comparison="Jobs excluding completed and cancelled" tone="blue" /> : null}
+          {operationalResources.includes("dispatches") ? <StatCard icon={Truck} label="Open Order Backlog" rawValue={pendingDispatchCount} change={dispatchCount ? `${dispatchCount} shipped MTD` : "No shipments MTD"} comparison="Undelivered orders, including partial shipments" tone="yellow" /> : null}
           {operationalResources.includes("quality") ? <StatCard icon={Check} label="Quality Holds" rawValue={qualityHoldCount} change={qualityHoldCount ? "Review" : "Clear"} comparison="Rejected or rework inspections" tone="purple" /> : null}
-          {operationalResources.includes("inventory") ? <StatCard icon={Boxes} label="Low Stock" rawValue={lowInventoryRows.length} change={lowInventoryRows.length ? "Reorder" : "Healthy"} comparison="Items at or below reorder level" tone="green" /> : null}
+          {operationalResources.includes("inventory") ? <StatCard icon={Boxes} label="Low Stock" rawValue={lowInventoryCount} change={lowInventoryCount ? "Reorder" : "No shortages"} comparison="Exact item count at or below reorder level" tone="green" /> : null}
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard icon={CircleDollarSign} label="Booked Revenue" rawValue={monthlyOrderValue} isCurrency change={monthlyOrderCount ? `${monthlyOrderCount} orders` : "No orders"} comparison={`${activeCustomerCount} active buying customers`} tone="green" />
-          <StatCard icon={FileText} label="Pipeline Value" rawValue={monthlyQuoteValue} isCurrency change={monthlyQuoteCount ? `${monthlyQuoteCount} quotes` : "No quotes"} comparison={`${monthlyQuoteCount} quotes created`} tone="purple" />
+          <StatCard icon={FileText} label="Open Pipeline Value" rawValue={monthlyQuoteValue} isCurrency change={`${pendingQuoteCount} open quotes`} comparison="Sent or approved quotes, including prior months; excludes expired validity" tone="purple" />
           <StatCard icon={Factory} label={activeTab === "sales" ? "Orders Converted" : "Floor Load"} rawValue={activeTab === "sales" ? monthlyOrderCount : productionCount} change={activeTab === "sales" ? "This month" : "Live"} comparison={activeTab === "sales" ? "Confirmed customer orders" : "Jobs in production"} tone="blue" />
-          <StatCard icon={activeTab === "sales" ? FileText : Truck} label={activeTab === "sales" ? "Quotes Pending" : "Dispatch Ready"} rawValue={activeTab === "sales" ? pendingQuoteCount : pendingDispatchCount} change={activeTab === "sales" ? "Follow up" : dispatchCount ? `+${dispatchCount}` : "0"} comparison={activeTab === "sales" ? "Open commercial follow-ups" : "Moved this month"} tone="yellow" />
+          <StatCard icon={activeTab === "sales" ? FileText : Truck} label={activeTab === "sales" ? "Quotes Pending" : "Open Order Backlog"} rawValue={activeTab === "sales" ? pendingQuoteCount : pendingDispatchCount} change={activeTab === "sales" ? "Follow up" : `${dispatchCount} shipped MTD`} comparison={activeTab === "sales" ? "Open commercial follow-ups" : "Undelivered orders; readiness requires dispatch checks"} tone="yellow" />
         </div>
       )}
 
@@ -88,11 +92,11 @@ export function DashboardTabs({
           <div className="grid gap-6 xl:grid-cols-[1.45fr_1fr]">
             <Card>
               <CardContent>
-                <SectionHeading title="Overview / Analytics" action="This Year" />
+                <SectionHeading title="Activity Counts" action="MTD" />
                 <div className="mt-7 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                   <div>
                     <p className="text-5xl font-bold tracking-tight text-neutral-950"><NumberTicker value={monthlyQuoteCount + monthlyOrderCount + dispatchCount} duration={1000} /></p>
-                    <p className="mt-3 text-sm font-medium text-neutral-500">Current quote, order, and dispatch activity</p>
+                    <p className="mt-3 text-sm font-medium text-neutral-500">Quote, order and shipment events through today; one order can have several events</p>
                   </div>
                   <div className="grid flex-1 gap-5 md:grid-cols-3">
                     <ActivityGrid title="Quotes" active={monthlyQuoteCount} />
@@ -105,14 +109,11 @@ export function DashboardTabs({
 
             <Card>
               <CardContent>
-                <SectionHeading title="Status Breakdown" action="This Month" />
+                <SectionHeading title="Order Stage Distribution" action="Current" />
                 <div className="mt-6 grid gap-6 sm:grid-cols-[190px_1fr] sm:items-center">
-                  <DonutChart total={productionCount + pendingDispatchCount + dispatchCount + delayedOrders.length} segments={[productionCount, pendingDispatchCount, dispatchCount, delayedOrders.length]} />
+                  <DonutChart total={orderDistributionTotal} segments={orderStageDistribution.map((row: { count: number }) => row.count)} />
                   <div className="space-y-4">
-                    <ProgressItem icon={Factory} label="In production" value={productionCount} total={totalStatus} color="bg-[#8b5cf6]" />
-                    <ProgressItem icon={Truck} label="Pending dispatch" value={pendingDispatchCount} total={totalStatus} color="bg-[#eab308]" />
-                    <ProgressItem icon={PackageCheck} label="Dispatched" value={dispatchCount} total={totalStatus} color="bg-[#60a5fa]" />
-                    <ProgressItem icon={CalendarDays} label="Delayed" value={delayedOrders.length} total={totalStatus} color="bg-neutral-950" />
+                    {orderStageDistribution.map((row: { stage: string; count: number }) => <ProgressItem key={row.stage} icon={FileText} label={row.stage.replaceAll("_", " ")} value={row.count} total={totalStatus} color="bg-neutral-950" />)}
                     <Link href="/reports" className="mt-2 inline-flex w-full items-center justify-center rounded-2xl bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800">View all</Link>
                   </div>
                 </div>
@@ -125,7 +126,7 @@ export function DashboardTabs({
               <CardContent>
                 <SectionHeading title="Tasks / Approvals" />
                 <div className="mt-5 space-y-3">
-                  <TaskCard title="Delayed orders" value={delayedOrders.length} href="/orders" tone={delayedOrders.length ? "critical" : "ok"} />
+                  <TaskCard title="Delayed orders" value={delayedOrderCount} href="/orders" tone={delayedOrderCount ? "critical" : "ok"} />
                   <TaskCard title="Pending quotes" value={pendingQuoteCount} href="/quotes" tone={pendingQuoteCount ? "warning" : "ok"} />
                   <TaskCard title="QC holds" value={qualityHoldCount} href="/quality" tone={qualityHoldCount ? "critical" : "ok"} />
                   <TaskCard title="Die correction" value={dieCorrectionCount} href="/dies" tone={dieCorrectionCount ? "warning" : "ok"} />
@@ -160,7 +161,7 @@ export function DashboardTabs({
                   <EventItem time="Today" title="Production jobs" meta={`${todayJobCount} active floor jobs`} accent="bg-[#8b5cf6]" />
                   <EventItem time="This week" title="Dispatch follow-up" meta={`${pendingDispatchCount} orders pending movement`} accent="bg-[#60a5fa]" />
                   <EventItem time="Toolroom" title="Die correction" meta={`${dieCorrectionCount} dies need attention`} accent="bg-neutral-950" />
-                  <EventItem time="Inventory" title="Low stock review" meta={`${lowInventoryRows.length} items below reorder`} accent="bg-[#eab308]" />
+                  <EventItem time="Inventory" title="Low stock review" meta={`${lowInventoryCount} items at or below reorder`} accent="bg-[#eab308]" />
                 </div>
               </CardContent>
             </Card>
@@ -176,7 +177,7 @@ export function DashboardTabs({
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <MiniMetric label="Quotes generated" value={monthlyQuoteCount} />
                 <MiniMetric label="Orders converted" value={monthlyOrderCount} />
-                <MiniMetric label="Quoted value" value={formatCompactCurrency(monthlyQuoteValue)} />
+                <MiniMetric label="Open pipeline value" value={formatCompactCurrency(monthlyQuoteValue)} />
                 <MiniMetric label="Booked value" value={formatCompactCurrency(monthlyOrderValue)} />
               </div>
             </CardContent>
@@ -209,8 +210,8 @@ export function DashboardTabs({
             <CardContent>
               <SectionHeading title="Operations Snapshot" href={operationsHref} />
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                {operationalResources.includes("production") ? <MiniMetric label="In production" value={productionCount} /> : null}
-                {operationalResources.includes("dispatches") ? <MiniMetric label="Pending dispatch" value={pendingDispatchCount} /> : null}
+                {operationalResources.includes("production") ? <MiniMetric label="Active production jobs" value={productionCount} /> : null}
+                {operationalResources.includes("dispatches") ? <MiniMetric label="Open order backlog" value={pendingDispatchCount} /> : null}
                 {operationalResources.includes("production") ? <MiniMetric label="Today's jobs" value={todayJobCount} /> : null}
                 <MiniMetric label="Attention items" value={attentionTotal} />
               </div>
@@ -299,7 +300,7 @@ function DonutChart({ total, segments }: { total: number; segments: number[] }) 
   const gradient = segments.reduce<{ cursor: number; stops: string[] }>((acc, value, index) => {
     const start = acc.cursor;
     const end = start + (value / safeTotal) * 100;
-    return { cursor: end, stops: [...acc.stops, `${colors[index]} ${start}% ${end}%`] };
+    return { cursor: end, stops: [...acc.stops, `${colors[index % colors.length]} ${start}% ${end}%`] };
   }, { cursor: 0, stops: [] }).stops.join(", ");
 
   return (

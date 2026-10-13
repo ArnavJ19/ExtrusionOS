@@ -7,6 +7,7 @@ import { can } from "@/lib/auth/permissions";
 import { buildProductionJobPcdaFields, chooseProductionSourceLine } from "@/lib/pcda/production";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
+import { isProductionOrderStageOpenForPlanning } from "@/lib/actions/production-order-eligibility";
 import { productionJobSchema } from "@/lib/validations/schemas";
 
 const productionStatusSchema = productionJobSchema.shape.status;
@@ -17,6 +18,13 @@ const completeProductionJobSchema = z.object({
   actual_meters: z.coerce.number().nonnegative("Actual metres cannot be negative").optional().nullable(),
   scrap_weight_kg: z.coerce.number().nonnegative("Scrap weight cannot be negative").default(0),
   remarks: z.string().trim().max(2000, "Completion remarks are too long").optional().nullable()
+});
+const correctCompletedOutputSchema = z.object({
+  job_id: z.string().uuid(),
+  actual_weight_kg: z.coerce.number().positive(),
+  actual_pieces: z.coerce.number().int().nonnegative(),
+  actual_meters: z.coerce.number().nonnegative(),
+  reason: z.string().trim().min(8).max(2000)
 });
 const scheduleSlotStatusSchema = z.enum(["draft", "scheduled"]);
 const assignPressSchema = z.object({
@@ -52,7 +60,7 @@ function revalidateProductionPaths(jobId?: string) {
 
 async function loadProductionSourceLine(supabase: any, companyId: string, orderId: string, profileId: string, sourceLineId?: string | null) {
   const orderItems = await supabase
-    .from("order_items")
+    .from("order_items_authorized")
     .select("*")
     .eq("company_id", companyId)
     .eq("order_id", orderId)
@@ -81,10 +89,6 @@ function isUsableDieStatus(status: unknown) {
 
 function isAvailablePressStatus(status: unknown) {
   return ["active", "operational", "idle"].includes(String(status ?? ""));
-}
-
-function isOpenOrderStage(stage: unknown) {
-  return !["closed", "cancelled", "dispatched", "delivered"].includes(String(stage ?? ""));
 }
 
 async function validateMachineForPlanning(supabase: any, companyId: string, machineId?: string | null) {
@@ -145,14 +149,14 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
       supabase.from("aluminium_profiles").select("id, is_active").eq("company_id", context.companyId).eq("id", parsed.data.profile_id).maybeSingle(),
       supabase.from("dies").select("id, profile_id, die_status").eq("company_id", context.companyId).eq("id", parsed.data.die_id).maybeSingle(),
       validateMachineForPlanning(supabase, context.companyId, parsed.data.machine_id),
-      editingId ? supabase.from("production_jobs").select("*").eq("company_id", context.companyId).eq("id", editingId).maybeSingle() : Promise.resolve({ data: null, error: null })
+      editingId ? supabase.from("production_jobs_authorized").select("*").eq("company_id", context.companyId).eq("id", editingId).maybeSingle() : Promise.resolve({ data: null, error: null })
     ]);
     if (orderResult.error) throw orderResult.error;
     if (profileResult.error) throw profileResult.error;
     if (dieResult.error) throw dieResult.error;
     if (currentJobResult.error) throw currentJobResult.error;
     if (!orderResult.data) return { success: false, error: "Selected order is not available for this company." };
-    if (!isOpenOrderStage(orderResult.data.current_stage)) return { success: false, error: "Selected order is not open for production planning." };
+    if (!isProductionOrderStageOpenForPlanning(orderResult.data.current_stage)) return { success: false, error: "Selected order is not open for production planning." };
     if (!profileResult.data) return { success: false, error: "Selected profile is not available for this company." };
     if (profileResult.data.is_active === false) return { success: false, error: "Selected profile is inactive and cannot be planned for production." };
     if (!dieResult.data || dieResult.data.profile_id !== parsed.data.profile_id) return { success: false, error: "Selected die does not match this profile." };
@@ -262,6 +266,33 @@ export async function completeProductionJobAction(
   }
 }
 
+export async function correctCompletedProductionOutputAction(input: z.input<typeof correctCompletedOutputSchema>): Promise<ProductionActionResult> {
+  try {
+    const context = await getSessionContext();
+    if (!["owner", "admin", "production_manager"].includes(context.role)) {
+      return { success: false, error: "Only an owner, administrator, or production manager can correct completed output." };
+    }
+    const parsed = correctCompletedOutputSchema.safeParse(input);
+    if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Check corrected output and reason." };
+    const supabase = await createClient();
+    const result = await supabase.rpc("correct_completed_production_output_atomic", {
+      p_job_id: parsed.data.job_id,
+      p_actual_weight_kg: parsed.data.actual_weight_kg,
+      p_actual_pieces: parsed.data.actual_pieces,
+      p_actual_meters: parsed.data.actual_meters,
+      p_reason: parsed.data.reason
+    });
+    if (result.error || !result.data) throw result.error ?? new Error("Could not correct completed output");
+    revalidateProductionPaths(parsed.data.job_id);
+    revalidatePath("/production/finishing");
+    revalidatePath("/packaging");
+    revalidatePath("/quality");
+    return { success: true, jobId: parsed.data.job_id };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error, "Could not correct completed output") };
+  }
+}
+
 export async function saveProductionScheduleSlotAction(input: z.input<typeof scheduleSlotSchema>): Promise<ProductionActionResult> {
   try {
     const context = await getSessionContext();
@@ -284,7 +315,7 @@ export async function saveProductionScheduleSlotAction(input: z.input<typeof sch
     if (machineValidation?.error) return { success: false, error: machineValidation.error };
     const order = Array.isArray(jobResult.data.order) ? jobResult.data.order[0] : jobResult.data.order;
     const die = Array.isArray(jobResult.data.die) ? jobResult.data.die[0] : jobResult.data.die;
-    if (!isOpenOrderStage(order?.current_stage)) return { success: false, error: "This order is not open for press scheduling." };
+    if (!isProductionOrderStageOpenForPlanning(order?.current_stage)) return { success: false, error: "This order is not open for press scheduling." };
     if (!die || die.profile_id !== jobResult.data.profile_id || !isUsableDieStatus(die.die_status)) return { success: false, error: "This job does not have a usable die for press scheduling." };
     if (new Date(parsed.data.planned_end_at).getTime() <= new Date(parsed.data.planned_start_at).getTime()) {
       return { success: false, error: "Planned end must be after planned start." };

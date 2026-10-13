@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
-import { buildAdvancedAnalyticsSnapshot, parseAdvancedAnalyticsSnapshot } from "@/lib/analytics/advanced-dashboard";
+import { getAnalyticsEvidenceState, parseAdvancedAnalyticsSnapshot } from "@/lib/analytics/advanced-dashboard";
 import { createClient } from "@/lib/supabase/server";
 import { formatCompactCurrency, formatCurrency, formatDate, formatPercent } from "@/lib/utils/format";
 import { labelize } from "@/types/app";
@@ -31,24 +31,23 @@ export default async function AnalyticsPage() {
     p_as_of: analyticsAsOf,
     p_months: 6,
   });
-  const emptySnapshot = buildAdvancedAnalyticsSnapshot({
-    orders: [],
-    quotes: [],
-    productionJobs: [],
-    dispatches: [],
-    invoices: [],
-    payments: [],
-    expenses: [],
-    qualityInspections: [],
-    inventoryItems: [],
-    tasks: [],
-  }, now);
   const parsedSnapshot = parseAdvancedAnalyticsSnapshot(analyticsResult.data);
-  const snapshot = parsedSnapshot ?? emptySnapshot;
+  const evidenceState = analyticsResult.error ? "unavailable" : getAnalyticsEvidenceState(parsedSnapshot, analyticsAsOf, now);
   const queryErrors = [
     analyticsResult.error ? `analytics: ${analyticsResult.error.message}` : null,
     !analyticsResult.error && !parsedSnapshot ? "analytics: database returned an invalid snapshot" : null,
   ].filter(Boolean) as string[];
+
+  if (!parsedSnapshot || evidenceState === "unavailable" || evidenceState === "stale") return (
+    <div className="space-y-6">
+      <PageHeader title="Advanced Analytics" description="Business metrics require current, verified source data." />
+      <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm font-semibold text-amber-800">
+        Analytics {evidenceState === "stale" ? "is stale" : "is unavailable"}. Retry after the data source is restored. Metrics and risk conclusions cannot be established.
+        {queryErrors.length ? <p className="mt-2">{analyticsResult.error ? "The database analytics query failed." : "The database returned an invalid snapshot."}</p> : null}
+      </div>
+    </div>
+  );
+  const snapshot = parsedSnapshot;
 
   const maxTrendValue = Math.max(
     1,
@@ -59,12 +58,12 @@ export default async function AnalyticsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Advanced Analytics"
-        description="Ultra-detailed owner dashboard across commercial, production, dispatch, receivables, expenses, quality, and inventory risk."
+        description={`Activity through ${analyticsAsOf} in Asia/Kolkata. Outstanding balances, order stages, inventory and tasks describe current state; they are not reconstructed historical balances.`}
       />
 
-      {queryErrors.length ? (
+      {evidenceState === "partial" ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
-          Partial data warning: {queryErrors.join(" | ")}
+          Shipment evidence is partial: {snapshot.dataQuality?.unknownShipmentCount} activated records lack a verified movement timestamp or packing ledger. They are excluded from shipment totals. Resolve this evidence before concluding that shipment performance is healthy.
         </div>
       ) : null}
 
@@ -83,7 +82,7 @@ export default async function AnalyticsPage() {
               <TrendingUp className="h-4 w-4 text-emerald-600" />
             </div>
             <p className="mt-3 text-3xl font-black text-slate-900">{formatPercent(snapshot.kpis.quoteConversionRateMtd)}</p>
-            <p className="mt-1 text-xs text-slate-500">Pipeline value {formatCompactCurrency(snapshot.kpis.quotePipelineValueMtd)}</p>
+            <p className="mt-1 text-xs text-slate-500">Open pipeline {formatCompactCurrency(snapshot.kpis.quotePipelineValueMtd)}; includes prior-month quotes with current validity</p>
           </CardContent>
         </Card>
         <Card>
@@ -176,14 +175,14 @@ export default async function AnalyticsPage() {
                     </div>
                   </div>
                 ))
-              ) : (
+              ) : evidenceState === "verified" ? (
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
                     <p>No critical risk signals from current data.</p>
                   </div>
                 </div>
-              )}
+              ) : <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-800">Risk assessment is incomplete until shipment evidence is reconciled.</div>}
             </div>
             <div className="mt-4 grid gap-2">
               <div className={`rounded-xl border px-3 py-2 text-xs font-bold ${pctClass(snapshot.kpis.productionAttainmentPctMtd, 90)}`}>
@@ -205,7 +204,7 @@ export default async function AnalyticsPage() {
           <CardContent>
             <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Production Against MTD Plan</p>
             <p className="mt-2 text-2xl font-black text-slate-900">{Math.round(snapshot.kpis.productionActualKgMtd).toLocaleString("en-IN")} kg</p>
-            <p className="mt-1 text-xs text-slate-500">Planned this month: {Math.round(snapshot.kpis.productionPlannedKgMtd).toLocaleString("en-IN")} kg. Actual counts jobs completed this month.</p>
+            <p className="mt-1 text-xs text-slate-500">Plan through the as-of date: {Math.round(snapshot.kpis.productionPlannedKgMtd).toLocaleString("en-IN")} kg. Actual counts jobs completed through that date.</p>
           </CardContent>
         </Card>
         <Card>
@@ -242,10 +241,10 @@ export default async function AnalyticsPage() {
           <CardContent>
             <div className="space-y-2">
               {snapshot.topCustomers.length ? snapshot.topCustomers.map((customer, index) => (
-                <div key={customer.name} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3">
+                <div key={customer.customerId ?? `unknown-${index}`} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-black text-slate-900">#{index + 1} {customer.name}</p>
-                    <p className="mt-0.5 text-xs font-semibold text-slate-500">{customer.orderCount} orders</p>
+                    <p className="mt-0.5 text-xs font-semibold text-slate-500">Account {customer.customerId?.slice(0, 8) ?? "unlinked"} / {customer.orderCount} orders</p>
                   </div>
                   <p className="text-sm font-black text-slate-900">{formatCurrency(customer.value)}</p>
                 </div>

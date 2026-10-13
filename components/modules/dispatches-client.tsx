@@ -27,14 +27,23 @@ export function DispatchesClient({ context }: { context: SessionContext }) {
   async function loadAll() {
     setLoading(true);
     const [orderResult, dispatchResult] = await Promise.all([
-      supabase.from("orders").select("id, order_number, customer_id, current_stage, customers(customer_name, company_name)").eq("company_id", context.companyId).order("order_date", { ascending: false }),
-      supabase.from("dispatches").select("*, orders(order_number, customers(customer_name, company_name))").eq("company_id", context.companyId).order("dispatch_date", { ascending: false })
+      supabase.from("orders_authorized").select("id, order_number, customer_name, company_name, current_stage").eq("company_id", context.companyId).order("order_date", { ascending: false }),
+      supabase.from("dispatches").select("*").eq("company_id", context.companyId).order("dispatch_date", { ascending: false })
     ]);
+    const relatedOrderIds = [...new Set((dispatchResult.data ?? []).map((dispatch: any) => dispatch.order_id).filter(Boolean))];
+    const relatedOrders = relatedOrderIds.length
+      ? await supabase.from("orders_authorized").select("id, order_number, customer_name, company_name").eq("company_id", context.companyId).in("id", relatedOrderIds)
+      : { data: [], error: null };
     setLoading(false);
     if (orderResult.error) toast.error(getErrorMessage(orderResult.error));
     if (dispatchResult.error) toast.error(getErrorMessage(dispatchResult.error));
+    if (relatedOrders.error) toast.error(getErrorMessage(relatedOrders.error));
     setOrders(orderResult.data ?? []);
-    setDispatches(dispatchResult.data ?? []);
+    const ordersById = new Map((relatedOrders.data ?? []).map((order: any) => [order.id, order]));
+    setDispatches((dispatchResult.data ?? []).map((dispatch: any) => {
+      const order = ordersById.get(dispatch.order_id);
+      return { ...dispatch, orders: order ? { ...order, customers: { customer_name: order.customer_name, company_name: order.company_name } } : null };
+    }));
   }
 
   useEffect(() => { void loadAll(); }, []);
@@ -66,7 +75,7 @@ export function DispatchesClient({ context }: { context: SessionContext }) {
       <PageHeader title="Dispatches" description="Track bundles, transporter, vehicle, driver, e-way bill, LR number, and delivery status." />
       <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
         <Card><CardContent><h2 className="section-title mb-1">Create dispatch</h2><p className="mb-5 text-sm font-medium text-slate-500">Record shipment details clearly for factory, accounts, and customer follow-up.</p><div className="grid gap-4">
-          <label className="block space-y-1.5"><span className="form-label">Order *</span><select className="form-input" value={form.order_id} onChange={(event) => setForm({ ...form, order_id: event.target.value })}><option value="">Select order</option>{orders.map((order) => <option key={order.id} value={order.id}>{order.order_number} · {order.customers?.company_name || order.customers?.customer_name}</option>)}</select></label>
+          <label className="block space-y-1.5"><span className="form-label">Order *</span><select className="form-input" value={form.order_id} onChange={(event) => setForm({ ...form, order_id: event.target.value })}><option value="">Select order</option>{orders.map((order) => <option key={order.id} value={order.id}>{order.order_number} · {order.company_name || order.customer_name || "Customer"}</option>)}</select></label>
           <label className="block space-y-1.5"><span className="form-label">Dispatch date</span><input className="form-input" type="date" value={form.dispatch_date} onChange={(event) => setForm({ ...form, dispatch_date: event.target.value })} /></label>
           <label className="block space-y-1.5"><span className="form-label">Bundles</span><input className="form-input" type="number" inputMode="numeric" min="0" value={form.number_of_bundles} onChange={(event) => setForm({ ...form, number_of_bundles: Number(event.target.value) })} /></label>
           <label className="block space-y-1.5"><span className="form-label">Net aluminium weight kg</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.001" value={form.total_weight_kg} onChange={(event) => setForm({ ...form, total_weight_kg: Number(event.target.value) })} /></label>

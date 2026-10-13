@@ -34,9 +34,9 @@ export function groupProfileCutsForProduction(cuts: ProductionCutInput[]): Produ
     const existing = map.get(cut.profile_id);
     if (existing) {
       existing.plannedQuantityKg = round(existing.plannedQuantityKg + weight);
-      existing.plannedMeters = round(existing.plannedMeters + (Number.isFinite(meters) ? meters : 0), 2);
+      existing.plannedMeters = round(existing.plannedMeters + (Number.isFinite(meters) ? meters : 0));
     } else {
-      map.set(cut.profile_id, { profileId: cut.profile_id, profileCode: cut.profile_code ?? "Profile", profileName: cut.profile_name ?? "Profile", plannedQuantityKg: round(weight), plannedMeters: round(Number.isFinite(meters) ? meters : 0, 2) });
+      map.set(cut.profile_id, { profileId: cut.profile_id, profileCode: cut.profile_code ?? "Profile", profileName: cut.profile_name ?? "Profile", plannedQuantityKg: round(weight), plannedMeters: round(Number.isFinite(meters) ? meters : 0) });
     }
   }
   return Array.from(map.values()).sort((a, b) => a.profileCode.localeCompare(b.profileCode));
