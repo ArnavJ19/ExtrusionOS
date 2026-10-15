@@ -32,11 +32,14 @@ export default async function InventoryPage() {
   }
 
   const cid = context.companyId;
+  const canReadReservations = can(context.role, "read", "inventory_reservations");
 
   const [allItems, lowStockItems, reservations] = await Promise.all([
     supabase.from("inventory_items").select("id, item_code, item_name, item_category, current_stock, reorder_level, unit", { count: "exact" }).eq("company_id", cid),
     supabase.from("inventory_items").select("id, item_code, item_name, item_category, current_stock, reorder_level, unit").eq("company_id", cid).or("current_stock.lte.reorder_level").order("current_stock", { ascending: true }).limit(5),
-    supabase.from("profile_stock_reservations").select("id", { count: "exact", head: true }).eq("company_id", cid).eq("status", "active"),
+    canReadReservations
+      ? supabase.from("profile_stock_reservations").select("id", { count: "exact", head: true }).eq("company_id", cid).eq("status", "active")
+      : Promise.resolve({ data: null, error: null, count: null }),
   ]);
 
   const rows = allItems.data ?? [];
@@ -74,12 +77,14 @@ export default async function InventoryPage() {
           allItems={allItemsData}
         />
       </ModuleOverviewClient>
-      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      {canReadReservations ? <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div><p className="text-xs font-black uppercase tracking-[0.16em] text-orange">Reservation Ledger</p><h2 className="section-title mt-1">Reserved Profile Stock</h2><p className="mt-1 text-sm font-medium text-slate-500">{reservations.count ?? 0} active stock reservation{(reservations.count ?? 0) === 1 ? "" : "s"} are holding profile stock against customer orders.</p></div>
+          <div><p className="text-xs font-black uppercase tracking-[0.16em] text-orange">Reservation Ledger</p><h2 className="section-title mt-1">Reserved Profile Stock</h2><p className="mt-1 text-sm font-medium text-slate-500">{!reservations.error && Number.isSafeInteger(reservations.count) && Number(reservations.count) >= 0
+            ? `${reservations.count} active stock reservation${reservations.count === 1 ? "" : "s"} are holding profile stock against customer orders.`
+            : "The active reservation count is unavailable. Open the ledger to verify its quantities."}</p></div>
           <Link href="/inventory/reservations" className="inline-flex items-center justify-center rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90">Open Reservations</Link>
         </div>
-      </div>
+      </div> : null}
     </div>
   );
 }

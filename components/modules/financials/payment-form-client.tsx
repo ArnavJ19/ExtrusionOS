@@ -59,6 +59,7 @@ export function PaymentFormClient({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const isCreditAdjustment = paymentMethod === "credit_note";
 
   useEffect(() => {
     let cancelled = false;
@@ -122,7 +123,7 @@ export function PaymentFormClient({
         toast.error(result.error);
         return;
       }
-      toast.success(`Receipt posted. Invoice balance is ${formatCurrency(result.data.balance_due)}.`);
+      toast.success(`${isCreditAdjustment ? "Credit adjustment" : "Receipt"} posted. Invoice balance is ${formatCurrency(result.data.balance_due)}.`);
       router.push(`/payments/${result.data.payment_id}`);
       router.refresh();
     });
@@ -140,8 +141,8 @@ export function PaymentFormClient({
         <div className="flex items-center gap-3">
           <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-700"><ReceiptIndianRupee className="h-6 w-6" /></div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-neutral-950">Record Customer Receipt</h1>
-            <p className="mt-1 text-sm font-medium text-neutral-500">Select the receivable first. The server will validate the locked balance and close or part-pay the invoice.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-neutral-950">{isCreditAdjustment ? "Record Credit Adjustment" : "Record Customer Receipt"}</h1>
+            <p className="mt-1 text-sm font-medium text-neutral-500">{isCreditAdjustment ? "Record a non-cash reduction against one invoice. For a returned or damaged dispatch, use its return credit note." : "Select the receivable first. The server will validate the locked balance and close or part-pay the invoice."}</p>
           </div>
         </div>
       </div>
@@ -157,7 +158,7 @@ export function PaymentFormClient({
       ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <Card>
-            <CardHeader><h2 className="section-title">Receipt Details</h2></CardHeader>
+            <CardHeader><h2 className="section-title">{isCreditAdjustment ? "Adjustment Details" : "Receipt Details"}</h2></CardHeader>
             <CardContent className="grid gap-5 md:grid-cols-2">
               <label className="block space-y-1.5 md:col-span-2">
                 <span className="form-label">Invoice *</span>
@@ -168,7 +169,7 @@ export function PaymentFormClient({
                 <input className="form-input" type="date" max={todayIso()} value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
               </label>
               <label className="block space-y-1.5">
-                <span className="form-label">Amount received *</span>
+                <span className="form-label">{isCreditAdjustment ? "Adjustment amount" : "Amount received"} *</span>
                 <input className="form-input" type="number" min="0.01" step="0.01" max={selectedInvoice?.balance_due} value={amount} onChange={(event) => setAmount(event.target.value)} />
               </label>
               <label className="block space-y-1.5">
@@ -178,9 +179,10 @@ export function PaymentFormClient({
                   <option value="upi">UPI</option>
                   <option value="cheque">Cheque</option>
                   <option value="cash">Cash</option>
-                  <option value="credit_note">Credit note</option>
+                  <option value="credit_note">Credit adjustment (non-cash)</option>
                   <option value="other">Other</option>
                 </select>
+                {isCreditAdjustment ? <p className="form-hint">Use a standalone adjustment only when this invoice has no issued return credit note. For a returned or damaged dispatch, issue its credit note from the dispatch record instead.</p> : null}
               </label>
               <label className="block space-y-1.5">
                 <span className="form-label">Reference number{["bank_transfer", "upi", "cheque"].includes(paymentMethod) ? " *" : ""}</span>
@@ -191,7 +193,7 @@ export function PaymentFormClient({
                 <textarea className="form-input min-h-28" value={notes} placeholder="Bank, branch, payer, or reconciliation note" onChange={(event) => setNotes(event.target.value)} />
               </label>
               <div className="flex flex-wrap gap-3 md:col-span-2">
-                <Button type="button" disabled={isPending || !selectedInvoice || Number(amount) <= 0} onClick={submit}>{isPending ? "Posting receipt..." : "Post Receipt"}</Button>
+                <Button type="button" disabled={isPending || !selectedInvoice || Number(amount) <= 0} onClick={submit}>{isPending ? "Posting..." : isCreditAdjustment ? "Post Credit Adjustment" : "Post Receipt"}</Button>
                 <Link href="/payments" className="inline-flex items-center rounded-2xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700">Cancel</Link>
               </div>
             </CardContent>

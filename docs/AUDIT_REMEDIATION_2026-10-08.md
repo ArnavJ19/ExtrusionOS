@@ -1,5 +1,11 @@
 # Audit remediation: 8 October 2026
 
+Current local verification: [14 October continuation](AUDIT_REMEDIATION_2026-10-14.md).
+The continuation supersedes the unfinished checklist below for local code/testing
+status, records all finding IDs and the additional integration fixes, and preserves
+the separate hosted acceptance boundary. The user has instructed local development
+only and no deployment. Historical evidence below remains intact.
+
 ## All-findings continuation
 
 The user extended the scope to every remaining finding in this report. All five

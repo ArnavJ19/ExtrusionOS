@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { formatCurrency, formatWeight } from "@/lib/utils/format";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { calculateBilletWeightKg, calculateRequiredBilletCount } from "@/lib/calculations/foundry";
+import { canSubmitQuoteOrder, loadQuoteDealerAvailability } from "@/lib/orders/quote-fulfillment";
 import type { SessionContext } from "@/types/app";
 
 type QuoteOption = {
@@ -40,6 +41,9 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
   const [priority, setPriority] = useState("normal");
   const [dealerFulfilledKg, setDealerFulfilledKg] = useState(0);
   const [availableUnreservedKg, setAvailableUnreservedKg] = useState(0);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
+  const [verifiedAvailabilityQuoteId, setVerifiedAvailabilityQuoteId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [minimumHandling, setMinimumHandling] = useState<"queue" | "override">("queue");
   const [overrideReason, setOverrideReason] = useState("");
@@ -111,50 +115,37 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
   });
 
   useEffect(() => {
+    let cancelled = false;
+    setDealerFulfilledKg(0);
+    setAvailableUnreservedKg(0);
+    setAvailabilityError(null);
+    setVerifiedAvailabilityQuoteId(null);
+    setAvailabilityLoading(Boolean(selectedQuote));
     const loadAvailability = async () => {
-      setDealerFulfilledKg(0);
-      setAvailableUnreservedKg(0);
       if (!selectedQuote) return;
-      const profileIds = Array.from(new Set((selectedQuote.quote_items ?? []).map((item) => item.profile_id).filter(Boolean))) as string[];
-      if (!profileIds.length) return;
-      const dealerId = context.dealerId ?? selectedQuote.dealer_id ?? null;
-      if (!dealerId) return;
-      const stockQuery = supabase.from("profile_stock_batches").select("id, profile_id, finish, total_weight_kg, status, dealer_id").eq("company_id", context.companyId).eq("dealer_id", dealerId).in("profile_id", profileIds).eq("status", "available");
-      const [stockResult, reservationResult] = await Promise.all([
-        stockQuery,
-        supabase.from("profile_stock_reservations").select("profile_stock_batch_id, reserved_weight_kg, status").eq("company_id", context.companyId).in("profile_id", profileIds).eq("status", "active"),
-      ]);
-      if (stockResult.error) return toast.error(stockResult.error.message);
-      if (reservationResult.error) return toast.error(reservationResult.error.message);
-      const finishKey = (value: unknown) => String(value ?? "mill_finish").trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
-      const reservationsByBatch = (reservationResult.data ?? []).reduce<Record<string, number>>((totals, row: any) => {
-        totals[row.profile_stock_batch_id] = (totals[row.profile_stock_batch_id] ?? 0) + Number(row.reserved_weight_kg ?? 0);
-        return totals;
-      }, {});
-      const demandByProfileFinish = (selectedQuote.quote_items ?? []).reduce<Record<string, number>>((totals, item) => {
-        if (!item.profile_id) return totals;
-        const key = `${item.profile_id}:${finishKey(item.finishing_type)}`;
-        totals[key] = (totals[key] ?? 0) + Number(item.billing_weight_kg ?? item.total_weight_kg ?? 0);
-        return totals;
-      }, {});
-      const stockByProfileFinish = (stockResult.data ?? []).reduce<Record<string, number>>((totals, row: any) => {
-        const key = `${row.profile_id}:${finishKey(row.finish)}`;
-        const available = Math.max(Number(row.total_weight_kg ?? 0) - Number(reservationsByBatch[row.id] ?? 0), 0);
-        totals[key] = (totals[key] ?? 0) + available;
-        return totals;
-      }, {});
-      const compatibleStockKg = Object.entries(demandByProfileFinish).reduce(
-        (sum, [key, demand]) => sum + Math.min(demand, stockByProfileFinish[key] ?? 0),
-        0
-      );
+      const compatibleStockKg = await loadQuoteDealerAvailability(supabase, selectedQuote.id);
+      if (cancelled) return;
       setAvailableUnreservedKg(compatibleStockKg);
+      setVerifiedAvailabilityQuoteId(selectedQuote.id);
       if (context.dealerId) setDealerFulfilledKg(Math.min(compatibleStockKg, quoteWeightKg));
     };
-    loadAvailability();
-  }, [context.companyId, context.dealerId, quoteWeightKg, selectedQuote, supabase]);
+    void loadAvailability().catch((error) => {
+      if (cancelled) return;
+      const message = error.message ?? "Could not verify dealer stock availability";
+      setAvailabilityError(message);
+      toast.error(message);
+    }).finally(() => {
+      if (!cancelled) setAvailabilityLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [context.dealerId, quoteWeightKg, selectedQuote, supabase]);
+
+  const canSubmit = canSubmitQuoteOrder({ quoteSelected: Boolean(selectedQuote), saving,
+    availabilityLoading: availabilityLoading || verifiedAvailabilityQuoteId !== selectedQuote?.id, availabilityError });
 
   async function submit() {
     if (!selectedQuote) return toast.error("Select a quote before creating an order.");
+    if (!canSubmit) return toast.error(availabilityError ?? "Wait for stock availability to finish loading.");
     if (dealerFulfilledKg > availableUnreservedKg) return toast.error("Dealer fulfillment cannot use reserved or unavailable stock.");
     if (dealerFulfilledKg > quoteWeightKg) return toast.error("Dealer fulfillment cannot exceed the quote weight.");
     if (factoryBlocked && minimumHandling === "override" && overrideReason.trim().length < 8) {
@@ -220,6 +211,8 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
             <label className="block space-y-1.5"><span className="form-label">Dealer Stock Used (kg)</span><input className="form-input" type="number" step="0.001" min="0" max={Math.min(availableUnreservedKg, quoteWeightKg)} value={dealerFulfilledKg} onChange={(event) => setDealerFulfilledKg(Number(event.target.value))} disabled={Boolean(context.dealerId)} /></label>
             <ReadOnly label="Factory Manufacturing Weight" value={formatWeight(manufacturingWeightKg)} />
           </div>
+          {availabilityLoading ? <p className="text-sm font-medium text-slate-500">Checking current unreserved dealer stock...</p> : null}
+          {availabilityError ? <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-800">{availabilityError}</p> : null}
           {factoryBlocked ? <div className="space-y-4 rounded-2xl border border-amber-200 bg-amber-50 p-4"><div className="flex gap-3 text-sm font-bold text-amber-900"><AlertTriangle className="h-5 w-5 shrink-0" /> The remaining factory quantity is below 700 kg. The order can be saved, but production cannot start until it is combined with other queued work or a manager approves an exception.</div><div className="grid gap-3 md:grid-cols-2"><label className="flex cursor-pointer gap-3 rounded-xl border border-amber-200 bg-white p-3"><input type="radio" checked={minimumHandling === "queue"} onChange={() => setMinimumHandling("queue")} /><span><strong className="block text-sm text-slate-950">Add to consolidation queue</strong><span className="text-xs font-medium text-slate-500">Recommended: combine compatible orders to reach the minimum.</span></span></label>{!context.dealerId && ["owner", "admin", "factory_manager", "production_manager"].includes(context.role) ? <label className="flex cursor-pointer gap-3 rounded-xl border border-amber-200 bg-white p-3"><input type="radio" checked={minimumHandling === "override"} onChange={() => setMinimumHandling("override")} /><span><strong className="block text-sm text-slate-950">Manager exception</strong><span className="text-xs font-medium text-slate-500">Release this order alone with an auditable reason.</span></span></label> : null}</div>{minimumHandling === "override" ? <label className="block space-y-1.5"><span className="form-label">Override reason *</span><textarea className="form-input min-h-20 bg-white" value={overrideReason} onChange={(event) => setOverrideReason(event.target.value)} /></label> : null}</div> : null}
         </CardContent>
       </Card>
@@ -233,7 +226,7 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
             <label className="block space-y-1.5"><span className="form-label">Priority</span><select className="form-input" value={priority} onChange={(event) => setPriority(event.target.value)}><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></label>
           </div>
           <label className="block space-y-1.5"><span className="form-label">Notes</span><textarea className="form-input min-h-24" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Customer PO, dealer stock source, special dispatch notes" /></label>
-          <div className="flex justify-end gap-3 border-t border-slate-200 pt-5"><Button type="button" variant="secondary" onClick={() => router.back()}>Cancel</Button><Button type="button" disabled={saving || !selectedQuote || factoryBlocked} onClick={submit}>{saving ? "Creating..." : "Create Order"}</Button></div>
+          <div className="flex justify-end gap-3 border-t border-slate-200 pt-5"><Button type="button" variant="secondary" onClick={() => router.back()}>Cancel</Button><Button type="button" disabled={!canSubmit} onClick={submit}>{saving ? "Creating..." : "Create Order"}</Button></div>
         </CardContent>
       </Card>
     </div>

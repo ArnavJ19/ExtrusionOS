@@ -2,6 +2,7 @@ export const REQUIRED_API_FUNCTIONS = [
   "save_system_configuration_atomic",
   "submit_dealer_receipt_atomic",
   "save_order_atomic",
+  "create_direct_order_atomic",
   "save_ready_dispatch_atomic",
   "generate_system_quote_atomic",
   "handoff_system_configuration_to_production_atomic",
@@ -10,6 +11,9 @@ export const REQUIRED_API_FUNCTIONS = [
   "resolve_quality_rework_atomic",
   "list_open_quality_rework_inspections",
   "get_profile_stock_consumption_totals",
+  "get_profile_stock_reservation_ledger_page",
+  "get_dispatch_reservation_ledger_page",
+  "get_dealer_quote_stock_availability",
   "issue_dispatch_return_credit_note_atomic",
   "reverse_credit_note_atomic",
   "get_dashboard_snapshot",
@@ -47,9 +51,12 @@ export async function checkHostedSchemaContract(
   read: SchemaReader
 ): Promise<SchemaContractCheck[]> {
   const base = new URL(baseUrl);
-  if (base.protocol !== "https:" && !["localhost", "127.0.0.1", "[::1]"].includes(base.hostname)) {
+  const loopbackHttp = base.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(base.hostname);
+  if (base.protocol !== "https:" && !loopbackHttp) {
     throw new Error("The database URL must use HTTPS unless it is a local instance.");
   }
+  if (base.username || base.password) throw new Error("The database URL must not contain credentials.");
+  if (!apiKey.trim()) throw new Error("An API credential is required.");
   const headers: Record<string, string> = { apikey: apiKey, Accept: "application/openapi+json" };
   // Legacy JWT keys can be bearer tokens; newer publishable/secret keys cannot.
   if (apiKey.startsWith("eyJ")) headers.Authorization = `Bearer ${apiKey}`;
@@ -65,13 +72,19 @@ export async function checkHostedSchemaContract(
   const advertised = paths && typeof paths === "object" && !Array.isArray(paths)
     ? paths as Record<string, unknown>
     : null;
-  const checks: SchemaContractCheck[] = REQUIRED_API_FUNCTIONS.map((name) => ({
-    check: `rpc:${name}`,
-    status: advertised ? (Object.hasOwn(advertised, `/rpc/${name}`) ? "verified" : "missing") : "unavailable",
-    detail: advertised
-      ? (Object.hasOwn(advertised, `/rpc/${name}`) ? "Advertised in REST schema; execution and caller authorization still require testing." : "Not advertised for this API credential; catalog and privileges need inspection.")
-      : "REST schema could not be verified."
-  }));
+  const checks: SchemaContractCheck[] = REQUIRED_API_FUNCTIONS.map((name) => {
+    const present = advertised && Object.hasOwn(advertised, `/rpc/${name}`);
+    const path = present ? advertised[`/rpc/${name}`] : null;
+    const validPath = path !== null && typeof path === "object" && !Array.isArray(path);
+    return {
+      check: `rpc:${name}`,
+      status: !advertised || (present && !validPath) ? "unavailable" : present ? "verified" : "missing",
+      detail: !advertised ? "REST schema could not be verified."
+        : present && !validPath ? "RPC exposure returned an invalid schema entry."
+        : present ? "Advertised in REST schema; execution and caller authorization still require testing."
+        : "Not advertised for this API credential; catalog and privileges need inspection."
+    };
+  });
   for (const { table, column } of REQUIRED_COLUMN_CHECKS) {
     const url = new URL(`/rest/v1/${table}`, base);
     url.searchParams.set("select", column);
@@ -79,7 +92,15 @@ export async function checkHostedSchemaContract(
     try {
       const response = await read(url, { ...headers, Accept: "application/json" });
       if (response.ok) {
-        checks.push({ check: `${table}:${column}`, status: "verified", detail: "Zero-row column query accepted; historical values were not read." });
+        const body = await response.json();
+        const emptyResult = Array.isArray(body) && body.length === 0;
+        checks.push({
+          check: `${table}:${column}`,
+          status: emptyResult ? "verified" : "unavailable",
+          detail: emptyResult
+            ? "Zero-row column query accepted; historical values were not read."
+            : "Zero-row column query returned an unexpected response; the column could not be verified."
+        });
         continue;
       }
       const body = await response.json().catch(() => null) as { code?: string } | null;

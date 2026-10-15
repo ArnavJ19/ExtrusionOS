@@ -8,7 +8,6 @@ import { getSystemsConfiguratorContext } from "@/lib/systems-configurator/access
 import { generateSystemQuote } from "@/lib/systems-configurator/actions";
 import { getSystemQuoteReadiness } from "@/lib/systems-configurator/quote-readiness";
 import { buildSystemWhatsAppSummary } from "@/lib/systems-configurator/quote-integration";
-import { can } from "@/lib/auth/permissions";
 import { labelize } from "@/types/app";
 
 export default async function SystemQuotePage({ params }: { params: Promise<{ id: string }> }) {

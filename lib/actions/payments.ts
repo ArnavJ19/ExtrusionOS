@@ -10,7 +10,7 @@ import { getErrorMessage } from "@/lib/utils/errors";
 const recordPaymentInputSchema = z.object({
   invoice_id: z.string().uuid("Select an invoice"),
   payment_date: z.string().min(1, "Payment date is required"),
-  amount: z.coerce.number().positive("Amount must be greater than zero"),
+  amount: z.coerce.number().finite("Enter a finite payment amount").positive("Amount must be greater than zero"),
   payment_method: z.enum(["bank_transfer", "upi", "cheque", "cash", "credit_note", "other"]),
   reference_number: z.string().trim().max(120).optional().nullable(),
   notes: z.string().trim().max(2000).optional().nullable(),
@@ -65,19 +65,13 @@ export async function recordPaymentAction(input: RecordPaymentInput): Promise<Pa
     const supabase = await createClient();
     const { data: invoice, error: invoiceError } = await supabase
       .from("invoices")
-      .select("id, customer_id, order_id, balance_due, status")
+      .select("id")
       .eq("company_id", context.companyId)
       .eq("id", parsed.data.invoice_id)
       .maybeSingle();
     if (invoiceError) throw invoiceError;
     if (!invoice) return { success: false, error: "Invoice not found for this company." };
-    if (!["generated", "sent", "partially_paid", "overdue"].includes(String(invoice.status))) {
-      return { success: false, error: "Payments can only be posted to an issued, unpaid invoice." };
-    }
-    if (parsed.data.amount > Number(invoice.balance_due ?? 0)) {
-      return { success: false, error: "Payment amount exceeds the outstanding invoice balance." };
-    }
-
+    // The locked transaction must resolve retries before checking the current balance and status.
     const result = await supabase.rpc("record_payment_atomic", {
       p_invoice_id: parsed.data.invoice_id,
       p_payment: {

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
+import { loadReservationConsumptionTotals } from "@/lib/inventory/reservation-consumption";
 import { buildVerifiedPackingListItems, type VerifiedDispatchBundleInput } from "@/lib/pcda/dispatch";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
@@ -66,7 +67,7 @@ async function loadDispatchSourceLines(
       .order("created_at", { ascending: true }),
     supabase
       .from("profile_stock_reservations")
-      .select("id, order_id, profile_id, profile_stock_batch_id, reserved_weight_kg, reserved_length_m, reserved_pieces, status, created_at, profile_stock_consumptions(consumed_weight_kg, consumed_length_m, consumed_pieces)")
+      .select("id, order_id, profile_id, profile_stock_batch_id, reserved_weight_kg, reserved_length_m, reserved_pieces, status, created_at")
       .eq("company_id", companyId)
       .eq("order_id", orderId)
       .eq("status", "active")
@@ -93,7 +94,7 @@ async function loadDispatchSourceLines(
     .map((dispatch: any) => dispatch.id)
     .filter((id: string) => id !== editingId);
 
-  const [qualityResult, finishingResult, packagingResult, usedPackingResult] = await Promise.all([
+  const [qualityResult, finishingResult, packagingResult, usedPackingResult, consumptionTotals] = await Promise.all([
     jobIds.length
       ? supabase.from("quality_inspections").select("production_job_id, finishing_job_id, quantity_checked_kg, status").eq("company_id", companyId).in("production_job_id", jobIds)
       : Promise.resolve({ data: [], error: null }),
@@ -105,7 +106,8 @@ async function loadDispatchSourceLines(
       : Promise.resolve({ data: [], error: null }),
     dispatchIds.length
       ? supabase.from("packing_list_items").select("source_line_id, net_weight_kg, number_of_pieces, net_length_m").eq("company_id", companyId).in("dispatch_id", dispatchIds)
-      : Promise.resolve({ data: [], error: null })
+      : Promise.resolve({ data: [], error: null }),
+    loadReservationConsumptionTotals(supabase, (reservationResult.data ?? []).map((reservation: any) => String(reservation.id)))
   ]);
   for (const result of [qualityResult, finishingResult, packagingResult, usedPackingResult]) {
     if (result.error) throw result.error;
@@ -128,21 +130,17 @@ async function loadDispatchSourceLines(
   const qualityRequired = featureResult.data?.is_enabled ?? true;
   const blockers: string[] = [];
   const reservationSources = (reservationResult.data ?? []).flatMap((reservation: any) => {
-    const consumedWeight = (reservation.profile_stock_consumptions ?? []).reduce(
-      (sum: number, row: any) => sum + Number(row.consumed_weight_kg ?? 0),
-      0
-    );
-    const consumedLength = (reservation.profile_stock_consumptions ?? []).reduce((sum: number, row: any) => sum + Number(row.consumed_length_m ?? 0), 0);
-    const consumedPieces = (reservation.profile_stock_consumptions ?? []).reduce((sum: number, row: any) => sum + Number(row.consumed_pieces ?? 0), 0);
-    const availableWeight = Math.max(Number(reservation.reserved_weight_kg ?? 0) - consumedWeight, 0);
+    const consumed = consumptionTotals.get(String(reservation.id));
+    if (!consumed) throw new Error("Reservation consumption totals are incomplete. Refresh before preparing dispatch.");
+    const availableWeight = Math.max(Number(reservation.reserved_weight_kg ?? 0) - consumed.weightKg, 0);
     return availableWeight > 0 && reservation.profile_id && reservation.profile_stock_batch_id
       ? [{
         ...reservation,
         reservation_id: reservation.id,
         source_kind: "reservation",
         available_weight_kg: availableWeight,
-        available_length_m: Math.max(Number(reservation.reserved_length_m ?? 0) - consumedLength, 0),
-        available_pieces: Math.max(Number(reservation.reserved_pieces ?? 0) - consumedPieces, 0),
+        available_length_m: Math.max(Number(reservation.reserved_length_m ?? 0) - consumed.lengthM, 0),
+        available_pieces: Math.max(Number(reservation.reserved_pieces ?? 0) - consumed.pieces, 0),
         actual_quantity_kg: Number(reservation.reserved_weight_kg ?? 0)
       }]
       : [];

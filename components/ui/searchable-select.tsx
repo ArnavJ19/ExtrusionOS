@@ -20,9 +20,10 @@ type SearchableSelectProps = {
   emptyText?: string;
   onSearchChange?: (query: string) => void;
   searching?: boolean;
+  ariaLabel?: string;
 };
 
-export function SearchableSelect({ value, options, onChange, placeholder = "Select", disabled, className, emptyText = "No matching options", onSearchChange, searching = false }: SearchableSelectProps) {
+export function SearchableSelect({ value, options, onChange, placeholder = "Select", disabled, className, emptyText = "No matching options", onSearchChange, searching = false, ariaLabel }: SearchableSelectProps) {
   const selected = options.find((option) => option.value === value) ?? null;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(selected?.label ?? "");
@@ -54,6 +55,7 @@ export function SearchableSelect({ value, options, onChange, placeholder = "Sele
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
         <input
+          aria-label={ariaLabel}
           className="form-input w-full pl-9 pr-16"
           value={query}
           placeholder={placeholder}

@@ -1,5 +1,7 @@
 "use server";
 
+import { loadReservationConsumptionTotals } from "@/lib/inventory/reservation-consumption";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -552,18 +554,7 @@ export async function reserveSystemBomProfileStock(configurationId: string) {
 
   const activeReservations = reservationsResult.data ?? [];
   const reservationIds = activeReservations.map((reservation: any) => reservation.id);
-  const consumptionResult = reservationIds.length
-    ? await supabase.rpc("get_profile_stock_consumption_totals", { p_reservation_ids: reservationIds })
-    : { data: [], error: null };
-  if (consumptionResult.error) throw consumptionResult.error;
-  const consumptionByReservation = new Map<string, { weightKg: number; lengthM: number; pieces: number }>();
-  for (const consumption of consumptionResult.data ?? []) {
-    const current = consumptionByReservation.get(consumption.reservation_id) ?? { weightKg: 0, lengthM: 0, pieces: 0 };
-    current.weightKg += Number(consumption.consumed_weight_kg ?? 0);
-    current.lengthM += Number(consumption.consumed_length_m ?? 0);
-    current.pieces += Number(consumption.consumed_pieces ?? 0);
-    consumptionByReservation.set(consumption.reservation_id, current);
-  }
+  const consumptionByReservation = await loadReservationConsumptionTotals(supabase, reservationIds);
   const reservationsWithConsumption = activeReservations.map((reservation: any) => ({
     ...reservation,
     consumed_weight_kg: consumptionByReservation.get(reservation.id)?.weightKg ?? 0,

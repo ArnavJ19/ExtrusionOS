@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ConfiguratorOutputNav } from "@/components/modules/systems-configurator/output-nav";
 import { createClient } from "@/lib/supabase/server";
 import { can } from "@/lib/auth/permissions";
+import { loadReservationConsumptionTotals } from "@/lib/inventory/reservation-consumption";
 import { getSystemsConfiguratorContext } from "@/lib/systems-configurator/access";
 import { reserveSystemBomProfileStock } from "@/lib/systems-configurator/actions";
 import { getSystemBomReadiness } from "@/lib/systems-configurator/bom-readiness";
@@ -37,20 +38,11 @@ export default async function SystemBomPage({ params }: { params: Promise<{ id: 
   const [stockResult, reservationsResult] = reservationRequirements.length ? await Promise.all([
     supabase.from("profile_stock_batches").select("id, profile_id, total_weight_kg, length_m, status").eq("company_id", context.companyId).in("profile_id", reservationRequirements.map((item) => item.profileId)),
     supabase.from("profile_stock_reservations").select("id, profile_stock_batch_id, profile_id, order_id, configuration_id, reserved_weight_kg, reserved_length_m, reserved_pieces, status").eq("company_id", context.companyId).eq("status", "active").in("profile_id", reservationRequirements.map((item) => item.profileId))
-  ]) : [{ data: [] }, { data: [] }];
+  ]) : [{ data: [], error: null }, { data: [], error: null }];
+  if (stockResult.error) throw stockResult.error;
+  if (reservationsResult.error) throw reservationsResult.error;
   const reservationIds = (reservationsResult.data ?? []).map((reservation: any) => reservation.id);
-  const consumptionResult = reservationIds.length
-    ? await supabase.rpc("get_profile_stock_consumption_totals", { p_reservation_ids: reservationIds })
-    : { data: [], error: null };
-  if (consumptionResult.error) throw consumptionResult.error;
-  const consumptionByReservation = new Map<string, { weightKg: number; lengthM: number; pieces: number }>();
-  for (const consumption of consumptionResult.data ?? []) {
-    const current = consumptionByReservation.get(consumption.reservation_id) ?? { weightKg: 0, lengthM: 0, pieces: 0 };
-    current.weightKg += Number(consumption.consumed_weight_kg ?? 0);
-    current.lengthM += Number(consumption.consumed_length_m ?? 0);
-    current.pieces += Number(consumption.consumed_pieces ?? 0);
-    consumptionByReservation.set(consumption.reservation_id, current);
-  }
+  const consumptionByReservation = await loadReservationConsumptionTotals(supabase, reservationIds);
   const reservationsWithConsumption = (reservationsResult.data ?? []).map((reservation: any) => ({
     ...reservation,
     consumed_weight_kg: consumptionByReservation.get(reservation.id)?.weightKg ?? 0,
