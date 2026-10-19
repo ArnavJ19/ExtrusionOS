@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { isProductionOrderStageOpenForPlanning } from "@/lib/actions/production-order-eligibility";
 import { productionJobSchema } from "@/lib/validations/schemas";
+import { isUsableProductionDieStatus } from "@/lib/workflow/production-dies";
 
 const productionStatusSchema = productionJobSchema.shape.status;
 const completeProductionJobSchema = z.object({
@@ -81,12 +82,6 @@ async function loadProductionSourceLine(supabase: any, companyId: string, orderI
   throw new Error("This converted order has no order lines. Repair the quote-to-order conversion before planning production.");
 }
 
-function isUsableDieStatus(status: unknown) {
-  const blockedDieStatuses = ["inactive", "dead", "blocked", "retired", "scrapped", "under_maintenance"];
-  if (blockedDieStatuses.includes(String(status ?? ""))) return false;
-  return ["active", "approved"].includes(String(status ?? ""));
-}
-
 function isAvailablePressStatus(status: unknown) {
   return ["active", "operational", "idle"].includes(String(status ?? ""));
 }
@@ -141,7 +136,7 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
 
     const parsed = productionJobSchema.safeParse(input);
     if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check production job details." };
-    if (!parsed.data.die_id) return { success: false, error: "Production cannot be scheduled because no active die exists for this order/profile. Add the die in Die Master first." };
+    if (!parsed.data.die_id) return { success: false, error: "Select an active or approved die for this order/profile before scheduling production." };
 
     const supabase = await createClient();
     const [orderResult, profileResult, dieResult, machineValidation, currentJobResult] = await Promise.all([
@@ -160,7 +155,7 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
     if (!profileResult.data) return { success: false, error: "Selected profile is not available for this company." };
     if (profileResult.data.is_active === false) return { success: false, error: "Selected profile is inactive and cannot be planned for production." };
     if (!dieResult.data || dieResult.data.profile_id !== parsed.data.profile_id) return { success: false, error: "Selected die does not match this profile." };
-    if (!isUsableDieStatus(dieResult.data.die_status)) return { success: false, error: `Die is ${String(dieResult.data.die_status).replace(/_/g, " ")} and cannot be used for production.` };
+    if (!isUsableProductionDieStatus(dieResult.data.die_status)) return { success: false, error: `Die is ${String(dieResult.data.die_status).replace(/_/g, " ")} and cannot be used for production.` };
     if (machineValidation?.error) return { success: false, error: machineValidation.error };
     if (editingId && !currentJobResult.data) return { success: false, error: "Production job not found for this company." };
 
@@ -316,7 +311,7 @@ export async function saveProductionScheduleSlotAction(input: z.input<typeof sch
     const order = Array.isArray(jobResult.data.order) ? jobResult.data.order[0] : jobResult.data.order;
     const die = Array.isArray(jobResult.data.die) ? jobResult.data.die[0] : jobResult.data.die;
     if (!isProductionOrderStageOpenForPlanning(order?.current_stage)) return { success: false, error: "This order is not open for press scheduling." };
-    if (!die || die.profile_id !== jobResult.data.profile_id || !isUsableDieStatus(die.die_status)) return { success: false, error: "This job does not have a usable die for press scheduling." };
+    if (!die || die.profile_id !== jobResult.data.profile_id || !isUsableProductionDieStatus(die.die_status)) return { success: false, error: "This job does not have a usable die for press scheduling." };
     if (new Date(parsed.data.planned_end_at).getTime() <= new Date(parsed.data.planned_start_at).getTime()) {
       return { success: false, error: "Planned end must be after planned start." };
     }

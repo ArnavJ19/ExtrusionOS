@@ -5,6 +5,8 @@ import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { loadReservationConsumptionTotals } from "@/lib/inventory/reservation-consumption";
+import { loadDispatchPackingTotals } from "@/lib/dispatches/packing-history";
+import { loadFinishedProductionReadiness } from "@/lib/dispatches/finishing-readiness";
 import { buildVerifiedPackingListItems, type VerifiedDispatchBundleInput } from "@/lib/pcda/dispatch";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
@@ -27,22 +29,6 @@ function revalidateDispatchPaths(dispatchId?: string, orderId?: string) {
   if (orderId) revalidatePath(`/orders/${orderId}`);
 }
 
-function usedWeightBySource(rows: Record<string, any>[]) {
-  return rows.reduce<Record<string, number>>((totals, row) => {
-    if (!row.source_line_id) return totals;
-    totals[row.source_line_id] = (totals[row.source_line_id] ?? 0) + Number(row.net_weight_kg ?? 0);
-    return totals;
-  }, {});
-}
-
-function usedAmountBySource(rows: Record<string, any>[], field: "number_of_pieces" | "net_length_m") {
-  return rows.reduce<Record<string, number>>((totals, row) => {
-    if (!row.source_line_id) return totals;
-    totals[row.source_line_id] = (totals[row.source_line_id] ?? 0) + Number(row[field] ?? 0);
-    return totals;
-  }, {});
-}
-
 async function loadDispatchSourceLines(
   supabase: any,
   companyId: string,
@@ -50,7 +36,7 @@ async function loadDispatchSourceLines(
   editingId: string | null,
   requestedWeightKg = 0
 ) {
-  const [productionResult, fulfillmentResult, reservationResult, featureResult, dispatchResult] = await Promise.all([
+  const [productionResult, fulfillmentResult, reservationResult, featureResult] = await Promise.all([
     supabase
       .from("production_jobs_authorized")
       .select("*")
@@ -77,39 +63,31 @@ async function loadDispatchSourceLines(
       .select("is_enabled")
       .eq("company_id", companyId)
       .eq("module_name", "quality_compliance")
-      .maybeSingle(),
-    supabase
-      .from("dispatches")
-      .select("id")
-      .eq("company_id", companyId)
-      .eq("order_id", orderId)
+      .maybeSingle()
   ]);
-  for (const result of [productionResult, fulfillmentResult, reservationResult, featureResult, dispatchResult]) {
+  for (const result of [productionResult, fulfillmentResult, reservationResult, featureResult]) {
     if (result.error) throw result.error;
   }
 
   const jobs = productionResult.data ?? [];
-  const jobIds = jobs.map((job: any) => job.id);
-  const dispatchIds = (dispatchResult.data ?? [])
-    .map((dispatch: any) => dispatch.id)
-    .filter((id: string) => id !== editingId);
+  const millJobs = jobs.filter((job: any) => String(job.finishing_type ?? "mill_finish") === "mill_finish");
+  const jobIds = millJobs.map((job: any) => job.id);
+  const finishedJobs = jobs.filter((job: any) => String(job.finishing_type ?? "mill_finish") !== "mill_finish");
 
-  const [qualityResult, finishingResult, packagingResult, usedPackingResult, consumptionTotals] = await Promise.all([
+  const [qualityResult, packagingResult, packingTotals, consumptionTotals, finishingReadiness] = await Promise.all([
     jobIds.length
       ? supabase.from("quality_inspections").select("production_job_id, finishing_job_id, quantity_checked_kg, status").eq("company_id", companyId).in("production_job_id", jobIds)
       : Promise.resolve({ data: [], error: null }),
     jobIds.length
-      ? supabase.from("finishing_jobs").select("id, production_job_id, output_weight_kg, status").eq("company_id", companyId).in("production_job_id", jobIds)
-      : Promise.resolve({ data: [], error: null }),
-    jobIds.length
       ? supabase.from("packaging_jobs").select("id, production_job_id, status").eq("company_id", companyId).eq("order_id", orderId).in("production_job_id", jobIds)
       : Promise.resolve({ data: [], error: null }),
-    dispatchIds.length
-      ? supabase.from("packing_list_items").select("source_line_id, net_weight_kg, number_of_pieces, net_length_m").eq("company_id", companyId).in("dispatch_id", dispatchIds)
-      : Promise.resolve({ data: [], error: null }),
-    loadReservationConsumptionTotals(supabase, (reservationResult.data ?? []).map((reservation: any) => String(reservation.id)))
+    jobs.length || (fulfillmentResult.data ?? []).length
+      ? loadDispatchPackingTotals(supabase, companyId, orderId, editingId)
+      : Promise.resolve(new Map<string, {weightKg: number; lengthM: number; pieces: number}>()),
+    loadReservationConsumptionTotals(supabase, (reservationResult.data ?? []).map((reservation: any) => String(reservation.id))),
+    loadFinishedProductionReadiness(supabase, companyId, orderId, finishedJobs)
   ]);
-  for (const result of [qualityResult, finishingResult, packagingResult, usedPackingResult]) {
+  for (const result of [qualityResult, packagingResult]) {
     if (result.error) throw result.error;
   }
 
@@ -124,9 +102,6 @@ async function loadDispatchSourceLines(
     : { data: [], error: null };
   if (materialsResult.error) throw materialsResult.error;
 
-  const usedBySource = usedWeightBySource(usedPackingResult.data ?? []);
-  const usedPiecesBySource = usedAmountBySource(usedPackingResult.data ?? [], "number_of_pieces");
-  const usedLengthBySource = usedAmountBySource(usedPackingResult.data ?? [], "net_length_m");
   const qualityRequired = featureResult.data?.is_enabled ?? true;
   const blockers: string[] = [];
   const reservationSources = (reservationResult.data ?? []).flatMap((reservation: any) => {
@@ -147,7 +122,7 @@ async function loadDispatchSourceLines(
   });
   const stockSources = (fulfillmentResult.data ?? []).flatMap((fulfillment: any) => {
     const availableWeight = Math.max(
-      Number(fulfillment.fulfilled_weight_kg ?? 0) - Number(usedBySource[fulfillment.id] ?? 0),
+      Number(fulfillment.fulfilled_weight_kg ?? 0) - (packingTotals.get(fulfillment.id)?.weightKg ?? 0),
       0
     );
     return availableWeight > 0 && fulfillment.profile_id
@@ -155,8 +130,8 @@ async function loadDispatchSourceLines(
         ...fulfillment,
         source_kind: "dealer_stock",
         available_weight_kg: availableWeight,
-        available_pieces: Math.max(Number(fulfillment.fulfilled_pieces ?? 0) - Number(usedPiecesBySource[fulfillment.id] ?? 0), 0),
-        available_length_m: Math.max(Number(fulfillment.fulfilled_length_m ?? 0) - Number(usedLengthBySource[fulfillment.id] ?? 0), 0)
+        available_pieces: Math.max(Number(fulfillment.fulfilled_pieces ?? 0) - (packingTotals.get(fulfillment.id)?.pieces ?? 0), 0),
+        available_length_m: Math.max(Number(fulfillment.fulfilled_length_m ?? 0) - (packingTotals.get(fulfillment.id)?.lengthM ?? 0), 0)
       }]
       : [];
   });
@@ -168,46 +143,42 @@ async function loadDispatchSourceLines(
     }
 
     const finishType = String(job.finishing_type ?? "mill_finish");
-    const completedFinishing = (finishingResult.data ?? []).find(
-      (finish: any) => finish.production_job_id === job.id && finish.status === "completed"
-    );
-    if (finishType !== "mill_finish" && !completedFinishing) {
-      blockers.push(`${job.job_number ?? "Production job"} is waiting for ${finishType.replace(/_/g, " ")} completion.`);
-      return [];
-    }
-    const acceptedOutput = finishType === "mill_finish"
-      ? actualWeight
-      : Number(completedFinishing?.output_weight_kg ?? 0);
-
-    const approvedWeight = qualityRequired
-      ? (qualityResult.data ?? [])
-        .filter((inspection: any) => (
-          inspection.production_job_id === job.id
-          && inspection.status === "approved"
-          && (finishType === "mill_finish"
-            ? !inspection.finishing_job_id
-            : inspection.finishing_job_id === completedFinishing?.id)
-        ))
-        .reduce((sum: number, inspection: any) => sum + Number(inspection.quantity_checked_kg ?? 0), 0)
-      : acceptedOutput;
-    if (approvedWeight <= 0) {
-      blockers.push(`${job.job_number ?? "Production job"} has no QC-released quantity.`);
-      return [];
-    }
-
-    const packagingJob = packagingJobs.find(
-      (packaging: any) => packaging.production_job_id === job.id && packaging.status === "completed"
-    );
-    const hasMaterial = packagingJob && (materialsResult.data ?? []).some(
-      (material: any) => material.job_id === packagingJob.id && Number(material.quantity_required ?? 0) > 0
-    );
-    if (!hasMaterial) {
-      blockers.push(`${job.job_number ?? "Production job"} is waiting for completed packaging with issued material.`);
-      return [];
+    let releasedWeight: number;
+    if (finishType !== "mill_finish") {
+      releasedWeight = finishingReadiness.get(String(job.id).toLowerCase()) ?? 0;
+      if (releasedWeight <= 0) {
+        blockers.push(`${job.job_number ?? "Production job"} is waiting for accepted finishing receipts, QC release or completed packaging.`);
+        return [];
+      }
+    } else {
+      const approvedWeight = qualityRequired
+        ? (qualityResult.data ?? [])
+          .filter((inspection: any) => (
+            inspection.production_job_id === job.id
+            && inspection.status === "approved"
+            && !inspection.finishing_job_id
+          ))
+          .reduce((sum: number, inspection: any) => sum + Number(inspection.quantity_checked_kg ?? 0), 0)
+        : actualWeight;
+      if (approvedWeight <= 0) {
+        blockers.push(`${job.job_number ?? "Production job"} has no QC-released quantity.`);
+        return [];
+      }
+      const packagingJob = packagingJobs.find(
+        (packaging: any) => packaging.production_job_id === job.id && packaging.status === "completed"
+      );
+      const hasMaterial = packagingJob && (materialsResult.data ?? []).some(
+        (material: any) => material.job_id === packagingJob.id && Number(material.quantity_required ?? 0) > 0
+      );
+      if (!hasMaterial) {
+        blockers.push(`${job.job_number ?? "Production job"} is waiting for completed packaging with issued material.`);
+        return [];
+      }
+      releasedWeight = Math.min(actualWeight, approvedWeight);
     }
 
     const availableWeight = Math.max(
-      Math.min(actualWeight, acceptedOutput, approvedWeight) - Number(usedBySource[job.id] ?? 0),
+      Math.min(actualWeight, releasedWeight) - (packingTotals.get(job.id)?.weightKg ?? 0),
       0
     );
     return availableWeight > 0
@@ -215,8 +186,8 @@ async function loadDispatchSourceLines(
         ...job,
         source_kind: "production",
         available_weight_kg: availableWeight,
-        available_pieces: Math.max(Number(job.actual_pieces ?? 0) - Number(usedPiecesBySource[job.id] ?? 0), 0),
-        available_length_m: Math.max(Number(job.actual_meters ?? 0) - Number(usedLengthBySource[job.id] ?? 0), 0)
+        available_pieces: Math.max(Number(job.actual_pieces ?? 0) - (packingTotals.get(job.id)?.pieces ?? 0), 0),
+        available_length_m: Math.max(Number(job.actual_meters ?? 0) - (packingTotals.get(job.id)?.lengthM ?? 0), 0)
       }]
       : [];
   });

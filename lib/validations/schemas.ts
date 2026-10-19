@@ -583,6 +583,7 @@ export const packagingJobSchema = z.object({
   packaging_number: optionalText,
   order_id: z.string().uuid("Select an order"),
   production_job_id: z.string().uuid("Select a completed production job"),
+  finishing_job_id: z.string().uuid("Select an accepted finishing receipt").optional().nullable().or(z.literal("")),
   scheduled_date: optionalText,
   pieces: z.coerce.number().int().nonnegative("Pieces cannot be negative").default(0),
   profile_weight_kg: z.coerce.number().nonnegative("Weight cannot be negative").default(0),
@@ -599,15 +600,15 @@ export const packagingJobMaterialSchema = z.object({
 
 export const qualityInspectionSchema = z.object({
   production_job_id: z.string().uuid("Select a completed production job"),
-  finishing_job_id: z.string().uuid("Select a completed finishing job").optional().nullable().or(z.literal("")),
+  finishing_job_id: z.string().uuid("Select an accepted finishing receipt").optional().nullable().or(z.literal("")),
   profile_id: z.string().uuid("Select a profile"),
   inspection_date: z.string().min(1, "Inspection date is required"),
   batch_number: optionalText,
   quantity_checked_kg: z.coerce.number().nonnegative(),
   dimensional_variance: optionalText,
-  hardness_webster: z.coerce.number().positive().max(30, "Hardness Webster scale is typically 0-20").optional().nullable(),
+  hardness_webster: z.preprocess((value) => value === "" ? null : value, z.coerce.number().positive().max(30, "Hardness Webster scale is typically 0-20").optional().nullable()),
   surface_finish_ok: z.coerce.boolean().default(true),
-  weight_per_meter_actual: z.coerce.number().positive().optional().nullable(),
+  weight_per_meter_actual: z.preprocess((value) => value === "" ? null : value, z.coerce.number().positive().optional().nullable()),
   status: z.enum(["pending", "approved", "rejected", "rework"]).default("pending"),
   inspector_name: optionalText,
   notes: optionalText

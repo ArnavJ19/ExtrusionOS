@@ -1,6 +1,7 @@
 "use server";
 
 import { loadReservationConsumptionTotals } from "@/lib/inventory/reservation-consumption";
+import { isUsableProductionDieForProfile, usableProductionDieStatuses } from "@/lib/workflow/production-dies";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -465,11 +466,13 @@ export async function handoffSystemConfigurationToProduction(configurationId: st
     .from("dies")
     .select("id, profile_id, die_status")
     .eq("company_id", context.companyId)
-    .in("profile_id", profileIds);
+    .in("profile_id", profileIds)
+    .in("die_status", usableProductionDieStatuses)
+    .order("id", { ascending: true });
   if (diesResult.error) throw diesResult.error;
   const usableDies = new Map<string, string>();
   for (const die of diesResult.data ?? []) {
-    if (!["inactive", "dead", "blocked", "retired", "scrapped", "under_maintenance"].includes(String(die.die_status ?? "")) && !usableDies.has(die.profile_id)) {
+    if (profileIds.includes(die.profile_id) && isUsableProductionDieForProfile(die, die.profile_id) && !usableDies.has(die.profile_id)) {
       usableDies.set(die.profile_id, die.id);
     }
   }

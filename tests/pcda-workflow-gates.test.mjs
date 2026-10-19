@@ -18,12 +18,12 @@ describe("Die production gate", () => {
   it("blocks blocked die without override", () => {
     const result = canUseDieForProduction("blocked");
     assert.equal(result.allowed, false);
-    assert.equal(result.requiresOverride, true);
+    assert.equal(result.requiresOverride, false);
   });
 
-  it("allows blocked die with owner override", () => {
+  it("keeps blocked die unavailable to owners until its status is corrected", () => {
     const result = canUseDieForProduction("blocked", true);
-    assert.equal(result.allowed, true);
+    assert.equal(result.allowed, false);
   });
 
   it("blocks retired die", () => {
@@ -33,13 +33,13 @@ describe("Die production gate", () => {
     assert.equal(canUseDieForProduction("under_correction").allowed, false);
   });
 
-  it("warns on trial/nitriding but allows", () => {
+  it("blocks trial/nitriding until approved", () => {
     const trial = canUseDieForProduction("trial");
-    assert.equal(trial.allowed, true);
-    assert.ok(trial.reason?.includes("Warning"));
+    assert.equal(trial.allowed, false);
+    assert.ok(trial.reason?.includes("active or approved"));
 
     const nitriding = canUseDieForProduction("nitriding");
-    assert.equal(nitriding.allowed, true);
+    assert.equal(nitriding.allowed, false);
   });
 
   it("blocks unknown status", () => {

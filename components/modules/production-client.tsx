@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { saveProductionJobAction, updateProductionJobStatusAction } from "@/lib/actions/production";
 import { formatDate, formatWeight } from "@/lib/utils/format";
 import { labelize, type SessionContext } from "@/types/app";
+import { usableProductionDieStatuses } from "@/lib/workflow/production-dies";
 
 type ProductionJob = {
   id: string;
@@ -77,7 +78,7 @@ export function ProductionClient({ context }: { context: SessionContext }) {
       supabase.from("orders").select("id, order_number").eq("company_id", context.companyId).not("current_stage", "in", '("closed","cancelled","delivered")').order("order_date", { ascending: false }),
       supabase.from("aluminium_profiles").select("id, profile_code, profile_name").eq("company_id", context.companyId).eq("is_active", true).order("profile_code"),
       supabase.from("machines").select("id, machine_name").eq("company_id", context.companyId).order("machine_name"),
-      supabase.from("dies").select("id, die_number, profile_id").eq("company_id", context.companyId).eq("die_status", "active").order("die_number")
+      supabase.from("dies").select("id, die_number, profile_id").eq("company_id", context.companyId).in("die_status", usableProductionDieStatuses).order("die_number")
     ]);
     setOrders(orderRes.data ?? []);
     setProfiles(profileRes.data ?? []);

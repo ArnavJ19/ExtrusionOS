@@ -33,25 +33,44 @@ export function SearchableSelect({ value, options, onChange, placeholder = "Sele
     if (!open) setQuery(selected?.label ?? "");
   }, [open, selected?.label]);
 
+  useEffect(() => () => {
+    if (blurTimer.current) clearTimeout(blurTimer.current);
+  }, []);
+
   const filteredOptions = useMemo(() => {
     const search = query.trim().toLowerCase();
     if (!search || selected?.label === query) return options;
     return options.filter((option) => option.label.toLowerCase().includes(search) || String(option.value).toLowerCase().includes(search));
   }, [options, query, selected?.label]);
 
+  function cancelClose() {
+    if (blurTimer.current) clearTimeout(blurTimer.current);
+    blurTimer.current = null;
+  }
+
+  function openOptions() {
+    if (disabled) return;
+    cancelClose();
+    setOpen(true);
+  }
+
   function closeSoon() {
-    blurTimer.current = setTimeout(() => setOpen(false), 120);
+    cancelClose();
+    blurTimer.current = setTimeout(() => { setOpen(false); blurTimer.current = null; }, 120);
   }
 
   function choose(option: SearchableSelectOption) {
-    if (blurTimer.current) clearTimeout(blurTimer.current);
+    if (disabled || searching) return;
+    cancelClose();
     onChange(option.value);
     setQuery(option.label);
     setOpen(false);
   }
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("relative", className)} onBlur={(event) => {
+      if (!event.currentTarget.contains(event.relatedTarget)) closeSoon();
+    }}>
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
         <input
@@ -61,21 +80,25 @@ export function SearchableSelect({ value, options, onChange, placeholder = "Sele
           placeholder={placeholder}
           disabled={disabled}
           onFocus={() => {
-            if (blurTimer.current) clearTimeout(blurTimer.current);
-            setOpen(true);
+            openOptions();
             setQuery(selected?.label ?? "");
           }}
-          onBlur={closeSoon}
+          onClick={openOptions}
           onChange={(event) => {
             setQuery(event.target.value);
             setOpen(true);
             onSearchChange?.(event.target.value);
           }}
           onKeyDown={(event) => {
+            if (event.nativeEvent.isComposing) return;
             if (event.key === "Escape") setOpen(false);
-            if (event.key === "Enter" && open && filteredOptions[0]) {
+            if (event.key === "ArrowDown" && !open) {
               event.preventDefault();
-              choose(filteredOptions[0]);
+              openOptions();
+            }
+            if (event.key === "Enter" && open) {
+              event.preventDefault();
+              if (!searching && filteredOptions[0]) choose(filteredOptions[0]);
             }
           }}
         />
@@ -90,7 +113,7 @@ export function SearchableSelect({ value, options, onChange, placeholder = "Sele
       </div>
       {open && !disabled ? (
         <div className="absolute z-30 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-1 shadow-xl">
-          {filteredOptions.length ? filteredOptions.map((option) => (
+          {searching ? <div className="px-3 py-4 text-sm font-semibold text-neutral-500">Searching...</div> : filteredOptions.length ? filteredOptions.map((option) => (
             <button
               type="button"
               key={option.value}
@@ -100,7 +123,7 @@ export function SearchableSelect({ value, options, onChange, placeholder = "Sele
             >
               {option.label}
             </button>
-          )) : <div className="px-3 py-4 text-sm font-semibold text-neutral-500">{searching ? "Searching..." : emptyText}</div>}
+          )) : <div className="px-3 py-4 text-sm font-semibold text-neutral-500">{emptyText}</div>}
         </div>
       ) : null}
     </div>

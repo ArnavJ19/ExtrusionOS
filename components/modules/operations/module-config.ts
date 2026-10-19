@@ -614,11 +614,12 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     schema: packagingJobSchema,
     numberPrefix: "PKG",
     numberField: "packaging_number",
-    defaultValues: { packaging_number: "", order_id: "", production_job_id: "", scheduled_date: new Date().toISOString().slice(0, 10), pieces: 0, profile_weight_kg: 0, profile_length_m: 0, status: "scheduled", notes: "" },
+    defaultValues: { packaging_number: "", order_id: "", production_job_id: "", finishing_job_id: "", scheduled_date: new Date().toISOString().slice(0, 10), pieces: 0, profile_weight_kg: 0, profile_length_m: 0, status: "scheduled", notes: "" },
     fields: [
       { name: "packaging_number", label: "Packaging ID" },
       { name: "order_id", label: "Order waiting packaging", type: "select", required: true, lookup: orderLookup },
-      { name: "production_job_id", label: "Completed production job", type: "select", required: true, lookup: { table: "production_jobs", select: "id, job_number, order_id, status", labelFields: ["job_number"], orderBy: "created_at", filter: { status: "completed" } } },
+      { name: "production_job_id", label: "Completed production job", type: "select", required: true, lookup: { table: "production_jobs", select: "id, job_number, order_id, status, finishing_type, actual_quantity_kg, actual_pieces, actual_meters, pieces, length_per_piece_m", labelFields: ["job_number"], orderBy: "created_at", filter: { status: "completed" } } },
+      { name: "finishing_job_id", label: "Accepted finishing receipt", type: "select", lookup: { table: "finishing_accepted_outputs", select: "id, production_job_id, order_id, finishing_type, status, output_weight_kg, received_date, receipt_kind", labelFields: ["finishing_type", "receipt_kind", "received_date", "output_weight_kg"], orderBy: "created_at" } },
       { name: "scheduled_date", label: "Scheduled date", type: "date" },
       { name: "pieces", label: "Pieces", type: "number" },
       { name: "profile_weight_kg", label: "Profile weight kg", type: "number", step: "0.001" },
@@ -807,7 +808,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     defaultValues: { production_job_id: "", finishing_job_id: "", profile_id: "", inspection_date: new Date().toISOString().slice(0, 10), batch_number: "", quantity_checked_kg: 0, dimensional_variance: "", hardness_webster: "", surface_finish_ok: true, weight_per_meter_actual: "", status: "pending", inspector_name: "", notes: "" },
     fields: [
       { name: "production_job_id", label: "Completed production job", type: "select", required: true, lookup: { table: "production_jobs", select: "id, job_number, profile_id, order_id, status, finishing_type, actual_quantity_kg", labelFields: ["job_number"], orderBy: "created_at", filter: { status: "completed" } } },
-      { name: "finishing_job_id", label: "Completed finishing job", type: "select", lookup: { table: "finishing_jobs", select: "id, production_job_id, finishing_type, status, output_weight_kg", labelFields: ["finishing_type"], orderBy: "created_at", filter: { status: "completed" } } },
+      { name: "finishing_job_id", label: "Accepted finishing receipt", type: "select", lookup: { table: "finishing_accepted_outputs", select: "id, production_job_id, order_id, finishing_type, status, output_weight_kg, received_date, receipt_kind", labelFields: ["finishing_type", "receipt_kind", "received_date", "output_weight_kg"], orderBy: "created_at" } },
       { name: "profile_id", label: "Profile", type: "select", required: true, readOnly: true, lookup: profileLookup },
       { name: "inspection_date", label: "Inspection date", type: "date", required: true },
       { name: "batch_number", label: "Batch number" },

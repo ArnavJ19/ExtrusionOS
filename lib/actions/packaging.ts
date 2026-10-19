@@ -57,6 +57,7 @@ export async function savePackagingJobAction(input: SavePackagingInput): Promise
       p_job: {
         ...parsedJob.data,
         production_job_id: parsedJob.data.production_job_id || null,
+        ...(parsedJob.data.finishing_job_id !== undefined ? {finishing_job_id: parsedJob.data.finishing_job_id || null} : {}),
         scheduled_date: parsedJob.data.scheduled_date || null,
         notes: parsedJob.data.notes || null
       },

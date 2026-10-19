@@ -280,7 +280,8 @@ test("the historical audit executes read-only and the guard is private with both
   assert.equal((await db.query(`select count(*)::int n from pg_trigger
     where tgfoid='private.enforce_invoice_credit_settlement_exclusivity()'::regprocedure and tgenabled='O' and not tgisinternal`)).rows[0].n, 2);
   const preflight = readFileSync(new URL("../sql/audit-deployment-preflight.sql", import.meta.url), "utf8")
-    .split("-- Credit settlement guards are private triggers and cannot be verified through REST RPC discovery.")[1];
+    .split("-- Credit settlement guards are private triggers and cannot be verified through REST RPC discovery.")[1]
+    .split(";")[0];
   assert.ok(preflight);
   const catalog = (await db.query(preflight)).rows;
   assert.equal(catalog.length, 2);

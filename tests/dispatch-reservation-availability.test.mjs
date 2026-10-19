@@ -220,6 +220,14 @@ test("aggregate failure prevents dispatch submission and repeated source reads d
   assert.deepEqual(state.paths, []);
 });
 
+test("a stale or forged source from another order is rejected by fresh server loading before the stock writer",async()=>{
+  reset();state.allowDispatchWrite=true;
+  const result=await actions.saveDispatchAction({order_id:order,dispatch_date:"2026-10-19",delivery_status:"dispatched",
+    bundles:[{bundle_number:"STALE-SOURCE",source_line_id:id(999),number_of_pieces:1,net_length_m:0.5,gross_weight_kg:1,tare_weight_kg:0}]});
+  assert.equal(result.success,false);assert.match(result.error,/available source for this order/);
+  assert.deepEqual(state.calls.map(call=>call.name),["get_profile_stock_consumption_totals"]);assert.deepEqual(state.paths,[]);
+});
+
 test("partial consumption conserves held kg, metres and whole pieces over randomized ledgers", async () => {
   await fc.assert(fc.asyncProperty(fc.integer({ min: 1, max: 3000 }), fc.integer({ min: 0, max: 3000 }), async (held, candidate) => {
     const consumed = Math.min(held, candidate);

@@ -139,7 +139,7 @@ describe("PCDA customer sanitization and workflow gates", () => {
     assert.equal(canApproveProfile(false).allowed, false);
     assert.equal(canApproveProfile(false, true).allowed, true);
     assert.equal(canUseDieForProduction("blocked").allowed, false);
-    assert.equal(canUseDieForProduction("blocked", true).allowed, true);
+    assert.equal(canUseDieForProduction("blocked", true).allowed, false);
     assert.equal(canConvertQuoteToOrder("Pending").allowed, false);
     assert.equal(canConvertQuoteToOrder("Approved").allowed, true);
     assert.equal(isProductionRouteComplete(0).allowed, false);

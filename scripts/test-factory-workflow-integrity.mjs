@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
-import {sqlDefinition} from "./lib/historical-schema-fixture.mjs";
+import {installOrderCancellationStockObjects} from "./lib/order-cancellation-stock-fixture.mjs";
 
 const company = "11111111-1111-4111-8111-111111111111";
 const user = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -136,6 +136,7 @@ export async function runFactoryWorkflowIntegrityChecks() {
     await db.exec(migration);
     // Inspect the prepared follow-up body without applying its migration script.
     await db.exec(functionDefinition("supabase/migrations/20261015000000_reservation_release_replay_integrity.sql", "private.consume_dispatch_reservations"));
+    await installOrderCancellationStockObjects(db,{reservationGuardOnly:true});
     await db.exec(`create trigger factory_fixture_link_billets_to_production_job after update of status on public.production_jobs
       for each row when (new.status='completed') execute function public.link_billets_to_production_job();`);
 

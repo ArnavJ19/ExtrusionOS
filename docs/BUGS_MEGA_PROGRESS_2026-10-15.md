@@ -1016,7 +1016,7 @@ returns; and complete desktop/mobile operator UAT. This checklist grants no
 authority to run migrations. R09 adds neither a release UI nor a physical-return
 receipt, historical repair or deployment.
 
-## Current continuation checkpoint
+## R09 checkpoint (superseded below)
 
 R01-R03 are locally fixed. R04-R09 remain verified, unapplied local database
 candidates. The final suite has 840 passing tests, 135 above the 705-test
@@ -1025,3 +1025,230 @@ A00, historical reconciliation, hosted
 JWT/RLS/Storage, independent-session races, physical returns, release UI,
 authenticated operator journeys and deployment remain open. The overall goal
 remains active.
+
+## R10 - Order cancellation and physical stock integrity
+
+Status: OPEN; LOCAL CANDIDATE VERIFIED, NOT APPLIED.
+
+The next partial-release investigation traced the actual cancellation trigger,
+rather than installing a released status directly as earlier projection/replay
+fixtures did. The latest `public.credit_dealer_stock_on_order_cancel` body was
+still in `0041_dealer_roles_inventory_automation.sql`. Cancellation automatically
+added all uncredited dealer fulfillment kg and pieces back to a batch, marked it
+available, posted a positive movement and stamped fulfillment credited. It did
+not restore metres or require a physical receipt, and it left active profile
+holds attached to the cancelled order. The capacity guard also permitted a new
+active reservation when its parent order existed but was cancelled.
+
+The initial real-trigger fixture, with current R08 guards and actual reservation
+policies, failed seven of eight acceptance checks. The sibling-company control
+passed. A batch physically holding 40 kg / 20 m / 4 pieces became 60 kg / 20 m /
+6 pieces without any receipt. A target hold with 30 kg / 15 m / 3 pieces reserved
+and 10 kg / 5 m / 1 piece consumed stayed active, blocking its 20 kg / 10 m /
+2-piece remainder. An unrelated order also held 20 kg / 10 m / 2 pieces. Checking
+kg availability alone could conceal part of the error; all physical units and
+posted movement/fulfillment evidence are therefore compared.
+
+The prepared candidate retains the existing trigger function/attachment name
+for compatibility. A real transition to cancelled requires an active same-company
+owner/admin and unchanged order identity/company. The parent update holds the
+order lock; target active reservations are locked with NOWAIT in stable order.
+The complete R09 private projection validates all matching histories before any
+hold is changed. Only those active holds become cancelled with a close timestamp.
+Initial/current reserved units, posted consumption, existing terminal holds,
+physical stock batches, dealer fulfillment and inventory movements are retained.
+One stage entry explains that physical returns require a receipt, and one audit
+records actor, released record count, complete open kg and unchanged physical
+stock. A repeated cancelled-stage update creates no duplicate release or audit.
+
+A private before-write guard locks the same-company parent order with NOWAIT and
+rejects new active holds on a cancelled order, including an identity/status update
+that would attach one. Its trigger sorts before the existing batch-capacity guard.
+Inactive transitions do not take an unnecessary parent lock. Existing terminal
+and quantity/capacity checks remain. The cancellation lock and error path avoid
+waiting on a dispatch that already holds a reservation and may later need the
+order; the whole operation rolls back with a retry on a reported lock conflict.
+Independent-backend race behavior still requires separate acceptance.
+
+No public business RPC, table, index, RLS policy or new write privilege is added.
+Both trigger implementations revoke direct public/anonymous/authenticated execute.
+No historical data is rewritten. The new read-only review lists cancelled orders
+retaining active holds and credited fulfillments requiring receipt/source review;
+it explicitly does not establish that a recorded credit represented returned
+goods. Historical stock, receipts, credits and commercial reconciliation remain
+open.
+
+Created during this investigation:
+
+- `supabase/migrations/20261015060000_order_cancellation_stock_integrity.sql`
+- `sql/audit-order-cancellation-stock.sql`
+- `scripts/lib/order-cancellation-stock-fixture.mjs`
+- `scripts/qa-order-cancellation-stock.mjs`
+- `tests/order-cancellation-stock.test.mjs`
+
+Modified during this investigation:
+
+- `scripts/lib/dispatch-reservation-render-fixture.mjs`
+- `scripts/test-audit-migration-integration.mjs`
+- `tests/audit-migration-integration.test.mjs`
+- `scripts/test-dealer-fulfillment-integrity.mjs`
+- `tests/dealer-fulfillment-integrity.test.mjs`
+- `scripts/test-factory-workflow-integrity.mjs`
+- `sql/audit-deployment-preflight.sql`
+- `BUGS-MEGA.md`
+- `docs/BUGS_MEGA_PROGRESS_2026-10-15.md`
+
+Seventeen new SQL checks and the 33-check focused set pass. They exercise real
+trigger execution through an authenticated SQL role with synthetic identity and
+typed historical tables. The fixture includes current R08 order/snapshot guards,
+R09 reader bodies, reservation and batch-capacity guards, exact packing lineage,
+the actual reservation policies and a synthetic company-scoped order policy.
+This does not reproduce the full hosted JWT/RLS catalog or baseline migration
+chain.
+
+Coverage includes unchanged stock/fulfillment/movements/history under cancellation,
+exact 20 kg / 10 m / 2-piece release, other-order preservation, repeat timestamps
+and one audit, bad source evidence, late audit rollback, terminal/non-reactivation
+rules, ample-stock rejection of a new hold on a cancelled parent, 602 target holds,
+and 1,501 separately linked consumption entries leaving an exact 499 kg remainder.
+The large-history batch stays 1,499 kg / 749.5 m / 1,499 pieces; the audit records
+519 kg including the original target hold's 20 kg. No API row cap participates in
+the transaction's quantities.
+
+Role tests use a fixture-only privileged writer to prove the cancellation trigger
+still rejects other-company, suspended, absent and unauthorized role identities,
+even when the parent writer bypasses ordinary row visibility. Active owner/admin
+cases succeed. Reinstalling extracted objects changes no business data; catalog
+preflight verifies both enabled attachments, security-definer mode and revoked
+direct execute. The historical review executes in an actual read-only transaction,
+finds the legacy reproduction and leaves the new cancellation clear. A reported
+55P03 conflict is fault-injected to verify error/rollback behavior; this is not
+independent-session lock testing.
+
+An exact actual dispatch-consumption replay after the real order-cancellation
+trigger succeeds twice without a second debit. The existing dealer fixture now
+converts a quote with the actual current private function, then cancels as its
+active owner and proves exact stock, fulfillment, movement and commercial lineage
+preservation. The existing factory fixture installs the new reservation eligibility
+guard while retaining its other source-specific boundaries. The historical catalog
+fixture installs 19 extracted prepared function definitions and six triggers after
+eight historical audit scripts, preserving masks and private/anonymous denial.
+
+Verification caught an initial audit-column mistake (`user_id`/`metadata` instead
+of the existing `actor_id`/`metadata_json`) and corrected it. A replay fixture
+initially supplied an order-line identity where reservation packing requires the
+reservation ID and source order; the existing lineage guard rejected it and the
+fixture was corrected. Review added fail-fast reservation locking and its rollback
+case before final gates. None of these failures was treated as a pass.
+
+The SQL-backed browser fixture serves the actual dispatch reservation panel with
+the actual read RPC and extracted candidate objects in disposable PGlite. It uses
+synthetic identity, current built CSS/fonts and loopback-only assets. At 1440, 820,
+390 and 320 pixels it checks the panel before and after cancellation: 20 kg open /
+10 kg consumed / zero released becomes zero open / 10 kg consumed / 20 kg released,
+with 2 pieces and 10 m released. Physical stock remains 40 kg / 20 m / 4 pieces, one
+audit is recorded and the unrelated hold stays active. Cancellation itself is an
+authenticated local SQL control; no browser cancellation button, hosted login,
+physical receipt or complete operator journey is substituted.
+
+Eight screenshots and `results.json` are saved under:
+
+`C:/Users/arnav/.codex/visualizations/2026/10/15/01a13e40-ffdd-7a00-86c5-fe3b2d0a5d19/order-cancellation-stock`.
+
+Desktop and compact-mobile after-cancellation screenshots were inspected. Browser
+checks report no page errors or document overflow. The final run uses the final
+application build's CSS/fonts. The file-only ledger reports 156 files, 144 version identifiers and
+the same seven collision groups; without hosted metadata its status remains
+unavailable. The REST contract remains 32 checks; trigger activation and body/ACL
+review require the catalog and are not inferred from REST discovery.
+
+| Verification | Result |
+| --- | --- |
+| Initial real cancellation-trigger checks | Seven failed; sibling-company control passed |
+| New cancellation SQL edge checks | 17 passed |
+| Focused cancellation/reader/factory/dealer/catalog regression | 33 passed |
+| Final `npm test` | 857 passed, 76 suites, zero failed/skipped/cancelled |
+| `npm run lint` | Passed, zero errors/warnings |
+| `npm run typecheck` | Passed |
+| `npm run build` | Passed, 153 pages generated |
+| Actual SQL-backed reservation panel before/after cancellation | Four viewports, eight screenshots, zero page errors/overflow |
+| Source audit, tracked diff and new-file whitespace | Passed for R10; separate R11 blocker recorded below |
+| File-only ledger | 156 files / 144 versions / same seven collisions; hosted metadata unavailable |
+
+R10 therefore remains OPEN with a LOCAL CANDIDATE VERIFIED, NOT APPLIED status.
+Only extracted function/trigger/ACL objects ran in disposable PGlite. No Supabase
+migration, hosted business-data query/write or deployment was performed. The
+function depends on R09's shared private reader and the full earlier prerequisites;
+do not apply only this newest file.
+
+Manual acceptance after separately authorized schema activation remains pending:
+review the complete migration ledger and effective guards/ACLs; use real active,
+denied, suspended and second-company identities; trace posted partial shipments,
+dealer fulfillment, both reservation readers and cancellation in all units;
+repeat exact requests and race reservation/dispatch/cancellation in independent
+sessions; reconcile historical automatic credits against physical receipt/source
+evidence; and complete operator cancellation/release/return journeys. Invoicing
+retained shipments must also be resolved and accepted through R11. This checklist
+does not authorize a migration or certify a production cancellation workflow.
+
+## R11 baseline - Invoicing retained shipments after cancellation
+
+The final cross-workflow source audit found `saveInvoiceAction` rejecting the
+cancelled parent stage before checking the supplied dispatch. A new diagnostic,
+`scripts/audit-cancelled-order-invoice.mjs`, calls the actual action after the real
+local R10 trigger has cancelled the remaining order. Its synthetic active owner
+selects an existing same-company delivered dispatch. The action returns exactly
+`A cancelled order cannot be invoiced.` after querying only `orders`, with no
+dispatch lookup or invoice write. The physical batch remains 40 kg / 20 m /
+4 pieces and the delivered shipment remains recorded.
+
+The diagnostic completed with `findingConfirmed: true`; that means the blocker
+was reproduced, not that invoice acceptance passed. Its result is saved as
+`cancelled-invoice-diagnostic.json` in the R10 evidence directory. It does not
+establish whether every remaining SQL/packing/commercial condition would accept
+the invoice if this early gate changed. No invoice action or database writer has
+been edited for R11, and no invoice was created. The 857-test suite does not close
+this newly reproduced gap.
+
+R11 is OPEN; REPRODUCED, NOT FIXED. Next work is to inspect the current application
+and SQL invoice writers, establish failing action/SQL tests for retained posted
+shipments after cancellation, and preserve company/role, exact fulfillment,
+packing/commercial, damage/return, duplication and issued-snapshot controls while
+repairing the eligible path. Full cancellation acceptance remains open.
+
+## Current continuation checkpoint
+
+R01-R03 are locally fixed. R04-R10 remain verified, unapplied candidates. R11 is
+reproduced and unfixed. The suite has 857 passing tests, 152 above the 705-test
+baseline; the separate R11 diagnostic records a blocker rather than acceptance.
+The no-Supabase-migrations instruction
+remains in force. A00, historical reconciliation, hosted security, independent
+sessions, operator cancellation/release controls, physical-return receipts,
+authenticated operator journeys and deployment remain open. The goal remains
+active.
+
+## 19 October continuation pointer
+
+The checkpoint and R11 baseline above are historical. The subsequent R11 local
+candidate, 919-test verification, browser evidence and current acceptance
+boundaries are recorded in `docs/BUGS_MEGA_PROGRESS_2026-10-19.md` and the updated
+`BUGS-MEGA.md`. R11 remains OPEN as a verified, unapplied candidate. R12-R15 are
+subsequently locally fixed after full regression/audit checks. The no-Supabase-migrations instruction and
+the active goal remain in force.
+
+The later scrap-posting investigation adds twelve passing local scenarios
+(13 tests including the enclosing case), taking the full suite to 1,072. It
+separately reproduces R16 in production report reconciliation; that report defect
+remains open and is not covered by the passing posting controls.
+
+That R16 reproduction is now historical. The subsequent application-reader fix
+is locally verified with 67 new report tests, 1,139 total passing tests, final
+lint/typecheck/build and five inspected actual-action PDFs. R16 is locally fixed;
+the current evidence and remaining boundaries are in the 19 October report.
+R04-R11 remain unapplied and no Supabase migrations have run.
+
+The subsequent R17 finishing-evidence investigation prepares a verified,
+unapplied database candidate and adds 43 tests, taking the final full suite to
+1,182 passing tests / 76 suites. Final lint, typecheck and build (153 pages) pass.
+R17 remains OPEN under the same no-migrations instruction. The 19 October report
+retains its reproduction, earlier failing test runs, final checks and boundaries.

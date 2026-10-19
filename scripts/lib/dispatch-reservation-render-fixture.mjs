@@ -34,7 +34,7 @@ export function createDispatchReservationRenderFixture() {
     const rows=Array.from({length:601},(_,n)=>reservationFixtureRow(1000+n,["active","released","consumed","cancelled"][n%4]));
     rows[0]={...rows[0],reserved_weight_kg:2000,reserved_length_m:1000,reserved_pieces:2000,consumed_weight_kg:1501,consumed_length_m:750.5,consumed_pieces:1501,
       open_weight_kg:499,open_length_m:249.5,open_pieces:499};
-    state={role:"inventory_manager",calls:[],tables:[],rows,result:null,throwRpc:false,dispatchError:null,reservationError:null,
+    state={role:"inventory_manager",dispatchId:reservationFixtureDispatch,rpcOverride:null,calls:[],tables:[],rows,result:null,throwRpc:false,dispatchError:null,reservationError:null,
       sourceOrderId:reservationFixtureOrder,legacyRows:null};
     return state;
   }
@@ -49,6 +49,7 @@ export function createDispatchReservationRenderFixture() {
     if(request==="@/components/modules/dispatch-credit-note-client")return {DispatchCreditNoteClient:()=>null};
     if(request==="@/lib/supabase/server")return {createClient:async()=>({
       async rpc(name,args){state.calls.push({name,args});if(state.throwRpc)throw new Error("private transport detail");
+        if(state.rpcOverride)return state.rpcOverride(name,args);
         return state.result??{data:dispatchReservationEnvelope(state.rows,args.p_page),error:null};},
       from(table){state.tables.push(table);const query={select(){return query;},eq(){return query;},order(){return query;},limit(){return query;},
         async single(){return {data:{order_id:state.sourceOrderId,total_weight_kg:1501,delivery_status:"delivered"},error:state.dispatchError};},
@@ -64,7 +65,7 @@ export function createDispatchReservationRenderFixture() {
   let Page;
   try{Page=require("../../app/(dashboard)/dispatches/[id]/page.tsx").default;}finally{Module._load=original;}
   async function panel(params={}){
-    const root=await Page({params:Promise.resolve({id:reservationFixtureDispatch}),searchParams:Promise.resolve(params)});
+    const root=await Page({params:Promise.resolve({id:state.dispatchId}),searchParams:Promise.resolve(params)});
     const entry=root.props.children.find(child=>child?.type?.name==="DispatchReservationPanel");
     if(!entry)throw new Error("Actual dispatch reservation panel is missing");
     return entry;

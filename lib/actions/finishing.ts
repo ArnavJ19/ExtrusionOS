@@ -64,6 +64,8 @@ export async function transitionFinishingJobAction(
     }
 
     revalidatePath("/production/finishing");
+    revalidatePath("/production/finishing/database");
+    revalidatePath("/production/finishing/[id]", "page");
     revalidatePath("/production");
     revalidatePath("/packaging");
     revalidatePath("/quality");
@@ -96,6 +98,8 @@ export async function retryRejectedFinishingJobAction(
     }
 
     revalidatePath("/production/finishing");
+    revalidatePath("/production/finishing/database");
+    revalidatePath("/production/finishing/[id]", "page");
     revalidatePath("/production");
     return { success: true, jobId: String(result.data) };
   } catch (error) {

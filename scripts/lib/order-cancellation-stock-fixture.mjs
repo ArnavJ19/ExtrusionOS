@@ -9,13 +9,16 @@ export const cancellationIds={company:id(1),sibling:id(2),actor:id(3),siblingAct
   order:id(300),otherOrder:id(301),dispatch:id(302),reservation:id(303),otherReservation:id(304),batch:id(305),
   fulfillment:id(306),quote:id(307),quoteLine:id(308),orderLine:id(309),inventory:id(310)};
 
-export async function installOrderCancellationStockObjects(db){
+export async function installOrderCancellationStockObjects(db,{reservationGuardOnly=false}={}){
   // Extract candidate objects only. Never execute a prepared migration wrapper.
   const source=readFileSync(candidateUrl,"utf8");
-  const names=[...source.matchAll(/create or replace function ([\w.]+)\(/g)].map(match=>match[1]);
+  const names=[...source.matchAll(/create or replace function ([\w.]+)\(/g)].map(match=>match[1])
+    .filter(name=>!reservationGuardOnly||name==="private.guard_cancelled_order_reservations");
   for(const name of names)await db.exec(sqlDefinition(orderCancellationCandidate,name));
-  for(const statement of source.match(/(?:drop trigger|create trigger|revoke|grant)[^;]+;/gi)??[])await db.exec(statement);
-  return {functions:names.length,triggers:(source.match(/create trigger/g)??[]).length};
+  const statements=(source.match(/(?:drop trigger|create trigger|revoke|grant)[^;]+;/gi)??[])
+    .filter(statement=>!reservationGuardOnly||/guard_cancelled_order_reservations/.test(statement));
+  for(const statement of statements)await db.exec(statement);
+  return {functions:names.length,triggers:statements.filter(statement=>/^create trigger/i.test(statement)).length};
 }
 
 export async function createOrderCancellationStockFixture({candidate=existsSync(candidateUrl),stage="dispatched"}={}){
@@ -25,12 +28,13 @@ export async function createOrderCancellationStockFixture({candidate=existsSync(
     await db.exec(`create function public.get_current_user_role() returns text language sql security definer as $$select private.get_current_user_role()$$;
       create function public.get_current_user_dealer_id() returns uuid language sql security definer as $$select private.get_current_user_dealer_id()$$;
       update app_users set role='owner' where id in ('${f.actor}','${f.siblingActor}');
+      update aluminium_profiles set section_weight_kg_per_m=2 where id='${f.profile}';
       insert into quotes(id,company_id,customer_id,dealer_id,status,grand_total) values('${f.quote}','${f.company}','${id(10)}','${f.dealer}','converted_to_order',5000);
       insert into quote_items(id,company_id,quote_id,profile_id,billing_weight_kg,total_weight_kg,finishing_type,net_rate,price_per_kg,line_total_before_gst)
         values('${f.quoteLine}','${f.company}','${f.quote}','${f.profile}',50,50,'mill_finish',100,100,5000);
-      insert into orders(id,company_id,customer_id,quote_id,dealer_id,current_stage,requested_weight_kg,dealer_fulfilled_weight_kg,manufacturing_weight_kg)
-        values('${f.order}','${f.company}','${id(10)}','${f.quote}','${f.dealer}','${stage}',50,20,30),
-          ('${f.otherOrder}','${f.company}','${id(10)}',null,null,'order_confirmed',20,0,20);
+      insert into orders(id,company_id,customer_id,quote_id,dealer_id,current_stage,requested_weight_kg,dealer_fulfilled_weight_kg,manufacturing_weight_kg,order_number)
+        values('${f.order}','${f.company}','${id(10)}','${f.quote}','${f.dealer}','${stage}',50,20,30,'O-CANCEL-001'),
+          ('${f.otherOrder}','${f.company}','${id(10)}',null,null,'order_confirmed',20,0,20,'O-OTHER-001');
       insert into order_items(id,company_id,order_id,quote_item_id,profile_id,quantity_kg,dealer_fulfilled_weight_kg,manufacturing_weight_kg)
         values('${f.orderLine}','${f.company}','${f.order}','${f.quoteLine}','${f.profile}',50,20,30);
       insert into profile_stock_batches(id,company_id,dealer_id,profile_id,finish,bundle_number,total_weight_kg,length_m,quantity_pieces,status)
@@ -63,6 +67,7 @@ export async function createOrderCancellationStockFixture({candidate=existsSync(
       alter table orders enable row level security;
       create policy fixture_cancellation_orders on orders for all using(company_id=private.get_current_user_company_id()) with check(company_id=private.get_current_user_company_id());
       alter table profile_stock_reservations enable row level security;`);
+    await db.exec(`create unique index fixture_cancellation_consumption_identity on profile_stock_consumptions(company_id,dispatch_id,reservation_id);`);
     const access=readFileSync(new URL("../../supabase/migrations/20261008010000_access_projection_integrity.sql",import.meta.url),"utf8");
     for(const statement of access.match(/create policy profile_stock_reservations_access_\w+[\s\S]*?;/g)??[])await db.exec(statement);
     if(candidate)await installOrderCancellationStockObjects(db);

@@ -8,6 +8,7 @@ import { buildInvoiceItems } from "@/lib/pcda/invoice";
 import { isGstStateCode } from "@/lib/calculations/gst";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
+import {canInvoiceOrderDispatch,invoiceSourceRequest,loadInvoiceSourceOptions,type InvoiceSourceRequest,type InvoiceSourceOptions} from "@/lib/financials/invoice-sources";
 
 const saveInvoiceInputSchema = z.object({
   place_of_supply_state_code: z.string().refine(isGstStateCode, "Select a supported domestic place of supply"),
@@ -41,31 +42,37 @@ function revalidateInvoicePaths(invoiceId?: string) {
   if (invoiceId) revalidatePath(`/invoices/${invoiceId}`);
 }
 
-async function loadInvoiceSourceLines(
-  supabase: any,
-  companyId: string,
-  orderId: string,
-  dispatchId: string | null
-) {
-  if (dispatchId) {
-    const packingResult = await supabase
-      .from("packing_list_items_authorized")
-      .select("*")
-      .eq("company_id", companyId)
-      .eq("dispatch_id", dispatchId)
-      .order("created_at", { ascending: true });
-    if (packingResult.error) throw packingResult.error;
-    return packingResult.data ?? [];
-  }
+export async function searchInvoiceSourcesAction(input: InvoiceSourceRequest): Promise<
+  {success:true;options:InvoiceSourceOptions} | {success:false;error:string}
+> {
+  try {
+    const context = await getSessionContext();
+    if(!can(context.role,"read","financials")) return {success:false,error:"You do not have permission to inspect invoice sources."};
+    const parsed = invoiceSourceRequest.safeParse(input);
+    if(!parsed.success) return {success:false,error:"Check the invoice source and enter a search of at most 100 characters."};
+    return {success:true,options:await loadInvoiceSourceOptions(await createClient(),parsed.data)};
+  } catch {return {success:false,error:"Invoice sources are unavailable. Refresh before choosing a source."};}
+}
 
-  const orderItemsResult = await supabase
-    .from("order_items_authorized")
-    .select("*")
-    .eq("company_id", companyId)
-    .eq("order_id", orderId)
-    .order("created_at", { ascending: true });
-  if (orderItemsResult.error) throw orderItemsResult.error;
-  return orderItemsResult.data ?? [];
+async function loadInvoiceSourceLines(supabase: any,companyId: string,dispatchId: string) {
+  const rows: Record<string,any>[] = [];
+  const identities = new Set<string>();
+  let expected: number | null = null;
+  for(let start=0;;start+=200) {
+    const result = await supabase.from("packing_list_items_authorized").select("*",{count:"exact"})
+      .eq("company_id",companyId).eq("dispatch_id",dispatchId).order("id",{ascending:true}).range(start,start+199);
+    if(result.error) throw result.error;
+    if(!Array.isArray(result.data) || !Number.isSafeInteger(result.count) || result.count < 0 || result.count > 100000
+      || (expected !== null && result.count !== expected)) throw new Error("The complete packing list could not be verified. Refresh before invoicing.");
+    const count: number = result.count;
+    expected = count;
+    if(result.data.length !== Math.min(200,Math.max(count-start,0))) throw new Error("The packing list is incomplete. Refresh before invoicing.");
+    for(const row of result.data) {
+      if(!z.string().uuid().safeParse(row?.id).success || identities.has(row.id)) throw new Error("The packing list contains conflicting source identities.");
+      identities.add(row.id);rows.push(row);
+    }
+    if(rows.length === expected) return rows;
+  }
 }
 
 export async function saveInvoiceAction(input: SaveInvoiceInput): Promise<InvoiceActionResult> {
@@ -90,7 +97,6 @@ export async function saveInvoiceAction(input: SaveInvoiceInput): Promise<Invoic
       .maybeSingle();
     if (orderError) throw orderError;
     if (!order) return { success: false, error: "Source order not found for this company." };
-    if (order.current_stage === "cancelled") return { success: false, error: "A cancelled order cannot be invoiced." };
 
     const dispatchId = parsed.data.dispatch_id;
     const { data: dispatch, error: dispatchError } = await supabase
@@ -109,11 +115,13 @@ export async function saveInvoiceAction(input: SaveInvoiceInput): Promise<Invoic
         error: "Returned or damaged dispatches cannot be invoiced. Resolve the return or damage and create a replacement dispatch first."
       };
     }
+    if (!canInvoiceOrderDispatch(order.current_stage,dispatch.delivery_status)) {
+      return {success:false,error:"Only a retained dispatched, in-transit or delivered shipment can be invoiced after cancellation. Unfulfilled quantities cannot be invoiced."};
+    }
 
     const sourceLines = await loadInvoiceSourceLines(
       supabase,
       context.companyId,
-      parsed.data.order_id,
       dispatchId
     );
     if (sourceLines.length === 0) {
@@ -182,7 +190,6 @@ export async function regenerateInvoiceItemsAction(invoiceId: string): Promise<I
     const sourceLines = await loadInvoiceSourceLines(
       supabase,
       context.companyId,
-      invoice.order_id,
       invoice.dispatch_id
     );
     if (sourceLines.length === 0) return { success: false, error: "The invoice source has no billable lines." };
