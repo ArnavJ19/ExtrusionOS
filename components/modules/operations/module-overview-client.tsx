@@ -69,6 +69,7 @@ export function ModuleOverviewClient({
   children?: React.ReactNode;
 }) {
   const config = getModuleConfig(moduleKey);
+  const readTable = config.readTable ?? config.table;
   const supabase = useMemo(() => createClient(), []);
   const [groups, setGroups] = useState<Group[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -80,14 +81,25 @@ export function ModuleOverviewClient({
     setError(null);
     const groupValues = config.groups ?? [];
     const grouped = await Promise.all(groupValues.map(async (status) => {
-      let request = supabase.from(config.table as any).select(config.select, { count: "exact" }).eq("company_id", context.companyId);
+      let request = supabase.from(readTable as any).select(config.select, { count: "exact" }).eq("company_id", context.companyId);
       if (config.groupField) request = request.eq(config.groupField, status);
       const { data, error: groupError, count } = await request.order(config.defaultSort.column, { ascending: config.defaultSort.direction === "asc", nullsFirst: false }).limit(50);
       if (groupError) throw groupError;
       return { status, count: count ?? 0, rows: data ?? [] };
     }));
-    const { count, error: countError } = await supabase.from(config.table as any).select("id", { count: "exact", head: true }).eq("company_id", context.companyId);
+    const { count, error: countError } = await supabase.from(readTable as any).select("id", { count: "exact", head: true }).eq("company_id", context.companyId);
     if (countError) throw countError;
+    if (moduleKey === "quotes") {
+      const customerIds = [...new Set(grouped.flatMap((group) => group.rows.map((row: any) => row.customer_id)).filter(Boolean))];
+      const customersResult = customerIds.length
+        ? await supabase.from("customers").select("id, customer_name, company_name").eq("company_id", context.companyId).in("id", customerIds)
+        : { data: [], error: null };
+      if (customersResult.error) throw customersResult.error;
+      const customers = new Map((customersResult.data ?? []).map((customer: any) => [customer.id, customer]));
+      for (const group of grouped) {
+        group.rows = group.rows.map((row: any) => ({ ...row, customers: customers.get(row.customer_id) ?? null }));
+      }
+    }
     setGroups(grouped);
     setTotalCount(count ?? 0);
   }
