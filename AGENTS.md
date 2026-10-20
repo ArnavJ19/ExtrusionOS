@@ -4,6 +4,15 @@ This file is the primary project-level instruction document for AI coding agents
 
 Use this file before making any change to the repository. These rules apply to Cursor, Claude Code, Codex, Lovable, Bolt, Replit Agent, or any other AI-assisted coding tool.
 
+## Working Branches And Worktrees
+
+The user maintains exactly two working branches and checkouts: `main` in the
+project root and `codex/v1` in `.worktrees/codex-v1`. Continue development in
+`codex/v1`, verify it, then fast-forward `main`. Preserve the latest PDF and report
+implementation when reconciling older work. Do not create another branch or
+worktree unless the user explicitly requests one. See
+`docs/GIT_CONSOLIDATION_2026-10-20.md` for the consolidation and recovery record.
+
 ---
 
 ## 1. Project Identity

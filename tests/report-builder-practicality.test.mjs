@@ -37,7 +37,7 @@ test("grouping changes exported data instead of remaining decorative", () => {
   assert.match(component, /query\.order\(grouping, \{ ascending: true, nullsFirst: false \}\)/);
   assert.match(component, /"Grouped by", grouping \? prettyFieldLabel\(grouping\)/);
   assert.match(component, /let activeGroupValue: string \| null = null/);
-  assert.match(component, /prettyFieldLabel\(grouping\).*short\(groupValue/);
+  assert.match(component, /prettyFieldLabel\(grouping\).*short\(withoutId\(groupValue\)\)/);
 });
 
 

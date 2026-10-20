@@ -68,19 +68,20 @@ test("profile reservation status computes available, shortage and readiness", ()
 
   const ready = buildProfileReservationStatus(
     requirements,
-    [{ profile_id: "p1", status: "available", total_weight_kg: 1000 }],
-    [{ profile_id: "p1", status: "active", reserved_weight_kg: 300 }]
+    [{ profile_id: "p1", status: "available", total_weight_kg: 1000, length_m: 400 }],
+    [{ profile_id: "p1", status: "active", reserved_weight_kg: 300, reserved_length_m: 120 }]
   )[0];
   assert.equal(ready.totalStockWeightKg, 1000);
   assert.equal(ready.reservedWeightKg, 300);
   assert.equal(ready.availableWeightKg, 700); // 1000 - 300 held
   assert.equal(ready.shortageKg, 0); // 700 available >= 500 required
+  assert.equal(ready.availableLengthM, 280);
   assert.equal(ready.ready, true);
 
   const short = buildProfileReservationStatus(
     [{ profileId: "p1", profileCode: "SW-OF", profileName: "", requiredWeightKg: 900, requiredLengthM: 300 }],
-    [{ profile_id: "p1", status: "available", total_weight_kg: 1000 }],
-    [{ profile_id: "p1", status: "active", reserved_weight_kg: 300 }]
+    [{ profile_id: "p1", status: "available", total_weight_kg: 1000, length_m: 400 }],
+    [{ profile_id: "p1", status: "active", reserved_weight_kg: 300, reserved_length_m: 120 }]
   )[0];
   assert.equal(short.availableWeightKg, 700);
   assert.equal(short.shortageKg, 200); // needs 900, only 700 free
