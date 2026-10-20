@@ -14,6 +14,8 @@ const WAVE1 = [
   "supabase/migrations/20261021030000_dispatch_logistics_freeze.sql",
   "supabase/migrations/20261021040000_reservation_packing_commercial_lineage.sql",
   "supabase/migrations/20261021050000_die_schedule_exclusivity.sql",
+  "supabase/migrations/20261021060000_quality_release_rules.sql",
+  "supabase/migrations/20261021070000_audit_log_actor_identity.sql",
 ];
 
 const attempt = async (fn) => { try { return { ok: true, value: await fn() }; } catch (error) { return { ok: false, error: error.message }; } };
@@ -448,8 +450,93 @@ scenario("G007-die-already-running", "007", async (ctx, candidate) => {
   return `start rejected: ${r.error}`;
 });
 
+// ---- EXOS-AUD-012 -------------------------------------------------------
+// Completed mill-finish job (600 kg) on a profile with a 5% weight tolerance and a 12 HW minimum.
+async function seedCompletedJobForQc(ctx) {
+  await ctx.replica(`
+    update public.aluminium_profiles set weight_tolerance_percent = 5, hardness_requirement = '>= 12 HW' where id = '${ids.profile}';
+    insert into public.order_items (id, company_id, order_id, profile_id, quantity_kg, net_rate, gst_percent, finishing_type) values ('${lineA}', '${ids.company}', '${ids.orderA}', '${ids.profile}', 1000, 300, 18, 'mill_finish');
+    insert into public.production_jobs (id, company_id, job_number, order_id, profile_id, die_id, source_line_id, status, planned_quantity_kg, actual_quantity_kg, actual_pieces, actual_meters, finishing_type, completed_at)
+      values ('${ids.jobA}', '${ids.company}', 'J-QC', '${ids.orderA}', '${ids.profile}', '${ids.die}', '${lineA}', 'completed', 600, 600, 100, 580, 'mill_finish', now())`);
+}
+const qcInsert = (status, hardness, kgm, kg = 100) => `insert into public.quality_inspections (company_id, production_job_id, profile_id, quantity_checked_kg, hardness_webster, weight_per_meter_actual, surface_finish_ok, status, inspector_name)
+  values ('${ids.company}', '${ids.jobA}', '${ids.profile}', ${kg}, ${hardness ?? "null"}, ${kgm ?? "null"}, true, '${status}', 'Inspector') returning id`;
+
+scenario("G012-production-manager-self-approval", "012", async (ctx, candidate) => {
+  await seedCompletedJobForQc(ctx);
+  const r = await attempt(() => ctx.as(ids.productionManager, qcInsert("approved", 14, 1.02)));
+  if (!candidate) { assert.equal(r.ok, true, r.error); return "baseline: production manager approved own output"; }
+  assert.equal(r.ok, false);
+  const reject = await attempt(() => ctx.as(ids.productionManager, qcInsert("rejected", null, null)));
+  assert.equal(reject.ok, true, reject.error);
+  return `approval rejected (${r.error}); production manager can still reject`;
+});
+
+scenario("G012-out-of-spec-approval", "012", async (ctx, candidate) => {
+  await seedCompletedJobForQc(ctx);
+  const heavy = await attempt(() => ctx.as(ids.quality, qcInsert("approved", 14, 1.6)));
+  const soft = await attempt(() => ctx.as(ids.quality, qcInsert("approved", 2, 1.0)));
+  if (!candidate) { assert.equal(heavy.ok, true, heavy.error); assert.equal(soft.ok, true, soft.error); return "baseline: 1.6 kg/m and 2 HW approved"; }
+  assert.equal(heavy.ok, false); assert.equal(soft.ok, false);
+  return `rejected: ${heavy.error} | ${soft.error}`;
+});
+
+scenario("G012-in-spec-approval-records-approver", "012", async (ctx) => {
+  await seedCompletedJobForQc(ctx);
+  const missing = await attempt(() => ctx.as(ids.quality, qcInsert("approved", null, 1.02)));
+  assert.equal(missing.ok, false, "a configured hardness spec requires the measurement");
+  const ok = await attempt(() => ctx.as(ids.quality, qcInsert("approved", 13, 1.03)));
+  assert.equal(ok.ok, true, ok.error);
+  const [row] = await ctx.q(`select dispositioned_by::text, dispositioned_at is not null stamped from public.quality_inspections where id = '${ok.value[0].id}'`);
+  assert.equal(row.dispositioned_by, ids.quality); assert.equal(row.stamped, true);
+  return `missing hardness rejected (${missing.error}); in-spec approval stored with approver = quality user`;
+});
+
+scenario("G012-unconfigured-profile-not-checked", "012", async (ctx) => {
+  await seedCompletedJobForQc(ctx);
+  await ctx.replica(`update public.aluminium_profiles set weight_tolerance_percent = null, hardness_requirement = null where id = '${ids.profile}'`);
+  const ok = await attempt(() => ctx.as(ids.quality, qcInsert("approved", null, null)));
+  assert.equal(ok.ok, true, ok.error);
+  return "profiles without a specification approve without measurements (no invented tolerance)";
+});
+
+scenario("G012-admin-disables-qc-gate", "012", async (ctx, candidate) => {
+  const admin = "a0000000-0000-4000-8000-000000000014";
+  await ctx.replica(`insert into auth.users (id) values ('${admin}');
+    insert into public.app_users (id, company_id, full_name, email, role, is_active) values ('${admin}', '${ids.company}', 'Admin', 'ad@x', 'admin', true);
+    insert into public.feature_flags (company_id, module_name, is_enabled) values ('${ids.company}', 'quality_compliance', true)`);
+  const r = await attempt(() => ctx.as(admin, `update public.feature_flags set is_enabled = false where company_id = '${ids.company}' and module_name = 'quality_compliance'`));
+  const [flag] = await ctx.q(`select is_enabled from public.feature_flags where module_name = 'quality_compliance'`);
+  if (!candidate) { assert.equal(flag.is_enabled, false); return "baseline: admin switched the dispatch QC gate off"; }
+  assert.equal(r.ok, false); assert.equal(flag.is_enabled, true);
+  const owner = await attempt(() => ctx.as(ids.owner, `update public.feature_flags set is_enabled = false where company_id = '${ids.company}' and module_name = 'quality_compliance'`));
+  assert.equal(owner.ok, true, owner.error);
+  return `admin rejected (${r.error}); owner may still disable it`;
+});
+
+// ---- EXOS-AUD-019 -------------------------------------------------------
+scenario("G019-viewer-forges-audit-rows", "019", async (ctx, candidate) => {
+  await ctx.as(ids.viewer, `insert into public.audit_logs (company_id, actor_id, action, entity_type, entity_id, metadata_json) values ('${ids.company}', '${ids.owner}', 'payment_recorded', 'payment', gen_random_uuid(), '{"amount":500000}'::jsonb)`);
+  await ctx.as(ids.viewer, `insert into public.audit_logs_enterprise (company_id, actor_user_id, actor_name, actor_role, action_type, module_name, entity_type, change_summary) values ('${ids.company}', '${ids.owner}', 'Owner', 'owner', 'invoice_approved', 'financials', 'invoice', 'forged')`);
+  const [log] = await ctx.q(`select actor_id::text from public.audit_logs where action = 'payment_recorded'`);
+  const [ent] = await ctx.q(`select actor_user_id::text, actor_name, actor_role from public.audit_logs_enterprise where change_summary = 'forged'`);
+  if (!candidate) { assert.equal(log.actor_id, ids.owner); assert.equal(ent.actor_user_id, ids.owner); return "baseline: rows attributed to the owner"; }
+  assert.equal(log.actor_id, ids.viewer); assert.equal(ent.actor_user_id, ids.viewer);
+  assert.equal(ent.actor_role, "viewer"); assert.equal(ent.actor_name, "Viewer");
+  return `rows stamped with the real actor -> ${JSON.stringify(ent)}`;
+});
+
+scenario("G019-server-audit-writers-unchanged", "019", async (ctx) => {
+  // record_enterprise_audit (definer trigger) still attributes a business change to the session user.
+  await ctx.as(ids.productionManager, `update public.machines set status = 'idle' where id = '${ids.pressA}'`);
+  const rows = await ctx.q(`select actor_id::text, action from public.audit_logs where entity_id = '${ids.pressA}' and action = 'update_machines'`);
+  assert.ok(rows.length >= 1, "machine change audited");
+  assert.ok(rows.every((row) => row.actor_id === ids.productionManager), JSON.stringify(rows));
+  return `machine change audited by the trigger writer -> ${JSON.stringify(rows[0])}`;
+});
+
 // ---- runner ---------------------------------------------------------------
-const onlyCandidate = new Set(["G010-finish-disambiguates-lines", "G010-ambiguous-lines-rejected", "G007-same-die-later-window-allowed", "G007-completed-job-does-not-block", "G008-production-manager-returns-press", "G008-operator-out-of-service-only", "G008-sales-manager-registers-die", "G011-pending-dispatch-still-editable", "G002-completion-still-books-scrap", "G003-weight-correction-moves-balance", "G003-furnace-charge-and-cancel-still-work"]);
+const onlyCandidate = new Set(["G012-in-spec-approval-records-approver", "G012-unconfigured-profile-not-checked", "G019-server-audit-writers-unchanged", "G010-finish-disambiguates-lines", "G010-ambiguous-lines-rejected", "G007-same-die-later-window-allowed", "G007-completed-job-does-not-block", "G008-production-manager-returns-press", "G008-operator-out-of-service-only", "G008-sales-manager-registers-die", "G011-pending-dispatch-still-editable", "G002-completion-still-books-scrap", "G003-weight-correction-moves-balance", "G003-furnace-charge-and-cancel-still-work"]);
 let failures = 0;
 for (const s of scenarios) {
   for (const candidate of onlyCandidate.has(s.id) ? [true] : [false, true]) {

@@ -51,4 +51,15 @@ PASS G007-same-die-later-window-allowed [candidate]: back-to-back windows for th
 PASS G007-completed-job-does-not-block [candidate]: a completed job's released slot does not block the die
 PASS G007-die-already-running [baseline]: baseline: second job started while the die was running
 PASS G007-die-already-running [candidate]: start rejected: Die D-100 is already running on another production job
+PASS G012-production-manager-self-approval [baseline]: baseline: production manager approved own output
+PASS G012-production-manager-self-approval [candidate]: approval rejected (QC approval requires a quality, factory manager, owner or admin user); production manager can still reject
+PASS G012-out-of-spec-approval [baseline]: baseline: 1.6 kg/m and 2 HW approved
+PASS G012-out-of-spec-approval [candidate]: rejected: Actual 1.600 kg/m is outside 1.000 kg/m ± 5.00 %; QC cannot approve | Hardness 2.00 HW is below the required 12 HW; QC cannot approve
+PASS G012-in-spec-approval-records-approver [candidate]: missing hardness rejected (Record Webster hardness: this profile requires at least 12); in-spec approval stored with approver = quality user
+PASS G012-unconfigured-profile-not-checked [candidate]: profiles without a specification approve without measurements (no invented tolerance)
+PASS G012-admin-disables-qc-gate [baseline]: baseline: admin switched the dispatch QC gate off
+PASS G012-admin-disables-qc-gate [candidate]: admin rejected (Only the owner may disable the dispatch quality gate); owner may still disable it
+PASS G019-viewer-forges-audit-rows [baseline]: baseline: rows attributed to the owner
+PASS G019-viewer-forges-audit-rows [candidate]: rows stamped with the real actor -> {"actor_user_id":"a0000000-0000-4000-8000-000000000004","actor_name":"Viewer","actor_role":"viewer"}
+PASS G019-server-audit-writers-unchanged [candidate]: machine change audited by the trigger writer -> {"actor_id":"a0000000-0000-4000-8000-000000000002","action":"update_machines"}
 GATE PASSED

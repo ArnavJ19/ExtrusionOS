@@ -14,7 +14,7 @@ An independent, adversarial business-logic audit. **No application source, migra
 | `06_REMEDIATION_ROADMAP.md` | Waves 1–4 |
 | `07_REGRESSION_TEST_BLUEPRINT.md` | Before/after scenarios per finding |
 | `08_ARCHITECTURE_MAP.md` | Deliverable A: module inventory, sources of truth, dependency map |
-| `09_REMEDIATION_STATUS.md` | Wave 1 candidates (009, 002, 003, 008, 011, 010, 007), gate results, pre-application steps |
+| `09_REMEDIATION_STATUS.md` | Wave 1 candidates (009, 002, 003, 008, 011, 010, 007, 012, 019), gate results, pre-application steps |
 | `harness/` | Reproducible PGlite replica of the live catalog, reproduction scripts and `gate-wave1.mjs` |
 
 ## Method
