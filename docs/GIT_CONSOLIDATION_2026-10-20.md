@@ -113,7 +113,12 @@ new candidate migration retains its own not-applied status.
   the retained Node 22 pin with bounded test concurrency.
 - Seven original branch tips are verified ancestors of the consolidated branch.
   Final verification additionally checks exactly two local branches, two remote
-  branches and two worktrees, matching branch tips, and clean working copies.
+  branches and two worktrees, matching branch tips, and no uncommitted application
+  source. The development checkout is clean. The root's running local tools can
+  refresh `.codebase-memory/artifact.json`, `.codebase-memory/graph.db.zst` and
+  `next-env.d.ts`; those generated differences remain local and are recorded in
+  the recovery output. They are not discarded, hidden with index flags or pushed
+  as application changes.
 
 Full logs, the PDF smoke fixtures/renders and the machine-readable preservation
 manifest are under the task's local `verification/` directory beside the backup
