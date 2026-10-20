@@ -5,8 +5,12 @@
 
 import { TECHNICAL_LINE_ITEM_FIELDS } from "./field-map.ts";
 
+// Internal cost/margin/supplier fields must never be copied onto invoice_items: an invoice
+// is a customer billing document, and any invoice PDF/portal doing select("*") would leak them.
+const RESTRICTED_INVOICE_FIELDS = ["internal_cost", "supplier_rate", "margin", "internal_note"];
+
 const invoiceCopyFields = TECHNICAL_LINE_ITEM_FIELDS.filter(
-  (field) => !["id", "company_id"].includes(String(field))
+  (field) => !["id", "company_id", ...RESTRICTED_INVOICE_FIELDS].includes(String(field))
 );
 
 export function buildInvoiceItems(

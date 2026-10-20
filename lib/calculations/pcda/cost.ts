@@ -1,8 +1,15 @@
 /**
  * PCDA Cost Calculations
- * 
+ *
  * Pure functions for cost ratios, contribution margin, basic price, and net rate.
  * All monetary outputs rounded to 2 decimal places.
+ *
+ * DEPRECATED / NOT WIRED: the live quotation money engine is `lib/calculations/quote.ts`
+ * (`calculateQuoteItem`), persisted by `save_quote_atomic`. These helpers are NOT used on
+ * any live pricing path. Do NOT wire them into quote/order/report generation without first
+ * reconciling their `basicPrice`/`netRateAndLineValue` semantics against `calculateQuoteItem`
+ * (including recovery grossing and per_sqft surface-area finishing) — otherwise screen and
+ * PDF/report numbers will diverge.
  */
 
 import { NOT_CAPTURED, type CalcResult, guardPositive } from "./sentinel.ts";

@@ -116,6 +116,9 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
           gstPercent: item.gst_percent ?? parsed.data.gst_percent,
           quoteRevisionNumber: nextRevisionNumber
         }),
+        // PCDA represents absent optional charges as null; quote storage requires zero.
+        other_charges: Number(calculatedItem.other_charges ?? 0),
+        packing_charge: Number(calculatedItem.packing_charge ?? 0),
         profile_id: item.profile_id,
         die_id: item.die_id || null,
         item_description: item.item_description || null,

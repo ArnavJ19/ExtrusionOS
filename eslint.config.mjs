@@ -12,5 +12,5 @@ export default defineConfig([
       "react-hooks/exhaustive-deps": "off"
     }
   },
-  globalIgnores([".next/**", ".next-*/**", "next-build/**", "node_modules/**", "coverage/**", ".claude/worktrees/**"])
+  globalIgnores([".next/**", ".next-*/**", "next-build/**", "node_modules/**", "coverage/**", ".claude/worktrees/**", ".worktrees/**"])
 ]);

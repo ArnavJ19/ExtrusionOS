@@ -42,6 +42,7 @@
   ],
   "exclude": [
     "node_modules",
+    ".worktrees",
     ".next",
     ".next-*",
     "test-costing.ts"

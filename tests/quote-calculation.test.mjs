@@ -53,6 +53,20 @@ test("finishing modes are calculated centrally", () => {
   assert.equal(calculateFinishingCost("per_sqft", 500, 100, 50, 80), 40000);
 });
 
+test("expected recovery grosses up billet input without changing output conversion cost", () => {
+  const item = calculateQuoteItem({ ...baseItem, expected_recovery_percent: 80 });
+  assert.equal(item.billet_input_kg, 625);
+  assert.equal(item.raw_material_cost, 156250);
+  assert.equal(item.conversion_cost, 12500);
+  assert.equal(item.costing_complete, true);
+});
+
+test("full recovery leaves billet input equal to the billing weight", () => {
+  const item = calculateQuoteItem({ ...baseItem, expected_recovery_percent: 100 });
+  assert.equal(item.billet_input_kg, 500);
+  assert.equal(item.raw_material_cost, 125000);
+});
+
 test("die amortization supports full, per kg, waived, and customer paid modes", () => {
   assert.equal(calculateDieAmortization({ dieCharge: 10000, billingWeightKg: 500, type: "full_die_charge" }), 10000);
   assert.equal(calculateDieAmortization({ dieCharge: 10000, billingWeightKg: 500, type: "per_kg", quantityKg: 1000 }), 5000);

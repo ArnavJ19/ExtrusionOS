@@ -10,6 +10,12 @@ const RESTRICTED_LABEL_PATTERNS = [
   "margin",
   "profit",
   "internal note",
+  // Internal tooling / landed cost must never appear on a customer document. The amount
+  // the customer actually pays for a die is shown separately as "Die Service Charge"
+  // (the amortized amount), not the raw die tooling cost.
+  "die cost",
+  "tooling cost",
+  "landed cost",
 ];
 
 function isRestrictedReportField(field: ReportField): boolean {
