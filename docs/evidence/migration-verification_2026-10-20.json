@@ -1,0 +1,72 @@
+{
+  "captured_at_utc": "2026-10-20 06:18:48 UTC",
+  "role_read_probe": {
+    "rollback_read_probes": {
+      "identity_role": "owner",
+      "order_page_count": null,
+      "analytics_response": "object",
+      "dashboard_response": "object",
+      "finishing_response": "object",
+      "order_page_response": "object",
+      "identity_derived_company": true,
+      "reservation_ledger_count": "0",
+      "reservation_ledger_response": "object"
+    }
+  },
+  "expense_before": {
+    "expense_preflight": {
+      "expenses": 0,
+      "payments": 0,
+      "paid_total": 0,
+      "amount_total": 0,
+      "overpaid_rows": 0,
+      "negative_payments": 0,
+      "component_mismatch": 0,
+      "legacy_paid_approval": 0,
+      "cross_company_payments": 0
+    }
+  },
+  "expense_rollback_probe": {
+    "rolled_back_workflow_probe": {
+      "payment_created": true,
+      "reversal_returned": true,
+      "same_payment_on_retry": true,
+      "manual_expense_created": true
+    }
+  },
+  "integrity": {
+    "final_integrity": {
+      "orders": 10,
+      "billets": 48,
+      "expenses": 0,
+      "billet_kg": 13711.728,
+      "ledger_rows": 82,
+      "expense_credits": 0,
+      "expense_payments": 0,
+      "plan_trigger_anon": false,
+      "manual_public_anon": false,
+      "manual_public_auth": true,
+      "profile_trigger_anon": false,
+      "expense_direct_update": false,
+      "expense_payment_rpc_anon": false,
+      "expense_payment_rpc_auth": true,
+      "public_tables_without_rls": 0,
+      "manual_writer_private_closed": true,
+      "expense_payment_direct_insert": false
+    }
+  },
+  "local_tests": {
+    "passed": 1531,
+    "failed": 0,
+    "suites": 76,
+    "log": "test-results/migration-full-final.log"
+  },
+  "local_focused_finishing_and_manual": {
+    "passed": 95,
+    "failed": 0
+  },
+  "local_expense_focused": {
+    "passed": 18,
+    "failed": 0
+  }
+}

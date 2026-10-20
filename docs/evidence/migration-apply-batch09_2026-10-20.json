@@ -1,0 +1,14 @@
+[
+  {
+    "file": "20261020020000_receivables_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:29:56 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  }
+]

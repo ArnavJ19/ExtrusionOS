@@ -1,5 +1,7 @@
 # BUGS-MEGA continuation - 19 October 2026
 
+> Historical checkpoint. On 20 October the user authorized migration application. R04-R11 and R17-R22 are now applied with current catalog/body/grant verification; completed expense/receivables/reporting work and two forward repairs are also applied. The [20 October application report](MIGRATION_RECONCILIATION_2026-10-20.md) supersedes the unapplied/reproduced statuses below and records 1,553 passing tests, current hosted evidence and remaining workflow acceptance boundaries.
+
 This continues the 15 October report and preserves its historical reproductions.
 The user's instruction, "DON'T RUN ANY SUPABASE MIGRATIONS," remains in force.
 No Supabase migration runner, hosted write, deployment, commit or PR was used.
@@ -1355,9 +1357,9 @@ denied and second-company identities. No Supabase migration, hosted write,
 deployment, physical reconciliation or complete signed-in operator journey
 occurred. R20 remains open and unapplied; the goal remains active.
 
-## R21 - Legacy billet-link repair candidate under final verification
+## R21 - Legacy billet-link repair candidate verified
 
-**OPEN; CANDIDATE PREPARED, FINAL VERIFICATION IN PROGRESS, NOT APPLIED.**
+**OPEN; LOCAL CANDIDATE VERIFIED, NOT APPLIED.**
 
 The billet requirement/FIFO/manual-allocation investigation confirms a narrower
 link-repair defect. The legacy repair function checks alloy and diameter but
@@ -1426,8 +1428,19 @@ the eight historical audit scripts. Required REST probes stay at 37: 23
 functions and 14 columns. The file-only inventory is 162 SQL files / 150
 versions with the existing seven collision groups. A00 remains open.
 
-Final full-suite/lint/typecheck/build gates are underway. No candidate migration
-wrapper or Supabase migration command ran; extracted objects were installed only
+Final gates after the production-profile correction all pass:
+
+- `npm test -- --test-concurrency=2`: **1,461 tests / 76 suites**, zero failures,
+  skips, cancellations or todos; exit 0.
+- `npm run lint`: exit 0, no warnings/errors.
+- `npm run typecheck`: exit 0; completed before the final build.
+- `npm run build`: exit 0, **154 generated pages**.
+- `git diff --check` and all five new-file trailing-whitespace checks pass.
+- Original/candidate diagnostics, 45 focused checks, SELECT-only historical
+  review, and final source/security audit pass. Earlier complete runs passed
+  1,457 and 1,458 tests before the last lineage cases; those are historical.
+
+No candidate migration wrapper or Supabase migration command ran; extracted objects were installed only
 in disposable PGlite. Evidence is under
 `C:/Users/arnav/.codex/visualizations/2026/10/15/01a13e40-ffdd-7a00-86c5-fe3b2d0a5d19/billet-link-repair/`
 and adjacent `billet-link-*.log` files. Original and candidate JSON include both
@@ -1436,6 +1449,11 @@ quoted-path fixture used an unsupported acceptance-field name; it was corrected
 to the existing `customer_approved` status and actual customer/drawing guard.
 That was a fixture correction, not a product-schema change.
 
+Final source checkpoint is `d3ef74f` (`Improve inventory and operations
+workflows`). The final source inspection shows only `BUGS-MEGA.md` and this
+report remaining modified. Full tests and build completed on 19 October IST;
+these close-out records were finalized after the date rolled to 20 October.
+
 R21 remains open and unapplied until separately authorized activation and hosted
 JWT/RLS/catalog, independent-session, historical and operator acceptance. The
 broader allocation adequacy, source provenance and physical inventory questions
@@ -1443,6 +1461,13 @@ remain open. In particular, this candidate does not certify that a nominal
 standard-length/count requirement is covered by nonstandard measured billets.
 The allocation panel's load/error/refresh behavior also needs its own focused
 verification. No hosted write, deployment or operator acceptance occurred.
+
+Future operator acceptance requires an authorized, reconciled activation:
+review the historical report; inspect mixed-temper and shared-material profiles;
+refresh their requirements through the real workflow; verify exact retained
+links/counters and unchanged stock fields; repeat without extra links; and
+exercise allowed/denied and second-company identities. Full manual allocation
+and reallocation acceptance remains blocked by the independent R22 issue.
 
 ## R22 - Manual billet allocation schema mismatch reproduced
 
@@ -1479,14 +1504,14 @@ Screenshots use the built application CSS and Plus Jakarta Sans and are checked
 for document overflow. Images are reviewed locally. It uses a synthetic session
 and transport, so it does not establish a hosted authenticated journey.
 
-The latest file-only inventory after preparing R20 reports 161 SQL files,
-149 versions and the same seven
+The latest file-only inventory after preparing R21 reports 162 SQL files,
+150 versions and the same seven
 collision groups: `0032`, `0034`, `0036`, `0055`, `20260511`, `20260512`,
 `20260513`. The earlier reconciler's nonzero exit established that hosted
 comparison was unavailable without a metadata export; the current file inventory
 adds no hosted evidence. The required REST contract now has 37 checks (23
 functions plus 14 columns); no fresh hosted object-presence conclusion is made.
-Integration installs 43 prepared function definitions and 13 trigger
+Integration installs 44 prepared function definitions and 13 trigger
 attachments alongside the eight historical audit scripts and authorized views.
 
 Before any future, separately authorized activation, reconcile the complete

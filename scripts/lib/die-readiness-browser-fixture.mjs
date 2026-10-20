@@ -50,7 +50,7 @@ export async function createDieReadinessBrowserFixture({styled=false}={}){
         return q}}}`:args.path==="actions"?`
       const blocked=async input=>{window.__die.writes.push(input);throw new Error('Browser fixture does not execute production writes')};
       export const saveProductionJobAction=input=>new Promise((resolve,reject)=>window.__die.writes.push({input,resolve,reject}));
-      export const updateProductionJobStatusAction=blocked,saveDispatchAction=blocked,saveFoundryBatchAction=blocked,savePackagingJobAction=blocked,saveOrderAction=blocked;`
+      export const updateProductionJobStatusAction=blocked,saveDispatchAction=blocked,saveFoundryBatchAction=blocked,savePackagingJobAction=blocked,saveOrderAction=blocked,saveManualExpenseAction=blocked;`
       :args.path==="navigation"?`export const useRouter=()=>({push(path){window.__die.navigation.push(path)},refresh(){}});`
       :`import React from 'react';export default function Link({children,...props}){return React.createElement('a',props,children)}`}));
   }}]});

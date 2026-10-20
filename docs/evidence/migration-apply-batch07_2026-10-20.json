@@ -1,0 +1,14 @@
+[
+  {
+    "file": "20261020000000_manual_billet_requirement_lineage.sql",
+    "applied_at_utc": "2026-10-20 06:10:32 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  }
+]

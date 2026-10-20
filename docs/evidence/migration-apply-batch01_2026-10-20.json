@@ -1,0 +1,74 @@
+[
+  {
+    "file": "20260810000000_tenant_boundary_and_dealer_workflow_hardening.sql",
+    "applied_at_utc": "2026-10-20 06:01:05 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20260810010000_manufacturing_reference_and_material_guards.sql",
+    "applied_at_utc": "2026-10-20 06:01:07 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20260810020000_atomic_dealer_order_creation_and_workflow.sql",
+    "applied_at_utc": "2026-10-20 06:01:09 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20260810030000_quote_and_order_financial_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:01:12 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20260810040000_storage_and_catalog_policy_alignment.sql",
+    "applied_at_utc": "2026-10-20 06:01:14 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20260810050000_factory_queue_weight_runtime_fix.sql",
+    "applied_at_utc": "2026-10-20 06:01:16 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  }
+]

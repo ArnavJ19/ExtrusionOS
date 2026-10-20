@@ -70,7 +70,7 @@ export async function createFinishingReceiptsBrowserFixture({tables={},styled=fa
       const capture=async input=>{window.__receipts.writes.push({kind:'packaging-action',input});return {success:true,jobId:input.editing_id||'00000000-0000-4000-8000-000000000802'}};
       export const savePackagingJobAction=capture;
       const blocked=async()=>{throw new Error('Unrelated action is outside this browser fixture')};
-      export const saveProductionJobAction=blocked,saveDispatchAction=blocked,saveFoundryBatchAction=blocked,saveOrderAction=blocked;`
+      export const saveProductionJobAction=blocked,saveDispatchAction=blocked,saveFoundryBatchAction=blocked,saveOrderAction=blocked,saveManualExpenseAction=blocked;`
       :args.path==="navigation"?`export const useRouter=()=>({push(path){window.__receipts.navigation.push(path)},refresh(){}});`
       :`import React from 'react';export default function Link({children,...props}){return React.createElement('a',props,children)}`}));
   }}]});

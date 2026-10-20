@@ -1,0 +1,82 @@
+[
+  {
+    "view_name": "company_settings_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "expense_ledger_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "expense_ledger_reconciliation_issues",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "finish_options_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "finishing_accepted_outputs",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "glass_items_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "hardware_items_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "invoice_items_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "order_dealer_stock_fulfillments_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "order_items_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "orders_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "packing_list_items_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "production_jobs_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "quote_items_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "quotes_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "system_configurations_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "system_glass_cuts_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "system_hardware_bom_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "system_material_summary_authorized",
+    "visible_rows": 0
+  },
+  {
+    "view_name": "system_templates_authorized",
+    "visible_rows": 0
+  }
+]

@@ -1293,7 +1293,7 @@ security definer
 set search_path = public, private
 as $$ select private.save_ready_dispatch_atomic(p_dispatch_id, p_dispatch, p_items) $$;
 
-create or replace function public.transition_dispatch_delivery_atomic(p_dispatch_id uuid, p_status text, p_proof_of_delivery_url text, p_remarks text)
+create or replace function public.transition_dispatch_delivery_atomic(p_dispatch_id uuid, p_status text, p_proof_of_delivery_url text default null, p_remarks text default null)
 returns uuid
 language sql
 security definer

@@ -1,0 +1,910 @@
+[
+  {
+    "check": 0,
+    "rows": [
+      {
+        "name": "complete_production_job_atomic",
+        "signature": "complete_production_job_atomic(uuid,numeric,integer,numeric,numeric,text)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "correct_completed_production_output_atomic",
+        "signature": "correct_completed_production_output_atomic(uuid,numeric,integer,numeric,text)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "create_direct_order_atomic",
+        "signature": "create_direct_order_atomic(jsonb,jsonb,uuid)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "generate_system_quote_atomic",
+        "signature": "generate_system_quote_atomic(uuid)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "get_advanced_analytics_snapshot",
+        "signature": "get_advanced_analytics_snapshot(date,integer)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "get_dashboard_snapshot",
+        "signature": "get_dashboard_snapshot(date)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "get_dealer_quote_stock_availability",
+        "signature": "get_dealer_quote_stock_availability(uuid)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "get_dispatch_reservation_ledger_page",
+        "signature": "get_dispatch_reservation_ledger_page(uuid,integer)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "get_finished_production_readiness",
+        "signature": "get_finished_production_readiness(uuid)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "get_finishing_workload",
+        "signature": "get_finishing_workload(uuid,uuid,uuid,text,text,text,text,integer)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "get_invoice_source_options",
+        "signature": "get_invoice_source_options(text,text,uuid,uuid,uuid)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "get_operation_database_page",
+        "signature": "get_operation_database_page(text,text,jsonb,text,text,integer,date,date)",
+        "security_definer": false,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "get_profile_stock_consumption_totals",
+        "signature": "get_profile_stock_consumption_totals(uuid[])",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "get_profile_stock_reservation_ledger_page",
+        "signature": "get_profile_stock_reservation_ledger_page(integer,text,text,text,text)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "handoff_system_configuration_to_production_atomic",
+        "signature": "handoff_system_configuration_to_production_atomic(uuid,jsonb,text)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "issue_dispatch_return_credit_note_atomic",
+        "signature": "issue_dispatch_return_credit_note_atomic(uuid,text,uuid)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "list_open_quality_rework_inspections",
+        "signature": "list_open_quality_rework_inspections(integer,integer)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "resolve_quality_rework_atomic",
+        "signature": "resolve_quality_rework_atomic(uuid,numeric,numeric,text,text)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "reverse_credit_note_atomic",
+        "signature": "reverse_credit_note_atomic(uuid,text)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "save_order_atomic",
+        "signature": "save_order_atomic(uuid,jsonb)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "save_ready_dispatch_atomic",
+        "signature": "save_ready_dispatch_atomic(uuid,jsonb,jsonb)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "save_system_configuration_atomic",
+        "signature": "save_system_configuration_atomic(uuid,text,timestamp with time zone,jsonb,jsonb)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "name": "submit_dealer_receipt_atomic",
+        "signature": "submit_dealer_receipt_atomic(uuid,uuid,uuid,text,jsonb,text,text,text)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      }
+    ]
+  },
+  {
+    "check": 1,
+    "rows": [
+      {
+        "name": "supplier_snapshot",
+        "present": true,
+        "relation": "invoices"
+      },
+      {
+        "name": "customer_snapshot",
+        "present": true,
+        "relation": "invoices"
+      },
+      {
+        "name": "system_configuration_id",
+        "present": true,
+        "relation": "quotes"
+      },
+      {
+        "name": "configuration_cut_snapshot",
+        "present": true,
+        "relation": "quote_items"
+      },
+      {
+        "name": "configuration_cut_snapshot",
+        "present": true,
+        "relation": "order_items"
+      },
+      {
+        "name": "actual_dispatched_at",
+        "present": true,
+        "relation": "dispatches"
+      },
+      {
+        "name": "net_length_m",
+        "present": true,
+        "relation": "packing_list_items"
+      },
+      {
+        "name": "reserved_pieces",
+        "present": true,
+        "relation": "profile_stock_reservations"
+      },
+      {
+        "name": "finishing_job_id",
+        "present": true,
+        "relation": "packaging_jobs"
+      },
+      {
+        "name": "receipt_kind",
+        "present": true,
+        "relation": "finishing_accepted_outputs"
+      },
+      {
+        "name": "initial_reserved_weight_kg",
+        "present": true,
+        "relation": "profile_stock_reservations"
+      },
+      {
+        "name": "initial_reserved_length_m",
+        "present": true,
+        "relation": "profile_stock_reservations"
+      },
+      {
+        "name": "initial_reserved_pieces",
+        "present": true,
+        "relation": "profile_stock_reservations"
+      },
+      {
+        "name": "consumed_pieces",
+        "present": true,
+        "relation": "profile_stock_consumptions"
+      }
+    ]
+  },
+  {
+    "check": 2,
+    "rows": [
+      {
+        "cmd": "DELETE",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text])))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "customers",
+        "permissive": "PERMISSIVE",
+        "policyname": "customers_access_delete",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "customers",
+        "permissive": "PERMISSIVE",
+        "policyname": "customers_access_insert",
+        "with_check": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text])))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'accounts'::text, 'production_manager'::text, 'factory_manager'::text, 'dispatch_manager'::text, 'dispatch'::text, 'inventory_manager'::text, 'quality'::text, 'viewer'::text])) OR (((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (EXISTS ( SELECT 1\n   FROM quotes q\n  WHERE ((q.company_id = customers.company_id) AND (q.customer_id = customers.id) AND (q.dealer_id = private.get_current_user_dealer_id()))))) OR ((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (EXISTS ( SELECT 1\n   FROM orders o\n  WHERE ((o.company_id = customers.company_id) AND (o.customer_id = customers.id) AND (o.dealer_id = private.get_current_user_dealer_id()))))))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "customers",
+        "permissive": "PERMISSIVE",
+        "policyname": "customers_access_read",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text])))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "customers",
+        "permissive": "PERMISSIVE",
+        "policyname": "customers_access_update",
+        "with_check": "((company_id = private.get_current_user_company_id()) AND (private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text])))"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text])) AND (EXISTS ( SELECT 1\n   FROM orders o\n  WHERE ((o.id = order_items.order_id) AND (o.company_id = order_items.company_id)))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "order_items",
+        "permissive": "PERMISSIVE",
+        "policyname": "order_items_access_delete",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "order_items",
+        "permissive": "PERMISSIVE",
+        "policyname": "order_items_access_insert",
+        "with_check": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (EXISTS ( SELECT 1\n   FROM orders o\n  WHERE ((o.id = order_items.order_id) AND (o.company_id = order_items.company_id) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'production_manager'::text, 'factory_manager'::text])) OR ((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (o.dealer_id = private.get_current_user_dealer_id())))))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (EXISTS ( SELECT 1\n   FROM orders o\n  WHERE ((o.id = order_items.order_id) AND (o.company_id = order_items.company_id) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'production_manager'::text, 'production'::text, 'factory_manager'::text, 'dispatch_manager'::text, 'dispatch'::text, 'inventory_manager'::text, 'accounts'::text, 'quality'::text, 'viewer'::text])) OR ((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (o.dealer_id = private.get_current_user_dealer_id())))))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "order_items",
+        "permissive": "PERMISSIVE",
+        "policyname": "order_items_access_read",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (EXISTS ( SELECT 1\n   FROM orders o\n  WHERE ((o.id = order_items.order_id) AND (o.company_id = order_items.company_id) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'production_manager'::text, 'factory_manager'::text, 'dispatch_manager'::text, 'dispatch'::text, 'inventory_manager'::text])) OR ((private.get_current_user_role() = 'dealer_admin'::text) AND (o.dealer_id = private.get_current_user_dealer_id())))))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "order_items",
+        "permissive": "PERMISSIVE",
+        "policyname": "order_items_access_update",
+        "with_check": "((company_id = private.get_current_user_company_id()) AND (EXISTS ( SELECT 1\n   FROM orders o\n  WHERE ((o.id = order_items.order_id) AND (o.company_id = order_items.company_id) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'production_manager'::text, 'factory_manager'::text, 'dispatch_manager'::text, 'dispatch'::text, 'inventory_manager'::text])) OR ((private.get_current_user_role() = 'dealer_admin'::text) AND (o.dealer_id = private.get_current_user_dealer_id())))))))"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text])))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "orders",
+        "permissive": "PERMISSIVE",
+        "policyname": "orders_access_delete",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "orders",
+        "permissive": "PERMISSIVE",
+        "policyname": "orders_access_insert",
+        "with_check": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text])) OR ((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (dealer_id = private.get_current_user_dealer_id()))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'production_manager'::text, 'production'::text, 'factory_manager'::text, 'dispatch_manager'::text, 'dispatch'::text, 'inventory_manager'::text, 'accounts'::text, 'quality'::text, 'viewer'::text])) OR ((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (dealer_id = private.get_current_user_dealer_id()))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "orders",
+        "permissive": "PERMISSIVE",
+        "policyname": "orders_access_read",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'production_manager'::text, 'factory_manager'::text, 'dispatch_manager'::text, 'dispatch'::text])) OR (private.get_current_user_role() = 'inventory_manager'::text) OR ((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (dealer_id = private.get_current_user_dealer_id()))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "orders",
+        "permissive": "PERMISSIVE",
+        "policyname": "orders_access_update",
+        "with_check": "((company_id = private.get_current_user_company_id()) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'production_manager'::text, 'factory_manager'::text, 'dispatch_manager'::text, 'dispatch'::text, 'inventory_manager'::text])) OR ((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (dealer_id = private.get_current_user_dealer_id()))))"
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "profile_stock_reservations",
+        "permissive": "PERMISSIVE",
+        "policyname": "profile_stock_reservations_access_insert",
+        "with_check": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'production_manager'::text, 'factory_manager'::text, 'inventory_manager'::text])))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'production_manager'::text, 'production'::text, 'factory_manager'::text, 'inventory_manager'::text, 'dispatch_manager'::text, 'dispatch'::text])))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "profile_stock_reservations",
+        "permissive": "PERMISSIVE",
+        "policyname": "profile_stock_reservations_access_read",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'factory_manager'::text, 'inventory_manager'::text])))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "profile_stock_reservations",
+        "permissive": "PERMISSIVE",
+        "policyname": "profile_stock_reservations_access_update",
+        "with_check": "((company_id = private.get_current_user_company_id()) AND (private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'factory_manager'::text, 'inventory_manager'::text])))"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (EXISTS ( SELECT 1\n   FROM quotes q\n  WHERE ((q.id = quote_items.quote_id) AND (q.company_id = quote_items.company_id) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text])) OR ((private.get_current_user_role() = 'dealer_admin'::text) AND (q.dealer_id = private.get_current_user_dealer_id())))))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "quote_items",
+        "permissive": "PERMISSIVE",
+        "policyname": "quote_items_access_delete",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "quote_items",
+        "permissive": "PERMISSIVE",
+        "policyname": "quote_items_access_insert",
+        "with_check": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (EXISTS ( SELECT 1\n   FROM quotes q\n  WHERE ((q.id = quote_items.quote_id) AND (q.company_id = quote_items.company_id) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text])) OR ((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (q.dealer_id = private.get_current_user_dealer_id())))))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (EXISTS ( SELECT 1\n   FROM quotes q\n  WHERE ((q.id = quote_items.quote_id) AND (q.company_id = quote_items.company_id) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'accounts'::text, 'viewer'::text])) OR ((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (q.dealer_id = private.get_current_user_dealer_id())))))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "quote_items",
+        "permissive": "PERMISSIVE",
+        "policyname": "quote_items_access_read",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (EXISTS ( SELECT 1\n   FROM quotes q\n  WHERE ((q.id = quote_items.quote_id) AND (q.company_id = quote_items.company_id) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text])) OR ((private.get_current_user_role() = 'dealer_admin'::text) AND (q.dealer_id = private.get_current_user_dealer_id())))))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "quote_items",
+        "permissive": "PERMISSIVE",
+        "policyname": "quote_items_access_update",
+        "with_check": "((company_id = private.get_current_user_company_id()) AND (EXISTS ( SELECT 1\n   FROM quotes q\n  WHERE ((q.id = quote_items.quote_id) AND (q.company_id = quote_items.company_id) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text])) OR ((private.get_current_user_role() = 'dealer_admin'::text) AND (q.dealer_id = private.get_current_user_dealer_id())))))))"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND (private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text])))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "quotes",
+        "permissive": "PERMISSIVE",
+        "policyname": "quotes_access_delete",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "public"
+        ],
+        "tablename": "quotes",
+        "permissive": "PERMISSIVE",
+        "policyname": "quotes_access_insert",
+        "with_check": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text])) OR ((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (dealer_id = private.get_current_user_dealer_id()))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'accounts'::text, 'viewer'::text])) OR ((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (dealer_id = private.get_current_user_dealer_id()))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "quotes",
+        "permissive": "PERMISSIVE",
+        "policyname": "quotes_access_read",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "((auth.uid() IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text])) OR ((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (dealer_id = private.get_current_user_dealer_id()))))",
+        "roles": [
+          "public"
+        ],
+        "tablename": "quotes",
+        "permissive": "PERMISSIVE",
+        "policyname": "quotes_access_update",
+        "with_check": "((company_id = private.get_current_user_company_id()) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text])) OR ((private.get_current_user_role() = ANY (ARRAY['dealer_admin'::text, 'dealer_staff'::text])) AND (dealer_id = private.get_current_user_dealer_id()))))"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "((company_id = get_current_user_company_id()) AND (get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text])))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "system_configurations",
+        "permissive": "PERMISSIVE",
+        "policyname": "astra_delete",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "system_configurations",
+        "permissive": "PERMISSIVE",
+        "policyname": "astra_insert",
+        "with_check": "((company_id = get_current_user_company_id()) AND (get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text])))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((company_id = get_current_user_company_id()) AND (get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'production_manager'::text, 'production'::text, 'factory_manager'::text, 'inventory_manager'::text, 'viewer'::text])))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "system_configurations",
+        "permissive": "PERMISSIVE",
+        "policyname": "astra_read",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "((company_id = get_current_user_company_id()) AND (get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text])))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "system_configurations",
+        "permissive": "PERMISSIVE",
+        "policyname": "astra_update",
+        "with_check": "((company_id = get_current_user_company_id()) AND (get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text])))"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "((company_id = get_current_user_company_id()) AND (get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text])))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "system_material_summary",
+        "permissive": "PERMISSIVE",
+        "policyname": "astra_delete",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "system_material_summary",
+        "permissive": "PERMISSIVE",
+        "policyname": "astra_insert",
+        "with_check": "((company_id = get_current_user_company_id()) AND (get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text])))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((company_id = get_current_user_company_id()) AND (get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'production_manager'::text, 'production'::text, 'factory_manager'::text, 'inventory_manager'::text, 'viewer'::text])))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "system_material_summary",
+        "permissive": "PERMISSIVE",
+        "policyname": "astra_read",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "((company_id = get_current_user_company_id()) AND (get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text])))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "system_material_summary",
+        "permissive": "PERMISSIVE",
+        "policyname": "astra_update",
+        "with_check": "((company_id = get_current_user_company_id()) AND (get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text])))"
+      }
+    ]
+  },
+  {
+    "check": 3,
+    "rows": [
+      {
+        "migration_ledger_present": true
+      }
+    ]
+  },
+  {
+    "check": 4,
+    "rows": [
+      {
+        "present": true,
+        "attached": null,
+        "signature": "private.invoice_dispatch_is_billable(uuid,uuid,uuid)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "present": true,
+        "attached": null,
+        "signature": "private.save_invoice_atomic(uuid,jsonb,jsonb,boolean)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "present": true,
+        "attached": null,
+        "signature": "private.replace_invoice_items_atomic(uuid,jsonb)",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "present": true,
+        "attached": true,
+        "signature": "public.validate_invoice_dispatch_billable()",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      }
+    ]
+  },
+  {
+    "check": 5,
+    "rows": [
+      {
+        "name": "credit_dealer_stock_on_order_cancel_trigger",
+        "enabled": true,
+        "attached": true,
+        "relation": "orders",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "name": "aa_guard_cancelled_order_reservations",
+        "enabled": true,
+        "attached": true,
+        "relation": "profile_stock_reservations",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      }
+    ]
+  },
+  {
+    "check": 6,
+    "rows": [
+      {
+        "name": "zy_guard_direct_order_line_snapshots",
+        "enabled": true,
+        "attached": true,
+        "relation": "order_items",
+        "request_rls": true,
+        "request_read": false,
+        "request_write": false,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "name": "zy_guard_direct_order_snapshots",
+        "enabled": true,
+        "attached": true,
+        "relation": "orders",
+        "request_rls": true,
+        "request_read": false,
+        "request_write": false,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      }
+    ]
+  },
+  {
+    "check": 7,
+    "rows": [
+      {
+        "name": "credit_notes_settlement_exclusivity",
+        "enabled": true,
+        "attached": true,
+        "relation": "credit_notes",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "name": "payments_credit_settlement_exclusivity",
+        "enabled": true,
+        "attached": true,
+        "relation": "payments",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      }
+    ]
+  },
+  {
+    "check": 8,
+    "rows": [
+      {
+        "present": true,
+        "signature": "private.guard_terminal_finishing_evidence()",
+        "definition_md5": "2cad00f0be617add370ab6d881a95c59",
+        "anonymous_execute": false,
+        "authenticated_execute": false,
+        "update_delete_guard_attached": true
+      },
+      {
+        "present": true,
+        "signature": "private.transition_finishing_job_atomic(uuid,text,uuid,date,date,numeric,numeric,text)",
+        "definition_md5": "72601fd437ea4258212de767642ce34c",
+        "anonymous_execute": false,
+        "authenticated_execute": false,
+        "update_delete_guard_attached": null
+      }
+    ]
+  },
+  {
+    "check": 9,
+    "rows": [
+      {
+        "name": "aa_guard_finishing_material_lineage",
+        "attached": true,
+        "relation": "finishing_jobs",
+        "tgenabled": "O",
+        "event_mask": 21,
+        "definition_md5": "e71fb882e0772ac753919b2016f64ed5",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "name": "route_completed_finishing_to_packaging",
+        "attached": true,
+        "relation": "finishing_jobs",
+        "tgenabled": "O",
+        "event_mask": 21,
+        "definition_md5": "a70222f3e87a186fb88a5ea199539d5f",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "name": "zz_guard_packaging_finishing_source",
+        "attached": true,
+        "relation": "packaging_jobs",
+        "tgenabled": "O",
+        "event_mask": 23,
+        "definition_md5": "ea1c6616e1eb20763a1ac1e3bcee37f8",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      }
+    ]
+  },
+  {
+    "check": 10,
+    "rows": [
+      {
+        "present": true,
+        "signature": "private.assert_finishing_material_lineage(uuid,uuid)",
+        "definition_md5": "02b526fd71ca7743e6976be35d63e5aa",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "present": true,
+        "signature": "private.finishing_accepted_output_kg(uuid,uuid,uuid)",
+        "definition_md5": "f6b86a819fd997b68e8904e69b615e7b",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "present": true,
+        "signature": "private.finishing_dispatch_ready_kg(uuid,uuid,uuid,boolean)",
+        "definition_md5": "2f0d6df697ae0a97b229130a5af007b4",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "present": true,
+        "signature": "public.get_finished_production_readiness(uuid)",
+        "definition_md5": "fab3039003353daa51d193300cf48ed9",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      },
+      {
+        "present": true,
+        "signature": "public.validate_quality_production_link()",
+        "definition_md5": "ccb75fe329e43ccada66fd1cbd09a417",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "present": true,
+        "signature": "private.save_packaging_job_atomic(uuid,jsonb,jsonb)",
+        "definition_md5": "a960279fd44afc1ab969b05d9bac8a4f",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "present": true,
+        "signature": "private.assert_dispatch_ready(uuid)",
+        "definition_md5": "9b7188c5cb551f71f7ec14fccc455e6a",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "present": true,
+        "signature": "public.refresh_packaging_job_material()",
+        "definition_md5": "4690a6fcee519053a91081b58e1ff3a0",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "present": true,
+        "signature": "public.validate_completed_packaging_materials()",
+        "definition_md5": "426a14699563f1fb8a3666d333ce5d26",
+        "security_definer": false,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      }
+    ]
+  },
+  {
+    "check": 11,
+    "rows": [
+      {
+        "name": "guard_packaging_evidence_delete",
+        "attached": true,
+        "relation": "packaging_jobs",
+        "tgenabled": "O",
+        "event_mask": 11,
+        "definition_md5": "2fc689070f7047cdf75f54f0ff751792",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      },
+      {
+        "name": "guard_packaging_material_movement_evidence",
+        "attached": true,
+        "relation": "packaging_material_movements",
+        "tgenabled": "O",
+        "event_mask": 27,
+        "definition_md5": "9628abe7adc6f75bab178f2ec9e810a8",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      }
+    ]
+  },
+  {
+    "check": 12,
+    "rows": [
+      {
+        "ledger_rls": true,
+        "anonymous_insert": false,
+        "authenticated_read": true,
+        "authenticated_delete": false,
+        "authenticated_insert": false,
+        "authenticated_update": false,
+        "authenticated_column_insert": false,
+        "authenticated_column_update": false
+      }
+    ]
+  },
+  {
+    "check": 13,
+    "rows": [
+      {
+        "present": true,
+        "volatility": "s",
+        "definition_md5": "7f2002f5cffb8b72b6c098183f8c702d",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": true
+      }
+    ]
+  },
+  {
+    "check": 14,
+    "rows": [
+      {
+        "present": true,
+        "definition_md5": "3f3e7c4dcb7c9536108f92b5f2fdd6fe",
+        "security_definer": true,
+        "anonymous_execute": false,
+        "authenticated_execute": false
+      }
+    ]
+  }
+]

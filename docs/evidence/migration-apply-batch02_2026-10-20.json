@@ -1,0 +1,86 @@
+[
+  {
+    "file": "20260812000000_security_and_notification_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:01:45 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20260812010000_dispatch_return_and_manifest_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:01:47 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20260812020000_invite_acceptance_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:01:49 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20260812030000_profile_configuration_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:01:52 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20260918000000_production_source_line_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:01:54 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20260929000000_business_logic_fixes.sql",
+    "applied_at_utc": "2026-10-20 06:01:57 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20260930000000_astra_audit_fixes.sql",
+    "applied_at_utc": "2026-10-20 06:01:59 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  }
+]

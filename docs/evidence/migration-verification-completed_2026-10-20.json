@@ -1,0 +1,53 @@
+{
+  "captured_at_utc": "2026-10-20 06:36:50 UTC",
+  "project_ref": "pkawmdxtmsdgigsehcmb",
+  "applied_migrations": 40,
+  "ledger_rows": 84,
+  "local_files": 168,
+  "local_tests": {
+    "passed": 1553,
+    "failed": 0,
+    "suites": 76,
+    "skipped": 0,
+    "cancelled": 0,
+    "log": "test-results/migration-reverified-full.log"
+  },
+  "focused_tests": {
+    "finishing_and_manual": 95,
+    "expense": 18,
+    "receivables": 7,
+    "reporting": 5,
+    "affected_browser_and_credit": 31
+  },
+  "expense_rolled_back_workflow": {
+    "rolled_back_workflow_probe": {
+      "payment_created": true,
+      "reversal_returned": true,
+      "same_payment_on_retry": true,
+      "manual_expense_created": true
+    }
+  },
+  "finance_read_probes": {
+    "finance_read_probe": {
+      "analytics": "object",
+      "dashboard": "object",
+      "profitability": "object",
+      "profitability_anon": false,
+      "expense_review_rows": 0,
+      "invoice_review_rows": 0
+    }
+  },
+  "protected_missing_identity_views": 22,
+  "public_tables_without_rls": 0,
+  "post_apply_business_counts": {
+    "orders": 10,
+    "billets": 48,
+    "recorded_billet_kg": "13711.728",
+    "invoices": 0,
+    "payments": 0,
+    "expenses": 0,
+    "expense_payments": 0,
+    "expense_supplier_credits": 0
+  },
+  "boundary": "SQL-role claims and local fixtures do not establish real JWT/browser/Storage/operator/concurrency acceptance. No application deployment."
+}

@@ -1,0 +1,350 @@
+{
+  "lints": [
+    {
+      "name": "anon_security_definer_function_executable",
+      "title": "Public Can Execute SECURITY DEFINER Function",
+      "level": "WARN",
+      "facing": "EXTERNAL",
+      "categories": [
+        "SECURITY"
+      ],
+      "description": "Detects `SECURITY DEFINER` functions that are callable without signing in. Revoke `EXECUTE`, switch the function to `SECURITY INVOKER`, or move it out of your exposed API schema if it is not meant to be public.",
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable",
+      "count": 1,
+      "findings": [
+        {
+          "detail": "Function `public.validate_production_plan_slot_tenant()` can be executed by the `anon` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/validate_production_plan_slot_tenant`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "validate_production_plan_slot_tenant",
+            "schema": "public",
+            "language": "plpgsql",
+            "arguments": "",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        }
+      ]
+    },
+    {
+      "name": "authenticated_security_definer_function_executable",
+      "title": "Signed-In Users Can Execute SECURITY DEFINER Function",
+      "level": "WARN",
+      "facing": "EXTERNAL",
+      "categories": [
+        "SECURITY"
+      ],
+      "description": "Detects `SECURITY DEFINER` functions that are callable by signed-in users. Revoke `EXECUTE`, switch the function to `SECURITY INVOKER`, or move it out of your exposed API schema if signed-in users should not call it.",
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable",
+      "count": 26,
+      "findings": [
+        {
+          "detail": "Function `public.complete_production_job_atomic(p_job_id uuid, p_actual_weight_kg numeric, p_actual_pieces integer, p_actual_meters numeric, p_scrap_weight_kg numeric, p_remarks text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/complete_production_job_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "complete_production_job_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_job_id uuid, p_actual_weight_kg numeric, p_actual_pieces integer, p_actual_meters numeric, p_scrap_weight_kg numeric, p_remarks text",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.convert_quote_to_order_atomic(p_quote_id uuid, p_order jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/convert_quote_to_order_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "convert_quote_to_order_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_quote_id uuid, p_order jsonb",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.create_dealer_order_from_order_atomic(p_order_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/create_dealer_order_from_order_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "create_dealer_order_from_order_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_order_id uuid",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.current_portal_user_owns(p_company_id uuid, p_customer_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/current_portal_user_owns`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "current_portal_user_owns",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_company_id uuid, p_customer_id uuid",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.get_financial_collection_events(p_start_date date)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_financial_collection_events`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "get_financial_collection_events",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_start_date date",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.get_unread_notification_count()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/get_unread_notification_count`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "get_unread_notification_count",
+            "schema": "public",
+            "language": "plpgsql",
+            "arguments": "",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.handoff_system_configuration_to_production_atomic(p_configuration_id uuid, p_jobs jsonb, p_remarks text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/handoff_system_configuration_to_production_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "handoff_system_configuration_to_production_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_configuration_id uuid, p_jobs jsonb, p_remarks text",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.mark_notification_read(p_notification_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/mark_notification_read`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "mark_notification_read",
+            "schema": "public",
+            "language": "plpgsql",
+            "arguments": "p_notification_id uuid",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.onboard_company_atomic(p_company jsonb, p_profile jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/onboard_company_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "onboard_company_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_company jsonb, p_profile jsonb",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.record_current_login_event(p_event_type text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/record_current_login_event`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "record_current_login_event",
+            "schema": "public",
+            "language": "plpgsql",
+            "arguments": "p_event_type text",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.record_payment_atomic(p_invoice_id uuid, p_payment jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/record_payment_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "record_payment_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_invoice_id uuid, p_payment jsonb",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.release_production_schedule_slot_atomic(p_slot_id uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/release_production_schedule_slot_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "release_production_schedule_slot_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_slot_id uuid",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.replace_invoice_items_atomic(p_invoice_id uuid, p_items jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/replace_invoice_items_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "replace_invoice_items_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_invoice_id uuid, p_items jsonb",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.retry_rejected_finishing_job_atomic(p_rejected_job_id uuid, p_planned_date date, p_remarks text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/retry_rejected_finishing_job_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "retry_rejected_finishing_job_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_rejected_job_id uuid, p_planned_date date, p_remarks text",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.reverse_payment_atomic(p_payment_id uuid, p_reason text, p_idempotency_key uuid)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/reverse_payment_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "reverse_payment_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_payment_id uuid, p_reason text, p_idempotency_key uuid",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.save_dispatch_atomic(p_dispatch_id uuid, p_dispatch jsonb, p_items jsonb, p_order_stage text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/save_dispatch_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "save_dispatch_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_dispatch_id uuid, p_dispatch jsonb, p_items jsonb, p_order_stage text",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.save_invoice_atomic(p_invoice_id uuid, p_invoice jsonb, p_items jsonb, p_replace_items boolean)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/save_invoice_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "save_invoice_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_invoice_id uuid, p_invoice jsonb, p_items jsonb, p_replace_items boolean",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.save_order_atomic(p_order_id uuid, p_order jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/save_order_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "save_order_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_order_id uuid, p_order jsonb",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.save_packaging_job_atomic(p_job_id uuid, p_job jsonb, p_materials jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/save_packaging_job_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "save_packaging_job_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_job_id uuid, p_job jsonb, p_materials jsonb",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.save_production_job_atomic(p_job_id uuid, p_job jsonb, p_billet_ids uuid[])` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/save_production_job_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "save_production_job_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_job_id uuid, p_job jsonb, p_billet_ids uuid[]",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.save_production_schedule_slot_atomic(p_slot_id uuid, p_slot jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/save_production_schedule_slot_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "save_production_schedule_slot_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_slot_id uuid, p_slot jsonb",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.save_ready_dispatch_atomic(p_dispatch_id uuid, p_dispatch jsonb, p_items jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/save_ready_dispatch_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "save_ready_dispatch_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_dispatch_id uuid, p_dispatch jsonb, p_items jsonb",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.transition_dispatch_delivery_atomic(p_dispatch_id uuid, p_status text, p_proof_of_delivery_url text, p_remarks text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/transition_dispatch_delivery_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "transition_dispatch_delivery_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_dispatch_id uuid, p_status text, p_proof_of_delivery_url text, p_remarks text",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.transition_finishing_job_atomic(p_job_id uuid, p_status text, p_vendor_id uuid, p_sent_date date, p_received_date date, p_output_weight_kg numeric, p_rejection_weight_kg numeric, p_remarks text)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/transition_finishing_job_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "transition_finishing_job_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_job_id uuid, p_status text, p_vendor_id uuid, p_sent_date date, p_received_date date, p_output_weight_kg numeric, p_rejection_weight_kg numeric, p_remarks text",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.update_versioned_entity_atomic(p_entity_type text, p_entity_id uuid, p_payload jsonb)` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/update_versioned_entity_atomic`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "update_versioned_entity_atomic",
+            "schema": "public",
+            "language": "sql",
+            "arguments": "p_entity_type text, p_entity_id uuid, p_payload jsonb",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        },
+        {
+          "detail": "Function `public.validate_production_plan_slot_tenant()` can be executed by the `authenticated` role as a `SECURITY DEFINER` function via `/rest/v1/rpc/validate_production_plan_slot_tenant`. Revoke `EXECUTE` or switch it to `SECURITY INVOKER` if that is not intentional.",
+          "metadata": {
+            "name": "validate_production_plan_slot_tenant",
+            "schema": "public",
+            "language": "plpgsql",
+            "arguments": "",
+            "security_definer": true
+          },
+          "observed_at": "2026-10-20T05:51:30.346Z"
+        }
+      ]
+    },
+    {
+      "name": "auth_leaked_password_protection",
+      "title": "Leaked Password Protection Disabled",
+      "level": "WARN",
+      "facing": "EXTERNAL",
+      "categories": [
+        "SECURITY"
+      ],
+      "description": "Leaked password protection is currently disabled.",
+      "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection",
+      "count": 1,
+      "findings": [
+        {
+          "detail": "Supabase Auth prevents the use of compromised passwords by checking against HaveIBeenPwned.org. Enable this feature to enhance security.",
+          "metadata": {
+            "type": "auth",
+            "entity": "Auth"
+          }
+        }
+      ]
+    }
+  ]
+}

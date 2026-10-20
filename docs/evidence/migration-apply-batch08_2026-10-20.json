@@ -1,0 +1,26 @@
+[
+  {
+    "file": "20261020010000_expense_ledger_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:15:29 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261020061323_close_post_reconciliation_function_grants.sql",
+    "applied_at_utc": "2026-10-20 06:15:32 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  }
+]

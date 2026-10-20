@@ -1,0 +1,14 @@
+[
+  {
+    "file": "20261020030000_finance_reporting_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:33:38 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  }
+]

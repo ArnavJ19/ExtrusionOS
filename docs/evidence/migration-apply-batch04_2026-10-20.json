@@ -1,0 +1,86 @@
+[
+  {
+    "file": "20261015000000_reservation_release_replay_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:03:33 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261015010000_reservation_ledger_projection.sql",
+    "applied_at_utc": "2026-10-20 06:03:35 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261015020000_credit_settlement_exclusivity.sql",
+    "applied_at_utc": "2026-10-20 06:03:37 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261015030000_credit_note_retry_binding.sql",
+    "applied_at_utc": "2026-10-20 06:03:39 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261015040000_direct_priced_orders.sql",
+    "applied_at_utc": "2026-10-20 06:03:42 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261015050000_dispatch_reservation_ledger.sql",
+    "applied_at_utc": "2026-10-20 06:03:44 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261015060000_order_cancellation_stock_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:03:47 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  }
+]

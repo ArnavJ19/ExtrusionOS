@@ -1,0 +1,1936 @@
+{
+  "evidence": "Static object/body comparison only; constraints, policies, grants, data changes and dynamic SQL require separate review.",
+  "files": [
+    {
+      "file": "0006_enterprise_phase_1.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0007_enterprise_phase_2.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0008_enterprise_phase_3.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0009_enterprise_phase_4.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0010_enterprise_phase_5.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0011_enterprise_phase_6.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0012_enterprise_phase5_qr_update.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0013_enterprise_phase_7.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0014_phase6_schema_upgrade.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0015_enterprise_phase_8.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0016_enterprise_phase_9.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0017_enterprise_phase_10.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0018_enterprise_phase_11.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0019_enterprise_phase_12.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0020_enterprise_phase_13.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0021_enterprise_phase_14.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0022_enterprise_phase_15.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0023_enterprise_phase_16.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0024_enterprise_phase_17.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0025_enterprise_phase_18.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0026_enterprise_phase_19.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0027_enterprise_phase_20.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0028_enterprise_phase_21.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0029_enterprise_phase_22.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0030_systems_configurator_phase_1.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0031_profile_stock_reservations.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0032_enterprise_phase_23_security.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0032_profile_stock_consumptions.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0033_enterprise_phase_24_command_center.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0034_enterprise_phase_23_24_hardening.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0034_security_audit_fixes.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0035_phase_23_security_limitations_fix.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0036_fix_production_jobs_job_number.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0036_phase_5_to_10_operational_hardening.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0037_quote_order_fulfillment_controls.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0038_order_dealer_stock_fulfillment.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0039_fix_system_configurations_status.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0040_access_control_dealer_workflows.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0041_dealer_roles_inventory_automation.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0042_dealer_quote_order_isolation.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0043_dealer_order_workflow_hardening.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0044_order_production_requirements.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0045_dealer_isolation_and_inventory_entry.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0046_dealer_factory_status_and_tasks.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0047_dealer_factory_collaboration.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0048_security_advisor_function_hardening.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0049_security_advisor_remaining_definer_cleanup.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0050_production_pieces_and_foundry.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0051_foundry_sources_scrap_billets_packaging.sql",
+      "missing_tables": [],
+      "missing_columns": [
+        "foundry_batches.order_id"
+      ],
+      "missing_functions": [
+        "public.refresh_packaging_job_material"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0052_packaging_queue_and_calculation_hardening.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "public.refresh_packaging_job_material"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0053_vendors_created_by.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0054_billet_diameter_vendor_source_scrap_workflow.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0055_billet_inventory_and_outsourced_billets.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0055_machines_and_foundry_enhancements.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0056_order_billet_requirements_and_allocation.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0057_foundry_furnace_mix_and_chemistry.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0058_production_plan_slots.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "0059_reports_storage_bucket.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260511_phase1_quote_engine.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260511_phase2_terminology_and_stages.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260512_audit_fixes.sql",
+      "missing_tables": [],
+      "missing_columns": [
+        "machines.updated_at",
+        "vendors.updated_at",
+        "quote_revisions.updated_at",
+        "billet_batches.updated_at",
+        "profile_stock_batches.updated_at"
+      ],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260512_phase1_rls_fixes.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260512_phase3_operational_depth.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260512_phase4_quality_dispatch.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260512_phase5_financials_analytics.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260513_enterprise_phase1_foundation.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260513_enterprise_phase1_hardening.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260513_enterprise_phase2_ai_quotation_assistant.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260513_enterprise_phase2_nvidia_ai_provider.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260514_core_dealer_improvements.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260530000000_packaging_multiple_materials.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260530000001_machines_created_by.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260530000002_foundry_billet_allocation_repairs.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260530000003_production_jobs_created_by.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260531000000_expenses_module.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": [
+        "public.expense_apply_totals",
+        "public.sync_external_source_inventory_and_expense",
+        "public.sync_scrap_inventory_and_expense"
+      ]
+    },
+    {
+      "file": "20260531010000_expenses_phase2_packaging_and_controls.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260531020000_expenses_phase3_energy_maintenance_approval.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": [
+        "public.apply_expense_approval_policy"
+      ]
+    },
+    {
+      "file": "20260601000000_pcda_die_profile_enrichment.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260601000001_pcda_master_data_catalogs.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260602000000_pcda_phase1_completion.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260602000001_add_label_to_qr_codes.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260602000002_security_definer_access_hardening.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260603000000_pcda_master_catalog_tables_consolidated.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260603100000_security_audit_fixes_june2026.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260604000000_pcda_quote_items_enrichment.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260604000001_pcda_order_items_enrichment.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260604000002_pcda_production_dispatch_enrichment.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260604000003_pcda_invoice_items.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260608000000_pcda_crm_enrichment.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260715000000_atomic_business_workflows.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": [
+        "private.save_production_job_atomic"
+      ]
+    },
+    {
+      "file": "20260715010000_role_aware_sensitive_rls.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260715011000_legacy_role_rls_observability.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260715020000_documents_storage_bucket.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260715030000_distributed_api_rate_limits.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260715040000_documents_storage_role_rls.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260715041000_mixed_ownership_role_rls.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260718009999_financial_payment_compatibility.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260718010000_financial_closure.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260718010100_financial_collection_analytics.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260718020000_production_quality_packaging_handoffs.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260718020500_finishing_route_and_quality_yield.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260718021000_dispatch_readiness_and_delivery.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260718021500_floor_output_and_finishing_workflows.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260718040000_report_builder_data_sources.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260718050000_customer_accepted_quote_orders.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260718051000_quote_status_transitions.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260718052000_invoice_packing_line_parity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260718053000_reservation_consumption_safety.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260718054000_dispatch_proof_upload.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260721091000_security_advisor_cleanup.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260721091224_performance_fk_indexes.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260721091307_physical_dispatch_stock_provenance.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260721091327_advanced_analytics_aggregates.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260721091345_remove_duplicate_indexes.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260721091534_restrict_trigger_function_execution.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260721091620_quote_atomic_dealer_lineage.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260721091808_atomic_company_onboarding.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260721093238_lineage_fk_indexes.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260723010000_production_schedule_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260723020000_atomic_dealer_quote_order_handoff.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260723030000_atomic_system_production_handoff.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260723040000_returned_dispatch_invoice_guard.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260723050000_subscription_entitlement_guard.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260723055000_canonical_factory_minimum_queue.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260723060000_exact_dispatch_manifest_and_consolidation.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260723070000_dispatch_return_credit_notes.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260723080000_production_completion_analytics.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260723090000_notification_read_receipts.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260810000000_tenant_boundary_and_dealer_workflow_hardening.sql",
+      "missing_tables": [
+        "public.production_job_status_history"
+      ],
+      "missing_columns": [],
+      "missing_functions": [
+        "public.validate_profile_stock_batch_profile_company",
+        "public.submit_dealer_receipt_atomic",
+        "private.transition_production_job_atomic",
+        "public.transition_production_job_atomic"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260810010000_manufacturing_reference_and_material_guards.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "public.validate_production_job_references",
+        "public.guard_production_job_status",
+        "public.validate_foundry_billet_lineage",
+        "public.validate_order_billet_requirement_material"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260810020000_atomic_dealer_order_creation_and_workflow.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.create_dealer_order_atomic",
+        "public.create_dealer_order_atomic",
+        "private.transition_dealer_order_atomic",
+        "public.transition_dealer_order_atomic"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260810030000_quote_and_order_financial_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "public.recalculate_quote_item_financials",
+        "public.derive_order_value_from_quote"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260810040000_storage_and_catalog_policy_alignment.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260810050000_factory_queue_weight_runtime_fix.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": [
+        "private.create_order_from_quote_with_dealer_workflow_atomic"
+      ]
+    },
+    {
+      "file": "20260812000000_security_and_notification_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.guard_self_app_user_security_fields",
+        "private.notification_visible_to_current_user",
+        "public.validate_foundry_billet_lineage",
+        "private.derive_quote_header_financials",
+        "private.refresh_quote_header_after_item_change"
+      ],
+      "different_function_bodies": [
+        "public.mark_notification_read",
+        "public.get_unread_notification_count"
+      ]
+    },
+    {
+      "file": "20260812010000_dispatch_return_and_manifest_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [
+        "dealer_receipts.request_payload"
+      ],
+      "missing_functions": [
+        "public.submit_dealer_receipt_atomic"
+      ],
+      "different_function_bodies": [
+        "private.is_valid_delivery_transition",
+        "public.validate_dispatch_transition"
+      ]
+    },
+    {
+      "file": "20260812020000_invite_acceptance_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "public.accept_invitation_atomic"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260812030000_profile_configuration_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.replace_profile_routing_atomic",
+        "private.replace_profile_quality_plan_atomic",
+        "public.replace_profile_routing_atomic",
+        "public.replace_profile_quality_plan_atomic"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260918000000_production_source_line_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.validate_production_job_source_line"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20260929000000_business_logic_fixes.sql",
+      "missing_tables": [],
+      "missing_columns": [
+        "aluminium_profiles.hsn_code",
+        "quote_items.perimeter_mm",
+        "quote_items.surface_area_sqft",
+        "quote_items.billet_input_kg",
+        "quote_items.costing_complete",
+        "quote_items.hsn_code",
+        "order_items.hsn_code",
+        "packing_list_items.hsn_code",
+        "invoice_items.hsn_code",
+        "companies.gst_state_code",
+        "invoices.supplier_state_code",
+        "invoices.place_of_supply_state_code",
+        "invoices.cgst_amount",
+        "invoices.sgst_amount",
+        "invoices.utgst_amount",
+        "invoices.igst_amount"
+      ],
+      "missing_functions": [
+        "private.assign_business_number",
+        "public.recalculate_quote_item_financials",
+        "private.derive_quote_header_financials",
+        "public.derive_order_value_from_quote",
+        "private.require_complete_quote_costing",
+        "private.refresh_direct_order_value",
+        "private.canonicalize_invoice_supply",
+        "private.canonicalize_invoice_tax_line"
+      ],
+      "different_function_bodies": [
+        "private.convert_quote_to_order_atomic",
+        "private.recalculate_invoice_collection_state",
+        "private.update_versioned_entity_atomic",
+        "private.recalculate_invoice_totals"
+      ]
+    },
+    {
+      "file": "20260930000000_astra_audit_fixes.sql",
+      "missing_tables": [],
+      "missing_columns": [
+        "invoices.supplier_snapshot",
+        "invoices.customer_snapshot"
+      ],
+      "missing_functions": [
+        "private.guard_configuration_lifecycle",
+        "private.guard_configuration_child",
+        "public.save_system_configuration_atomic",
+        "private.guard_profile_reservation_capacity",
+        "private.guard_reserved_stock_capacity",
+        "private.canonicalize_packing_tax",
+        "private.snapshot_invoice_parties",
+        "private.canonicalize_invoice_tax_line"
+      ],
+      "different_function_bodies": [
+        "private.next_business_number_locked",
+        "public.refresh_foundry_batch_calculations",
+        "public.validate_finishing_transition",
+        "private.handoff_system_configuration_to_production_atomic"
+      ]
+    },
+    {
+      "file": "20261008000000_foundry_material_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.apply_foundry_source_delta",
+        "public.guard_foundry_batch_material_integrity",
+        "public.guard_foundry_billet_material_integrity"
+      ],
+      "different_function_bodies": [
+        "public.sync_foundry_scrap_usage",
+        "public.sync_foundry_external_source_usage",
+        "public.sync_foundry_billets"
+      ]
+    },
+    {
+      "file": "20261008010000_access_projection_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.guard_quote_cost_writes",
+        "private.guard_order_workflow_writes",
+        "private.guard_order_item_workflow_writes",
+        "private.guard_quote_header_cost_writes",
+        "private.guard_quote_relationship_writes",
+        "private.guard_low_margin_quote_approval",
+        "public.save_system_configuration_atomic"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20261008020000_factory_workflow_integrity.sql",
+      "missing_tables": [
+        "private.production_completion_authorizations",
+        "private.production_output_correction_authorizations",
+        "public.production_output_corrections",
+        "private.dispatch_activation_authorizations",
+        "public.quality_rework_resolutions",
+        "private.quality_resolution_authorizations"
+      ],
+      "missing_columns": [
+        "profile_stock_reservations.reserved_pieces",
+        "profile_stock_reservations.initial_reserved_weight_kg",
+        "profile_stock_reservations.initial_reserved_pieces",
+        "profile_stock_reservations.initial_reserved_length_m",
+        "profile_stock_consumptions.consumed_pieces",
+        "packing_list_items.net_length_m",
+        "dispatches.actual_dispatched_at",
+        "quality_inspections.resolution_id"
+      ],
+      "missing_functions": [
+        "public.get_profile_stock_consumption_totals",
+        "public.enforce_production_completion_integrity",
+        "private.guard_completed_production_scrap",
+        "private.guard_completed_billet_inputs",
+        "public.correct_completed_production_output_atomic",
+        "private.guard_profile_reservation_capacity",
+        "private.guard_reserved_stock_capacity",
+        "private.validate_production_start_resources",
+        "private.validate_production_slot_release_resources",
+        "private.order_has_remaining_production",
+        "private.order_job_has_remaining_production",
+        "private.guard_production_order_balance",
+        "private.transition_production_job_atomic",
+        "private.assert_dispatch_source_units",
+        "private.set_actual_dispatch_activation",
+        "public.list_open_quality_rework_inspections",
+        "private.guard_quality_resolution_child",
+        "private.guard_quality_resolution_immutability",
+        "public.resolve_quality_rework_atomic"
+      ],
+      "different_function_bodies": [
+        "public.complete_production_job_atomic",
+        "public.validate_operator_dispatch_bundle",
+        "private.save_production_schedule_slot_atomic",
+        "private.save_ready_dispatch_atomic",
+        "private.transition_dispatch_delivery_atomic",
+        "public.transition_dispatch_delivery_atomic",
+        "public.allocate_billets_by_priority"
+      ]
+    },
+    {
+      "file": "20261008030000_configuration_quote_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [
+        "quotes.system_configuration_id",
+        "quote_items.configuration_cut_snapshot",
+        "order_items.configuration_cut_snapshot"
+      ],
+      "missing_functions": [
+        "public.generate_system_quote_atomic",
+        "private.guard_configuration_cut_snapshot"
+      ],
+      "different_function_bodies": [
+        "public.handoff_system_configuration_to_production_atomic"
+      ]
+    },
+    {
+      "file": "20261008040000_management_metrics_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.metric_quote_is_open",
+        "public.get_dashboard_snapshot"
+      ],
+      "different_function_bodies": [
+        "public.get_advanced_analytics_snapshot"
+      ]
+    },
+    {
+      "file": "20261008050000_operation_search_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "public.get_operation_database_page"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20261013000000_audit_workflow_followup.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "public.get_profile_stock_consumption_totals",
+        "public.get_dealer_quote_stock_availability",
+        "public.guard_production_job_status"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20261013010000_dealer_fulfillment_integrity.sql",
+      "missing_tables": [
+        "private.quote_fulfillment_authorizations"
+      ],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.guard_order_workflow_writes",
+        "private.guard_order_item_workflow_writes"
+      ],
+      "different_function_bodies": [
+        "private.create_order_from_quote_with_dealer_stock",
+        "private.enforce_dealer_fulfillment_lineage"
+      ]
+    },
+    {
+      "file": "20261015000000_reservation_release_replay_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": [
+        "private.consume_dispatch_reservations"
+      ]
+    },
+    {
+      "file": "20261015010000_reservation_ledger_projection.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "public.get_profile_stock_reservation_ledger_page"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20261015020000_credit_settlement_exclusivity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.enforce_invoice_credit_settlement_exclusivity"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20261015030000_credit_note_retry_binding.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": [
+        "private.issue_dispatch_return_credit_note_atomic"
+      ]
+    },
+    {
+      "file": "20261015040000_direct_priced_orders.sql",
+      "missing_tables": [
+        "private.direct_order_requests"
+      ],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.create_direct_order_atomic",
+        "public.create_direct_order_atomic",
+        "private.guard_direct_order_snapshots",
+        "private.guard_order_workflow_writes",
+        "private.guard_order_item_workflow_writes",
+        "private.rebuild_direct_order_billet_requirements",
+        "private.canonicalize_invoice_tax_line"
+      ],
+      "different_function_bodies": [
+        "public.rebuild_order_billet_requirements",
+        "public.handle_order_billet_requirements",
+        "private.save_order_atomic"
+      ]
+    },
+    {
+      "file": "20261015050000_dispatch_reservation_ledger.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.profile_stock_reservation_ledger_page",
+        "public.get_profile_stock_reservation_ledger_page",
+        "public.get_dispatch_reservation_ledger_page"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20261015060000_order_cancellation_stock_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.guard_cancelled_order_reservations"
+      ],
+      "different_function_bodies": [
+        "public.credit_dealer_stock_on_order_cancel"
+      ]
+    },
+    {
+      "file": "20261019000000_retained_dispatch_invoices.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.invoice_dispatch_is_billable",
+        "public.get_invoice_source_options"
+      ],
+      "different_function_bodies": [
+        "public.validate_invoice_dispatch_billable",
+        "private.save_invoice_atomic",
+        "private.replace_invoice_items_atomic",
+        "public.save_invoice_atomic",
+        "public.replace_invoice_items_atomic"
+      ]
+    },
+    {
+      "file": "20261019010000_terminal_finishing_evidence.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.guard_terminal_finishing_evidence"
+      ],
+      "different_function_bodies": [
+        "private.transition_finishing_job_atomic"
+      ]
+    },
+    {
+      "file": "20261019020000_finishing_accepted_dispositions.sql",
+      "missing_tables": [],
+      "missing_columns": [
+        "packaging_jobs.finishing_job_id"
+      ],
+      "missing_functions": [
+        "private.assert_finishing_material_lineage",
+        "private.guard_finishing_material_lineage",
+        "private.finishing_accepted_output_kg",
+        "private.guard_packaging_finishing_source",
+        "private.finishing_dispatch_ready_kg",
+        "public.get_finished_production_readiness",
+        "public.refresh_packaging_job_material"
+      ],
+      "different_function_bodies": [
+        "public.route_completed_finishing_to_packaging",
+        "public.validate_quality_production_link",
+        "private.save_packaging_job_atomic",
+        "private.assert_dispatch_ready",
+        "public.validate_completed_packaging_materials"
+      ]
+    },
+    {
+      "file": "20261019030000_packaging_material_evidence.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.guard_packaging_evidence_delete",
+        "private.guard_packaging_material_movement_evidence"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20261019040000_finishing_workload_projection.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "public.get_finishing_workload"
+      ],
+      "different_function_bodies": []
+    },
+    {
+      "file": "20261019050000_billet_link_repair_integrity.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [],
+      "different_function_bodies": [
+        "public.repair_order_billet_requirement_links"
+      ]
+    },
+    {
+      "file": "20261020000000_manual_billet_requirement_lineage.sql",
+      "missing_tables": [],
+      "missing_columns": [],
+      "missing_functions": [
+        "private.order_profile_needs_billet_allocation",
+        "private.assign_billet_to_order"
+      ],
+      "different_function_bodies": [
+        "private.allocate_billet_to_order",
+        "private.reallocate_billet_to_order"
+      ]
+    }
+  ],
+  "live_functions": [
+    {
+      "name": "private.allocate_billet_to_order",
+      "args": "p_billet_id uuid, p_order_id uuid",
+      "latest_local_definition": "20261020000000_manual_billet_requirement_lineage.sql",
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "name": "private.assert_dispatch_ready",
+      "args": "p_dispatch_id uuid",
+      "latest_local_definition": "20261019020000_finishing_accepted_dispositions.sql",
+      "last_matching_local_body": "20260721091307_physical_dispatch_stock_provenance.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.consume_dispatch_reservations",
+      "args": "p_dispatch_id uuid",
+      "latest_local_definition": "20261015000000_reservation_release_replay_integrity.sql",
+      "last_matching_local_body": "20260721091307_physical_dispatch_stock_provenance.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.convert_quote_to_order_atomic",
+      "args": "p_quote_id uuid, p_order jsonb",
+      "latest_local_definition": "20260929000000_business_logic_fixes.sql",
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.create_order_from_quote_with_dealer_stock",
+      "args": "p_quote_id uuid, p_order_number text, p_order_date date, p_expected_dispatch_date date, p_priority text, p_dealer_fulfilled_weight_kg numeric, p_notes text",
+      "latest_local_definition": "20261013010000_dealer_fulfillment_integrity.sql",
+      "last_matching_local_body": "20260723055000_canonical_factory_minimum_queue.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.create_order_from_quote_with_dealer_workflow_atomic",
+      "args": "p_quote_id uuid, p_order_number text, p_order_date date, p_expected_dispatch_date date, p_priority text, p_dealer_fulfilled_weight_kg numeric, p_notes text",
+      "latest_local_definition": "20260810050000_factory_queue_weight_runtime_fix.sql",
+      "last_matching_local_body": "20260723060000_exact_dispatch_manifest_and_consolidation.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "name": "private.create_order_from_quote_with_dealer_workflow_atomic",
+      "args": "p_quote_id uuid, p_order_number text, p_order_date date, p_expected_dispatch_date date, p_priority text, p_dealer_fulfilled_weight_kg numeric, p_notes text, p_minimum_handling text, p_override_reason text",
+      "latest_local_definition": "20260810050000_factory_queue_weight_runtime_fix.sql",
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "name": "private.enforce_dealer_fulfillment_lineage",
+      "args": "",
+      "latest_local_definition": "20261013010000_dealer_fulfillment_integrity.sql",
+      "last_matching_local_body": "20260721091620_quote_atomic_dealer_lineage.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.handoff_system_configuration_to_production_atomic",
+      "args": "p_configuration_id uuid, p_jobs jsonb, p_remarks text",
+      "latest_local_definition": "20260930000000_astra_audit_fixes.sql",
+      "last_matching_local_body": "20260723030000_atomic_system_production_handoff.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.is_valid_delivery_transition",
+      "args": "p_from text, p_to text",
+      "latest_local_definition": "20260812010000_dispatch_return_and_manifest_integrity.sql",
+      "last_matching_local_body": "20260718021000_dispatch_readiness_and_delivery.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.issue_dispatch_return_credit_note_atomic",
+      "args": "p_dispatch_id uuid, p_reason text, p_idempotency_key uuid",
+      "latest_local_definition": "20261015030000_credit_note_retry_binding.sql",
+      "last_matching_local_body": "20260723070000_dispatch_return_credit_notes.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.next_business_number_locked",
+      "args": "p_table regclass, p_number_column text, p_company_id uuid, p_prefix text, p_business_date date",
+      "latest_local_definition": "20260930000000_astra_audit_fixes.sql",
+      "last_matching_local_body": "20260715000000_atomic_business_workflows.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.reallocate_billet_to_order",
+      "args": "p_billet_id uuid, p_order_id uuid",
+      "latest_local_definition": "20261020000000_manual_billet_requirement_lineage.sql",
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "name": "private.recalculate_invoice_collection_state",
+      "args": "p_invoice_id uuid, p_company_id uuid",
+      "latest_local_definition": "20260929000000_business_logic_fixes.sql",
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.recalculate_invoice_totals",
+      "args": "p_invoice_id uuid, p_company_id uuid",
+      "latest_local_definition": "20260929000000_business_logic_fixes.sql",
+      "last_matching_local_body": "20260718010000_financial_closure.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.replace_invoice_items_atomic",
+      "args": "p_invoice_id uuid, p_items jsonb",
+      "latest_local_definition": "20261019000000_retained_dispatch_invoices.sql",
+      "last_matching_local_body": "20260718010000_financial_closure.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.save_invoice_atomic",
+      "args": "p_invoice_id uuid, p_invoice jsonb, p_items jsonb, p_replace_items boolean",
+      "latest_local_definition": "20261019000000_retained_dispatch_invoices.sql",
+      "last_matching_local_body": "20260718010000_financial_closure.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.save_order_atomic",
+      "args": "p_order_id uuid, p_order jsonb",
+      "latest_local_definition": "20261015040000_direct_priced_orders.sql",
+      "last_matching_local_body": "20260715000000_atomic_business_workflows.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.save_packaging_job_atomic",
+      "args": "p_job_id uuid, p_job jsonb, p_materials jsonb",
+      "latest_local_definition": "20261019020000_finishing_accepted_dispositions.sql",
+      "last_matching_local_body": "20260718020000_production_quality_packaging_handoffs.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.save_production_job_atomic",
+      "args": "p_job_id uuid, p_job jsonb, p_billet_ids uuid[]",
+      "latest_local_definition": "20260715000000_atomic_business_workflows.sql",
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.save_production_schedule_slot_atomic",
+      "args": "p_slot_id uuid, p_slot jsonb",
+      "latest_local_definition": "20261008020000_factory_workflow_integrity.sql",
+      "last_matching_local_body": "20260723010000_production_schedule_integrity.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.save_ready_dispatch_atomic",
+      "args": "p_dispatch_id uuid, p_dispatch jsonb, p_items jsonb",
+      "latest_local_definition": "20261008020000_factory_workflow_integrity.sql",
+      "last_matching_local_body": "20260721091307_physical_dispatch_stock_provenance.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.transition_dispatch_delivery_atomic",
+      "args": "p_dispatch_id uuid, p_status text, p_proof_of_delivery_url text, p_remarks text",
+      "latest_local_definition": "20261008020000_factory_workflow_integrity.sql",
+      "last_matching_local_body": "20260718021000_dispatch_readiness_and_delivery.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.transition_finishing_job_atomic",
+      "args": "p_job_id uuid, p_status text, p_vendor_id uuid, p_sent_date date, p_received_date date, p_output_weight_kg numeric, p_rejection_weight_kg numeric, p_remarks text",
+      "latest_local_definition": "20261019010000_terminal_finishing_evidence.sql",
+      "last_matching_local_body": "20260718021500_floor_output_and_finishing_workflows.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "private.update_versioned_entity_atomic",
+      "args": "p_entity_type text, p_entity_id uuid, p_payload jsonb",
+      "latest_local_definition": "20260929000000_business_logic_fixes.sql",
+      "last_matching_local_body": "20260715000000_atomic_business_workflows.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.allocate_billets_by_priority",
+      "args": "p_company_id uuid",
+      "latest_local_definition": "20261008020000_factory_workflow_integrity.sql",
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.apply_expense_approval_policy",
+      "args": "",
+      "latest_local_definition": "20260531020000_expenses_phase3_energy_maintenance_approval.sql",
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.complete_production_job_atomic",
+      "args": "p_job_id uuid, p_actual_weight_kg numeric, p_actual_pieces integer, p_actual_meters numeric, p_scrap_weight_kg numeric, p_remarks text",
+      "latest_local_definition": "20261008020000_factory_workflow_integrity.sql",
+      "last_matching_local_body": "20260718021500_floor_output_and_finishing_workflows.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "name": "public.create_order_from_quote_with_dealer_workflow_atomic",
+      "args": "p_quote_id uuid, p_order_number text, p_order_date date, p_expected_dispatch_date date, p_priority text, p_dealer_fulfilled_weight_kg numeric, p_notes text, p_minimum_handling text, p_override_reason text",
+      "latest_local_definition": "20260723060000_exact_dispatch_manifest_and_consolidation.sql",
+      "last_matching_local_body": "20260723060000_exact_dispatch_manifest_and_consolidation.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "name": "public.credit_dealer_stock_on_order_cancel",
+      "args": "",
+      "latest_local_definition": "20261015060000_order_cancellation_stock_integrity.sql",
+      "last_matching_local_body": "0041_dealer_roles_inventory_automation.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.enforce_expense_payment_guards",
+      "args": "",
+      "latest_local_definition": null,
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.expense_apply_totals",
+      "args": "",
+      "latest_local_definition": "20260531000000_expenses_module.sql",
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.get_advanced_analytics_snapshot",
+      "args": "p_as_of date, p_months integer",
+      "latest_local_definition": "20261008040000_management_metrics_integrity.sql",
+      "last_matching_local_body": "20260723080000_production_completion_analytics.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "name": "public.get_unread_notification_count",
+      "args": "",
+      "latest_local_definition": "20260812000000_security_and_notification_integrity.sql",
+      "last_matching_local_body": "20260723090000_notification_read_receipts.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "name": "public.handle_order_billet_requirements",
+      "args": "",
+      "latest_local_definition": "20261015040000_direct_priced_orders.sql",
+      "last_matching_local_body": "0056_order_billet_requirements_and_allocation.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.handoff_system_configuration_to_production_atomic",
+      "args": "p_configuration_id uuid, p_jobs jsonb, p_remarks text",
+      "latest_local_definition": "20261008030000_configuration_quote_integrity.sql",
+      "last_matching_local_body": "20260723030000_atomic_system_production_handoff.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "name": "public.mark_notification_read",
+      "args": "p_notification_id uuid",
+      "latest_local_definition": "20260812000000_security_and_notification_integrity.sql",
+      "last_matching_local_body": "20260723090000_notification_read_receipts.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "name": "public.rebuild_order_billet_requirements",
+      "args": "p_order_id uuid",
+      "latest_local_definition": "20261015040000_direct_priced_orders.sql",
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.reconcile_foundry_billet_count",
+      "args": "",
+      "latest_local_definition": null,
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.refresh_foundry_batch_calculations",
+      "args": "",
+      "latest_local_definition": "20260930000000_astra_audit_fixes.sql",
+      "last_matching_local_body": "0057_foundry_furnace_mix_and_chemistry.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.repair_order_billet_requirement_links",
+      "args": "p_order_id uuid",
+      "latest_local_definition": "20261019050000_billet_link_repair_integrity.sql",
+      "last_matching_local_body": "20260530000002_foundry_billet_allocation_repairs.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.replace_invoice_items_atomic",
+      "args": "p_invoice_id uuid, p_items jsonb",
+      "latest_local_definition": "20261019000000_retained_dispatch_invoices.sql",
+      "last_matching_local_body": "20260715000000_atomic_business_workflows.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "name": "public.route_completed_finishing_to_packaging",
+      "args": "",
+      "latest_local_definition": "20261019020000_finishing_accepted_dispositions.sql",
+      "last_matching_local_body": "20260718020500_finishing_route_and_quality_yield.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.save_invoice_atomic",
+      "args": "p_invoice_id uuid, p_invoice jsonb, p_items jsonb, p_replace_items boolean",
+      "latest_local_definition": "20261019000000_retained_dispatch_invoices.sql",
+      "last_matching_local_body": "20260715000000_atomic_business_workflows.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "name": "public.sync_external_source_inventory_and_expense",
+      "args": "",
+      "latest_local_definition": "20260531000000_expenses_module.sql",
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.sync_foundry_billets",
+      "args": "",
+      "latest_local_definition": "20261008000000_foundry_material_integrity.sql",
+      "last_matching_local_body": "20260530000002_foundry_billet_allocation_repairs.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.sync_foundry_external_source_usage",
+      "args": "",
+      "latest_local_definition": "20261008000000_foundry_material_integrity.sql",
+      "last_matching_local_body": "0057_foundry_furnace_mix_and_chemistry.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.sync_foundry_scrap_usage",
+      "args": "",
+      "latest_local_definition": "20261008000000_foundry_material_integrity.sql",
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.sync_process_scrap_to_foundry",
+      "args": "",
+      "latest_local_definition": null,
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.sync_scrap_inventory_and_expense",
+      "args": "",
+      "latest_local_definition": "20260531000000_expenses_module.sql",
+      "last_matching_local_body": null,
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.transition_dispatch_delivery_atomic",
+      "args": "p_dispatch_id uuid, p_status text, p_proof_of_delivery_url text, p_remarks text",
+      "latest_local_definition": "20261008020000_factory_workflow_integrity.sql",
+      "last_matching_local_body": "20260718021000_dispatch_readiness_and_delivery.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": false
+    },
+    {
+      "name": "public.validate_completed_packaging_materials",
+      "args": "",
+      "latest_local_definition": "20261019020000_finishing_accepted_dispositions.sql",
+      "last_matching_local_body": "20260718020000_production_quality_packaging_handoffs.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": true
+    },
+    {
+      "name": "public.validate_dispatch_transition",
+      "args": "",
+      "latest_local_definition": "20260812010000_dispatch_return_and_manifest_integrity.sql",
+      "last_matching_local_body": "20260718021000_dispatch_readiness_and_delivery.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.validate_finishing_transition",
+      "args": "",
+      "latest_local_definition": "20260930000000_astra_audit_fixes.sql",
+      "last_matching_local_body": "20260718021500_floor_output_and_finishing_workflows.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": true
+    },
+    {
+      "name": "public.validate_invoice_dispatch_billable",
+      "args": "",
+      "latest_local_definition": "20261019000000_retained_dispatch_invoices.sql",
+      "last_matching_local_body": "20260723040000_returned_dispatch_invoice_guard.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": true
+    },
+    {
+      "name": "public.validate_operator_dispatch_bundle",
+      "args": "",
+      "latest_local_definition": "20261008020000_factory_workflow_integrity.sql",
+      "last_matching_local_body": "20260723060000_exact_dispatch_manifest_and_consolidation.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": false,
+      "anon_execute": false
+    },
+    {
+      "name": "public.validate_quality_production_link",
+      "args": "",
+      "latest_local_definition": "20261019020000_finishing_accepted_dispositions.sql",
+      "last_matching_local_body": "20260718020500_finishing_route_and_quality_yield.sql",
+      "latest_body_matches": false,
+      "authenticated_execute": true,
+      "anon_execute": true
+    }
+  ]
+}

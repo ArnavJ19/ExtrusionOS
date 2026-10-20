@@ -1,0 +1,335 @@
+{
+  "captured_at_utc": "2026-10-20 06:18:48 UTC",
+  "project_ref": "pkawmdxtmsdgigsehcmb",
+  "migration_ledger_present": true,
+  "migrations": [
+    {
+      "version": "20260602094754",
+      "name": "0012_enterprise_phase5_qr_update.sql"
+    },
+    {
+      "version": "20260721085917",
+      "name": "20260715000000_atomic_business_workflows"
+    },
+    {
+      "version": "20260721090049",
+      "name": "0036_phase_5_to_10_operational_hardening"
+    },
+    {
+      "version": "20260721090051",
+      "name": "0059_reports_storage_bucket"
+    },
+    {
+      "version": "20260721090106",
+      "name": "20260715010000_role_aware_sensitive_rls"
+    },
+    {
+      "version": "20260721090108",
+      "name": "20260715011000_legacy_role_rls_observability"
+    },
+    {
+      "version": "20260721090110",
+      "name": "20260715020000_documents_storage_bucket"
+    },
+    {
+      "version": "20260721090112",
+      "name": "20260715030000_distributed_api_rate_limits"
+    },
+    {
+      "version": "20260721090114",
+      "name": "20260715040000_documents_storage_role_rls"
+    },
+    {
+      "version": "20260721090116",
+      "name": "20260715041000_mixed_ownership_role_rls"
+    },
+    {
+      "version": "20260721090232",
+      "name": "20260718009999_financial_payment_compatibility"
+    },
+    {
+      "version": "20260721090243",
+      "name": "20260718010000_financial_closure"
+    },
+    {
+      "version": "20260721090245",
+      "name": "20260718010100_financial_collection_analytics"
+    },
+    {
+      "version": "20260721090247",
+      "name": "20260718020000_production_quality_packaging_handoffs"
+    },
+    {
+      "version": "20260721090249",
+      "name": "20260718020500_finishing_route_and_quality_yield"
+    },
+    {
+      "version": "20260721090252",
+      "name": "20260718021000_dispatch_readiness_and_delivery"
+    },
+    {
+      "version": "20260721090254",
+      "name": "20260718021500_floor_output_and_finishing_workflows"
+    },
+    {
+      "version": "20260721090256",
+      "name": "20260718040000_report_builder_data_sources"
+    },
+    {
+      "version": "20260721090258",
+      "name": "20260718050000_customer_accepted_quote_orders"
+    },
+    {
+      "version": "20260721090300",
+      "name": "20260718051000_quote_status_transitions"
+    },
+    {
+      "version": "20260721090301",
+      "name": "20260718052000_invoice_packing_line_parity"
+    },
+    {
+      "version": "20260721090303",
+      "name": "20260718053000_reservation_consumption_safety"
+    },
+    {
+      "version": "20260721090305",
+      "name": "20260718054000_dispatch_proof_upload"
+    },
+    {
+      "version": "20260721090359",
+      "name": "20260721091000_security_advisor_cleanup"
+    },
+    {
+      "version": "20260721091303",
+      "name": "20260721091224_performance_fk_indexes"
+    },
+    {
+      "version": "20260721091400",
+      "name": "20260721091345_remove_duplicate_indexes"
+    },
+    {
+      "version": "20260721091552",
+      "name": "20260721091534_restrict_trigger_function_execution"
+    },
+    {
+      "version": "20260721091932",
+      "name": "20260721091808_atomic_company_onboarding"
+    },
+    {
+      "version": "20260721092352",
+      "name": "20260721091327_advanced_analytics_aggregates"
+    },
+    {
+      "version": "20260721092723",
+      "name": "20260721091307_physical_dispatch_stock_provenance"
+    },
+    {
+      "version": "20260721092850",
+      "name": "20260721091620_quote_atomic_dealer_lineage"
+    },
+    {
+      "version": "20260721093417",
+      "name": "20260721093238_lineage_fk_indexes"
+    },
+    {
+      "version": "20260809133129",
+      "name": "widen_app_users_role_check"
+    },
+    {
+      "version": "20260809133148",
+      "name": "quote_conversion_status_gate_alignment"
+    },
+    {
+      "version": "20260809133215",
+      "name": "expense_approval_and_payment_hardening"
+    },
+    {
+      "version": "20260809133237",
+      "name": "billet_stock_integrity"
+    },
+    {
+      "version": "20260809133311",
+      "name": "production_billet_release_and_compat"
+    },
+    {
+      "version": "20260809133328",
+      "name": "invoice_reversal_status"
+    },
+    {
+      "version": "20260809133453",
+      "name": "revoke_trigger_fn_execute"
+    },
+    {
+      "version": "20260809135011",
+      "name": "process_scrap_recovery_loop"
+    },
+    {
+      "version": "20260809135640",
+      "name": "fix_source_expense_link_triggers"
+    },
+    {
+      "version": "20260809140231",
+      "name": "foundry_source_sync_recursion_guard"
+    },
+    {
+      "version": "20260809140456",
+      "name": "fix_billet_reconcile_status"
+    },
+    {
+      "version": "20260810120125",
+      "name": "expense_payment_update_guard"
+    },
+    {
+      "version": "20261020060105",
+      "name": "20260810000000_tenant_boundary_and_dealer_workflow_hardening"
+    },
+    {
+      "version": "20261020060108",
+      "name": "20260810010000_manufacturing_reference_and_material_guards"
+    },
+    {
+      "version": "20261020060110",
+      "name": "20260810020000_atomic_dealer_order_creation_and_workflow"
+    },
+    {
+      "version": "20261020060112",
+      "name": "20260810030000_quote_and_order_financial_integrity"
+    },
+    {
+      "version": "20261020060114",
+      "name": "20260810040000_storage_and_catalog_policy_alignment"
+    },
+    {
+      "version": "20261020060116",
+      "name": "20260810050000_factory_queue_weight_runtime_fix"
+    },
+    {
+      "version": "20261020060145",
+      "name": "20260812000000_security_and_notification_integrity"
+    },
+    {
+      "version": "20261020060148",
+      "name": "20260812010000_dispatch_return_and_manifest_integrity"
+    },
+    {
+      "version": "20261020060150",
+      "name": "20260812020000_invite_acceptance_integrity"
+    },
+    {
+      "version": "20261020060152",
+      "name": "20260812030000_profile_configuration_integrity"
+    },
+    {
+      "version": "20261020060154",
+      "name": "20260918000000_production_source_line_integrity"
+    },
+    {
+      "version": "20261020060157",
+      "name": "20260929000000_business_logic_fixes"
+    },
+    {
+      "version": "20261020060200",
+      "name": "20260930000000_astra_audit_fixes"
+    },
+    {
+      "version": "20261020060224",
+      "name": "20261008000000_foundry_material_integrity"
+    },
+    {
+      "version": "20261020060227",
+      "name": "20261008010000_access_projection_integrity"
+    },
+    {
+      "version": "20261020060230",
+      "name": "20261008020000_factory_workflow_integrity"
+    },
+    {
+      "version": "20261020060233",
+      "name": "20261008030000_configuration_quote_integrity"
+    },
+    {
+      "version": "20261020060236",
+      "name": "20261008040000_management_metrics_integrity"
+    },
+    {
+      "version": "20261020060238",
+      "name": "20261008050000_operation_search_integrity"
+    },
+    {
+      "version": "20261020060240",
+      "name": "20261013000000_audit_workflow_followup"
+    },
+    {
+      "version": "20261020060243",
+      "name": "20261013010000_dealer_fulfillment_integrity"
+    },
+    {
+      "version": "20261020060333",
+      "name": "20261015000000_reservation_release_replay_integrity"
+    },
+    {
+      "version": "20261020060335",
+      "name": "20261015010000_reservation_ledger_projection"
+    },
+    {
+      "version": "20261020060338",
+      "name": "20261015020000_credit_settlement_exclusivity"
+    },
+    {
+      "version": "20261020060340",
+      "name": "20261015030000_credit_note_retry_binding"
+    },
+    {
+      "version": "20261020060342",
+      "name": "20261015040000_direct_priced_orders"
+    },
+    {
+      "version": "20261020060345",
+      "name": "20261015050000_dispatch_reservation_ledger"
+    },
+    {
+      "version": "20261020060347",
+      "name": "20261015060000_order_cancellation_stock_integrity"
+    },
+    {
+      "version": "20261020060425",
+      "name": "20261019000000_retained_dispatch_invoices"
+    },
+    {
+      "version": "20261020060428",
+      "name": "20261019010000_terminal_finishing_evidence"
+    },
+    {
+      "version": "20261020060430",
+      "name": "20261019020000_finishing_accepted_dispositions"
+    },
+    {
+      "version": "20261020060433",
+      "name": "20261019030000_packaging_material_evidence"
+    },
+    {
+      "version": "20261020060436",
+      "name": "20261019040000_finishing_workload_projection"
+    },
+    {
+      "version": "20261020060438",
+      "name": "20261019050000_billet_link_repair_integrity"
+    },
+    {
+      "version": "20261020060454",
+      "name": "20261020060043_reconcile_historical_audit_columns"
+    },
+    {
+      "version": "20261020061032",
+      "name": "20261020000000_manual_billet_requirement_lineage"
+    },
+    {
+      "version": "20261020061529",
+      "name": "20261020010000_expense_ledger_integrity"
+    },
+    {
+      "version": "20261020061532",
+      "name": "20261020061323_close_post_reconciliation_function_grants"
+    }
+  ]
+}

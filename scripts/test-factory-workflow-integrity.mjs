@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import {installOrderCancellationStockObjects} from "./lib/order-cancellation-stock-fixture.mjs";
+import {installManualBilletAllocationObjects} from "./lib/manual-billet-allocation-fixture.mjs";
 
 const company = "11111111-1111-4111-8111-111111111111";
 const user = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -73,7 +74,7 @@ export async function runFactoryWorkflowIntegrityChecks() {
       create table public.foundry_aluminium_scrap(id uuid primary key, company_id uuid, weight_kg numeric, available_weight_kg numeric, status text, updated_at timestamptz default now());
       create table public.foundry_external_aluminium_sources(id uuid primary key, company_id uuid, weight_kg numeric, available_weight_kg numeric, status text, alloy text, updated_at timestamptz default now());
       create table public.foundry_batches(id uuid primary key, company_id uuid, batch_number text, furnace_number text, furnace_name text, batch_sequence integer, production_date date, scrap_id uuid, external_source_id uuid, scrap_percentage numeric, external_aluminium_percentage numeric, furnace_efficiency_percent numeric, required_furnace_charge_kg numeric, scrap_aluminium_kg numeric, external_aluminium_kg numeric, ingot_kg numeric, alloy text, temper text, alloy_density_kg_m3 numeric, billet_length_mm numeric, billet_diameter_inch numeric, billet_diameter_mm numeric, billet_count integer, billet_weight_density_kg numeric, total_billet_weight_density_kg numeric, alloy_composition_default jsonb, alloy_composition_actual jsonb, alloy_composition_altered boolean, status text, notes text, updated_at timestamptz default now());
-      create table public.foundry_billets(id uuid primary key default gen_random_uuid(), company_id uuid, production_job_id uuid, order_id uuid, allocation_requirement_id uuid, foundry_batch_id uuid, source_type text, billet_code text, billet_number integer, profile_id uuid, status text, weight_kg numeric, updated_at timestamptz default now(), alloy text, temper text, billet_diameter_inch numeric, billet_diameter_mm numeric, billet_length_mm numeric, allocated_at timestamptz, allocated_by uuid, created_at timestamptz default now());
+      create table public.foundry_billets(id uuid primary key default gen_random_uuid(), company_id uuid, production_job_id uuid, order_id uuid, allocation_requirement_id uuid, foundry_batch_id uuid, source_type text, billet_code text, billet_number integer, status text, weight_kg numeric, updated_at timestamptz default now(), alloy text, temper text, billet_diameter_inch numeric, billet_diameter_mm numeric, billet_length_mm numeric, allocated_at timestamptz, allocated_by uuid, created_at timestamptz default now());
       create unique index foundry_billets_batch_number_in_house_unique on public.foundry_billets(foundry_batch_id,billet_number) where source_type='in_house';
       create table public.scrap_records(id uuid primary key default gen_random_uuid(), company_id uuid, order_id uuid, production_job_id uuid, profile_id uuid, die_id uuid, weight_kg numeric, scrap_type text, reason text, recorded_date date, recorded_by uuid, notes text);
       create table public.profile_stock_batches(id uuid primary key, company_id uuid, profile_id uuid, total_weight_kg numeric, length_m numeric, quantity_pieces integer, status text);
@@ -137,6 +138,7 @@ export async function runFactoryWorkflowIntegrityChecks() {
     // Inspect the prepared follow-up body without applying its migration script.
     await db.exec(functionDefinition("supabase/migrations/20261015000000_reservation_release_replay_integrity.sql", "private.consume_dispatch_reservations"));
     await installOrderCancellationStockObjects(db,{reservationGuardOnly:true});
+    await installManualBilletAllocationObjects(db);
     await db.exec(`create trigger factory_fixture_link_billets_to_production_job after update of status on public.production_jobs
       for each row when (new.status='completed') execute function public.link_billets_to_production_job();`);
 
@@ -448,10 +450,10 @@ export async function runFactoryWorkflowIntegrityChecks() {
         ('${incompatibleRequirement}','${company}','${allocationOrder}','${profile}','6063','T5',5,2,0,'partial',now()-interval '2 days'),
         ('${allocationRequirement}','${company}','${allocationOrder}','${profile}','6063','T6',5,2,0,'partial',now()),
         ('41414141-4141-4141-8141-414141414142','${company}','${previousOrder}','${profile}','6063','T6',5,2,1,'partial',now());
-        insert into public.foundry_billets(id,company_id,profile_id,status,weight_kg,alloy,temper,billet_diameter_inch,billet_code,source_type) values
-        ('${allocationBillet}','${company}','${profile}','cast',180,'6063','T6',5,'B-ALLOCATE','in_house');
-        insert into public.foundry_billets(id,company_id,order_id,allocation_requirement_id,profile_id,status,weight_kg,alloy,temper,billet_diameter_inch,billet_code,source_type) values
-        ('${reallocationBillet}','${company}','${previousOrder}','41414141-4141-4141-8141-414141414142','${profile}','allocated',180,'6063','T6',5,'B-REALLOCATE','in_house');`);
+        insert into public.foundry_billets(id,company_id,status,weight_kg,alloy,temper,billet_diameter_inch,billet_code,source_type) values
+        ('${allocationBillet}','${company}','cast',180,'6063','T6',5,'B-ALLOCATE','in_house');
+        insert into public.foundry_billets(id,company_id,order_id,allocation_requirement_id,status,weight_kg,alloy,temper,billet_diameter_inch,billet_code,source_type) values
+        ('${reallocationBillet}','${company}','${previousOrder}','41414141-4141-4141-8141-414141414142','allocated',180,'6063','T6',5,'B-REALLOCATE','in_house');`);
       const allocatedRequirement = await db.query(`select private.allocate_billet_to_order($1,$2) id`, [allocationBillet, allocationOrder]);
       assert.equal(allocatedRequirement.rows[0].id, allocationRequirement);
       const reallocatedRequirement = await db.query(`select private.reallocate_billet_to_order($1,$2) id`, [reallocationBillet, allocationOrder]);
@@ -473,8 +475,8 @@ export async function runFactoryWorkflowIntegrityChecks() {
         select public.rebuild_order_billet_requirements('${autoOrder}');
         insert into public.order_billet_requirements(id,company_id,order_id,profile_id,alloy,temper,billet_diameter_inch,billets_required,billets_allocated,status) values
         ('${autoWrong}','${company}','${autoOrder}','${profile}','6063','T5',5,1,0,'partial');
-        insert into public.foundry_billets(id,company_id,profile_id,status,weight_kg,alloy,temper,billet_diameter_inch,billet_code,source_type) values
-        ('${autoBillet}','${company}','${profile}','cast',180,'6063','T6',5,'B-AUTO','in_house');`);
+        insert into public.foundry_billets(id,company_id,status,weight_kg,alloy,temper,billet_diameter_inch,billet_code,source_type) values
+        ('${autoBillet}','${company}','cast',180,'6063','T6',5,'B-AUTO','in_house');`);
       await db.query(`select public.allocate_billets_by_priority($1)`, [company]);
       const result = await db.query(`select order_id,allocation_requirement_id,status from public.foundry_billets where id=$1`, [autoBillet]);
       const rightRequirement = await db.query(`select id from public.order_billet_requirements where order_id=$1 and temper='T6' and status <> 'cancelled'`, [autoOrder]);

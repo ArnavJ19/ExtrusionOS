@@ -22,7 +22,11 @@ test("terminal finishing evidence candidate preserves movement, retries and depe
       for(const [field,value] of [["vendor_id",f.otherVendor],["sent_date","2026-10-17"],["received_date","2026-10-19"],["planned_date","2026-10-20"],
         ["color_code","RAL-9005"],["shade_name","Different shade"],["branch_id",f.otherVendor],["plant_id",f.otherVendor],["created_at","2026-10-01T00:00:00Z"]]){
         await context.test(`${status} ${field} cannot be rewritten directly`,async()=>{
-          await terminal(status);await rejectsWithoutChange(()=>db.query(`update finishing_jobs set ${field}=$1 where id=$2`,[value,fixture.jobId]),/terminal finishing/i);
+          await terminal(status);
+          const replacement=field==="planned_date"
+            ?(await db.query("select (coalesce(planned_date,date '2000-01-01')+1)::text value from finishing_jobs where id=$1",[fixture.jobId])).rows[0].value
+            :value;
+          await rejectsWithoutChange(()=>db.query(`update finishing_jobs set ${field}=$1 where id=$2`,[replacement,fixture.jobId]),/terminal finishing/i);
         });
       }
       await context.test(`${status} movement evidence cannot be rewritten through the public RPC`,async()=>{

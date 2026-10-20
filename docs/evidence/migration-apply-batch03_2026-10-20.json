@@ -1,0 +1,98 @@
+[
+  {
+    "file": "20261008000000_foundry_material_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:02:24 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261008010000_access_projection_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:02:27 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261008020000_factory_workflow_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:02:29 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261008030000_configuration_quote_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:02:33 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261008040000_management_metrics_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:02:35 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261008050000_operation_search_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:02:38 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261013000000_audit_workflow_followup.sql",
+    "applied_at_utc": "2026-10-20 06:02:41 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261013010000_dealer_fulfillment_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:02:43 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  }
+]

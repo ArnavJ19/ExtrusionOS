@@ -1,0 +1,185 @@
+{
+  "captured_at_utc": "2026-10-20 05:45:51 UTC",
+  "project_ref": "pkawmdxtmsdgigsehcmb",
+  "project_url": "https://pkawmdxtmsdgigsehcmb.supabase.co",
+  "source": "Read-only Supabase list_migrations; row count independently confirmed using BEGIN TRANSACTION READ ONLY, SELECT and ROLLBACK.",
+  "migration_ledger_present": true,
+  "migrations": [
+    {
+      "version": "20260602094754",
+      "name": "0012_enterprise_phase5_qr_update.sql"
+    },
+    {
+      "version": "20260721085917",
+      "name": "20260715000000_atomic_business_workflows"
+    },
+    {
+      "version": "20260721090049",
+      "name": "0036_phase_5_to_10_operational_hardening"
+    },
+    {
+      "version": "20260721090051",
+      "name": "0059_reports_storage_bucket"
+    },
+    {
+      "version": "20260721090106",
+      "name": "20260715010000_role_aware_sensitive_rls"
+    },
+    {
+      "version": "20260721090108",
+      "name": "20260715011000_legacy_role_rls_observability"
+    },
+    {
+      "version": "20260721090110",
+      "name": "20260715020000_documents_storage_bucket"
+    },
+    {
+      "version": "20260721090112",
+      "name": "20260715030000_distributed_api_rate_limits"
+    },
+    {
+      "version": "20260721090114",
+      "name": "20260715040000_documents_storage_role_rls"
+    },
+    {
+      "version": "20260721090116",
+      "name": "20260715041000_mixed_ownership_role_rls"
+    },
+    {
+      "version": "20260721090232",
+      "name": "20260718009999_financial_payment_compatibility"
+    },
+    {
+      "version": "20260721090243",
+      "name": "20260718010000_financial_closure"
+    },
+    {
+      "version": "20260721090245",
+      "name": "20260718010100_financial_collection_analytics"
+    },
+    {
+      "version": "20260721090247",
+      "name": "20260718020000_production_quality_packaging_handoffs"
+    },
+    {
+      "version": "20260721090249",
+      "name": "20260718020500_finishing_route_and_quality_yield"
+    },
+    {
+      "version": "20260721090252",
+      "name": "20260718021000_dispatch_readiness_and_delivery"
+    },
+    {
+      "version": "20260721090254",
+      "name": "20260718021500_floor_output_and_finishing_workflows"
+    },
+    {
+      "version": "20260721090256",
+      "name": "20260718040000_report_builder_data_sources"
+    },
+    {
+      "version": "20260721090258",
+      "name": "20260718050000_customer_accepted_quote_orders"
+    },
+    {
+      "version": "20260721090300",
+      "name": "20260718051000_quote_status_transitions"
+    },
+    {
+      "version": "20260721090301",
+      "name": "20260718052000_invoice_packing_line_parity"
+    },
+    {
+      "version": "20260721090303",
+      "name": "20260718053000_reservation_consumption_safety"
+    },
+    {
+      "version": "20260721090305",
+      "name": "20260718054000_dispatch_proof_upload"
+    },
+    {
+      "version": "20260721090359",
+      "name": "20260721091000_security_advisor_cleanup"
+    },
+    {
+      "version": "20260721091303",
+      "name": "20260721091224_performance_fk_indexes"
+    },
+    {
+      "version": "20260721091400",
+      "name": "20260721091345_remove_duplicate_indexes"
+    },
+    {
+      "version": "20260721091552",
+      "name": "20260721091534_restrict_trigger_function_execution"
+    },
+    {
+      "version": "20260721091932",
+      "name": "20260721091808_atomic_company_onboarding"
+    },
+    {
+      "version": "20260721092352",
+      "name": "20260721091327_advanced_analytics_aggregates"
+    },
+    {
+      "version": "20260721092723",
+      "name": "20260721091307_physical_dispatch_stock_provenance"
+    },
+    {
+      "version": "20260721092850",
+      "name": "20260721091620_quote_atomic_dealer_lineage"
+    },
+    {
+      "version": "20260721093417",
+      "name": "20260721093238_lineage_fk_indexes"
+    },
+    {
+      "version": "20260809133129",
+      "name": "widen_app_users_role_check"
+    },
+    {
+      "version": "20260809133148",
+      "name": "quote_conversion_status_gate_alignment"
+    },
+    {
+      "version": "20260809133215",
+      "name": "expense_approval_and_payment_hardening"
+    },
+    {
+      "version": "20260809133237",
+      "name": "billet_stock_integrity"
+    },
+    {
+      "version": "20260809133311",
+      "name": "production_billet_release_and_compat"
+    },
+    {
+      "version": "20260809133328",
+      "name": "invoice_reversal_status"
+    },
+    {
+      "version": "20260809133453",
+      "name": "revoke_trigger_fn_execute"
+    },
+    {
+      "version": "20260809135011",
+      "name": "process_scrap_recovery_loop"
+    },
+    {
+      "version": "20260809135640",
+      "name": "fix_source_expense_link_triggers"
+    },
+    {
+      "version": "20260809140231",
+      "name": "foundry_source_sync_recursion_guard"
+    },
+    {
+      "version": "20260809140456",
+      "name": "fix_billet_reconcile_status"
+    },
+    {
+      "version": "20260810120125",
+      "name": "expense_payment_update_guard"
+    }
+  ]
+}

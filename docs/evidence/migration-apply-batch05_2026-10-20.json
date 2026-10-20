@@ -1,0 +1,74 @@
+[
+  {
+    "file": "20261019000000_retained_dispatch_invoices.sql",
+    "applied_at_utc": "2026-10-20 06:04:25 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261019010000_terminal_finishing_evidence.sql",
+    "applied_at_utc": "2026-10-20 06:04:27 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261019020000_finishing_accepted_dispositions.sql",
+    "applied_at_utc": "2026-10-20 06:04:30 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261019030000_packaging_material_evidence.sql",
+    "applied_at_utc": "2026-10-20 06:04:33 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261019040000_finishing_workload_projection.sql",
+    "applied_at_utc": "2026-10-20 06:04:36 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "file": "20261019050000_billet_link_repair_integrity.sql",
+    "applied_at_utc": "2026-10-20 06:04:38 UTC",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"success\":true}"
+        }
+      ]
+    }
+  }
+]
