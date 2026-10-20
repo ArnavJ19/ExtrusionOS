@@ -12,6 +12,8 @@ const WAVE1 = [
   "supabase/migrations/20261021010000_scrap_and_foundry_source_write_guards.sql",
   "supabase/migrations/20261021020000_machine_and_die_status_authority.sql",
   "supabase/migrations/20261021030000_dispatch_logistics_freeze.sql",
+  "supabase/migrations/20261021040000_reservation_packing_commercial_lineage.sql",
+  "supabase/migrations/20261021050000_die_schedule_exclusivity.sql",
 ];
 
 const attempt = async (fn) => { try { return { ok: true, value: await fn() }; } catch (error) { return { ok: false, error: error.message }; } };
@@ -25,7 +27,13 @@ async function fresh(candidate) {
     await db.exec(`select set_config('audit.uid','${userId}',false); set role authenticated;`);
     try { return (await db.query(sql)).rows; } finally { await db.exec("reset role;"); }
   };
-  return { db, q, replica, as };
+  // Definer-equivalent context: auth.uid() is set, but the statement runs with the
+  // function owner's privileges, as inside the SECURITY DEFINER dispatch RPCs.
+  const sys = async (userId, sql) => {
+    await db.exec(`select set_config('audit.uid','${userId}',false);`);
+    return (await db.query(sql)).rows;
+  };
+  return { db, q, replica, as, sys };
 }
 
 const lineA = "f5000000-0000-4000-8000-000000000001";
@@ -316,8 +324,132 @@ scenario("G011-pending-dispatch-still-editable", "011", async (ctx) => {
   return "pending dispatch documents remain editable";
 });
 
+// ---- EXOS-AUD-010 -------------------------------------------------------
+const lineB = "f5000000-0000-4000-8000-000000000002";
+const stockBatch = "f6000000-0000-4000-8000-000000000001";
+const reservation = "f6100000-0000-4000-8000-000000000001";
+const pendingDispatch = "f6200000-0000-4000-8000-000000000001";
+
+async function seedReservation(ctx, { lines = [{ id: lineA, finish: "mill_finish", rate: 300 }] } = {}) {
+  const values = lines.map((line) => `('${line.id}', '${ids.company}', '${ids.orderA}', '${ids.profile}', 1000, 300, ${line.rate}, 18, '${line.finish}')`).join(",");
+  await ctx.replica(`
+    insert into public.order_items (id, company_id, order_id, profile_id, quantity_kg, quantity_pieces, net_rate, gst_percent, finishing_type) values ${values};
+    insert into public.order_items (id, company_id, order_id, profile_id, quantity_kg, net_rate, gst_percent, finishing_type) values ('${lineB}', '${ids.company}', '${ids.orderB}', '${ids.profile}', 1000, 999, 5, 'mill_finish');
+    insert into public.profile_stock_batches (id, company_id, profile_id, finish, length_m, quantity_pieces, total_weight_kg, status) values ('${stockBatch}', '${ids.company}', '${ids.profile}', 'mill_finish', 58, 10, 58, 'reserved');
+    insert into public.profile_stock_reservations (id, company_id, profile_stock_batch_id, profile_id, order_id, reserved_weight_kg, reserved_length_m, reserved_pieces, initial_reserved_weight_kg, initial_reserved_length_m, initial_reserved_pieces, status)
+      values ('${reservation}', '${ids.company}', '${stockBatch}', '${ids.profile}', '${ids.orderA}', 58, 58, 10, 58, 58, 10, 'active');
+    insert into public.dispatches (id, company_id, order_id, dispatch_number, dispatch_date, number_of_bundles, total_weight_kg, total_tare_weight_kg, delivery_status) values ('${pendingDispatch}', '${ids.company}', '${ids.orderA}', 'D-R', current_date, 1, 5.8, 0, 'pending')`);
+}
+// Column shape produced by lib/pcda/dispatch.ts for a reservation source (see repro-05).
+const reservationRow = (bundle, extra = "null, null, null") => `insert into public.packing_list_items (company_id, dispatch_id, profile_id, bundle_number, source_kind, source_record_id, source_line_id, reservation_id, profile_stock_batch_id, number_of_pieces, net_length_m, gross_weight_kg, tare_weight_kg, operator_verified_at, operator_verified_by, order_item_id, quote_item_id, net_rate)
+  values ('${ids.company}', '${pendingDispatch}', '${ids.profile}', '${bundle}', 'reservation', '${ids.orderA}', '${reservation}', '${reservation}', '${stockBatch}', 1, 5.8, 5.8, 0, now(), '${ids.dispatch}', ${extra})`;
+const packed = async (ctx, bundle) => (await ctx.q(`select order_item_id::text, net_rate::numeric, gst_percent::numeric from public.packing_list_items where bundle_number='${bundle}'`))[0];
+
+scenario("G010-app-shaped-reservation-line", "010", async (ctx, candidate) => {
+  await seedReservation(ctx);
+  const r = await attempt(() => ctx.sys(ids.dispatch, reservationRow("S-1")));
+  if (!candidate) { assert.equal(r.ok, false); assert.match(r.error, /authoritative commercial source/); return `baseline rejected: ${r.error}`; }
+  assert.equal(r.ok, true, r.error);
+  const row = await packed(ctx, "S-1");
+  assert.equal(row.order_item_id, lineA); assert.equal(Number(row.net_rate), 300); assert.equal(Number(row.gst_percent), 18);
+  return `accepted with order A line, Rs ${row.net_rate}/kg, GST ${row.gst_percent}%`;
+});
+
+scenario("G010-forged-foreign-line-and-rate", "010", async (ctx, candidate) => {
+  await seedReservation(ctx);
+  await ctx.replica(`delete from public.dispatches where id='${pendingDispatch}'; update public.orders set current_stage='packing' where id='${ids.orderA}'`);
+  // Direct RPC call (as in scripts/run-local-reservation-invoice-acceptance.mjs) supplying another order's line and Rs 1/kg.
+  const items = `jsonb_build_array(jsonb_build_object('bundle_number','FG-1','source_kind','reservation','source_record_id','${ids.orderA}','source_line_id','${reservation}','reservation_id','${reservation}','profile_stock_batch_id','${stockBatch}','profile_id','${ids.profile}','number_of_pieces',1,'net_length_m',5.8,'gross_weight_kg',5.8,'tare_weight_kg',0,'order_item_id','${lineB}','net_rate',1.00,'gst_percent',5))`;
+  const r = await attempt(() => ctx.as(ids.owner, `select public.save_ready_dispatch_atomic(null, jsonb_build_object('order_id','${ids.orderA}','dispatch_date','2026-10-21','total_weight_kg',5.8,'total_tare_weight_kg',0), ${items}) id`));
+  assert.equal(r.ok, true, r.error);
+  const row = await packed(ctx, "FG-1");
+  if (!candidate) { assert.equal(row.order_item_id, lineB); assert.equal(Number(row.net_rate), 1); return `baseline: shipped and priced from order B line at Rs ${row.net_rate}/kg, GST ${row.gst_percent}%`; }
+  assert.equal(row.order_item_id, lineA); assert.equal(Number(row.net_rate), 300); assert.equal(Number(row.gst_percent), 18);
+  return `client lineage overwritten -> order A line, Rs ${row.net_rate}/kg, GST ${row.gst_percent}%`;
+});
+
+scenario("G010-finish-disambiguates-lines", "010", async (ctx) => {
+  await seedReservation(ctx, { lines: [{ id: lineA, finish: "mill_finish", rate: 300 }, { id: "f5000000-0000-4000-8000-000000000003", finish: "powder_coating", rate: 380 }] });
+  const r = await attempt(() => ctx.sys(ids.dispatch, reservationRow("S-3")));
+  assert.equal(r.ok, true, r.error);
+  const row = await packed(ctx, "S-3");
+  assert.equal(row.order_item_id, lineA); assert.equal(Number(row.net_rate), 300);
+  return "mill-finish batch matched the mill-finish line (not the powder-coated one)";
+});
+
+scenario("G010-ambiguous-lines-rejected", "010", async (ctx) => {
+  await seedReservation(ctx, { lines: [{ id: lineA, finish: "powder_coating", rate: 380 }, { id: "f5000000-0000-4000-8000-000000000003", finish: "anodizing", rate: 420 }] });
+  const r = await attempt(() => ctx.sys(ids.dispatch, reservationRow("S-4")));
+  assert.equal(r.ok, false);
+  return `rejected: ${r.error}`;
+});
+
+scenario("G010-reserved-stock-shipment-end-to-end", "010", async (ctx, candidate) => {
+  await seedReservation(ctx);
+  await ctx.replica(`delete from public.dispatches where id='${pendingDispatch}'; update public.orders set current_stage='packing' where id='${ids.orderA}'`);
+  const items = `jsonb_build_array(jsonb_build_object('bundle_number','RS-1','source_kind','reservation','source_record_id','${ids.orderA}','source_line_id','${reservation}','reservation_id','${reservation}','profile_stock_batch_id','${stockBatch}','profile_id','${ids.profile}','number_of_pieces',1,'net_length_m',5.8,'gross_weight_kg',5.8,'tare_weight_kg',0,'order_item_id',null,'quote_item_id',null,'net_rate',null))`;
+  const r = await attempt(() => ctx.as(ids.dispatch, `select public.save_ready_dispatch_atomic(null, jsonb_build_object('order_id','${ids.orderA}','dispatch_date','2026-10-21','total_weight_kg',5.8,'total_tare_weight_kg',0,'transporter_name','Shree Roadlines','vehicle_number','MH01AB1234'), ${items}) id`));
+  if (!candidate) { assert.equal(r.ok, false); return `baseline blocked: ${r.error}`; }
+  assert.equal(r.ok, true, r.error);
+  const [batch] = await ctx.q(`select total_weight_kg::numeric kg, quantity_pieces from public.profile_stock_batches where id='${stockBatch}'`);
+  const row = await packed(ctx, "RS-1");
+  assert.equal(Number(batch.kg), 52.2); assert.equal(Number(row.net_rate), 300);
+  return `dispatch role shipped 1 reserved piece; stock 58 -> ${batch.kg} kg; packed at Rs ${row.net_rate}/kg`;
+});
+
+// ---- EXOS-AUD-007 -------------------------------------------------------
+async function seedTwoJobsOneDie(ctx) {
+  await ctx.replica(`
+    insert into public.order_items (id, company_id, order_id, profile_id, quantity_kg, quantity_pieces, length_per_piece_m, net_rate, gst_percent, finishing_type)
+    values ('${lineA}', '${ids.company}', '${ids.orderA}', '${ids.profile}', 1000, 172, 5.8, 300, 18, 'mill_finish'),
+           ('${lineB}', '${ids.company}', '${ids.orderB}', '${ids.profile}', 1000, 172, 5.8, 300, 18, 'mill_finish');
+    insert into public.production_jobs (id, company_id, job_number, order_id, profile_id, die_id, source_line_id, source_record_id, status, planned_quantity_kg, pieces, length_per_piece_m, extrusion_efficiency_percent, finishing_type)
+    values ('${ids.jobA}', '${ids.company}', 'J-A', '${ids.orderA}', '${ids.profile}', '${ids.die}', '${lineA}', '${ids.orderA}', 'planned', 1000, 172, 5.8, 85, 'mill_finish'),
+           ('${ids.jobB}', '${ids.company}', 'J-B', '${ids.orderB}', '${ids.profile}', '${ids.die}', '${lineB}', '${ids.orderB}', 'planned', 1000, 172, 5.8, 85, 'mill_finish')`);
+}
+const slot = (job, press, start, end) => `select public.save_production_schedule_slot_atomic(null, jsonb_build_object('production_job_id','${job}','machine_id','${press}','planned_start_at','${start}','planned_end_at','${end}','status','scheduled')) id`;
+
+scenario("G007-same-die-two-presses-overlap", "007", async (ctx, candidate) => {
+  await seedTwoJobsOneDie(ctx);
+  const a = await attempt(() => ctx.as(ids.productionManager, slot(ids.jobA, ids.pressA, "2026-11-01T10:00:00+05:30", "2026-11-01T14:00:00+05:30")));
+  assert.equal(a.ok, true, a.error);
+  const b = await attempt(() => ctx.as(ids.productionManager, slot(ids.jobB, ids.pressB, "2026-11-01T12:00:00+05:30", "2026-11-01T16:00:00+05:30")));
+  if (!candidate) { assert.equal(b.ok, true, b.error); return "baseline: overlapping slot for the same die accepted on press B"; }
+  assert.equal(b.ok, false);
+  return `second press slot rejected: ${b.error}`;
+});
+
+scenario("G007-same-die-later-window-allowed", "007", async (ctx) => {
+  await seedTwoJobsOneDie(ctx);
+  const a = await attempt(() => ctx.as(ids.productionManager, slot(ids.jobA, ids.pressA, "2026-11-01T10:00:00+05:30", "2026-11-01T14:00:00+05:30")));
+  const b = await attempt(() => ctx.as(ids.productionManager, slot(ids.jobB, ids.pressB, "2026-11-01T14:00:00+05:30", "2026-11-01T18:00:00+05:30")));
+  assert.equal(a.ok, true, a.error); assert.equal(b.ok, true, b.error);
+  return "back-to-back windows for the same die are allowed";
+});
+
+scenario("G007-completed-job-does-not-block", "007", async (ctx) => {
+  await seedTwoJobsOneDie(ctx);
+  await ctx.replica(`update public.production_jobs set status='completed', machine_id='${ids.pressA}' where id='${ids.jobA}';
+    insert into public.production_plan_slots (company_id, production_job_id, machine_id, planned_start_at, planned_end_at, status) values ('${ids.company}', '${ids.jobA}', '${ids.pressA}', '2026-11-01T10:00:00+05:30', '2026-11-01T14:00:00+05:30', 'released')`);
+  const b = await attempt(() => ctx.as(ids.productionManager, slot(ids.jobB, ids.pressB, "2026-11-01T12:00:00+05:30", "2026-11-01T16:00:00+05:30")));
+  assert.equal(b.ok, true, b.error);
+  return "a completed job's released slot does not block the die";
+});
+
+scenario("G007-die-already-running", "007", async (ctx, candidate) => {
+  await seedTwoJobsOneDie(ctx);
+  // Job A runs on press A; job B (same die) has a released slot on another day and is ready.
+  await ctx.replica(`update public.production_jobs set status='in_progress', machine_id='${ids.pressA}' where id='${ids.jobA}';
+    update public.production_jobs set status='ready', machine_id='${ids.pressB}' where id='${ids.jobB}';
+    insert into public.production_plan_slots (company_id, production_job_id, machine_id, planned_start_at, planned_end_at, status) values ('${ids.company}', '${ids.jobB}', '${ids.pressB}', '2026-11-03T10:00:00+05:30', '2026-11-03T14:00:00+05:30', 'released')`);
+  const r = await attempt(() => ctx.as(ids.production, `select public.transition_production_job_atomic('${ids.jobB}','in_progress','start') id`));
+  if (!candidate) { assert.equal(r.ok, true, r.error); return "baseline: second job started while the die was running"; }
+  assert.equal(r.ok, false);
+  return `start rejected: ${r.error}`;
+});
+
 // ---- runner ---------------------------------------------------------------
-const onlyCandidate = new Set(["G008-production-manager-returns-press", "G008-operator-out-of-service-only", "G008-sales-manager-registers-die", "G011-pending-dispatch-still-editable", "G002-completion-still-books-scrap", "G003-weight-correction-moves-balance", "G003-furnace-charge-and-cancel-still-work"]);
+const onlyCandidate = new Set(["G010-finish-disambiguates-lines", "G010-ambiguous-lines-rejected", "G007-same-die-later-window-allowed", "G007-completed-job-does-not-block", "G008-production-manager-returns-press", "G008-operator-out-of-service-only", "G008-sales-manager-registers-die", "G011-pending-dispatch-still-editable", "G002-completion-still-books-scrap", "G003-weight-correction-moves-balance", "G003-furnace-charge-and-cancel-still-work"]);
 let failures = 0;
 for (const s of scenarios) {
   for (const candidate of onlyCandidate.has(s.id) ? [true] : [false, true]) {
