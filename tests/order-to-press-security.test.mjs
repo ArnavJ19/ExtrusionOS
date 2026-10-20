@@ -56,7 +56,7 @@ test("production job writes derive company ownership on the server", () => {
 });
 
 test("production scheduling validates scoped order, profile, die, and billet references", () => {
-  assert.match(productionAction, /Production cannot be scheduled because no active die exists for this order\/profile/);
+  assert.match(productionAction, /Select an active or approved die for this order\/profile/);
   assert.match(productionAction, /supabase\.from\("orders"\)\.select\("id[^"]*"\)\.eq\("company_id", context\.companyId\)\.eq\("id", parsed\.data\.order_id\)/);
   assert.match(productionAction, /supabase\.from\("aluminium_profiles"\)\.select\("id[^"]*"\)\.eq\("company_id", context\.companyId\)\.eq\("id", parsed\.data\.profile_id\)/);
   assert.match(productionAction, /supabase\.from\("dies"\)\.select\("id, profile_id, die_status"\)\.eq\("company_id", context\.companyId\)\.eq\("id", parsed\.data\.die_id\)/);
@@ -64,7 +64,7 @@ test("production scheduling validates scoped order, profile, die, and billet ref
   assert.match(productionAction, /machine_type !== "extrusion_press"/);
   assert.match(productionAction, /Selected extrusion press is not available for planning/);
   assert.match(productionAction, /Selected die does not match this profile\./);
-  assert.match(productionAction, /"inactive", "dead", "blocked", "retired", "scrapped", "under_maintenance"/);
+  assert.match(productionAction, /isUsableProductionDieStatus\(dieResult\.data\.die_status\)/);
   assert.match(productionAction, /Die is \$\{String\(dieResult\.data\.die_status\)\.replace\(\/_\/g, " "\)\} and cannot be used for production\./);
   assert.match(productionAction, /Select at least one allocated billet for this production job/);
   assert.match(productionAction, /validateSelectedBillets/);
@@ -106,7 +106,7 @@ test("production form lookups for machine, die, order, and profile are tenant sc
   assert.match(loadFormData, /supabase\.from\("orders"\)[\s\S]*\.eq\("company_id", context\.companyId\)/);
   assert.match(loadFormData, /supabase\.from\("aluminium_profiles"\)[\s\S]*\.eq\("company_id", context\.companyId\)[\s\S]*\.eq\("is_active", true\)/);
   assert.match(loadFormData, /supabase\.from\("machines"\)[\s\S]*\.eq\("company_id", context\.companyId\)/);
-  assert.match(loadFormData, /supabase\.from\("dies"\)[\s\S]*\.eq\("company_id", context\.companyId\)[\s\S]*\.eq\("die_status", "active"\)/);
+  assert.match(loadFormData, /supabase\.from\("dies"\)[\s\S]*\.eq\("company_id", context\.companyId\)[\s\S]*\.in\("die_status", usableProductionDieStatuses\)/);
 });
 
 test("production autofill keeps full billet demand separate from current allocation", () => {

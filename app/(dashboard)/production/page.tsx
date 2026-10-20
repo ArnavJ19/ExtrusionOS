@@ -29,7 +29,7 @@ export default async function ProductionPage() {
     supabase.from("production_jobs").select("id", { count: "exact", head: true }).eq("company_id", cid).in("status", ["planned", "in_progress"]).is("machine_id", null),
     supabase
       .from("orders")
-      .select("id, order_number, priority, current_stage, expected_dispatch_date, billets_required, billets_allocated, billets_short, billet_allocation_status, customers(company_name, customer_name), production_profile:aluminium_profiles!orders_production_profile_id_fkey(profile_code, profile_name), production_die:dies!orders_production_die_id_fkey(die_number, die_status)")
+      .select("id, order_number, priority, current_stage, expected_dispatch_date, billets_required, billets_allocated, billets_short, billet_allocation_status, production_profile_id, customers(company_name, customer_name), production_profile:aluminium_profiles!orders_production_profile_id_fkey(profile_code, profile_name), production_die:dies!orders_production_die_id_fkey(die_number, die_status, profile_id)")
       .eq("company_id", cid)
       .in("current_stage", ["order_confirmed", "die_ready", "billet_ready", "billet_heating", "extrusion_planned"])
       .order("expected_dispatch_date", { ascending: true, nullsFirst: false })

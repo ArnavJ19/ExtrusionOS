@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (!parsed.success) return NextResponse.json({ error: "Invalid invoice ID" }, { status: 400 });
   const supabase = await createClient();
   const [invoice, items] = await Promise.all([
-    supabase.from("invoices").select("invoice_number,invoice_date,status,subtotal,tax_total,grand_total,supplier_state_code,place_of_supply_state_code,cgst_amount,sgst_amount,utgst_amount,igst_amount,supplier_snapshot,customer_snapshot").eq("company_id", context.companyId).eq("id", parsed.data).maybeSingle(),
+    supabase.from("invoices").select("invoice_number,invoice_date,due_date,amount_paid,credited_amount,balance_due,status,subtotal,tax_total,grand_total,supplier_state_code,place_of_supply_state_code,cgst_amount,sgst_amount,utgst_amount,igst_amount,supplier_snapshot,customer_snapshot").eq("company_id", context.companyId).eq("id", parsed.data).maybeSingle(),
     supabase.from("invoice_items_authorized").select("item_description,hsn_code,quantity,unit_rate,line_total,gst_percent").eq("company_id", context.companyId).eq("invoice_id", parsed.data).order("created_at"),
   ]);
   if (invoice.error || items.error) return NextResponse.json({ error: "Invoice data is unavailable. Please try again or contact your administrator to check the database deployment." }, { status: 503 });

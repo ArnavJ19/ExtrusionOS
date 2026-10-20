@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getReportTemplate, isPcdaLineReport, PCDA_LINE_REPORT_SECTIONS } from "./templates";
 import type { ReportTemplateKey } from "./templates";
 import { NOT_CAPTURED_LABEL, mapNullableToDisplay } from "@/lib/pcda/labels";
+import { loadProductionBatchEvidence } from "./production-evidence";
 
 // ---------------------------------------------------------------------------
 // Report Model Types
@@ -529,13 +530,15 @@ async function buildProductionBatchReportModel(
   supabase: Awaited<ReturnType<typeof createClient>>,
   ctx: BuildContext
 ): Promise<ReportModel> {
-  const { data: job } = await supabase
+  const { data: job, error: jobError } = await supabase
     .from("production_jobs_authorized")
     .select("*")
     .eq("id", recordId)
     .eq("company_id", companyId)
     .single();
 
+  if (jobError || !job) throw new Error("Production job could not be loaded. Refresh before generating the report.");
+  const evidence = await loadProductionBatchEvidence(supabase, job, companyId, recordId);
   const generatedBy = await resolveUserName(supabase, null);
 
   const header: ReportHeader = {
@@ -566,18 +569,25 @@ async function buildProductionBatchReportModel(
       title: "Input Material",
       fields: [
         { label: "Billet Alloy", value: d(job?.billet_alloy ?? job?.alloy) },
-        { label: "Billet Weight kg", value: mapNullableToDisplay(job?.input_billet_weight ?? job?.billet_weight_kg) },
+        { label: "Billet Weight kg", value: mapNullableToDisplay(evidence.inputKg) },
+        { label: "Input Basis", value: "Linked billet weights (allocated, issued or consumed)" },
+        { label: "Billet Records", value: evidence.billetCount },
         { label: "Billet Length", value: mapNullableToDisplay(job?.billet_length) },
       ],
     },
     {
       title: "Output & Recovery",
       fields: [
-        { label: "Output Good kg", value: mapNullableToDisplay(job?.output_good_weight ?? job?.actual_quantity_kg) },
-        { label: "Rejected kg", value: mapNullableToDisplay(job?.rejected_weight ?? job?.rejected_kg) },
-        { label: "Scrap kg", value: mapNullableToDisplay(job?.scrap_weight ?? job?.scrap_kg) },
-        { label: "Recovery %", value: mapNullableToDisplay(job?.recovery_percent) },
-        { label: "Scrap %", value: mapNullableToDisplay(job?.scrap_percent) },
+        { label: "Output Good kg", value: mapNullableToDisplay(evidence.outputKg) },
+        { label: "Rejected kg (source snapshot)", value: mapNullableToDisplay(job?.rejected_weight ?? job?.rejected_kg) },
+        { label: "Scrap kg", value: mapNullableToDisplay(evidence.scrapKg) },
+        { label: "Scrap Basis", value: "Recorded entries; zero entries alone do not prove zero physical loss" },
+        { label: "Scrap Entries", value: evidence.scrapCount },
+        { label: "Recovery %", value: mapNullableToDisplay(evidence.recoveryPercent) },
+        { label: "Scrap %", value: mapNullableToDisplay(evidence.scrapPercent) },
+        { label: "Balance Difference kg", value: mapNullableToDisplay(evidence.differenceKg) },
+        { label: "Balance Tolerance kg", value: mapNullableToDisplay(evidence.toleranceKg) },
+        { label: "Reconciliation", value: evidence.reconciliation },
       ],
     },
     {
@@ -1188,7 +1198,8 @@ async function buildProfitabilityReportModel(
     revisionNumber: d(breakdown?.revision_number),
     generatedDate: new Date().toLocaleDateString("en-IN"),
     generatedBy,
-    approvalStatus: d(breakdown?.payment_status),
+    // Cost records carry no approval workflow; payment state is reported in its own field (RPT-10).
+    approvalStatus: "Not applicable",
   };
 
   const sections: ReportSection[] = [

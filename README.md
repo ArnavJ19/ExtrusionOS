@@ -57,6 +57,29 @@ All file paths should start with `company_id/`, for example `company_id/profiles
 4. Keep `SUPABASE_SERVICE_ROLE_KEY` server-only if you later add server-side admin jobs.
 5. Deploy.
 
+## Local Checks
+
+The regression suite includes headless browser checks for shared form controls.
+Install the existing Playwright package's Chromium runtime once before running
+the suite:
+
+```bash
+npx playwright install chromium
+```
+
+Run the project checks:
+
+```bash
+npm test
+npm run lint
+npm run typecheck
+npm run build
+```
+
+Browser regressions use loopback-only fixtures, and SQL regressions use disposable
+PGlite databases. These commands do not apply migrations to a Supabase project.
+Run typecheck and build sequentially because build refreshes generated types.
+
 ## Test Checklist
 
 - Signup creates an auth user, company, owner profile, and company settings.

@@ -25,6 +25,9 @@ type FinishingJob = {
   status: string;
   remarks: string | null;
   retry_of_finishing_job_id: string | null;
+  corrective_retry?: {id:string;status:string;input_weight_kg:number} | null;
+  remaining_rejected_kg?: number;
+  can_retry?: boolean;
   orders?: {
     order_number?: string | null;
     customers?: { customer_name?: string | null; company_name?: string | null } | null;
@@ -66,11 +69,13 @@ function localToday() {
 export function FinishingWorkflowBoard({
   jobs,
   vendors,
-  canUpdate
+  canUpdate,
+  statusCounts
 }: {
   jobs: FinishingJob[];
   vendors: Vendor[];
   canUpdate: boolean;
+  statusCounts?: Record<string,number>;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -78,7 +83,7 @@ export function FinishingWorkflowBoard({
   const initial = visibleJobs.find((job) => transitions[job.status]?.length) ?? visibleJobs[0] ?? null;
   const [selectedId, setSelectedId] = useState(initial?.id ?? "");
   const selected = jobs.find((job) => job.id === selectedId) ?? null;
-  const retryJob = selected ? jobs.find((job) => job.retry_of_finishing_job_id === selected.id) ?? null : null;
+  const retryJob = selected ? selected.corrective_retry ?? jobs.find((job) => job.retry_of_finishing_job_id === selected.id) ?? null : null;
   const [vendorId, setVendorId] = useState(initial?.vendor_id ?? "");
   const [sentDate, setSentDate] = useState(initial?.sent_date ?? localToday());
   const [receivedDate, setReceivedDate] = useState(initial?.received_date ?? localToday());
@@ -146,7 +151,7 @@ export function FinishingWorkflowBoard({
   }
 
   function retryRejectedJob() {
-    if (!selected || selected.status !== "rejected" || retryJob) return;
+    if (!selected || selected.status !== "rejected" || retryJob || selected.can_retry === false) return;
     if (!window.confirm("Create one corrective finishing retry for the recoverable rejected weight?")) return;
     startTransition(async () => {
       const result = await retryRejectedFinishingJobAction({
@@ -166,7 +171,7 @@ export function FinishingWorkflowBoard({
   if (!visibleJobs.length) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-sm font-semibold text-slate-500">
-        No finishing jobs found. Non-mill-finish production output will appear here automatically after the press job is completed.
+        No finishing movements await attention in this scope. Use the Finishing Database to review retained receipts.
       </div>
     );
   }
@@ -174,7 +179,9 @@ export function FinishingWorkflowBoard({
   return (
     <div className="grid gap-5 xl:grid-cols-[0.9fr_1.5fr]">
       <div className="space-y-3">
-        {visibleJobs.map((job) => (
+        {["planned","sent_to_vendor","in_process","received","rejected"].filter(status=>visibleJobs.some(job=>job.status===status)).map(status=><div key={status} className="space-y-3">
+          {statusCounts ? <p className="text-xs font-black uppercase tracking-wide text-slate-500">{labelize(status)}: {visibleJobs.filter(job=>job.status===status).length} shown of {statusCounts[status]??0}</p> : null}
+        {visibleJobs.filter(job=>job.status===status).map((job) => (
           <button
             key={job.id}
             type="button"
@@ -189,11 +196,11 @@ export function FinishingWorkflowBoard({
               <Badge value={job.status} />
             </div>
             <div className="mt-3 flex items-center justify-between text-xs font-semibold text-slate-600">
-              <span>{job.vendors?.vendor_name ?? "In-house / vendor not assigned"}</span>
-              <b className="text-slate-950">{formatWeight(job.input_weight_kg ?? 0)}</b>
+              <span className="min-w-0 break-words">{job.vendors?.vendor_name ?? "In-house / vendor not assigned"}</span>
+              <b className="shrink-0 text-slate-950">{formatWeight(job.input_weight_kg ?? 0)}</b>
             </div>
           </button>
-        ))}
+        ))}</div>)}
       </div>
 
       {selected ? (
@@ -242,7 +249,7 @@ export function FinishingWorkflowBoard({
               <p className="font-black text-amber-950">Corrective finishing retry</p>
               {retryJob ? (
                 <p className="mt-1 text-sm font-semibold text-amber-800">A retry already exists with status {labelize(retryJob.status)}. The rejected source remains locked as evidence.</p>
-              ) : (
+              ) : selected.can_retry === false ? <p className="mt-1 text-sm font-semibold text-amber-800">No verified recoverable rejected quantity is available for another retry. Review the recorded disposition.</p> : (
                 <>
                   <p className="mt-1 text-sm font-semibold text-amber-800">Create one new planned job for the recoverable rejected weight. The original rejection will not be edited or reopened.</p>
                   <div className="mt-3 grid gap-3 sm:grid-cols-[180px_1fr_auto] sm:items-end">

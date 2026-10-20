@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
+import {installOrderCancellationStockObjects} from "./lib/order-cancellation-stock-fixture.mjs";
 
 const company = "11111111-1111-4111-8111-111111111111";
 const user = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -133,6 +134,9 @@ export async function runFactoryWorkflowIntegrityChecks() {
       throw new Error(`${error.message}; SQL context: ${migration.slice(Math.max(0, position - 100), position + 100)}`);
     }
     await db.exec(migration);
+    // Inspect the prepared follow-up body without applying its migration script.
+    await db.exec(functionDefinition("supabase/migrations/20261015000000_reservation_release_replay_integrity.sql", "private.consume_dispatch_reservations"));
+    await installOrderCancellationStockObjects(db,{reservationGuardOnly:true});
     await db.exec(`create trigger factory_fixture_link_billets_to_production_job after update of status on public.production_jobs
       for each row when (new.status='completed') execute function public.link_billets_to_production_job();`);
 
@@ -269,6 +273,28 @@ export async function runFactoryWorkflowIntegrityChecks() {
       await reject(`select public.save_ready_dispatch_atomic(null,'${JSON.stringify({order_id:foreignOrder,total_weight_kg:1,total_tare_weight_kg:0})}'::jsonb,'[{}]'::jsonb)`, /selected order is not available for this company/i);
       await db.exec(`reset role`);
     });
+    await check("released partial reservation preserves exact posted replay and public delivery updates", async () => {
+      const remainderStock = "53535353-5353-4353-8353-535353535353";
+      const remainderReservation = "54545454-5454-4454-8454-545454545454";
+      await db.exec(`reset role;`);
+      await db.query(`select set_config('test.role','inventory_manager',false)`);
+      const posted = (await db.query(`select dispatch_id from public.profile_stock_consumptions where reservation_id=$1`, [remainderReservation])).rows[0].dispatch_id;
+      await db.query(`update public.profile_stock_reservations set status='released',released_at=now() where id=$1`, [remainderReservation]);
+      const snapshot = async () => ({
+        stock: (await db.query(`select total_weight_kg,length_m,quantity_pieces from public.profile_stock_batches where id=$1`, [remainderStock])).rows,
+        ledger: (await db.query(`select * from public.profile_stock_consumptions where reservation_id=$1 order by id`, [remainderReservation])).rows
+      });
+      const before = await snapshot();
+      await db.query(`select private.consume_dispatch_reservations($1)`, [posted]);
+      await db.query(`select private.consume_dispatch_reservations($1)`, [posted]);
+      assert.deepEqual(await snapshot(), before);
+      await db.query(`select set_config('test.role','dispatch_manager',false)`);
+      await db.exec(`set role authenticated;`);
+      await db.query(`select public.transition_dispatch_delivery_atomic($1,'in_transit',null,'Transport progressed after releasing the remaining hold')`, [posted]);
+      await db.exec(`reset role;`);
+      assert.deepEqual(await snapshot(), before);
+      assert.equal((await db.query(`select delivery_status from public.dispatches where id=$1`, [posted])).rows[0].delivery_status, "in_transit");
+    });
     await check("mixed reservation dispatch rollback restores earlier source debits", async () => {
       const order = "27272727-2727-4727-8727-272727272727";
       await db.exec(`insert into public.orders(id,company_id,current_stage) values ('${order}','${company}','in_production');
@@ -308,9 +334,24 @@ export async function runFactoryWorkflowIntegrityChecks() {
         { credited: 0, invoiceStatus: "sent", noteStatus: "reversed" });
     });
     await check("partial-dispatched order permits its exact 800 kg remainder and current resource-safe release", async () => {
+      await db.exec(functionDefinition("supabase/migrations/20260810010000_manufacturing_reference_and_material_guards.sql", "public.guard_production_job_status"));
+      await db.exec(functionDefinition("supabase/migrations/20260718021500_floor_output_and_finishing_workflows.sql", "public.validate_production_completion"));
+      await db.exec(functionDefinition("supabase/migrations/20260723010000_production_schedule_integrity.sql", "private.enforce_production_schedule_integrity"));
+      await db.exec(functionDefinition("supabase/migrations/20260723010000_production_schedule_integrity.sql", "private.release_production_schedule_slot_atomic"));
+      await db.exec(`create trigger guard_production_job_status before insert or update of status,machine_id,company_id on public.production_jobs
+        for each row execute function public.guard_production_job_status();
+        create trigger validate_production_completion before insert or update on public.production_jobs for each row execute function public.validate_production_completion();
+        create trigger enforce_production_schedule_integrity before insert or update on public.production_plan_slots
+        for each row execute function private.enforce_production_schedule_integrity();`);
+      const followupMigration = repoSql("supabase/migrations/20261013000000_audit_workflow_followup.sql");
+      await db.exec(`create function private.get_current_user_dealer_id() returns uuid language sql as $$select null::uuid$$;
+        create table public.quotes(id uuid primary key,company_id uuid,dealer_id uuid,status text,deleted_at timestamptz);
+        create table public.quote_items(id uuid primary key,company_id uuid,quote_id uuid,profile_id uuid,finishing_type text,billing_weight_kg numeric,total_weight_kg numeric);
+        alter table public.profile_stock_batches add column dealer_id uuid,add column finish text;`);
+      await db.exec(followupMigration);
       await db.query(`select set_config('test.role','production_manager',false)`);
-      await reject(`insert into public.production_jobs(id,company_id,status,planned_quantity_kg) values ('51515151-5151-4151-8151-515151515151','${company}','in_progress',1)`, /created as planned/i);
-      await reject(`insert into public.production_plan_slots(company_id,production_job_id,machine_id,status) values ('${company}','51515151-5151-4151-8151-515151515151','${pressId}','released')`, /no longer eligible for press release/i);
+      await reject(`insert into public.production_jobs(id,company_id,status,planned_quantity_kg) values ('51515151-5151-4151-8151-515151515151','${company}','in_progress',1)`, /created as planned|must start in planned/i);
+      await reject(`insert into public.production_plan_slots(company_id,production_job_id,machine_id,status,planned_start_at,planned_end_at) values ('${company}','51515151-5151-4151-8151-515151515151','${pressId}','released',now(),now()+interval '1 hour')`, /no longer eligible for press release/i);
       await db.exec(`insert into public.orders(id,company_id,current_stage,production_quantity_kg,order_number,priority,order_date)
         values ('${orderBalance}','${company}','in_production',1000,'ORD-PARTIAL','normal',current_date);
         insert into public.order_items(id,company_id,order_id,quantity_kg) values ('${orderLine}','${company}','${orderBalance}',1000);
@@ -321,6 +362,7 @@ export async function runFactoryWorkflowIntegrityChecks() {
         insert into public.production_plan_slots(company_id,production_job_id,machine_id,status,planned_start_at,planned_end_at)
           values ('${company}','${balanceJob}','${pressId}','scheduled',now()+interval '1 hour',now()+interval '9 hours');
         update public.production_plan_slots set status='released' where production_job_id='${balanceJob}';
+        update public.production_jobs set status='ready' where id='${balanceJob}';
         update public.production_jobs set status='in_progress' where id='${balanceJob}';
         insert into public.foundry_billets(id,company_id,production_job_id,status,weight_kg) values ('${balanceBillet}','${company}','${balanceJob}','issued',205);`);
       await db.query(`select public.complete_production_job_atomic($1,200,20,100,5,'partial shipment basis')`, [balanceJob]);
@@ -339,14 +381,64 @@ export async function runFactoryWorkflowIntegrityChecks() {
         'planned_end_at',now()+interval '2 days 8 hours','sequence_number',2,'capacity_kg',800,'status','scheduled'))`, [slotId]);
       const held = await db.query(`select status from public.production_jobs where id=$1`, [remainderJob]);
       assert.equal(held.rows[0].status, "on_hold");
-      await db.exec(`update public.production_jobs set status='ready' where id='${remainderJob}';
-        update public.dies set die_status='dead' where id='${dieId}';`);
+      await db.exec(`update public.dies set die_status='dead' where id='${dieId}';`);
       await reject(`update public.production_plan_slots set status='released' where id='${slotId}'`, /die is no longer eligible/i);
-      await db.exec(`update public.dies set die_status='active' where id='${dieId}';
-        update public.production_plan_slots set status='released' where id='${slotId}';
-        update public.production_jobs set status='in_progress' where id='${remainderJob}';`);
+      await db.exec(`update public.dies set die_status='active' where id='${dieId}';`);
+      await db.query(`select private.release_production_schedule_slot_atomic($1)`,[slotId]);
+      await db.exec(`update public.production_jobs set status='in_progress' where id='${remainderJob}';`);
       const progress = await db.query(`select status from public.production_jobs where id=$1`, [remainderJob]);
       assert.equal(progress.rows[0].status, "in_progress");
+    });
+    await check("held recovery preserves floor evidence and rejects conflicting replacement schedules", async () => {
+      const remainderJob = balanceJob.replaceAll("33333333", "37373737");
+      await db.exec(`update public.production_jobs set actual_quantity_kg=50,actual_pieces=5,actual_meters=25 where id='${remainderJob}';
+        insert into public.scrap_records(company_id,production_job_id,weight_kg) values('${company}','${remainderJob}',2);`);
+      await db.query(`select private.transition_production_job_atomic($1,'on_hold','press stopped for inspection')`,[remainderJob]);
+      await db.query(`update public.production_plan_slots set status='cancelled' where production_job_id=$1 and status='released'`,[remainderJob]);
+      await reject(`update public.production_jobs set status='ready' where id='${remainderJob}'`,/transition workflow/i);
+      await reject(`select private.save_production_schedule_slot_atomic(null,jsonb_build_object(
+        'production_job_id','${remainderJob}','machine_id','${pressId}','planned_start_at',now()+interval '1 hour',
+        'planned_end_at',now()+interval '2 hours','status','scheduled'))`,/overlapping active slot/i);
+      const slot = await db.query(`select private.save_production_schedule_slot_atomic(null,jsonb_build_object(
+        'production_job_id','${remainderJob}','machine_id','${pressId}','planned_start_at',now()+interval '3 days',
+        'planned_end_at',now()+interval '3 days 8 hours','status','scheduled')) id`);
+      const held = await db.query(`select status,actual_quantity_kg,actual_pieces,actual_meters,
+        (select sum(weight_kg) from public.scrap_records where production_job_id=j.id) scrap,
+        (select count(*)::int from public.production_job_status_history where production_job_id=j.id and new_status='on_hold') holds
+        from public.production_jobs j where id=$1`,[remainderJob]);
+      assert.deepEqual({...held.rows[0],actual_quantity_kg:Number(held.rows[0].actual_quantity_kg),actual_meters:Number(held.rows[0].actual_meters),scrap:Number(held.rows[0].scrap)},
+        {status:"on_hold",actual_quantity_kg:50,actual_pieces:5,actual_meters:25,scrap:2,holds:1});
+      await db.query(`select private.release_production_schedule_slot_atomic($1)`,[slot.rows[0].id]);
+      await db.query(`select private.transition_production_job_atomic($1,'in_progress','resume inspected press')`,[remainderJob]);
+      const resumed = await db.query(`select status,actual_quantity_kg from public.production_jobs where id=$1`,[remainderJob]);
+      assert.equal(resumed.rows[0].status,"in_progress");assert.equal(Number(resumed.rows[0].actual_quantity_kg),50);
+    });
+    await check("release and start separately reject stale order, die and press eligibility",async()=>{
+      const remainderJob = balanceJob.replaceAll("33333333", "37373737");
+      await db.query(`select private.transition_production_job_atomic($1,'on_hold','resource recheck')`,[remainderJob]);
+      await db.query(`update public.production_plan_slots set status='cancelled' where production_job_id=$1 and status='released'`,[remainderJob]);
+      const slot = await db.query(`select private.save_production_schedule_slot_atomic(null,jsonb_build_object(
+        'production_job_id','${remainderJob}','machine_id','${pressId}','planned_start_at',now()+interval '4 days',
+        'planned_end_at',now()+interval '4 days 8 hours','status','scheduled')) id`);
+      for (const [block,restore,pattern] of [
+        [`update orders set current_stage='cancelled' where id='${orderBalance}'`,`update orders set current_stage='dispatched' where id='${orderBalance}'`,/Order is no longer eligible/i],
+        [`update dies set die_status='dead' where id='${dieId}'`,`update dies set die_status='active' where id='${dieId}'`,/die is no longer eligible/i],
+        [`update machines set is_active=false,status='maintenance' where id='${pressId}'`,`update machines set is_active=true,status='active' where id='${pressId}'`,/press is no longer eligible/i]
+      ]) {
+        await db.exec(block);await assert.rejects(db.query(`select private.release_production_schedule_slot_atomic($1)`,[slot.rows[0].id]),pattern);
+        await db.exec(restore);
+      }
+      await db.query(`select private.release_production_schedule_slot_atomic($1)`,[slot.rows[0].id]);
+      for (const [block,restore,pattern] of [
+        [`update orders set current_stage='cancelled' where id='${orderBalance}'`,`update orders set current_stage='dispatched' where id='${orderBalance}'`,/Order.*(eligible|available)/i],
+        [`update dies set die_status='dead' where id='${dieId}'`,`update dies set die_status='active' where id='${dieId}'`,/die is no longer eligible/i],
+        [`update machines set is_active=false,status='maintenance' where id='${pressId}'`,`update machines set is_active=true,status='active' where id='${pressId}'`,/press is no longer eligible/i]
+      ]) {
+        await db.exec(block);await assert.rejects(db.query(`select private.transition_production_job_atomic($1,'in_progress','start after release')`,[remainderJob]),pattern);
+        await db.exec(restore);
+      }
+      const state = await db.query(`select status from production_jobs where id=$1`,[remainderJob]);assert.equal(state.rows[0].status,"ready");
+      await db.query(`select private.transition_production_job_atomic($1,'in_progress','resources restored')`,[remainderJob]);
     });
     await check("factory managers can manually allocate and reallocate temper-compatible billets", async () => {
       await db.query(`select set_config('test.role','factory_manager',false)`);
@@ -458,6 +550,7 @@ export async function runFactoryWorkflowIntegrityChecks() {
       assert.equal(billet.rows[0].status, "cast");
       await reject(`update public.foundry_billets set weight_kg=weight_kg+1 where id='${billet.rows[0].id}'`, /maintained only by the batch calculation|match the calculated parent/i);
       await db.exec(`update public.foundry_billets set status='allocated',order_id='${order}',allocation_requirement_id='${requirement}',allocated_at=now(),allocated_by='${user}' where id='${billet.rows[0].id}';
+        update public.production_jobs set status='ready' where id='${jobId}';
         update public.production_jobs set status='in_progress' where id='${jobId}';
         update public.foundry_billets set status='issued',production_job_id='${jobId}' where id='${billet.rows[0].id}';`);
       const inputKg = Number(billet.rows[0].weight_kg);

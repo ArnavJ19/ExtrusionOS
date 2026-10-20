@@ -12,31 +12,17 @@ export type GateDecision = {
   requiresOverride?: boolean;
 };
 
-/** Statuses that block die usage in production */
-const BLOCKED_DIE_STATUSES = new Set([
-  "blocked", "retired", "scrapped", "dead", "inactive",
-  "under_correction", "correction", "design", "ordered"
-]);
-
-/** Statuses that warn but don't block */
-const WARNING_DIE_STATUSES = new Set([
-  "under_trial", "trial", "nitriding", "under_maintenance"
-]);
+import { isUsableProductionDieStatus } from "../production-dies.ts";
 
 /**
  * Gate: Can this die be used for production?
- * Blocks on blocked/retired/correction/dead statuses unless Owner_Admin override.
+ * Matches scheduling and SQL release/start; die status has no role override.
  */
 export function canUseDieForProduction(dieStatus: string | null, isOwnerAdmin = false): GateDecision {
   if (!dieStatus) return { allowed: false, reason: "Die status is unknown." };
 
-  if (BLOCKED_DIE_STATUSES.has(dieStatus)) {
-    if (isOwnerAdmin) return { allowed: true, reason: `Owner override: die status is ${dieStatus}.` };
-    return { allowed: false, reason: `Die is ${dieStatus.replace(/_/g, " ")}. Cannot be used for production.`, requiresOverride: true };
-  }
-
-  if (WARNING_DIE_STATUSES.has(dieStatus)) {
-    return { allowed: true, reason: `Warning: die is ${dieStatus.replace(/_/g, " ")}. Proceed with caution.` };
+  if (!isUsableProductionDieStatus(dieStatus)) {
+    return {allowed: false, requiresOverride: false, reason: `Die is ${dieStatus.replace(/_/g, " ")}. Only active or approved dies can be used for production.${isOwnerAdmin ? " Review and approve the die in Die Master before scheduling." : ""}`};
   }
 
   return { allowed: true };

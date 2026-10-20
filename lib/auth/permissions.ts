@@ -55,6 +55,7 @@ export function hasPermission(role: UserRole, permission: GranularPermission, ex
 
 export function can(role: UserRole, action: Action, resource: Resource): boolean {
   if (resource === "inventory_reservations") {
+    if (action === "read") return ["owner", "admin", "production_manager", "production", "factory_manager", "inventory_manager", "dispatch_manager", "dispatch"].includes(role);
     return action === "reserve" && ["owner", "admin", "production_manager", "factory_manager", "inventory_manager"].includes(role);
   }
   if (resource === "roles") return role === "owner";

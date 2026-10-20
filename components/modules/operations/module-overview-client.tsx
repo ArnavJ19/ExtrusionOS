@@ -110,7 +110,7 @@ export function ModuleOverviewClient({
         description={config.description}
         actions={hideHeaderActions ? undefined : (
           <div className="flex flex-wrap gap-2">
-            {canCreate && config.fields ? <Link href={`${config.basePath}/new`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800 hover:shadow-md"><Plus className="h-4 w-4" /> {config.primaryAction}</Link> : null}
+            {canCreate && (config.fields || config.createHref) ? <Link href={config.createHref ?? `${config.basePath}/new`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800 hover:shadow-md"><Plus className="h-4 w-4" /> {config.primaryAction}</Link> : null}
             <Link href={`${config.basePath}/database`} className="inline-flex items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-950 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-50"><Table2 className="h-4 w-4" /> {config.databaseAction}</Link>
           </div>
         )}

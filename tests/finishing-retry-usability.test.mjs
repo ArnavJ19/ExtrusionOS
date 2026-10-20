@@ -13,6 +13,6 @@ test("rejected finishing exposes the bounded database retry as an operator workf
   assert.match(board, /Plan One Retry/);
   assert.match(board, /The rejected source remains locked as evidence/);
   assert.match(board, /retryRejectedFinishingJobAction/);
-  assert.match(page, /retry_of_finishing_job_id/);
+  assert.match(page, /loadFinishingWorkload/);
   assert.match(page, /workflowRows/);
 });

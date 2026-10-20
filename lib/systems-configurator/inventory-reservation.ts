@@ -33,14 +33,16 @@ export function buildProfileReservationStatus(requirements: ProfileReservationRe
   return requirements.map((requirement) => {
     const batches = stockBatches.filter((batch) => batch.profile_id === requirement.profileId);
     const activeReservations = reservations.filter((reservation) => reservation.profile_id === requirement.profileId && reservation.status === "active");
-    const totalStockWeightKg = round3(batches.filter((batch) => !["dispatched", "rejected", "scrap"].includes(batch.status)).reduce((sum, batch) => sum + Number(batch.total_weight_kg ?? 0), 0));
+    const usableBatches = batches.filter((batch) => ["available", "reserved"].includes(batch.status));
+    const totalStockWeightKg = round3(usableBatches.reduce((sum, batch) => sum + Number(batch.total_weight_kg ?? 0), 0));
     const reservedWeightKg = round3(activeReservations.reduce((sum, reservation) => sum + Math.max(Number(reservation.reserved_weight_kg ?? 0) - Number(reservation.consumed_weight_kg ?? 0), 0), 0));
-    const totalStockLengthM = round3(batches.filter((batch) => !["dispatched", "rejected", "scrap"].includes(batch.status)).reduce((sum, batch) => sum + Number(batch.length_m ?? 0), 0));
+    const totalStockLengthM = round3(usableBatches.reduce((sum, batch) => sum + Number(batch.length_m ?? 0), 0));
     const reservedLengthM = round3(activeReservations.reduce((sum, reservation) => sum + Math.max(Number(reservation.reserved_length_m ?? 0) - Number(reservation.consumed_length_m ?? 0), 0), 0));
     const availableWeightKg = round3(Math.max(totalStockWeightKg - reservedWeightKg, 0));
     const availableLengthM = round3(Math.max(totalStockLengthM - reservedLengthM, 0));
     const shortageKg = round3(Math.max(requirement.requiredWeightKg - availableWeightKg, 0));
-    return { ...requirement, totalStockWeightKg, availableWeightKg, reservedWeightKg, totalStockLengthM, availableLengthM, reservedLengthM, shortageKg, ready: shortageKg === 0 };
+    return { ...requirement, totalStockWeightKg, availableWeightKg, reservedWeightKg, totalStockLengthM, availableLengthM, reservedLengthM, shortageKg,
+      ready: shortageKg === 0 && availableLengthM >= requirement.requiredLengthM };
   });
 }
 

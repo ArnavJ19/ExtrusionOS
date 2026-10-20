@@ -9,6 +9,17 @@ import {
 } from "../lib/systems-configurator/inventory-reservation.ts";
 
 describe("reservation availability after partial dispatch", () => {
+  it("requires enough usable metres as well as kilograms for BOM readiness", () => {
+    const requirement = { profileId: "p1", profileCode: "P1", profileName: "Profile", requiredWeightKg: 20, requiredLengthM: 10 };
+    const batches = [
+      { id: "available", profile_id: "p1", total_weight_kg: 30, length_m: 5, status: "available" },
+      { id: "hold", profile_id: "p1", total_weight_kg: 999, length_m: 999, status: "quality_hold" }
+    ];
+    const [status] = buildProfileReservationStatus([requirement], batches, []);
+    assert.equal(status.availableWeightKg, 30);
+    assert.equal(status.availableLengthM, 5);
+    assert.equal(status.ready, false);
+  });
   it("subtracts consumed kg, metres, and pieces from active holds", () => {
     const batch = { id: "batch-1", profile_id: "profile-1", total_weight_kg: 40, length_m: 20, quantity_pieces: 4, status: "reserved" };
     const reservation = {

@@ -13,7 +13,11 @@ export function displayValue(row: Record<string, any>, path: string, type?: stri
   const value = getPath(row, path) ?? (path.endsWith("company_name") ? getPath(row, path.replace("company_name", "customer_name")) : null);
   if (type === "badge" && value) return <Badge value={String(value)} />;
   if (type === "date") return formatDate(value);
-  if (type === "currency") return <NumberTicker value={Number(value ?? 0)} prefix="₹" decimals={0} />;
+  if (type === "currency") {
+    // Show paise and label the record's own currency; non-INR amounts are never shown as rupees (RPT-07).
+    const currency = typeof row.currency === "string" && row.currency ? row.currency : "INR";
+    return <NumberTicker value={Number(value ?? 0)} prefix={currency === "INR" ? "₹" : `${currency} `} decimals={2} />;
+  }
   if (type === "weight") return <NumberTicker value={Number(value ?? 0)} suffix=" kg" decimals={3} />;
   if (type === "number") return <NumberTicker value={Number(value ?? 0)} />;
   if (typeof value === "boolean") return value ? "Yes" : "No";

@@ -152,8 +152,10 @@ test("advanced analytics snapshot computes conversion, delay, receivable, and ri
   assert.equal(snapshot.kpis.receivableOutstanding, 150000);
   assert.equal(snapshot.kpis.overdueInvoices, 2);
   assert.equal(snapshot.kpis.collectionsMtd, 120000);
-  assert.equal(snapshot.kpis.expenseRunRateMtd, 80000);
-  assert.equal(snapshot.kpis.expensePaidRateMtd, 25);
+  // RPT-01: a pending-approval expense is a commitment, not booked spend.
+  assert.equal(snapshot.kpis.expenseRunRateMtd, 50000);
+  assert.equal(snapshot.kpis.expensePaidRateMtd, 40);
+  assert.equal(snapshot.kpis.expenseCommitments, 30000);
   assert.equal(snapshot.kpis.qualityPassRateMtd, 50);
   assert.equal(snapshot.kpis.inventoryAtRiskCount, 2);
   assert.equal(snapshot.kpis.inventoryOutOfStockCount, 2);

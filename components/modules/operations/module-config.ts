@@ -1,7 +1,8 @@
 import type { ZodSchema } from "zod";
-import { aluminiumScrapSchema, customerSchema, dispatchSchema, expenseLedgerSchema, expensePaymentSchema, externalAluminiumSourceSchema, foundryBatchSchema, inventoryItemSchema, invoiceSchema, orderSchema, packagingJobSchema, packagingMaterialSchema, packagingMaterialPurchaseSchema, packagingJobMaterialSchema, productionJobSchema, profileSchema, qualityInspectionSchema, vendorSchema, machineSchema } from "@/lib/validations/schemas";
+import { aluminiumScrapSchema, customerSchema, dispatchSchema, externalAluminiumSourceSchema, foundryBatchSchema, inventoryItemSchema, invoiceSchema, orderSchema, packagingJobSchema, packagingMaterialSchema, packagingMaterialPurchaseSchema, packagingJobMaterialSchema, productionJobSchema, profileSchema, qualityInspectionSchema, vendorSchema, machineSchema } from "@/lib/validations/schemas";
 import { aluminiumScrapQualities, applicationCategories, customerTypes, deliveryStatuses, externalAluminiumSourceTypes, foundryBatchStatuses, inventoryCategories, invoiceStatuses, orderPriorities, orderStages, packagingCalculationMethods, packagingJobStatuses, packagingMaterialTypes, productionJobStatuses, qualityStatuses, quoteStatuses, standardAlloys, standardTempers, vendorTypes } from "@/types/app";
 import type { Resource } from "@/lib/auth/permissions";
+import { expenseCategories, manualExpenseInputSchema } from "@/lib/financials/expenses";
 
 export type ModuleKey = "orders" | "quotes" | "dispatches" | "production" | "foundry" | "foundry_external_sources" | "foundry_scrap" | "foundry_billets" | "outsourced_billets" | "packaging" | "packaging_materials" | "packaging_material_purchases" | "packaging_job_materials" | "inventory" | "customers" | "profiles" | "quality" | "invoices" | "vendors" | "tasks" | "payments" | "expenses" | "expense_payments" | "machines";
 
@@ -52,6 +53,8 @@ export type ModuleConfig = {
   schema?: ZodSchema<any>;
   defaultValues?: Record<string, any>;
   fields?: FieldConfig[];
+  // Dedicated create route for modules whose writes are server-owned (no generic fields).
+  createHref?: string;
   numberPrefix?: string;
   numberField?: string;
   uniqueField?: string;
@@ -371,7 +374,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { name: "invoice_number", label: "Invoice number" },
       { name: "invoice_date", label: "Invoice date", type: "date" },
       { name: "due_date", label: "Due date", type: "date" },
-      { name: "payment_status", label: "Payment status", type: "select", options: options(["unpaid", "partially_paid", "paid", "overdue", "cancelled", "reversed"]) },
+      { name: "payment_status", label: "Payment status (maintained from Expenses)", type: "select", readOnly: true, options: options(["unpaid", "partially_paid", "paid", "overdue", "cancelled", "reversed"]) },
       { name: "payment_method", label: "Payment method" },
       { name: "available_weight_kg", label: "Available kg", type: "number", step: "0.001", readOnly: true },
       { name: "quantity", label: "Quantity", type: "number", step: "0.001" },
@@ -516,7 +519,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { name: "invoice_number", label: "Invoice number" },
       { name: "invoice_date", label: "Invoice date", type: "date" },
       { name: "due_date", label: "Due date", type: "date" },
-      { name: "payment_status", label: "Payment status", type: "select", options: options(["unpaid", "partially_paid", "paid", "overdue", "cancelled", "reversed"]) },
+      { name: "payment_status", label: "Payment status (maintained from Expenses)", type: "select", readOnly: true, options: options(["unpaid", "partially_paid", "paid", "overdue", "cancelled", "reversed"]) },
       { name: "payment_method", label: "Payment method" },
       { name: "status", label: "Status", type: "select", options: options(["received", "consumed", "cancelled"]) },
       { name: "notes", label: "Notes", type: "textarea" }
@@ -571,7 +574,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { name: "invoice_number", label: "Invoice number" },
       { name: "invoice_date", label: "Invoice date", type: "date" },
       { name: "due_date", label: "Due date", type: "date" },
-      { name: "payment_status", label: "Payment status", type: "select", options: options(["unpaid", "partially_paid", "paid", "overdue", "cancelled", "reversed"]) },
+      { name: "payment_status", label: "Payment status (maintained from Expenses)", type: "select", readOnly: true, options: options(["unpaid", "partially_paid", "paid", "overdue", "cancelled", "reversed"]) },
       { name: "payment_method", label: "Payment method" },
       { name: "available_weight_kg", label: "Available kg", type: "number", step: "0.001", readOnly: true },
       { name: "vendor_id", label: "Vendor", type: "select", lookup: vendorLookup },
@@ -614,11 +617,12 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     schema: packagingJobSchema,
     numberPrefix: "PKG",
     numberField: "packaging_number",
-    defaultValues: { packaging_number: "", order_id: "", production_job_id: "", scheduled_date: new Date().toISOString().slice(0, 10), pieces: 0, profile_weight_kg: 0, profile_length_m: 0, status: "scheduled", notes: "" },
+    defaultValues: { packaging_number: "", order_id: "", production_job_id: "", finishing_job_id: "", scheduled_date: new Date().toISOString().slice(0, 10), pieces: 0, profile_weight_kg: 0, profile_length_m: 0, status: "scheduled", notes: "" },
     fields: [
       { name: "packaging_number", label: "Packaging ID" },
       { name: "order_id", label: "Order waiting packaging", type: "select", required: true, lookup: orderLookup },
-      { name: "production_job_id", label: "Completed production job", type: "select", required: true, lookup: { table: "production_jobs", select: "id, job_number, order_id, status", labelFields: ["job_number"], orderBy: "created_at", filter: { status: "completed" } } },
+      { name: "production_job_id", label: "Completed production job", type: "select", required: true, lookup: { table: "production_jobs", select: "id, job_number, order_id, status, finishing_type, actual_quantity_kg, actual_pieces, actual_meters, pieces, length_per_piece_m", labelFields: ["job_number"], orderBy: "created_at", filter: { status: "completed" } } },
+      { name: "finishing_job_id", label: "Accepted finishing receipt", type: "select", lookup: { table: "finishing_accepted_outputs", select: "id, production_job_id, order_id, finishing_type, status, output_weight_kg, received_date, receipt_kind", labelFields: ["finishing_type", "receipt_kind", "received_date", "output_weight_kg"], orderBy: "created_at" } },
       { name: "scheduled_date", label: "Scheduled date", type: "date" },
       { name: "pieces", label: "Pieces", type: "number" },
       { name: "profile_weight_kg", label: "Profile weight kg", type: "number", step: "0.001" },
@@ -729,7 +733,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { name: "invoice_number", label: "Invoice number" },
       { name: "invoice_date", label: "Invoice date", type: "date" },
       { name: "due_date", label: "Due date", type: "date" },
-      { name: "payment_status", label: "Payment status", type: "select", options: options(["unpaid", "partially_paid", "paid", "overdue", "cancelled", "reversed"]) },
+      { name: "payment_status", label: "Payment status (maintained from Expenses)", type: "select", readOnly: true, options: options(["unpaid", "partially_paid", "paid", "overdue", "cancelled", "reversed"]) },
       { name: "payment_method", label: "Payment method" },
       { name: "notes", label: "Notes", type: "textarea" }
     ],
@@ -807,7 +811,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     defaultValues: { production_job_id: "", finishing_job_id: "", profile_id: "", inspection_date: new Date().toISOString().slice(0, 10), batch_number: "", quantity_checked_kg: 0, dimensional_variance: "", hardness_webster: "", surface_finish_ok: true, weight_per_meter_actual: "", status: "pending", inspector_name: "", notes: "" },
     fields: [
       { name: "production_job_id", label: "Completed production job", type: "select", required: true, lookup: { table: "production_jobs", select: "id, job_number, profile_id, order_id, status, finishing_type, actual_quantity_kg", labelFields: ["job_number"], orderBy: "created_at", filter: { status: "completed" } } },
-      { name: "finishing_job_id", label: "Completed finishing job", type: "select", lookup: { table: "finishing_jobs", select: "id, production_job_id, finishing_type, status, output_weight_kg", labelFields: ["finishing_type"], orderBy: "created_at", filter: { status: "completed" } } },
+      { name: "finishing_job_id", label: "Accepted finishing receipt", type: "select", lookup: { table: "finishing_accepted_outputs", select: "id, production_job_id, order_id, finishing_type, status, output_weight_kg, received_date, receipt_kind", labelFields: ["finishing_type", "receipt_kind", "received_date", "output_weight_kg"], orderBy: "created_at" } },
       { name: "profile_id", label: "Profile", type: "select", required: true, readOnly: true, lookup: profileLookup },
       { name: "inspection_date", label: "Inspection date", type: "date", required: true },
       { name: "batch_number", label: "Batch number" },
@@ -845,7 +849,8 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
     primaryAction: "Create Manual Expense",
     databaseAction: "View Expense Database",
     groupField: "approval_status",
-    groups: ["draft", "pending_approval", "approved", "rejected", "paid", "cancelled", "reversed"],
+    // Settlement lives in payment_status (ledger-derived); "paid" is not an approval decision.
+    groups: ["draft", "pending_approval", "approved", "rejected", "cancelled", "reversed"],
     searchPlaceholder: "Search expense number, category, invoice, vendor, description...",
     searchFields: ["expense_number", "expense_category", "expense_subcategory", "invoice_number", "description", "source_module", "source_submodule", "source_label"],
     dateFilterField: "created_at",
@@ -875,13 +880,8 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
         { label: "Balance", path: "balance_amount", type: "currency" }
       ]
     },
-    schema: expenseLedgerSchema,
+    schema: manualExpenseInputSchema,
     defaultValues: {
-      source_module: "manual",
-      source_submodule: "manual_expense",
-      source_table: "",
-      source_record_id: "",
-      source_label: "",
       expense_category: "office_and_administration",
       expense_subcategory: "miscellaneous",
       vendor_id: "",
@@ -895,58 +895,50 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       discount_amount: 0,
       total_amount: 0,
       currency: "INR",
-      payment_status: "unpaid",
       payment_method: "",
       invoice_number: "",
       invoice_date: "",
       due_date: "",
-      paid_date: "",
       cost_center: "",
       department: "",
       machine_id: "",
       inventory_item_id: "",
-      maintenance_record_id: "",
-      approval_status: "draft",
-      notes: ""
+      notes: "",
+      submit: false
     },
+    // Manual expenses only. Source-linked costs are edited at their source; approval and
+    // settlement state are changed by the approval workflow and the payment ledger.
     fields: [
-      { name: "source_module", label: "Source module", type: "select", options: options(["manual", "foundry", "inventory", "maintenance", "dies", "packaging", "utilities", "admin"]) },
-      { name: "source_submodule", label: "Source submodule" },
-      { name: "source_table", label: "Source table" },
-      { name: "source_record_id", label: "Source record ID" },
-      { name: "source_label", label: "Source label" },
-      { name: "expense_category", label: "Category", type: "select", options: options(["raw_material", "scrap_purchase", "external_aluminium_source", "packaging_material", "spare_parts", "maintenance_repairs", "dies_tooling", "utilities", "fuel_oils", "chemicals", "freight_logistics", "labour_vendor_services", "office_and_administration", "production_consumables", "surface_treatment", "factory_overheads", "miscellaneous"]) },
+      { name: "expense_category", label: "Category", type: "select", required: true, options: options([...expenseCategories]) },
       { name: "expense_subcategory", label: "Subcategory" },
       { name: "vendor_id", label: "Vendor", type: "select", lookup: vendorLookup },
       { name: "description", label: "Description", required: true, type: "textarea" },
       { name: "quantity", label: "Quantity", type: "number", step: "0.001" },
       { name: "unit", label: "Unit" },
-      { name: "rate", label: "Rate", type: "number", step: "0.01" },
-      { name: "base_amount", label: "Base amount", type: "number", step: "0.01" },
-      { name: "tax_amount", label: "Tax amount", type: "number", step: "0.01" },
+      { name: "rate", label: "Rate (leave 0 for a lump-sum base)", type: "number", step: "0.01" },
+      { name: "base_amount", label: "Base amount (quantity x rate when a rate is entered)", type: "number", step: "0.01" },
+      { name: "tax_amount", label: "GST / tax amount", type: "number", step: "0.01" },
       { name: "freight_amount", label: "Freight amount", type: "number", step: "0.01" },
       { name: "discount_amount", label: "Discount amount", type: "number", step: "0.01" },
-      { name: "total_amount", label: "Total amount", type: "number", step: "0.01" },
-      { name: "currency", label: "Currency", type: "select", options: options(["INR", "USD", "EUR", "AED", "GBP", "other"]) },
-      { name: "payment_status", label: "Payment status", type: "select", options: options(["unpaid", "partially_paid", "paid", "overdue", "cancelled", "reversed"]) },
-      { name: "payment_method", label: "Payment method" },
-      { name: "invoice_number", label: "Invoice number" },
-      { name: "invoice_date", label: "Invoice date", type: "date" },
+      { name: "total_amount", label: "Total amount (calculated)", type: "number", step: "0.01", readOnly: true },
+      { name: "currency", label: "Currency", type: "select", readOnly: true, options: [{ value: "INR", label: "INR" }] },
+      { name: "payment_method", label: "Expected payment method" },
+      { name: "invoice_number", label: "Vendor bill number" },
+      { name: "invoice_date", label: "Bill date", type: "date" },
       { name: "due_date", label: "Due date", type: "date" },
-      { name: "paid_date", label: "Paid date", type: "date" },
       { name: "cost_center", label: "Cost center" },
       { name: "department", label: "Department" },
       { name: "machine_id", label: "Machine", type: "select", lookup: { table: "machines", select: "id, machine_name", labelFields: ["machine_name"], orderBy: "machine_name" } },
       { name: "inventory_item_id", label: "Inventory item", type: "select", lookup: { table: "inventory_items", select: "id, item_code, item_name", labelFields: ["item_code", "item_name"], orderBy: "item_name" } },
-      { name: "maintenance_record_id", label: "Maintenance record ID" },
-      { name: "approval_status", label: "Approval status", type: "select", options: options(["draft", "pending_approval", "approved", "rejected", "paid", "cancelled", "reversed"]) },
-      { name: "notes", label: "Notes", type: "textarea" }
+      { name: "notes", label: "Notes", type: "textarea" },
+      { name: "submit", label: "Submit for approval when saving", type: "checkbox" }
     ],
     emptyState: { title: "No expenses posted", description: "Create manual expenses or post source transactions from foundry and inventory to build centralized spend visibility." },
     detailIntro: "Track one expense with source linkage, invoice details, payment trail, approvals, and cost attribution context.",
     detailSections: [
-      { title: "Financial", fields: [{ label: "Category", path: "expense_category", type: "badge" }, { label: "Subcategory", path: "expense_subcategory" }, { label: "Base", path: "base_amount", type: "currency" }, { label: "Tax", path: "tax_amount", type: "currency" }, { label: "Freight", path: "freight_amount", type: "currency" }, { label: "Discount", path: "discount_amount", type: "currency" }, { label: "Total", path: "total_amount", type: "currency" }, { label: "Balance", path: "balance_amount", type: "currency" }] },
-      { title: "Workflow", fields: [{ label: "Payment status", path: "payment_status", type: "badge" }, { label: "Approval status", path: "approval_status", type: "badge" }, { label: "Invoice number", path: "invoice_number" }, { label: "Invoice date", path: "invoice_date", type: "date" }, { label: "Due date", path: "due_date", type: "date" }, { label: "Paid date", path: "paid_date", type: "date" }] },
+      { title: "Financial", fields: [{ label: "Category", path: "expense_category", type: "badge" }, { label: "Subcategory", path: "expense_subcategory" }, { label: "Vendor", path: "vendor_name_snapshot" }, { label: "Currency", path: "currency" }, { label: "Base", path: "base_amount", type: "currency" }, { label: "Tax", path: "tax_amount", type: "currency" }, { label: "Freight", path: "freight_amount", type: "currency" }, { label: "Discount", path: "discount_amount", type: "currency" }, { label: "Total", path: "total_amount", type: "currency" }] },
+      { title: "Settlement", fields: [{ label: "Supplier payments", path: "amount_paid", type: "currency" }, { label: "Supplier refunds", path: "refunded_amount", type: "currency" }, { label: "Supplier credit notes", path: "credited_amount", type: "currency" }, { label: "Balance payable", path: "balance_amount", type: "currency" }, { label: "Supplier credit due", path: "supplier_credit_due", type: "currency" }, { label: "Payment status", path: "payment_status", type: "badge" }, { label: "Settled on", path: "paid_date", type: "date" }] },
+      { title: "Workflow", fields: [{ label: "Approval status", path: "approval_status", type: "badge" }, { label: "Approval note", path: "approval_note" }, { label: "Approved at", path: "approved_at", type: "date" }, { label: "Bill number", path: "invoice_number" }, { label: "Bill date", path: "invoice_date", type: "date" }, { label: "Due date", path: "due_date", type: "date" }] },
       { title: "Source Link", fields: [{ label: "Source module", path: "source_module", type: "badge" }, { label: "Source submodule", path: "source_submodule" }, { label: "Source table", path: "source_table" }, { label: "Source record", path: "source_record_id" }, { label: "Source label", path: "source_label" }] }
     ],
     relatedRecords: [
@@ -974,10 +966,12 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { id: "description", header: "Description", path: "expense_ledger.description" },
       { id: "amount_paid", header: "Amount Paid", path: "amount_paid", type: "currency", sortable: true },
       { id: "payment_method", header: "Method", path: "payment_method", sortable: true },
-      { id: "reference_number", header: "Reference", path: "reference_number", sortable: true }
+      { id: "reference_number", header: "Reference", path: "reference_number", sortable: true },
+      { id: "status", header: "Status", path: "status", type: "badge", sortable: true }
     ],
     card: {
       titlePath: "expense_ledger.expense_number",
+      badgePath: "status",
       subtitlePath: "reference_number",
       meta: [
         { label: "Date", path: "payment_date", type: "date" },
@@ -985,7 +979,8 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
         { label: "Method", path: "payment_method" }
       ]
     },
-    schema: expensePaymentSchema,
+    // Supplier payments are posted by ExpensePaymentFormClient through record_expense_payment_atomic;
+    // these fields only describe the entry for generic pages and never write directly.
     defaultValues: {
       expense_ledger_id: "",
       payment_date: new Date().toISOString().slice(0, 10),
@@ -996,7 +991,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       notes: ""
     },
     fields: [
-      { name: "expense_ledger_id", label: "Expense", type: "select", required: true, lookup: { table: "expense_ledger", select: "id, expense_number, description, payment_status", labelFields: ["expense_number", "description"], orderBy: "created_at" } },
+      { name: "expense_ledger_id", label: "Expense", type: "select", required: true, lookup: { table: "expense_ledger", select: "id, expense_number, description, payment_status", labelFields: ["expense_number", "description"], orderBy: "created_at", filter: { approval_status: "approved" } } },
       { name: "payment_date", label: "Payment date", type: "date", required: true },
       { name: "amount_paid", label: "Amount paid", type: "number", required: true, step: "0.01" },
       { name: "payment_method", label: "Payment method" },
@@ -1119,7 +1114,7 @@ moduleConfigs.invoices.detailIntro = "Track billing value, due date, paid amount
 moduleConfigs.invoices.detailSections = [
   { title: "GST", fields: [{ label: "Supplier state code", path: "supplier_state_code" }, { label: "Place of supply state code", path: "place_of_supply_state_code" }, { label: "CGST", path: "cgst_amount", type: "currency" }, { label: "SGST", path: "sgst_amount", type: "currency" }, { label: "UTGST", path: "utgst_amount", type: "currency" }, { label: "IGST", path: "igst_amount", type: "currency" }] },
   { title: "Billing", fields: [{ label: "Customer", path: "customers.company_name" }, { label: "Status", path: "status", type: "badge" }, { label: "Invoice date", path: "invoice_date", type: "date" }, { label: "Due date", path: "due_date", type: "date" }] },
-  { title: "Receivable", fields: [{ label: "Subtotal", path: "subtotal", type: "currency" }, { label: "Tax", path: "tax_total", type: "currency" }, { label: "Grand total", path: "grand_total", type: "currency" }, { label: "Balance due", path: "balance_due", type: "currency" }] }
+  { title: "Receivable", fields: [{ label: "Subtotal", path: "subtotal", type: "currency" }, { label: "Tax", path: "tax_total", type: "currency" }, { label: "Grand total", path: "grand_total", type: "currency" }, { label: "Receipts and adjustments (net of refunds)", path: "amount_paid", type: "currency" }, { label: "Return credit notes", path: "credited_amount", type: "currency" }, { label: "Balance due", path: "balance_due", type: "currency" }, { label: "Customer refund due", path: "customer_credit_due", type: "currency" }, { label: "Paid on", path: "paid_date", type: "date" }] }
 ];
 moduleConfigs.invoices.title = "Invoices";
 moduleConfigs.invoices.databaseTitle = "Invoice Database";
@@ -1134,6 +1129,8 @@ moduleConfigs.invoices.emptyState = {
 // from accidentally reintroducing browser-owned totals or receipt statuses.
 moduleConfigs.invoices.schema = undefined;
 moduleConfigs.invoices.fields = undefined;
+// The dedicated atomic invoice form stays the only create path (UX-01).
+moduleConfigs.invoices.createHref = "/invoices/new";
 moduleConfigs.invoices.relatedRecords = [
   { label: "Customer Receipts", table: "payments", field: "invoice_id", href: "/payments/database", hint: "Posted and reversed receipts for this invoice" }
 ];

@@ -1,29 +1,4 @@
-export type CostEntry = {
-  id: string;
-  customer_name: string;
-  profile_name: string;
-  die_code: string;
-  salesperson: string;
-  product_category: string;
-  finishing_type: string;
-  branch: string;
-  month_key: string;
-  revenue: number;
-  total_weight_kg: number;
-  rate_per_kg: number;
-  material_cost: number;
-  conversion_cost: number;
-  finishing_cost: number;
-  packing_cost: number;
-  transport_cost: number;
-  scrap_cost: number;
-  energy_cost: number;
-  die_cost_allocated: number;
-  overhead_cost: number;
-  other_cost: number;
-  payment_days: number;
-  payment_status: string;
-};
+import { z } from "zod";
 
 export type ProfitAlert = {
   id: string;
@@ -37,73 +12,66 @@ export type ProfitAlert = {
   is_acknowledged: boolean;
 };
 
-export function totalCost(e: CostEntry) {
-  return e.material_cost + e.conversion_cost + e.finishing_cost + e.packing_cost +
-    e.transport_cost + e.scrap_cost + e.energy_cost + e.die_cost_allocated +
-    e.overhead_cost + e.other_cost;
-}
-
-export function grossMargin(e: CostEntry) { return e.revenue - totalCost(e); }
-export function marginPct(e: CostEntry) { return e.revenue > 0 ? (grossMargin(e) / e.revenue) * 100 : 0; }
-
 export const DIMENSIONS = ["customer", "profile", "die", "salesperson", "category", "finishing", "branch", "month"] as const;
 export type Dimension = typeof DIMENSIONS[number];
 
-export function getDimensionKey(e: CostEntry, dim: Dimension): string {
-  switch (dim) {
-    case "customer": return e.customer_name;
-    case "profile": return e.profile_name;
-    case "die": return e.die_code;
-    case "salesperson": return e.salesperson;
-    case "category": return e.product_category;
-    case "finishing": return e.finishing_type;
-    case "branch": return e.branch;
-    case "month": return e.month_key;
-  }
+// Server-side aggregates from get_profitability_summary (RPT-05). Every company row is
+// included; rows with any unknown cost component are counted as incomplete and excluded
+// from cost and margin instead of being costed at zero (RPT-08). Pay days come from the
+// settling receipt of paid invoices; open invoices are reported as outstanding age (RPT-09).
+const amount = z.union([z.number(), z.string()]).pipe(z.coerce.number().finite());
+const optionalAmount = z.union([z.number(), z.string(), z.null()]).transform((value) => (value === null ? null : Number(value)))
+  .refine((value) => value === null || Number.isFinite(value));
+
+const group = z.object({
+  key: z.string(),
+  rows: amount,
+  incompleteRows: amount,
+  revenue: amount,
+  completeRevenue: amount,
+  totalCost: amount,
+  margin: amount,
+  marginPct: optionalAmount,
+  scrapCost: amount,
+  weightKg: amount,
+  avgPayDays: optionalAmount,
+  settledRows: amount,
+  avgOpenAgeDays: optionalAmount,
+  openRows: amount
+});
+
+const summarySchema = z.object({
+  dimension: z.enum(DIMENSIONS),
+  totals: z.object({
+    rows: amount,
+    incompleteRows: amount,
+    revenue: amount,
+    completeRevenue: amount,
+    totalCost: amount,
+    margin: amount,
+    weightKg: amount,
+    scrapCost: amount,
+    avgPayDays: optionalAmount,
+    settledRows: amount,
+    avgOpenAgeDays: optionalAmount,
+    openRows: amount
+  }),
+  groups: z.array(group)
+});
+
+export type ProfitabilitySummary = z.infer<typeof summarySchema>;
+export type ProfitabilityGroup = z.infer<typeof group>;
+
+export function parseProfitabilitySummary(value: unknown): ProfitabilitySummary | null {
+  const parsed = summarySchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
 }
 
-export type AggRow = {
-  key: string;
-  revenue: number;
-  totalCost: number;
-  margin: number;
-  marginPct: number;
-  materialCost: number;
-  conversionCost: number;
-  finishingCost: number;
-  scrapCost: number;
-  energyCost: number;
-  transportCost: number;
-  avgPayDays: number;
-  weightKg: number;
-  orders: number;
-};
+export function marginPercent(margin: number, completeRevenue: number) {
+  return completeRevenue > 0 ? (margin / completeRevenue) * 100 : null;
+}
 
-export function aggregate(entries: CostEntry[], dim: Dimension): AggRow[] {
-  const map = new Map<string, CostEntry[]>();
-  entries.forEach((e) => {
-    const k = getDimensionKey(e, dim);
-    map.set(k, [...(map.get(k) || []), e]);
-  });
-  return Array.from(map.entries()).map(([key, items]) => {
-    const rev = items.reduce((s, e) => s + e.revenue, 0);
-    const tc = items.reduce((s, e) => s + totalCost(e), 0);
-    const mg = rev - tc;
-    return {
-      key,
-      revenue: rev,
-      totalCost: tc,
-      margin: mg,
-      marginPct: rev > 0 ? (mg / rev) * 100 : 0,
-      materialCost: items.reduce((s, e) => s + e.material_cost, 0),
-      conversionCost: items.reduce((s, e) => s + e.conversion_cost, 0),
-      finishingCost: items.reduce((s, e) => s + e.finishing_cost, 0),
-      scrapCost: items.reduce((s, e) => s + e.scrap_cost, 0),
-      energyCost: items.reduce((s, e) => s + e.energy_cost, 0),
-      transportCost: items.reduce((s, e) => s + e.transport_cost, 0),
-      avgPayDays: Math.round(items.reduce((s, e) => s + e.payment_days, 0) / items.length),
-      weightKg: items.reduce((s, e) => s + e.total_weight_kg, 0),
-      orders: items.length,
-    };
-  }).sort((a, b) => b.revenue - a.revenue);
+export function sortGroups(groups: ProfitabilityGroup[], sortBy: "revenue" | "margin" | "marginPct", direction: "asc" | "desc") {
+  const value = (row: ProfitabilityGroup) => (sortBy === "marginPct" ? row.marginPct ?? Number.NEGATIVE_INFINITY : row[sortBy]);
+  return [...groups].sort((a, b) => (direction === "desc" ? value(b) - value(a) : value(a) - value(b)) || a.key.localeCompare(b.key));
 }

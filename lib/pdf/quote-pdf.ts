@@ -1,6 +1,8 @@
 import { PDFDocument, StandardFonts, rgb, PDFFont, PDFPage } from "pdf-lib/cjs";
 import { formatCurrency, formatDate, formatMeters, formatWeight } from "@/lib/utils/format";
 import { numberToWordsINR } from "@/lib/utils/number-to-words";
+import { PdfTextKit } from "@/lib/pdf/unicode-text";
+import { nodeFontLoader } from "@/lib/pdf/font-loader-node";
 
 const ORANGE = rgb(0.98, 0.45, 0.09);
 const DARK = rgb(0.07, 0.09, 0.13);
@@ -16,6 +18,7 @@ const MARGIN_TOP = 36;
 const MARGIN_BOTTOM = 42;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_X * 2;
 
+// Indian-script names and addresses are preserved; PdfTextKit embeds the needed fonts (PDF-06).
 function sanitizeText(text: string | null | undefined) {
   if (!text) return "";
   return text
@@ -24,44 +27,27 @@ function sanitizeText(text: string | null | undefined) {
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/[\u2013\u2014]/g, "-")
     .replace(/\u2026/g, "...")
-    .replace(/[\u202F\u200B]/g, " ")
-    .replace(/[^\x00-\xFF]/g, ""); 
+    .replace(/[\u202F\u200B]/g, " ");
+  // Indian-script names and addresses are preserved; PdfTextKit embeds the needed fonts (PDF-06).
 }
 
 function formatPdfCurrency(value: number | string | null | undefined) {
   return formatCurrency(value).replace(/\u20B9/g, "Rs. ");
 }
 
-function splitTextIntoLines(text: string, font: PDFFont, size: number, maxWidth: number) {
-  const lines = text.split('\n');
-  const result: string[] = [];
-  for (const line of lines) {
-    if (!line.trim()) {
-      result.push('');
-      continue;
-    }
-    const words = line.split(' ');
-    let currentLine = words[0] || '';
-    for (let i = 1; i < words.length; i++) {
-      const word = words[i];
-      const testLine = currentLine + ' ' + word;
-      const width = font.widthOfTextAtSize(testLine, size);
-      if (width > maxWidth) {
-        result.push(currentLine);
-        currentLine = word;
-      } else {
-        currentLine = testLine;
-      }
-    }
-    result.push(currentLine);
-  }
-  return result;
-}
 
 export async function buildQuotePdf(data: { company: any; settings: any; quote: any; items: any[] }) {
   const pdf = await PDFDocument.create();
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const collectText = (value: unknown, out: string[] = []): string[] => {
+    if (typeof value === "string") out.push(value);
+    else if (Array.isArray(value)) value.forEach((entry) => collectText(entry, out));
+    else if (value && typeof value === "object") Object.values(value).forEach((entry) => collectText(entry, out));
+    return out;
+  };
+  const kit = await PdfTextKit.create(pdf, nodeFontLoader, collectText(data));
+  const isBold = (font: PDFFont) => font === bold;
   
   let page!: PDFPage;
   let currentY = 0;
@@ -83,11 +69,11 @@ export async function buildQuotePdf(data: { company: any; settings: any; quote: 
     const sanitized = sanitizeText(text);
     
     let currentSize = size;
-    let textWidth = font.widthOfTextAtSize(sanitized, currentSize);
+    let textWidth = kit.measure(sanitized, currentSize, isBold(font));
     
     if (maxWidth && textWidth > maxWidth) {
       currentSize = Math.max(4, size * (maxWidth / textWidth));
-      textWidth = font.widthOfTextAtSize(sanitized, currentSize);
+      textWidth = kit.measure(sanitized, currentSize, isBold(font));
     }
     
     let drawX = x;
@@ -96,15 +82,15 @@ export async function buildQuotePdf(data: { company: any; settings: any; quote: 
     } else if (align === 'center') {
       drawX = x - textWidth / 2;
     }
-    page.drawText(sanitized, { x: drawX, y, font, size: currentSize, color });
+    kit.draw(page, sanitized, { x: drawX, y, size: currentSize, bold: isBold(font), color });
   };
 
   const drawWrappedText = (text: string, x: number, y: number, maxWidth: number, font: PDFFont, size: number, lineHeight: number, color = TEXT) => {
-    const lines = splitTextIntoLines(sanitizeText(text), font, size, maxWidth);
+    const lines = kit.wrap(sanitizeText(text), size, maxWidth, isBold(font));
     let tempY = y;
     for (const line of lines) {
       if (line) {
-        page.drawText(line, { x, y: tempY, font, size, color });
+        kit.draw(page, line, { x, y: tempY, size, bold: isBold(font), color });
       }
       tempY -= lineHeight;
     }
@@ -112,7 +98,7 @@ export async function buildQuotePdf(data: { company: any; settings: any; quote: 
   };
 
   const measureWrappedTextHeight = (text: string, maxWidth: number, font: PDFFont, size: number, lineHeight: number) => {
-    const lines = splitTextIntoLines(sanitizeText(text), font, size, maxWidth);
+    const lines = kit.wrap(sanitizeText(text), size, maxWidth, isBold(font));
     return lines.length * lineHeight;
   };
 

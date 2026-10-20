@@ -67,6 +67,9 @@ export type AnalyticsExpenseRow = {
   amount_paid?: MaybeNumber;
   payment_status?: string | null;
   approval_status?: string | null;
+  currency?: string | null;
+  refunded_amount?: MaybeNumber;
+  deleted_at?: MaybeDate;
   created_at?: MaybeDate;
   invoice_date?: MaybeDate;
   paid_date?: MaybeDate;
@@ -116,6 +119,7 @@ export type AnalyticsTrendPoint = {
   ordersValue: number;
   dispatchWeight: number;
   invoicedValue: number;
+  creditNoteValue?: number;
   expenseValue: number;
   collectionValue: number;
 };
@@ -135,9 +139,15 @@ export type AdvancedAnalyticsSnapshot = {
     receivableOutstanding: number;
     overdueInvoices: number;
     invoicedValueMtd: number;
+    creditNotesMtd?: number;
+    netInvoicedMtd?: number;
     collectionsMtd: number;
+    customerCreditDue?: number;
+    customerCreditDueCount?: number;
     expenseRunRateMtd: number;
     expensePaidRateMtd: number;
+    expenseCommitments?: number;
+    expenseNonInrCountMtd?: number;
     qualityPassRateMtd: number;
     inventoryAtRiskCount: number;
     inventoryOutOfStockCount: number;
@@ -149,10 +159,13 @@ export type AdvancedAnalyticsSnapshot = {
   stageBacklog: { stage: string; count: number }[];
   lowStock: { itemCode: string; itemName: string; unit: string; currentStock: number; reorderLevel: number; shortagePct: number }[];
   overdueInvoiceList: { invoiceNumber: string; customer: string; dueDate: string | null; balanceDue: number; status: string }[];
+  customerCreditList?: { invoiceId?: string | null; invoiceNumber: string; customer: string; creditDue: number; status: string }[];
+  expenseByCurrency?: { currency: string; bookedMtd: number; count: number }[];
   risks: string[];
-  dataQuality?: { version: string; asOf: string; generatedAt: string; currentStateAt: string; unknownShipmentCount: number };
+  dataQuality?: { version: string; asOf: string; generatedAt: string; currentStateAt: string; unknownShipmentCount: number; financeDetail?: boolean };
 };
 
+export const SUPPORTED_ANALYTICS_VERSIONS = ["20261008", "20261020"] as const;
 const analyticsNumber = z.union([z.number(), z.string().min(1)]).pipe(z.coerce.number().finite());
 const advancedAnalyticsSnapshotSchema = z.object({
   kpis: z.object({
@@ -169,9 +182,15 @@ const advancedAnalyticsSnapshotSchema = z.object({
     receivableOutstanding: analyticsNumber,
     overdueInvoices: analyticsNumber,
     invoicedValueMtd: analyticsNumber,
+    creditNotesMtd: analyticsNumber.optional(),
+    netInvoicedMtd: analyticsNumber.optional(),
     collectionsMtd: analyticsNumber,
+    customerCreditDue: analyticsNumber.optional(),
+    customerCreditDueCount: analyticsNumber.optional(),
     expenseRunRateMtd: analyticsNumber,
     expensePaidRateMtd: analyticsNumber,
+    expenseCommitments: analyticsNumber.optional(),
+    expenseNonInrCountMtd: analyticsNumber.optional(),
     qualityPassRateMtd: analyticsNumber,
     inventoryAtRiskCount: analyticsNumber,
     inventoryOutOfStockCount: analyticsNumber,
@@ -184,6 +203,7 @@ const advancedAnalyticsSnapshotSchema = z.object({
     ordersValue: analyticsNumber,
     dispatchWeight: analyticsNumber,
     invoicedValue: analyticsNumber,
+    creditNoteValue: analyticsNumber.optional(),
     expenseValue: analyticsNumber,
     collectionValue: analyticsNumber,
   })),
@@ -212,13 +232,27 @@ const advancedAnalyticsSnapshotSchema = z.object({
     balanceDue: analyticsNumber,
     status: z.string(),
   })),
+  customerCreditList: z.array(z.object({
+    invoiceId: z.string().nullable().optional(),
+    invoiceNumber: z.string(),
+    customer: z.string(),
+    creditDue: analyticsNumber,
+    status: z.string(),
+  })).optional(),
+  expenseByCurrency: z.array(z.object({
+    currency: z.string(),
+    bookedMtd: analyticsNumber,
+    count: analyticsNumber,
+  })).optional(),
   risks: z.array(z.string()),
   dataQuality: z.object({
-    version: z.literal("20261008"),
+    // 20261020 adds gross/net invoicing, booked-spend rules and finance-only detail.
+    version: z.enum(SUPPORTED_ANALYTICS_VERSIONS),
     asOf: z.string(),
     generatedAt: z.string().datetime({ offset: true }),
     currentStateAt: z.string().datetime({ offset: true }),
     unknownShipmentCount: z.number().int().nonnegative(),
+    financeDetail: z.boolean().optional(),
   }).optional(),
 });
 
@@ -229,7 +263,7 @@ export function parseAdvancedAnalyticsSnapshot(value: unknown): AdvancedAnalytic
 
 export function getAnalyticsEvidenceState(snapshot: AdvancedAnalyticsSnapshot | null, asOf: string, now = new Date()) {
   const quality = snapshot?.dataQuality;
-  if (!quality || quality.version !== "20261008" || quality.asOf !== asOf) return "unavailable";
+  if (!quality || !(SUPPORTED_ANALYTICS_VERSIONS as readonly string[]).includes(quality.version) || quality.asOf !== asOf) return "unavailable";
   const ages = [quality.generatedAt, quality.currentStateAt].map((time) => now.getTime() - new Date(time).getTime());
   if (ages.some((age) => !Number.isFinite(age) || age < -60_000 || age > 15 * 60_000)) return "stale";
   return quality.unknownShipmentCount > 0 ? "partial" : "verified";
@@ -305,6 +339,10 @@ function customerLabel(order: AnalyticsOrderRow) {
   return order.customers?.company_name || order.customers?.customer_name || "Unknown Customer";
 }
 
+export function isBookedExpense(expense: Pick<AnalyticsExpenseRow, "approval_status">) {
+  return expense.approval_status === "approved" || expense.approval_status === "paid";
+}
+
 export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new Date()): AdvancedAnalyticsSnapshot {
   const { today, monthStart: monthStartDate } = getBusinessDateBoundaries(now);
   const throughAsOf = (value: MaybeDate) => { const date = businessDate(value); return date !== null && date <= today; };
@@ -361,9 +399,13 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
       status: String(invoice.status ?? "sent"),
     }));
 
-  const expenseMtd = input.expenses.filter((expense) => inMtd(expense.invoice_date ?? expense.created_at));
+  // Booked spend mirrors get_advanced_analytics_snapshot 20261020: approved, undeleted INR only.
+  const liveExpenses = input.expenses.filter((expense) => !expense.deleted_at && (expense.currency ?? "INR") === "INR");
+  const expenseMtd = liveExpenses.filter((expense) => isBookedExpense(expense) && inMtd(expense.invoice_date ?? expense.created_at));
   const expenseRunRateMtd = expenseMtd.reduce((sum, expense) => sum + toNumber(expense.total_amount), 0);
-  const expensePaidMtd = expenseMtd.reduce((sum, expense) => sum + toNumber(expense.amount_paid), 0);
+  const expensePaidMtd = expenseMtd.reduce((sum, expense) => sum + toNumber(expense.amount_paid) - toNumber(expense.refunded_amount), 0);
+  const expenseCommitments = liveExpenses.filter((expense) => expense.approval_status === "pending_approval")
+    .reduce((sum, expense) => sum + toNumber(expense.total_amount), 0);
 
   const qualityMtd = input.qualityInspections.filter((inspection) => inMtd(inspection.inspection_date ?? inspection.created_at));
   const qualityApprovedMtd = qualityMtd.filter((inspection) => String(inspection.status ?? "") === "approved");
@@ -422,7 +464,7 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
   const ordersByMonth = groupByMonth(input.orders.filter((row) => row.current_stage !== "cancelled"), (row) => row.order_date, (row) => toNumber(row.order_value), axisKeys, today);
   const dispatchByMonth = groupByMonth(verifiedDispatches, (row) => row.actual_dispatched_at, (row) => toNumber(row.movement_weight_kg), axisKeys, today);
   const invoiceByMonth = groupByMonth(input.invoices.filter((row) => ISSUED_INVOICE_STATUSES.has(String(row.status))), (row) => row.invoice_date, (row) => toNumber(row.grand_total), axisKeys, today);
-  const expenseByMonth = groupByMonth(input.expenses, (row) => row.invoice_date ?? row.created_at, (row) => toNumber(row.total_amount), axisKeys, today);
+  const expenseByMonth = groupByMonth(liveExpenses.filter(isBookedExpense), (row) => row.invoice_date ?? row.created_at, (row) => toNumber(row.total_amount), axisKeys, today);
   const collectionByMonth = groupByMonth(input.payments, (row) => row.payment_date, (row) => toNumber(row.amount), axisKeys, today);
 
   const trends = axis.map((point) => ({
@@ -462,6 +504,7 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
       collectionsMtd,
       expenseRunRateMtd,
       expensePaidRateMtd: safePercent(expensePaidMtd, expenseRunRateMtd),
+      expenseCommitments,
       qualityPassRateMtd: safePercent(qualityApprovedMtd.length, qualityDecisionMtd.length),
       inventoryAtRiskCount: atRiskInventory.length,
       inventoryOutOfStockCount: activeInventoryItems.filter((item) => toNumber(item.current_stock) <= 0).length,

@@ -1,24 +1,32 @@
 import { RecordDetailClient } from "@/components/modules/operations/record-detail-client";
 import { DispatchDeliveryWorkflow } from "@/components/modules/dispatch-delivery-workflow";
 import { DispatchCreditNoteClient } from "@/components/modules/dispatch-credit-note-client";
+import { CustomerRefundForm } from "@/components/modules/financials/customer-refund-form";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
-import { formatWeight } from "@/lib/utils/format";
+import { formatDate, formatWeight } from "@/lib/utils/format";
+import { getReservationLedgerOptions, loadDispatchReservationLedgerPage, type DispatchReservationLedgerPage } from "@/lib/inventory/reservation-ledger";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
-export default async function DispatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function DispatchDetailPage({ params, searchParams }: {
+  params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { id } = await params;
   const context = await getSessionContext();
   if (!can(context.role, "read", "dispatches")) redirect("/dashboard");
   const canUpdate = can(context.role, "update", "dispatches");
+  const query = await searchParams ?? {};
+  const reservationPage = getReservationLedgerOptions({ page: query.reservationPage }).page;
   return <div className="space-y-6">
     <RecordDetailClient moduleKey="dispatches" context={context} recordId={id} canEdit={false} />
     <DispatchDeliveryPanel dispatchId={id} canUpdate={canUpdate} />
     <DispatchPackingPanel dispatchId={id} />
-    <DispatchReservationPanel dispatchId={id} />
+    <DispatchReservationPanel dispatchId={id} page={reservationPage} />
     <DispatchCreditNotePanel dispatchId={id} />
   </div>;
 }
@@ -33,7 +41,14 @@ async function DispatchCreditNotePanel({ dispatchId }: { dispatchId: string }) {
     supabase.from("credit_notes").select("id, credit_note_number, grand_total, status, reason, reversal_reason").eq("company_id", context.companyId).eq("dispatch_id", dispatchId).order("created_at", { ascending: false }).limit(1).maybeSingle()
   ]);
   if (dispatchResult.error || !dispatchResult.data) return null;
-  return <DispatchCreditNoteClient dispatchId={dispatchId} deliveryStatus={dispatchResult.data.delivery_status} invoice={(invoiceResult.data ?? null) as any} creditNote={(creditResult.data ?? null) as any} canManage={can(context.role, "create", "financials")} />;
+  const invoice = invoiceResult.data;
+  const creditNote = creditResult.data;
+  const canManage = can(context.role, "create", "financials");
+  return <div className="space-y-4">
+    <DispatchCreditNoteClient dispatchId={dispatchId} deliveryStatus={dispatchResult.data.delivery_status} invoice={(invoice ?? null) as any} creditNote={(creditNote ?? null) as any} canManage={canManage} />
+    {canManage && invoice && Number(invoice.customer_credit_due ?? 0) > 0 ? <CustomerRefundForm invoiceId={invoice.id} creditDue={Number(invoice.customer_credit_due)}
+      creditNoteId={creditNote?.status === "issued" ? creditNote.id : null} today={getBusinessDateBoundaries().today} /> : null}
+  </div>;
 }
 
 async function DispatchDeliveryPanel({ dispatchId, canUpdate }: { dispatchId: string; canUpdate: boolean }) {
@@ -94,36 +109,71 @@ async function DispatchPackingPanel({ dispatchId }: { dispatchId: string }) {
   );
 }
 
-async function DispatchReservationPanel({ dispatchId }: { dispatchId: string }) {
+async function DispatchReservationPanel({ dispatchId, page }: { dispatchId: string; page: number }) {
   const context = await getSessionContext();
+  if (!can(context.role, "read", "dispatches") || !can(context.role, "read", "inventory_reservations")) return null;
   const supabase = await createClient();
-  const dispatchResult = await supabase.from("dispatches").select("order_id, total_weight_kg, delivery_status").eq("company_id", context.companyId).eq("id", dispatchId).single();
-  if (dispatchResult.error || !dispatchResult.data) return null;
-  const reservationsResult = await supabase
-    .from("profile_stock_reservations")
-    .select("id, profile_id, reserved_weight_kg, reserved_length_m, status, aluminium_profiles(profile_code, profile_name), profile_stock_batches(bundle_number), profile_stock_consumptions(consumed_weight_kg, dispatch_id)")
-    .eq("company_id", context.companyId)
-    .eq("order_id", dispatchResult.data.order_id)
-    .order("created_at", { ascending: true });
-  const reservations = reservationsResult.data ?? [];
-  const rows = reservations.map((row: any) => {
-    const consumedWeight = (row.profile_stock_consumptions ?? []).reduce((sum: number, item: any) => sum + Number(item.consumed_weight_kg ?? 0), 0);
-    return { ...row, consumedWeight, remainingWeight: Math.max(Number(row.reserved_weight_kg ?? 0) - consumedWeight, 0) };
-  });
-  const activeReservations = rows.filter((row: any) => row.remainingWeight > 0);
-  const activeWeight = activeReservations.reduce((sum: number, row: any) => sum + Number(row.remainingWeight ?? 0), 0);
+  const pageHref = (value: number) => `/dispatches/${encodeURIComponent(dispatchId)}?reservationPage=${value}#stock-reservations`;
+  let result: DispatchReservationLedgerPage | null = null;
+  try { result = await loadDispatchReservationLedgerPage(supabase, dispatchId, page); } catch {
+    // Missing or invalid evidence cannot establish zero stock commitments.
+  }
+  if (!result) return <Card id="stock-reservations" className="border-slate-200 shadow-sm">
+    <CardHeader><h2 className="section-title">Dispatch reservations are unavailable</h2></CardHeader>
+    <CardContent><p role="alert" className="text-sm font-medium text-slate-600">Reservation quantities for the source order could not be verified. Retry after its data and database connection are restored.</p>
+      <Link href={pageHref(page)} className="mt-3 inline-block text-sm font-semibold text-orange">Retry loading reservations</Link></CardContent>
+  </Card>;
+  if (!result.ledger || !result.order_id) return <Card id="stock-reservations" className="border-slate-200 shadow-sm">
+    <CardHeader><h2 className="section-title">Order reservation ledger</h2></CardHeader>
+    <CardContent><p className="text-sm font-medium text-slate-600">No source order is linked to this dispatch. Link the correct order before reviewing its reservation quantities.</p></CardContent>
+  </Card>;
+  const ledger = result.ledger;
 
   return (
-    <Card className="border-slate-200 shadow-sm">
-      <CardHeader><h2 className="section-title">Reserved Stock Consumption</h2></CardHeader>
+    <Card id="stock-reservations" className="min-w-0 overflow-hidden border-slate-200 shadow-sm">
+      <CardHeader><div className="flex flex-wrap items-start justify-between gap-3"><h2 className="section-title">Order reservation ledger</h2>
+        <Link href="/inventory/reservations" className="text-sm font-semibold text-orange">Open inventory ledger</Link></div>
+        <p className="mt-2 text-sm text-slate-500">Totals cover the source order across all dispatches. <Link className="font-semibold text-slate-700 hover:text-orange" href={`/orders/${result.order_id}`}>Order {result.order_number ?? result.order_id}</Link></p>
+      </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div><p className="text-sm font-black text-slate-950">{activeReservations.length ? `${formatWeight(activeWeight)} reserved stock is active for this order.` : "No active stock reservations for this order."}</p><p className="mt-1 text-sm font-medium text-slate-500">Each dispatched bundle now carries its exact reservation and stock-batch provenance. Consumption is posted automatically with the dispatch, and a fully consumed reservation reduces its batch before the stock can become available again.</p></div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <DispatchReservationMetric label="Open holds" value={formatWeight(ledger.summary.open_weight_kg)} detail={`${ledger.summary.active_count.toLocaleString("en-IN")} active reservations`} />
+          <DispatchReservationMetric label="Consumed stock" value={formatWeight(ledger.summary.consumed_weight_kg)} detail="Posted consumption for the source order" />
+          <DispatchReservationMetric label="Released holds" value={formatWeight(ledger.summary.released_weight_kg)} detail="Unconsumed commitments released or cancelled" />
+          <DispatchReservationMetric label="Reservations" value={ledger.total_count.toLocaleString("en-IN")} detail="All source-order records; ten per page" />
         </div>
+        <p className="text-sm font-medium text-slate-500">Consumption is posted automatically with the dispatch. Open holds include active, unconsumed quantities. Released holds free commitments; physical returns require a recorded receipt. Lifecycle status stays as recorded.</p>
         <div className="overflow-x-auto rounded-2xl border border-slate-200">
-          <table className="industrial-table min-w-[860px]"><thead><tr><th>Profile</th><th>Bundle</th><th className="text-right">Reserved kg</th><th className="text-right">Consumed kg</th><th className="text-right">Remaining kg</th><th className="text-right">Reserved m</th><th>Status</th></tr></thead><tbody>{rows.map((row: any) => <tr key={row.id}><td className="font-black text-slate-950">{row.aluminium_profiles?.profile_code ?? "Profile"}<p className="text-xs font-semibold text-slate-500">{row.aluminium_profiles?.profile_name ?? ""}</p></td><td>{row.profile_stock_batches?.bundle_number ?? "-"}</td><td className="text-right font-semibold tabular-nums">{formatWeight(row.reserved_weight_kg)}</td><td className="text-right font-semibold tabular-nums">{formatWeight(row.consumedWeight)}</td><td className="text-right font-black tabular-nums text-slate-950">{formatWeight(row.remainingWeight)}</td><td className="text-right font-semibold tabular-nums">{Number(row.reserved_length_m ?? 0).toFixed(3)}</td><td><Badge value={row.status} /></td></tr>)}{!rows.length ? <tr><td colSpan={7} className="px-4 py-10 text-center font-semibold text-slate-500">No reservations created for this order yet.</td></tr> : null}</tbody></table>
+          <table className="industrial-table min-w-[1100px]"><thead><tr><th>Profile</th><th>Bundle / location</th><th>Reserved</th><th>Consumed</th><th>Open hold</th><th>Released hold</th><th>Status</th></tr></thead>
+            <tbody>{ledger.rows.map(row => <tr key={row.id} data-reservation-id={row.id}>
+              <td className="font-black text-slate-950">{row.profile_code ?? "Profile unavailable"}<p className="text-xs font-semibold text-slate-500">{row.profile_name ?? ""}</p></td>
+              <td>{row.bundle_number ?? "Bundle unavailable"}<p className="text-xs text-slate-500">{row.location ?? "No location"}</p></td>
+              <td><DispatchReservationQuantity weight={row.reserved_weight_kg} length={row.reserved_length_m} pieces={row.reserved_pieces} /></td>
+              <td><DispatchReservationQuantity weight={row.consumed_weight_kg} length={row.consumed_length_m} pieces={row.consumed_pieces} /></td>
+              <td><DispatchReservationQuantity weight={row.open_weight_kg} length={row.open_length_m} pieces={row.open_pieces} /></td>
+              <td><DispatchReservationQuantity weight={row.released_weight_kg} length={row.released_length_m} pieces={row.released_pieces} /></td>
+              <td><Badge value={row.status} />{row.released_at ? <p className="mt-2 text-xs text-slate-500">{row.status === "consumed" ? "Closed" : "Released"} {formatDate(row.released_at)}</p> : null}</td>
+            </tr>)}{!ledger.rows.length ? <tr><td colSpan={7} className="px-4 py-10 text-center font-semibold text-slate-500">No reservations are recorded for this source order.</td></tr> : null}</tbody>
+          </table>
         </div>
+        <nav aria-label="Dispatch reservation pages" className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-slate-600">
+          <p>Page {ledger.page} of {Math.max(1, Math.ceil(ledger.total_count / 10))}</p><div className="flex gap-3">
+            {ledger.page > 1 ? <Link href={pageHref(ledger.page - 1)} className="rounded-lg border border-slate-200 px-3 py-2">Previous</Link> : null}
+            {ledger.page * 10 < ledger.total_count ? <Link href={pageHref(ledger.page + 1)} className="rounded-lg border border-slate-200 px-3 py-2">Next</Link> : null}
+          </div>
+        </nav>
       </CardContent>
     </Card>
   );
+}
+
+function DispatchReservationQuantity({ weight, length, pieces }: { weight: number; length: number | null; pieces: number | null }) {
+  return <div className="whitespace-nowrap tabular-nums"><p className="font-semibold">{formatWeight(weight)}</p>
+    <p className="mt-1 text-xs text-slate-500">{pieces === null ? "Pieces not captured" : `${pieces.toLocaleString("en-IN")} pieces`}</p>
+    <p className="text-xs text-slate-500">{length === null ? "Metres not captured" : `${length.toFixed(3)} m`}</p></div>;
+}
+
+function DispatchReservationMetric({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return <div className="min-w-0 rounded-xl bg-slate-50 p-3"><p className="text-xs font-bold uppercase text-slate-500">{label}</p>
+    <p className="mt-1 break-words text-xl font-black text-slate-950">{value}</p><p className="mt-1 text-xs text-slate-500">{detail}</p></div>;
 }

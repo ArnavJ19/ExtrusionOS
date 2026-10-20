@@ -34,7 +34,8 @@ test("invoice totals are derived from the selected dispatch lines inside one ato
 });
 
 test("returned and damaged dispatches cannot enter receivables", () => {
-  assert.match(invoiceForm, /\.not\("delivery_status", "in", "\(returned,damaged\)"\)/);
+  assert.match(invoiceForm, /searchInvoiceSourcesAction/);
+  assert.doesNotMatch(invoiceForm, /\.limit\(500\)/);
   assert.match(invoiceActions, /select\("id, order_id, delivery_status"\)/);
   assert.match(invoiceActions, /\["returned", "damaged"\]\.includes\(dispatch\.delivery_status\)/);
   assert.match(invoiceActions, /Returned or damaged dispatches cannot be invoiced/);

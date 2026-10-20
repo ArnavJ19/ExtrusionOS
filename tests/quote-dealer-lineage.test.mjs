@@ -39,10 +39,9 @@ test("dealer stock is allocated by exact quote line and finish", () => {
 });
 
 test("availability and production planning respect finish and per-line factory balance", () => {
-  assert.match(quoteOrderForm, /quote_items\(id, profile_id, finishing_type/);
-  assert.match(quoteOrderForm, /profile_stock_batch_id, reserved_weight_kg/);
-  assert.match(quoteOrderForm, /demandByProfileFinish/);
-  assert.match(quoteOrderForm, /stockByProfileFinish/);
+  assert.match(quoteOrderForm, /from\("quote_items_authorized"\)\.select\("id, quote_id, profile_id, finishing_type/);
+  assert.match(quoteOrderForm, /loadQuoteDealerAvailability\(supabase, selectedQuote\.id\)/);
+  assert.doesNotMatch(quoteOrderForm, /from\("profile_stock_reservations"\)/);
   assert.match(productionForm, /item\.manufacturing_weight_kg \?\? item\.billing_weight_kg/);
 });
 

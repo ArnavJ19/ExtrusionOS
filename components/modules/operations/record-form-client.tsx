@@ -11,6 +11,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { saveDispatchAction } from "@/lib/actions/dispatches";
+import { saveManualExpenseAction } from "@/lib/actions/expenses";
 import { saveFoundryBatchAction } from "@/lib/actions/foundry";
 import { savePackagingJobAction } from "@/lib/actions/packaging";
 import { saveProductionJobAction } from "@/lib/actions/production";
@@ -18,12 +19,16 @@ import { saveOrderAction } from "@/lib/actions/quotes-orders";
 import { createClient } from "@/lib/supabase/browser";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
+import { deriveExpenseTotals } from "@/lib/financials/expenses";
+import { isUsableProductionDieForProfile, usableProductionDieStatuses } from "@/lib/workflow/production-dies";
+import { isAcceptedFinishingReceiptForJob } from "@/lib/workflow/finishing-receipts";
 import { calculateBilletWeightKg, calculateFoundryFurnaceMix, calculateRequiredBilletCount, calculateTotalBilletWeightKg, inchesToMm } from "@/lib/calculations/foundry";
 import { compositionToEditableRows, compositionsMatch, getStandardAlloyComposition, normalizeCompositionRows, type AlloyComposition } from "@/lib/calculations/alloy-composition";
 import type { SessionContext } from "@/types/app";
 import { getModuleConfig, type FieldConfig, type ModuleKey } from "./module-config";
 
-type LookupOption = { value: string; label: string; [key: string]: any };
+type LookupOption = { value: string; label: string; profile_id?: string | null; die_status?: string | null;
+  production_job_id?: string | null; status?: string | null; output_weight_kg?: number | string | null; received_date?: string | null; [key: string]: any };
 type LookupMap = Record<string, LookupOption[]>;
 type ChemistryField = "element" | "min" | "max";
 
@@ -40,10 +45,14 @@ type ProductionOrderItem = {
   manufacturing_weight_kg?: number | null;
   production_pieces?: number | null;
   aluminium_profiles?: { profile_code?: string | null; profile_name?: string | null } | null;
-  dies?: { die_number?: string | null; rack_location?: string | null } | null;
+  dies?: { profile_id?: string | null; die_status?: string | null; die_number?: string | null; rack_location?: string | null } | null;
 };
 
 function labelFor(row: Record<string, any>, fields: string[]) {
+  if (row.receipt_kind && row.received_date && Number.isFinite(Number(row.output_weight_kg))) {
+    const process = String(row.finishing_type ?? "Finishing").replace(/_/g, " ");
+    return `${process} · ${row.receipt_kind} · ${String(row.received_date).slice(0, 10)} · ${Number(row.output_weight_kg).toLocaleString("en-IN", {maximumFractionDigits: 3})} kg accepted`;
+  }
   return fields.map((field) => row[field]).filter(Boolean).join(" · ") || row.id;
 }
 
@@ -86,6 +95,9 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
   const [productionAutofillSummary, setProductionAutofillSummary] = useState<string | null>(null);
   const [productionAutofillLoading, setProductionAutofillLoading] = useState(false);
   const [packagingAutofillSummary, setPackagingAutofillSummary] = useState<string | null>(null);
+  const [packagingSourceLocked, setPackagingSourceLocked] = useState(false);
+  const packagingAutofillRequest = useRef(0);
+  const expenseCreateKey = useRef<string | null>(null);
   const [availableBillets, setAvailableBillets] = useState<any[]>([]);
   const [selectedBillets, setSelectedBillets] = useState<Set<string>>(new Set());
   const [billetsLoading, setBilletsLoading] = useState(false);
@@ -99,6 +111,8 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
   const [error, setError] = useState<string | null>(null);
   const editing = Boolean(recordId);
 
+  useEffect(() => () => { packagingAutofillRequest.current++; }, [context.companyId, moduleKey, recordId]);
+
   function lookupRequest(field: FieldConfig, values: Record<string, any>) {
     const lookup = field.lookup!;
     let request: any = supabase.from(lookup.table as any).select(lookup.select).eq("company_id", context.companyId);
@@ -106,10 +120,13 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     if (lookup.table === "dies") {
       const profileId = field.name === "production_die_id" ? values.production_profile_id : field.name === "die_id" ? values.profile_id : "";
       if (profileId) request = request.eq("profile_id", profileId);
+      if (moduleKey === "production" || moduleKey === "orders") request = request.in("die_status", usableProductionDieStatuses);
     }
-    if (moduleKey === "quality" && field.name === "finishing_job_id" && values.production_job_id) {
-      request = request.eq("production_job_id", values.production_job_id);
+    if (["quality", "packaging"].includes(moduleKey) && field.name === "finishing_job_id") {
+      if (values.production_job_id) request = request.eq("production_job_id", values.production_job_id);
+      if (moduleKey === "packaging" && values.order_id) request = request.eq("order_id", values.order_id);
     }
+    if (moduleKey === "packaging" && field.name === "production_job_id" && values.order_id) request = request.eq("order_id", values.order_id);
     return request;
   }
 
@@ -165,6 +182,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       const { data, error: recordError } = await supabase.from(config.table as any).select("*").eq("id", recordId).eq("company_id", context.companyId).single();
       if (recordError) throw recordError;
       loadedForm = normalizeRow(data, config.defaultValues ?? {});
+      if (moduleKey === "packaging") setPackagingSourceLocked(Boolean(data.finishing_job_id));
       setForm(loadedForm);
     }
 
@@ -365,8 +383,10 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       return;
     }
     const plannedWeight = Number(item.manufacturing_weight_kg ?? item.billing_weight_kg ?? item.total_weight_kg ?? 0);
-    const fallbackDie = item.profile_id ? lookups.die_id?.find((option) => option.profile_id === item.profile_id && !["inactive", "dead"].includes(String(option.die_status ?? "")))?.value ?? null : null;
-    const dieId = item.die_id ?? fallbackDie;
+    const linkedDie = item.dies ?? lookups.die_id?.find((option) => option.value === item.die_id);
+    const fallbackDie = lookups.die_id?.find((option) => isUsableProductionDieForProfile(option, item.profile_id))?.value ?? null;
+    // An explicit order-line die needs review if unusable; do not silently replace it.
+    const dieId = item.die_id ? (isUsableProductionDieForProfile(linkedDie, item.profile_id) ? item.die_id : null) : fallbackDie;
     const billetWeight = Number(form.billet_weight_kg ?? 0) || 0;
     const estimatedBillets = calculateRequiredBilletCount(plannedWeight, billetWeight, Number(form.extrusion_efficiency_percent ?? 75));
     setForm((current) => ({
@@ -380,7 +400,11 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       required_billet_count: estimatedBillets > 0 ? estimatedBillets : current.required_billet_count,
       remarks: item.item_description ? `From order quote item: ${item.item_description}` : current.remarks
     }));
-    setProductionAutofillSummary(dieId ? summarizeProductionItem({ ...item, die_id: dieId }, items.length) : "No active die exists for this order/profile. Add the die in Die Master before scheduling production.");
+    setProductionAutofillSummary(dieId ? summarizeProductionItem({ ...item, die_id: dieId }, items.length) : item.die_id
+      ? "The assigned die is unavailable for this profile. Review its current status, then select an active or approved die before scheduling production."
+      : "Select an active or approved die for this profile before scheduling production.");
+    const dieField = config.fields?.find((field) => field.name === "die_id");
+    if (dieField) searchLookup(dieField, "", { ...form, profile_id: item.profile_id, die_id: dieId ?? "" });
   }
 
   async function loadProductionOrderAutofill(orderId: string) {
@@ -413,7 +437,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       const dieIds = [...new Set((orderItems ?? []).map((item: any) => item.die_id).filter(Boolean))];
       const [profilesResult, diesResult] = await Promise.all([
         profileIds.length ? supabase.from("aluminium_profiles").select("id, profile_code, profile_name").eq("company_id", context.companyId).in("id", profileIds) : { data: [], error: null },
-        dieIds.length ? supabase.from("dies").select("id, die_number, rack_location").eq("company_id", context.companyId).in("id", dieIds) : { data: [], error: null },
+        dieIds.length ? supabase.from("dies").select("id, die_number, rack_location, profile_id, die_status").eq("company_id", context.companyId).in("id", dieIds) : { data: [], error: null },
       ]);
       if (profilesResult.error) throw profilesResult.error;
       if (diesResult.error) throw diesResult.error;
@@ -487,20 +511,33 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
   }
 
   async function loadPackagingOrderAutofill(orderId: string) {
+    const request = ++packagingAutofillRequest.current;
+    setForm((current) => ({...current, order_id: orderId, production_job_id: "", finishing_job_id: "", pieces: 0, profile_weight_kg: 0, profile_length_m: 0}));
     if (!orderId) {
       setPackagingAutofillSummary(null);
-      setForm((current) => ({ ...current, order_id: "", production_job_id: "", pieces: 0, profile_weight_kg: 0, profile_length_m: 0 }));
+      setForm((current) => ({ ...current, order_id: "", production_job_id: "", finishing_job_id: "", pieces: 0, profile_weight_kg: 0, profile_length_m: 0 }));
       return;
     }
 
-    const { data: jobs, error: jobsError } = await supabase
+    let result;
+    try {
+      result = await supabase
       .from("production_jobs")
-      .select("id, job_number, pieces, actual_quantity_kg, planned_quantity_kg, length_per_piece_m, status")
+      .select("id, job_number, pieces, actual_pieces, actual_meters, actual_quantity_kg, planned_quantity_kg, length_per_piece_m, status, finishing_type")
       .eq("company_id", context.companyId)
       .eq("order_id", orderId)
       .eq("status", "completed")
       .order("updated_at", { ascending: false })
-      .limit(1);
+        .limit(1);
+    } catch (readError) {
+      if (packagingAutofillRequest.current !== request) return;
+      const message = getErrorMessage(readError, "Could not load completed production for packaging");
+      setPackagingAutofillSummary(message);
+      toast.error(message);
+      return;
+    }
+    if (packagingAutofillRequest.current !== request) return;
+    const {data: jobs, error: jobsError} = result;
     if (jobsError) {
       const message = getErrorMessage(jobsError, "Could not load completed production job for packaging");
       setPackagingAutofillSummary(message);
@@ -512,10 +549,18 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       setPackagingAutofillSummary("No completed production job found for this order. Complete production before packaging.");
       return;
     }
+    setLookups((current) => ({...current, production_job_id: toLookupOptions([job, ...(current.production_job_id ?? [])], ["job_number"])}));
+    if (String(job.finishing_type ?? "mill_finish") !== "mill_finish") {
+      setForm((current) => ({...current, order_id: orderId, production_job_id: job.id, finishing_job_id: "", pieces: 0, profile_weight_kg: 0, profile_length_m: 0}));
+      const finishingField = config.fields?.find((candidate) => candidate.name === "finishing_job_id");
+      if (finishingField) searchLookup(finishingField, "", {...form, order_id: orderId, production_job_id: job.id, finishing_job_id: ""});
+      setPackagingAutofillSummary(`Selected completed job ${job.job_number}. Choose its accepted finishing receipt or open the queued package.`);
+      return;
+    }
     const pieces = Number(job.pieces ?? 0);
     const weight = Number(job.actual_quantity_kg ?? job.planned_quantity_kg ?? 0);
     const lengthM = Number(job.length_per_piece_m ?? 0) * pieces;
-    setForm((current) => ({ ...current, order_id: orderId, production_job_id: job.id, pieces, profile_weight_kg: weight, profile_length_m: lengthM }));
+    setForm((current) => ({ ...current, order_id: orderId, production_job_id: job.id, finishing_job_id: "", pieces, profile_weight_kg: weight, profile_length_m: lengthM }));
     setPackagingAutofillSummary(`Auto-filled completed job ${job.job_number}: ${pieces.toLocaleString("en-IN")} pcs, ${weight.toLocaleString("en-IN")} kg, ${lengthM.toLocaleString("en-IN")} m profile length.`);
   }
 
@@ -541,7 +586,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     if (moduleKey === "quality" && field.name === "production_job_id" && typeof value === "string") {
       const job = lookups.production_job_id?.find((option) => option.value === value);
       const finishing = lookups.finishing_job_id?.find((option) => (
-        option.production_job_id === value && option.status === "completed"
+        isAcceptedFinishingReceiptForJob(option, value)
       ));
       const needsFinishing = String(job?.finishing_type ?? "mill_finish") !== "mill_finish";
       setForm((current) => ({
@@ -554,10 +599,13 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
           ? finishing?.output_weight_kg ?? 0
           : job?.actual_quantity_kg ?? 0
       }));
+      const finishingField = config.fields?.find((candidate) => candidate.name === "finishing_job_id");
+      if (finishingField && needsFinishing) searchLookup(finishingField, "", {...form, production_job_id: value, finishing_job_id: ""});
       return;
     }
     if (moduleKey === "quality" && field.name === "finishing_job_id" && typeof value === "string") {
-      update(field.name, value);
+      const receipt = lookups.finishing_job_id?.find((option) => option.value === value && isAcceptedFinishingReceiptForJob(option, String(form.production_job_id ?? "")));
+      setForm((current) => ({...current, finishing_job_id: receipt?.value ?? "", quantity_checked_kg: receipt?.output_weight_kg ?? 0}));
       return;
     }
     if (moduleKey === "orders" && field.name === "production_die_id" && typeof value === "string") {
@@ -595,7 +643,32 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       return;
     }
     if (moduleKey === "packaging" && field.name === "production_job_id" && typeof value === "string") {
-      update(field.name, value);
+      packagingAutofillRequest.current++;
+      const job = lookups.production_job_id?.find((option) => option.value === value && option.order_id === form.order_id);
+      const millFinish = job && String(job.finishing_type ?? "mill_finish") === "mill_finish";
+      setForm((current) => ({...current, production_job_id: job?.value ?? "", finishing_job_id: "", pieces: millFinish ? job.actual_pieces || job.pieces || 0 : 0,
+        profile_weight_kg: millFinish ? job.actual_quantity_kg ?? 0 : 0,
+        profile_length_m: millFinish ? job.actual_meters || Number(job.length_per_piece_m ?? 0) * Number(job.actual_pieces || job.pieces || 0) : 0}));
+      setPackagingAutofillSummary(job ? "Production source changed. Verify its accepted receipt and packing quantities." : null);
+      const finishingField = config.fields?.find((candidate) => candidate.name === "finishing_job_id");
+      if (finishingField) searchLookup(finishingField, "", {...form, production_job_id: value, finishing_job_id: ""});
+      return;
+    }
+    if (moduleKey === "packaging" && field.name === "finishing_job_id" && typeof value === "string") {
+      if (form.finishing_job_id === value) return;
+      const receipt = lookups.finishing_job_id?.find((option) => option.value === value && option.order_id === form.order_id
+        && isAcceptedFinishingReceiptForJob(option, String(form.production_job_id ?? "")));
+      setForm((current) => ({...current, finishing_job_id: receipt?.value ?? "", profile_weight_kg: receipt?.output_weight_kg ?? 0}));
+      return;
+    }
+    if (moduleKey === "expenses" && ["quantity", "rate", "base_amount", "tax_amount", "freight_amount", "discount_amount"].includes(field.name)) {
+      // Preview only: the database derives and verifies the same total on save.
+      setForm((current) => {
+        const next = { ...current, [field.name]: value };
+        const totals = deriveExpenseTotals(next);
+        const rateDriven = Number(next.quantity || 0) > 0 && Number(next.rate || 0) > 0;
+        return { ...next, base_amount: rateDriven && field.name !== "base_amount" ? totals.base : next.base_amount, total_amount: totals.error && totals.total <= 0 ? 0 : totals.total };
+      });
       return;
     }
     if (moduleKey === "packaging_materials" && field.name === "consumption_rate" && typeof value === "string") {
@@ -646,7 +719,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     if (moduleKey === "production") {
       if (!sanitized.die_id) {
         setSaving(false);
-        return toast.error("Production cannot be scheduled because no active die exists for this order/profile. Add the die in Die Master first.");
+        return toast.error("Select an active or approved die for this order/profile before scheduling production.");
       }
       const required = Number(sanitized.required_billet_count || 0);
       if (required > 0 && selectedBillets.size === 0) {
@@ -658,9 +731,19 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       setSaving(false);
       return toast.error("Profile standard length is missing. Add stock length before using this profile for BOM, cutting list, or inventory planning.");
     }
-    if (moduleKey === "expenses" && editing && String(form.approval_status || "").toLowerCase() === "approved") {
+    if (moduleKey === "expenses") {
+      if (!editing && !expenseCreateKey.current) expenseCreateKey.current = crypto.randomUUID();
+      const result = await saveManualExpenseAction({
+        ...(parsed.data as Record<string, any>),
+        expense_id: editing ? recordId : null,
+        idempotency_key: editing ? null : expenseCreateKey.current
+      } as any);
       setSaving(false);
-      return toast.error("Approved expenses cannot be edited directly. Use payment entries or reversal workflow.");
+      if (!result.success) return toast.error(result.error);
+      toast.success(`${result.data.expense_number} saved as ${result.data.approval_status.replace(/_/g, " ")}`);
+      router.push(`${config.basePath}/${result.data.expense_id}`);
+      router.refresh();
+      return;
     }
     if (config.uniqueField && sanitized[config.uniqueField]) {
       let duplicateRequest = supabase
@@ -760,13 +843,6 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       const total = Number(payload.total_amount ?? 0) || Number((base + Number(payload.tax_amount ?? 0) + Number(payload.freight_amount ?? 0) - Number(payload.discount_amount ?? 0)).toFixed(2));
       payload = { ...payload, base_amount: base, total_amount: total };
     }
-    if (moduleKey === "expenses") {
-      const qty = Number(payload.quantity ?? 0);
-      const rate = Number(payload.rate ?? 0);
-      const base = Number(payload.base_amount ?? 0) || Number((qty * rate).toFixed(2));
-      const total = Number(payload.total_amount ?? 0) || Number((base + Number(payload.tax_amount ?? 0) + Number(payload.freight_amount ?? 0) - Number(payload.discount_amount ?? 0)).toFixed(2));
-      payload = { ...payload, base_amount: base, total_amount: total };
-    }
     if (moduleKey === "foundry_scrap" && !payload.available_weight_kg) payload.available_weight_kg = payload.weight_kg;
     if (moduleKey === "foundry_external_sources" && !editing && !payload.available_weight_kg) payload.available_weight_kg = payload.weight_kg;
     if (!editing && config.numberField) {
@@ -785,19 +861,28 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
   function renderField(field: FieldConfig) {
     const value = form[field.name] ?? "";
     const options: LookupOption[] = field.lookup ? lookups[field.name] ?? [] : field.options ?? [];
-    const dieProfileId = moduleKey === "production" && field.name === "die_id" ? form.profile_id : moduleKey === "orders" && field.name === "production_die_id" ? form.production_profile_id : "";
-    const qualityJobId = moduleKey === "quality" && field.name === "finishing_job_id" ? form.production_job_id : "";
+    const productionDieField = (moduleKey === "production" && field.name === "die_id") || (moduleKey === "orders" && field.name === "production_die_id");
+    const dieProfileId = moduleKey === "production" ? form.profile_id : form.production_profile_id;
+    const receiptField = ["quality", "packaging"].includes(moduleKey) && field.name === "finishing_job_id";
+    const receiptReadOnly = moduleKey === "packaging" && packagingSourceLocked && ["order_id", "production_job_id", "finishing_job_id"].includes(field.name);
     const fieldOptions = moduleKey === "foundry" && !editing && field.name === "status"
       ? options.filter((option) => option.value === "planned")
-      : dieProfileId
-      ? options.filter((option) => (!option.profile_id || option.profile_id === dieProfileId) && !["inactive", "dead"].includes(String(option.die_status ?? "")))
-      : qualityJobId
-        ? options.filter((option) => option.production_job_id === qualityJobId)
+      : productionDieField
+      ? options.filter((option) => isUsableProductionDieForProfile(option, dieProfileId) || (field.readOnly && option.value === value))
+        .map((option) => field.readOnly && !isUsableProductionDieForProfile(option, dieProfileId)
+          ? { ...option, label: `${option.label} (Unavailable for production)` } : option)
+      : receiptField
+        ? options.filter((option) => isAcceptedFinishingReceiptForJob(option, String(form.production_job_id ?? ""))
+          && (moduleKey !== "packaging" || option.order_id === form.order_id))
+        : moduleKey === "packaging" && field.name === "production_job_id"
+          ? options.filter((option) => option.order_id === form.order_id)
         : options;
     return (
       <label key={field.name} className={field.type === "textarea" ? "block space-y-1.5 md:col-span-2" : "block space-y-1.5"}>
         <span className="form-label">{field.label}{field.required ? " *" : ""}</span>
-        {field.type === "textarea" ? <textarea className="form-input min-h-24" value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} /> : field.type === "select" ? <SearchableSelect value={String(value)} options={fieldOptions} placeholder="Select" onChange={(nextValue) => handleFieldChange(field, nextValue)} onSearchChange={field.lookup ? (query) => searchLookup(field, query) : undefined} searching={Boolean(field.lookup && lookupSearching[field.name])} disabled={field.readOnly || (productionAutofillLoading && field.name === "order_id")} /> : field.type === "checkbox" ? <input className="form-input" type="checkbox" checked={Boolean(value)} disabled={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.checked)} /> : <input className="form-input" type={field.type ?? "text"} step={field.step} value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} />}
+        {field.type === "textarea" ? <textarea className="form-input min-h-24" value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} /> : field.type === "select" ? <SearchableSelect value={String(value)} options={fieldOptions} placeholder="Select" onChange={(nextValue) => handleFieldChange(field, nextValue)} onSearchChange={field.lookup ? (query) => searchLookup(field, query) : undefined} searching={Boolean(field.lookup && lookupSearching[field.name])} disabled={field.readOnly || receiptReadOnly || (productionAutofillLoading && field.name === "order_id")} /> : field.type === "checkbox" ? <input className="form-input" type="checkbox" checked={Boolean(value)} disabled={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.checked)} /> : <input className="form-input" type={field.type ?? "text"} step={field.step} value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} />}
+        {receiptField ? <p className="text-xs font-semibold text-slate-500">Select accepted output from one final receipt. Its rejected remainder stays separate.</p> : null}
+        {receiptField && receiptReadOnly && value ? <p className="break-words text-xs font-semibold text-slate-700">Recorded receipt: {fieldOptions.find((option) => option.value === value)?.label ?? "Receipt details unavailable. Refresh before completing packaging."}</p> : null}
       </label>
     );
   }

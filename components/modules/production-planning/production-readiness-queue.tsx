@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CalendarDays, Factory, Gauge, PackageCheck } from "lucide-react";
 import { ReadinessBadge } from "@/components/modules/production-planning/readiness-badge";
 import { formatDate, formatWeight } from "@/lib/utils/format";
+import { isUsableProductionDieForProfile } from "@/lib/workflow/production-dies";
 
 type ReadinessOrder = {
   id: string;
@@ -14,7 +15,8 @@ type ReadinessOrder = {
   billets_short: number | null;
   billet_allocation_status: string | null;
   production_profile?: { profile_code?: string | null; profile_name?: string | null } | null;
-  production_die?: { die_number?: string | null; die_status?: string | null } | null;
+  production_profile_id?: string | null;
+  production_die?: { die_number?: string | null; die_status?: string | null; profile_id?: string | null } | null;
   customers?: { company_name?: string | null; customer_name?: string | null } | null;
 };
 
@@ -29,7 +31,7 @@ type ScheduleJob = {
 };
 
 function dieReady(order: ReadinessOrder) {
-  return Boolean(order.production_die?.die_number && !["blocked", "inactive", "dead", "retired", "scrapped", "under_maintenance"].includes(String(order.production_die?.die_status ?? "")));
+  return Boolean(order.production_die?.die_number && isUsableProductionDieForProfile(order.production_die, order.production_profile_id));
 }
 
 export function ProductionReadinessQueue({ orders, todayJobs }: { orders: ReadinessOrder[]; todayJobs: ScheduleJob[] }) {
