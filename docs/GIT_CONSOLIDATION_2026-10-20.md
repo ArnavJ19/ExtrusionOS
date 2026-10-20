@@ -78,16 +78,45 @@ Generated caches and installed dependencies can be recreated. Extra worktrees
 are removed only after their final work is captured and included in `codex/v1`.
 Old remote branches are removed only after their commits are reachable from the
 retained branches. No force push is needed.
+The root checkout's three original generated-file changes are also preserved in
+the named Git stash `consolidation-2026-10-20-original-local-generated-files`.
+This retains the original index snapshot/deletion and development type-path
+change without mixing local generated state into the published application.
 
-No database migration, hosted-data change or application deployment is part of
-this consolidation. Restored historical SQL files match names in the already
+No database migration or hosted-data change is part of this consolidation.
+GitHub may run existing CI or deployment hooks after the branch update; this
+record does not certify deployment completion. Restored historical SQL files
+match names in the already
 recorded 20 October hosted ledger; this is source reconciliation, not a new
 hosted probe or an instruction to replay them. The allocation continuation's
 new candidate migration retains its own not-applied status.
 
 ## Verification result
 
-- Initial standalone `npm run typecheck`: passed.
+- Final `npm test`: **1,681 passed across 76 suites; zero failures, skips or
+  cancellations**. The earlier combined run's two die-readiness failures were
+  resolved by retaining the current production source-line implementation.
+- Final `npm run lint`, `npm run typecheck` and `npm run build`: passed. The
+  production build uses synthetic public Supabase values and generates 154 pages.
 - Focused PDF/report and merge regression set: 54 passed, zero failures/skips.
-- Final full-suite, lint, typecheck, build and two-branch parity: pending final
-  allocation import and verification.
+- Focused die/production/source-line regression set: 35 passed, zero failures.
+- Seven synthetic reports generated and rendered across 16 pages: die with and
+  without history, profile, short/long PCDA, grouped multi-band multi-currency
+  Report Builder and empty Report Builder. Text-bound checks passed on every
+  page; representative pages were visually inspected. These are fixture checks,
+  not authenticated customer/operator acceptance. The die fixture can place its
+  signatures on a separate continuation page, as in the preserved renderer.
+- The built traces for all six `/api/pdf` routes include 22 PDF font files each.
+- Preservation check: all 17 product/handover/font files from the latest Claude
+  commit are unchanged by Git blob identity. All 85 imported allocation
+  source/evidence files are unchanged. The additional package change combines
+  the retained Node 22 pin with bounded test concurrency.
+- Seven original branch tips are verified ancestors of the consolidated branch.
+  Final verification additionally checks exactly two local branches, two remote
+  branches and two worktrees, matching branch tips, and clean working copies.
+
+Full logs, the PDF smoke fixtures/renders and the machine-readable preservation
+manifest are under the task's local `verification/` directory beside the backup
+directory. Their absolute parent is the dated task folder shown above. The
+original allocation verification evidence remains committed under
+`docs/evidence/BUGS_MEGA_2026-10-20/`.
