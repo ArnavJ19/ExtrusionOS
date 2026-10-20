@@ -18,10 +18,19 @@ const WAVE1 = [
   "supabase/migrations/20261021070000_audit_log_actor_identity.sql",
 ];
 
+// Optional migrations applied before Wave 1 in the candidate build (rollout rehearsal),
+// e.g. GATE_PREFIX_MIGRATIONS=supabase/migrations/a.sql,supabase/migrations/b.sql
+const PREFIX = (process.env.GATE_PREFIX_MIGRATIONS ?? "").split(",").map((file) => file.trim()).filter(Boolean);
+// Post-apply verification: GATE_POST_APPLY_DIR=live-20261021 runs only the candidate
+// assertions against a fresh capture of the hosted catalog, with no migrations layered on.
+const POST_APPLY_DIR = process.env.GATE_POST_APPLY_DIR ?? "";
+
 const attempt = async (fn) => { try { return { ok: true, value: await fn() }; } catch (error) { return { ok: false, error: error.message }; } };
 
 async function fresh(candidate) {
-  const { db } = await createLiveCatalogDb({ migrations: candidate ? WAVE1 : [] });
+  const { db } = POST_APPLY_DIR
+    ? await createLiveCatalogDb({ dir: POST_APPLY_DIR })
+    : await createLiveCatalogDb({ migrations: candidate ? [...PREFIX, ...WAVE1] : [] });
   await seed(db);
   const q = async (sql) => (await db.query(sql)).rows;
   const replica = (sql) => db.exec(`set session_replication_role = replica; ${sql}; set session_replication_role = origin;`);
@@ -98,7 +107,9 @@ scenario("G009-factory-stage-change-unchanged", "009", async (ctx, candidate) =>
   const [b] = await ctx.q(`select status from public.foundry_billets where id='${billet}'`);
   const outcome = JSON.stringify({ stage: order.current_stage, billet: b.status, reqs });
   factoryOutcome[candidate ? "candidate" : "baseline"] = outcome;
-  if (candidate) assert.equal(outcome, factoryOutcome.baseline, "owner path must behave exactly as before");
+  // Post-apply runs have no in-process baseline; use the outcome recorded on the pre-fix snapshot.
+  const baseline = factoryOutcome.baseline ?? '{"stage":"dispatched","billet":"cast","reqs":[]}';
+  if (candidate) assert.equal(outcome, baseline, "owner path must behave exactly as before");
   return `owner transition ok; outcome ${outcome}`;
 });
 
@@ -539,8 +550,8 @@ scenario("G019-server-audit-writers-unchanged", "019", async (ctx) => {
 const onlyCandidate = new Set(["G012-in-spec-approval-records-approver", "G012-unconfigured-profile-not-checked", "G019-server-audit-writers-unchanged", "G010-finish-disambiguates-lines", "G010-ambiguous-lines-rejected", "G007-same-die-later-window-allowed", "G007-completed-job-does-not-block", "G008-production-manager-returns-press", "G008-operator-out-of-service-only", "G008-sales-manager-registers-die", "G011-pending-dispatch-still-editable", "G002-completion-still-books-scrap", "G003-weight-correction-moves-balance", "G003-furnace-charge-and-cancel-still-work"]);
 let failures = 0;
 for (const s of scenarios) {
-  for (const candidate of onlyCandidate.has(s.id) ? [true] : [false, true]) {
-    const label = `${s.id} [${candidate ? "candidate" : "baseline"}]`;
+  for (const candidate of onlyCandidate.has(s.id) || POST_APPLY_DIR ? [true] : [false, true]) {
+    const label = `${s.id} [${POST_APPLY_DIR ? `hosted ${POST_APPLY_DIR}` : candidate ? "candidate" : "baseline"}]`;
     const ctx = await fresh(candidate);
     try {
       const detail = await s.run(ctx, candidate);

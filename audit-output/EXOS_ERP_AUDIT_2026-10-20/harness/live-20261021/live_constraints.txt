@@ -1,0 +1,1133 @@
+CON ai_interactions.ai_interactions_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON ai_interactions.ai_interactions_pkey [p] PRIMARY KEY (id)
+CON ai_interactions.ai_interactions_status_check [c] CHECK ((status = ANY (ARRAY['completed'::text, 'failed'::text, 'redacted'::text, 'external_blocked'::text])))
+CON ai_interactions.ai_interactions_type_check [c] CHECK ((interaction_type = ANY (ARRAY['quotation_assist'::text, 'customer_summary'::text, 'order_summary'::text, 'payment_followup'::text, 'production_insight'::text, 'document_summary'::text])))
+CON ai_interactions.ai_interactions_user_id_fkey [f] FOREIGN KEY (user_id) REFERENCES auth.users(id)
+CON aluminium_profiles.aluminium_profiles_alloy_id_fkey [f] FOREIGN KEY (alloy_id) REFERENCES pcda_master_alloys(id)
+CON aluminium_profiles.aluminium_profiles_alloy_standard_id_fkey [f] FOREIGN KEY (alloy_standard_id) REFERENCES pcda_master_alloy_standards(id)
+CON aluminium_profiles.aluminium_profiles_application_category_check [c] CHECK ((application_category = ANY (ARRAY['sliding_window'::text, 'casement_window'::text, 'door'::text, 'curtain_wall'::text, 'partition'::text, 'railing'::text, 'solar'::text, 'heat_sink'::text, 'industrial'::text, 'electrical'::text, 'automotive'::text, 'aerospace'::text, 'furniture'::text, 'custom'::text, 'other'::text])))
+CON aluminium_profiles.aluminium_profiles_approval_status_check [c] CHECK ((approval_status = ANY (ARRAY['draft'::text, 'submitted'::text, 'approved'::text, 'rejected'::text, 'superseded'::text])))
+CON aluminium_profiles.aluminium_profiles_approved_by_fkey [f] FOREIGN KEY (approved_by) REFERENCES auth.users(id)
+CON aluminium_profiles.aluminium_profiles_backup_die_id_fkey [f] FOREIGN KEY (backup_die_id) REFERENCES dies(id)
+CON aluminium_profiles.aluminium_profiles_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON aluminium_profiles.aluminium_profiles_company_code_unique [u] UNIQUE (company_id, profile_code)
+CON aluminium_profiles.aluminium_profiles_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON aluminium_profiles.aluminium_profiles_complexity_rating_check [c] CHECK ((complexity_rating = ANY (ARRAY['simple'::text, 'standard'::text, 'complex'::text, 'very_complex'::text])))
+CON aluminium_profiles.aluminium_profiles_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON aluminium_profiles.aluminium_profiles_deleted_by_fkey [f] FOREIGN KEY (deleted_by) REFERENCES auth.users(id)
+CON aluminium_profiles.aluminium_profiles_drawing_approval_status_check [c] CHECK ((drawing_approval_status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'superseded'::text])))
+CON aluminium_profiles.aluminium_profiles_drawing_approved_by_fkey [f] FOREIGN KEY (drawing_approved_by) REFERENCES auth.users(id)
+CON aluminium_profiles.aluminium_profiles_pkey [p] PRIMARY KEY (id)
+CON aluminium_profiles.aluminium_profiles_primary_die_id_fkey [f] FOREIGN KEY (primary_die_id) REFERENCES dies(id)
+CON aluminium_profiles.aluminium_profiles_profile_classification_check [c] CHECK ((profile_classification = ANY (ARRAY['solid'::text, 'hollow'::text, 'semi_hollow'::text])))
+CON aluminium_profiles.aluminium_profiles_section_weight_kg_per_m_check [c] CHECK ((section_weight_kg_per_m > (0)::numeric))
+CON aluminium_profiles.aluminium_profiles_temper_id_fkey [f] FOREIGN KEY (temper_id) REFERENCES pcda_master_tempers(id)
+CON aluminium_profiles.profiles_billet_diameter_valid [c] CHECK (((billet_diameter_required_inch IS NULL) OR (billet_diameter_required_inch > (0)::numeric)))
+CON app_users.app_users_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON app_users.app_users_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON app_users.app_users_deactivated_by_fkey [f] FOREIGN KEY (deactivated_by) REFERENCES auth.users(id)
+CON app_users.app_users_dealer_fk [f] FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE SET NULL
+CON app_users.app_users_id_fkey [f] FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE
+CON app_users.app_users_invited_by_fkey [f] FOREIGN KEY (invited_by) REFERENCES auth.users(id)
+CON app_users.app_users_pkey [p] PRIMARY KEY (id)
+CON app_users.app_users_role_changed_by_fkey [f] FOREIGN KEY (role_changed_by) REFERENCES auth.users(id)
+CON app_users.app_users_role_check [c] CHECK ((role = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'production_manager'::text, 'production'::text, 'dispatch_manager'::text, 'dispatch'::text, 'accounts'::text, 'quality'::text, 'viewer'::text, 'factory_manager'::text, 'inventory_manager'::text, 'dealer_admin'::text, 'dealer_staff'::text])))
+CON app_users.app_users_status_check [c] CHECK ((status = ANY (ARRAY['active'::text, 'invited'::text, 'deactivated'::text])))
+CON audit_logs.audit_logs_actor_id_fkey [f] FOREIGN KEY (actor_id) REFERENCES auth.users(id)
+CON audit_logs.audit_logs_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON audit_logs.audit_logs_pkey [p] PRIMARY KEY (id)
+CON audit_logs_enterprise.audit_logs_enterprise_actor_dealer_id_fkey [f] FOREIGN KEY (actor_dealer_id) REFERENCES dealers(id)
+CON audit_logs_enterprise.audit_logs_enterprise_actor_user_id_fkey [f] FOREIGN KEY (actor_user_id) REFERENCES auth.users(id)
+CON audit_logs_enterprise.audit_logs_enterprise_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON audit_logs_enterprise.audit_logs_enterprise_pkey [p] PRIMARY KEY (id)
+CON audit_logs_enterprise.audit_logs_enterprise_status_check [c] CHECK ((status = ANY (ARRAY['success'::text, 'failed'::text])))
+CON automation_rules.automation_rules_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON automation_rules.automation_rules_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON automation_rules.automation_rules_pkey [p] PRIMARY KEY (id)
+CON automation_rules.automation_rules_trigger_type_check [c] CHECK ((trigger_type = ANY (ARRAY['quote_created'::text, 'quote_sent'::text, 'quote_expiring'::text, 'quote_approved'::text, 'order_created'::text, 'order_delayed'::text, 'dispatch_created'::text, 'invoice_overdue'::text, 'inventory_low'::text, 'quality_failed'::text, 'die_high_rejection'::text, 'complaint_created'::text])))
+CON automation_runs.automation_runs_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON automation_runs.automation_runs_pkey [p] PRIMARY KEY (id)
+CON automation_runs.automation_runs_rule_id_fkey [f] FOREIGN KEY (rule_id) REFERENCES automation_rules(id) ON DELETE SET NULL
+CON automation_runs.automation_runs_status_check [c] CHECK ((status = ANY (ARRAY['completed'::text, 'failed'::text, 'skipped'::text])))
+CON billet_batches.billet_batches_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON billet_batches.billet_batches_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON billet_batches.billet_batches_pkey [p] PRIMARY KEY (id)
+CON billet_batches.billet_batches_supplier_id_fkey [f] FOREIGN KEY (supplier_id) REFERENCES vendors(id)
+CON billet_batches.billet_batches_warehouse_id_fkey [f] FOREIGN KEY (warehouse_id) REFERENCES branches(id) ON DELETE SET NULL
+CON branches.branches_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON branches.branches_pkey [p] PRIMARY KEY (id)
+CON branches.branches_type_check [c] CHECK ((branch_type = ANY (ARRAY['head_office'::text, 'factory'::text, 'warehouse'::text, 'sales_office'::text, 'depot'::text, 'dealer_location'::text])))
+CON breakdown_logs.breakdown_logs_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON breakdown_logs.breakdown_logs_cost_bill_documentation_check [c] CHECK (((cost <= (0)::numeric) OR (bill_number IS NOT NULL) OR (bill_file_url IS NOT NULL) OR (bill_storage_path IS NOT NULL))) NOT VALID
+CON breakdown_logs.breakdown_logs_expense_ledger_id_fkey [f] FOREIGN KEY (expense_ledger_id) REFERENCES expense_ledger(id) ON DELETE SET NULL
+CON breakdown_logs.breakdown_logs_machine_type_check [c] CHECK ((machine_type = ANY (ARRAY['extrusion_press'::text, 'billet_heater'::text, 'aging_oven'::text, 'puller'::text, 'stretcher'::text, 'cutting_machine'::text, 'powder_coating_line'::text, 'anodizing_line'::text, 'compressor'::text, 'packing_equipment'::text, 'other'::text])))
+CON breakdown_logs.breakdown_logs_payment_status_check [c] CHECK ((payment_status = ANY (ARRAY['unpaid'::text, 'partially_paid'::text, 'paid'::text, 'overdue'::text, 'cancelled'::text, 'reversed'::text])))
+CON breakdown_logs.breakdown_logs_pkey [p] PRIMARY KEY (id)
+CON breakdown_logs.breakdown_logs_status_check [c] CHECK ((status = ANY (ARRAY['open'::text, 'in_progress'::text, 'resolved'::text, 'recurring'::text])))
+CON breakdown_logs.breakdown_logs_vendor_id_fkey [f] FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE SET NULL
+CON breakdown_spare_part_usage.breakdown_spare_part_usage_breakdown_id_fkey [f] FOREIGN KEY (breakdown_id) REFERENCES breakdown_logs(id) ON DELETE CASCADE
+CON breakdown_spare_part_usage.breakdown_spare_part_usage_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON breakdown_spare_part_usage.breakdown_spare_part_usage_pkey [p] PRIMARY KEY (id)
+CON breakdown_spare_part_usage.breakdown_spare_part_usage_quantity_used_check [c] CHECK ((quantity_used > (0)::numeric))
+CON breakdown_spare_part_usage.breakdown_spare_part_usage_spare_part_id_fkey [f] FOREIGN KEY (spare_part_id) REFERENCES maintenance_spare_parts(id) ON DELETE RESTRICT
+CON calibration_records.calibration_records_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON calibration_records.calibration_records_pkey [p] PRIMARY KEY (id)
+CON calibration_records.calibration_records_status_check [c] CHECK ((status = ANY (ARRAY['valid'::text, 'due_soon'::text, 'overdue'::text, 'expired'::text])))
+CON checklist_responses.checklist_responses_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON checklist_responses.checklist_responses_completed_by_fkey [f] FOREIGN KEY (completed_by) REFERENCES auth.users(id)
+CON checklist_responses.checklist_responses_pkey [p] PRIMARY KEY (id)
+CON checklist_responses.checklist_responses_template_id_fkey [f] FOREIGN KEY (template_id) REFERENCES checklist_templates(id) ON DELETE SET NULL
+CON checklist_templates.checklist_templates_checklist_type_check [c] CHECK ((checklist_type = ANY (ARRAY['production_start'::text, 'production_completion'::text, 'quality_inspection'::text, 'dispatch_loading'::text, 'machine_maintenance'::text, 'die_trial'::text])))
+CON checklist_templates.checklist_templates_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON checklist_templates.checklist_templates_pkey [p] PRIMARY KEY (id)
+CON companies.companies_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON companies.companies_pkey [p] PRIMARY KEY (id)
+CON company_settings.company_settings_ai_provider_check [c] CHECK ((ai_provider = ANY (ARRAY['local_rules'::text, 'openai'::text, 'anthropic'::text, 'azure_openai'::text, 'other'::text])))
+CON company_settings.company_settings_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON company_settings.company_settings_company_id_key [u] UNIQUE (company_id)
+CON company_settings.company_settings_default_branch_id_fkey [f] FOREIGN KEY (default_branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON company_settings.company_settings_pdf_theme_check [c] CHECK (((pdf_theme IS NULL) OR (pdf_theme = ANY (ARRAY['industrial_classic'::text, 'aluminium_modern'::text, 'minimal_mono'::text, 'executive_blueprint'::text]))))
+CON company_settings.company_settings_pkey [p] PRIMARY KEY (id)
+CON company_subscriptions.company_subscriptions_billing_cycle_check [c] CHECK ((billing_cycle = ANY (ARRAY['monthly'::text, 'annual'::text, 'manual'::text])))
+CON company_subscriptions.company_subscriptions_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON company_subscriptions.company_subscriptions_pkey [p] PRIMARY KEY (id)
+CON company_subscriptions.company_subscriptions_plan_id_fkey [f] FOREIGN KEY (plan_id) REFERENCES subscription_plans(id) ON DELETE RESTRICT
+CON company_subscriptions.company_subscriptions_status_check [c] CHECK ((status = ANY (ARRAY['trialing'::text, 'active'::text, 'past_due'::text, 'cancelled'::text, 'expired'::text])))
+CON compliance_audit_records.compliance_audit_records_audit_type_check [c] CHECK ((audit_type = ANY (ARRAY['internal'::text, 'external'::text, 'bis'::text, 'iso'::text, 'customer'::text, 'surveillance'::text])))
+CON compliance_audit_records.compliance_audit_records_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON compliance_audit_records.compliance_audit_records_pkey [p] PRIMARY KEY (id)
+CON compliance_audit_records.compliance_audit_records_status_check [c] CHECK ((status = ANY (ARRAY['scheduled'::text, 'in_progress'::text, 'completed'::text, 'non_conformance'::text, 'closed'::text])))
+CON compliance_standards.compliance_standards_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON compliance_standards.compliance_standards_pkey [p] PRIMARY KEY (id)
+CON credit_notes.credit_notes_company_id_credit_note_number_key [u] UNIQUE (company_id, credit_note_number)
+CON credit_notes.credit_notes_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON credit_notes.credit_notes_company_id_idempotency_key_key [u] UNIQUE (company_id, idempotency_key)
+CON credit_notes.credit_notes_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON credit_notes.credit_notes_dispatch_id_fkey [f] FOREIGN KEY (dispatch_id) REFERENCES dispatches(id) ON DELETE RESTRICT
+CON credit_notes.credit_notes_grand_total_check [c] CHECK ((grand_total > (0)::numeric))
+CON credit_notes.credit_notes_invoice_id_fkey [f] FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE RESTRICT
+CON credit_notes.credit_notes_pkey [p] PRIMARY KEY (id)
+CON credit_notes.credit_notes_reversed_by_fkey [f] FOREIGN KEY (reversed_by) REFERENCES auth.users(id)
+CON credit_notes.credit_notes_status_check [c] CHECK ((status = ANY (ARRAY['issued'::text, 'reversed'::text])))
+CON customer_compliance_requirements.customer_compliance_requirements_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON customer_compliance_requirements.customer_compliance_requirements_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON customer_compliance_requirements.customer_compliance_requirements_customer_id_fkey [f] FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+CON customer_compliance_requirements.customer_compliance_requirements_pkey [p] PRIMARY KEY (id)
+CON customers.customers_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON customers.customers_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON customers.customers_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON customers.customers_customer_type_check [c] CHECK ((customer_type = ANY (ARRAY['fabricator'::text, 'dealer'::text, 'architect'::text, 'industrial'::text, 'solar'::text, 'government'::text, 'export'::text, 'contractor'::text, 'other'::text])))
+CON customers.customers_default_alloy_standard_id_fkey [f] FOREIGN KEY (default_alloy_standard_id) REFERENCES pcda_master_alloy_standards(id)
+CON customers.customers_deleted_by_fkey [f] FOREIGN KEY (deleted_by) REFERENCES auth.users(id)
+CON customers.customers_pkey [p] PRIMARY KEY (id)
+CON data_exchange_jobs.data_exchange_jobs_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON data_exchange_jobs.data_exchange_jobs_pkey [p] PRIMARY KEY (id)
+CON data_exchange_jobs.data_exchange_jobs_started_by_fkey [f] FOREIGN KEY (started_by) REFERENCES auth.users(id)
+CON data_exchange_jobs.data_exchange_jobs_status_check [c] CHECK ((status = ANY (ARRAY['queued'::text, 'running'::text, 'completed'::text, 'failed'::text, 'cancelled'::text])))
+CON data_exchange_jobs.data_exchange_jobs_type_check [c] CHECK ((job_type = ANY (ARRAY['import'::text, 'export'::text])))
+CON data_retention_settings.data_retention_settings_audit_log_retention_days_check [c] CHECK (((audit_log_retention_days >= 30) AND (audit_log_retention_days <= 3650)))
+CON data_retention_settings.data_retention_settings_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON data_retention_settings.data_retention_settings_company_id_key [u] UNIQUE (company_id)
+CON data_retention_settings.data_retention_settings_export_retention_days_check [c] CHECK (((export_retention_days >= 7) AND (export_retention_days <= 3650)))
+CON data_retention_settings.data_retention_settings_pkey [p] PRIMARY KEY (id)
+CON data_retention_settings.data_retention_settings_soft_delete_retention_days_check [c] CHECK (((soft_delete_retention_days >= 7) AND (soft_delete_retention_days <= 3650)))
+CON dealer_order_comments.dealer_order_comments_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON dealer_order_comments.dealer_order_comments_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON dealer_order_comments.dealer_order_comments_dealer_order_id_fkey [f] FOREIGN KEY (dealer_order_id) REFERENCES dealer_orders(id) ON DELETE CASCADE
+CON dealer_order_comments.dealer_order_comments_pkey [p] PRIMARY KEY (id)
+CON dealer_order_comments.dealer_order_comments_visibility_check [c] CHECK ((visibility = ANY (ARRAY['dealer_factory'::text, 'factory_only'::text])))
+CON dealer_order_items.dealer_order_items_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON dealer_order_items.dealer_order_items_dealer_order_id_fkey [f] FOREIGN KEY (dealer_order_id) REFERENCES dealer_orders(id) ON DELETE CASCADE
+CON dealer_order_items.dealer_order_items_inventory_item_id_fkey [f] FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id)
+CON dealer_order_items.dealer_order_items_item_type_check [c] CHECK ((item_type = ANY (ARRAY['profile'::text, 'hardware'::text, 'accessory'::text, 'glass'::text, 'gasket'::text, 'fastener'::text, 'other'::text])))
+CON dealer_order_items.dealer_order_items_pkey [p] PRIMARY KEY (id)
+CON dealer_order_items.dealer_order_items_quantity_check [c] CHECK ((quantity > (0)::numeric))
+CON dealer_order_items.dealer_order_items_unit_check [c] CHECK ((unit = ANY (ARRAY['pieces'::text, 'meters'::text, 'kg'::text, 'set'::text, 'box'::text])))
+CON dealer_order_status_history.dealer_order_status_history_changed_by_fkey [f] FOREIGN KEY (changed_by) REFERENCES auth.users(id)
+CON dealer_order_status_history.dealer_order_status_history_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON dealer_order_status_history.dealer_order_status_history_dealer_order_id_fkey [f] FOREIGN KEY (dealer_order_id) REFERENCES dealer_orders(id) ON DELETE CASCADE
+CON dealer_order_status_history.dealer_order_status_history_pkey [p] PRIMARY KEY (id)
+CON dealer_orders.dealer_orders_accepted_by_fkey [f] FOREIGN KEY (accepted_by) REFERENCES auth.users(id)
+CON dealer_orders.dealer_orders_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON dealer_orders.dealer_orders_company_number_unique [u] UNIQUE (company_id, order_number)
+CON dealer_orders.dealer_orders_created_by_dealer_user_id_fkey [f] FOREIGN KEY (created_by_dealer_user_id) REFERENCES auth.users(id)
+CON dealer_orders.dealer_orders_dealer_id_fkey [f] FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
+CON dealer_orders.dealer_orders_linked_order_id_fkey [f] FOREIGN KEY (linked_order_id) REFERENCES orders(id) ON DELETE SET NULL
+CON dealer_orders.dealer_orders_pkey [p] PRIMARY KEY (id)
+CON dealer_orders.dealer_orders_priority_check [c] CHECK ((priority = ANY (ARRAY['low'::text, 'normal'::text, 'high'::text, 'urgent'::text])))
+CON dealer_orders.dealer_orders_quote_id_fkey [f] FOREIGN KEY (quote_id) REFERENCES quotes(id) ON DELETE SET NULL
+CON dealer_orders.dealer_orders_status_check [c] CHECK ((status = ANY (ARRAY['dealer_order_submitted'::text, 'accepted_by_factory'::text, 'rejected_by_factory'::text, 'material_reserved'::text, 'production_scheduled'::text, 'in_production'::text, 'production_completed'::text, 'quality_check_pending'::text, 'quality_check_passed'::text, 'packed'::text, 'dispatched'::text, 'in_transit'::text, 'delivered_to_dealer'::text, 'pending_dealer_count'::text, 'received_confirmed'::text, 'discrepancy_reported'::text, 'recount_requested'::text, 'discrepancy_resolved'::text, 'closed'::text, 'cancelled'::text])))
+CON dealer_receipt_items.dealer_receipt_items_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON dealer_receipt_items.dealer_receipt_items_dealer_receipt_id_fkey [f] FOREIGN KEY (dealer_receipt_id) REFERENCES dealer_receipts(id) ON DELETE CASCADE
+CON dealer_receipt_items.dealer_receipt_items_pkey [p] PRIMARY KEY (id)
+CON dealer_receipt_items.dealer_receipt_items_shipment_item_id_fkey [f] FOREIGN KEY (shipment_item_id) REFERENCES shipment_items(id) ON DELETE CASCADE
+CON dealer_receipt_items.dealer_receipt_items_status_check [c] CHECK ((status = ANY (ARRAY['received_confirmed'::text, 'discrepancy_reported'::text])))
+CON dealer_receipts.dealer_receipts_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON dealer_receipts.dealer_receipts_dealer_id_fkey [f] FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
+CON dealer_receipts.dealer_receipts_pkey [p] PRIMARY KEY (id)
+CON dealer_receipts.dealer_receipts_received_by_user_id_fkey [f] FOREIGN KEY (received_by_user_id) REFERENCES auth.users(id)
+CON dealer_receipts.dealer_receipts_shipment_id_fkey [f] FOREIGN KEY (shipment_id) REFERENCES shipments(id) ON DELETE CASCADE
+CON dealer_receipts.dealer_receipts_status_check [c] CHECK ((status = ANY (ARRAY['submitted'::text, 'confirmed'::text, 'discrepancy_reported'::text, 'recount_requested'::text, 'resolved'::text])))
+CON dealers.dealers_company_code_unique [u] UNIQUE (company_id, dealer_code)
+CON dealers.dealers_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON dealers.dealers_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON dealers.dealers_pkey [p] PRIMARY KEY (id)
+CON die_corrections.die_corrections_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON die_corrections.die_corrections_correction_reason_check [c] CHECK ((correction_reason = ANY (ARRAY['die_lines'::text, 'dimensional'::text, 'surface_pickup'::text, 'slow_speed'::text, 'bearing_issue'::text, 'tongue_ratio'::text, 'other'::text])))
+CON die_corrections.die_corrections_pkey [p] PRIMARY KEY (id)
+CON die_corrections.die_corrections_result_status_check [c] CHECK ((result_status = ANY (ARRAY['pending'::text, 'success'::text, 'partial'::text, 'failed'::text])))
+CON die_health_metrics.die_health_metrics_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON die_health_metrics.die_health_metrics_die_id_key [u] UNIQUE (die_id)
+CON die_health_metrics.die_health_metrics_health_score_check [c] CHECK (((health_score >= 0) AND (health_score <= 100)))
+CON die_health_metrics.die_health_metrics_pkey [p] PRIMARY KEY (id)
+CON die_health_metrics.die_health_metrics_recommendation_check [c] CHECK ((recommendation = ANY (ARRAY['healthy'::text, 'monitor'::text, 'correction_needed'::text, 'replace_soon'::text, 'dead'::text])))
+CON die_nitriding_history.die_nitriding_history_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON die_nitriding_history.die_nitriding_history_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON die_nitriding_history.die_nitriding_history_die_id_fkey [f] FOREIGN KEY (die_id) REFERENCES dies(id) ON DELETE CASCADE
+CON die_nitriding_history.die_nitriding_history_pkey [p] PRIMARY KEY (id)
+CON die_nitriding_history.die_nitriding_history_status_check [c] CHECK ((status = ANY (ARRAY['scheduled'::text, 'in_progress'::text, 'completed'::text, 'failed'::text])))
+CON die_trials.die_trials_approved_by_fkey [f] FOREIGN KEY (approved_by) REFERENCES auth.users(id)
+CON die_trials.die_trials_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON die_trials.die_trials_dimensional_status_check [c] CHECK ((dimensional_status = ANY (ARRAY['within_tolerance'::text, 'marginal'::text, 'out_of_spec'::text])))
+CON die_trials.die_trials_output_quality_check [c] CHECK ((output_quality = ANY (ARRAY['excellent'::text, 'good'::text, 'acceptable'::text, 'poor'::text, 'rejected'::text])))
+CON die_trials.die_trials_pkey [p] PRIMARY KEY (id)
+CON die_trials.die_trials_surface_status_check [c] CHECK ((surface_status = ANY (ARRAY['smooth'::text, 'minor_lines'::text, 'rough'::text, 'die_lines'::text, 'pickup'::text])))
+CON die_trials.die_trials_trial_result_check [c] CHECK ((trial_result = ANY (ARRAY['pass'::text, 'fail'::text, 'conditional'::text, 'pending'::text])))
+CON dies.dies_approved_by_fkey [f] FOREIGN KEY (approved_by) REFERENCES auth.users(id)
+CON dies.dies_billet_diameter_valid [c] CHECK (((billet_diameter_required_inch IS NULL) OR (billet_diameter_required_inch > (0)::numeric)))
+CON dies.dies_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON dies.dies_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON dies.dies_company_number_unique [u] UNIQUE (company_id, die_number)
+CON dies.dies_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON dies.dies_customer_id_fkey [f] FOREIGN KEY (customer_id) REFERENCES customers(id)
+CON dies.dies_deleted_by_fkey [f] FOREIGN KEY (deleted_by) REFERENCES auth.users(id)
+CON dies.dies_die_status_check [c] CHECK ((die_status = ANY (ARRAY['design'::text, 'ordered'::text, 'received'::text, 'under_trial'::text, 'approved'::text, 'active'::text, 'under_correction'::text, 'under_maintenance'::text, 'blocked'::text, 'retired'::text, 'scrapped'::text, 'trial'::text, 'correction'::text, 'nitriding'::text, 'inactive'::text, 'dead'::text])))
+CON dies.dies_die_type_check [c] CHECK ((die_type = ANY (ARRAY['solid'::text, 'hollow'::text, 'semi_hollow'::text, 'porthole'::text, 'bridge'::text, 'feeder'::text, 'multi_cavity'::text, 'flat'::text, 'special'::text])))
+CON dies.dies_dimensional_inspection_status_check [c] CHECK ((dimensional_inspection_status = ANY (ARRAY['pending'::text, 'passed'::text, 'failed'::text, 'not_required'::text])))
+CON dies.dies_drawing_approval_status_check [c] CHECK ((drawing_approval_status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'superseded'::text])))
+CON dies.dies_drawing_approved_by_fkey [f] FOREIGN KEY (drawing_approved_by) REFERENCES auth.users(id)
+CON dies.dies_ownership_type_check [c] CHECK ((ownership_type = ANY (ARRAY['company_owned'::text, 'customer_owned'::text, 'shared'::text, 'trial'::text, 'archived'::text])))
+CON dies.dies_performance_grade_check [c] CHECK ((performance_grade = ANY (ARRAY['excellent'::text, 'good'::text, 'average'::text, 'problematic'::text, 'blocked'::text])))
+CON dies.dies_pkey [p] PRIMARY KEY (id)
+CON dies.dies_priority_level_check [c] CHECK ((priority_level = ANY (ARRAY['low'::text, 'normal'::text, 'high'::text, 'critical'::text])))
+CON dies.dies_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id)
+CON discrepancy_recounts.discrepancy_recounts_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON discrepancy_recounts.discrepancy_recounts_discrepancy_id_fkey [f] FOREIGN KEY (discrepancy_id) REFERENCES inventory_discrepancies(id) ON DELETE CASCADE
+CON discrepancy_recounts.discrepancy_recounts_pkey [p] PRIMARY KEY (id)
+CON discrepancy_recounts.discrepancy_recounts_recounted_by_user_id_fkey [f] FOREIGN KEY (recounted_by_user_id) REFERENCES auth.users(id)
+CON dispatch_status_history.dispatch_status_history_changed_by_fkey [f] FOREIGN KEY (changed_by) REFERENCES auth.users(id)
+CON dispatch_status_history.dispatch_status_history_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON dispatch_status_history.dispatch_status_history_dispatch_id_fkey [f] FOREIGN KEY (dispatch_id) REFERENCES dispatches(id) ON DELETE CASCADE
+CON dispatch_status_history.dispatch_status_history_pkey [p] PRIMARY KEY (id)
+CON dispatches.dispatches_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON dispatches.dispatches_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON dispatches.dispatches_company_number_unique [u] UNIQUE (company_id, dispatch_number)
+CON dispatches.dispatches_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON dispatches.dispatches_delivery_status_check [c] CHECK ((delivery_status = ANY (ARRAY['pending'::text, 'dispatched'::text, 'in_transit'::text, 'delivered'::text, 'delayed'::text, 'damaged'::text, 'returned'::text])))
+CON dispatches.dispatches_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id)
+CON dispatches.dispatches_pkey [p] PRIMARY KEY (id)
+CON dispatches.dispatches_total_tare_nonnegative [c] CHECK ((total_tare_weight_kg >= (0)::numeric))
+CON dispatches.dispatches_warehouse_id_fkey [f] FOREIGN KEY (warehouse_id) REFERENCES branches(id) ON DELETE SET NULL
+CON dispatches.validate_dispatch_readiness [t] TRIGGER DEFERRABLE INITIALLY DEFERRED
+CON document_pack_items.document_pack_items_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON document_pack_items.document_pack_items_document_id_fkey [f] FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+CON document_pack_items.document_pack_items_pack_id_document_id_key [u] UNIQUE (pack_id, document_id)
+CON document_pack_items.document_pack_items_pack_id_fkey [f] FOREIGN KEY (pack_id) REFERENCES document_packs(id) ON DELETE CASCADE
+CON document_pack_items.document_pack_items_pkey [p] PRIMARY KEY (id)
+CON document_packs.document_packs_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON document_packs.document_packs_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON document_packs.document_packs_pack_type_check [c] CHECK ((pack_type = ANY (ARRAY['quote_pack'::text, 'order_pack'::text, 'dispatch_pack'::text, 'quality_pack'::text, 'export_pack'::text, 'tender_pack'::text, 'customer_pack'::text])))
+CON document_packs.document_packs_pkey [p] PRIMARY KEY (id)
+CON document_versions.document_versions_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON document_versions.document_versions_document_id_fkey [f] FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
+CON document_versions.document_versions_document_id_version_number_key [u] UNIQUE (document_id, version_number)
+CON document_versions.document_versions_pkey [p] PRIMARY KEY (id)
+CON document_versions.document_versions_uploaded_by_fkey [f] FOREIGN KEY (uploaded_by) REFERENCES auth.users(id)
+CON document_versions.document_versions_version_number_check [c] CHECK ((version_number > 0))
+CON documents.documents_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON documents.documents_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON documents.documents_deleted_by_fkey [f] FOREIGN KEY (deleted_by) REFERENCES auth.users(id)
+CON documents.documents_document_type_check [c] CHECK ((document_type = ANY (ARRAY['drawing'::text, 'quotation_pdf'::text, 'purchase_order'::text, 'dispatch_proof'::text, 'packing_list'::text, 'test_certificate'::text, 'gst_document'::text, 'other'::text])))
+CON documents.documents_pkey [p] PRIMARY KEY (id)
+CON documents.documents_related_entity_type_check [c] CHECK ((related_entity_type = ANY (ARRAY['customer'::text, 'profile'::text, 'die'::text, 'quote'::text, 'order'::text, 'dispatch'::text, 'company'::text])))
+CON documents.documents_uploaded_by_fkey [f] FOREIGN KEY (uploaded_by) REFERENCES auth.users(id)
+CON drawing_reviews.drawing_reviews_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON drawing_reviews.drawing_reviews_drawing_id_fkey [f] FOREIGN KEY (drawing_id) REFERENCES technical_drawings(id) ON DELETE CASCADE
+CON drawing_reviews.drawing_reviews_pkey [p] PRIMARY KEY (id)
+CON drawing_reviews.drawing_reviews_review_status_check [c] CHECK ((review_status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'changes_requested'::text, 'commented'::text])))
+CON energy_readings.energy_readings_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON energy_readings.energy_readings_energy_source_id_fkey [f] FOREIGN KEY (energy_source_id) REFERENCES energy_sources(id) ON DELETE SET NULL
+CON energy_readings.energy_readings_energy_type_check [c] CHECK ((energy_type = ANY (ARRAY['electricity'::text, 'solar'::text, 'grid_electricity'::text, 'dg_electricity'::text, 'natural_gas'::text, 'diesel'::text, 'furnace_oil'::text, 'lpg'::text, 'compressed_air'::text, 'other'::text])))
+CON energy_readings.energy_readings_expense_ledger_id_fkey [f] FOREIGN KEY (expense_ledger_id) REFERENCES expense_ledger(id) ON DELETE SET NULL
+CON energy_readings.energy_readings_pkey [p] PRIMARY KEY (id)
+CON energy_readings.energy_readings_unit_check [c] CHECK ((unit = ANY (ARRAY['kWh'::text, 'litres'::text, 'kg'::text, 'cubic_m'::text, 'units'::text])))
+CON energy_sources.energy_sources_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON energy_sources.energy_sources_company_name_unique [u] UNIQUE (company_id, source_name)
+CON energy_sources.energy_sources_energy_type_check [c] CHECK ((energy_type = ANY (ARRAY['electricity'::text, 'solar'::text, 'grid_electricity'::text, 'dg_electricity'::text, 'natural_gas'::text, 'diesel'::text, 'furnace_oil'::text, 'lpg'::text, 'compressed_air'::text, 'other'::text])))
+CON energy_sources.energy_sources_pkey [p] PRIMARY KEY (id)
+CON energy_sources.energy_sources_unit_check [c] CHECK ((unit = ANY (ARRAY['kWh'::text, 'litres'::text, 'kg'::text, 'cubic_m'::text, 'units'::text])))
+CON entity_revisions.entity_revisions_actor_id_fkey [f] FOREIGN KEY (actor_id) REFERENCES auth.users(id)
+CON entity_revisions.entity_revisions_company_id_entity_type_entity_id_revision__key [u] UNIQUE (company_id, entity_type, entity_id, revision_number)
+CON entity_revisions.entity_revisions_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON entity_revisions.entity_revisions_pkey [p] PRIMARY KEY (id)
+CON expense_ledger.expense_ledger_amounts_nonnegative [c] CHECK (((base_amount >= (0)::numeric) AND (tax_amount >= (0)::numeric) AND (freight_amount >= (0)::numeric) AND (discount_amount >= (0)::numeric) AND (amount_paid >= (0)::numeric)))
+CON expense_ledger.expense_ledger_approval_status_check [c] CHECK ((approval_status = ANY (ARRAY['draft'::text, 'pending_approval'::text, 'approved'::text, 'rejected'::text, 'paid'::text, 'cancelled'::text, 'reversed'::text])))
+CON expense_ledger.expense_ledger_approved_by_fkey [f] FOREIGN KEY (approved_by) REFERENCES auth.users(id)
+CON expense_ledger.expense_ledger_balance_nonnegative [c] CHECK ((balance_amount >= (0)::numeric))
+CON expense_ledger.expense_ledger_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON expense_ledger.expense_ledger_company_number_unique [u] UNIQUE (company_id, expense_number)
+CON expense_ledger.expense_ledger_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON expense_ledger.expense_ledger_currency_check [c] CHECK ((currency = ANY (ARRAY['INR'::text, 'USD'::text, 'EUR'::text, 'AED'::text, 'GBP'::text, 'other'::text])))
+CON expense_ledger.expense_ledger_id_company_unique [u] UNIQUE (id, company_id)
+CON expense_ledger.expense_ledger_inventory_item_id_fkey [f] FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE SET NULL
+CON expense_ledger.expense_ledger_machine_id_fkey [f] FOREIGN KEY (machine_id) REFERENCES machines(id) ON DELETE SET NULL
+CON expense_ledger.expense_ledger_payment_status_check [c] CHECK ((payment_status = ANY (ARRAY['unpaid'::text, 'partially_paid'::text, 'paid'::text, 'overdue'::text, 'cancelled'::text, 'reversed'::text])))
+CON expense_ledger.expense_ledger_pkey [p] PRIMARY KEY (id)
+CON expense_ledger.expense_ledger_quantity_nonnegative [c] CHECK ((quantity >= (0)::numeric))
+CON expense_ledger.expense_ledger_rate_nonnegative [c] CHECK ((rate >= (0)::numeric))
+CON expense_ledger.expense_ledger_settlement_nonnegative [c] CHECK (((credited_amount >= (0)::numeric) AND (refunded_amount >= (0)::numeric) AND (supplier_credit_due >= (0)::numeric)))
+CON expense_ledger.expense_ledger_total_nonnegative [c] CHECK ((total_amount >= (0)::numeric))
+CON expense_ledger.expense_ledger_updated_by_fkey [f] FOREIGN KEY (updated_by) REFERENCES auth.users(id)
+CON expense_ledger.expense_ledger_vendor_id_fkey [f] FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE SET NULL
+CON expense_payments.expense_payments_amount_positive [c] CHECK ((amount_paid > (0)::numeric))
+CON expense_payments.expense_payments_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON expense_payments.expense_payments_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON expense_payments.expense_payments_expense_ledger_id_fkey [f] FOREIGN KEY (expense_ledger_id) REFERENCES expense_ledger(id) ON DELETE CASCADE
+CON expense_payments.expense_payments_parent_company_fk [f] FOREIGN KEY (expense_ledger_id, company_id) REFERENCES expense_ledger(id, company_id)
+CON expense_payments.expense_payments_pkey [p] PRIMARY KEY (id)
+CON expense_payments.expense_payments_reversed_by_fkey [f] FOREIGN KEY (reversed_by) REFERENCES auth.users(id)
+CON expense_payments.expense_payments_status_check [c] CHECK ((status = ANY (ARRAY['posted'::text, 'reversed'::text])))
+CON expense_supplier_credits.expense_supplier_credits_amount_check [c] CHECK ((amount > (0)::numeric))
+CON expense_supplier_credits.expense_supplier_credits_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON expense_supplier_credits.expense_supplier_credits_company_idempotency_unique [u] UNIQUE (company_id, idempotency_key)
+CON expense_supplier_credits.expense_supplier_credits_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON expense_supplier_credits.expense_supplier_credits_credit_type_check [c] CHECK ((credit_type = ANY (ARRAY['credit_note'::text, 'refund'::text])))
+CON expense_supplier_credits.expense_supplier_credits_parent_company_fk [f] FOREIGN KEY (expense_ledger_id, company_id) REFERENCES expense_ledger(id, company_id)
+CON expense_supplier_credits.expense_supplier_credits_pkey [p] PRIMARY KEY (id)
+CON expense_supplier_credits.expense_supplier_credits_reversed_by_fkey [f] FOREIGN KEY (reversed_by) REFERENCES auth.users(id)
+CON expense_supplier_credits.expense_supplier_credits_status_check [c] CHECK ((status = ANY (ARRAY['posted'::text, 'reversed'::text])))
+CON export_documents.export_documents_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON export_documents.export_documents_document_type_check [c] CHECK ((document_type = ANY (ARRAY['proforma_invoice'::text, 'commercial_invoice'::text, 'packing_list'::text, 'certificate_of_origin'::text, 'test_certificate'::text, 'bill_of_lading'::text, 'shipping_bill'::text, 'insurance'::text, 'fumigation_certificate'::text, 'other'::text])))
+CON export_documents.export_documents_export_order_id_fkey [f] FOREIGN KEY (export_order_id) REFERENCES export_orders(id) ON DELETE CASCADE
+CON export_documents.export_documents_pkey [p] PRIMARY KEY (id)
+CON export_documents.export_documents_status_check [c] CHECK ((status = ANY (ARRAY['pending'::text, 'uploaded'::text, 'verified'::text, 'sent'::text])))
+CON export_orders.export_orders_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON export_orders.export_orders_currency_check [c] CHECK ((currency = ANY (ARRAY['USD'::text, 'EUR'::text, 'GBP'::text, 'AED'::text, 'SAR'::text, 'AUD'::text, 'INR'::text])))
+CON export_orders.export_orders_incoterm_check [c] CHECK ((incoterm = ANY (ARRAY['EXW'::text, 'FOB'::text, 'CIF'::text, 'CFR'::text, 'DAP'::text, 'DDP'::text])))
+CON export_orders.export_orders_payment_status_check [c] CHECK ((payment_status = ANY (ARRAY['pending'::text, 'lc_received'::text, 'advance_received'::text, 'partial'::text, 'full'::text, 'overdue'::text])))
+CON export_orders.export_orders_pkey [p] PRIMARY KEY (id)
+CON export_orders.export_orders_shipment_mode_check [c] CHECK ((shipment_mode = ANY (ARRAY['sea'::text, 'air'::text, 'road'::text, 'courier'::text])))
+CON export_orders.export_orders_status_check [c] CHECK ((status = ANY (ARRAY['draft'::text, 'confirmed'::text, 'production'::text, 'packing'::text, 'shipped'::text, 'in_transit'::text, 'delivered'::text, 'completed'::text, 'cancelled'::text])))
+CON factory_load_consolidations.factory_load_consolidations_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON factory_load_consolidations.factory_load_consolidations_company_id_order_id_key [u] UNIQUE (company_id, order_id)
+CON factory_load_consolidations.factory_load_consolidations_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON factory_load_consolidations.factory_load_consolidations_manufacturing_weight_kg_check [c] CHECK ((manufacturing_weight_kg > (0)::numeric))
+CON factory_load_consolidations.factory_load_consolidations_minimum_weight_kg_check [c] CHECK ((minimum_weight_kg > (0)::numeric))
+CON factory_load_consolidations.factory_load_consolidations_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+CON factory_load_consolidations.factory_load_consolidations_pkey [p] PRIMARY KEY (id)
+CON factory_load_consolidations.factory_load_consolidations_released_by_fkey [f] FOREIGN KEY (released_by) REFERENCES auth.users(id)
+CON factory_load_consolidations.factory_load_consolidations_status_check [c] CHECK ((status = ANY (ARRAY['pending'::text, 'consolidated'::text, 'overridden'::text, 'cancelled'::text])))
+CON feature_flags.feature_flags_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON feature_flags.feature_flags_company_module_unique [u] UNIQUE (company_id, module_name)
+CON feature_flags.feature_flags_enabled_by_fkey [f] FOREIGN KEY (enabled_by) REFERENCES auth.users(id)
+CON feature_flags.feature_flags_module_check [c] CHECK ((module_name = ANY (ARRAY['ai_assistant'::text, 'whatsapp_automation'::text, 'dealer_portal'::text, 'advanced_inventory'::text, 'production_planning'::text, 'quality_compliance'::text, 'export_docs'::text, 'tender_management'::text, 'energy_monitoring'::text, 'machine_maintenance'::text, 'bis_compliance'::text, 'profitability_intelligence'::text, 'barcode_tracking'::text, 'accounting_integrations'::text, 'mobile_floor_app'::text, 'multi_plant'::text, 'systems_configurator'::text, 'document_intelligence'::text, 'die_intelligence'::text, 'crm'::text, 'report_builder'::text, 'automation'::text, 'command_center'::text])))
+CON feature_flags.feature_flags_pkey [p] PRIMARY KEY (id)
+CON finish_options.finish_options_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON finish_options.finish_options_pkey [p] PRIMARY KEY (id)
+CON finish_options.finish_options_vendor_id_fkey [f] FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE SET NULL
+CON finishing_jobs.finishing_jobs_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON finishing_jobs.finishing_jobs_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON finishing_jobs.finishing_jobs_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+CON finishing_jobs.finishing_jobs_pkey [p] PRIMARY KEY (id)
+CON finishing_jobs.finishing_jobs_plant_id_fkey [f] FOREIGN KEY (plant_id) REFERENCES branches(id) ON DELETE SET NULL
+CON finishing_jobs.finishing_jobs_production_job_id_fkey [f] FOREIGN KEY (production_job_id) REFERENCES production_jobs(id)
+CON finishing_jobs.finishing_jobs_retry_of_finishing_job_id_fkey [f] FOREIGN KEY (retry_of_finishing_job_id) REFERENCES finishing_jobs(id) ON DELETE RESTRICT
+CON finishing_jobs.finishing_jobs_status_check [c] CHECK ((status = ANY (ARRAY['not_required'::text, 'planned'::text, 'sent_to_vendor'::text, 'in_process'::text, 'received'::text, 'rejected'::text, 'completed'::text])))
+CON finishing_jobs.finishing_jobs_vendor_id_fkey [f] FOREIGN KEY (vendor_id) REFERENCES vendors(id)
+CON finishing_status_history.finishing_status_history_changed_by_fkey [f] FOREIGN KEY (changed_by) REFERENCES auth.users(id)
+CON finishing_status_history.finishing_status_history_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON finishing_status_history.finishing_status_history_finishing_job_id_fkey [f] FOREIGN KEY (finishing_job_id) REFERENCES finishing_jobs(id) ON DELETE CASCADE
+CON finishing_status_history.finishing_status_history_pkey [p] PRIMARY KEY (id)
+CON foundry_aluminium_scrap.foundry_aluminium_scrap_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON foundry_aluminium_scrap.foundry_aluminium_scrap_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON foundry_aluminium_scrap.foundry_aluminium_scrap_expense_ledger_id_fkey [f] FOREIGN KEY (expense_ledger_id) REFERENCES expense_ledger(id) ON DELETE SET NULL
+CON foundry_aluminium_scrap.foundry_aluminium_scrap_inventory_item_id_fkey [f] FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE SET NULL
+CON foundry_aluminium_scrap.foundry_aluminium_scrap_pkey [p] PRIMARY KEY (id)
+CON foundry_aluminium_scrap.foundry_aluminium_scrap_scrap_quality_check [c] CHECK ((scrap_quality = ANY (ARRAY['clean'::text, 'painted'::text, 'mixed'::text, 'contaminated'::text, 'segregation_required'::text, 'rejected'::text])))
+CON foundry_aluminium_scrap.foundry_aluminium_scrap_scrap_source_check [c] CHECK ((scrap_source = ANY (ARRAY['incoming'::text, 'in_house'::text])))
+CON foundry_aluminium_scrap.foundry_aluminium_scrap_status_check [c] CHECK ((status = ANY (ARRAY['available'::text, 'reserved'::text, 'used'::text, 'rejected'::text])))
+CON foundry_aluminium_scrap.foundry_aluminium_scrap_vendor_id_fkey [f] FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE SET NULL
+CON foundry_aluminium_scrap.foundry_aluminium_scrap_weight_kg_check [c] CHECK ((weight_kg > (0)::numeric))
+CON foundry_aluminium_scrap.foundry_scrap_amounts_nonnegative [c] CHECK (((rate >= (0)::numeric) AND (base_amount >= (0)::numeric) AND (tax_amount >= (0)::numeric) AND (freight_amount >= (0)::numeric) AND (discount_amount >= (0)::numeric) AND (total_amount >= (0)::numeric)))
+CON foundry_aluminium_scrap.foundry_scrap_available_nonnegative [c] CHECK (((available_weight_kg IS NULL) OR (available_weight_kg >= (0)::numeric)))
+CON foundry_aluminium_scrap.foundry_scrap_available_within_weight [c] CHECK (((available_weight_kg IS NULL) OR (available_weight_kg <= weight_kg))) NOT VALID
+CON foundry_aluminium_scrap.foundry_scrap_company_number_unique [u] UNIQUE (company_id, scrap_number)
+CON foundry_aluminium_scrap.foundry_scrap_incoming_vendor_required [c] CHECK (((scrap_source <> 'incoming'::text) OR (vendor_id IS NOT NULL)))
+CON foundry_batches.foundry_batches_batch_sequence_positive [c] CHECK (((batch_sequence IS NOT NULL) AND (batch_sequence > 0)))
+CON foundry_batches.foundry_batches_billet_count_check [c] CHECK ((billet_count > 0))
+CON foundry_batches.foundry_batches_billet_diameter_mm_check [c] CHECK ((billet_diameter_mm > (0)::numeric))
+CON foundry_batches.foundry_batches_billet_length_mm_check [c] CHECK ((billet_length_mm > (0)::numeric))
+CON foundry_batches.foundry_batches_charge_weights_nonnegative [c] CHECK (((required_furnace_charge_kg >= (0)::numeric) AND (scrap_aluminium_kg >= (0)::numeric) AND (external_aluminium_kg >= (0)::numeric) AND (ingot_kg >= (0)::numeric)))
+CON foundry_batches.foundry_batches_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON foundry_batches.foundry_batches_company_number_unique [u] UNIQUE (company_id, batch_number)
+CON foundry_batches.foundry_batches_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON foundry_batches.foundry_batches_density_positive [c] CHECK ((alloy_density_kg_m3 > (0)::numeric))
+CON foundry_batches.foundry_batches_diameter_capacity [c] CHECK (((billet_diameter_inch IS NULL) OR ((billet_diameter_inch = (6)::numeric) AND (billet_count <= 24)) OR ((billet_diameter_inch = (4)::numeric) AND (billet_count <= 48)) OR (billet_diameter_inch <> ALL (ARRAY[(4)::numeric, (6)::numeric]))))
+CON foundry_batches.foundry_batches_efficiency_valid [c] CHECK (((extrusion_efficiency_percent > (0)::numeric) AND (extrusion_efficiency_percent <= (100)::numeric)))
+CON foundry_batches.foundry_batches_external_source_id_fkey [f] FOREIGN KEY (external_source_id) REFERENCES foundry_external_aluminium_sources(id) ON DELETE RESTRICT
+CON foundry_batches.foundry_batches_furnace_efficiency_valid [c] CHECK (((furnace_efficiency_percent > (0)::numeric) AND (furnace_efficiency_percent <= (100)::numeric)))
+CON foundry_batches.foundry_batches_furnace_required [c] CHECK (((furnace_number IS NOT NULL) AND (length(TRIM(BOTH FROM furnace_number)) > 0)))
+CON foundry_batches.foundry_batches_ingot_kg_check [c] CHECK ((ingot_kg >= (0)::numeric))
+CON foundry_batches.foundry_batches_mix_percent_valid [c] CHECK (((scrap_percentage >= (0)::numeric) AND (external_aluminium_percentage >= (0)::numeric) AND (abs(((scrap_percentage + external_aluminium_percentage) - (100)::numeric)) <= 0.001)))
+CON foundry_batches.foundry_batches_pkey [p] PRIMARY KEY (id)
+CON foundry_batches.foundry_batches_scrap_aluminium_kg_check [c] CHECK ((scrap_aluminium_kg >= (0)::numeric))
+CON foundry_batches.foundry_batches_scrap_id_fkey [f] FOREIGN KEY (scrap_id) REFERENCES foundry_aluminium_scrap(id) ON DELETE RESTRICT
+CON foundry_batches.foundry_batches_status_check [c] CHECK ((status = ANY (ARRAY['planned'::text, 'melting'::text, 'cast'::text, 'homogenizing'::text, 'ready'::text, 'issued'::text, 'cancelled'::text])))
+CON foundry_billets.foundry_billets_allocated_by_fkey [f] FOREIGN KEY (allocated_by) REFERENCES auth.users(id)
+CON foundry_billets.foundry_billets_allocation_requirement_id_fkey [f] FOREIGN KEY (allocation_requirement_id) REFERENCES order_billet_requirements(id) ON DELETE SET NULL
+CON foundry_billets.foundry_billets_billet_number_check [c] CHECK ((billet_number > 0))
+CON foundry_billets.foundry_billets_company_code_unique [u] UNIQUE (company_id, billet_code)
+CON foundry_billets.foundry_billets_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON foundry_billets.foundry_billets_foundry_batch_id_fkey [f] FOREIGN KEY (foundry_batch_id) REFERENCES foundry_batches(id) ON DELETE CASCADE
+CON foundry_billets.foundry_billets_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL
+CON foundry_billets.foundry_billets_outsourced_batch_id_fkey [f] FOREIGN KEY (outsourced_batch_id) REFERENCES outsourced_billet_batches(id) ON DELETE CASCADE
+CON foundry_billets.foundry_billets_pkey [p] PRIMARY KEY (id)
+CON foundry_billets.foundry_billets_production_job_id_fkey [f] FOREIGN KEY (production_job_id) REFERENCES production_jobs(id) ON DELETE SET NULL
+CON foundry_billets.foundry_billets_source_batch_check [c] CHECK ((((source_type = 'in_house'::text) AND (foundry_batch_id IS NOT NULL) AND (outsourced_batch_id IS NULL)) OR ((source_type = 'outsourced'::text) AND (outsourced_batch_id IS NOT NULL) AND (foundry_batch_id IS NULL))))
+CON foundry_billets.foundry_billets_source_type_check [c] CHECK ((source_type = ANY (ARRAY['in_house'::text, 'outsourced'::text])))
+CON foundry_billets.foundry_billets_status_check [c] CHECK ((status = ANY (ARRAY['planned'::text, 'cast'::text, 'allocated'::text, 'issued'::text, 'consumed'::text, 'scrap'::text, 'cancelled'::text])))
+CON foundry_billets.foundry_billets_weight_kg_check [c] CHECK ((weight_kg > (0)::numeric))
+CON foundry_external_aluminium_sources.foundry_external_aluminium_sources_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON foundry_external_aluminium_sources.foundry_external_aluminium_sources_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON foundry_external_aluminium_sources.foundry_external_aluminium_sources_expense_ledger_id_fkey [f] FOREIGN KEY (expense_ledger_id) REFERENCES expense_ledger(id) ON DELETE SET NULL
+CON foundry_external_aluminium_sources.foundry_external_aluminium_sources_inventory_item_id_fkey [f] FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE SET NULL
+CON foundry_external_aluminium_sources.foundry_external_aluminium_sources_item_type_check [c] CHECK ((item_type = ANY (ARRAY['aluminum_ingot'::text, 'aluminum_sows'::text, 'aluminum_billets'::text, 'aluminum_wire_rods'::text, 'aluminum_t_ingots'::text, 'aluminum_chips'::text])))
+CON foundry_external_aluminium_sources.foundry_external_aluminium_sources_pkey [p] PRIMARY KEY (id)
+CON foundry_external_aluminium_sources.foundry_external_aluminium_sources_status_check [c] CHECK ((status = ANY (ARRAY['available'::text, 'reserved'::text, 'used'::text, 'rejected'::text, 'returned'::text])))
+CON foundry_external_aluminium_sources.foundry_external_aluminium_sources_vendor_id_fkey [f] FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE SET NULL
+CON foundry_external_aluminium_sources.foundry_external_aluminium_sources_weight_kg_check [c] CHECK ((weight_kg > (0)::numeric))
+CON foundry_external_aluminium_sources.foundry_external_amounts_nonnegative [c] CHECK (((rate >= (0)::numeric) AND (base_amount >= (0)::numeric) AND (tax_amount >= (0)::numeric) AND (freight_amount >= (0)::numeric) AND (discount_amount >= (0)::numeric) AND (total_amount >= (0)::numeric)))
+CON foundry_external_aluminium_sources.foundry_external_available_within_weight [c] CHECK (((available_weight_kg IS NULL) OR (available_weight_kg <= weight_kg))) NOT VALID
+CON foundry_external_aluminium_sources.foundry_external_sources_available_nonnegative [c] CHECK (((available_weight_kg IS NULL) OR (available_weight_kg >= (0)::numeric)))
+CON foundry_external_aluminium_sources.foundry_external_sources_company_number_unique [u] UNIQUE (company_id, source_number)
+CON foundry_external_aluminium_sources.foundry_external_sources_quantity_required [c] CHECK (((item_type = 'aluminum_chips'::text) OR (quantity IS NOT NULL)))
+CON glass_items.glass_items_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON glass_items.glass_items_pkey [p] PRIMARY KEY (id)
+CON hardware_items.hardware_items_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON hardware_items.hardware_items_pkey [p] PRIMARY KEY (id)
+CON integrations.integrations_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON integrations.integrations_company_id_integration_type_provider_name_key [u] UNIQUE (company_id, integration_type, provider_name)
+CON integrations.integrations_integration_type_check [c] CHECK ((integration_type = ANY (ARRAY['tally'::text, 'busy'::text, 'zoho_books'::text, 'whatsapp_business'::text, 'email_smtp'::text, 'indiamart_leads'::text, 'tradeindia_leads'::text, 'google_drive_backup'::text, 'google_sheets_export'::text, 'payment_gateway'::text, 'broker_transport_api'::text])))
+CON integrations.integrations_pkey [p] PRIMARY KEY (id)
+CON integrations.integrations_status_check [c] CHECK ((status = ANY (ARRAY['not_configured'::text, 'connected'::text, 'error'::text, 'disabled'::text])))
+CON inventory_discrepancies.inventory_discrepancies_approved_by_fkey [f] FOREIGN KEY (approved_by) REFERENCES auth.users(id)
+CON inventory_discrepancies.inventory_discrepancies_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON inventory_discrepancies.inventory_discrepancies_dealer_id_fkey [f] FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
+CON inventory_discrepancies.inventory_discrepancies_dealer_order_id_fkey [f] FOREIGN KEY (dealer_order_id) REFERENCES dealer_orders(id)
+CON inventory_discrepancies.inventory_discrepancies_pkey [p] PRIMARY KEY (id)
+CON inventory_discrepancies.inventory_discrepancies_reported_by_user_id_fkey [f] FOREIGN KEY (reported_by_user_id) REFERENCES auth.users(id)
+CON inventory_discrepancies.inventory_discrepancies_resolution_reason_check [c] CHECK (((resolution_reason IS NULL) OR (resolution_reason = ANY (ARRAY['short_shipment'::text, 'dealer_counting_error'::text, 'transit_damage_loss'::text, 'wrong_item_sent'::text, 'extra_quantity_received'::text, 'manual_correction'::text]))))
+CON inventory_discrepancies.inventory_discrepancies_resolved_by_fkey [f] FOREIGN KEY (resolved_by) REFERENCES auth.users(id)
+CON inventory_discrepancies.inventory_discrepancies_shipment_id_fkey [f] FOREIGN KEY (shipment_id) REFERENCES shipments(id)
+CON inventory_discrepancies.inventory_discrepancies_shipment_item_id_fkey [f] FOREIGN KEY (shipment_item_id) REFERENCES shipment_items(id)
+CON inventory_discrepancies.inventory_discrepancies_status_check [c] CHECK ((status = ANY (ARRAY['open'::text, 'recount_requested'::text, 'recount_completed'::text, 'resolved'::text, 'rejected'::text])))
+CON inventory_items.inventory_item_category_check [c] CHECK ((item_category = ANY (ARRAY['billets'::text, 'extruded_profiles'::text, 'hardware'::text, 'powder_coating_material'::text, 'packing_material'::text, 'scrap'::text, 'finished_goods'::text])))
+CON inventory_items.inventory_items_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON inventory_items.inventory_items_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON inventory_items.inventory_items_pkey [p] PRIMARY KEY (id)
+CON inventory_items.inventory_items_warehouse_id_fkey [f] FOREIGN KEY (warehouse_id) REFERENCES branches(id) ON DELETE SET NULL
+CON inventory_locations.inventory_locations_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id)
+CON inventory_locations.inventory_locations_company_code_unique [u] UNIQUE (company_id, location_code)
+CON inventory_locations.inventory_locations_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON inventory_locations.inventory_locations_dealer_id_fkey [f] FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
+CON inventory_locations.inventory_locations_location_type_check [c] CHECK ((location_type = ANY (ARRAY['factory'::text, 'warehouse'::text, 'branch'::text, 'dealer'::text, 'in_transit'::text, 'customer'::text])))
+CON inventory_locations.inventory_locations_pkey [p] PRIMARY KEY (id)
+CON inventory_movements.inventory_movements_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON inventory_movements.inventory_movements_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON inventory_movements.inventory_movements_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON inventory_movements.inventory_movements_inventory_item_id_fkey [f] FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE CASCADE
+CON inventory_movements.inventory_movements_pkey [p] PRIMARY KEY (id)
+CON inventory_movements.inventory_movements_warehouse_id_fkey [f] FOREIGN KEY (warehouse_id) REFERENCES branches(id) ON DELETE SET NULL
+CON inventory_movements.movement_type_check [c] CHECK ((movement_type = ANY (ARRAY['purchase_in'::text, 'production_in'::text, 'production_issue'::text, 'dispatch_out'::text, 'scrap_in'::text, 'scrap_out'::text, 'adjustment_in'::text, 'adjustment_out'::text, 'return_in'::text])))
+CON inventory_transactions.inventory_transactions_audit_log_id_fkey [f] FOREIGN KEY (audit_log_id) REFERENCES audit_logs_enterprise(id)
+CON inventory_transactions.inventory_transactions_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON inventory_transactions.inventory_transactions_created_by_user_id_fkey [f] FOREIGN KEY (created_by_user_id) REFERENCES auth.users(id)
+CON inventory_transactions.inventory_transactions_from_location_id_fkey [f] FOREIGN KEY (from_location_id) REFERENCES inventory_locations(id)
+CON inventory_transactions.inventory_transactions_from_owner_type_check [c] CHECK ((from_owner_type = ANY (ARRAY['factory'::text, 'dealer'::text, 'customer'::text])))
+CON inventory_transactions.inventory_transactions_inventory_item_id_fkey [f] FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id)
+CON inventory_transactions.inventory_transactions_inventory_state_check [c] CHECK ((inventory_state = ANY (ARRAY['factory_available_stock'::text, 'factory_reserved_stock'::text, 'factory_allocated_to_order'::text, 'packed_for_dispatch'::text, 'dispatched_to_dealer'::text, 'in_transit_to_dealer'::text, 'dealer_pending_receipt'::text, 'dealer_received_confirmed'::text, 'dealer_inventory_on_hand'::text, 'discrepancy_under_review'::text, 'damaged_or_short_received'::text, 'adjustment_approved'::text])))
+CON inventory_transactions.inventory_transactions_item_type_check [c] CHECK ((item_type = ANY (ARRAY['profile'::text, 'hardware'::text, 'accessory'::text, 'glass'::text, 'gasket'::text, 'fastener'::text, 'other'::text])))
+CON inventory_transactions.inventory_transactions_pkey [p] PRIMARY KEY (id)
+CON inventory_transactions.inventory_transactions_quantity_check [c] CHECK ((quantity <> (0)::numeric))
+CON inventory_transactions.inventory_transactions_status_check [c] CHECK ((status = ANY (ARRAY['draft'::text, 'posted'::text, 'pending_approval'::text, 'approved'::text, 'rejected'::text, 'void'::text])))
+CON inventory_transactions.inventory_transactions_to_location_id_fkey [f] FOREIGN KEY (to_location_id) REFERENCES inventory_locations(id)
+CON inventory_transactions.inventory_transactions_to_owner_type_check [c] CHECK ((to_owner_type = ANY (ARRAY['factory'::text, 'dealer'::text, 'customer'::text])))
+CON inventory_transactions.inventory_transactions_unit_check [c] CHECK ((unit = ANY (ARRAY['pieces'::text, 'meters'::text, 'kg'::text, 'set'::text, 'box'::text])))
+CON invitations.invitations_accepted_by_fkey [f] FOREIGN KEY (accepted_by) REFERENCES auth.users(id)
+CON invitations.invitations_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id)
+CON invitations.invitations_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON invitations.invitations_dealer_id_fkey [f] FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
+CON invitations.invitations_invited_by_fkey [f] FOREIGN KEY (invited_by) REFERENCES auth.users(id)
+CON invitations.invitations_pkey [p] PRIMARY KEY (id)
+CON invitations.invitations_revoked_by_fkey [f] FOREIGN KEY (revoked_by) REFERENCES auth.users(id)
+CON invitations.invitations_role_id_fkey [f] FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE RESTRICT
+CON invitations.invitations_status_check [c] CHECK ((status = ANY (ARRAY['pending'::text, 'accepted'::text, 'revoked'::text, 'expired'::text])))
+CON invitations.invitations_token_hash_key [u] UNIQUE (token_hash)
+CON invoice_items.assert_invoice_packing_coverage [t] TRIGGER DEFERRABLE INITIALLY DEFERRED
+CON invoice_items.invoice_items_alloy_id_fkey [f] FOREIGN KEY (alloy_id) REFERENCES pcda_master_alloys(id)
+CON invoice_items.invoice_items_alloy_standard_id_fkey [f] FOREIGN KEY (alloy_standard_id) REFERENCES pcda_master_alloy_standards(id)
+CON invoice_items.invoice_items_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON invoice_items.invoice_items_die_id_fkey [f] FOREIGN KEY (die_id) REFERENCES dies(id)
+CON invoice_items.invoice_items_drawing_approval_status_check [c] CHECK (((drawing_approval_status IS NULL) OR (drawing_approval_status = ANY (ARRAY['Pending'::text, 'Approved'::text, 'Rejected'::text]))))
+CON invoice_items.invoice_items_invoice_id_fkey [f] FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
+CON invoice_items.invoice_items_order_item_id_fkey [f] FOREIGN KEY (order_item_id) REFERENCES order_items(id)
+CON invoice_items.invoice_items_packing_mode_id_fkey [f] FOREIGN KEY (packing_mode_id) REFERENCES pcda_master_packing_modes(id)
+CON invoice_items.invoice_items_pkey [p] PRIMARY KEY (id)
+CON invoice_items.invoice_items_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id)
+CON invoice_items.invoice_items_quote_item_id_fkey [f] FOREIGN KEY (quote_item_id) REFERENCES quote_items(id) ON DELETE RESTRICT
+CON invoice_items.invoice_items_temper_id_fkey [f] FOREIGN KEY (temper_id) REFERENCES pcda_master_tempers(id)
+CON invoices.invoice_status_check [c] CHECK ((status = ANY (ARRAY['draft'::text, 'generated'::text, 'sent'::text, 'partially_paid'::text, 'paid'::text, 'overdue'::text, 'cancelled'::text, 'credited'::text])))
+CON invoices.invoices_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON invoices.invoices_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON invoices.invoices_company_id_invoice_number_key [u] UNIQUE (company_id, invoice_number)
+CON invoices.invoices_customer_id_fkey [f] FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE RESTRICT
+CON invoices.invoices_deleted_by_fkey [f] FOREIGN KEY (deleted_by) REFERENCES auth.users(id)
+CON invoices.invoices_dispatch_id_fkey [f] FOREIGN KEY (dispatch_id) REFERENCES dispatches(id) ON DELETE SET NULL
+CON invoices.invoices_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL
+CON invoices.invoices_pkey [p] PRIMARY KEY (id)
+CON leads.leads_assigned_to_fkey [f] FOREIGN KEY (assigned_to) REFERENCES auth.users(id)
+CON leads.leads_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON leads.leads_customer_type_check [c] CHECK ((customer_type = ANY (ARRAY['fabricator'::text, 'dealer'::text, 'architect'::text, 'industrial'::text, 'solar'::text, 'government'::text, 'export'::text, 'contractor'::text, 'other'::text])))
+CON leads.leads_lead_source_check [c] CHECK ((lead_source = ANY (ARRAY['referral'::text, 'website'::text, 'indiaMart'::text, 'tradeIndia'::text, 'exhibition'::text, 'field_sales'::text, 'architect'::text, 'contractor'::text, 'government_tender'::text, 'repeat_customer'::text, 'other'::text])))
+CON leads.leads_pkey [p] PRIMARY KEY (id)
+CON leads.leads_segment_check [c] CHECK ((segment = ANY (ARRAY['key_account'::text, 'dealer'::text, 'fabricator'::text, 'architect'::text, 'government'::text, 'export'::text, 'project'::text, 'price_sensitive'::text, 'unassigned'::text])))
+CON leads.leads_status_check [c] CHECK ((status = ANY (ARRAY['new'::text, 'contacted'::text, 'qualified'::text, 'quotation_sent'::text, 'negotiation'::text, 'won'::text, 'lost'::text, 'dormant'::text])))
+CON login_events.login_events_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON login_events.login_events_event_type_check [c] CHECK ((event_type = ANY (ARRAY['login_success'::text, 'login_failed'::text, 'logout'::text, 'password_reset'::text, 'invite_accepted'::text])))
+CON login_events.login_events_pkey [p] PRIMARY KEY (id)
+CON login_events.login_events_user_id_fkey [f] FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+CON machines.machine_type_check [c] CHECK ((machine_type = ANY (ARRAY['extrusion_press'::text, 'aging_oven'::text, 'powder_coating_line'::text, 'anodizing_line'::text, 'cutting_machine'::text, 'packing_station'::text, 'other'::text])))
+CON machines.machines_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON machines.machines_company_code_unique [u] UNIQUE (company_id, machine_code)
+CON machines.machines_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON machines.machines_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON machines.machines_pkey [p] PRIMARY KEY (id)
+CON machines.machines_plant_id_fkey [f] FOREIGN KEY (plant_id) REFERENCES branches(id) ON DELETE SET NULL
+CON machines.machines_status_check [c] CHECK ((status = ANY (ARRAY['active'::text, 'operational'::text, 'idle'::text, 'maintenance'::text, 'breakdown'::text, 'inactive'::text]))) NOT VALID
+CON maintenance_schedules.maintenance_schedules_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON maintenance_schedules.maintenance_schedules_frequency_type_check [c] CHECK ((frequency_type = ANY (ARRAY['daily'::text, 'weekly'::text, 'monthly'::text, 'quarterly'::text, 'half_yearly'::text, 'yearly'::text, 'run_hours'::text])))
+CON maintenance_schedules.maintenance_schedules_machine_type_check [c] CHECK ((machine_type = ANY (ARRAY['extrusion_press'::text, 'billet_heater'::text, 'aging_oven'::text, 'puller'::text, 'stretcher'::text, 'cutting_machine'::text, 'powder_coating_line'::text, 'anodizing_line'::text, 'compressor'::text, 'packing_equipment'::text, 'other'::text])))
+CON maintenance_schedules.maintenance_schedules_maintenance_type_check [c] CHECK ((maintenance_type = ANY (ARRAY['preventive'::text, 'corrective'::text, 'inspection'::text, 'calibration'::text, 'breakdown'::text])))
+CON maintenance_schedules.maintenance_schedules_pkey [p] PRIMARY KEY (id)
+CON maintenance_schedules.maintenance_schedules_status_check [c] CHECK ((status = ANY (ARRAY['scheduled'::text, 'in_progress'::text, 'completed'::text, 'overdue'::text, 'cancelled'::text])))
+CON maintenance_spare_parts.maintenance_spare_parts_company_code_unique [u] UNIQUE (company_id, part_code)
+CON maintenance_spare_parts.maintenance_spare_parts_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON maintenance_spare_parts.maintenance_spare_parts_pkey [p] PRIMARY KEY (id)
+CON maintenance_spare_parts.maintenance_spare_parts_stock_nonnegative [c] CHECK ((current_stock >= (0)::numeric))
+CON message_campaigns.message_campaigns_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON message_campaigns.message_campaigns_pkey [p] PRIMARY KEY (id)
+CON message_campaigns.message_campaigns_template_id_fkey [f] FOREIGN KEY (template_id) REFERENCES whatsapp_templates(id)
+CON notification_read_receipts.notification_read_receipts_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON notification_read_receipts.notification_read_receipts_notification_id_fkey [f] FOREIGN KEY (notification_id) REFERENCES notifications(id) ON DELETE CASCADE
+CON notification_read_receipts.notification_read_receipts_pkey [p] PRIMARY KEY (notification_id, user_id)
+CON notification_read_receipts.notification_read_receipts_user_id_fkey [f] FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+CON notifications.notifications_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON notifications.notifications_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON notifications.notifications_dealer_id_fkey [f] FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
+CON notifications.notifications_pkey [p] PRIMARY KEY (id)
+CON notifications.notifications_recipient_user_id_fkey [f] FOREIGN KEY (recipient_user_id) REFERENCES auth.users(id)
+CON notifications.notifications_severity_check [c] CHECK ((severity = ANY (ARRAY['info'::text, 'success'::text, 'warning'::text, 'critical'::text])))
+CON opportunities.opportunities_assigned_to_fkey [f] FOREIGN KEY (assigned_to) REFERENCES auth.users(id)
+CON opportunities.opportunities_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON opportunities.opportunities_customer_id_fkey [f] FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
+CON opportunities.opportunities_lead_id_fkey [f] FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE SET NULL
+CON opportunities.opportunities_lead_source_check [c] CHECK ((lead_source = ANY (ARRAY['referral'::text, 'website'::text, 'indiaMart'::text, 'tradeIndia'::text, 'exhibition'::text, 'field_sales'::text, 'architect'::text, 'contractor'::text, 'government_tender'::text, 'repeat_customer'::text, 'other'::text])))
+CON opportunities.opportunities_pkey [p] PRIMARY KEY (id)
+CON opportunities.opportunities_probability_percent_check [c] CHECK (((probability_percent >= (0)::numeric) AND (probability_percent <= (100)::numeric)))
+CON opportunities.opportunities_segment_check [c] CHECK ((segment = ANY (ARRAY['key_account'::text, 'dealer'::text, 'fabricator'::text, 'architect'::text, 'government'::text, 'export'::text, 'project'::text, 'price_sensitive'::text, 'unassigned'::text])))
+CON opportunities.opportunities_stage_check [c] CHECK ((stage = ANY (ARRAY['enquiry'::text, 'requirement_collected'::text, 'quote_preparation'::text, 'quote_sent'::text, 'negotiation'::text, 'sampling'::text, 'approved'::text, 'won'::text, 'lost'::text])))
+CON order_billet_requirements.order_billet_requirements_billet_diameter_inch_check [c] CHECK ((billet_diameter_inch > (0)::numeric))
+CON order_billet_requirements.order_billet_requirements_billet_length_mm_check [c] CHECK ((billet_length_mm > (0)::numeric))
+CON order_billet_requirements.order_billet_requirements_billet_weight_kg_check [c] CHECK ((billet_weight_kg >= (0)::numeric))
+CON order_billet_requirements.order_billet_requirements_billets_allocated_check [c] CHECK ((billets_allocated >= 0))
+CON order_billet_requirements.order_billet_requirements_billets_required_check [c] CHECK ((billets_required >= 0))
+CON order_billet_requirements.order_billet_requirements_billets_short_check [c] CHECK ((billets_short >= 0))
+CON order_billet_requirements.order_billet_requirements_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON order_billet_requirements.order_billet_requirements_extrusion_efficiency_percent_check [c] CHECK (((extrusion_efficiency_percent > (0)::numeric) AND (extrusion_efficiency_percent <= (100)::numeric)))
+CON order_billet_requirements.order_billet_requirements_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+CON order_billet_requirements.order_billet_requirements_pkey [p] PRIMARY KEY (id)
+CON order_billet_requirements.order_billet_requirements_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE RESTRICT
+CON order_billet_requirements.order_billet_requirements_required_weight_kg_check [c] CHECK ((required_weight_kg >= (0)::numeric))
+CON order_billet_requirements.order_billet_requirements_status_check [c] CHECK ((status = ANY (ARRAY['not_required'::text, 'pending'::text, 'partial'::text, 'complete'::text, 'shortage'::text, 'cancelled'::text])))
+CON order_billet_requirements.order_billet_requirements_unique [u] UNIQUE (company_id, order_id, profile_id, alloy, temper, billet_diameter_inch)
+CON order_cost_breakdown.order_cost_breakdown_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON order_cost_breakdown.order_cost_breakdown_payment_status_check [c] CHECK ((payment_status = ANY (ARRAY['pending'::text, 'partial'::text, 'paid'::text, 'overdue'::text, 'written_off'::text])))
+CON order_cost_breakdown.order_cost_breakdown_pkey [p] PRIMARY KEY (id)
+CON order_dealer_stock_fulfillments.order_dealer_stock_fulfillments_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON order_dealer_stock_fulfillments.order_dealer_stock_fulfillments_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON order_dealer_stock_fulfillments.order_dealer_stock_fulfillments_fulfilled_weight_kg_check [c] CHECK ((fulfilled_weight_kg > (0)::numeric))
+CON order_dealer_stock_fulfillments.order_dealer_stock_fulfillments_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+CON order_dealer_stock_fulfillments.order_dealer_stock_fulfillments_order_item_id_fkey [f] FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE RESTRICT
+CON order_dealer_stock_fulfillments.order_dealer_stock_fulfillments_pkey [p] PRIMARY KEY (id)
+CON order_dealer_stock_fulfillments.order_dealer_stock_fulfillments_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE RESTRICT
+CON order_dealer_stock_fulfillments.order_dealer_stock_fulfillments_profile_stock_batch_id_fkey [f] FOREIGN KEY (profile_stock_batch_id) REFERENCES profile_stock_batches(id) ON DELETE RESTRICT
+CON order_dealer_stock_fulfillments.order_dealer_stock_fulfillments_quote_id_fkey [f] FOREIGN KEY (quote_id) REFERENCES quotes(id) ON DELETE SET NULL
+CON order_dealer_stock_fulfillments.order_dealer_stock_fulfillments_quote_item_id_fkey [f] FOREIGN KEY (quote_item_id) REFERENCES quote_items(id) ON DELETE RESTRICT
+CON order_items.order_items_alloy_id_fkey [f] FOREIGN KEY (alloy_id) REFERENCES pcda_master_alloys(id)
+CON order_items.order_items_alloy_standard_id_fkey [f] FOREIGN KEY (alloy_standard_id) REFERENCES pcda_master_alloy_standards(id)
+CON order_items.order_items_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON order_items.order_items_die_id_fkey [f] FOREIGN KEY (die_id) REFERENCES dies(id)
+CON order_items.order_items_drawing_approval_status_check [c] CHECK (((drawing_approval_status IS NULL) OR (drawing_approval_status = ANY (ARRAY['Pending'::text, 'Approved'::text, 'Rejected'::text]))))
+CON order_items.order_items_length_per_piece_m_check [c] CHECK (((length_per_piece_m IS NULL) OR (length_per_piece_m > (0)::numeric)))
+CON order_items.order_items_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+CON order_items.order_items_packing_mode_id_fkey [f] FOREIGN KEY (packing_mode_id) REFERENCES pcda_master_packing_modes(id)
+CON order_items.order_items_pkey [p] PRIMARY KEY (id)
+CON order_items.order_items_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id)
+CON order_items.order_items_quantity_pieces_check [c] CHECK (((quantity_pieces IS NULL) OR (quantity_pieces > 0)))
+CON order_items.order_items_quote_item_id_fkey [f] FOREIGN KEY (quote_item_id) REFERENCES quote_items(id) ON DELETE RESTRICT
+CON order_items.order_items_temper_id_fkey [f] FOREIGN KEY (temper_id) REFERENCES pcda_master_tempers(id)
+CON order_stage_history.order_stage_history_changed_by_fkey [f] FOREIGN KEY (changed_by) REFERENCES auth.users(id)
+CON order_stage_history.order_stage_history_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON order_stage_history.order_stage_history_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+CON order_stage_history.order_stage_history_pkey [p] PRIMARY KEY (id)
+CON orders.orders_billet_allocation_status_check [c] CHECK ((billet_allocation_status = ANY (ARRAY['not_required'::text, 'pending'::text, 'partial'::text, 'complete'::text, 'shortage'::text])))
+CON orders.orders_billet_counts_valid [c] CHECK (((billets_required >= 0) AND (billets_allocated >= 0) AND (billets_short >= 0)))
+CON orders.orders_billet_diameter_valid [c] CHECK (((billet_diameter_required_inch IS NULL) OR (billet_diameter_required_inch > (0)::numeric)))
+CON orders.orders_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON orders.orders_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON orders.orders_company_number_unique [u] UNIQUE (company_id, order_number)
+CON orders.orders_created_by_dealership_id_fkey [f] FOREIGN KEY (created_by_dealership_id) REFERENCES dealers(id)
+CON orders.orders_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON orders.orders_created_by_user_id_fkey [f] FOREIGN KEY (created_by_user_id) REFERENCES auth.users(id)
+CON orders.orders_current_stage_check [c] CHECK ((current_stage = ANY (ARRAY['order_confirmed'::text, 'die_ready'::text, 'billet_ready'::text, 'billet_heating'::text, 'extrusion_planned'::text, 'extruded'::text, 'stretching'::text, 'cutting'::text, 'aging'::text, 'surface_treatment'::text, 'finishing'::text, 'packing'::text, 'dispatched'::text, 'delivered'::text, 'payment_pending'::text, 'closed'::text, 'cancelled'::text])))
+CON orders.orders_customer_id_fkey [f] FOREIGN KEY (customer_id) REFERENCES customers(id)
+CON orders.orders_dealer_id_fkey [f] FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE SET NULL
+CON orders.orders_deleted_by_fkey [f] FOREIGN KEY (deleted_by) REFERENCES auth.users(id)
+CON orders.orders_factory_minimum_weight_check [c] CHECK (((current_stage <> ALL (ARRAY['extrusion_planned'::text, 'die_ready'::text, 'billet_ready'::text, 'billet_heating'::text, 'extruded'::text, 'stretching'::text, 'cutting'::text, 'aging'::text, 'surface_treatment'::text, 'finishing'::text, 'packing'::text])) OR (manufacturing_weight_kg >= (700)::numeric))) NOT VALID
+CON orders.orders_fulfillment_weight_check [c] CHECK (((requested_weight_kg >= (0)::numeric) AND (dealer_fulfilled_weight_kg >= (0)::numeric) AND (manufacturing_weight_kg >= (0)::numeric) AND (dealer_fulfilled_weight_kg <= requested_weight_kg))) NOT VALID
+CON orders.orders_pkey [p] PRIMARY KEY (id)
+CON orders.orders_plant_id_fkey [f] FOREIGN KEY (plant_id) REFERENCES branches(id) ON DELETE SET NULL
+CON orders.orders_priority_check [c] CHECK ((priority = ANY (ARRAY['low'::text, 'normal'::text, 'high'::text, 'urgent'::text])))
+CON orders.orders_production_die_id_fkey [f] FOREIGN KEY (production_die_id) REFERENCES dies(id) ON DELETE RESTRICT
+CON orders.orders_production_pieces_nonnegative [c] CHECK (((production_pieces IS NULL) OR (production_pieces >= 0)))
+CON orders.orders_production_profile_id_fkey [f] FOREIGN KEY (production_profile_id) REFERENCES aluminium_profiles(id) ON DELETE RESTRICT
+CON orders.orders_production_quantity_nonnegative [c] CHECK (((production_quantity_kg IS NULL) OR (production_quantity_kg >= (0)::numeric)))
+CON orders.orders_quote_id_fkey [f] FOREIGN KEY (quote_id) REFERENCES quotes(id)
+CON outbound_messages.outbound_messages_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON outbound_messages.outbound_messages_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON outbound_messages.outbound_messages_customer_id_fkey [f] FOREIGN KEY (customer_id) REFERENCES customers(id)
+CON outbound_messages.outbound_messages_pkey [p] PRIMARY KEY (id)
+CON outbound_messages.outbound_messages_template_id_fkey [f] FOREIGN KEY (template_id) REFERENCES whatsapp_templates(id)
+CON outsourced_billet_batches.outsourced_billet_amounts_nonnegative [c] CHECK (((price_per_kg IS NULL) OR (price_per_kg >= (0)::numeric)))
+CON outsourced_billet_batches.outsourced_billet_batches_billet_count_check [c] CHECK ((billet_count > 0))
+CON outsourced_billet_batches.outsourced_billet_batches_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON outsourced_billet_batches.outsourced_billet_batches_company_number_unique [u] UNIQUE (company_id, batch_number)
+CON outsourced_billet_batches.outsourced_billet_batches_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON outsourced_billet_batches.outsourced_billet_batches_expense_ledger_id_fkey [f] FOREIGN KEY (expense_ledger_id) REFERENCES expense_ledger(id) ON DELETE SET NULL
+CON outsourced_billet_batches.outsourced_billet_batches_inventory_item_id_fkey [f] FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE SET NULL
+CON outsourced_billet_batches.outsourced_billet_batches_pkey [p] PRIMARY KEY (id)
+CON outsourced_billet_batches.outsourced_billet_batches_status_check [c] CHECK ((status = ANY (ARRAY['received'::text, 'consumed'::text, 'cancelled'::text])))
+CON outsourced_billet_batches.outsourced_billet_batches_vendor_id_fkey [f] FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE RESTRICT
+CON outsourced_billet_batches.outsourced_billet_batches_weight_kg_check [c] CHECK ((weight_kg > (0)::numeric))
+CON packaging_job_materials.packaging_job_materials_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON packaging_job_materials.packaging_job_materials_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON packaging_job_materials.packaging_job_materials_job_id_fkey [f] FOREIGN KEY (job_id) REFERENCES packaging_jobs(id) ON DELETE CASCADE
+CON packaging_job_materials.packaging_job_materials_material_id_fkey [f] FOREIGN KEY (material_id) REFERENCES packaging_materials(id) ON DELETE RESTRICT
+CON packaging_job_materials.packaging_job_materials_pkey [p] PRIMARY KEY (id)
+CON packaging_job_materials.packaging_job_materials_quantity_required_check [c] CHECK ((quantity_required >= (0)::numeric))
+CON packaging_job_materials.validate_completed_packaging_material [t] TRIGGER DEFERRABLE INITIALLY DEFERRED
+CON packaging_jobs.packaging_jobs_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON packaging_jobs.packaging_jobs_company_number_unique [u] UNIQUE (company_id, packaging_number)
+CON packaging_jobs.packaging_jobs_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON packaging_jobs.packaging_jobs_finishing_job_id_fkey [f] FOREIGN KEY (finishing_job_id) REFERENCES finishing_jobs(id) ON DELETE RESTRICT
+CON packaging_jobs.packaging_jobs_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+CON packaging_jobs.packaging_jobs_pieces_check [c] CHECK ((pieces >= 0))
+CON packaging_jobs.packaging_jobs_pkey [p] PRIMARY KEY (id)
+CON packaging_jobs.packaging_jobs_production_job_id_fkey [f] FOREIGN KEY (production_job_id) REFERENCES production_jobs(id) ON DELETE SET NULL
+CON packaging_jobs.packaging_jobs_profile_length_m_check [c] CHECK ((profile_length_m >= (0)::numeric))
+CON packaging_jobs.packaging_jobs_profile_weight_kg_check [c] CHECK ((profile_weight_kg >= (0)::numeric))
+CON packaging_jobs.packaging_jobs_status_check [c] CHECK ((status = ANY (ARRAY['scheduled'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text])))
+CON packaging_jobs.validate_completed_packaging_job [t] TRIGGER DEFERRABLE INITIALLY DEFERRED
+CON packaging_material_movements.packaging_material_movements_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON packaging_material_movements.packaging_material_movements_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON packaging_material_movements.packaging_material_movements_material_id_fkey [f] FOREIGN KEY (material_id) REFERENCES packaging_materials(id) ON DELETE RESTRICT
+CON packaging_material_movements.packaging_material_movements_movement_type_check [c] CHECK ((movement_type = ANY (ARRAY['issue'::text, 'restore'::text])))
+CON packaging_material_movements.packaging_material_movements_packaging_job_id_fkey [f] FOREIGN KEY (packaging_job_id) REFERENCES packaging_jobs(id) ON DELETE CASCADE
+CON packaging_material_movements.packaging_material_movements_pkey [p] PRIMARY KEY (id)
+CON packaging_material_movements.packaging_material_movements_quantity_check [c] CHECK ((quantity > (0)::numeric))
+CON packaging_material_purchases.packaging_material_purchases_amounts_nonnegative [c] CHECK (((rate >= (0)::numeric) AND (base_amount >= (0)::numeric) AND (tax_amount >= (0)::numeric) AND (freight_amount >= (0)::numeric) AND (discount_amount >= (0)::numeric) AND (total_amount >= (0)::numeric)))
+CON packaging_material_purchases.packaging_material_purchases_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON packaging_material_purchases.packaging_material_purchases_company_number_unique [u] UNIQUE (company_id, purchase_number)
+CON packaging_material_purchases.packaging_material_purchases_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON packaging_material_purchases.packaging_material_purchases_expense_ledger_id_fkey [f] FOREIGN KEY (expense_ledger_id) REFERENCES expense_ledger(id) ON DELETE SET NULL
+CON packaging_material_purchases.packaging_material_purchases_inventory_item_id_fkey [f] FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) ON DELETE SET NULL
+CON packaging_material_purchases.packaging_material_purchases_material_id_fkey [f] FOREIGN KEY (material_id) REFERENCES packaging_materials(id) ON DELETE RESTRICT
+CON packaging_material_purchases.packaging_material_purchases_payment_status_check [c] CHECK ((payment_status = ANY (ARRAY['unpaid'::text, 'partially_paid'::text, 'paid'::text, 'overdue'::text, 'cancelled'::text, 'reversed'::text])))
+CON packaging_material_purchases.packaging_material_purchases_pkey [p] PRIMARY KEY (id)
+CON packaging_material_purchases.packaging_material_purchases_quantity_check [c] CHECK ((quantity > (0)::numeric))
+CON packaging_material_purchases.packaging_material_purchases_vendor_id_fkey [f] FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE RESTRICT
+CON packaging_materials.packaging_materials_calculation_method_check [c] CHECK ((calculation_method = ANY (ARRAY['per_profile_meter'::text, 'per_piece'::text, 'per_kg'::text, 'fixed'::text])))
+CON packaging_materials.packaging_materials_company_code_unique [u] UNIQUE (company_id, material_code)
+CON packaging_materials.packaging_materials_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON packaging_materials.packaging_materials_consumption_rate_positive [c] CHECK (((consumption_rate IS NOT NULL) AND (consumption_rate > (0)::numeric)))
+CON packaging_materials.packaging_materials_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON packaging_materials.packaging_materials_current_stock_check [c] CHECK ((current_stock >= (0)::numeric))
+CON packaging_materials.packaging_materials_material_type_check [c] CHECK ((material_type = ANY (ARRAY['stretch_film'::text, 'bubble_wrap'::text, 'paper'::text, 'hdpe'::text, 'pp_woven_sheet'::text, 'wooden_crate'::text, 'strapping'::text, 'corner_protector'::text, 'other'::text])))
+CON packaging_materials.packaging_materials_pkey [p] PRIMARY KEY (id)
+CON packaging_materials.packaging_materials_reorder_level_check [c] CHECK ((reorder_level >= (0)::numeric))
+CON packaging_materials.packaging_materials_vendor_id_fkey [f] FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE SET NULL
+CON packing_list_items.packing_list_items_alloy_id_fkey [f] FOREIGN KEY (alloy_id) REFERENCES pcda_master_alloys(id)
+CON packing_list_items.packing_list_items_alloy_standard_id_fkey [f] FOREIGN KEY (alloy_standard_id) REFERENCES pcda_master_alloy_standards(id)
+CON packing_list_items.packing_list_items_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON packing_list_items.packing_list_items_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON packing_list_items.packing_list_items_dispatch_id_fkey [f] FOREIGN KEY (dispatch_id) REFERENCES dispatches(id) ON DELETE CASCADE
+CON packing_list_items.packing_list_items_operator_verified_by_fkey [f] FOREIGN KEY (operator_verified_by) REFERENCES auth.users(id)
+CON packing_list_items.packing_list_items_order_item_id_fkey [f] FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE RESTRICT
+CON packing_list_items.packing_list_items_packing_mode_id_fkey [f] FOREIGN KEY (packing_mode_id) REFERENCES pcda_master_packing_modes(id)
+CON packing_list_items.packing_list_items_pkey [p] PRIMARY KEY (id)
+CON packing_list_items.packing_list_items_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE CASCADE
+CON packing_list_items.packing_list_items_profile_stock_batch_id_fkey [f] FOREIGN KEY (profile_stock_batch_id) REFERENCES profile_stock_batches(id) ON DELETE RESTRICT
+CON packing_list_items.packing_list_items_quote_item_id_fkey [f] FOREIGN KEY (quote_item_id) REFERENCES quote_items(id) ON DELETE RESTRICT
+CON packing_list_items.packing_list_items_reservation_id_fkey [f] FOREIGN KEY (reservation_id) REFERENCES profile_stock_reservations(id) ON DELETE RESTRICT
+CON packing_list_items.packing_list_items_source_kind_check [c] CHECK (((source_kind IS NULL) OR (source_kind = ANY (ARRAY['production'::text, 'dealer_stock'::text, 'reservation'::text]))))
+CON packing_list_items.packing_list_items_stock_provenance_check [c] CHECK (((source_kind IS NULL) OR ((source_kind = 'production'::text) AND (reservation_id IS NULL) AND (profile_stock_batch_id IS NULL)) OR ((source_kind = 'dealer_stock'::text) AND (reservation_id IS NULL) AND (profile_stock_batch_id IS NOT NULL)) OR ((source_kind = 'reservation'::text) AND (reservation_id IS NOT NULL) AND (profile_stock_batch_id IS NOT NULL)))) NOT VALID
+CON packing_list_items.packing_list_items_temper_id_fkey [f] FOREIGN KEY (temper_id) REFERENCES pcda_master_tempers(id)
+CON packing_list_items.packing_list_items_warehouse_id_fkey [f] FOREIGN KEY (warehouse_id) REFERENCES branches(id) ON DELETE SET NULL
+CON packing_list_items.validate_packing_dispatch_readiness [t] TRIGGER DEFERRABLE INITIALLY DEFERRED
+CON payments.payment_method_check [c] CHECK ((payment_method = ANY (ARRAY['bank_transfer'::text, 'upi'::text, 'cheque'::text, 'cash'::text, 'credit_note'::text, 'other'::text])))
+CON payments.payments_amount_check [c] CHECK ((amount > (0)::numeric))
+CON payments.payments_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON payments.payments_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON payments.payments_dealership_id_fkey [f] FOREIGN KEY (dealership_id) REFERENCES dealers(id) ON DELETE SET NULL
+CON payments.payments_invoice_id_fkey [f] FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
+CON payments.payments_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL
+CON payments.payments_pkey [p] PRIMARY KEY (id)
+CON payments.payments_recorded_by_user_id_fkey [f] FOREIGN KEY (recorded_by_user_id) REFERENCES auth.users(id)
+CON payments.payments_related_credit_note_id_fkey [f] FOREIGN KEY (related_credit_note_id) REFERENCES credit_notes(id)
+CON payments.payments_reversed_by_fkey [f] FOREIGN KEY (reversed_by) REFERENCES auth.users(id)
+CON pcda_master_alloy_standards.pcda_master_alloy_standards_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_alloy_standards.pcda_master_alloy_standards_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_alloy_standards.pcda_master_alloy_standards_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_alloy_standards.pcda_master_alloy_standards_pkey [p] PRIMARY KEY (id)
+CON pcda_master_alloys.pcda_master_alloys_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_alloys.pcda_master_alloys_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_alloys.pcda_master_alloys_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_alloys.pcda_master_alloys_pkey [p] PRIMARY KEY (id)
+CON pcda_master_compliance_types.pcda_master_compliance_types_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_compliance_types.pcda_master_compliance_types_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_compliance_types.pcda_master_compliance_types_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_compliance_types.pcda_master_compliance_types_pkey [p] PRIMARY KEY (id)
+CON pcda_master_cost_components.pcda_master_cost_components_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_cost_components.pcda_master_cost_components_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_cost_components.pcda_master_cost_components_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_cost_components.pcda_master_cost_components_pkey [p] PRIMARY KEY (id)
+CON pcda_master_defect_types.pcda_master_defect_types_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_defect_types.pcda_master_defect_types_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_defect_types.pcda_master_defect_types_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_defect_types.pcda_master_defect_types_pkey [p] PRIMARY KEY (id)
+CON pcda_master_die_types.pcda_master_die_types_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_die_types.pcda_master_die_types_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_die_types.pcda_master_die_types_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_die_types.pcda_master_die_types_pkey [p] PRIMARY KEY (id)
+CON pcda_master_document_types.pcda_master_document_types_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_document_types.pcda_master_document_types_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_document_types.pcda_master_document_types_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_document_types.pcda_master_document_types_pkey [p] PRIMARY KEY (id)
+CON pcda_master_finish_types.pcda_master_finish_types_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_finish_types.pcda_master_finish_types_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_finish_types.pcda_master_finish_types_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_finish_types.pcda_master_finish_types_pkey [p] PRIMARY KEY (id)
+CON pcda_master_machine_types.pcda_master_machine_types_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_machine_types.pcda_master_machine_types_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_machine_types.pcda_master_machine_types_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_machine_types.pcda_master_machine_types_pkey [p] PRIMARY KEY (id)
+CON pcda_master_packing_modes.pcda_master_packing_modes_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_packing_modes.pcda_master_packing_modes_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_packing_modes.pcda_master_packing_modes_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_packing_modes.pcda_master_packing_modes_pkey [p] PRIMARY KEY (id)
+CON pcda_master_production_stages.pcda_master_production_stages_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_production_stages.pcda_master_production_stages_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_production_stages.pcda_master_production_stages_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_production_stages.pcda_master_production_stages_pkey [p] PRIMARY KEY (id)
+CON pcda_master_profile_categories.pcda_master_profile_categories_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_profile_categories.pcda_master_profile_categories_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_profile_categories.pcda_master_profile_categories_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_profile_categories.pcda_master_profile_categories_pkey [p] PRIMARY KEY (id)
+CON pcda_master_qty_methods.pcda_master_qty_methods_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_qty_methods.pcda_master_qty_methods_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_qty_methods.pcda_master_qty_methods_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_qty_methods.pcda_master_qty_methods_pkey [p] PRIMARY KEY (id)
+CON pcda_master_quality_parameters.pcda_master_quality_parameters_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_quality_parameters.pcda_master_quality_parameters_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_quality_parameters.pcda_master_quality_parameters_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_quality_parameters.pcda_master_quality_parameters_pkey [p] PRIMARY KEY (id)
+CON pcda_master_surface_treatments.pcda_master_surface_treatments_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_surface_treatments.pcda_master_surface_treatments_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_surface_treatments.pcda_master_surface_treatments_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_surface_treatments.pcda_master_surface_treatments_pkey [p] PRIMARY KEY (id)
+CON pcda_master_tempers.pcda_master_tempers_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_tempers.pcda_master_tempers_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_tempers.pcda_master_tempers_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_tempers.pcda_master_tempers_pkey [p] PRIMARY KEY (id)
+CON pcda_master_uoms.pcda_master_uoms_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON pcda_master_uoms.pcda_master_uoms_company_id_value_key [u] UNIQUE (company_id, value)
+CON pcda_master_uoms.pcda_master_uoms_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON pcda_master_uoms.pcda_master_uoms_pkey [p] PRIMARY KEY (id)
+CON permissions.permissions_pkey [p] PRIMARY KEY (key)
+CON portal_users.portal_users_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON portal_users.portal_users_customer_id_fkey [f] FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+CON portal_users.portal_users_email_company_id_key [u] UNIQUE (email, company_id)
+CON portal_users.portal_users_id_fkey [f] FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE
+CON portal_users.portal_users_pkey [p] PRIMARY KEY (id)
+CON product_standard_mappings.product_standard_mappings_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON product_standard_mappings.product_standard_mappings_pkey [p] PRIMARY KEY (id)
+CON product_standard_mappings.product_standard_mappings_standard_id_fkey [f] FOREIGN KEY (standard_id) REFERENCES compliance_standards(id) ON DELETE CASCADE
+CON production_efficiency_change_logs.production_efficiency_change_logs_changed_by_fkey [f] FOREIGN KEY (changed_by) REFERENCES auth.users(id)
+CON production_efficiency_change_logs.production_efficiency_change_logs_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON production_efficiency_change_logs.production_efficiency_change_logs_pkey [p] PRIMARY KEY (id)
+CON production_efficiency_change_logs.production_efficiency_change_logs_production_job_id_fkey [f] FOREIGN KEY (production_job_id) REFERENCES production_jobs(id) ON DELETE CASCADE
+CON production_job_status_history.production_job_status_history_changed_by_fkey [f] FOREIGN KEY (changed_by) REFERENCES auth.users(id)
+CON production_job_status_history.production_job_status_history_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON production_job_status_history.production_job_status_history_pkey [p] PRIMARY KEY (id)
+CON production_job_status_history.production_job_status_history_production_job_id_fkey [f] FOREIGN KEY (production_job_id) REFERENCES production_jobs(id) ON DELETE CASCADE
+CON production_jobs.production_jobs_actual_pieces_nonnegative [c] CHECK ((actual_pieces >= 0))
+CON production_jobs.production_jobs_alloy_id_fkey [f] FOREIGN KEY (alloy_id) REFERENCES pcda_master_alloys(id)
+CON production_jobs.production_jobs_alloy_standard_id_fkey [f] FOREIGN KEY (alloy_standard_id) REFERENCES pcda_master_alloy_standards(id)
+CON production_jobs.production_jobs_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON production_jobs.production_jobs_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON production_jobs.production_jobs_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON production_jobs.production_jobs_die_id_fkey [f] FOREIGN KEY (die_id) REFERENCES dies(id)
+CON production_jobs.production_jobs_drawing_approval_status_check [c] CHECK (((drawing_approval_status IS NULL) OR (drawing_approval_status = ANY (ARRAY['Pending'::text, 'Approved'::text, 'Rejected'::text]))))
+CON production_jobs.production_jobs_efficiency_valid [c] CHECK (((extrusion_efficiency_percent > (0)::numeric) AND (extrusion_efficiency_percent <= (100)::numeric)))
+CON production_jobs.production_jobs_machine_id_fkey [f] FOREIGN KEY (machine_id) REFERENCES machines(id)
+CON production_jobs.production_jobs_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+CON production_jobs.production_jobs_packing_mode_id_fkey [f] FOREIGN KEY (packing_mode_id) REFERENCES pcda_master_packing_modes(id)
+CON production_jobs.production_jobs_pieces_nonnegative [c] CHECK ((pieces >= 0))
+CON production_jobs.production_jobs_pkey [p] PRIMARY KEY (id)
+CON production_jobs.production_jobs_plant_id_fkey [f] FOREIGN KEY (plant_id) REFERENCES branches(id) ON DELETE SET NULL
+CON production_jobs.production_jobs_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id)
+CON production_jobs.production_jobs_required_billets_nonnegative [c] CHECK ((required_billet_count >= 0))
+CON production_jobs.production_jobs_status_check [c] CHECK ((status = ANY (ARRAY['planned'::text, 'ready'::text, 'in_progress'::text, 'completed'::text, 'on_hold'::text, 'cancelled'::text])))
+CON production_jobs.production_jobs_temper_id_fkey [f] FOREIGN KEY (temper_id) REFERENCES pcda_master_tempers(id)
+CON production_output_corrections.production_output_corrections_changed_by_fkey [f] FOREIGN KEY (changed_by) REFERENCES auth.users(id)
+CON production_output_corrections.production_output_corrections_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE RESTRICT
+CON production_output_corrections.production_output_corrections_pkey [p] PRIMARY KEY (id)
+CON production_output_corrections.production_output_corrections_production_job_id_fkey [f] FOREIGN KEY (production_job_id) REFERENCES production_jobs(id) ON DELETE RESTRICT
+CON production_plan_slots.production_plan_slots_capacity_kg_check [c] CHECK (((capacity_kg IS NULL) OR (capacity_kg >= (0)::numeric)))
+CON production_plan_slots.production_plan_slots_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON production_plan_slots.production_plan_slots_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL
+CON production_plan_slots.production_plan_slots_locked_by_fkey [f] FOREIGN KEY (locked_by) REFERENCES auth.users(id) ON DELETE SET NULL
+CON production_plan_slots.production_plan_slots_machine_id_fkey [f] FOREIGN KEY (machine_id) REFERENCES machines(id) ON DELETE RESTRICT
+CON production_plan_slots.production_plan_slots_pkey [p] PRIMARY KEY (id)
+CON production_plan_slots.production_plan_slots_production_job_id_fkey [f] FOREIGN KEY (production_job_id) REFERENCES production_jobs(id) ON DELETE CASCADE
+CON production_plan_slots.production_plan_slots_sequence_number_check [c] CHECK ((sequence_number >= 0))
+CON production_plan_slots.production_plan_slots_status_check [c] CHECK ((status = ANY (ARRAY['draft'::text, 'scheduled'::text, 'released'::text, 'cancelled'::text])))
+CON production_plan_slots.production_plan_slots_time_check [c] CHECK (((planned_end_at IS NULL) OR (planned_end_at > planned_start_at)))
+CON profile_defect_rules.profile_defect_rules_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON profile_defect_rules.profile_defect_rules_linked_die_id_fkey [f] FOREIGN KEY (linked_die_id) REFERENCES dies(id)
+CON profile_defect_rules.profile_defect_rules_pkey [p] PRIMARY KEY (id)
+CON profile_defect_rules.profile_defect_rules_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE CASCADE
+CON profile_defect_rules.profile_defect_rules_severity_check [c] CHECK ((severity = ANY (ARRAY['minor'::text, 'major'::text, 'critical'::text])))
+CON profile_optimization_runs.profile_optimization_runs_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON profile_optimization_runs.profile_optimization_runs_configuration_id_fkey [f] FOREIGN KEY (configuration_id) REFERENCES system_configurations(id) ON DELETE CASCADE
+CON profile_optimization_runs.profile_optimization_runs_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON profile_optimization_runs.profile_optimization_runs_pkey [p] PRIMARY KEY (id)
+CON profile_quality_plans.profile_quality_plans_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON profile_quality_plans.profile_quality_plans_pkey [p] PRIMARY KEY (id)
+CON profile_quality_plans.profile_quality_plans_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE CASCADE
+CON profile_routing_steps.profile_routing_steps_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON profile_routing_steps.profile_routing_steps_pkey [p] PRIMARY KEY (id)
+CON profile_routing_steps.profile_routing_steps_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE CASCADE
+CON profile_stock_batches.profile_stock_batches_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON profile_stock_batches.profile_stock_batches_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON profile_stock_batches.profile_stock_batches_dealer_id_fkey [f] FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE SET NULL
+CON profile_stock_batches.profile_stock_batches_pkey [p] PRIMARY KEY (id)
+CON profile_stock_batches.profile_stock_batches_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE CASCADE
+CON profile_stock_batches.profile_stock_batches_reserved_for_order_id_fkey [f] FOREIGN KEY (reserved_for_order_id) REFERENCES orders(id)
+CON profile_stock_batches.profile_stock_batches_warehouse_id_fkey [f] FOREIGN KEY (warehouse_id) REFERENCES branches(id) ON DELETE SET NULL
+CON profile_stock_batches.profile_stock_status_check [c] CHECK ((status = ANY (ARRAY['available'::text, 'reserved'::text, 'dispatched'::text, 'rejected'::text, 'scrap'::text])))
+CON profile_stock_consumptions.profile_stock_consumptions_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON profile_stock_consumptions.profile_stock_consumptions_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON profile_stock_consumptions.profile_stock_consumptions_dispatch_id_fkey [f] FOREIGN KEY (dispatch_id) REFERENCES dispatches(id) ON DELETE CASCADE
+CON profile_stock_consumptions.profile_stock_consumptions_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+CON profile_stock_consumptions.profile_stock_consumptions_pkey [p] PRIMARY KEY (id)
+CON profile_stock_consumptions.profile_stock_consumptions_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE CASCADE
+CON profile_stock_consumptions.profile_stock_consumptions_profile_stock_batch_id_fkey [f] FOREIGN KEY (profile_stock_batch_id) REFERENCES profile_stock_batches(id) ON DELETE CASCADE
+CON profile_stock_consumptions.profile_stock_consumptions_reservation_id_fkey [f] FOREIGN KEY (reservation_id) REFERENCES profile_stock_reservations(id) ON DELETE CASCADE
+CON profile_stock_consumptions.profile_stock_consumptions_weight_positive [c] CHECK ((consumed_weight_kg > (0)::numeric))
+CON profile_stock_reservations.profile_stock_reservations_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON profile_stock_reservations.profile_stock_reservations_configuration_id_fkey [f] FOREIGN KEY (configuration_id) REFERENCES system_configurations(id) ON DELETE SET NULL
+CON profile_stock_reservations.profile_stock_reservations_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON profile_stock_reservations.profile_stock_reservations_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+CON profile_stock_reservations.profile_stock_reservations_pkey [p] PRIMARY KEY (id)
+CON profile_stock_reservations.profile_stock_reservations_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE CASCADE
+CON profile_stock_reservations.profile_stock_reservations_profile_stock_batch_id_fkey [f] FOREIGN KEY (profile_stock_batch_id) REFERENCES profile_stock_batches(id) ON DELETE CASCADE
+CON profile_stock_reservations.profile_stock_reservations_status_check [c] CHECK ((status = ANY (ARRAY['active'::text, 'released'::text, 'consumed'::text, 'cancelled'::text])))
+CON profile_stock_reservations.profile_stock_reservations_weight_positive [c] CHECK ((reserved_weight_kg > (0)::numeric))
+CON profitability_alerts.profitability_alerts_alert_type_check [c] CHECK ((alert_type = ANY (ARRAY['high_revenue_low_margin'::text, 'negative_margin'::text, 'high_scrap'::text, 'underpriced_quote'::text, 'transport_too_high'::text, 'payment_delay'::text, 'finishing_cost_spike'::text, 'energy_cost_spike'::text, 'die_cost_overrun'::text, 'customer_declining_margin'::text])))
+CON profitability_alerts.profitability_alerts_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON profitability_alerts.profitability_alerts_pkey [p] PRIMARY KEY (id)
+CON profitability_alerts.profitability_alerts_severity_check [c] CHECK ((severity = ANY (ARRAY['info'::text, 'warning'::text, 'critical'::text])))
+CON qr_codes.qr_codes_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON qr_codes.qr_codes_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON qr_codes.qr_codes_pkey [p] PRIMARY KEY (id)
+CON qr_codes.qr_codes_qr_value_key [u] UNIQUE (qr_value)
+CON qr_codes.qr_codes_status_check [c] CHECK ((status = ANY (ARRAY['active'::text, 'expired'::text, 'inactive'::text, 'archived'::text])))
+CON quality_inspections.quality_inspections_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON quality_inspections.quality_inspections_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON quality_inspections.quality_inspections_dispositioned_by_fkey [f] FOREIGN KEY (dispositioned_by) REFERENCES auth.users(id)
+CON quality_inspections.quality_inspections_finishing_job_id_fkey [f] FOREIGN KEY (finishing_job_id) REFERENCES finishing_jobs(id) ON DELETE SET NULL
+CON quality_inspections.quality_inspections_pkey [p] PRIMARY KEY (id)
+CON quality_inspections.quality_inspections_plant_id_fkey [f] FOREIGN KEY (plant_id) REFERENCES branches(id) ON DELETE SET NULL
+CON quality_inspections.quality_inspections_production_job_id_fkey [f] FOREIGN KEY (production_job_id) REFERENCES production_jobs(id) ON DELETE SET NULL
+CON quality_inspections.quality_inspections_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE CASCADE
+CON quality_inspections.quality_inspections_resolution_id_fkey [f] FOREIGN KEY (resolution_id) REFERENCES quality_rework_resolutions(id) ON DELETE RESTRICT
+CON quality_inspections.quality_status_check [c] CHECK ((status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'rework'::text])))
+CON quality_rework_resolutions.quality_rework_resolutions_approved_weight_kg_check [c] CHECK ((approved_weight_kg >= (0)::numeric))
+CON quality_rework_resolutions.quality_rework_resolutions_check [c] CHECK ((round((approved_weight_kg + rejected_weight_kg), 3) = round(source_quantity_kg, 3)))
+CON quality_rework_resolutions.quality_rework_resolutions_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE RESTRICT
+CON quality_rework_resolutions.quality_rework_resolutions_company_id_source_inspection_id_key [u] UNIQUE (company_id, source_inspection_id)
+CON quality_rework_resolutions.quality_rework_resolutions_finishing_job_id_fkey [f] FOREIGN KEY (finishing_job_id) REFERENCES finishing_jobs(id) ON DELETE RESTRICT
+CON quality_rework_resolutions.quality_rework_resolutions_pkey [p] PRIMARY KEY (id)
+CON quality_rework_resolutions.quality_rework_resolutions_production_job_id_fkey [f] FOREIGN KEY (production_job_id) REFERENCES production_jobs(id) ON DELETE RESTRICT
+CON quality_rework_resolutions.quality_rework_resolutions_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE RESTRICT
+CON quality_rework_resolutions.quality_rework_resolutions_rejected_weight_kg_check [c] CHECK ((rejected_weight_kg >= (0)::numeric))
+CON quality_rework_resolutions.quality_rework_resolutions_resolved_by_fkey [f] FOREIGN KEY (resolved_by) REFERENCES auth.users(id)
+CON quality_rework_resolutions.quality_rework_resolutions_source_inspection_id_fkey [f] FOREIGN KEY (source_inspection_id) REFERENCES quality_inspections(id) ON DELETE RESTRICT
+CON quality_rework_resolutions.quality_rework_resolutions_source_quantity_kg_check [c] CHECK ((source_quantity_kg > (0)::numeric))
+CON quote_items.quote_items_alloy_id_fkey [f] FOREIGN KEY (alloy_id) REFERENCES pcda_master_alloys(id)
+CON quote_items.quote_items_alloy_standard_id_fkey [f] FOREIGN KEY (alloy_standard_id) REFERENCES pcda_master_alloy_standards(id)
+CON quote_items.quote_items_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON quote_items.quote_items_die_amortization_type_check [c] CHECK ((die_amortization_type = ANY (ARRAY['full_die_charge'::text, 'per_kg'::text, 'waived'::text, 'customer_paid'::text])))
+CON quote_items.quote_items_die_id_fkey [f] FOREIGN KEY (die_id) REFERENCES dies(id)
+CON quote_items.quote_items_drawing_approval_status_check [c] CHECK (((drawing_approval_status IS NULL) OR (drawing_approval_status = ANY (ARRAY['Pending'::text, 'Approved'::text, 'Rejected'::text]))))
+CON quote_items.quote_items_finishing_charge_type_check [c] CHECK ((finishing_charge_type = ANY (ARRAY['per_kg'::text, 'per_meter'::text, 'fixed'::text, 'per_sqft'::text])))
+CON quote_items.quote_items_finishing_type_check [c] CHECK ((finishing_type = ANY (ARRAY['mill_finish'::text, 'powder_coating'::text, 'anodizing'::text, 'anodized_silver'::text, 'anodized_bronze'::text, 'anodized_black'::text, 'wood_finish'::text, 'wood_grain'::text, 'pvdf'::text, 'other'::text])))
+CON quote_items.quote_items_length_per_piece_m_check [c] CHECK ((length_per_piece_m > (0)::numeric))
+CON quote_items.quote_items_packing_mode_id_fkey [f] FOREIGN KEY (packing_mode_id) REFERENCES pcda_master_packing_modes(id)
+CON quote_items.quote_items_pkey [p] PRIMARY KEY (id)
+CON quote_items.quote_items_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id)
+CON quote_items.quote_items_quantity_pieces_check [c] CHECK ((quantity_pieces > 0))
+CON quote_items.quote_items_quote_id_fkey [f] FOREIGN KEY (quote_id) REFERENCES quotes(id) ON DELETE CASCADE
+CON quote_items.quote_items_section_weight_kg_per_m_check [c] CHECK ((section_weight_kg_per_m > (0)::numeric))
+CON quote_items.quote_items_temper_id_fkey [f] FOREIGN KEY (temper_id) REFERENCES pcda_master_tempers(id)
+CON quote_requests.quote_requests_assigned_to_fkey [f] FOREIGN KEY (assigned_to) REFERENCES auth.users(id)
+CON quote_requests.quote_requests_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON quote_requests.quote_requests_customer_id_fkey [f] FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+CON quote_requests.quote_requests_pkey [p] PRIMARY KEY (id)
+CON quote_requests.quote_requests_portal_user_id_fkey [f] FOREIGN KEY (portal_user_id) REFERENCES portal_users(id)
+CON quote_revisions.quote_revisions_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON quote_revisions.quote_revisions_pkey [p] PRIMARY KEY (id)
+CON quote_revisions.quote_revisions_quote_id_fkey [f] FOREIGN KEY (quote_id) REFERENCES quotes(id) ON DELETE CASCADE
+CON quote_revisions.quote_revisions_quote_revision_unique [u] UNIQUE (quote_id, revision_number)
+CON quote_revisions.quote_revisions_revised_by_fkey [f] FOREIGN KEY (revised_by) REFERENCES auth.users(id)
+CON quote_suggestions.quote_suggestions_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON quote_suggestions.quote_suggestions_confidence_check [c] CHECK (((confidence_score >= (0)::numeric) AND (confidence_score <= (100)::numeric)))
+CON quote_suggestions.quote_suggestions_customer_id_fkey [f] FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
+CON quote_suggestions.quote_suggestions_pkey [p] PRIMARY KEY (id)
+CON quote_suggestions.quote_suggestions_source_type_check [c] CHECK ((source_type = ANY (ARRAY['natural_language'::text, 'whatsapp_message'::text, 'drawing_note'::text, 'past_quote'::text, 'manual'::text])))
+CON quote_suggestions.quote_suggestions_status_check [c] CHECK ((status = ANY (ARRAY['draft'::text, 'accepted'::text, 'rejected'::text, 'converted_to_quote'::text])))
+CON quote_suggestions.quote_suggestions_suggested_by_fkey [f] FOREIGN KEY (suggested_by) REFERENCES auth.users(id)
+CON quotes.quotes_approved_by_fkey [f] FOREIGN KEY (approved_by) REFERENCES auth.users(id)
+CON quotes.quotes_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON quotes.quotes_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON quotes.quotes_company_number_unique [u] UNIQUE (company_id, quote_number)
+CON quotes.quotes_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON quotes.quotes_customer_id_fkey [f] FOREIGN KEY (customer_id) REFERENCES customers(id)
+CON quotes.quotes_dealer_id_fkey [f] FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE SET NULL
+CON quotes.quotes_deleted_by_fkey [f] FOREIGN KEY (deleted_by) REFERENCES auth.users(id)
+CON quotes.quotes_pkey [p] PRIMARY KEY (id)
+CON quotes.quotes_status_check [c] CHECK ((status = ANY (ARRAY['draft'::text, 'internal_review'::text, 'approved_for_sending'::text, 'sent'::text, 'customer_approved'::text, 'customer_rejected'::text, 'expired'::text, 'converted_to_order'::text])))
+CON quotes.quotes_system_configuration_id_fkey [f] FOREIGN KEY (system_configuration_id) REFERENCES system_configurations(id) ON DELETE RESTRICT
+CON report_exports.report_exports_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON report_exports.report_exports_exported_by_fkey [f] FOREIGN KEY (exported_by) REFERENCES auth.users(id)
+CON report_exports.report_exports_pkey [p] PRIMARY KEY (id)
+CON report_exports.report_exports_status_check [c] CHECK ((status = ANY (ARRAY['queued'::text, 'completed'::text, 'failed'::text])))
+CON role_permissions.role_permissions_granted_by_fkey [f] FOREIGN KEY (granted_by) REFERENCES auth.users(id)
+CON role_permissions.role_permissions_permission_key_fkey [f] FOREIGN KEY (permission_key) REFERENCES permissions(key) ON DELETE CASCADE
+CON role_permissions.role_permissions_pkey [p] PRIMARY KEY (role_id, permission_key)
+CON role_permissions.role_permissions_role_id_fkey [f] FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+CON roles.roles_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON roles.roles_company_key_unique [u] UNIQUE (company_id, role_key)
+CON roles.roles_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON roles.roles_pkey [p] PRIMARY KEY (id)
+CON sales_activities.sales_activities_activity_type_check [c] CHECK ((activity_type = ANY (ARRAY['call'::text, 'whatsapp'::text, 'email'::text, 'meeting'::text, 'site_visit'::text, 'sample_sent'::text, 'quote_followup'::text, 'payment_followup'::text])))
+CON sales_activities.sales_activities_assigned_to_fkey [f] FOREIGN KEY (assigned_to) REFERENCES auth.users(id)
+CON sales_activities.sales_activities_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON sales_activities.sales_activities_customer_id_fkey [f] FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL
+CON sales_activities.sales_activities_lead_id_fkey [f] FOREIGN KEY (lead_id) REFERENCES leads(id) ON DELETE SET NULL
+CON sales_activities.sales_activities_opportunity_id_fkey [f] FOREIGN KEY (opportunity_id) REFERENCES opportunities(id) ON DELETE SET NULL
+CON sales_activities.sales_activities_pkey [p] PRIMARY KEY (id)
+CON sales_targets.sales_targets_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON sales_targets.sales_targets_company_id_salesperson_name_period_month_key [u] UNIQUE (company_id, salesperson_name, period_month)
+CON sales_targets.sales_targets_pkey [p] PRIMARY KEY (id)
+CON sales_targets.sales_targets_salesperson_id_fkey [f] FOREIGN KEY (salesperson_id) REFERENCES auth.users(id) ON DELETE SET NULL
+CON saved_reports.saved_reports_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON saved_reports.saved_reports_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON saved_reports.saved_reports_data_source_check [c] CHECK ((data_source = ANY (ARRAY['customers'::text, 'quotes'::text, 'orders'::text, 'dispatches'::text, 'invoices'::text, 'payments'::text, 'expenses'::text, 'expense_payments'::text, 'inventory'::text, 'production_jobs'::text, 'scrap_records'::text, 'dies'::text, 'quality_tests'::text, 'vendors'::text, 'purchases'::text, 'packaging_material_purchases'::text])))
+CON saved_reports.saved_reports_pkey [p] PRIMARY KEY (id)
+CON saved_reports.saved_reports_visibility_check [c] CHECK ((visibility = ANY (ARRAY['private'::text, 'company'::text, 'owner_only'::text])))
+CON scan_events.scan_events_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON scan_events.scan_events_pkey [p] PRIMARY KEY (id)
+CON scan_events.scan_events_qr_code_id_fkey [f] FOREIGN KEY (qr_code_id) REFERENCES qr_codes(id)
+CON scan_events.scan_events_scanned_by_fkey [f] FOREIGN KEY (scanned_by) REFERENCES auth.users(id)
+CON scrap_records.scrap_records_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON scrap_records.scrap_records_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON scrap_records.scrap_records_die_id_fkey [f] FOREIGN KEY (die_id) REFERENCES dies(id)
+CON scrap_records.scrap_records_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id)
+CON scrap_records.scrap_records_pkey [p] PRIMARY KEY (id)
+CON scrap_records.scrap_records_plant_id_fkey [f] FOREIGN KEY (plant_id) REFERENCES branches(id) ON DELETE SET NULL
+CON scrap_records.scrap_records_production_job_id_fkey [f] FOREIGN KEY (production_job_id) REFERENCES production_jobs(id)
+CON scrap_records.scrap_records_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id)
+CON scrap_records.scrap_records_recorded_by_fkey [f] FOREIGN KEY (recorded_by) REFERENCES auth.users(id)
+CON scrap_records.scrap_type_check [c] CHECK ((scrap_type = ANY (ARRAY['butt_scrap'::text, 'process_scrap'::text, 'rejection'::text, 'cutting_waste'::text, 'coating_rejection'::text, 'anodizing_rejection'::text, 'packing_damage'::text, 'customer_return'::text, 'remelt_scrap'::text, 'other'::text])))
+CON sensitive_action_logs.sensitive_action_logs_action_type_check [c] CHECK ((action_type = ANY (ARRAY['delete_quote'::text, 'delete_order'::text, 'change_company_settings'::text, 'change_user_role'::text, 'export_all_data'::text, 'disable_user'::text, 'revoke_portal_access'::text, 'delete_customer'::text, 'delete_profile'::text, 'delete_die'::text, 'delete_invoice'::text, 'bulk_delete'::text, 'role_escalation'::text])))
+CON sensitive_action_logs.sensitive_action_logs_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON sensitive_action_logs.sensitive_action_logs_pkey [p] PRIMARY KEY (id)
+CON sensitive_action_logs.sensitive_action_logs_user_id_fkey [f] FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+CON shipment_items.shipment_items_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON shipment_items.shipment_items_dealer_order_item_id_fkey [f] FOREIGN KEY (dealer_order_item_id) REFERENCES dealer_order_items(id)
+CON shipment_items.shipment_items_expected_quantity_check [c] CHECK ((expected_quantity > (0)::numeric))
+CON shipment_items.shipment_items_inventory_item_id_fkey [f] FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id)
+CON shipment_items.shipment_items_pkey [p] PRIMARY KEY (id)
+CON shipment_items.shipment_items_shipment_id_fkey [f] FOREIGN KEY (shipment_id) REFERENCES shipments(id) ON DELETE CASCADE
+CON shipment_items.shipment_items_status_check [c] CHECK ((status = ANY (ARRAY['dealer_pending_receipt'::text, 'received_confirmed'::text, 'discrepancy_reported'::text, 'recount_requested'::text, 'discrepancy_resolved'::text])))
+CON shipment_items.shipment_items_unit_check [c] CHECK ((unit = ANY (ARRAY['pieces'::text, 'meters'::text, 'kg'::text, 'set'::text, 'box'::text])))
+CON shipments.shipments_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON shipments.shipments_company_number_unique [u] UNIQUE (company_id, shipment_number)
+CON shipments.shipments_dealer_id_fkey [f] FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
+CON shipments.shipments_dealer_order_id_fkey [f] FOREIGN KEY (dealer_order_id) REFERENCES dealer_orders(id)
+CON shipments.shipments_dispatched_by_fkey [f] FOREIGN KEY (dispatched_by) REFERENCES auth.users(id)
+CON shipments.shipments_pkey [p] PRIMARY KEY (id)
+CON shipments.shipments_status_check [c] CHECK ((status = ANY (ARRAY['packed'::text, 'dispatched'::text, 'in_transit'::text, 'delivered_to_dealer'::text, 'pending_dealer_count'::text, 'received_confirmed'::text, 'discrepancy_reported'::text, 'closed'::text])))
+CON subscription_plans.subscription_plans_pkey [p] PRIMARY KEY (id)
+CON subscription_plans.subscription_plans_plan_type_key [u] UNIQUE (plan_type)
+CON subscription_plans.subscription_plans_type_check [c] CHECK ((plan_type = ANY (ARRAY['free_demo'::text, 'starter'::text, 'pro'::text, 'enterprise'::text])))
+CON support_tickets.support_tickets_assigned_to_fkey [f] FOREIGN KEY (assigned_to) REFERENCES auth.users(id)
+CON support_tickets.support_tickets_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON support_tickets.support_tickets_customer_id_fkey [f] FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+CON support_tickets.support_tickets_pkey [p] PRIMARY KEY (id)
+CON support_tickets.support_tickets_portal_user_id_fkey [f] FOREIGN KEY (portal_user_id) REFERENCES portal_users(id)
+CON support_tickets.support_tickets_related_order_id_fkey [f] FOREIGN KEY (related_order_id) REFERENCES orders(id)
+CON sync_logs.sync_logs_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON sync_logs.sync_logs_integration_id_fkey [f] FOREIGN KEY (integration_id) REFERENCES integrations(id) ON DELETE SET NULL
+CON sync_logs.sync_logs_pkey [p] PRIMARY KEY (id)
+CON sync_logs.sync_logs_status_check [c] CHECK ((status = ANY (ARRAY['queued'::text, 'running'::text, 'completed'::text, 'failed'::text, 'partial'::text])))
+CON system_beading_cuts.system_beading_cuts_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON system_beading_cuts.system_beading_cuts_configuration_id_fkey [f] FOREIGN KEY (configuration_id) REFERENCES system_configurations(id) ON DELETE CASCADE
+CON system_beading_cuts.system_beading_cuts_pkey [p] PRIMARY KEY (id)
+CON system_beading_cuts.system_beading_cuts_positive [c] CHECK (((cut_length_mm > (0)::numeric) AND (quantity > 0)))
+CON system_beading_cuts.system_beading_cuts_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE SET NULL
+CON system_components.system_components_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON system_components.system_components_pkey [p] PRIMARY KEY (id)
+CON system_components.system_components_related_profile_id_fkey [f] FOREIGN KEY (related_profile_id) REFERENCES aluminium_profiles(id)
+CON system_components.system_components_series_id_fkey [f] FOREIGN KEY (series_id) REFERENCES system_series(id) ON DELETE CASCADE
+CON system_configurations.system_configurations_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON system_configurations.system_configurations_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON system_configurations.system_configurations_customer_id_fkey [f] FOREIGN KEY (customer_id) REFERENCES customers(id)
+CON system_configurations.system_configurations_finish_id_fkey [f] FOREIGN KEY (finish_id) REFERENCES finish_options(id) ON DELETE SET NULL
+CON system_configurations.system_configurations_glass_id_fkey [f] FOREIGN KEY (glass_id) REFERENCES glass_items(id) ON DELETE SET NULL
+CON system_configurations.system_configurations_order_id_fkey [f] FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL
+CON system_configurations.system_configurations_pkey [p] PRIMARY KEY (id)
+CON system_configurations.system_configurations_quote_id_fkey [f] FOREIGN KEY (quote_id) REFERENCES quotes(id) ON DELETE SET NULL
+CON system_configurations.system_configurations_series_id_fkey [f] FOREIGN KEY (series_id) REFERENCES system_series(id)
+CON system_configurations.system_configurations_status_check [c] CHECK ((status = ANY (ARRAY['draft'::text, 'calculated'::text, 'quoted'::text, 'approved'::text, 'converted_to_order'::text, 'in_production'::text, 'completed'::text, 'cancelled'::text, 'sent'::text, 'ordered'::text, 'archived'::text])))
+CON system_configurations.system_configurations_template_id_fkey [f] FOREIGN KEY (template_id) REFERENCES system_templates(id) ON DELETE SET NULL
+CON system_glass_cuts.system_glass_cuts_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON system_glass_cuts.system_glass_cuts_configuration_id_fkey [f] FOREIGN KEY (configuration_id) REFERENCES system_configurations(id) ON DELETE CASCADE
+CON system_glass_cuts.system_glass_cuts_glass_id_fkey [f] FOREIGN KEY (glass_id) REFERENCES glass_items(id) ON DELETE SET NULL
+CON system_glass_cuts.system_glass_cuts_pkey [p] PRIMARY KEY (id)
+CON system_glass_cuts.system_glass_cuts_positive [c] CHECK (((width_mm > (0)::numeric) AND (height_mm > (0)::numeric) AND (quantity > 0)))
+CON system_hardware_bom.system_hardware_bom_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON system_hardware_bom.system_hardware_bom_configuration_id_fkey [f] FOREIGN KEY (configuration_id) REFERENCES system_configurations(id) ON DELETE CASCADE
+CON system_hardware_bom.system_hardware_bom_hardware_item_id_fkey [f] FOREIGN KEY (hardware_item_id) REFERENCES hardware_items(id) ON DELETE SET NULL
+CON system_hardware_bom.system_hardware_bom_pkey [p] PRIMARY KEY (id)
+CON system_material_summary.system_material_summary_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON system_material_summary.system_material_summary_configuration_id_fkey [f] FOREIGN KEY (configuration_id) REFERENCES system_configurations(id) ON DELETE CASCADE
+CON system_material_summary.system_material_summary_pkey [p] PRIMARY KEY (id)
+CON system_panels.system_panels_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON system_panels.system_panels_configuration_id_fkey [f] FOREIGN KEY (configuration_id) REFERENCES system_configurations(id) ON DELETE CASCADE
+CON system_panels.system_panels_pkey [p] PRIMARY KEY (id)
+CON system_profile_cuts.system_profile_cuts_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON system_profile_cuts.system_profile_cuts_configuration_id_fkey [f] FOREIGN KEY (configuration_id) REFERENCES system_configurations(id) ON DELETE CASCADE
+CON system_profile_cuts.system_profile_cuts_pkey [p] PRIMARY KEY (id)
+CON system_profile_cuts.system_profile_cuts_positive [c] CHECK (((cut_length_mm > (0)::numeric) AND (quantity > 0)))
+CON system_profile_cuts.system_profile_cuts_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE SET NULL
+CON system_profiles.system_profiles_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON system_profiles.system_profiles_pkey [p] PRIMARY KEY (id)
+CON system_profiles.system_profiles_profile_id_fkey [f] FOREIGN KEY (profile_id) REFERENCES aluminium_profiles(id) ON DELETE SET NULL
+CON system_profiles.system_profiles_series_id_fkey [f] FOREIGN KEY (series_id) REFERENCES system_series(id) ON DELETE CASCADE
+CON system_reports.system_reports_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON system_reports.system_reports_configuration_id_fkey [f] FOREIGN KEY (configuration_id) REFERENCES system_configurations(id) ON DELETE CASCADE
+CON system_reports.system_reports_generated_by_fkey [f] FOREIGN KEY (generated_by) REFERENCES auth.users(id)
+CON system_reports.system_reports_pkey [p] PRIMARY KEY (id)
+CON system_series.system_series_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON system_series.system_series_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON system_series.system_series_pkey [p] PRIMARY KEY (id)
+CON system_templates.system_templates_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON system_templates.system_templates_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON system_templates.system_templates_pkey [p] PRIMARY KEY (id)
+CON system_templates.system_templates_series_id_fkey [f] FOREIGN KEY (series_id) REFERENCES system_series(id) ON DELETE SET NULL
+CON tasks.tasks_assigned_by_user_id_fkey [f] FOREIGN KEY (assigned_by_user_id) REFERENCES auth.users(id)
+CON tasks.tasks_assigned_to_fkey [f] FOREIGN KEY (assigned_to) REFERENCES auth.users(id)
+CON tasks.tasks_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON tasks.tasks_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON tasks.tasks_dealership_id_fkey [f] FOREIGN KEY (dealership_id) REFERENCES dealers(id) ON DELETE SET NULL
+CON tasks.tasks_pkey [p] PRIMARY KEY (id)
+CON tasks.tasks_priority_check [c] CHECK ((priority = ANY (ARRAY['low'::text, 'normal'::text, 'high'::text, 'urgent'::text])))
+CON tasks.tasks_status_check [c] CHECK ((status = ANY (ARRAY['open'::text, 'in_progress'::text, 'completed'::text, 'cancelled'::text])))
+CON technical_documents.technical_documents_approval_status_check [c] CHECK ((approval_status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text, 'superseded'::text])))
+CON technical_documents.technical_documents_approved_by_fkey [f] FOREIGN KEY (approved_by) REFERENCES auth.users(id)
+CON technical_documents.technical_documents_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON technical_documents.technical_documents_pkey [p] PRIMARY KEY (id)
+CON technical_documents.technical_documents_storage_path_tenant_prefix [c] CHECK (((storage_path IS NULL) OR (split_part(storage_path, '/'::text, 1) = (company_id)::text))) NOT VALID
+CON technical_documents.technical_documents_uploaded_by_fkey [f] FOREIGN KEY (uploaded_by) REFERENCES auth.users(id)
+CON technical_drawings.technical_drawings_approval_status_check [c] CHECK ((approval_status = ANY (ARRAY['draft'::text, 'under_review'::text, 'approved_internal'::text, 'sent_to_customer'::text, 'customer_approved'::text, 'rejected'::text, 'obsolete'::text])))
+CON technical_drawings.technical_drawings_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON technical_drawings.technical_drawings_pkey [p] PRIMARY KEY (id)
+CON technical_drawings.technical_drawings_related_entity_type_check [c] CHECK ((related_entity_type = ANY (ARRAY['die'::text, 'profile'::text, 'quote'::text, 'order'::text, 'customer'::text, 'system_configuration'::text, 'general'::text])))
+CON technical_queries.technical_queries_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON technical_queries.technical_queries_pkey [p] PRIMARY KEY (id)
+CON technical_queries.technical_queries_priority_check [c] CHECK ((priority = ANY (ARRAY['low'::text, 'normal'::text, 'high'::text, 'critical'::text])))
+CON technical_queries.technical_queries_related_drawing_id_fkey [f] FOREIGN KEY (related_drawing_id) REFERENCES technical_drawings(id)
+CON technical_queries.technical_queries_status_check [c] CHECK ((status = ANY (ARRAY['open'::text, 'in_progress'::text, 'responded'::text, 'closed'::text])))
+CON technical_reports.technical_reports_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON technical_reports.technical_reports_generated_by_fkey [f] FOREIGN KEY (generated_by) REFERENCES auth.users(id)
+CON technical_reports.technical_reports_pkey [p] PRIMARY KEY (id)
+CON tender_checklist_items.tender_checklist_items_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON tender_checklist_items.tender_checklist_items_pkey [p] PRIMARY KEY (id)
+CON tender_checklist_items.tender_checklist_items_status_check [c] CHECK ((status = ANY (ARRAY['pending'::text, 'in_progress'::text, 'done'::text, 'not_applicable'::text])))
+CON tender_checklist_items.tender_checklist_items_tender_id_fkey [f] FOREIGN KEY (tender_id) REFERENCES tenders(id) ON DELETE CASCADE
+CON tender_documents.tender_documents_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON tender_documents.tender_documents_document_type_check [c] CHECK ((document_type = ANY (ARRAY['technical'::text, 'commercial'::text, 'financial'::text, 'eligibility'::text, 'general'::text])))
+CON tender_documents.tender_documents_pkey [p] PRIMARY KEY (id)
+CON tender_documents.tender_documents_status_check [c] CHECK ((status = ANY (ARRAY['pending'::text, 'uploaded'::text, 'verified'::text, 'rejected'::text])))
+CON tender_documents.tender_documents_tender_id_fkey [f] FOREIGN KEY (tender_id) REFERENCES tenders(id) ON DELETE CASCADE
+CON tenders.tenders_commercial_status_check [c] CHECK ((commercial_status = ANY (ARRAY['pending'::text, 'l1'::text, 'l2'::text, 'l3'::text, 'above_l3'::text])))
+CON tenders.tenders_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON tenders.tenders_emd_status_check [c] CHECK ((emd_status = ANY (ARRAY['not_paid'::text, 'paid'::text, 'refunded'::text, 'forfeited'::text])))
+CON tenders.tenders_pkey [p] PRIMARY KEY (id)
+CON tenders.tenders_sector_check [c] CHECK ((sector = ANY (ARRAY['railways'::text, 'airport'::text, 'solar'::text, 'power'::text, 'defence'::text, 'metro'::text, 'government_building'::text, 'infrastructure'::text, 'industrial'::text, 'other'::text])))
+CON tenders.tenders_status_check [c] CHECK ((status = ANY (ARRAY['identified'::text, 'under_review'::text, 'eligible'::text, 'not_eligible'::text, 'documents_pending'::text, 'submitted'::text, 'technically_qualified'::text, 'commercially_opened'::text, 'won'::text, 'lost'::text, 'cancelled'::text])))
+CON tenders.tenders_technical_status_check [c] CHECK ((technical_status = ANY (ARRAY['pending'::text, 'qualified'::text, 'disqualified'::text])))
+CON user_invitations.user_invitations_accepted_by_fkey [f] FOREIGN KEY (accepted_by) REFERENCES auth.users(id)
+CON user_invitations.user_invitations_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON user_invitations.user_invitations_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON user_invitations.user_invitations_invited_by_fkey [f] FOREIGN KEY (invited_by) REFERENCES auth.users(id)
+CON user_invitations.user_invitations_pkey [p] PRIMARY KEY (id)
+CON user_invitations.user_invitations_role_check [c] CHECK ((role = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'production_manager'::text, 'production'::text, 'dispatch_manager'::text, 'dispatch'::text, 'accounts'::text, 'quality'::text, 'viewer'::text])))
+CON user_invitations.user_invitations_status_check [c] CHECK ((status = ANY (ARRAY['pending'::text, 'accepted'::text, 'cancelled'::text, 'expired'::text])))
+CON user_roles.user_roles_assigned_by_fkey [f] FOREIGN KEY (assigned_by) REFERENCES auth.users(id)
+CON user_roles.user_roles_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id)
+CON user_roles.user_roles_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON user_roles.user_roles_dealer_fk [f] FOREIGN KEY (dealer_id) REFERENCES dealers(id) ON DELETE CASCADE
+CON user_roles.user_roles_pkey [p] PRIMARY KEY (id)
+CON user_roles.user_roles_role_id_fkey [f] FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE RESTRICT
+CON user_roles.user_roles_user_id_fkey [f] FOREIGN KEY (user_id) REFERENCES app_users(id) ON DELETE CASCADE
+CON vendors.vendors_branch_id_fkey [f] FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL
+CON vendors.vendors_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON vendors.vendors_created_by_fkey [f] FOREIGN KEY (created_by) REFERENCES auth.users(id)
+CON vendors.vendors_pkey [p] PRIMARY KEY (id)
+CON vendors.vendors_type_check [c] CHECK ((vendor_type = ANY (ARRAY['aluminum_ingot'::text, 'aluminum_sows'::text, 'aluminum_billets'::text, 'aluminum_wire_rods'::text, 'aluminum_t_ingots'::text, 'aluminum_chips'::text, 'die_maker'::text, 'powder_coating'::text, 'anodizing'::text, 'hardware_supplier'::text, 'transporter'::text, 'packing_supplier'::text, 'maintenance'::text, 'other'::text])))
+CON whatsapp_templates.whatsapp_templates_company_id_fkey [f] FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+CON whatsapp_templates.whatsapp_templates_pkey [p] PRIMARY KEY (id)

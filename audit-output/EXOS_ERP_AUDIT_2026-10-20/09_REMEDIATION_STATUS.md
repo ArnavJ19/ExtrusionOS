@@ -1,6 +1,22 @@
 # Remediation Status — Wave 1 (started 20–21 October 2026)
 
-**Hosted status: NOT APPLIED.** The candidates below are verified only on the PGlite replica of the live catalog. Nothing has been applied to Supabase `pkawmdxtmsdgigsehcmb`.
+**Hosted status: APPLIED on 21 October 2026**, at the user's instruction, to Supabase `pkawmdxtmsdgigsehcmb`. The ledger went from 86 to **97 rows**. Eleven migrations were applied, in filename order:
+
+1. The parallel session's three candidates:
+   - `20261020120000_invoice_supplier_snapshot_contact`
+   - `20261020142106_posted_reservation_delivery_lifecycle`
+   - `20261020162949_production_billet_material_normalization`
+2. The eight Wave 1 migrations below (`20261021000000` to `20261021070000`).
+
+Each file was applied through `apply_migration` with its `begin;`/`commit;` lines removed, because the tool supplies its own transaction. The bodies are otherwise identical to the repo files.
+
+**Verification**
+- **Rehearsal before applying:** all 11 migrations on the replica of the live catalog, then the gate. 64/64 passed (`harness/results/gate-wave1-rollout-rehearsal.txt`).
+- **After applying:**
+  - A fresh capture of the hosted catalog was saved to `harness/live-20261021/`. It shows 301 functions (+7), 289 triggers (+8), 579 policies (−3) and 1,189 authenticated grants (−4), matching the migrations exactly.
+  - Every candidate assertion was run against that capture with no migrations layered on: **39/39 passed** (`harness/results/gate-wave1-hosted-post-apply.txt`).
+  - A read-only check confirmed hosted business data is unchanged: 10 orders, 48 billets, 13,711.728 kg, and the foundry source balances as before.
+  - The new CHECK constraints remain NOT VALID.
 
 | Finding | Change | Files | Gate result |
 | --- | --- | --- | --- |
@@ -19,7 +35,7 @@
 
 Gate: `node audit-output/EXOS_ERP_AUDIT_2026-10-20/harness/gate-wave1.mjs`. 64 checks, **GATE PASSED** (`harness/results/gate-wave1.txt`). Each baseline check reproduces the defect on the unmodified snapshot. Each candidate check applies all eight migrations on top of it, in order.
 
-## Before hosted application
+## Follow-up after hosted application (originally the pre-application checklist)
 
 1. **Reconcile the drifted live rows first** (read-only findings): `SCR-2026-0001` (rejected, 1,000,000 kg, 900 available, 0 charged), `SCR-2026-0002` (`available` while partly charged), and `EAS-2026-0003` (100,000,000 kg). The guard preserves current balances on edit; it does not repair history. Validate the new CHECK constraints only after reconciliation.
 2. Behavior change to communicate: when a non-factory role changes an order's stage (dispatch delivery, sales quote conversion), automatic billet allocation now waits for the next factory or foundry event instead of failing.

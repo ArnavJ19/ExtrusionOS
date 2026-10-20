@@ -5,12 +5,13 @@
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 
-const here = (name) => new URL(`./${name}`, import.meta.url);
+const here = (name, dir = ".") => new URL(`./${dir}/${name}`, import.meta.url);
 
-export async function createLiveCatalogDb({ verbose = false, migrations = [] } = {}) {
-  const catalog = JSON.parse(readFileSync(here("catalog.json"), "utf8"));
-  const functionSource = readFileSync(here("live_functions.sql"), "utf8");
-  const constraintSource = readFileSync(here("live_constraints.txt"), "utf8");
+export async function createLiveCatalogDb({ verbose = false, migrations = [], dir = "." } = {}) {
+  // dir selects a catalog snapshot folder (default: the 20 Oct pre-remediation capture).
+  const catalog = JSON.parse(readFileSync(here("catalog.json", dir), "utf8"));
+  const functionSource = readFileSync(here("live_functions.sql", dir), "utf8");
+  const constraintSource = readFileSync(here("live_constraints.txt", dir), "utf8");
   const db = new PGlite();
   const failures = [];
   const run = async (label, sql) => {
@@ -60,7 +61,7 @@ export async function createLiveCatalogDb({ verbose = false, migrations = [] } =
 
   // Live RLS, policies, table grants and function EXECUTE grants for the
   // authenticated role, so "set role authenticated" mimics a PostgREST caller.
-  const security = JSON.parse(readFileSync(here("security.json"), "utf8"));
+  const security = JSON.parse(readFileSync(here("security.json", dir), "utf8"));
   await run("revoke", `revoke execute on all functions in schema public, private from public;`);
   for (const statement of security.schemagrants ?? []) await run("schema grant", `${statement};`);
   for (const statement of security.rls ?? []) await run("rls", `${statement};`);
