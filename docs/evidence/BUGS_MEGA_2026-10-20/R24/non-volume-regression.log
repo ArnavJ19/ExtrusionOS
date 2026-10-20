@@ -1,0 +1,79 @@
+TAP version 13
+# Subtest: the lookup does not offer an order that the actual writer rejects for temper
+ok 1 - the lookup does not offer an order that the actual writer rejects for temper
+  ---
+  duration_ms: 5227.242
+  type: 'test'
+  ...
+# Subtest: normalized alloy and temper accepted by the writer remain discoverable
+ok 2 - normalized alloy and temper accepted by the writer remain discoverable
+  ---
+  duration_ms: 340.2657
+  type: 'test'
+  ...
+# Subtest: delivered and payment-pending orders do not appear as compatible open orders
+ok 3 - delivered and payment-pending orders do not appear as compatible open orders
+  ---
+  duration_ms: 490.8949
+  type: 'test'
+  ...
+# Subtest: fully covered dispatched profiles do not remain allocation choices
+ok 4 - fully covered dispatched profiles do not remain allocation choices
+  ---
+  duration_ms: 292.1522
+  type: 'test'
+  ...
+# Subtest: two matching requirements produce one distinct choice per order
+ok 5 - two matching requirements produce one distinct choice per order
+  ---
+  duration_ms: 312.1158
+  type: 'test'
+  ...
+# Subtest: a small REST row cap cannot hide a later compatible order
+ok 6 - a small REST row cap cannot hide a later compatible order
+  ---
+  duration_ms: 304.1223
+  type: 'test'
+  ...
+# Subtest: ten-row pages reach later orders and clear the prior order selection
+ok 7 - ten-row pages reach later orders and clear the prior order selection
+  ---
+  duration_ms: 1742.4554
+  type: 'test'
+  ...
+# Subtest: global search reaches orders outside the first page and treats percent literally
+ok 8 - global search reaches orders outside the first page and treats percent literally
+  ---
+  duration_ms: 1543.8249
+  type: 'test'
+  ...
+# Subtest: a stale search response cannot replace current options
+ok 9 - a stale search response cannot replace current options
+  ---
+  duration_ms: 479.2763
+  type: 'test'
+  ...
+# Subtest: a stale search failure cannot replace current options
+ok 10 - a stale search failure cannot replace current options
+  ---
+  duration_ms: 440.5666
+  type: 'test'
+  ...
+# Subtest: a missing new RPC is explicitly unavailable and never falls back to capped requirements
+ok 11 - a missing new RPC is explicitly unavailable and never falls back to capped requirements
+  ---
+  duration_ms: 127.4841
+  type: 'test'
+  ...
+# Subtest: the read snapshot replaces a billet issued between the header and options requests
+ok 12 - the read snapshot replaces a billet issued between the header and options requests
+  ---
+  duration_ms: 221.2429
+  type: 'test'
+  ...
+# Subtest: a role outside manual allocation cannot retain a mounted mutation panel
+ok 13 - a role outside manual allocation cannot retain a mounted mutation panel
+  ---
+  duration_ms: 264.2112
+  type: 'test'
+  ...

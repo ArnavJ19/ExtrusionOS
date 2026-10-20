@@ -1,0 +1,145 @@
+TAP version 13
+# Subtest: allocation reader preserves complete validated response fields
+ok 1 - allocation reader preserves complete validated response fields
+  ---
+  duration_ms: 1.9762
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects foreign company
+ok 2 - allocation reader rejects foreign company
+  ---
+  duration_ms: 0.7798
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects foreign billet
+ok 3 - allocation reader rejects foreign billet
+  ---
+  duration_ms: 0.3298
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects foreign billet company
+ok 4 - allocation reader rejects foreign billet company
+  ---
+  duration_ms: 0.316
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects stale search
+ok 5 - allocation reader rejects stale search
+  ---
+  duration_ms: 0.1623
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects wrong page size
+ok 6 - allocation reader rejects wrong page size
+  ---
+  duration_ms: 0.1149
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects missing page
+ok 7 - allocation reader rejects missing page
+  ---
+  duration_ms: 0.186
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects string count
+ok 8 - allocation reader rejects string count
+  ---
+  duration_ms: 0.1218
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects truncated rows
+ok 9 - allocation reader rejects truncated rows
+  ---
+  duration_ms: 0.4633
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects non-array rows
+ok 10 - allocation reader rejects non-array rows
+  ---
+  duration_ms: 0.52
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects foreign option
+ok 11 - allocation reader rejects foreign option
+  ---
+  duration_ms: 0.2372
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects invalid order id
+ok 12 - allocation reader rejects invalid order id
+  ---
+  duration_ms: 0.2054
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects terminal order
+ok 13 - allocation reader rejects terminal order
+  ---
+  duration_ms: 0.1227
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects missing order label
+ok 14 - allocation reader rejects missing order label
+  ---
+  duration_ms: 0.2049
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects fractional requirement count
+ok 15 - allocation reader rejects fractional requirement count
+  ---
+  duration_ms: 0.1151
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects negative allocated count
+ok 16 - allocation reader rejects negative allocated count
+  ---
+  duration_ms: 0.1214
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects inconsistent shortage
+ok 17 - allocation reader rejects inconsistent shortage
+  ---
+  duration_ms: 0.0909
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects fully allocated option
+ok 18 - allocation reader rejects fully allocated option
+  ---
+  duration_ms: 0.1381
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects duplicate orders
+ok 19 - allocation reader rejects duplicate orders
+  ---
+  duration_ms: 0.1894
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects linked production
+ok 20 - allocation reader rejects linked production
+  ---
+  duration_ms: 0.1636
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects non-finite diameter
+ok 21 - allocation reader rejects non-finite diameter
+  ---
+  duration_ms: 0.1239
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects invalid current order
+ok 22 - allocation reader rejects invalid current order
+  ---
+  duration_ms: 0.1148
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects unsafe numeric count
+ok 23 - allocation reader rejects unsafe numeric count
+  ---
+  duration_ms: 0.0848
+  type: 'test'
+  ...
+# Subtest: verified empty and clamped pages stay distinct from unavailable payloads
+ok 24 - verified empty and clamped pages stay distinct from unavailable payloads
+  ---
+  duration_ms: 0.218
+  type: 'test'
+  ...

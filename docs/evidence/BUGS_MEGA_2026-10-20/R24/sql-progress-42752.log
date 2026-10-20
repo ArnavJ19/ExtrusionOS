@@ -1,0 +1,73 @@
+START reads distinct compatible orders without changing stock, requirements or notices
+END reads distinct compatible orders without changing stock, requirements or notices
+START same-material profiles are grouped once per order with exact summed counts
+END same-material profiles are grouped once per order with exact summed counts
+START owner can read the exact scoped allocation projection
+END owner can read the exact scoped allocation projection
+START admin can read the exact scoped allocation projection
+END admin can read the exact scoped allocation projection
+START factory_manager can read the exact scoped allocation projection
+END factory_manager can read the exact scoped allocation projection
+START production_manager can read the exact scoped allocation projection
+END production_manager can read the exact scoped allocation projection
+START production can read the exact scoped allocation projection
+END production can read the exact scoped allocation projection
+START sales cannot read allocation choices
+END sales cannot read allocation choices
+START accounts cannot read allocation choices
+END accounts cannot read allocation choices
+START quality cannot read allocation choices
+END quality cannot read allocation choices
+START inventory_manager cannot read allocation choices
+END inventory_manager cannot read allocation choices
+START dispatch cannot read allocation choices
+END dispatch cannot read allocation choices
+START viewer cannot read allocation choices
+END viewer cannot read allocation choices
+START dealer_admin cannot read allocation choices
+END dealer_admin cannot read allocation choices
+START missing role cannot read allocation choices
+END missing role cannot read allocation choices
+START inactive and missing identities cannot read the projection
+END inactive and missing identities cannot read the projection
+START second-company orders and foreign or missing billet identities never leak
+END second-company orders and foreign or missing billet identities never leak
+START incompatible temper cannot yield a choice
+END incompatible temper cannot yield a choice
+START incompatible alloy cannot yield a choice
+END incompatible alloy cannot yield a choice
+START incompatible diameter cannot yield a choice
+END incompatible diameter cannot yield a choice
+START normalization agrees with allocation instead of using an ILIKE wildcard
+END normalization agrees with allocation instead of using an ILIKE wildcard
+START closed orders are excluded even with retained positive requirements
+END closed orders are excluded even with retained positive requirements
+START cancelled orders are excluded even with retained positive requirements
+END cancelled orders are excluded even with retained positive requirements
+START delivered orders are excluded even with retained positive requirements
+END delivered orders are excluded even with retained positive requirements
+START payment_pending orders are excluded even with retained positive requirements
+END payment_pending orders are excluded even with retained positive requirements
+START dispatched profile eligibility is shared with the actual allocation authority
+END dispatched profile eligibility is shared with the actual allocation authority
+START literal search and case folding do not expand percent, underscore or backslash
+END literal search and case folding do not expand percent, underscore or backslash
+START invalid page and oversized query input fail before returning rows
+END invalid page and oversized query input fail before returning rows
+START stale low allocated counter is unavailable without silently repairing history
+END stale low allocated counter is unavailable without silently repairing history
+START stale high allocated counter is unavailable without silently repairing history
+END stale high allocated counter is unavailable without silently repairing history
+START unlinked committed legacy stock requires review without read-time repair
+END unlinked committed legacy stock requires review without read-time repair
+START a broken existing allocation cannot be advertised as reallocatable
+END a broken existing allocation cannot be advertised as reallocatable
+START issued billets return no manual choices
+END issued billets return no manual choices
+START consumed billets return no manual choices
+END consumed billets return no manual choices
+START scrap billets return no manual choices
+END scrap billets return no manual choices
+START the reader's ACL, stability and private helper boundary remain narrow
+END the reader's ACL, stability and private helper boundary remain narrow
+START more than 1,000 valid orders have complete stable ten-row pages and a clamped last page

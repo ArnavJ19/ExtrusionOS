@@ -1,0 +1,130 @@
+[
+  {
+    "width": 1440,
+    "state": "first-page",
+    "viewport": 1440,
+    "scrollWidth": 1440,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\1440-first-page.png",
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "state": "last-page",
+    "viewport": 1440,
+    "scrollWidth": 1440,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\1440-last-page.png",
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "state": "global-search",
+    "viewport": 1440,
+    "scrollWidth": 1440,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\1440-global-search.png",
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "state": "unavailable",
+    "viewport": 1440,
+    "scrollWidth": 1440,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\1440-unavailable.png",
+    "pageErrors": []
+  },
+  {
+    "width": 820,
+    "state": "first-page",
+    "viewport": 820,
+    "scrollWidth": 820,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\820-first-page.png",
+    "pageErrors": []
+  },
+  {
+    "width": 820,
+    "state": "last-page",
+    "viewport": 820,
+    "scrollWidth": 820,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\820-last-page.png",
+    "pageErrors": []
+  },
+  {
+    "width": 820,
+    "state": "global-search",
+    "viewport": 820,
+    "scrollWidth": 820,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\820-global-search.png",
+    "pageErrors": []
+  },
+  {
+    "width": 820,
+    "state": "unavailable",
+    "viewport": 820,
+    "scrollWidth": 820,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\820-unavailable.png",
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "state": "first-page",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\390-first-page.png",
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "state": "last-page",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\390-last-page.png",
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "state": "global-search",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\390-global-search.png",
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "state": "unavailable",
+    "viewport": 390,
+    "scrollWidth": 390,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\390-unavailable.png",
+    "pageErrors": []
+  },
+  {
+    "width": 320,
+    "state": "first-page",
+    "viewport": 320,
+    "scrollWidth": 320,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\320-first-page.png",
+    "pageErrors": []
+  },
+  {
+    "width": 320,
+    "state": "last-page",
+    "viewport": 320,
+    "scrollWidth": 320,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\320-last-page.png",
+    "pageErrors": []
+  },
+  {
+    "width": 320,
+    "state": "global-search",
+    "viewport": 320,
+    "scrollWidth": 320,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\320-global-search.png",
+    "pageErrors": []
+  },
+  {
+    "width": 320,
+    "state": "unavailable",
+    "viewport": 320,
+    "scrollWidth": 320,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-options\\responsive\\320-unavailable.png",
+    "pageErrors": []
+  }
+]

@@ -70,6 +70,9 @@ export async function runAuditMigrationIntegrationChecks() {
     const packagingEvidenceObjects = await installPackagingEvidenceCandidateObjects(db);
     const finishingWorkloadObjects = await installFinishingWorkloadObjects(db);
     const billetLinkRepairObjects = await installBilletLinkRepairObjects(db);
+    await db.exec(sqlDefinition("20261020000000_manual_billet_requirement_lineage.sql", "private.order_profile_needs_billet_allocation"));
+    await db.exec("revoke all on function private.order_profile_needs_billet_allocation(uuid,uuid,uuid) from public,anon,authenticated;");
+    await db.exec(read("20261020070000_manual_billet_allocation_options.sql"));
     const views = await db.query(`select table_name from information_schema.views where table_schema='public' and table_name like '%_authorized' order by table_name`);
     assert.ok(views.rows.length >= 10);
     await db.exec("set role authenticated;");
@@ -123,7 +126,12 @@ export async function runAuditMigrationIntegrationChecks() {
       has_function_privilege('authenticated','private.guard_packaging_evidence_delete()','execute') direct_guard,
       has_function_privilege('authenticated','public.apply_packaging_material_stock_from_materials()','execute') direct_stock_trigger`)).rows[0];
     assert.deepEqual(packagingAcl,{client_insert:false,column_insert:false,direct_guard:false,direct_stock_trigger:false});
-    return {migrations:names.length,preparedFunctions:4+directObjects.functions+dispatchReservationObjects.functions+cancellationObjects.functions+retainedInvoiceObjects.functions+finishingObjects.functions+partialFinishingObjects.functions+packagingEvidenceObjects.functions+finishingWorkloadObjects.functions+billetLinkRepairObjects.functions,
+    const allocationOptionsAcl=(await db.query(`select
+      has_function_privilege('authenticated','public.get_manual_billet_allocation_options(uuid,text,integer)','execute') reader,
+      has_function_privilege('anon','public.get_manual_billet_allocation_options(uuid,text,integer)','execute') anonymous,
+      has_function_privilege('authenticated','private.order_profile_needs_billet_allocation(uuid,uuid,uuid)','execute') private_helper`)).rows[0];
+    assert.deepEqual(allocationOptionsAcl,{reader:true,anonymous:false,private_helper:false});
+    return {migrations:names.length,preparedFunctions:6+directObjects.functions+dispatchReservationObjects.functions+cancellationObjects.functions+retainedInvoiceObjects.functions+finishingObjects.functions+partialFinishingObjects.functions+packagingEvidenceObjects.functions+finishingWorkloadObjects.functions+billetLinkRepairObjects.functions,
       preparedTriggers:guards.rows.length+directObjects.triggers+cancellationObjects.triggers+retainedInvoiceObjects.triggers+finishingObjects.triggers+partialFinishingObjects.triggers+packagingEvidenceObjects.triggers,views:views.rows.length,tables:tables.length};
   } finally {await db.close();}
 }

@@ -9,6 +9,7 @@ with required(name) as (
          ('get_profile_stock_consumption_totals'), ('get_profile_stock_reservation_ledger_page'), ('get_dispatch_reservation_ledger_page'), ('get_dealer_quote_stock_availability'), ('issue_dispatch_return_credit_note_atomic'),
          ('get_finished_production_readiness'),
          ('get_finishing_workload'),
+         ('get_manual_billet_allocation_options'),
          ('reverse_credit_note_atomic'), ('get_invoice_source_options'), ('get_dashboard_snapshot'),
          ('get_advanced_analytics_snapshot'), ('get_operation_database_page')
 )
