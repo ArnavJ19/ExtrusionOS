@@ -20,5 +20,5 @@ export default async function ReportBuilderPage() {
     .order("created_at", { ascending: false })
     .limit(30);
 
-  return <ReportBuilderClient companyId={context.companyId} role={context.role} initialReports={(reportsResult.data ?? []) as any[]} />;
+  return <ReportBuilderClient companyId={context.companyId} companyName={context.companyName} preparedBy={context.fullName ?? null} role={context.role} initialReports={(reportsResult.data ?? []) as any[]} />;
 }

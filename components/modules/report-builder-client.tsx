@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { PDFDocument, rgb } from "pdf-lib";
 import { toast } from "sonner";
 import { BarChart3, CalendarRange, Database, Eye, Filter, Save, Shield } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -12,8 +11,9 @@ import { createClient } from "@/lib/supabase/browser";
 import { savedReportSchema } from "@/lib/validations/schemas";
 import { formatDate } from "@/lib/utils/format";
 import { recordsToCsv } from "@/lib/utils/csv";
-import { browserFontLoader, PdfTextKit } from "@/lib/pdf/unicode-text";
-import { computeReportTotals, deriveReportRow, planColumnBands, reportFieldMap, reportImplicitFilters, reportSelectFields, reportSourceDateFieldMap, reportSourceTableMap } from "@/lib/reports/report-builder";
+import { browserFontLoader } from "@/lib/pdf/unicode-text";
+import { buildReportBuilderPdf } from "@/lib/reports/report-builder-pdf";
+import { computeReportTotals, deriveReportRow, reportFieldMap, reportImplicitFilters, reportSelectFields, reportSourceDateFieldMap, reportSourceTableMap } from "@/lib/reports/report-builder";
 
 type SavedReportRow = {
   id: string;
@@ -101,11 +101,13 @@ const idDisplayFieldMap: Record<string, { table: string; select: string; build: 
 
 type Props = {
   companyId: string;
+  companyName?: string;
+  preparedBy?: string | null;
   role: string;
   initialReports: SavedReportRow[];
 };
 
-export function ReportBuilderClient({ companyId, role, initialReports }: Props) {
+export function ReportBuilderClient({ companyId, companyName = "Company", preparedBy = null, role, initialReports }: Props) {
   const [source, setSource] = useState("quotes");
   const [selectedFields, setSelectedFields] = useState<string[]>(["quote_number", "quote_date", "status", "grand_total"]);
   const [filters, setFilters] = useState([{ field: "status", operator: "equals", value: "sent" }]);
@@ -338,115 +340,27 @@ export function ReportBuilderClient({ companyId, role, initialReports }: Props) 
       const { rows, selectedFields, grouping, source, implicitFilters } = await fetchReportRows(report);
       const displayRows = await enrichRowsForStakeholders(rows, selectedFields);
       const config = report.config_json ?? {};
-      const outputFields = grouping ? selectedFields.filter((field) => field !== grouping) : selectedFields;
-      // Every selected column is printed: wide reports continue in additional column bands.
-      const bands = planColumnBands(outputFields, 6);
-      const totals = computeReportTotals(source, rows, grouping, prettyValue);
-      const pdf = await PDFDocument.create();
-      const kit = await PdfTextKit.create(pdf, browserFontLoader(), [
-        report.report_name, ...displayRows.flatMap((row) => selectedFields.map((field) => prettyValue(row[field])))
-      ]);
-      const pageSize: [number, number] = [842, 595];
-      let page = pdf.addPage(pageSize);
-      const width = page.getWidth();
-      const height = page.getHeight();
-      const margin = 36;
-      const tableWidth = width - margin * 2;
-      const indexWidth = 34;
-      const colGap = 8;
-      let y = height - margin;
-      const ink = rgb(0.1, 0.16, 0.26);
-
-      const short = (value: string, limit = 32) => value.length > limit ? `${value.slice(0, limit - 1)}...` : value;
-      const newPage = () => {
-        page = pdf.addPage(pageSize);
-        y = height - margin;
-        kit.draw(page, `${report.report_name} (continued)`, { x: margin, y, size: 8, bold: true, color: rgb(0.4, 0.45, 0.5) });
-        y -= 16;
-      };
-      const writeLine = (text: string, size = 10, useBold = false) => {
-        for (const line of kit.wrap(text, size, tableWidth, useBold)) {
-          if (y < margin + 18) newPage();
-          kit.draw(page, line, { x: margin, y, size, bold: useBold, color: ink });
-          y -= size + 5;
-        }
-      };
-
-      writeLine(report.report_name, 16, true);
-      writeLine(`Source: ${prettyFieldLabel(report.data_source)}`);
-      writeLine(`Visibility: ${report.visibility}`);
-      if (grouping) writeLine(`Grouped by: ${prettyFieldLabel(grouping)}`);
-      writeLine(`Generated: ${new Date().toLocaleString("en-IN")}`);
-      const dateRange = config.date_range as { from?: string | null; to?: string | null } | undefined;
-      if (dateRange?.from || dateRange?.to) writeLine(`Date range: ${dateRange?.from || "-"} to ${dateRange?.to || "-"}`);
-      if (Array.isArray(config.filters) && config.filters.length) {
-        writeLine(`Filters: ${config.filters.map((item: { field?: string; operator?: string; value?: string }) => `${prettyFieldLabel(item.field || "field")} ${item.operator || "equals"} ${item.value || "-"}`).join("; ")}`);
-      }
-      for (const implicit of implicitFilters) writeLine(`Rule: ${implicit.label}`, 9);
-      writeLine(`Rows: ${displayRows.length.toLocaleString("en-IN")}${bands.length > 1 ? ` | Columns continue across ${bands.length} bands; # links rows between bands.` : ""}`, 9);
-      y -= 6;
-
-      bands.forEach((band, bandIndex) => {
-        const colCount = Math.max(1, band.length);
-        const colWidth = (tableWidth - indexWidth - colGap * colCount) / colCount;
-        const drawTableHeader = () => {
-          page.drawRectangle({ x: margin, y: y - 14, width: tableWidth, height: 16, color: rgb(0.94, 0.96, 0.98) });
-          kit.draw(page, "#", { x: margin + 3, y: y - 10, size: 9, bold: true, color: ink });
-          let x = margin + indexWidth;
-          for (const field of band) {
-            kit.draw(page, kit.wrap(prettyFieldLabel(field), 9, colWidth - 6, true)[0] ?? "", { x: x + 3, y: y - 10, size: 9, bold: true, color: ink });
-            x += colWidth + colGap;
-          }
-          y -= 20;
-        };
-        if (bands.length > 1) writeLine(`Columns ${bandIndex * 6 + 1}-${bandIndex * 6 + band.length} of ${outputFields.length}`, 10, true);
-        if (y < margin + 60) newPage();
-        drawTableHeader();
-        if (!displayRows.length) { writeLine("No rows matched this report configuration.", 10); return; }
-        let activeGroupValue: string | null = null;
-        displayRows.forEach((row, rowIndex) => {
-          if (grouping) {
-            const groupValue = prettyValue(row[grouping]);
-            if (groupValue !== activeGroupValue) {
-              if (y < margin + 36) { newPage(); drawTableHeader(); }
-              page.drawRectangle({ x: margin, y: y - 13, width: tableWidth, height: 17, color: rgb(0.9, 0.94, 0.98) });
-              kit.draw(page, `${prettyFieldLabel(grouping)}: ${short(groupValue, 70)}`, { x: margin + 4, y: y - 9, size: 9, bold: true, color: rgb(0.1, 0.24, 0.4) });
-              y -= 20;
-              activeGroupValue = groupValue;
-            }
-          }
-          // Cells wrap instead of truncating, so long values are never cut off.
-          const cells = band.map((field) => kit.wrap(prettyValue(row[field]), 8.5, colWidth - 6));
-          const rowHeight = Math.max(1, ...cells.map((lines) => lines.length)) * 11 + 3;
-          if (y - rowHeight < margin + 18) { newPage(); drawTableHeader(); }
-          kit.draw(page, String(rowIndex + 1), { x: margin + 3, y, size: 8.5, color: rgb(0.4, 0.45, 0.5) });
-          let x = margin + indexWidth;
-          cells.forEach((lines) => {
-            lines.forEach((line, lineIndex) => kit.draw(page, line, { x: x + 3, y: y - lineIndex * 11, size: 8.5, color: rgb(0.12, 0.17, 0.26) }));
-            x += colWidth + colGap;
-          });
-          y -= rowHeight;
-          page.drawLine({ start: { x: margin, y: y + 6 }, end: { x: width - margin, y: y + 6 }, thickness: 0.35, color: rgb(0.89, 0.91, 0.94) });
-        });
-        y -= 10;
+      const filters = Array.isArray(config.filters) ? config.filters as { field?: string; operator?: string; value?: string }[] : [];
+      const operatorLabel: Record<string, string> = { equals: "is", contains: "contains", gt: "is after / above", lt: "is before / below", between: "is between" };
+      // Layout, column bands, group subtotals and statement totals live in lib/reports/report-builder-pdf.ts.
+      const bytes = await buildReportBuilderPdf({
+        reportName: report.report_name,
+        companyName,
+        preparedBy,
+        source,
+        visibility: report.visibility,
+        grouping,
+        dateRange: config.date_range as { from?: string | null; to?: string | null } | undefined,
+        filters: filters.map((item) => `${prettyFieldLabel(item.field || "field")} ${operatorLabel[item.operator || "equals"] ?? item.operator} ${(item.value || "-").split("|").join(" and ")}`),
+        rules: implicitFilters.map((implicit) => implicit.label),
+        fields: grouping ? selectedFields.filter((field) => field !== grouping) : selectedFields,
+        rows: displayRows,
+        totals: computeReportTotals(source, rows, grouping, prettyValue),
+        prettyFieldLabel,
+        prettyValue,
+        loadFont: browserFontLoader()
       });
-
-      // Statement totals per group and overall; currencies are never mixed (PDF-04, EXP-23).
-      if (totals.fields.length && displayRows.length) {
-        if (y < margin + 80) newPage();
-        writeLine("Statement totals", 12, true);
-        const describe = (group: { label: string; count: number; byCurrency: Record<string, Record<string, number>> }) =>
-          Object.entries(group.byCurrency).map(([currency, values]) =>
-            `${currency}: ${totals.fields.map((field) => `${prettyFieldLabel(field)} ${values[field].toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`).join(" | ")}`).join("  /  ");
-        for (const group of totals.groups) writeLine(`${prettyFieldLabel(grouping ?? "group")} ${group.label} (${group.count} rows) - ${describe(group)}`, 9);
-        writeLine(`Grand total (${totals.grand.count} rows) - ${describe(totals.grand)}`, 10, true);
-      }
-
-      const pages = pdf.getPages();
-      pages.forEach((current, index) => kit.drawRight(current, `Page ${index + 1} of ${pages.length}`, { right: width - margin, y: 18, size: 8, color: rgb(0.45, 0.45, 0.45) }));
-      const bytes = await pdf.save();
-      const pdfBuffer = Uint8Array.from(bytes).buffer;
-      downloadBlob(new Blob([pdfBuffer], { type: "application/pdf" }), `${sanitizeFileName(report.report_name)}.pdf`);
+      downloadBlob(new Blob([Uint8Array.from(bytes).buffer], { type: "application/pdf" }), `${sanitizeFileName(report.report_name)}.pdf`);
       toast.success("PDF export downloaded");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "PDF export failed");

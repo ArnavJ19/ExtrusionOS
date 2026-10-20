@@ -25,7 +25,13 @@ export const PDF_SCRIPT_FONTS: ScriptFont[] = [
   { script: "latin_ext", ranges: [[0x0100, 0x024f], [0x1e00, 0x1eff], [0x2c60, 0x2c7f], [0xa720, 0xa7ff]], ...font("devanagari", "latin-ext") }
 ];
 
-export const PDF_FONT_FILES = PDF_SCRIPT_FONTS.flatMap((entry) => [entry.regular, entry.bold]);
+/**
+ * Embedded Latin base face (Noto Sans, tabular lining figures). Embedding it instead of relying on
+ * the viewer's built-in Helvetica gives identical metrics in every viewer and correct copy/paste.
+ */
+export const PDF_BASE_FONT = font("devanagari", "latin");
+
+export const PDF_FONT_FILES = [PDF_BASE_FONT.regular, PDF_BASE_FONT.bold, ...PDF_SCRIPT_FONTS.flatMap((entry) => [entry.regular, entry.bold])];
 
 export function scriptForCodePoint(codePoint: number): PdfScript | null {
   for (const entry of PDF_SCRIPT_FONTS) {

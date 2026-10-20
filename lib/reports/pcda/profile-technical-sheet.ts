@@ -1,24 +1,33 @@
 /**
  * Profile Technical Sheet Report Generator
- * 
- * Generates a PDF technical sheet for a profile/section using pdf-lib.
+ *
+ * Generates a PDF technical sheet for a profile/section on the shared document engine.
  * All data comes from real persisted records — no fabricated values.
  */
 
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib/cjs";
+import { PdfDocumentWriter, type PdfField } from "../../pdf/document-kit.ts";
+import { nodeFontLoader } from "../../pdf/font-loader-node.ts";
+import { pdfDate, pdfLabel, pdfNumber, pdfPercent, toNumber } from "../../pdf/format.ts";
+import type { PdfFontLoader } from "../../pdf/unicode-text.ts";
 
-const ORANGE = rgb(0.98, 0.45, 0.09);
-const DARK = rgb(0.07, 0.09, 0.13);
-const TEXT = rgb(0.07, 0.09, 0.13);
-const LIGHT_GRAY = rgb(0.96, 0.97, 0.98);
-const WHITE = rgb(1, 1, 1);
-const PAGE_WIDTH = 595.28;
-const PAGE_HEIGHT = 841.89;
-const MARGIN = 40;
+const NOT_CAPTURED = "Not Captured";
 
-function val(v: any, suffix = ""): string {
-  if (v === null || v === undefined || v === "") return "Not Captured";
+function val(v: unknown, suffix = ""): string {
+  if (v === null || v === undefined || v === "") return NOT_CAPTURED;
   return `${v}${suffix}`;
+}
+
+function num(v: unknown, decimals: number, unit = ""): string {
+  return toNumber(v) === null ? NOT_CAPTURED : pdfNumber(v, decimals, unit);
+}
+
+function label(v: unknown): string {
+  return v === null || v === undefined || v === "" ? NOT_CAPTURED : pdfLabel(v);
+}
+
+function allowed(v: unknown): string {
+  if (v === null || v === undefined) return NOT_CAPTURED;
+  return v ? "Allowed" : "Not allowed";
 }
 
 export type ProfileReportData = {
@@ -27,112 +36,71 @@ export type ProfileReportData = {
   primaryDie?: { die_number?: string; die_status?: string } | null;
   backupDie?: { die_number?: string; die_status?: string } | null;
   generatedBy: string;
+  loadFont?: PdfFontLoader;
 };
 
 export async function buildProfileTechnicalSheetPdf(data: ProfileReportData): Promise<Uint8Array> {
-  const pdf = await PDFDocument.create();
-  const regular = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-
-  let page: PDFPage = null!;
-  let y: number = 0;
-
-  function addPage() {
-    page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    y = PAGE_HEIGHT - MARGIN;
-    page.drawRectangle({ x: 0, y: 0, width: 14, height: PAGE_HEIGHT, color: ORANGE });
-  }
-
-  function text(str: string, x: number, yPos: number, font: PDFFont, size: number, color = TEXT) {
-    const safe = (str || "Not Captured").replace(/[^\x00-\xFF]/g, "");
-    page.drawText(safe, { x, y: yPos, font, size, color });
-  }
-
-  function sectionHeader(title: string) {
-    y -= 25;
-    if (y < 80) addPage();
-    page.drawRectangle({ x: MARGIN, y: y - 2, width: PAGE_WIDTH - MARGIN * 2, height: 18, color: LIGHT_GRAY });
-    text(title, MARGIN + 8, y + 2, bold, 10, ORANGE);
-    y -= 18;
-  }
-
-  function row(label: string, value: string) {
-    if (y < 60) addPage();
-    y -= 14;
-    text(label, MARGIN + 8, y, regular, 8, rgb(0.4, 0.4, 0.4));
-    text(value, MARGIN + 200, y, bold, 8);
-  }
-
-  addPage();
-
-  // Header banner
-  const bannerH = 50;
-  page.drawRectangle({ x: MARGIN - 10, y: y - bannerH, width: PAGE_WIDTH - MARGIN + 10, height: bannerH, color: DARK });
-  text("PROFILE TECHNICAL SHEET", MARGIN + 5, y - 32, bold, 16, WHITE);
-  text(data.company.name, PAGE_WIDTH - MARGIN - 5 - bold.widthOfTextAtSize(data.company.name, 10), y - 32, bold, 10, ORANGE);
-  y -= bannerH + 10;
-
   const p = data.profile;
+  const doc = await PdfDocumentWriter.create({
+    title: "PROFILE TECHNICAL SHEET",
+    number: p.profile_code ?? null,
+    issuer: { name: data.company.name, lines: [data.company.gst_number ? `GSTIN: ${data.company.gst_number}` : null] },
+    meta: [
+      ["Profile code", val(p.profile_code)],
+      ["Section No.", p.section_number ?? null],
+      ["Approval", label(p.approval_status)],
+      ["Prepared by", data.generatedBy],
+      ["Date", pdfDate(new Date())]
+    ],
+    footerNote: "Technical record generated from captured profile data. Values marked Not Captured were not recorded.",
+    subject: `Profile technical sheet ${p.profile_code ?? ""}`.trim()
+  }, data.loadFont ?? nodeFontLoader, data);
 
-  // Identity
-  sectionHeader("Profile Identity");
-  row("Profile Code", val(p.profile_code));
-  row("Profile Name", val(p.profile_name));
-  row("Section Number", val(p.section_number));
-  row("Application", val(p.application_category));
-  row("System Type", val(p.system_type));
-  row("Classification", val(p.profile_classification));
-  row("Complexity", val(p.complexity_rating));
-  row("Approval Status", val(p.approval_status));
+  const section = (title: string, fields: PdfField[]) => {
+    doc.sectionTitle(title, 40);
+    doc.fields(fields, { columns: 2, blank: NOT_CAPTURED });
+  };
+  const die = (entry?: { die_number?: string; die_status?: string } | null) =>
+    entry?.die_number ? `${entry.die_number}${entry.die_status ? ` (${pdfLabel(entry.die_status)})` : ""}` : NOT_CAPTURED;
 
-  // Weight & Geometry
-  sectionHeader("Weight & Geometry");
-  row("Weight kg/m (theoretical)", val(p.section_weight_kg_per_m, " kg/m"));
-  row("Weight kg/m (actual)", val(p.actual_weight_kg_per_m, " kg/m"));
-  row("Weight Tolerance", val(p.weight_tolerance_percent, "%"));
-  row("CCD", val(p.circumscribing_circle_diameter_mm, " mm"));
-  row("Nominal Wall", val(p.nominal_wall_thickness_mm, " mm"));
-  row("Min Wall", val(p.min_wall_thickness_mm, " mm"));
-  row("Max Wall", val(p.max_wall_thickness_mm, " mm"));
-  row("Voids", val(p.number_of_voids));
-  row("Standard Length", val(p.standard_length_m, " m"));
+  section("Profile identity", [
+    ["Profile code", val(p.profile_code)], ["Profile name", val(p.profile_name)],
+    ["Section number", val(p.section_number)], ["Application", label(p.application_category)],
+    ["System type", label(p.system_type)], ["Classification", label(p.profile_classification)],
+    ["Complexity", label(p.complexity_rating)], ["Approval status", label(p.approval_status)]
+  ]);
 
-  // Alloy
-  sectionHeader("Alloy & Mechanical");
-  row("Alloy", val(p.alloy));
-  row("Temper", val(p.temper));
-  row("Tensile Strength", val(p.tensile_strength_mpa, " MPa"));
-  row("Yield Strength", val(p.yield_strength_mpa, " MPa"));
-  row("Elongation", val(p.elongation_percent, "%"));
+  section("Weight and geometry", [
+    ["Weight, theoretical", num(p.section_weight_kg_per_m, 3, "kg/m")], ["Weight, actual", num(p.actual_weight_kg_per_m, 3, "kg/m")],
+    ["Weight tolerance", pdfPercent(p.weight_tolerance_percent, 2, NOT_CAPTURED)], ["CCD", num(p.circumscribing_circle_diameter_mm, 2, "mm")],
+    ["Nominal wall", num(p.nominal_wall_thickness_mm, 2, "mm")], ["Minimum wall", num(p.min_wall_thickness_mm, 2, "mm")],
+    ["Maximum wall", num(p.max_wall_thickness_mm, 2, "mm")], ["Voids", num(p.number_of_voids, 0)],
+    ["Standard length", num(p.standard_length_m, 3, "m")]
+  ]);
 
-  // Production
-  sectionHeader("Production Parameters");
-  row("Recommended Press", val(p.recommended_press));
-  row("Billet Alloy", val(p.billet_alloy));
-  row("Billet Temp Range", val(p.billet_temperature_range));
-  row("Ram Speed Range", val(p.ram_speed_range));
-  row("Exit Temp Range", val(p.exit_temperature_range));
-  row("Quench Method", val(p.quench_method));
-  row("Recovery Target", val(p.recovery_target_percent, "%"));
-  row("Min Recovery", val(p.min_acceptable_recovery_percent, "%"));
-  row("Scrap Factor", val(p.scrap_factor_percent, "%"));
+  section("Alloy and mechanical properties", [
+    ["Alloy", val(p.alloy)], ["Temper", val(p.temper)],
+    ["Tensile strength", num(p.tensile_strength_mpa, 1, "MPa")], ["Yield strength", num(p.yield_strength_mpa, 1, "MPa")],
+    ["Elongation", pdfPercent(p.elongation_percent, 2, NOT_CAPTURED)]
+  ]);
 
-  // Die linkage
-  sectionHeader("Die Linkage");
-  row("Primary Die", data.primaryDie ? `${data.primaryDie.die_number} (${data.primaryDie.die_status})` : "Not Captured");
-  row("Backup Die", data.backupDie ? `${data.backupDie.die_number} (${data.backupDie.die_status})` : "Not Captured");
+  section("Production parameters", [
+    ["Recommended press", val(p.recommended_press)], ["Billet alloy", val(p.billet_alloy)],
+    ["Billet temperature", val(p.billet_temperature_range)], ["Ram speed", val(p.ram_speed_range)],
+    ["Exit temperature", val(p.exit_temperature_range)], ["Quench method", label(p.quench_method)],
+    ["Recovery target", pdfPercent(p.recovery_target_percent, 2, NOT_CAPTURED)], ["Minimum recovery", pdfPercent(p.min_acceptable_recovery_percent, 2, NOT_CAPTURED)],
+    ["Scrap factor", pdfPercent(p.scrap_factor_percent, 2, NOT_CAPTURED)]
+  ]);
 
-  // Surface
-  sectionHeader("Surface Treatment");
-  row("Mill Finish", p.mill_finish_allowed ? "Allowed" : "Not Allowed");
-  row("Powder Coating", p.powder_coating_allowed ? "Allowed" : "Not Allowed");
-  row("Anodizing", p.anodizing_allowed ? "Allowed" : "Not Allowed");
-  row("Coating Thickness", val(p.coating_thickness_microns, " µm"));
-  row("Anodizing Microns", val(p.anodizing_micron_requirement, " µm"));
+  section("Die linkage", [["Primary die", die(data.primaryDie)], ["Backup die", die(data.backupDie)]]);
 
-  // Footer
-  text(`Generated by ${data.generatedBy} on ${new Date().toLocaleDateString("en-IN")}`, MARGIN, 25, regular, 7, rgb(0.5, 0.5, 0.5));
-  text("ExtrusionOS Profile Technical Sheet", PAGE_WIDTH - MARGIN - 180, 25, regular, 7, rgb(0.5, 0.5, 0.5));
+  section("Surface treatment", [
+    ["Mill finish", allowed(p.mill_finish_allowed)], ["Powder coating", allowed(p.powder_coating_allowed)],
+    ["Anodizing", allowed(p.anodizing_allowed)], ["Coating thickness", num(p.coating_thickness_microns, 1, "µm")],
+    ["Anodizing thickness", num(p.anodizing_micron_requirement, 1, "µm")]
+  ]);
 
-  return pdf.save();
+  doc.space(6);
+  doc.signatures(["Prepared by", "Quality / technical", "Approved by"]);
+  return doc.finish();
 }

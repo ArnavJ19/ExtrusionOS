@@ -4,7 +4,8 @@ import test from "node:test";
 
 // Source maps live in lib/reports/report-builder.ts; the client applies them to queries and exports.
 const component = readFileSync(new URL("../components/modules/report-builder-client.tsx", import.meta.url), "utf8")
-  + readFileSync(new URL("../lib/reports/report-builder.ts", import.meta.url), "utf8");
+  + readFileSync(new URL("../lib/reports/report-builder.ts", import.meta.url), "utf8")
+  + readFileSync(new URL("../lib/reports/report-builder-pdf.ts", import.meta.url), "utf8");
 const migration = readFileSync(new URL("../supabase/migrations/20260718040000_report_builder_data_sources.sql", import.meta.url), "utf8");
 
 test("report sources resolve to real tables and production uses actual output", () => {
@@ -34,7 +35,7 @@ test("grouping changes exported data instead of remaining decorative", () => {
     /grouping && !selected\.includes\(grouping\) \? \[grouping, \.\.\.selected\] : selected/,
   );
   assert.match(component, /query\.order\(grouping, \{ ascending: true, nullsFirst: false \}\)/);
-  assert.match(component, /Grouped by:/);
+  assert.match(component, /"Grouped by", grouping \? prettyFieldLabel\(grouping\)/);
   assert.match(component, /let activeGroupValue: string \| null = null/);
   assert.match(component, /prettyFieldLabel\(grouping\).*short\(groupValue/);
 });

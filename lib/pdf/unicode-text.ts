@@ -1,11 +1,12 @@
 import fontkit from "@pdf-lib/fontkit";
 import regeneratorRuntime from "regenerator-runtime";
-import { StandardFonts, type Color, type PDFDocument, type PDFFont, type PDFPage } from "pdf-lib";
-import { scriptFont, scriptForCodePoint, type PdfScript } from "./font-catalog.ts";
+import { StandardFonts, degrees, type Color, type PDFDocument, type PDFFont, type PDFPage } from "pdf-lib";
+import { PDF_BASE_FONT, scriptFont, scriptForCodePoint, type PdfScript } from "./font-catalog.ts";
 
-// Unicode-safe PDF text (PDF-01, PDF-06). Text stays in Helvetica where WinAnsi can encode it;
-// Indian scripts, the rupee sign and accented Latin names switch to embedded Noto Sans subsets
-// instead of being stripped. fontkit's Indic shaper needs a regenerator runtime global.
+// Unicode-safe PDF text (PDF-01, PDF-06). Latin text uses an embedded Noto Sans subset (falling
+// back to the standard Helvetica only if the font file cannot be loaded); Indian scripts, the
+// rupee sign and accented Latin names switch to the matching embedded Noto Sans faces instead of
+// being stripped. fontkit's Indic shaper needs a regenerator runtime global.
 const globalScope = globalThis as typeof globalThis & { regeneratorRuntime?: unknown };
 globalScope.regeneratorRuntime ??= regeneratorRuntime;
 
@@ -35,8 +36,13 @@ export class PdfTextKit {
   static async create(pdf: PDFDocument, loadFont: PdfFontLoader, texts: Iterable<unknown> = []) {
     pdf.registerFontkit(fontkit);
     const kit = new PdfTextKit(pdf, loadFont);
-    for (const [key, name] of [["base:regular", StandardFonts.Helvetica], ["base:bold", StandardFonts.HelveticaBold]] as const) {
-      const font = await pdf.embedFont(name);
+    for (const [key, file, fallback] of [["base:regular", PDF_BASE_FONT.regular, StandardFonts.Helvetica], ["base:bold", PDF_BASE_FONT.bold, StandardFonts.HelveticaBold]] as const) {
+      let font: PDFFont;
+      try {
+        font = await pdf.embedFont(await loadFont(file), { subset: true });
+      } catch {
+        font = await pdf.embedFont(fallback);
+      }
       kit.fonts.set(key, { pdf: font, chars: new Set(font.getCharacterSet()) });
     }
     await kit.ensure(texts);
@@ -95,13 +101,18 @@ export class PdfTextKit {
     return this.runs(text, bold).reduce((width, run) => width + run.font.pdf.widthOfTextAtSize(run.text, size), 0);
   }
 
-  draw(page: PDFPage, text: string, options: { x: number; y: number; size: number; bold?: boolean; color?: Color }) {
-    let x = options.x;
+  /** Draws text run by run; `rotate` (degrees, counter-clockwise) turns the baseline. */
+  draw(page: PDFPage, text: string, options: { x: number; y: number; size: number; bold?: boolean; color?: Color; rotate?: number }) {
+    const radians = ((options.rotate ?? 0) * Math.PI) / 180;
+    let advance = 0;
     for (const run of this.runs(text, options.bold)) {
-      page.drawText(run.text, { x, y: options.y, size: options.size, font: run.font.pdf, color: options.color });
-      x += run.font.pdf.widthOfTextAtSize(run.text, options.size);
+      page.drawText(run.text, {
+        x: options.x + Math.cos(radians) * advance, y: options.y + Math.sin(radians) * advance,
+        size: options.size, font: run.font.pdf, color: options.color, rotate: options.rotate ? degrees(options.rotate) : undefined
+      });
+      advance += run.font.pdf.widthOfTextAtSize(run.text, options.size);
     }
-    return x - options.x;
+    return advance;
   }
 
   drawRight(page: PDFPage, text: string, options: { right: number; y: number; size: number; bold?: boolean; color?: Color }) {

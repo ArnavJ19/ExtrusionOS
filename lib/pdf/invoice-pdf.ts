@@ -1,8 +1,9 @@
-import { PDFDocument, rgb, type PDFPage } from "pdf-lib";
 import { gstStateLabel } from "../calculations/gst.ts";
 import { numberToWordsINR } from "../utils/number-to-words.ts";
-import { PdfTextKit, type PdfFontLoader } from "./unicode-text.ts";
+import { type PdfFontLoader } from "./unicode-text.ts";
 import { nodeFontLoader } from "./font-loader-node.ts";
+import { PdfDocumentWriter, type PdfTableRow } from "./document-kit.ts";
+import { joinParts, pdfAmount, pdfDate, pdfMoney, pdfPercent, pdfQuantity, toNumber } from "./format.ts";
 
 type InvoiceDocumentData = {
   company: Record<string, any>;
@@ -12,109 +13,147 @@ type InvoiceDocumentData = {
   loadFont?: PdfFontLoader;
 };
 
-const PAGE: [number, number] = [595, 842];
-const LEFT = 42;
-const RIGHT = 553;
-const WIDTH = RIGHT - LEFT;
-const TOP = 800;
-const BOTTOM = 60;
-const INK = rgb(0.12, 0.15, 0.18);
-const MUTED = rgb(0.4, 0.43, 0.47);
-
-const money = (value: unknown) => `INR ${Number(value ?? 0).toFixed(2)}`;
+// Union-territory GST codes, matching private.canonicalize_invoice_supply().
+const UT_STATE_CODES = new Set(["04", "26", "31", "35", "38"]);
+const paise = (value: number) => Math.round(value * 100);
+const lineTax = (item: Record<string, any>) => Math.round(Number(item.line_total ?? 0) * Number(item.gst_percent ?? 0) + 1e-7) / 100;
 
 export async function buildInvoicePdf({ company, customer, invoice, items, loadFont = nodeFontLoader }: InvoiceDocumentData) {
   if (!invoice.supplier_state_code || !invoice.place_of_supply_state_code || !items.length || items.some((item) => !item.hsn_code)) {
     throw new Error("Complete supply states and HSN codes before generating this invoice.");
   }
-  const pdf = await PDFDocument.create();
   const companyName = String(company.legal_name || company.name || "");
   const customerName = String(customer.company_name || customer.customer_name || "");
-  const title = invoice.status === "draft" ? "DRAFT INVOICE" : invoice.status === "cancelled" ? "CANCELLED INVOICE" : "TAX INVOICE";
-  // Every value that may be drawn is scanned so the right Unicode fonts are embedded (PDF-01).
-  const kit = await PdfTextKit.create(pdf, loadFont, [
-    companyName, company.billing_address, company.gst_number, customerName, customer.billing_address, customer.shipping_address,
-    customer.gst_number, invoice.invoice_number, invoice.notes, ...items.map((item) => item.item_description)
+  const status = String(invoice.status ?? "");
+  const title = status === "draft" ? "DRAFT INVOICE" : status === "cancelled" ? "CANCELLED INVOICE" : "TAX INVOICE";
+  const interState = invoice.supplier_state_code !== invoice.place_of_supply_state_code;
+  const stateTaxLabel = UT_STATE_CODES.has(String(invoice.supplier_state_code)) || Number(invoice.utgst_amount) > 0 ? "UTGST" : "SGST";
+
+  const doc = await PdfDocumentWriter.create({
+    title,
+    number: invoice.invoice_number,
+    issuer: {
+      name: companyName,
+      lines: [
+        company.legal_name && company.name && company.legal_name !== company.name ? `Trade name: ${company.name}` : null,
+        joinParts([company.billing_address, company.city, company.state, company.pincode]),
+        `GSTIN: ${company.gst_number || "Not recorded"}   ·   State: ${gstStateLabel(invoice.supplier_state_code)}`,
+        joinParts([company.phone, company.email], "   ·   ")
+      ]
+    },
+    meta: [
+      ["Invoice No.", invoice.invoice_number],
+      ["Invoice date", pdfDate(invoice.invoice_date)],
+      ["Due date", invoice.due_date ? pdfDate(invoice.due_date) : null],
+      ["Place of supply", gstStateLabel(invoice.place_of_supply_state_code)],
+      ["Supply type", interState ? "Inter-state (IGST)" : `Intra-state (CGST + ${stateTaxLabel})`]
+    ],
+    stamp: status === "draft" ? { text: "Draft", tone: "warning" } : status === "cancelled" ? { text: "Cancelled", tone: "void" } : null,
+    subject: `Tax invoice ${invoice.invoice_number} to ${customerName}`
+  }, loadFont, [company, customer, invoice, items]);
+
+  if (status === "draft") doc.notice("Draft for review only. This document is not a valid tax invoice until it is issued.", "warning");
+  if (status === "cancelled") doc.notice("This invoice has been cancelled and is not payable.", "void");
+
+  doc.panels([
+    { label: "Billed to", title: customerName, lines: [customer.billing_address, `GSTIN: ${customer.gst_number || "Unregistered"}`] },
+    { label: "Shipped to", title: customerName, lines: [customer.shipping_address || customer.billing_address || "Same as billing address"] }
   ]);
-  let page: PDFPage;
-  let y = TOP;
 
-  // Continuation pages repeat a compact identity header (PDF-02).
-  function newPage(first: boolean) {
-    page = pdf.addPage(PAGE);
-    y = TOP;
-    if (!first) {
-      kit.draw(page, `${title} ${invoice.invoice_number} | ${invoice.invoice_date} | ${companyName} -> ${customerName} (continued)`, { x: LEFT, y, size: 9, bold: true, color: MUTED });
-      y -= 18;
-      page.drawLine({ start: { x: LEFT, y: y + 8 }, end: { x: RIGHT, y: y + 8 }, thickness: 0.5, color: MUTED });
-    }
-  }
-  function ensure(height: number) {
-    if (y - height < BOTTOM) newPage(false);
-  }
-  function text(value: unknown, size = 10, bold = false, indent = 0) {
-    for (const line of kit.wrap(String(value ?? ""), size, WIDTH - indent, bold)) {
-      ensure(size + 6);
-      kit.draw(page, line, { x: LEFT + indent, y, size, bold, color: INK });
-      y -= size + 6;
-    }
-  }
-  function pair(label: string, value: string, size = 10, bold = false) {
-    ensure(size + 6);
-    kit.draw(page, label, { x: LEFT, y, size, bold, color: INK });
-    kit.drawRight(page, value, { right: RIGHT, y, size, bold, color: INK });
-    y -= size + 6;
-  }
-
-  newPage(true);
-  text(title, 20, true);
-  text(`${invoice.invoice_number} | Date: ${invoice.invoice_date}${invoice.due_date ? ` | Due: ${invoice.due_date}` : ""}`, 11, true);
-  text(companyName, 13, true);
-  text(`GSTIN: ${company.gst_number || "Not recorded"} | State: ${gstStateLabel(invoice.supplier_state_code)}`);
-  text(company.billing_address);
-  y -= 4;
-  text(`Bill to: ${customerName}`, 12, true);
-  text(`GSTIN: ${customer.gst_number || "Unregistered"}`);
-  text(customer.billing_address);
-  text(`Deliver to: ${customer.shipping_address || customer.billing_address || "Not recorded"}`);
-  text(`Place of supply: ${gstStateLabel(invoice.place_of_supply_state_code)}`, 11, true);
-  y -= 10;
-  items.forEach((item, index) => {
-    ensure(48);
-    text(`${index + 1}. ${item.item_description || "Aluminium profile"}`, 11, true);
-    text(`HSN ${item.hsn_code} | ${Number(item.quantity).toFixed(3)} kg x ${money(item.unit_rate)} | Taxable ${money(item.line_total)}`, 10, false, 12);
-    text(invoice.supplier_state_code !== invoice.place_of_supply_state_code
-      ? `IGST rate: ${Number(item.gst_percent)}%`
-      : `CGST rate: ${Number(item.gst_percent) / 2}% | ${Number(invoice.utgst_amount) > 0 ? "UTGST" : "SGST"} rate: ${Number(item.gst_percent) / 2}%`, 10, false, 12);
-    y -= 5;
+  // Line items. Tax per line follows the database rule: round(line_total × rate, 2).
+  const rows: PdfTableRow[] = items.map((item, index) => {
+    const tax = lineTax(item);
+    return [
+      String(index + 1),
+      item.item_description || "Aluminium profile",
+      item.hsn_code,
+      pdfQuantity(item.quantity, 3),
+      pdfAmount(item.unit_rate),
+      pdfAmount(item.line_total),
+      pdfPercent(item.gst_percent),
+      pdfAmount(tax),
+      pdfAmount(Number(item.line_total ?? 0) + tax)
+    ];
   });
-  ensure(140);
-  pair("Taxable total", money(invoice.subtotal), 11, true);
-  for (const [label, key] of [["CGST", "cgst_amount"], ["SGST", "sgst_amount"], ["UTGST", "utgst_amount"], ["IGST", "igst_amount"]]) {
-    if (Number(invoice[key]) > 0) pair(label, money(invoice[key]));
+  const sumQuantity = items.reduce((sum, item) => sum + Number(item.quantity ?? 0), 0);
+  const sumTaxable = items.reduce((sum, item) => sum + paise(Number(item.line_total ?? 0)), 0) / 100;
+  const sumTax = items.reduce((sum, item) => sum + paise(lineTax(item)), 0) / 100;
+  rows.push({ kind: "total", cells: ["", "Total", "", pdfQuantity(sumQuantity, 3), "", pdfAmount(sumTaxable), "", pdfAmount(sumTax), pdfAmount(sumTaxable + sumTax)] });
+
+  doc.table([
+    { header: "#", width: 3.5, align: "right" },
+    { header: "Description of goods", width: 24 },
+    { header: "HSN", width: 8.5 },
+    { header: "Qty (kg)", width: 9.5, align: "right" },
+    { header: "Rate (INR/kg)", width: 9, align: "right" },
+    { header: "Taxable value (INR)", width: 12.5, align: "right" },
+    { header: "GST rate", width: 6, align: "right" },
+    { header: "GST (INR)", width: 11.5, align: "right" },
+    { header: "Amount (INR)", width: 13.5, align: "right" }
+  ], rows);
+
+  // HSN-wise tax summary, printed only when line-level tax reconciles with the invoice so the
+  // document never shows two different tax figures.
+  const taxTotal = toNumber(invoice.tax_total) ?? (Number(invoice.cgst_amount ?? 0) + Number(invoice.sgst_amount ?? 0) + Number(invoice.utgst_amount ?? 0) + Number(invoice.igst_amount ?? 0));
+  if (paise(sumTax) === paise(taxTotal)) {
+    const groups = new Map<string, { hsn: string; rate: number; taxable: number; tax: number }>();
+    for (const item of items) {
+      const key = `${item.hsn_code}|${Number(item.gst_percent)}`;
+      const group = groups.get(key) ?? { hsn: String(item.hsn_code), rate: Number(item.gst_percent), taxable: 0, tax: 0 };
+      group.taxable += paise(Number(item.line_total ?? 0));
+      group.tax += paise(lineTax(item));
+      groups.set(key, group);
+    }
+    const summary = Array.from(groups.values());
+    // Central share per group; the last group absorbs rounding so columns equal the invoice amounts.
+    const centralTotal = paise(Number(invoice.cgst_amount ?? 0));
+    let centralAllocated = 0;
+    const summaryRows: PdfTableRow[] = summary.map((group, index) => {
+      if (interState) return [group.hsn, pdfPercent(group.rate), pdfAmount(group.taxable / 100), pdfAmount(group.tax / 100), pdfAmount(group.tax / 100)];
+      const central = index === summary.length - 1 ? centralTotal - centralAllocated : Math.round(group.tax / 2);
+      centralAllocated += central;
+      return [group.hsn, pdfPercent(group.rate), pdfAmount(group.taxable / 100), pdfAmount(central / 100), pdfAmount((group.tax - central) / 100), pdfAmount(group.tax / 100)];
+    });
+    summaryRows.push({ kind: "total", cells: interState
+      ? ["Total", "", pdfAmount(sumTaxable), pdfAmount(invoice.igst_amount), pdfAmount(sumTax)]
+      : ["Total", "", pdfAmount(sumTaxable), pdfAmount(invoice.cgst_amount), pdfAmount(Number(invoice.sgst_amount ?? 0) + Number(invoice.utgst_amount ?? 0)), pdfAmount(sumTax)] });
+    doc.sectionTitle("Tax summary (HSN-wise)", 40);
+    doc.table(interState ? [
+      { header: "HSN", width: 14 }, { header: "GST rate", width: 10, align: "right" }, { header: "Taxable value (INR)", width: 18, align: "right" },
+      { header: "IGST (INR)", width: 16, align: "right" }, { header: "Total tax (INR)", width: 16, align: "right" }
+    ] : [
+      { header: "HSN", width: 14 }, { header: "GST rate", width: 10, align: "right" }, { header: "Taxable value (INR)", width: 18, align: "right" },
+      { header: "CGST (INR)", width: 15, align: "right" }, { header: `${stateTaxLabel} (INR)`, width: 15, align: "right" }, { header: "Total tax (INR)", width: 16, align: "right" }
+    ], summaryRows);
   }
-  pair("Grand total", money(invoice.grand_total), 14, true);
-  text(numberToWordsINR(Number(invoice.grand_total)));
-  // Payment terms and receivable context (PDF-03).
+
+  const totalRows = [{ label: "Taxable value", value: pdfMoney(invoice.subtotal) }];
+  if (interState) totalRows.push({ label: "IGST", value: pdfMoney(invoice.igst_amount ?? 0) });
+  else {
+    totalRows.push({ label: "CGST", value: pdfMoney(invoice.cgst_amount ?? 0) });
+    totalRows.push({ label: stateTaxLabel, value: pdfMoney(stateTaxLabel === "UTGST" ? invoice.utgst_amount ?? 0 : invoice.sgst_amount ?? 0) });
+  }
+  doc.totals([...totalRows, { label: "Invoice total", value: pdfMoney(invoice.grand_total), emphasis: true }]);
+  doc.amountInWords(numberToWordsINR(Number(invoice.grand_total ?? 0)));
+
+  // Receivable position (PDF-03).
   if (invoice.due_date || invoice.amount_paid != null || invoice.balance_due != null) {
-    y -= 6;
-    text("Payment status", 11, true);
-    if (invoice.due_date) pair("Payment due by", String(invoice.due_date));
-    if (invoice.amount_paid != null) pair("Received to date (net of refunds)", money(invoice.amount_paid));
-    if (Number(invoice.credited_amount ?? 0) > 0) pair("Return credit notes", money(invoice.credited_amount));
-    if (invoice.balance_due != null) pair("Balance due", money(invoice.balance_due), 11, true);
+    doc.sectionTitle("Payment status", 30);
+    doc.fields([
+      ["Payment due by", invoice.due_date ? pdfDate(invoice.due_date) : null],
+      ["Received to date (net of refunds)", invoice.amount_paid != null ? pdfMoney(invoice.amount_paid) : null],
+      ...(Number(invoice.credited_amount ?? 0) > 0 ? [["Return credit notes", pdfMoney(invoice.credited_amount)] as [string, string]] : []),
+      ["Balance due", invoice.balance_due != null ? pdfMoney(invoice.balance_due) : null]
+    ].filter(([, value]) => value !== null) as [string, string][], { columns: 2, labelRatio: 0.5 });
   }
-  y -= 10;
-  text(`For ${companyName}`, 11, true);
-  text("Authorised signatory: ____________________");
 
-  const pages = pdf.getPages();
-  pages.forEach((current, index) => {
-    kit.drawRight(current, `${invoice.invoice_number} | Page ${index + 1} of ${pages.length}`, { right: RIGHT, y: 30, size: 8, color: MUTED });
-  });
-  if (kit.missing.size) {
-    const last = pages[pages.length - 1];
-    kit.draw(last, `Note: ${kit.missing.size} character(s) outside supported scripts are shown as "?".`, { x: LEFT, y: 42, size: 7, color: MUTED });
+  if (invoice.notes) {
+    doc.sectionTitle("Notes", 20);
+    doc.paragraph(invoice.notes, { size: 8 });
+    doc.space(8);
   }
-  return pdf.save();
+
+  doc.space(6);
+  doc.signatures(["Receiver's signature", "Authorised signatory"], { forName: companyName });
+  return doc.finish();
 }
