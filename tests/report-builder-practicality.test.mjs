@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const component = readFileSync(new URL("../components/modules/report-builder-client.tsx", import.meta.url), "utf8");
+// Source maps live in lib/reports/report-builder.ts; the client applies them to queries and exports.
+const component = readFileSync(new URL("../components/modules/report-builder-client.tsx", import.meta.url), "utf8")
+  + readFileSync(new URL("../lib/reports/report-builder.ts", import.meta.url), "utf8");
 const migration = readFileSync(new URL("../supabase/migrations/20260718040000_report_builder_data_sources.sql", import.meta.url), "utf8");
 
 test("report sources resolve to real tables and production uses actual output", () => {
@@ -39,7 +41,7 @@ test("grouping changes exported data instead of remaining decorative", () => {
 
 
 test("date ranges use each module's business date and an exclusive next-day boundary", () => {
-  assert.match(component, /const sourceDateFieldMap/);
+  assert.match(component, /(const sourceDateFieldMap|reportSourceDateFieldMap)/);
   assert.match(component, /quotes: "quote_date"/);
   assert.match(component, /dispatches: "dispatch_date"/);
   assert.match(component, /query\.gte\(dateField, dateRange\.from\)/);

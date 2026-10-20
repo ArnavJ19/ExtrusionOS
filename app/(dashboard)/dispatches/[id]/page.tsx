@@ -1,6 +1,8 @@
 import { RecordDetailClient } from "@/components/modules/operations/record-detail-client";
 import { DispatchDeliveryWorkflow } from "@/components/modules/dispatch-delivery-workflow";
 import { DispatchCreditNoteClient } from "@/components/modules/dispatch-credit-note-client";
+import { CustomerRefundForm } from "@/components/modules/financials/customer-refund-form";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getSessionContext } from "@/lib/auth";
@@ -39,7 +41,14 @@ async function DispatchCreditNotePanel({ dispatchId }: { dispatchId: string }) {
     supabase.from("credit_notes").select("id, credit_note_number, grand_total, status, reason, reversal_reason").eq("company_id", context.companyId).eq("dispatch_id", dispatchId).order("created_at", { ascending: false }).limit(1).maybeSingle()
   ]);
   if (dispatchResult.error || !dispatchResult.data) return null;
-  return <DispatchCreditNoteClient dispatchId={dispatchId} deliveryStatus={dispatchResult.data.delivery_status} invoice={(invoiceResult.data ?? null) as any} creditNote={(creditResult.data ?? null) as any} canManage={can(context.role, "create", "financials")} />;
+  const invoice = invoiceResult.data;
+  const creditNote = creditResult.data;
+  const canManage = can(context.role, "create", "financials");
+  return <div className="space-y-4">
+    <DispatchCreditNoteClient dispatchId={dispatchId} deliveryStatus={dispatchResult.data.delivery_status} invoice={(invoice ?? null) as any} creditNote={(creditNote ?? null) as any} canManage={canManage} />
+    {canManage && invoice && Number(invoice.customer_credit_due ?? 0) > 0 ? <CustomerRefundForm invoiceId={invoice.id} creditDue={Number(invoice.customer_credit_due)}
+      creditNoteId={creditNote?.status === "issued" ? creditNote.id : null} today={getBusinessDateBoundaries().today} /> : null}
+  </div>;
 }
 
 async function DispatchDeliveryPanel({ dispatchId, canUpdate }: { dispatchId: string; canUpdate: boolean }) {

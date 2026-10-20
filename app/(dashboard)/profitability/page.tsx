@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingState } from "@/components/ui/loading";
 import { QueryErrorNotice } from "@/components/ui/query-error-notice";
-import { aggregate, DIMENSIONS, grossMargin, marginPct, totalCost, type AggRow, type CostEntry, type Dimension, type ProfitAlert } from "./data";
+import { formatCompactCurrency } from "@/lib/utils/format";
+import { DIMENSIONS, marginPercent, parseProfitabilitySummary, sortGroups, type Dimension, type ProfitAlert, type ProfitabilityGroup, type ProfitabilitySummary } from "./data";
 
 const SEVERITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   critical: { bg: "bg-red-50", text: "text-red-800", border: "border-red-200" },
@@ -18,8 +19,8 @@ const SEVERITY_COLORS: Record<string, { bg: string; text: string; border: string
   info: { bg: "bg-blue-50", text: "text-blue-800", border: "border-blue-200" },
 };
 
-function fmt(v: number) { return v >= 100000 ? `Rs ${(v / 100000).toFixed(1)}L` : `Rs ${(v / 1000).toFixed(0)}K`; }
-function fmtPct(v: number) { return `${v.toFixed(1)}%`; }
+function fmtPct(value: number | null) { return value === null ? "Unknown" : `${value.toFixed(1)}%`; }
+function fmtDays(value: number | null) { return value === null ? "No receipts" : `${Math.round(value)}d`; }
 
 function SortIcon({ col, sortBy, sortDir }: { col: string; sortBy: string; sortDir: "asc" | "desc" }) {
   if (sortBy !== col) return null;
@@ -27,10 +28,10 @@ function SortIcon({ col, sortBy, sortDir }: { col: string; sortBy: string; sortD
 }
 
 export default function ProfitabilityPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [entries, setEntries] = useState<CostEntry[]>([]);
+  const [summary, setSummary] = useState<ProfitabilitySummary | null>(null);
   const [alerts, setAlerts] = useState<ProfitAlert[]>([]);
   const [dimension, setDimension] = useState<Dimension>("customer");
   const [sortBy, setSortBy] = useState<"revenue" | "margin" | "marginPct">("revenue");
@@ -38,45 +39,32 @@ export default function ProfitabilityPage() {
   const [alertFilter, setAlertFilter] = useState<"all" | "critical" | "warning" | "info">("all");
   const [ackLoadingId, setAckLoadingId] = useState<string | null>(null);
 
-  async function loadProfitability() {
+  async function loadProfitability(nextDimension: Dimension) {
     setLoading(true);
     setError("");
-    const [entryRes, alertRes] = await Promise.all([
-      supabase.from("order_cost_breakdown").select("*").order("created_at", { ascending: false }).limit(500),
+    // Totals and groups are aggregated in the database over every record, so the cards never
+    // silently cover only a recent page of history.
+    const [summaryRes, alertRes] = await Promise.all([
+      supabase.rpc("get_profitability_summary" as any, { p_dimension: nextDimension }),
       supabase.from("profitability_alerts").select("*").order("created_at", { ascending: false }).limit(300)
     ]);
-    if (entryRes.error || alertRes.error) {
-      setError(entryRes.error?.message || alertRes.error?.message || "Failed to load profitability data");
+    const parsed = summaryRes.error ? null : parseProfitabilitySummary(summaryRes.data);
+    if (summaryRes.error || !parsed || alertRes.error) {
+      setError(summaryRes.error?.message || alertRes.error?.message || "Profitability data is unavailable or invalid.");
     }
-    setEntries((entryRes.data ?? []) as CostEntry[]);
+    setSummary(parsed);
     setAlerts((alertRes.data ?? []) as ProfitAlert[]);
     setLoading(false);
   }
 
   useEffect(() => {
-    loadProfitability();
-  }, []);
+    void loadProfitability(dimension);
+  }, [dimension]);
 
-  const rows = useMemo(() => {
-    const agg = aggregate(entries, dimension);
-    return agg.sort((a, b) => {
-      const av = a[sortBy];
-      const bv = b[sortBy];
-      return sortDir === "desc" ? bv - av : av - bv;
-    });
-  }, [entries, dimension, sortBy, sortDir]);
-
-  const totals = useMemo(() => ({
-    revenue: entries.reduce((s, e) => s + Number(e.revenue || 0), 0),
-    cost: entries.reduce((s, e) => s + Number(totalCost(e) || 0), 0),
-    margin: entries.reduce((s, e) => s + Number(grossMargin(e) || 0), 0),
-    weight: entries.reduce((s, e) => s + Number(e.total_weight_kg || 0), 0),
-    avgMarginPct: entries.length ? entries.reduce((s, e) => s + marginPct(e), 0) / entries.length : 0,
-    avgPayDays: entries.length ? Math.round(entries.reduce((s, e) => s + Number(e.payment_days || 0), 0) / entries.length) : 0,
-    scrapTotal: entries.reduce((s, e) => s + Number(e.scrap_cost || 0), 0),
-    activeAlerts: alerts.filter((a) => !a.is_acknowledged).length
-  }), [entries, alerts]);
-
+  const rows = useMemo(() => (summary ? sortGroups(summary.groups, sortBy, sortDir) : []), [summary, sortBy, sortDir]);
+  const totals = summary?.totals;
+  const totalMarginPct = totals ? marginPercent(totals.margin, totals.completeRevenue) : null;
+  const activeAlerts = alerts.filter((a) => !a.is_acknowledged).length;
   const filteredAlerts = useMemo(() => alerts.filter((a) => alertFilter === "all" || a.severity === alertFilter), [alerts, alertFilter]);
 
   const handleSort = (col: "revenue" | "margin" | "marginPct") => {
@@ -98,23 +86,31 @@ export default function ProfitabilityPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Profitability Intelligence" description="Real order-level cost intelligence and margin alerts from live ERP records." />
+      <PageHeader title="Profitability Intelligence" description="Order-level cost intelligence aggregated across every cost record, with margin alerts." />
       <QueryErrorNotice messages={error ? [error] : []} />
+
+      {totals ? (
+        <p className="text-sm font-semibold text-slate-600">
+          Covers all {totals.rows.toLocaleString("en-IN")} cost records.
+          {totals.incompleteRows > 0 ? ` ${totals.incompleteRows.toLocaleString("en-IN")} records have an unknown cost component; their revenue is shown, but they are excluded from cost and margin until the cost is completed.` : " Every record has complete cost components."}
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-8">
         {[
-          { label: "Revenue", value: fmt(totals.revenue), icon: IndianRupee, color: "text-blue-600", accent: "bg-blue-50" },
-          { label: "Total Cost", value: fmt(totals.cost), icon: BarChart3, color: "text-slate-600", accent: "bg-slate-50" },
-          { label: "Gross Margin", value: fmt(totals.margin), icon: TrendingUp, color: "text-green-600", accent: "bg-green-50" },
-          { label: "Avg Margin %", value: fmtPct(totals.avgMarginPct), icon: TrendingUp, color: totals.avgMarginPct >= 20 ? "text-green-600" : "text-amber-600", accent: totals.avgMarginPct >= 20 ? "bg-green-50" : "bg-amber-50" },
-          { label: "Total Weight", value: `${(totals.weight / 1000).toFixed(1)}T`, icon: BarChart3, color: "text-indigo-600", accent: "bg-indigo-50" },
-          { label: "Avg Pay Days", value: `${totals.avgPayDays}d`, icon: TrendingDown, color: totals.avgPayDays > 60 ? "text-red-600" : "text-slate-600", accent: totals.avgPayDays > 60 ? "bg-red-50" : "bg-slate-50" },
-          { label: "Scrap Loss", value: fmt(totals.scrapTotal), icon: AlertTriangle, color: "text-red-600", accent: "bg-red-50" },
-          { label: "Active Alerts", value: String(totals.activeAlerts), icon: AlertTriangle, color: "text-amber-600", accent: "bg-amber-50" },
+          { label: "Revenue (all records)", value: totals ? formatCompactCurrency(totals.revenue) : "-", icon: IndianRupee, color: "text-blue-600", accent: "bg-blue-50" },
+          { label: "Total Cost (complete)", value: totals ? formatCompactCurrency(totals.totalCost) : "-", icon: BarChart3, color: "text-slate-600", accent: "bg-slate-50" },
+          { label: "Gross Margin (complete)", value: totals ? formatCompactCurrency(totals.margin) : "-", icon: TrendingUp, color: "text-green-600", accent: "bg-green-50" },
+          { label: "Margin %", value: fmtPct(totalMarginPct), icon: TrendingUp, color: (totalMarginPct ?? 0) >= 20 ? "text-green-600" : "text-amber-600", accent: (totalMarginPct ?? 0) >= 20 ? "bg-green-50" : "bg-amber-50" },
+          { label: "Total Weight", value: totals ? `${(totals.weightKg / 1000).toFixed(1)}T` : "-", icon: BarChart3, color: "text-indigo-600", accent: "bg-indigo-50" },
+          { label: "Avg Days to Settle", value: totals ? fmtDays(totals.avgPayDays) : "-", icon: TrendingDown, color: (totals?.avgPayDays ?? 0) > 60 ? "text-red-600" : "text-slate-600", accent: (totals?.avgPayDays ?? 0) > 60 ? "bg-red-50" : "bg-slate-50" },
+          { label: "Scrap Loss", value: totals ? formatCompactCurrency(totals.scrapCost) : "-", icon: AlertTriangle, color: "text-red-600", accent: "bg-red-50" },
+          { label: "Active Alerts", value: String(activeAlerts), icon: AlertTriangle, color: "text-amber-600", accent: "bg-amber-50" },
         ].map((item) => (
           <Card key={item.label}><CardContent className="p-3"><div className="mb-1 flex items-center gap-1.5"><div className={`h-6 w-6 ${item.accent} flex items-center justify-center rounded-lg`}><item.icon className={`h-3 w-3 ${item.color}`} /></div><p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{item.label}</p></div><p className="text-lg font-black text-slate-900">{item.value}</p></CardContent></Card>
         ))}
       </div>
+      {totals ? <p className="text-xs font-semibold text-slate-500">Days to settle uses posted receipts on {totals.settledRows.toLocaleString("en-IN")} fully paid orders. {totals.openRows > 0 ? `${totals.openRows.toLocaleString("en-IN")} orders still have open invoices averaging ${fmtDays(totals.avgOpenAgeDays)} outstanding.` : "No orders have open invoices."}</p> : null}
 
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-xs font-bold uppercase text-slate-500">Analyze by:</span>
@@ -127,7 +123,7 @@ export default function ProfitabilityPage() {
 
       <Card>
         <CardContent className="overflow-x-auto p-0">
-          {loading ? <LoadingState title="Loading profitability" description="Fetching cost breakdown and margin analytics." /> : rows.length ? (
+          {loading ? <LoadingState title="Loading profitability" description="Aggregating cost breakdown and margin analytics." /> : rows.length ? (
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-slate-50">
@@ -138,20 +134,20 @@ export default function ProfitabilityPage() {
                   <th className="cursor-pointer select-none px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500" onClick={() => handleSort("margin")}><span className="inline-flex items-center gap-1">Margin <SortIcon col="margin" sortBy={sortBy} sortDir={sortDir} /></span></th>
                   <th className="cursor-pointer select-none px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500" onClick={() => handleSort("marginPct")}><span className="inline-flex items-center gap-1">Margin % <SortIcon col="marginPct" sortBy={sortBy} sortDir={sortDir} /></span></th>
                   <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">Scrap</th>
-                  <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">Pay Days</th>
+                  <th className="px-3 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-slate-500">Days to Settle</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row: AggRow) => (
-                  <tr key={row.key} className={`border-b last:border-0 ${row.marginPct < 0 ? "bg-red-50/50" : "hover:bg-slate-50/50"}`}>
-                    <td className="px-4 py-3 font-bold text-slate-900">{row.key}</td>
-                    <td className="px-3 py-3 text-right text-slate-600">{row.orders}</td>
-                    <td className="px-3 py-3 text-right font-bold text-slate-900">{fmt(row.revenue)}</td>
-                    <td className="px-3 py-3 text-right text-slate-600">{fmt(row.totalCost)}</td>
-                    <td className={`px-3 py-3 text-right font-black ${row.margin >= 0 ? "text-green-700" : "text-red-700"}`}>{fmt(row.margin)}</td>
-                    <td className={`px-3 py-3 text-right font-bold ${row.marginPct >= 20 ? "text-green-700" : row.marginPct >= 0 ? "text-amber-700" : "text-red-700"}`}>{fmtPct(row.marginPct)}</td>
-                    <td className={`px-3 py-3 text-right ${row.revenue > 0 && row.scrapCost / row.revenue > 0.03 ? "font-bold text-red-600" : "text-slate-600"}`}>{fmt(row.scrapCost)}</td>
-                    <td className={`px-3 py-3 text-right ${row.avgPayDays > 60 ? "font-bold text-red-600" : "text-slate-600"}`}>{row.avgPayDays}d</td>
+                {rows.map((row: ProfitabilityGroup) => (
+                  <tr key={row.key} className={`border-b last:border-0 ${(row.marginPct ?? 0) < 0 ? "bg-red-50/50" : "hover:bg-slate-50/50"}`}>
+                    <td className="px-4 py-3 font-bold text-slate-900">{row.key}{row.incompleteRows > 0 ? <p className="text-[11px] font-semibold text-amber-700">{row.incompleteRows} with unknown cost</p> : null}</td>
+                    <td className="px-3 py-3 text-right text-slate-600">{row.rows}</td>
+                    <td className="px-3 py-3 text-right font-bold text-slate-900">{formatCompactCurrency(row.revenue)}</td>
+                    <td className="px-3 py-3 text-right text-slate-600">{formatCompactCurrency(row.totalCost)}</td>
+                    <td className={`px-3 py-3 text-right font-black ${row.margin >= 0 ? "text-green-700" : "text-red-700"}`}>{formatCompactCurrency(row.margin)}</td>
+                    <td className={`px-3 py-3 text-right font-bold ${(row.marginPct ?? 0) >= 20 ? "text-green-700" : (row.marginPct ?? 0) >= 0 ? "text-amber-700" : "text-red-700"}`}>{fmtPct(row.marginPct)}</td>
+                    <td className={`px-3 py-3 text-right ${row.revenue > 0 && row.scrapCost / row.revenue > 0.03 ? "font-bold text-red-600" : "text-slate-600"}`}>{formatCompactCurrency(row.scrapCost)}</td>
+                    <td className={`px-3 py-3 text-right ${(row.avgPayDays ?? 0) > 60 ? "font-bold text-red-600" : "text-slate-600"}`}>{fmtDays(row.avgPayDays)}</td>
                   </tr>
                 ))}
               </tbody>

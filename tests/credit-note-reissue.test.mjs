@@ -192,7 +192,7 @@ test("return credit explains adjustment reversal and a settlement conflict prese
   const html = renderToStaticMarkup(render().tree);
   assert.match(html, /standalone credit adjustment/);
   assert.match(html, /reverse that adjustment from Payments/);
-  assert.match(html, /Receipts \/ adjustments/);
+  assert.match(html, /Net receipts \/ adjustments/);
   state.issueResult = { success: false, error: "Reverse the standalone credit adjustment before issuing a return credit note for this invoice." };
   await click(render().issue);
   assert.equal(state.refreshes, 0);

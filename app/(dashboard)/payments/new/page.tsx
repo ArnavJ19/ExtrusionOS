@@ -1,6 +1,7 @@
 import { PaymentFormClient } from "@/components/modules/financials/payment-form-client";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { redirect } from "next/navigation";
 
 export default async function NewPaymentPage({
@@ -11,5 +12,5 @@ export default async function NewPaymentPage({
   const context = await getSessionContext();
   if (!can(context.role, "create", "financials")) redirect("/payments");
   const params = await searchParams;
-  return <PaymentFormClient context={context} initialInvoiceId={params.invoice_id ?? ""} />;
+  return <PaymentFormClient context={context} initialInvoiceId={params.invoice_id ?? ""} today={getBusinessDateBoundaries().today} />;
 }

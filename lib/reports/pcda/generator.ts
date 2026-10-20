@@ -1,4 +1,6 @@
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, rgb } from "pdf-lib";
+import { PdfTextKit, type PdfFontLoader } from "../../pdf/unicode-text.ts";
+import { nodeFontLoader } from "../../pdf/font-loader-node.ts";
 import type { ReportModel } from "./builder";
 import { escapeCsvCell, neutralizeSpreadsheetFormula } from "../../utils/csv.ts";
 
@@ -39,39 +41,46 @@ function reportRows(model: ReportModel): string[][] {
   return rows;
 }
 
-export async function generatePDF(model: ReportModel): Promise<GeneratedReportFile> {
+export async function generatePDF(model: ReportModel, loadFont: PdfFontLoader = nodeFontLoader): Promise<GeneratedReportFile> {
   const pdf = await PDFDocument.create();
-  const regular = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const pageSize: [number, number] = [595.28, 841.89];
   const margin = 42;
   const lineHeight = 14;
-  let page = pdf.addPage([595.28, 841.89]);
+  const textWidth = pageSize[0] - margin * 2;
+  const header = model.header;
+  const kit = await PdfTextKit.create(pdf, loadFont, [
+    ...Object.values(header),
+    ...model.sections.flatMap((section) => [section.title, ...section.fields.flatMap((field) => [field.label, String(field.value)])])
+  ]);
+  let page = pdf.addPage(pageSize);
   let y = page.getHeight() - margin;
 
   function ensureSpace(lines = 1) {
     if (y - lines * lineHeight < margin) {
-      page = pdf.addPage([595.28, 841.89]);
+      page = pdf.addPage(pageSize);
       y = page.getHeight() - margin;
+      kit.draw(page, `${header.reportTitle} | ${header.recordNumber} (continued)`, { x: margin, y, size: 8, color: rgb(0.38, 0.38, 0.38) });
+      y -= lineHeight;
     }
   }
 
-  function draw(text: string, options: { size?: number; bold?: boolean; color?: ReturnType<typeof rgb> } = {}) {
-    ensureSpace();
-    page.drawText(text.slice(0, 110), {
-      x: margin,
-      y,
-      size: options.size ?? 9,
-      font: options.bold ? bold : regular,
-      color: options.color ?? rgb(0.12, 0.12, 0.12),
-    });
-    y -= lineHeight;
+  // Long values wrap to the page width instead of being cut at a fixed length (PDF-07).
+  function draw(text: string, options: { size?: number; bold?: boolean; color?: ReturnType<typeof rgb>; indent?: number } = {}) {
+    const size = options.size ?? 9;
+    const indent = options.indent ?? 0;
+    for (const line of kit.wrap(text, size, textWidth - indent, options.bold)) {
+      ensureSpace();
+      kit.draw(page, line, { x: margin + indent, y, size, bold: options.bold, color: options.color ?? rgb(0.12, 0.12, 0.12) });
+      y -= Math.max(lineHeight, size + 4);
+    }
   }
 
-  draw(model.header.reportTitle, { size: 16, bold: true });
-  draw(`${model.header.companyName} · GST: ${model.header.companyGst}`, { size: 10 });
-  draw(`${model.header.moduleName} · ${model.header.recordNumber} · Rev ${model.header.revisionNumber}`, { size: 10 });
-  draw(`Generated ${model.header.generatedDate} by ${model.header.generatedBy}`, { size: 9, color: rgb(0.38, 0.38, 0.38) });
-  draw(`Approval: ${model.header.approvalStatus}`, { size: 9, color: rgb(0.38, 0.38, 0.38) });
+  draw(header.reportTitle, { size: 16, bold: true });
+  draw(`${header.companyName} · GST: ${header.companyGst}`, { size: 10 });
+  draw(`${header.moduleName} · ${header.recordNumber} · Rev ${header.revisionNumber}`, { size: 10 });
+  if (header.references) draw(`References: ${header.references}`, { size: 9, color: rgb(0.38, 0.38, 0.38) });
+  draw(`Generated ${header.generatedDate} by ${header.generatedBy}`, { size: 9, color: rgb(0.38, 0.38, 0.38) });
+  draw(`Approval: ${header.approvalStatus}`, { size: 9, color: rgb(0.38, 0.38, 0.38) });
   y -= 8;
 
   for (const section of model.sections) {
@@ -83,10 +92,13 @@ export async function generatePDF(model: ReportModel): Promise<GeneratedReportFi
       continue;
     }
     for (const field of section.fields) {
-      draw(`${field.label}: ${field.value}`);
+      draw(`${field.label}: ${field.value}`, { indent: 0 });
     }
     y -= 4;
   }
+
+  const pages = pdf.getPages();
+  pages.forEach((current, index) => kit.drawRight(current, `Page ${index + 1} of ${pages.length}`, { right: pageSize[0] - margin, y: 24, size: 8, color: rgb(0.45, 0.45, 0.45) }));
 
   return {
     bytes: await pdf.save(),

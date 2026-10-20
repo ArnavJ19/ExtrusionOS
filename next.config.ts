@@ -25,6 +25,10 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
+  // Server PDF routes read the Unicode font subsets from disk (lib/pdf/font-loader-node.ts).
+  outputFileTracingIncludes: {
+    "/api/pdf/**/*": ["./public/fonts/pdf/**/*"],
+  },
   async headers() {
     return [
       {

@@ -1198,7 +1198,8 @@ async function buildProfitabilityReportModel(
     revisionNumber: d(breakdown?.revision_number),
     generatedDate: new Date().toLocaleDateString("en-IN"),
     generatedBy,
-    approvalStatus: d(breakdown?.payment_status),
+    // Cost records carry no approval workflow; payment state is reported in its own field (RPT-10).
+    approvalStatus: "Not applicable",
   };
 
   const sections: ReportSection[] = [

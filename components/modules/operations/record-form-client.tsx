@@ -11,6 +11,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { saveDispatchAction } from "@/lib/actions/dispatches";
+import { saveManualExpenseAction } from "@/lib/actions/expenses";
 import { saveFoundryBatchAction } from "@/lib/actions/foundry";
 import { savePackagingJobAction } from "@/lib/actions/packaging";
 import { saveProductionJobAction } from "@/lib/actions/production";
@@ -18,6 +19,7 @@ import { saveOrderAction } from "@/lib/actions/quotes-orders";
 import { createClient } from "@/lib/supabase/browser";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
+import { deriveExpenseTotals } from "@/lib/financials/expenses";
 import { isUsableProductionDieForProfile, usableProductionDieStatuses } from "@/lib/workflow/production-dies";
 import { isAcceptedFinishingReceiptForJob } from "@/lib/workflow/finishing-receipts";
 import { calculateBilletWeightKg, calculateFoundryFurnaceMix, calculateRequiredBilletCount, calculateTotalBilletWeightKg, inchesToMm } from "@/lib/calculations/foundry";
@@ -95,6 +97,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
   const [packagingAutofillSummary, setPackagingAutofillSummary] = useState<string | null>(null);
   const [packagingSourceLocked, setPackagingSourceLocked] = useState(false);
   const packagingAutofillRequest = useRef(0);
+  const expenseCreateKey = useRef<string | null>(null);
   const [availableBillets, setAvailableBillets] = useState<any[]>([]);
   const [selectedBillets, setSelectedBillets] = useState<Set<string>>(new Set());
   const [billetsLoading, setBilletsLoading] = useState(false);
@@ -658,6 +661,16 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       setForm((current) => ({...current, finishing_job_id: receipt?.value ?? "", profile_weight_kg: receipt?.output_weight_kg ?? 0}));
       return;
     }
+    if (moduleKey === "expenses" && ["quantity", "rate", "base_amount", "tax_amount", "freight_amount", "discount_amount"].includes(field.name)) {
+      // Preview only: the database derives and verifies the same total on save.
+      setForm((current) => {
+        const next = { ...current, [field.name]: value };
+        const totals = deriveExpenseTotals(next);
+        const rateDriven = Number(next.quantity || 0) > 0 && Number(next.rate || 0) > 0;
+        return { ...next, base_amount: rateDriven && field.name !== "base_amount" ? totals.base : next.base_amount, total_amount: totals.error && totals.total <= 0 ? 0 : totals.total };
+      });
+      return;
+    }
     if (moduleKey === "packaging_materials" && field.name === "consumption_rate" && typeof value === "string") {
       setForm((current) => ({ ...current, consumption_rate: value, consumption_per_profile_meter: current.calculation_method === "per_profile_meter" ? value : current.consumption_per_profile_meter }));
       return;
@@ -718,9 +731,19 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       setSaving(false);
       return toast.error("Profile standard length is missing. Add stock length before using this profile for BOM, cutting list, or inventory planning.");
     }
-    if (moduleKey === "expenses" && editing && String(form.approval_status || "").toLowerCase() === "approved") {
+    if (moduleKey === "expenses") {
+      if (!editing && !expenseCreateKey.current) expenseCreateKey.current = crypto.randomUUID();
+      const result = await saveManualExpenseAction({
+        ...(parsed.data as Record<string, any>),
+        expense_id: editing ? recordId : null,
+        idempotency_key: editing ? null : expenseCreateKey.current
+      } as any);
       setSaving(false);
-      return toast.error("Approved expenses cannot be edited directly. Use payment entries or reversal workflow.");
+      if (!result.success) return toast.error(result.error);
+      toast.success(`${result.data.expense_number} saved as ${result.data.approval_status.replace(/_/g, " ")}`);
+      router.push(`${config.basePath}/${result.data.expense_id}`);
+      router.refresh();
+      return;
     }
     if (config.uniqueField && sanitized[config.uniqueField]) {
       let duplicateRequest = supabase
@@ -814,13 +837,6 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       payload = { ...payload, unit: payload.unit || "kg", base_amount: base, total_price: total };
     }
     if (moduleKey === "packaging_material_purchases") {
-      const qty = Number(payload.quantity ?? 0);
-      const rate = Number(payload.rate ?? 0);
-      const base = Number(payload.base_amount ?? 0) || Number((qty * rate).toFixed(2));
-      const total = Number(payload.total_amount ?? 0) || Number((base + Number(payload.tax_amount ?? 0) + Number(payload.freight_amount ?? 0) - Number(payload.discount_amount ?? 0)).toFixed(2));
-      payload = { ...payload, base_amount: base, total_amount: total };
-    }
-    if (moduleKey === "expenses") {
       const qty = Number(payload.quantity ?? 0);
       const rate = Number(payload.rate ?? 0);
       const base = Number(payload.base_amount ?? 0) || Number((qty * rate).toFixed(2));

@@ -11,6 +11,7 @@ import { LoadingState } from "@/components/ui/loading";
 import { createClient } from "@/lib/supabase/browser";
 import { getOperationalRisks } from "@/lib/calculations/operations";
 import { getErrorMessage } from "@/lib/utils/errors";
+import { canEditManualExpense } from "@/lib/financials/expenses";
 import type { SessionContext } from "@/types/app";
 import { displayValue, getPath, titleValue } from "./value";
 import { getModuleConfig, type ModuleKey } from "./module-config";
@@ -78,7 +79,7 @@ export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { 
           </div>
           <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-neutral-500">{config.detailIntro ?? "Focused detail page for one record. Use the database only when you need to search across all records."}</p>
         </div>
-        {canEdit && config.fields && !(moduleKey === "expenses" && String(row.approval_status || "").toLowerCase() === "approved") ? <Link href={`${config.basePath}/${recordId}/edit`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"><Pencil className="h-4 w-4" /> Edit</Link> : null}
+        {canEdit && config.fields && !(moduleKey === "expenses" && !canEditManualExpense(row as any)) && moduleKey !== "expense_payments" ? <Link href={`${config.basePath}/${recordId}/edit`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"><Pencil className="h-4 w-4" /> Edit</Link> : null}
       </div>
 
       {moduleKey === "invoices" ? <a className="inline-flex rounded-xl border border-neutral-200 px-4 py-2 text-sm font-semibold" href={`/api/pdf/invoice/${recordId}`} target="_blank" rel="noreferrer">Open Invoice PDF</a> : null}

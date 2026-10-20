@@ -5,9 +5,10 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ReceiptIndianRupee } from "lucide-react";
 import { toast } from "sonner";
-import { recordPaymentAction } from "@/lib/actions/payments";
-import { createClient } from "@/lib/supabase/browser";
-import { formatCurrency, formatDate, todayIso } from "@/lib/utils/format";
+import { recordPaymentAction, searchOpenInvoicesAction } from "@/lib/actions/payments";
+import { nextIdempotentAttempt } from "@/lib/financials/expenses";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { SessionContext } from "@/types/app";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -22,9 +23,11 @@ type OpenInvoice = {
   due_date: string | null;
   grand_total: number;
   amount_paid: number;
+  credited_amount?: number;
   balance_due: number;
   status: string;
-  order_id: string | null;
+  customer_name?: string | null;
+  order_number?: string | null;
   customers?: { customer_name?: string | null; company_name?: string | null } | null;
   orders?: { order_number?: string | null } | null;
 };
@@ -36,22 +39,29 @@ function relation<T>(value: T | T[] | null | undefined): T | null {
 
 function invoiceCustomer(invoice: OpenInvoice) {
   const customer = relation(invoice.customers);
-  return customer?.company_name || customer?.customer_name || "Unknown customer";
+  return invoice.customer_name || customer?.company_name || customer?.customer_name || "Unknown customer";
+}
+
+function invoiceOrder(invoice: OpenInvoice | null) {
+  return invoice?.order_number ?? relation(invoice?.orders)?.order_number ?? "-";
 }
 
 export function PaymentFormClient({
   context,
-  initialInvoiceId = ""
+  initialInvoiceId = "",
+  today
 }: {
   context: SessionContext;
   initialInvoiceId?: string;
+  today?: string;
 }) {
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
-  const idempotencyKey = useRef<string | null>(null);
+  // Receipt dates follow the Asia/Kolkata business calendar used by the database (AR-10).
+  const businessToday = useMemo(() => today ?? getBusinessDateBoundaries().today, [today]);
+  const attempt = useRef<{ requestKey: string; idempotencyKey: string } | null>(null);
   const [invoices, setInvoices] = useState<OpenInvoice[]>([]);
   const [invoiceId, setInvoiceId] = useState(initialInvoiceId);
-  const [paymentDate, setPaymentDate] = useState(todayIso());
+  const [paymentDate, setPaymentDate] = useState(businessToday);
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
   const [referenceNumber, setReferenceNumber] = useState("");
@@ -59,28 +69,39 @@ export function PaymentFormClient({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [searching, setSearching] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const searchVersion = useRef(0);
   const isCreditAdjustment = paymentMethod === "credit_note";
+
+  // Open invoices are searched on the server, 25 at a time. A deep-linked invoice is resolved
+  // by ID so it never depends on the first page of results (AR-08).
+  async function searchInvoices(term: string, selectedId: string | null = null) {
+    const version = ++searchVersion.current;
+    setSearching(true);
+    const result = await searchOpenInvoicesAction({ search: term, selectedId });
+    if (version !== searchVersion.current) return null;
+    setSearching(false);
+    if (!result.success) throw new Error(result.error);
+    if (!selectedId) setHasMore(result.data.hasMore);
+    setInvoices((current) => {
+      const merged = new Map(current.filter((row) => row.id === invoiceId || row.id === selectedId).map((row) => [row.id, row]));
+      for (const row of result.data.rows) merged.set(row.id, row);
+      return Array.from(merged.values());
+    });
+    return result.data.rows;
+  }
 
   useEffect(() => {
     let cancelled = false;
-
     async function load() {
-      const { data, error: queryError } = await supabase
-        .from("invoices")
-        .select("id, invoice_number, invoice_date, due_date, grand_total, amount_paid, balance_due, status, order_id, customers(customer_name, company_name), orders(order_number)")
-        .eq("company_id", context.companyId)
-        .in("status", ["generated", "sent", "partially_paid", "overdue"])
-        .gt("balance_due", 0)
-        .order("due_date", { ascending: true, nullsFirst: false })
-        .limit(500);
-      if (cancelled) return;
-      if (queryError) throw queryError;
-      const rows = (data ?? []) as unknown as OpenInvoice[];
-      setInvoices(rows);
-      const initial = rows.find((invoice) => invoice.id === initialInvoiceId);
-      if (initial) setAmount(String(initial.balance_due));
+      if (initialInvoiceId) {
+        const rows = await searchInvoices("", initialInvoiceId);
+        const initial = rows?.find((invoice) => invoice.id === initialInvoiceId);
+        if (!cancelled && initial) setAmount(String(initial.balance_due));
+      }
+      await searchInvoices("");
     }
-
     load()
       .catch((loadError) => {
         if (!cancelled) setError(loadError instanceof Error ? loadError.message : "Could not load open invoices");
@@ -88,11 +109,10 @@ export function PaymentFormClient({
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-
     return () => {
       cancelled = true;
     };
-  }, [context.companyId, initialInvoiceId, supabase]);
+  }, [context.companyId, initialInvoiceId]);
 
   const selectedInvoice = invoices.find((invoice) => invoice.id === invoiceId) ?? null;
   const options = invoices.map((invoice) => ({
@@ -104,21 +124,25 @@ export function PaymentFormClient({
     const invoice = invoices.find((item) => item.id === value);
     setInvoiceId(value);
     setAmount(invoice ? String(invoice.balance_due) : "");
-    idempotencyKey.current = null;
   }
 
   function submit() {
-    if (!idempotencyKey.current) idempotencyKey.current = crypto.randomUUID();
+    const payload = {
+      invoice_id: invoiceId,
+      payment_date: paymentDate,
+      amount: Number(amount),
+      payment_method: paymentMethod as "bank_transfer" | "upi" | "cheque" | "cash" | "credit_note" | "other",
+      reference_number: referenceNumber,
+      notes
+    };
+    // The same key is reused only for an unchanged retry. Editing any detail starts a new key,
+    // and the database rejects a reused key whose details differ (AR-03).
+    attempt.current = nextIdempotentAttempt(attempt.current, JSON.stringify([payload.invoice_id, payload.payment_date,
+      Number(payload.amount).toFixed(2), payload.payment_method, payload.reference_number.trim(), payload.notes.trim()]),
+      () => crypto.randomUUID());
+    const idempotencyKey = attempt.current.idempotencyKey;
     startTransition(async () => {
-      const result = await recordPaymentAction({
-        invoice_id: invoiceId,
-        payment_date: paymentDate,
-        amount: Number(amount),
-        payment_method: paymentMethod as "bank_transfer" | "upi" | "cheque" | "cash" | "credit_note" | "other",
-        reference_number: referenceNumber,
-        notes,
-        idempotency_key: idempotencyKey.current!
-      });
+      const result = await recordPaymentAction({ ...payload, idempotency_key: idempotencyKey });
       if (!result.success) {
         toast.error(result.error);
         return;
@@ -147,7 +171,7 @@ export function PaymentFormClient({
         </div>
       </div>
 
-      {invoices.length === 0 ? (
+      {invoices.length === 0 && !searching ? (
         <Card>
           <CardContent className="py-10 text-center">
             <h2 className="text-lg font-bold text-neutral-950">No issued invoice has an open balance</h2>
@@ -162,11 +186,14 @@ export function PaymentFormClient({
             <CardContent className="grid gap-5 md:grid-cols-2">
               <label className="block space-y-1.5 md:col-span-2">
                 <span className="form-label">Invoice *</span>
-                <SearchableSelect value={invoiceId} options={options} placeholder="Search invoice or customer" onChange={selectInvoice} />
+                <SearchableSelect value={invoiceId} options={options} placeholder="Search invoice number or customer" onChange={selectInvoice}
+                  onSearchChange={(query) => { void searchInvoices(query).catch((searchError) => toast.error(searchError instanceof Error ? searchError.message : "Search failed")); }}
+                  searching={searching} />
+                {hasMore ? <span className="form-hint">Showing the first 25 matches. Type an invoice number or customer to narrow the list.</span> : null}
               </label>
               <label className="block space-y-1.5">
                 <span className="form-label">Payment date *</span>
-                <input className="form-input" type="date" max={todayIso()} value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
+                <input className="form-input" type="date" max={businessToday} value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
               </label>
               <label className="block space-y-1.5">
                 <span className="form-label">{isCreditAdjustment ? "Adjustment amount" : "Amount received"} *</span>
@@ -182,7 +209,7 @@ export function PaymentFormClient({
                   <option value="credit_note">Credit adjustment (non-cash)</option>
                   <option value="other">Other</option>
                 </select>
-                {isCreditAdjustment ? <p className="form-hint">Use a standalone adjustment only when this invoice has no issued return credit note. For a returned or damaged dispatch, issue its credit note from the dispatch record instead.</p> : null}
+                {isCreditAdjustment ? <p className="form-hint">Use a standalone adjustment only when this invoice has no issued return credit note. For a returned or damaged dispatch, issue its credit note from the dispatch record instead. A partial shortage or damage on a delivered dispatch is settled with this adjustment.</p> : null}
               </label>
               <label className="block space-y-1.5">
                 <span className="form-label">Reference number{["bank_transfer", "upi", "cheque"].includes(paymentMethod) ? " *" : ""}</span>
@@ -204,11 +231,12 @@ export function PaymentFormClient({
             <CardContent className="space-y-4 text-sm">
               <Summary label="Customer" value={selectedInvoice ? invoiceCustomer(selectedInvoice) : "Select an invoice"} />
               <Summary label="Invoice" value={selectedInvoice?.invoice_number ?? "-"} />
-              <Summary label="Order" value={relation(selectedInvoice?.orders)?.order_number ?? "-"} />
+              <Summary label="Order" value={invoiceOrder(selectedInvoice)} />
               <Summary label="Invoice date" value={selectedInvoice ? formatDate(selectedInvoice.invoice_date) : "-"} />
               <Summary label="Due date" value={selectedInvoice ? formatDate(selectedInvoice.due_date) : "-"} />
               <Summary label="Invoice total" value={selectedInvoice ? formatCurrency(selectedInvoice.grand_total) : "-"} />
-              <Summary label="Already settled" value={selectedInvoice ? formatCurrency(selectedInvoice.amount_paid) : "-"} />
+              <Summary label="Receipts and adjustments" value={selectedInvoice ? formatCurrency(selectedInvoice.amount_paid) : "-"} />
+              <Summary label="Return credit notes" value={selectedInvoice ? formatCurrency(selectedInvoice.credited_amount ?? 0) : "-"} />
               <div className="rounded-2xl bg-neutral-950 p-4 text-white"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-300">Outstanding balance</p><p className="mt-2 text-2xl font-bold">{selectedInvoice ? formatCurrency(selectedInvoice.balance_due) : "-"}</p></div>
               <p className="text-xs font-semibold leading-5 text-neutral-500">Credit notes settle the invoice but are excluded from cash-collection analytics.</p>
             </CardContent>

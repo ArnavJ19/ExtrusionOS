@@ -352,7 +352,7 @@ export const brandingSettingsSchema = z.object({
 
 export const savedReportSchema = z.object({
   report_name: z.string().trim().min(3, "Report name should be at least 3 characters"),
-  data_source: z.enum(["customers", "quotes", "orders", "dispatches", "invoices", "payments", "expenses", "expense_payments", "inventory", "production_jobs", "scrap_records", "dies", "quality_tests", "vendors", "purchases", "packaging_material_purchases"]),
+  data_source: z.enum(["customers", "quotes", "orders", "dispatches", "invoices", "payments", "credit_notes", "expenses", "expense_payments", "inventory", "production_jobs", "scrap_records", "dies", "quality_tests", "vendors", "purchases", "packaging_material_purchases"]),
   selected_fields: z.array(z.string().trim()).min(1, "Select at least one field"),
   filters: z.array(z.object({ field: z.string().trim(), operator: z.enum(["equals", "contains", "gt", "lt", "between"]), value: z.string().trim() })).default([]),
   grouping: z.string().trim().nullable().optional(),
@@ -652,54 +652,9 @@ export const paymentSchema = z.object({
   notes: optionalText
 });
 
-export const expenseLedgerSchema = z.object({
-  source_module: z.string().trim().min(1).default("manual"),
-  source_submodule: optionalText,
-  source_table: optionalText,
-  source_record_id: z.string().uuid().optional().nullable().or(z.literal("")),
-  source_label: optionalText,
-  expense_category: z.string().trim().min(1, "Expense category is required"),
-  expense_subcategory: optionalText,
-  vendor_id: z.string().uuid("Select a vendor").optional().nullable().or(z.literal("")),
-  description: z.string().trim().min(1, "Description is required"),
-  quantity: z.coerce.number().nonnegative("Quantity cannot be negative").default(0),
-  unit: optionalText,
-  rate: z.coerce.number().nonnegative("Rate cannot be negative").default(0),
-  base_amount: z.coerce.number().nonnegative("Base amount cannot be negative").default(0),
-  tax_amount: z.coerce.number().nonnegative("Tax amount cannot be negative").default(0),
-  freight_amount: z.coerce.number().nonnegative("Freight amount cannot be negative").default(0),
-  discount_amount: z.coerce.number().nonnegative("Discount amount cannot be negative").default(0),
-  total_amount: z.coerce.number().nonnegative("Total amount cannot be negative").default(0),
-  currency: z.enum(["INR", "USD", "EUR", "AED", "GBP", "other"]).default("INR"),
-  payment_status: z.enum(["unpaid", "partially_paid", "paid", "overdue", "cancelled", "reversed"]).default("unpaid"),
-  payment_method: optionalText,
-  invoice_number: optionalText,
-  invoice_date: optionalText,
-  due_date: optionalText,
-  paid_date: optionalText,
-  cost_center: optionalText,
-  department: optionalText,
-  machine_id: z.string().uuid("Select a machine").optional().nullable().or(z.literal("")),
-  inventory_item_id: z.string().uuid("Select an inventory item").optional().nullable().or(z.literal("")),
-  maintenance_record_id: z.string().uuid().optional().nullable().or(z.literal("")),
-  approval_status: z.enum(["draft", "pending_approval", "approved", "rejected", "paid", "cancelled", "reversed"]).default("draft"),
-  notes: optionalText
-}).superRefine((value, ctx) => {
-  const landedTotal = Number(value.base_amount ?? 0) + Number(value.tax_amount ?? 0) + Number(value.freight_amount ?? 0) - Number(value.discount_amount ?? 0);
-  if (Number(value.total_amount ?? 0) <= 0 && landedTotal > 0) {
-    ctx.addIssue({ code: "custom", path: ["total_amount"], message: "Total amount should include base, tax, freight, and discount impact." });
-  }
-});
-
-export const expensePaymentSchema = z.object({
-  expense_ledger_id: z.string().uuid("Select an expense"),
-  payment_date: z.string().min(1, "Payment date is required"),
-  amount_paid: z.coerce.number().positive("Paid amount must be greater than zero"),
-  payment_method: optionalText,
-  bank_account: optionalText,
-  reference_number: optionalText,
-  notes: optionalText
-});
+// Expense writes are server-owned (save_manual_expense_atomic / record_expense_payment_atomic);
+// their input contracts live with the shared expense rules.
+export { manualExpenseInputSchema as expenseLedgerSchema, expensePaymentInputSchema as expensePaymentSchema } from "../financials/expenses";
 
 export const branchSchema = z.object({
   branch_name: z.string().trim().min(1, "Branch name is required"),
