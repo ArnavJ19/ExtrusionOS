@@ -1,0 +1,102 @@
+[
+  {
+    "path": "BUGS-MEGA.md",
+    "sha256": "FDACCBA19B9B0CF70B3BCA9270C628494E55A2E0D8AD18B6C5F67BF8A67F8B2E",
+    "bytes": 142178
+  },
+  {
+    "path": "components/modules/foundry/billet-allocation-client.tsx",
+    "sha256": "41DA939CBF5274E4DB54B64A4111319E8DE9AEC68AD9BDAAD9D5F6C62FC1EDFD",
+    "bytes": 10895
+  },
+  {
+    "path": "docs/BUGS_MEGA_HANDOFF_2026-10-20.md",
+    "sha256": "457A7FE2D9EFC363CDDB28C87F384357EB366508E766A5AAC9BBE2A85E067DB3",
+    "bytes": 5841
+  },
+  {
+    "path": "docs/BUGS_MEGA_PROGRESS_2026-10-20.md",
+    "sha256": "FD0AA70022FE36EE9F580017E0E6029BF5A7DBD7C5600BE5C5CFB0B0F1AFF998",
+    "bytes": 9548
+  },
+  {
+    "path": "docs/BUGS_MEGA_R24_ALLOCATION_OPTIONS_2026-10-20.md",
+    "sha256": "BC7CE642313DCDD9F20F54BA5184C4C576DB25F33FB4F95BC4FADC0127F91B31",
+    "bytes": 9595
+  },
+  {
+    "path": "lib/deployment/schema-contract.ts",
+    "sha256": "10EFBE2570504989A7279497F58832FCF0166FFE98521D85F22699ACB5966040",
+    "bytes": 6022
+  },
+  {
+    "path": "lib/workflow/billet-allocation-options.ts",
+    "sha256": "98ECDC65A9A6A9A1D51E8FFBDFBAF2CDC421719AC7810BD94E427B2EFFFAEB90",
+    "bytes": 3841
+  },
+  {
+    "path": "package.json",
+    "sha256": "01AA0FEC28D3E8317D244D2B4FF091542D55ECBD366359910F2963295DC2C6DD",
+    "bytes": 2086
+  },
+  {
+    "path": "scripts/lib/billet-allocation-browser-fixture.mjs",
+    "sha256": "65CB5AF59196B692B3D1550C057E59A01E3570358890896A6CEB57EE003C140D",
+    "bytes": 9905
+  },
+  {
+    "path": "scripts/lib/billet-allocation-options-fixture.mjs",
+    "sha256": "2466C491BA0185514A7A1C86ED240397BDAD6F9E5CDA8D85340E83AC54FBD637",
+    "bytes": 4366
+  },
+  {
+    "path": "scripts/qa-billet-allocation-options.mjs",
+    "sha256": "1949C7CB2837F9E469400C417C46898C078CD7B3A8A6DA1869E0D49CB85A89EE",
+    "bytes": 3458
+  },
+  {
+    "path": "scripts/qa-billet-allocation-panel.mjs",
+    "sha256": "FDCA37A6F0AEB0823CC6D8685CE622024522EAB31914572B29E99D9F5E36B63A",
+    "bytes": 2747
+  },
+  {
+    "path": "scripts/test-audit-migration-integration.mjs",
+    "sha256": "3DD848431111D823D93FFE1D2232A3BBC010B836504C5DF86C46294AC16FBC17",
+    "bytes": 14775
+  },
+  {
+    "path": "sql/audit-deployment-preflight.sql",
+    "sha256": "E09D10C7E51BACC8B245308D555A6CA62F542FE3409AA66B0342DF7E87F277F2",
+    "bytes": 14508
+  },
+  {
+    "path": "supabase/migrations/20261020070000_manual_billet_allocation_options.sql",
+    "sha256": "47AD47BA923C46EF1216104FD5177A4FFA96A02B6799518A0D7EB6B8A6852AAB",
+    "bytes": 7157
+  },
+  {
+    "path": "tests/audit-migration-integration.test.mjs",
+    "sha256": "7BEEC98C74B5118CB8338FAD59890099E3AC64A24D30480B2484222655F21A87",
+    "bytes": 536
+  },
+  {
+    "path": "tests/billet-allocation-options-browser.test.mjs",
+    "sha256": "7B891A1A6B2AA3D6161A8FCAEA99E0FCCAC15BDD0D4CB9B4FAB240BB87492718",
+    "bytes": 11170
+  },
+  {
+    "path": "tests/billet-allocation-options-reader.test.mjs",
+    "sha256": "B920ED590E99D200F0DA487D29D60AEE0061E9E5FD5B600ECC0D0C82636F6470",
+    "bytes": 3237
+  },
+  {
+    "path": "tests/billet-allocation-options.test.mjs",
+    "sha256": "BDAB5639B08EBDB5651FB6F01194ADF61315306A4365775C85446FEED7FA10CD",
+    "bytes": 11410
+  },
+  {
+    "path": "tests/billet-allocation-panel.test.mjs",
+    "sha256": "0D6298F46A571A0E9799EE5BE185C798B1C37749BB751D3E5E8346534C58CC41",
+    "bytes": 20032
+  }
+]

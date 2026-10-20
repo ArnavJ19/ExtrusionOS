@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node --no-warnings --test --experimental-strip-types tests/*.test.mjs",
+    "test": "node --no-warnings --test --experimental-strip-types --test-concurrency=2 tests/*.test.mjs",
     "test:e2e:staging": "node --no-warnings --experimental-strip-types scripts/run-staging-e2e.ts",
     "typecheck": "tsc --noEmit"
   },

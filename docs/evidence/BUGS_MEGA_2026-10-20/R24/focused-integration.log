@@ -1,0 +1,380 @@
+TAP version 13
+# Subtest: whole audit migrations coexist with authorized views, masks and RPC grants
+ok 1 - whole audit migrations coexist with authorized views, masks and RPC grants
+  ---
+  duration_ms: 4286.3823
+  type: 'test'
+  ...
+# Subtest: the lookup does not offer an order that the actual writer rejects for temper
+ok 2 - the lookup does not offer an order that the actual writer rejects for temper
+  ---
+  duration_ms: 4936.4261
+  type: 'test'
+  ...
+# Subtest: normalized alloy and temper accepted by the writer remain discoverable
+ok 3 - normalized alloy and temper accepted by the writer remain discoverable
+  ---
+  duration_ms: 247.6696
+  type: 'test'
+  ...
+# Subtest: delivered and payment-pending orders do not appear as compatible open orders
+ok 4 - delivered and payment-pending orders do not appear as compatible open orders
+  ---
+  duration_ms: 415.2189
+  type: 'test'
+  ...
+# Subtest: fully covered dispatched profiles do not remain allocation choices
+ok 5 - fully covered dispatched profiles do not remain allocation choices
+  ---
+  duration_ms: 214.143
+  type: 'test'
+  ...
+# Subtest: two matching requirements produce one distinct choice per order
+ok 6 - two matching requirements produce one distinct choice per order
+  ---
+  duration_ms: 217.7051
+  type: 'test'
+  ...
+# Subtest: a small REST row cap cannot hide a later compatible order
+ok 7 - a small REST row cap cannot hide a later compatible order
+  ---
+  duration_ms: 206.4666
+  type: 'test'
+  ...
+# Subtest: ten-row pages reach later orders and clear the prior order selection
+not ok 8 - ten-row pages reach later orders and clear the prior order selection
+  ---
+  duration_ms: 6215.311
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\tests\\billet-allocation-options-browser.test.mjs:57:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expect(locator).toBeVisible() failed
+    
+    Locator: getByText('Page 2 of 2 / 13 compatible orders', { exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+    
+    Call log:
+      - Expect "to.be.visible" with timeout 5000ms
+      - waiting for getByText('Page 2 of 2 / 13 compatible orders', { exact: true })
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    captureRawStack (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\node_modules\playwright-core\lib\coreBundle.js:3172:17)
+    callMatcherAsStep (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\node_modules\playwright\lib\matchers\expect.js:12877:57)
+    Object.toBeVisible (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\node_modules\playwright\lib\matchers\expect.js:12867:23)
+    TestContext.<anonymous> (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\tests\billet-allocation-options-browser.test.mjs:62:95)
+  ...
+# Subtest: global search reaches orders outside the first page and treats percent literally
+not ok 9 - global search reaches orders outside the first page and treats percent literally
+  ---
+  duration_ms: 6127.086
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\tests\\billet-allocation-options-browser.test.mjs:69:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expect(locator).toBeVisible() failed
+    
+    Locator: getByText('Page 1 of 2 / 13 compatible orders', { exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+    
+    Call log:
+      - Expect "to.be.visible" with timeout 5000ms
+      - waiting for getByText('Page 1 of 2 / 13 compatible orders', { exact: true })
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    captureRawStack (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\node_modules\playwright-core\lib\coreBundle.js:3172:17)
+    callMatcherAsStep (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\node_modules\playwright\lib\matchers\expect.js:12877:57)
+    Object.toBeVisible (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\node_modules\playwright\lib\matchers\expect.js:12867:23)
+    TestContext.<anonymous> (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\tests\billet-allocation-options-browser.test.mjs:79:95)
+  ...
+# Subtest: a stale search response cannot replace current options
+ok 10 - a stale search response cannot replace current options
+  ---
+  duration_ms: 347.5147
+  type: 'test'
+  ...
+# Subtest: a stale search failure cannot replace current options
+ok 11 - a stale search failure cannot replace current options
+  ---
+  duration_ms: 348.5238
+  type: 'test'
+  ...
+# Subtest: a missing new RPC is explicitly unavailable and never falls back to capped requirements
+ok 12 - a missing new RPC is explicitly unavailable and never falls back to capped requirements
+  ---
+  duration_ms: 122.0997
+  type: 'test'
+  ...
+# Subtest: the read snapshot replaces a billet issued between the header and options requests
+ok 13 - the read snapshot replaces a billet issued between the header and options requests
+  ---
+  duration_ms: 169.1071
+  type: 'test'
+  ...
+# Subtest: a role outside manual allocation cannot retain a mounted mutation panel
+ok 14 - a role outside manual allocation cannot retain a mounted mutation panel
+  ---
+  duration_ms: 187.5574
+  type: 'test'
+  ...
+# Subtest: allocation panel exposes initial loading and a recoverable billet read error
+ok 15 - allocation panel exposes initial loading and a recoverable billet read error
+  ---
+  duration_ms: 1230.3813
+  type: 'test'
+  ...
+# Subtest: successful allocation refreshes and leaves the panel usable
+ok 16 - successful allocation refreshes and leaves the panel usable
+  ---
+  duration_ms: 285.3804
+  type: 'test'
+  ...
+# Subtest: a failed post-save refresh preserves the confirmed allocation and can be retried
+ok 17 - a failed post-save refresh preserves the confirmed allocation and can be retried
+  ---
+  duration_ms: 336.4931
+  type: 'test'
+  ...
+# Subtest: requirement errors stay unavailable instead of becoming an empty order list
+ok 18 - requirement errors stay unavailable instead of becoming an empty order list
+  ---
+  duration_ms: 187.1784
+  type: 'test'
+  ...
+# Subtest: an older billet response cannot overwrite the new billet
+ok 19 - an older billet response cannot overwrite the new billet
+  ---
+  duration_ms: 108.9299
+  type: 'test'
+  ...
+# Subtest: an older requirement response cannot replace current order options
+ok 20 - an older requirement response cannot replace current order options
+  ---
+  duration_ms: 241.1191
+  type: 'test'
+  ...
+# Subtest: changing company for the same billet clears old choices and reloads in the new scope
+ok 21 - changing company for the same billet clears old choices and reloads in the new scope
+  ---
+  duration_ms: 204.8415
+  type: 'test'
+  ...
+# Subtest: changing billet discards the prior order selection
+ok 22 - changing billet discards the prior order selection
+  ---
+  duration_ms: 239.2102
+  type: 'test'
+  ...
+# Subtest: a rejected action reports uncertainty, clears saving and requires a fresh read
+ok 23 - a rejected action reports uncertainty, clears saving and requires a fresh read
+  ---
+  duration_ms: 419.2462
+  type: 'test'
+  ...
+# Subtest: a failed action cannot be resubmitted from stale readiness
+ok 24 - a failed action cannot be resubmitted from stale readiness
+  ---
+  duration_ms: 235.179
+  type: 'test'
+  ...
+# Subtest: a malformed success response cannot report a confirmed allocation
+ok 25 - a malformed success response cannot report a confirmed allocation
+  ---
+  duration_ms: 223.491
+  type: 'test'
+  ...
+# Subtest: same-event duplicate clicks send one write and pending controls remain disabled
+ok 26 - same-event duplicate clicks send one write and pending controls remain disabled
+  ---
+  duration_ms: 209.5541
+  type: 'test'
+  ...
+# Subtest: a late save after switching billets cannot clear or refresh the new panel
+ok 27 - a late save after switching billets cannot clear or refresh the new panel
+  ---
+  duration_ms: 371.9619
+  type: 'test'
+  ...
+# Subtest: unmounted load and save completions are ignored
+ok 28 - unmounted load and save completions are ignored
+  ---
+  duration_ms: 315.0469
+  type: 'test'
+  ...
+# Subtest: a rejected read offers retry without an unhandled rejection
+ok 29 - a rejected read offers retry without an unhandled rejection
+  ---
+  duration_ms: 110.5907
+  type: 'test'
+  ...
+# Subtest: invalid missing billet response cannot expose allocation controls
+ok 30 - invalid missing billet response cannot expose allocation controls
+  ---
+  duration_ms: 84.028
+  type: 'test'
+  ...
+# Subtest: invalid another billet response cannot expose allocation controls
+ok 31 - invalid another billet response cannot expose allocation controls
+  ---
+  duration_ms: 84.4981
+  type: 'test'
+  ...
+# Subtest: invalid another company response cannot expose allocation controls
+ok 32 - invalid another company response cannot expose allocation controls
+  ---
+  duration_ms: 85.1246
+  type: 'test'
+  ...
+# Subtest: invalid invalid allocated order response cannot expose allocation controls
+ok 33 - invalid invalid allocated order response cannot expose allocation controls
+  ---
+  duration_ms: 82.4717
+  type: 'test'
+  ...
+# Subtest: a missing requirement payload is unavailable instead of verified empty
+ok 34 - a missing requirement payload is unavailable instead of verified empty
+  ---
+  duration_ms: 86.2373
+  type: 'test'
+  ...
+# Subtest: non-allocatable billets retain their status and do not query requirements
+ok 35 - non-allocatable billets retain their status and do not query requirements
+  ---
+  duration_ms: 209.8107
+  type: 'test'
+  ...
+# Subtest: the browser's allocation reaches the actual action and SQL, then refreshes persisted quantities
+ok 36 - the browser's allocation reaches the actual action and SQL, then refreshes persisted quantities
+  ---
+  duration_ms: 3803.3082
+  type: 'test'
+  ...
+# Subtest: an obsolete requirement failure cannot replace a newer ready panel
+ok 37 - an obsolete requirement failure cannot replace a newer ready panel
+  ---
+  duration_ms: 123.0944
+  type: 'test'
+  ...
+# Subtest: manual refresh clears selection and disables writes until the new read completes
+ok 38 - manual refresh clears selection and disables writes until the new read completes
+  ---
+  duration_ms: 311.7038
+  type: 'test'
+  ...
+# Subtest: a changed user or role resets same-company readiness
+ok 39 - a changed user or role resets same-company readiness
+  ---
+  duration_ms: 536.8505
+  type: 'test'
+  ...
+# Subtest: invalid requirement null row cannot become an allocation option
+ok 40 - invalid requirement null row cannot become an allocation option
+  ---
+  duration_ms: 132.8573
+  type: 'test'
+  ...
+# Subtest: invalid requirement foreign company cannot become an allocation option
+ok 41 - invalid requirement foreign company cannot become an allocation option
+  ---
+  duration_ms: 99.4143
+  type: 'test'
+  ...
+# Subtest: invalid requirement invalid order cannot become an allocation option
+ok 42 - invalid requirement invalid order cannot become an allocation option
+  ---
+  duration_ms: 116.173
+  type: 'test'
+  ...
+# Subtest: browser reallocation preserves physical billet data and updates both order counters
+ok 43 - browser reallocation preserves physical billet data and updates both order counters
+  ---
+  duration_ms: 3103.6029
+  type: 'test'
+  ...
+# Subtest: a committed SQL allocation with a lost confirmation requires review and never silently posts twice
+ok 44 - a committed SQL allocation with a lost confirmation requires review and never silently posts twice
+  ---
+  duration_ms: 2967.9917
+  type: 'test'
+  ...
+# Subtest: schema contract distinguishes advertised RPCs and absent columns using zero-row reads
+ok 45 - schema contract distinguishes advertised RPCs and absent columns using zero-row reads
+  ---
+  duration_ms: 2.4439
+  type: 'test'
+  ...
+# Subtest: unavailable schema or credentials cannot become a verified empty contract
+ok 46 - unavailable schema or credentials cannot become a verified empty contract
+  ---
+  duration_ms: 1.6626
+  type: 'test'
+  ...
+# Subtest: publishable keys use apikey and legacy JWT keys also use bearer authorization
+ok 47 - publishable keys use apikey and legacy JWT keys also use bearer authorization
+  ---
+  duration_ms: 0.9043
+  type: 'test'
+  ...
+# Subtest: successful HTTP responses require valid empty column-query data
+ok 48 - successful HTTP responses require valid empty column-query data
+  ---
+  duration_ms: 1.5777
+  type: 'test'
+  ...
+# Subtest: credential-bearing and non-HTTP local URLs fail before any request
+ok 49 - credential-bearing and non-HTTP local URLs fail before any request
+  ---
+  duration_ms: 0.6878
+  type: 'test'
+  ...
+# Subtest: malformed OpenAPI paths, transport failures and unreadable JSON stay unavailable
+ok 50 - malformed OpenAPI paths, transport failures and unreadable JSON stay unavailable
+  ---
+  duration_ms: 2.0041
+  type: 'test'
+  ...
+# Subtest: missing exposure differs from permission and server failures
+ok 51 - missing exposure differs from permission and server failures
+  ---
+  duration_ms: 2.6821
+  type: 'test'
+  ...
+# Subtest: each loopback HTTP URL uses only schema and zero-row table requests
+ok 52 - each loopback HTTP URL uses only schema and zero-row table requests
+  ---
+  duration_ms: 0.9041
+  type: 'test'
+  ...
+# Subtest: invalid RPC entries cannot verify function exposure
+ok 53 - invalid RPC entries cannot verify function exposure
+  ---
+  duration_ms: 1.0641
+  type: 'test'
+  ...
+# Subtest: the actual hosted CLI sends only GET schema and zero-row probes after explicit opt-in
+ok 54 - the actual hosted CLI sends only GET schema and zero-row probes after explicit opt-in
+  ---
+  duration_ms: 560.7475
+  type: 'test'
+  ...
+# Subtest: the actual hosted CLI never follows redirects or prints remote error details
+ok 55 - the actual hosted CLI never follows redirects or prints remote error details
+  ---
+  duration_ms: 384.0774
+  type: 'test'
+  ...
+1..55
+# tests 55
+# suites 0
+# pass 53
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20720.7133

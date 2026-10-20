@@ -15,6 +15,7 @@ export const REQUIRED_API_FUNCTIONS = [
   "get_dispatch_reservation_ledger_page",
   "get_finished_production_readiness",
   "get_finishing_workload",
+  "get_manual_billet_allocation_options",
   "get_invoice_source_options",
   "get_dealer_quote_stock_availability",
   "issue_dispatch_return_credit_note_atomic",

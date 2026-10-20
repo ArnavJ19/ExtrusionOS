@@ -1,0 +1,150 @@
+TAP version 13
+# Subtest: the lookup does not offer an order that the actual writer rejects for temper
+not ok 1 - the lookup does not offer an order that the actual writer rejects for temper
+  ---
+  duration_ms: 3654.4741
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\tests\\billet-allocation-options-browser.test.mjs:12:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/arnav/.codex/worktrees/bugs-mega-next-issue/ExtrusionOS/tests/billet-allocation-options-browser.test.mjs:15:50)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: normalized alloy and temper accepted by the writer remain discoverable
+not ok 2 - normalized alloy and temper accepted by the writer remain discoverable
+  ---
+  duration_ms: 5206.0481
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\tests\\billet-allocation-options-browser.test.mjs:19:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expect(locator).toBeVisible() failed
+    
+    Locator: getByPlaceholder('Select order')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+    
+    Call log:
+      - Expect "to.be.visible" with timeout 5000ms
+      - waiting for getByPlaceholder('Select order')
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    captureRawStack (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\node_modules\playwright-core\lib\coreBundle.js:3172:17)
+    callMatcherAsStep (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\node_modules\playwright\lib\matchers\expect.js:12877:57)
+    Object.toBeVisible (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\node_modules\playwright\lib\matchers\expect.js:12867:23)
+    TestContext.<anonymous> (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\tests\billet-allocation-options-browser.test.mjs:22:69)
+  ...
+# Subtest: delivered and payment-pending orders do not appear as compatible open orders
+not ok 3 - delivered and payment-pending orders do not appear as compatible open orders
+  ---
+  duration_ms: 232.1193
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\tests\\billet-allocation-options-browser.test.mjs:27:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    delivered
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/arnav/.codex/worktrees/bugs-mega-next-issue/ExtrusionOS/tests/billet-allocation-options-browser.test.mjs:30:52)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: fully covered dispatched profiles do not remain allocation choices
+not ok 4 - fully covered dispatched profiles do not remain allocation choices
+  ---
+  duration_ms: 236.3957
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\tests\\billet-allocation-options-browser.test.mjs:34:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/arnav/.codex/worktrees/bugs-mega-next-issue/ExtrusionOS/tests/billet-allocation-options-browser.test.mjs:39:92)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: two matching requirements produce one distinct choice per order
+not ok 5 - two matching requirements produce one distinct choice per order
+  ---
+  duration_ms: 281.5403
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\tests\\billet-allocation-options-browser.test.mjs:42:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    2 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 2
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/arnav/.codex/worktrees/bugs-mega-next-issue/ExtrusionOS/tests/billet-allocation-options-browser.test.mjs:46:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a small REST row cap cannot hide a later compatible order
+not ok 6 - a small REST row cap cannot hide a later compatible order
+  ---
+  duration_ms: 5261.1685
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\tests\\billet-allocation-options-browser.test.mjs:49:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expect(locator).toBeVisible() failed
+    
+    Locator: getByRole('button', { name: /^O-2026-0002 -/ })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+    
+    Call log:
+      - Expect "to.be.visible" with timeout 5000ms
+      - waiting for getByRole('button', { name: /^O-2026-0002 -/ })
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    captureRawStack (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\node_modules\playwright-core\lib\coreBundle.js:3172:17)
+    callMatcherAsStep (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\node_modules\playwright\lib\matchers\expect.js:12877:57)
+    Object.toBeVisible (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\node_modules\playwright\lib\matchers\expect.js:12867:23)
+    TestContext.<anonymous> (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\tests\billet-allocation-options-browser.test.mjs:54:87)
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 0
+# fail 6
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 16003.6086

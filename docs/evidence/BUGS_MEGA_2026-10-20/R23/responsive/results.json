@@ -1,0 +1,114 @@
+[
+  {
+    "width": 1440,
+    "state": "ready",
+    "scrollWidth": 1440,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\1440-ready.png",
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "state": "recorded",
+    "scrollWidth": 1440,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\1440-recorded.png",
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "state": "unavailable",
+    "scrollWidth": 1440,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\1440-unavailable.png",
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "state": "unconfirmed",
+    "scrollWidth": 1440,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\1440-unconfirmed.png",
+    "pageErrors": []
+  },
+  {
+    "width": 820,
+    "state": "ready",
+    "scrollWidth": 820,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\820-ready.png",
+    "pageErrors": []
+  },
+  {
+    "width": 820,
+    "state": "recorded",
+    "scrollWidth": 820,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\820-recorded.png",
+    "pageErrors": []
+  },
+  {
+    "width": 820,
+    "state": "unavailable",
+    "scrollWidth": 820,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\820-unavailable.png",
+    "pageErrors": []
+  },
+  {
+    "width": 820,
+    "state": "unconfirmed",
+    "scrollWidth": 820,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\820-unconfirmed.png",
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "state": "ready",
+    "scrollWidth": 390,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\390-ready.png",
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "state": "recorded",
+    "scrollWidth": 390,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\390-recorded.png",
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "state": "unavailable",
+    "scrollWidth": 390,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\390-unavailable.png",
+    "pageErrors": []
+  },
+  {
+    "width": 390,
+    "state": "unconfirmed",
+    "scrollWidth": 390,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\390-unconfirmed.png",
+    "pageErrors": []
+  },
+  {
+    "width": 320,
+    "state": "ready",
+    "scrollWidth": 320,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\320-ready.png",
+    "pageErrors": []
+  },
+  {
+    "width": 320,
+    "state": "recorded",
+    "scrollWidth": 320,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\320-recorded.png",
+    "pageErrors": []
+  },
+  {
+    "width": 320,
+    "state": "unavailable",
+    "scrollWidth": 320,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\320-unavailable.png",
+    "pageErrors": []
+  },
+  {
+    "width": 320,
+    "state": "unconfirmed",
+    "scrollWidth": 320,
+    "screenshot": "C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\test-results\\billet-allocation-panel\\responsive\\320-unconfirmed.png",
+    "pageErrors": []
+  }
+]

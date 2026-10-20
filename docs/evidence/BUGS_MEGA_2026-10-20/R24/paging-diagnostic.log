@@ -1,0 +1,132 @@
+TAP version 13
+# Subtest: ten-row pages reach later orders and clear the prior order selection
+not ok 1 - ten-row pages reach later orders and clear the prior order selection
+  ---
+  duration_ms: 6166.2341
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\tests\\billet-allocation-options-browser.test.mjs:57:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /Page 2 of 2 \/ 13 compatible orders/. Input:
+    
+    'Manual Order Allocation\n' +
+      '\n' +
+      'Billet\n' +
+      '\n' +
+      'B-202\n' +
+      '\n' +
+      'Alloy\n' +
+      '\n' +
+      '6063\n' +
+      '\n' +
+      'Temper / Diameter\n' +
+      '\n' +
+      'T6 / 6 in\n' +
+      '\n' +
+      'This billet is allocated. View allocated order.\n' +
+      '\n' +
+      'Find compatible ordersCompatible open orders\n' +
+      'Reallocate Billet\n' +
+      'Page 2 of 2 / 12 compatible ordersPrevious ordersNext orders\n' +
+      'Refresh allocation options'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    Manual Order Allocation
+    
+    Billet
+    
+    B-202
+    
+    Alloy
+    
+    6063
+    
+    Temper / Diameter
+    
+    T6 / 6 in
+    
+    This billet is allocated. View allocated order.
+    
+    Find compatible ordersCompatible open orders
+    Reallocate Billet
+    Page 2 of 2 / 12 compatible ordersPrevious ordersNext orders
+    Refresh allocation options
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/arnav/.codex/worktrees/bugs-mega-next-issue/ExtrusionOS/tests/billet-allocation-options-browser.test.mjs:62:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: global search reaches orders outside the first page and treats percent literally
+not ok 2 - global search reaches orders outside the first page and treats percent literally
+  ---
+  duration_ms: 1592.9708
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\tests\\billet-allocation-options-browser.test.mjs:69:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /Page 1 of 2 \/ 13 compatible orders/. Input:
+    
+    'Manual Order Allocation\n' +
+      '\n' +
+      'Billet\n' +
+      '\n' +
+      'B-202\n' +
+      '\n' +
+      'Alloy\n' +
+      '\n' +
+      '6063\n' +
+      '\n' +
+      'Temper / Diameter\n' +
+      '\n' +
+      'T6 / 6 in\n' +
+      '\n' +
+      'This billet is allocated. View allocated order.\n' +
+      '\n' +
+      'Find compatible ordersCompatible open orders\n' +
+      'Reallocate Billet\n' +
+      'Page 1 of 2 / 12 compatible ordersPrevious ordersNext orders\n' +
+      'Refresh allocation options'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual: |-
+    Manual Order Allocation
+    
+    Billet
+    
+    B-202
+    
+    Alloy
+    
+    6063
+    
+    Temper / Diameter
+    
+    T6 / 6 in
+    
+    This billet is allocated. View allocated order.
+    
+    Find compatible ordersCompatible open orders
+    Reallocate Billet
+    Page 1 of 2 / 12 compatible ordersPrevious ordersNext orders
+    Refresh allocation options
+  operator: 'match'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/arnav/.codex/worktrees/bugs-mega-next-issue/ExtrusionOS/tests/billet-allocation-options-browser.test.mjs:79:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8723.9511

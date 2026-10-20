@@ -1,0 +1,262 @@
+TAP version 13
+# Subtest: the lookup does not offer an order that the actual writer rejects for temper
+ok 1 - the lookup does not offer an order that the actual writer rejects for temper
+  ---
+  duration_ms: 4451.05
+  type: 'test'
+  ...
+# Subtest: normalized alloy and temper accepted by the writer remain discoverable
+ok 2 - normalized alloy and temper accepted by the writer remain discoverable
+  ---
+  duration_ms: 371.0878
+  type: 'test'
+  ...
+# Subtest: delivered and payment-pending orders do not appear as compatible open orders
+ok 3 - delivered and payment-pending orders do not appear as compatible open orders
+  ---
+  duration_ms: 467.0623
+  type: 'test'
+  ...
+# Subtest: fully covered dispatched profiles do not remain allocation choices
+ok 4 - fully covered dispatched profiles do not remain allocation choices
+  ---
+  duration_ms: 226.6533
+  type: 'test'
+  ...
+# Subtest: two matching requirements produce one distinct choice per order
+ok 5 - two matching requirements produce one distinct choice per order
+  ---
+  duration_ms: 225.3913
+  type: 'test'
+  ...
+# Subtest: a small REST row cap cannot hide a later compatible order
+ok 6 - a small REST row cap cannot hide a later compatible order
+  ---
+  duration_ms: 252.3883
+  type: 'test'
+  ...
+# Subtest: allocation panel exposes initial loading and a recoverable billet read error
+ok 7 - allocation panel exposes initial loading and a recoverable billet read error
+  ---
+  duration_ms: 751.8892
+  type: 'test'
+  ...
+# Subtest: successful allocation refreshes and leaves the panel usable
+ok 8 - successful allocation refreshes and leaves the panel usable
+  ---
+  duration_ms: 516.6211
+  type: 'test'
+  ...
+# Subtest: a failed post-save refresh preserves the confirmed allocation and can be retried
+ok 9 - a failed post-save refresh preserves the confirmed allocation and can be retried
+  ---
+  duration_ms: 311.1264
+  type: 'test'
+  ...
+# Subtest: requirement errors stay unavailable instead of becoming an empty order list
+ok 10 - requirement errors stay unavailable instead of becoming an empty order list
+  ---
+  duration_ms: 135.1391
+  type: 'test'
+  ...
+# Subtest: an older billet response cannot overwrite the new billet
+ok 11 - an older billet response cannot overwrite the new billet
+  ---
+  duration_ms: 113.9728
+  type: 'test'
+  ...
+# Subtest: an older requirement response cannot replace current order options
+ok 12 - an older requirement response cannot replace current order options
+  ---
+  duration_ms: 210.5087
+  type: 'test'
+  ...
+# Subtest: changing company for the same billet clears old choices and reloads in the new scope
+ok 13 - changing company for the same billet clears old choices and reloads in the new scope
+  ---
+  duration_ms: 186.1987
+  type: 'test'
+  ...
+# Subtest: changing billet discards the prior order selection
+ok 14 - changing billet discards the prior order selection
+  ---
+  duration_ms: 185.8571
+  type: 'test'
+  ...
+# Subtest: a rejected action reports uncertainty, clears saving and requires a fresh read
+ok 15 - a rejected action reports uncertainty, clears saving and requires a fresh read
+  ---
+  duration_ms: 399.1574
+  type: 'test'
+  ...
+# Subtest: a failed action cannot be resubmitted from stale readiness
+ok 16 - a failed action cannot be resubmitted from stale readiness
+  ---
+  duration_ms: 246.2678
+  type: 'test'
+  ...
+# Subtest: a malformed success response cannot report a confirmed allocation
+ok 17 - a malformed success response cannot report a confirmed allocation
+  ---
+  duration_ms: 266.1172
+  type: 'test'
+  ...
+# Subtest: same-event duplicate clicks send one write and pending controls remain disabled
+ok 18 - same-event duplicate clicks send one write and pending controls remain disabled
+  ---
+  duration_ms: 238.2981
+  type: 'test'
+  ...
+# Subtest: a late save after switching billets cannot clear or refresh the new panel
+ok 19 - a late save after switching billets cannot clear or refresh the new panel
+  ---
+  duration_ms: 437.8118
+  type: 'test'
+  ...
+# Subtest: unmounted load and save completions are ignored
+ok 20 - unmounted load and save completions are ignored
+  ---
+  duration_ms: 336.833
+  type: 'test'
+  ...
+# Subtest: a rejected read offers retry without an unhandled rejection
+ok 21 - a rejected read offers retry without an unhandled rejection
+  ---
+  duration_ms: 135.9354
+  type: 'test'
+  ...
+# Subtest: invalid missing billet response cannot expose allocation controls
+ok 22 - invalid missing billet response cannot expose allocation controls
+  ---
+  duration_ms: 112.0577
+  type: 'test'
+  ...
+# Subtest: invalid another billet response cannot expose allocation controls
+ok 23 - invalid another billet response cannot expose allocation controls
+  ---
+  duration_ms: 117.422
+  type: 'test'
+  ...
+# Subtest: invalid another company response cannot expose allocation controls
+ok 24 - invalid another company response cannot expose allocation controls
+  ---
+  duration_ms: 110.9763
+  type: 'test'
+  ...
+# Subtest: invalid invalid allocated order response cannot expose allocation controls
+ok 25 - invalid invalid allocated order response cannot expose allocation controls
+  ---
+  duration_ms: 109.0348
+  type: 'test'
+  ...
+# Subtest: a missing requirement payload is unavailable instead of verified empty
+ok 26 - a missing requirement payload is unavailable instead of verified empty
+  ---
+  duration_ms: 113.016
+  type: 'test'
+  ...
+# Subtest: non-allocatable billets retain their status and do not query requirements
+ok 27 - non-allocatable billets retain their status and do not query requirements
+  ---
+  duration_ms: 245.4442
+  type: 'test'
+  ...
+# Subtest: the browser's allocation reaches the actual action and SQL, then refreshes persisted quantities
+not ok 28 - the browser's allocation reaches the actual action and SQL, then refreshes persisted quantities
+  ---
+  duration_ms: 6094.744
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\tests\\billet-allocation-panel.test.mjs:162:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.click: Timeout 2000ms exceeded.
+    Call log:
+    [2m  - waiting for getByPlaceholder('Select order')[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    Object.selectOrder (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\scripts\lib\billet-allocation-browser-fixture.mjs:121:89)
+    TestContext.<anonymous> (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\tests\billet-allocation-panel.test.mjs:171:90)
+  ...
+# Subtest: an obsolete requirement failure cannot replace a newer ready panel
+ok 29 - an obsolete requirement failure cannot replace a newer ready panel
+  ---
+  duration_ms: 166.3716
+  type: 'test'
+  ...
+# Subtest: manual refresh clears selection and disables writes until the new read completes
+ok 30 - manual refresh clears selection and disables writes until the new read completes
+  ---
+  duration_ms: 337.2062
+  type: 'test'
+  ...
+# Subtest: a changed user or role resets same-company readiness
+ok 31 - a changed user or role resets same-company readiness
+  ---
+  duration_ms: 497.1775
+  type: 'test'
+  ...
+# Subtest: invalid requirement null row cannot become an allocation option
+ok 32 - invalid requirement null row cannot become an allocation option
+  ---
+  duration_ms: 102.8431
+  type: 'test'
+  ...
+# Subtest: invalid requirement foreign company cannot become an allocation option
+ok 33 - invalid requirement foreign company cannot become an allocation option
+  ---
+  duration_ms: 94.8794
+  type: 'test'
+  ...
+# Subtest: invalid requirement invalid order cannot become an allocation option
+ok 34 - invalid requirement invalid order cannot become an allocation option
+  ---
+  duration_ms: 93.6845
+  type: 'test'
+  ...
+# Subtest: browser reallocation preserves physical billet data and updates both order counters
+not ok 35 - browser reallocation preserves physical billet data and updates both order counters
+  ---
+  duration_ms: 5233.4575
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\tests\\billet-allocation-panel.test.mjs:216:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.click: Timeout 2000ms exceeded.
+    Call log:
+    [2m  - waiting for getByPlaceholder('Select order')[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    Object.selectOrder (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\scripts\lib\billet-allocation-browser-fixture.mjs:121:89)
+    TestContext.<anonymous> (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\tests\billet-allocation-panel.test.mjs:225:93)
+  ...
+# Subtest: a committed SQL allocation with a lost confirmation requires review and never silently posts twice
+not ok 36 - a committed SQL allocation with a lost confirmation requires review and never silently posts twice
+  ---
+  duration_ms: 5096.0384
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\worktrees\\bugs-mega-next-issue\\ExtrusionOS\\tests\\billet-allocation-panel.test.mjs:241:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.click: Timeout 2000ms exceeded.
+    Call log:
+    [2m  - waiting for getByPlaceholder('Select order')[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    Object.selectOrder (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\scripts\lib\billet-allocation-browser-fixture.mjs:121:89)
+    TestContext.<anonymous> (C:\Users\arnav\.codex\worktrees\bugs-mega-next-issue\ExtrusionOS\tests\billet-allocation-panel.test.mjs:249:105)
+  ...
+1..36
+# tests 36
+# suites 0
+# pass 33
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 23799.4922

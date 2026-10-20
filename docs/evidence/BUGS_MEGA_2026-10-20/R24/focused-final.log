@@ -1,0 +1,641 @@
+TAP version 13
+# Subtest: the lookup does not offer an order that the actual writer rejects for temper
+ok 1 - the lookup does not offer an order that the actual writer rejects for temper
+  ---
+  duration_ms: 5279.6485
+  type: 'test'
+  ...
+# Subtest: normalized alloy and temper accepted by the writer remain discoverable
+ok 2 - normalized alloy and temper accepted by the writer remain discoverable
+  ---
+  duration_ms: 412.3964
+  type: 'test'
+  ...
+# Subtest: delivered and payment-pending orders do not appear as compatible open orders
+ok 3 - delivered and payment-pending orders do not appear as compatible open orders
+  ---
+  duration_ms: 615.9605
+  type: 'test'
+  ...
+# Subtest: fully covered dispatched profiles do not remain allocation choices
+ok 4 - fully covered dispatched profiles do not remain allocation choices
+  ---
+  duration_ms: 342.6117
+  type: 'test'
+  ...
+# Subtest: two matching requirements produce one distinct choice per order
+ok 5 - two matching requirements produce one distinct choice per order
+  ---
+  duration_ms: 475.2854
+  type: 'test'
+  ...
+# Subtest: a small REST row cap cannot hide a later compatible order
+ok 6 - a small REST row cap cannot hide a later compatible order
+  ---
+  duration_ms: 357.3165
+  type: 'test'
+  ...
+# Subtest: ten-row pages reach later orders and clear the prior order selection
+ok 7 - ten-row pages reach later orders and clear the prior order selection
+  ---
+  duration_ms: 3054.9694
+  type: 'test'
+  ...
+# Subtest: global search reaches orders outside the first page and treats percent literally
+ok 8 - global search reaches orders outside the first page and treats percent literally
+  ---
+  duration_ms: 2972.4731
+  type: 'test'
+  ...
+# Subtest: a stale search response cannot replace current options
+ok 9 - a stale search response cannot replace current options
+  ---
+  duration_ms: 498.0882
+  type: 'test'
+  ...
+# Subtest: a stale search failure cannot replace current options
+ok 10 - a stale search failure cannot replace current options
+  ---
+  duration_ms: 467.0537
+  type: 'test'
+  ...
+# Subtest: a missing new RPC is explicitly unavailable and never falls back to capped requirements
+ok 11 - a missing new RPC is explicitly unavailable and never falls back to capped requirements
+  ---
+  duration_ms: 129.5329
+  type: 'test'
+  ...
+# Subtest: the read snapshot replaces a billet issued between the header and options requests
+ok 12 - the read snapshot replaces a billet issued between the header and options requests
+  ---
+  duration_ms: 248.1154
+  type: 'test'
+  ...
+# Subtest: a role outside manual allocation cannot retain a mounted mutation panel
+ok 13 - a role outside manual allocation cannot retain a mounted mutation panel
+  ---
+  duration_ms: 279.71
+  type: 'test'
+  ...
+# Subtest: allocation reader preserves complete validated response fields
+ok 14 - allocation reader preserves complete validated response fields
+  ---
+  duration_ms: 1.7606
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects foreign company
+ok 15 - allocation reader rejects foreign company
+  ---
+  duration_ms: 0.7696
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects foreign billet
+ok 16 - allocation reader rejects foreign billet
+  ---
+  duration_ms: 0.2289
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects foreign billet company
+ok 17 - allocation reader rejects foreign billet company
+  ---
+  duration_ms: 0.222
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects stale search
+ok 18 - allocation reader rejects stale search
+  ---
+  duration_ms: 0.3912
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects wrong page size
+ok 19 - allocation reader rejects wrong page size
+  ---
+  duration_ms: 0.155
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects missing page
+ok 20 - allocation reader rejects missing page
+  ---
+  duration_ms: 0.257
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects string count
+ok 21 - allocation reader rejects string count
+  ---
+  duration_ms: 0.1995
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects truncated rows
+ok 22 - allocation reader rejects truncated rows
+  ---
+  duration_ms: 0.4601
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects non-array rows
+ok 23 - allocation reader rejects non-array rows
+  ---
+  duration_ms: 0.4979
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects foreign option
+ok 24 - allocation reader rejects foreign option
+  ---
+  duration_ms: 0.4365
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects invalid order id
+ok 25 - allocation reader rejects invalid order id
+  ---
+  duration_ms: 0.2453
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects terminal order
+ok 26 - allocation reader rejects terminal order
+  ---
+  duration_ms: 0.1337
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects missing order label
+ok 27 - allocation reader rejects missing order label
+  ---
+  duration_ms: 0.1001
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects fractional requirement count
+ok 28 - allocation reader rejects fractional requirement count
+  ---
+  duration_ms: 0.1103
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects negative allocated count
+ok 29 - allocation reader rejects negative allocated count
+  ---
+  duration_ms: 0.1152
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects inconsistent shortage
+ok 30 - allocation reader rejects inconsistent shortage
+  ---
+  duration_ms: 0.0924
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects fully allocated option
+ok 31 - allocation reader rejects fully allocated option
+  ---
+  duration_ms: 0.1074
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects duplicate orders
+ok 32 - allocation reader rejects duplicate orders
+  ---
+  duration_ms: 0.1589
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects linked production
+ok 33 - allocation reader rejects linked production
+  ---
+  duration_ms: 0.1138
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects non-finite diameter
+ok 34 - allocation reader rejects non-finite diameter
+  ---
+  duration_ms: 0.118
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects invalid current order
+ok 35 - allocation reader rejects invalid current order
+  ---
+  duration_ms: 0.1185
+  type: 'test'
+  ...
+# Subtest: allocation reader rejects unsafe numeric count
+ok 36 - allocation reader rejects unsafe numeric count
+  ---
+  duration_ms: 0.1061
+  type: 'test'
+  ...
+# Subtest: verified empty and clamped pages stay distinct from unavailable payloads
+ok 37 - verified empty and clamped pages stay distinct from unavailable payloads
+  ---
+  duration_ms: 0.2127
+  type: 'test'
+  ...
+# Subtest: manual allocation options preserve writer eligibility and complete read boundaries
+    # Subtest: reads distinct compatible orders without changing stock, requirements or notices
+    ok 1 - reads distinct compatible orders without changing stock, requirements or notices
+      ---
+      duration_ms: 307.291
+      type: 'test'
+      ...
+    # Subtest: same-material profiles are grouped once per order with exact summed counts
+    ok 2 - same-material profiles are grouped once per order with exact summed counts
+      ---
+      duration_ms: 109.5805
+      type: 'test'
+      ...
+    # Subtest: owner can read the exact scoped allocation projection
+    ok 3 - owner can read the exact scoped allocation projection
+      ---
+      duration_ms: 106.0973
+      type: 'test'
+      ...
+    # Subtest: admin can read the exact scoped allocation projection
+    ok 4 - admin can read the exact scoped allocation projection
+      ---
+      duration_ms: 83.7218
+      type: 'test'
+      ...
+    # Subtest: factory_manager can read the exact scoped allocation projection
+    ok 5 - factory_manager can read the exact scoped allocation projection
+      ---
+      duration_ms: 89.9583
+      type: 'test'
+      ...
+    # Subtest: production_manager can read the exact scoped allocation projection
+    ok 6 - production_manager can read the exact scoped allocation projection
+      ---
+      duration_ms: 96.5807
+      type: 'test'
+      ...
+    # Subtest: production can read the exact scoped allocation projection
+    ok 7 - production can read the exact scoped allocation projection
+      ---
+      duration_ms: 86.8843
+      type: 'test'
+      ...
+    # Subtest: sales cannot read allocation choices
+    ok 8 - sales cannot read allocation choices
+      ---
+      duration_ms: 86.3588
+      type: 'test'
+      ...
+    # Subtest: accounts cannot read allocation choices
+    ok 9 - accounts cannot read allocation choices
+      ---
+      duration_ms: 94.1762
+      type: 'test'
+      ...
+    # Subtest: quality cannot read allocation choices
+    ok 10 - quality cannot read allocation choices
+      ---
+      duration_ms: 108.2662
+      type: 'test'
+      ...
+    # Subtest: inventory_manager cannot read allocation choices
+    ok 11 - inventory_manager cannot read allocation choices
+      ---
+      duration_ms: 95.3223
+      type: 'test'
+      ...
+    # Subtest: dispatch cannot read allocation choices
+    ok 12 - dispatch cannot read allocation choices
+      ---
+      duration_ms: 91.0593
+      type: 'test'
+      ...
+    # Subtest: viewer cannot read allocation choices
+    ok 13 - viewer cannot read allocation choices
+      ---
+      duration_ms: 88.029
+      type: 'test'
+      ...
+    # Subtest: dealer_admin cannot read allocation choices
+    ok 14 - dealer_admin cannot read allocation choices
+      ---
+      duration_ms: 87.6231
+      type: 'test'
+      ...
+    # Subtest: missing role cannot read allocation choices
+    ok 15 - missing role cannot read allocation choices
+      ---
+      duration_ms: 78.1377
+      type: 'test'
+      ...
+    # Subtest: inactive and missing identities cannot read the projection
+    ok 16 - inactive and missing identities cannot read the projection
+      ---
+      duration_ms: 102.7713
+      type: 'test'
+      ...
+    # Subtest: second-company orders and foreign or missing billet identities never leak
+    ok 17 - second-company orders and foreign or missing billet identities never leak
+      ---
+      duration_ms: 136.3541
+      type: 'test'
+      ...
+    # Subtest: incompatible temper cannot yield a choice
+    ok 18 - incompatible temper cannot yield a choice
+      ---
+      duration_ms: 75.0178
+      type: 'test'
+      ...
+    # Subtest: incompatible alloy cannot yield a choice
+    ok 19 - incompatible alloy cannot yield a choice
+      ---
+      duration_ms: 100.259
+      type: 'test'
+      ...
+    # Subtest: incompatible diameter cannot yield a choice
+    ok 20 - incompatible diameter cannot yield a choice
+      ---
+      duration_ms: 85.3898
+      type: 'test'
+      ...
+    # Subtest: normalization agrees with allocation instead of using an ILIKE wildcard
+    ok 21 - normalization agrees with allocation instead of using an ILIKE wildcard
+      ---
+      duration_ms: 198.7703
+      type: 'test'
+      ...
+    # Subtest: closed orders are excluded even with retained positive requirements
+    ok 22 - closed orders are excluded even with retained positive requirements
+      ---
+      duration_ms: 116.4033
+      type: 'test'
+      ...
+    # Subtest: cancelled orders are excluded even with retained positive requirements
+    ok 23 - cancelled orders are excluded even with retained positive requirements
+      ---
+      duration_ms: 96.9143
+      type: 'test'
+      ...
+    # Subtest: delivered orders are excluded even with retained positive requirements
+    ok 24 - delivered orders are excluded even with retained positive requirements
+      ---
+      duration_ms: 86.9359
+      type: 'test'
+      ...
+    # Subtest: payment_pending orders are excluded even with retained positive requirements
+    ok 25 - payment_pending orders are excluded even with retained positive requirements
+      ---
+      duration_ms: 97.1122
+      type: 'test'
+      ...
+    # Subtest: dispatched profile eligibility is shared with the actual allocation authority
+    ok 26 - dispatched profile eligibility is shared with the actual allocation authority
+      ---
+      duration_ms: 270.9487
+      type: 'test'
+      ...
+    # Subtest: literal search and case folding do not expand percent, underscore or backslash
+    ok 27 - literal search and case folding do not expand percent, underscore or backslash
+      ---
+      duration_ms: 103.4933
+      type: 'test'
+      ...
+    # Subtest: invalid page and oversized query input fail before returning rows
+    ok 28 - invalid page and oversized query input fail before returning rows
+      ---
+      duration_ms: 112.4587
+      type: 'test'
+      ...
+    # Subtest: stale low allocated counter is unavailable without silently repairing history
+    ok 29 - stale low allocated counter is unavailable without silently repairing history
+      ---
+      duration_ms: 137.8282
+      type: 'test'
+      ...
+    # Subtest: stale high allocated counter is unavailable without silently repairing history
+    ok 30 - stale high allocated counter is unavailable without silently repairing history
+      ---
+      duration_ms: 127.3874
+      type: 'test'
+      ...
+    # Subtest: unlinked committed legacy stock requires review without read-time repair
+    ok 31 - unlinked committed legacy stock requires review without read-time repair
+      ---
+      duration_ms: 91.7567
+      type: 'test'
+      ...
+    # Subtest: a broken existing allocation cannot be advertised as reallocatable
+    ok 32 - a broken existing allocation cannot be advertised as reallocatable
+      ---
+      duration_ms: 81.7382
+      type: 'test'
+      ...
+    # Subtest: issued billets return no manual choices
+    ok 33 - issued billets return no manual choices
+      ---
+      duration_ms: 84.7048
+      type: 'test'
+      ...
+    # Subtest: consumed billets return no manual choices
+    ok 34 - consumed billets return no manual choices
+      ---
+      duration_ms: 72.2783
+      type: 'test'
+      ...
+    # Subtest: scrap billets return no manual choices
+    ok 35 - scrap billets return no manual choices
+      ---
+      duration_ms: 91.8821
+      type: 'test'
+      ...
+    # Subtest: the reader's ACL, stability and private helper boundary remain narrow
+    ok 36 - the reader's ACL, stability and private helper boundary remain narrow
+      ---
+      duration_ms: 12.5787
+      type: 'test'
+      ...
+    # Subtest: more than 1,000 valid orders have complete stable ten-row pages and a clamped last page
+    ok 37 - more than 1,000 valid orders have complete stable ten-row pages and a clamped last page
+      ---
+      duration_ms: 46754.7247
+      type: 'test'
+      ...
+    1..37
+ok 38 - manual allocation options preserve writer eligibility and complete read boundaries
+  ---
+  duration_ms: 53683.3646
+  type: 'test'
+  ...
+# Subtest: allocation panel exposes initial loading and a recoverable billet read error
+ok 39 - allocation panel exposes initial loading and a recoverable billet read error
+  ---
+  duration_ms: 893.7674
+  type: 'test'
+  ...
+# Subtest: successful allocation refreshes and leaves the panel usable
+ok 40 - successful allocation refreshes and leaves the panel usable
+  ---
+  duration_ms: 306.0818
+  type: 'test'
+  ...
+# Subtest: a failed post-save refresh preserves the confirmed allocation and can be retried
+ok 41 - a failed post-save refresh preserves the confirmed allocation and can be retried
+  ---
+  duration_ms: 347.5761
+  type: 'test'
+  ...
+# Subtest: requirement errors stay unavailable instead of becoming an empty order list
+ok 42 - requirement errors stay unavailable instead of becoming an empty order list
+  ---
+  duration_ms: 154.1976
+  type: 'test'
+  ...
+# Subtest: an older billet response cannot overwrite the new billet
+ok 43 - an older billet response cannot overwrite the new billet
+  ---
+  duration_ms: 119.9274
+  type: 'test'
+  ...
+# Subtest: an older requirement response cannot replace current order options
+ok 44 - an older requirement response cannot replace current order options
+  ---
+  duration_ms: 286.1815
+  type: 'test'
+  ...
+# Subtest: changing company for the same billet clears old choices and reloads in the new scope
+ok 45 - changing company for the same billet clears old choices and reloads in the new scope
+  ---
+  duration_ms: 254.8522
+  type: 'test'
+  ...
+# Subtest: changing billet discards the prior order selection
+ok 46 - changing billet discards the prior order selection
+  ---
+  duration_ms: 256.782
+  type: 'test'
+  ...
+# Subtest: a rejected action reports uncertainty, clears saving and requires a fresh read
+ok 47 - a rejected action reports uncertainty, clears saving and requires a fresh read
+  ---
+  duration_ms: 454.9437
+  type: 'test'
+  ...
+# Subtest: a failed action cannot be resubmitted from stale readiness
+ok 48 - a failed action cannot be resubmitted from stale readiness
+  ---
+  duration_ms: 298.029
+  type: 'test'
+  ...
+# Subtest: a malformed success response cannot report a confirmed allocation
+ok 49 - a malformed success response cannot report a confirmed allocation
+  ---
+  duration_ms: 312.2525
+  type: 'test'
+  ...
+# Subtest: same-event duplicate clicks send one write and pending controls remain disabled
+ok 50 - same-event duplicate clicks send one write and pending controls remain disabled
+  ---
+  duration_ms: 297.133
+  type: 'test'
+  ...
+# Subtest: a late save after switching billets cannot clear or refresh the new panel
+ok 51 - a late save after switching billets cannot clear or refresh the new panel
+  ---
+  duration_ms: 451.7096
+  type: 'test'
+  ...
+# Subtest: unmounted load and save completions are ignored
+ok 52 - unmounted load and save completions are ignored
+  ---
+  duration_ms: 439.9901
+  type: 'test'
+  ...
+# Subtest: a rejected read offers retry without an unhandled rejection
+ok 53 - a rejected read offers retry without an unhandled rejection
+  ---
+  duration_ms: 139.86
+  type: 'test'
+  ...
+# Subtest: invalid missing billet response cannot expose allocation controls
+ok 54 - invalid missing billet response cannot expose allocation controls
+  ---
+  duration_ms: 114.5526
+  type: 'test'
+  ...
+# Subtest: invalid another billet response cannot expose allocation controls
+ok 55 - invalid another billet response cannot expose allocation controls
+  ---
+  duration_ms: 115.9557
+  type: 'test'
+  ...
+# Subtest: invalid another company response cannot expose allocation controls
+ok 56 - invalid another company response cannot expose allocation controls
+  ---
+  duration_ms: 133.6109
+  type: 'test'
+  ...
+# Subtest: invalid invalid allocated order response cannot expose allocation controls
+ok 57 - invalid invalid allocated order response cannot expose allocation controls
+  ---
+  duration_ms: 113.2388
+  type: 'test'
+  ...
+# Subtest: a missing requirement payload is unavailable instead of verified empty
+ok 58 - a missing requirement payload is unavailable instead of verified empty
+  ---
+  duration_ms: 123.7136
+  type: 'test'
+  ...
+# Subtest: non-allocatable billets retain their status and do not query requirements
+ok 59 - non-allocatable billets retain their status and do not query requirements
+  ---
+  duration_ms: 317.6984
+  type: 'test'
+  ...
+# Subtest: the browser's allocation reaches the actual action and SQL, then refreshes persisted quantities
+ok 60 - the browser's allocation reaches the actual action and SQL, then refreshes persisted quantities
+  ---
+  duration_ms: 8172.0603
+  type: 'test'
+  ...
+# Subtest: an obsolete requirement failure cannot replace a newer ready panel
+ok 61 - an obsolete requirement failure cannot replace a newer ready panel
+  ---
+  duration_ms: 179.8549
+  type: 'test'
+  ...
+# Subtest: manual refresh clears selection and disables writes until the new read completes
+ok 62 - manual refresh clears selection and disables writes until the new read completes
+  ---
+  duration_ms: 340.7079
+  type: 'test'
+  ...
+# Subtest: a changed user or role resets same-company readiness
+ok 63 - a changed user or role resets same-company readiness
+  ---
+  duration_ms: 652.3438
+  type: 'test'
+  ...
+# Subtest: invalid requirement null row cannot become an allocation option
+ok 64 - invalid requirement null row cannot become an allocation option
+  ---
+  duration_ms: 159.5248
+  type: 'test'
+  ...
+# Subtest: invalid requirement foreign company cannot become an allocation option
+ok 65 - invalid requirement foreign company cannot become an allocation option
+  ---
+  duration_ms: 204.3733
+  type: 'test'
+  ...
+# Subtest: invalid requirement invalid order cannot become an allocation option
+ok 66 - invalid requirement invalid order cannot become an allocation option
+  ---
+  duration_ms: 137.7363
+  type: 'test'
+  ...
+# Subtest: browser reallocation preserves physical billet data and updates both order counters
+ok 67 - browser reallocation preserves physical billet data and updates both order counters
+  ---
+  duration_ms: 4704.0063
+  type: 'test'
+  ...
+# Subtest: a committed SQL allocation with a lost confirmation requires review and never silently posts twice
+ok 68 - a committed SQL allocation with a lost confirmation requires review and never silently posts twice
+  ---
+  duration_ms: 4090.012
+  type: 'test'
+  ...
+1..68
+# tests 105
+# suites 0
+# pass 105
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 53914.1234
