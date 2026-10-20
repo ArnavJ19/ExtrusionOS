@@ -26,11 +26,11 @@ worktrees without an explicit user request.
   PDF formatting helper and codebase-index history.
 - `71c24dd`: the existing GitHub main merge history.
 - `174e744`: the older Claude branch, including its twelve historical SQL files,
-  Node 22 pin, compatible export/production checks and customer-field filtering.
+  Node 22 pin, compatible export checks and customer-field filtering.
 - `ec5ef34`: the legacy route-types branch, reconciled with the current generated
   build path. The older practical-workflow branch was already an ancestor.
-- The separately verified billet-allocation continuation is imported after its
-  owning chat finishes saving its current work and stops its processes.
+- `8f1a406`: the verified billet-allocation continuation, its candidate migration,
+  tests, reports, logs and 32 screenshots, saved after its owning chat stopped.
 
 All branch histories are merged, rather than replacing a branch with another
 branch's filesystem. Overlapping older implementations were reviewed against the
@@ -40,6 +40,9 @@ PCDA line totals and the latest PDF layout remain authoritative. The older
 experimental custom-role payment changes were not substituted for the current
 authorization model. The older redirect-only reservation action was removed;
 dispatch consumption continues through the existing atomic database path.
+The current authorized-view source-line guard remains the production authority.
+An older duplicate check against the base order-items table was removed after
+the combined die-readiness tests exposed the extra, superseded read path.
 
 Two legacy test expectations were adapted to current behavior: valid stock
 readiness includes available length, and PDF group labels remove internal UUIDs
