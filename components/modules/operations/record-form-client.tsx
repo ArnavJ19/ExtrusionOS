@@ -843,8 +843,11 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
       const total = Number(payload.total_amount ?? 0) || Number((base + Number(payload.tax_amount ?? 0) + Number(payload.freight_amount ?? 0) - Number(payload.discount_amount ?? 0)).toFixed(2));
       payload = { ...payload, base_amount: base, total_amount: total };
     }
-    if (moduleKey === "foundry_scrap" && !payload.available_weight_kg) payload.available_weight_kg = payload.weight_kg;
-    if (moduleKey === "foundry_external_sources" && !editing && !payload.available_weight_kg) payload.available_weight_kg = payload.weight_kg;
+    // Source availability is owned by furnace charges; never post it on edit (0 is a real balance).
+    if (moduleKey === "foundry_scrap" || moduleKey === "foundry_external_sources") {
+      if (editing) delete payload.available_weight_kg;
+      else payload.available_weight_kg = payload.weight_kg;
+    }
     if (!editing && config.numberField) {
       delete payload[config.numberField];
     }

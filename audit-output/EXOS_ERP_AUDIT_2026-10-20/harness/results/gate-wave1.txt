@@ -1,0 +1,40 @@
+PASS G009-dispatch-delivery-update [baseline]: baseline blocked: Permission denied to allocate billets
+PASS G009-dispatch-delivery-update [candidate]: in_transit recorded; order dispatched; allocation deferred (billet cast)
+PASS G009-dispatch_manager-delivery-update [baseline]: baseline blocked: Permission denied to allocate billets
+PASS G009-dispatch_manager-delivery-update [candidate]: in_transit recorded; order dispatched; allocation deferred (billet cast)
+PASS G009-inventory_manager-delivery-update [baseline]: baseline blocked: Permission denied to allocate billets
+PASS G009-inventory_manager-delivery-update [candidate]: in_transit recorded; order dispatched; allocation deferred (billet cast)
+PASS G009-factory-stage-change-unchanged [baseline]: owner transition ok; outcome {"stage":"dispatched","billet":"cast","reqs":[]}
+PASS G009-factory-stage-change-unchanged [candidate]: owner transition ok; outcome {"stage":"dispatched","billet":"cast","reqs":[]}
+PASS G009-sales-quote-conversion [baseline]: baseline blocked: Permission denied to allocate billets
+PASS G009-sales-quote-conversion [candidate]: sales converted the quote; 1 billet requirement row(s) rebuilt, allocation deferred
+PASS G002-viewer-scrap-insert [baseline]: baseline: viewer created a 5000 kg lot
+PASS G002-viewer-scrap-insert [candidate]: rejected: permission denied for table scrap_records
+PASS G002-production-scrap-insert [baseline]: baseline: production created unlinked scrap
+PASS G002-production-scrap-insert [candidate]: rejected: permission denied for table scrap_records
+PASS G002-completion-still-books-scrap [candidate]: completion posted 400 kg process scrap -> {"weight_kg":"400.000","available_weight_kg":"400.000","status":"available"}
+PASS G003-direct-availability-inflation [baseline]: baseline: available 25000
+PASS G003-direct-availability-inflation [candidate]: client value ignored -> {"w":"1000.000","a":"0.000","status":"used"}
+PASS G003-form-edit-resurrection [baseline]: baseline: resurrected to 1000
+PASS G003-form-edit-resurrection [candidate]: used lot stays used -> {"w":"1000.000","a":"0.000","status":"used"}
+PASS G003-weight-correction-moves-balance [candidate]: +500 kg receipt correction -> {"w":"1500.000","a":"500.000","status":"reserved"}; below-charged rejected (Received weight 900.000 kg is below the 1000.000 kg already charged to furnace batches); rejected hold allowed
+PASS G003-insert-forces-full-availability [baseline]: baseline: available 99999 on a 100 kg receipt
+PASS G003-insert-forces-full-availability [candidate]: receipt availability forced to 100 kg; 'used' receipt rejected
+PASS G003-furnace-charge-and-cancel-still-work [candidate]: charge debited to 9726.375 (reserved); cancel refunded to 10000.000
+PASS G008-viewer-returns-broken-press [baseline]: baseline: viewer moved press to idle
+PASS G008-viewer-returns-broken-press [candidate]: viewer update affected no rows; press stays in breakdown
+PASS G008-production-manager-returns-press [candidate]: production manager returned press to active; free-text status rejected (new row for relation "machines" violates check constraint "machines_status_check")
+PASS G008-sales-reactivates-retired-die [baseline]: baseline: sales reactivated the die
+PASS G008-sales-reactivates-retired-die [candidate]: rejected: Only owner, admin, factory or production managers may make a die usable for production
+PASS G008-sales-manager-rpc-reactivates-die [baseline]: baseline: sales manager reactivated the die via RPC
+PASS G008-sales-manager-rpc-reactivates-die [candidate]: status change rejected (Only owner, admin, factory or production managers may make a die usable for production); commercial edit still allowed
+PASS G008-operator-out-of-service-only [candidate]: operator took die out of service; only the production manager returned it
+PASS G008-sales-manager-registers-die [candidate]: ordered die registered; usable die rejected (Only owner, admin, factory or production managers may make a die usable for production)
+PASS G011-viewer-rewrites-shipped-dispatch [baseline]: baseline: viewer rewrote documents and returned the shipment
+PASS G011-viewer-rewrites-shipped-dispatch [candidate]: viewer writes affected no rows -> {"delivery_status":"dispatched","eway_bill_number":"EWB-111","vehicle_number":"MH01AB1234","lr_number":null,"transporter_name":"Shree Roadlines"}
+PASS G011-dispatch-role-document-freeze [baseline]: baseline: shipped e-way bill rewritten by dispatch role
+PASS G011-dispatch-role-document-freeze [candidate]: recorded e-way bill frozen (Recorded transport documents are frozen after activation; record an amendment instead); late LR number filled
+PASS G011-status-only-through-workflow [baseline]: baseline: direct table return accepted
+PASS G011-status-only-through-workflow [candidate]: direct status change rejected (Use the delivery workflow to change dispatch status); workflow return recorded
+PASS G011-pending-dispatch-still-editable [candidate]: pending dispatch documents remain editable
+GATE PASSED

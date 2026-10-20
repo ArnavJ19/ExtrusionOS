@@ -1,0 +1,80 @@
+[REPRODUCED] R1 viewer-fabricates-foundry-scrap: viewer insert accepted; foundry scrap rows 0->1; new lot {"scrap_number":"SCR-2026-0001","scrap_source":"in_house","scrap_quality":"clean","status":"available","weight_kg":"5000.000","available_weight_kg":"5000.000"}
+[REPRODUCED] R1b scrap-record-uncorrectable: delete ok=true; rows remaining 1 (no update/delete policy; owner too)
+[REPRODUCED] R1c owner-cannot-correct-scrap-record: owner delete ok=true; rows remaining 1
+[REPRODUCED] R2 direct-available-weight-inflation: production role set used lot (1000 kg received, 0 available) to {"weight_kg":"1000.000","available_weight_kg":"25000.000","status":"available"}
+[REPRODUCED] R3 edit-resurrects-consumed-scrap: {"weight_kg":"1000.000","available_weight_kg":"1000.000","status":"used"}
+[REPRODUCED] R4 cross-alloy-charge: batch {"alloy":"6063","external_aluminium_kg":"273.625"} consumed source {"alloy":"6061","available_weight_kg":"9726.375"}
+[REPRODUCED] R5a measured-chemistry-rejected-after-melt: melting ok=true; enter spectro result ok=false Foundry batch physical, source, mix, and count fields freeze after planning
+[REPRODUCED] R5b actual-cast-count-cannot-be-recorded: reduce 10->8 good billets ok=false Foundry batch physical, source, mix, and count fields freeze after planning
+[REPRODUCED] R5c all-planned-billets-enter-stock: cast ok=true ; billets [{"status":"cast","n":10,"w":"21.890"}]
+[REPRODUCED] R5d no-billet-rejection-path: owner mark billet scrap ok=true; scrap billets=0 
+[REPRODUCED] R6a viewer-edits-press-status: viewer moved press B from 'breakdown' to 'idle' (eligible for release/start)
+[REPRODUCED] R6b sales-reactivates-retired-die: die_status now active
+[REPRODUCED] R7 viewer-posts-inventory-movement: movement accepted; item current_stock still 100.000 -> ledger and balance diverge
+[
+ {
+  "id": "R1 viewer-fabricates-foundry-scrap",
+  "outcome": "REPRODUCED",
+  "detail": "viewer insert accepted; foundry scrap rows 0->1; new lot {\"scrap_number\":\"SCR-2026-0001\",\"scrap_source\":\"in_house\",\"scrap_quality\":\"clean\",\"status\":\"available\",\"weight_kg\":\"5000.000\",\"available_weight_kg\":\"5000.000\"}"
+ },
+ {
+  "id": "R1b scrap-record-uncorrectable",
+  "outcome": "REPRODUCED",
+  "detail": "delete ok=true; rows remaining 1 (no update/delete policy; owner too)"
+ },
+ {
+  "id": "R1c owner-cannot-correct-scrap-record",
+  "outcome": "REPRODUCED",
+  "detail": "owner delete ok=true; rows remaining 1"
+ },
+ {
+  "id": "R2 direct-available-weight-inflation",
+  "outcome": "REPRODUCED",
+  "detail": "production role set used lot (1000 kg received, 0 available) to {\"weight_kg\":\"1000.000\",\"available_weight_kg\":\"25000.000\",\"status\":\"available\"}"
+ },
+ {
+  "id": "R3 edit-resurrects-consumed-scrap",
+  "outcome": "REPRODUCED",
+  "detail": "{\"weight_kg\":\"1000.000\",\"available_weight_kg\":\"1000.000\",\"status\":\"used\"}"
+ },
+ {
+  "id": "R4 cross-alloy-charge",
+  "outcome": "REPRODUCED",
+  "detail": "batch {\"alloy\":\"6063\",\"external_aluminium_kg\":\"273.625\"} consumed source {\"alloy\":\"6061\",\"available_weight_kg\":\"9726.375\"}"
+ },
+ {
+  "id": "R5a measured-chemistry-rejected-after-melt",
+  "outcome": "REPRODUCED",
+  "detail": "melting ok=true; enter spectro result ok=false Foundry batch physical, source, mix, and count fields freeze after planning"
+ },
+ {
+  "id": "R5b actual-cast-count-cannot-be-recorded",
+  "outcome": "REPRODUCED",
+  "detail": "reduce 10->8 good billets ok=false Foundry batch physical, source, mix, and count fields freeze after planning"
+ },
+ {
+  "id": "R5c all-planned-billets-enter-stock",
+  "outcome": "REPRODUCED",
+  "detail": "cast ok=true ; billets [{\"status\":\"cast\",\"n\":10,\"w\":\"21.890\"}]"
+ },
+ {
+  "id": "R5d no-billet-rejection-path",
+  "outcome": "REPRODUCED",
+  "detail": "owner mark billet scrap ok=true; scrap billets=0 "
+ },
+ {
+  "id": "R6a viewer-edits-press-status",
+  "outcome": "REPRODUCED",
+  "detail": "viewer moved press B from 'breakdown' to 'idle' (eligible for release/start)"
+ },
+ {
+  "id": "R6b sales-reactivates-retired-die",
+  "outcome": "REPRODUCED",
+  "detail": "die_status now active"
+ },
+ {
+  "id": "R7 viewer-posts-inventory-movement",
+  "outcome": "REPRODUCED",
+  "detail": "movement accepted; item current_stock still 100.000 -> ledger and balance diverge"
+ }
+]

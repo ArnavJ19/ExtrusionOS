@@ -1,0 +1,26 @@
+[OBSERVED] O0 receipt-creates-billets: [{"status":"cast","n":10,"kg":"220.000","alloy":"6063"}]
+[REPRODUCED] O1 consumed-outsourced-billets-rewritten: edit ok; consumed billets re-labelled 6061/T5 and reweighed: [{"billet_number":1,"status":"consumed","alloy":"6061","temper":"T5","weight_kg":"110.000"},{"billet_number":2,"status":"consumed","alloy":"6061","temper":"T5","weight_kg":"110.000"}]
+[REPRODUCED] O2 reduced-count-leaves-surplus-billets-usable: 6 billets numbered above the new count of 4 remain 'cast' (allocatable)
+[REPRODUCED] O3 cancelled-receipt-keeps-billets-in-stock: cancel ok; billets [{"status":"cast","n":8},{"status":"consumed","n":2}]
+[
+ {
+  "id": "O0 receipt-creates-billets",
+  "outcome": "OBSERVED",
+  "detail": "[{\"status\":\"cast\",\"n\":10,\"kg\":\"220.000\",\"alloy\":\"6063\"}]"
+ },
+ {
+  "id": "O1 consumed-outsourced-billets-rewritten",
+  "outcome": "REPRODUCED",
+  "detail": "edit ok; consumed billets re-labelled 6061/T5 and reweighed: [{\"billet_number\":1,\"status\":\"consumed\",\"alloy\":\"6061\",\"temper\":\"T5\",\"weight_kg\":\"110.000\"},{\"billet_number\":2,\"status\":\"consumed\",\"alloy\":\"6061\",\"temper\":\"T5\",\"weight_kg\":\"110.000\"}]"
+ },
+ {
+  "id": "O2 reduced-count-leaves-surplus-billets-usable",
+  "outcome": "REPRODUCED",
+  "detail": "6 billets numbered above the new count of 4 remain 'cast' (allocatable)"
+ },
+ {
+  "id": "O3 cancelled-receipt-keeps-billets-in-stock",
+  "outcome": "REPRODUCED",
+  "detail": "cancel ok; billets [{\"status\":\"cast\",\"n\":8},{\"status\":\"consumed\",\"n\":2}]"
+ }
+]

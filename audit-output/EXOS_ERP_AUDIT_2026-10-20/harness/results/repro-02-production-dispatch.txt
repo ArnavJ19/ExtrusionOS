@@ -1,0 +1,62 @@
+[REPRODUCED] P1 die-double-booking: release A true B true; start A true; start B true; [{"job_number":"J-A","status":"in_progress","same_die":true,"machine_id":"f2000000-0000-4000-8000-000000000001"},{"job_number":"J-B","status":"in_progress","same_die":true,"machine_id":"f2000000-0000-4000-8000-000000000002"}]
+[REPRODUCED] P2 completion-without-metal-input: job completed with {"status":"completed","actual_quantity_kg":"900.000","billets":0} against a 1000 kg plan
+[REPRODUCED] P2b auto-packaging-from-unbacked-output: [{"status":"scheduled","profile_weight_kg":"900.000"}]
+[REPRODUCED] P3 completion-loss-becomes-clean-recoverable-scrap: [{"scrap_source":"in_house","scrap_quality":"clean","status":"available","weight_kg":"400.000","available_weight_kg":"400.000","origin_reference":"Process scrap from production job f4000000-0000-4000-8000-000000000002"}]
+[REPRODUCED] P4 factory-manager-marks-order-delivered-via-low-level-rpc: order stage=delivered; dispatch=[{"delivery_status":"pending","actual_dispatched_at":null}] (no stock moved, no POD)
+[REPRODUCED] P4b dispatch-role-cannot-move-delivery-status: dispatch role: Permission denied to allocate billets; owner: A dispatch requires at least one physical bundle
+[REPRODUCED] P5 qc-approves-out-of-spec-by-production-manager: approved QC with hardness 2 HW, 1.6 kg/m vs 1.0 kg/m nominal, failed dimension text, approver = production manager
+[REPRODUCED] P6a app-built-stock-packing-line-rejected: Packing requires an authoritative commercial source and GST rate
+[REPRODUCED] P6b stock-packing-accepts-foreign-line-and-any-rate: accepted {"foreign_order_line":true,"net_rate":"1.00","gst_percent":"18.00"} (orderA reservation priced from orderB line at Rs 1/kg)
+[REPRODUCED] P7 cancelled-job-strands-issued-billets: [{"status":"issued","linked_to_cancelled_job":true,"n":2}]
+[
+ {
+  "id": "P1 die-double-booking",
+  "outcome": "REPRODUCED",
+  "detail": "release A true B true; start A true; start B true; [{\"job_number\":\"J-A\",\"status\":\"in_progress\",\"same_die\":true,\"machine_id\":\"f2000000-0000-4000-8000-000000000001\"},{\"job_number\":\"J-B\",\"status\":\"in_progress\",\"same_die\":true,\"machine_id\":\"f2000000-0000-4000-8000-000000000002\"}]"
+ },
+ {
+  "id": "P2 completion-without-metal-input",
+  "outcome": "REPRODUCED",
+  "detail": "job completed with {\"status\":\"completed\",\"actual_quantity_kg\":\"900.000\",\"billets\":0} against a 1000 kg plan"
+ },
+ {
+  "id": "P2b auto-packaging-from-unbacked-output",
+  "outcome": "REPRODUCED",
+  "detail": "[{\"status\":\"scheduled\",\"profile_weight_kg\":\"900.000\"}]"
+ },
+ {
+  "id": "P3 completion-loss-becomes-clean-recoverable-scrap",
+  "outcome": "REPRODUCED",
+  "detail": "[{\"scrap_source\":\"in_house\",\"scrap_quality\":\"clean\",\"status\":\"available\",\"weight_kg\":\"400.000\",\"available_weight_kg\":\"400.000\",\"origin_reference\":\"Process scrap from production job f4000000-0000-4000-8000-000000000002\"}]"
+ },
+ {
+  "id": "P4 factory-manager-marks-order-delivered-via-low-level-rpc",
+  "outcome": "REPRODUCED",
+  "detail": "order stage=delivered; dispatch=[{\"delivery_status\":\"pending\",\"actual_dispatched_at\":null}] (no stock moved, no POD)"
+ },
+ {
+  "id": "P4b dispatch-role-cannot-move-delivery-status",
+  "outcome": "REPRODUCED",
+  "detail": "dispatch role: Permission denied to allocate billets; owner: A dispatch requires at least one physical bundle"
+ },
+ {
+  "id": "P5 qc-approves-out-of-spec-by-production-manager",
+  "outcome": "REPRODUCED",
+  "detail": "approved QC with hardness 2 HW, 1.6 kg/m vs 1.0 kg/m nominal, failed dimension text, approver = production manager"
+ },
+ {
+  "id": "P6a app-built-stock-packing-line-rejected",
+  "outcome": "REPRODUCED",
+  "detail": "Packing requires an authoritative commercial source and GST rate"
+ },
+ {
+  "id": "P6b stock-packing-accepts-foreign-line-and-any-rate",
+  "outcome": "REPRODUCED",
+  "detail": "accepted {\"foreign_order_line\":true,\"net_rate\":\"1.00\",\"gst_percent\":\"18.00\"} (orderA reservation priced from orderB line at Rs 1/kg)"
+ },
+ {
+  "id": "P7 cancelled-job-strands-issued-billets",
+  "outcome": "REPRODUCED",
+  "detail": "[{\"status\":\"issued\",\"linked_to_cancelled_job\":true,\"n\":2}]"
+ }
+]

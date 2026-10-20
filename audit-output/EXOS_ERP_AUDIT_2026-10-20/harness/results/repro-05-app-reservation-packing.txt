@@ -1,0 +1,1 @@
+{"source_kind":"reservation","order_item_id":null,"quote_item_id":null,"net_rate":null}

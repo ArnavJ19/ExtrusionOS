@@ -1,0 +1,50 @@
+[CONTROL HOLDS] N1 cross-tenant-insert-blocked (control): new row violates row-level security policy for table "scrap_records"
+[CONTROL HOLDS] N2 viewer-direct-invoice-blocked (control): Set the company GST state code and enter the domestic place-of-supply state code
+[CONTROL HOLDS] N3 viewer-payment-rpc-blocked (control): Permission denied for payments
+[REPRODUCED] C1 viewer-rewrites-shipped-dispatch: logistics edit ok; return ok; row {"delivery_status":"returned","eway_bill_number":"EWB-999","vehicle_number":"XX00ZZ0000","lr_number":"LR-FAKE"}; history [{"from_status":"dispatched","to_status":"returned","by_viewer":true}]
+[NOT REPRODUCED] C2 viewer-creates-production-job: permission denied for table order_items
+[REPRODUCED] C3 viewer-forges-audit-entries: audit_logs as owner: accepted; audit_logs_enterprise as owner: accepted
+[REPRODUCED] C4 die-identity-and-history-editable-while-running: sales: Permission denied for dies; production_manager: ok; die {"die_number":"D-REUSED","moved_profile":true,"total_production_kg":"250000.000","total_runs":900}; running job {"job_number":"J-RUN","status":"in_progress","job_profile_unchanged":true}
+[REPRODUCED] C5 profile-master-change-under-open-work: profile now {"section_weight_kg_per_m":"1.350","alloy":"6061","billet_diameter_required_inch":"6.00"} with 1 open jobs; no impact check or reapproval
+[
+ {
+  "id": "N1 cross-tenant-insert-blocked (control)",
+  "outcome": "CONTROL HOLDS",
+  "detail": "new row violates row-level security policy for table \"scrap_records\""
+ },
+ {
+  "id": "N2 viewer-direct-invoice-blocked (control)",
+  "outcome": "CONTROL HOLDS",
+  "detail": "Set the company GST state code and enter the domestic place-of-supply state code"
+ },
+ {
+  "id": "N3 viewer-payment-rpc-blocked (control)",
+  "outcome": "CONTROL HOLDS",
+  "detail": "Permission denied for payments"
+ },
+ {
+  "id": "C1 viewer-rewrites-shipped-dispatch",
+  "outcome": "REPRODUCED",
+  "detail": "logistics edit ok; return ok; row {\"delivery_status\":\"returned\",\"eway_bill_number\":\"EWB-999\",\"vehicle_number\":\"XX00ZZ0000\",\"lr_number\":\"LR-FAKE\"}; history [{\"from_status\":\"dispatched\",\"to_status\":\"returned\",\"by_viewer\":true}]"
+ },
+ {
+  "id": "C2 viewer-creates-production-job",
+  "outcome": "NOT REPRODUCED",
+  "detail": "permission denied for table order_items"
+ },
+ {
+  "id": "C3 viewer-forges-audit-entries",
+  "outcome": "REPRODUCED",
+  "detail": "audit_logs as owner: accepted; audit_logs_enterprise as owner: accepted"
+ },
+ {
+  "id": "C4 die-identity-and-history-editable-while-running",
+  "outcome": "REPRODUCED",
+  "detail": "sales: Permission denied for dies; production_manager: ok; die {\"die_number\":\"D-REUSED\",\"moved_profile\":true,\"total_production_kg\":\"250000.000\",\"total_runs\":900}; running job {\"job_number\":\"J-RUN\",\"status\":\"in_progress\",\"job_profile_unchanged\":true}"
+ },
+ {
+  "id": "C5 profile-master-change-under-open-work",
+  "outcome": "REPRODUCED",
+  "detail": "profile now {\"section_weight_kg_per_m\":\"1.350\",\"alloy\":\"6061\",\"billet_diameter_required_inch\":\"6.00\"} with 1 open jobs; no impact check or reapproval"
+ }
+]
