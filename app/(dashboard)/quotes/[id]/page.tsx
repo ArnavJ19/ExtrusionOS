@@ -122,12 +122,12 @@ export default async function QuoteDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col items-start justify-between gap-4 xl:flex-row">
         <PageHeader 
           title={`Quote ${quote.quote_number}`} 
           description={`Revision ${quote.revision_number} | ${formatDate(quote.quote_date)} | ${quote.customers?.company_name || quote.customers?.customer_name}`}
         />
-        <div className="flex items-center gap-3 pt-2">
+        <div className="flex flex-wrap items-center gap-3 pt-2">
           <Badge value={quote.status} />
           {["owner", "admin"].includes(context.role) && can(context.role, "create", "quotes") ? <Link href={`/quotes/new?repeat_from=${encodeURIComponent(quote.id)}`} className="rounded-xl border border-neutral-200 px-3 py-2 text-sm font-bold">Repeat quotation</Link> : null}
           {!linkedOrder && quote.status === "customer_approved" && !context.dealerId && can(context.role, "create", "orders") ? <Link href={`/orders/new?quoteId=${quote.id}`} className="flex items-center gap-2 rounded-xl bg-charcoal px-3 py-2 text-sm font-bold text-white transition hover:bg-charcoal/90">Review &amp; Create Order</Link> : null}
@@ -151,7 +151,7 @@ export default async function QuoteDetailPage({
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <Card>
             <CardHeader>
               <h3 className="font-bold tracking-tight text-slate-900">Extrusion Items</h3>

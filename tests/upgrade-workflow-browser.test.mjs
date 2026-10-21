@@ -34,6 +34,13 @@ test("repeated quotation keeps structural lines and requires renewed commercial 
 test("a failed repeat never falls back to a partially copied editable draft", async () => {
   await page.evaluate(() => { window.fixture.repeatHandler = async () => ({ success: false, error: "Source no longer available" }); }); await screen("repeat"); await expect(page.getByRole("alert")).toHaveText("Source no longer available"); await expect(page.getByRole("button", { name: "Save quote", exact: true })).toHaveCount(0); await noWrites();
 });
+
+test("the actual quotation detail page links the exact repeat source only for permitted repricing roles", async () => {
+  await screen("quote-detail"); const link = page.getByRole("link", { name: "Repeat quotation", exact: true });
+  await expect(link).toBeVisible(); assert.equal(await link.getAttribute("href"), `/quotes/new?repeat_from=${ids.quote}`);
+  await page.evaluate(() => window.renderWorkflow("quote-detail", { role: "sales" }));
+  await expect(link).toHaveCount(0); await noWrites();
+});
 test("contextual quotation guidance is available by keyboard and states units and save semantics", async () => {
   await screen("repeat"); const help = page.getByText("Quotation entry help: units, margin, and saving", { exact: true }); await help.press("Enter"); await expect(page.getByText(/kg\/m is the section weight/)).toBeVisible(); await expect(page.getByText(/Save quote records a draft/)).toBeVisible(); await noWrites();
 });
