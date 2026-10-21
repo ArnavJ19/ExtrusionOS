@@ -52,3 +52,22 @@ Gate: `node audit-output/EXOS_ERP_AUDIT_2026-10-20/harness/gate-wave1.mjs`. 64 c
    - Free-text hardness requirements (e.g. "T6 per IS 733") are not parsed.
 7. A pre-existing mismatch was noticed while doing this: the machine form offers type `cnc`, but `machine_type_check` and `machineSchema` reject it. It was not changed.
 8. Still open from the same findings: a reversal RPC for an erroneous process-scrap posting (002, R1b/R1c), scrap alloy tagging (005/006, Wave 2), a return-to-service sign-off linked to resolved breakdowns (008 plus 027, which needs the machine FK), and an audited amendment RPC for transport documents (011).
+
+# Remediation Status — Wave 2 (21 October 2026)
+
+**Hosted status: APPLIED on 21 October 2026** to `pkawmdxtmsdgigsehcmb`, one migration at a time in filename order (`begin;`/`commit;` lines removed; bodies otherwise identical). Ledger **97 → 120 rows**; latest `20261021300000_reconcile_metal_sources_and_validate`. The unrelated `20261021290100_operation_page_null_projection.sql` (another actor) was not applied.
+
+**Resolved:** 001, 004, 005, 006, 013, 014, 015, 016, 017, 018, 020, 021 (default: owner/admin approval under open work), 022, 023, 024, 025, 027, 028, 029, 030, 031, 032 (app), 033; follow-ups 002 (scrap reversal), 008 (return-to-service sign-off) and 011 (transport-document amendment); extra defect in `apply_foundry_source_delta` (single-source charge). Per-finding table: `ERP_AUDIT_1.md` §3.
+
+**Pending:** 026 only (billing basis needs a business decision).
+
+**Follow-up list above:** item 1 done (drifted rows held, constraints validated); items 3 (amendment workflow), 7 (`cnc`) and 8 done; items 2, 4, 5 and 6 remain communication/business-confirmation items.
+
+**Verification**
+- Gate `harness/gate-wave2.mjs` on the post-Wave-1 snapshot `live-20261021`: **73/73** (`results/gate-wave2.txt`). All rejection messages reviewed with `GATE_TRACE=1`.
+- Wave 1 gate with Wave 2 layered on: 62/64; both differences intended (`results/gate-wave1-with-wave2.txt`).
+- `harness/rehearse-reconciliation.mjs`: the reconciliation migration on the live snapshot passed; a hosted preview before applying showed the same rows.
+- After applying: hosted fingerprint of all 94 functions, 33 triggers and 27 policies the migrations define is **identical** to the gated harness state (`results/wave2-hosted-fingerprint.txt`). SCR-2026-0001/0002 and EAS-2026-0003 are `rejected` (held with a note); the three NOT VALID constraints are validated. Security advisor: no new anon exposure.
+- App: `npm run lint`, `npm run typecheck`, `npm test` (1,980/1,980), `npm run build` pass.
+
+**Data found, not changed:** FB-2026-0001 is `cancelled` with 24 billets still `allocated` to an order.

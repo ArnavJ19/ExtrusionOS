@@ -1,0 +1,25 @@
+Wave 2 hosted post-apply fingerprint check (21 Oct 2026, AlExMS pkawmdxtmsdgigsehcmb)
+
+Method: harness/fingerprint-wave2.mjs collects every function, trigger and policy the
+23 Wave 2 migrations (20261021080000 .. 20261021300000, excluding the unrelated
+20261021290100) define, and hashes md5(prosrc || prosecdef || proconfig),
+md5(pg_get_triggerdef) and md5(qual || with_check || cmd || roles).
+"--local" applies Wave 2 to the live-20261021 catalog in PGlite (the state the
+73/73 gate ran on); the printed SQL was run on hosted after apply. Per-kind
+aggregate = count:md5(string_agg(name|fp ORDER BY name COLLATE "C")).
+
+kind  harness (PGlite)                       hosted
+fn    94:0d3e67639739d24a079788f13bf08d52    94:0d3e67639739d24a079788f13bf08d52
+trg   33:6d734adfbb9f3ead24758cc43783d5b9    33:6d734adfbb9f3ead24758cc43783d5b9
+pol   27:60b32285163066224b2ac3e6f75e95ad    27:60b32285163066224b2ac3e6f75e95ad
+
+Result: IDENTICAL. Hosted runs exactly the gated definitions.
+
+Other hosted checks after apply:
+- schema_migrations ledger: 120 rows (97 + 23).
+- SCR-2026-0001, SCR-2026-0002, EAS-2026-0003: status 'rejected' (held, note added).
+- foundry_scrap_available_within_weight, foundry_external_available_within_weight,
+  machines_status_check: convalidated = true.
+- Security advisor: no anon-executable definer functions; new view
+  inventory_ledger_reconciliation is not flagged (security_invoker); new RPCs are
+  in the existing "authenticated may execute definer RPC with internal role check" class.
