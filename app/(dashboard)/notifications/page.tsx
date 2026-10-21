@@ -15,7 +15,7 @@ export default async function NotificationsPage({ searchParams = Promise.resolve
 
   const { data: notifications, error, count } = await supabase
     .from("notifications")
-    .select("id, recipient_user_id, title, body, severity, is_read, created_at, notification_type, related_entity_type, related_entity_id, notification_read_receipts(user_id, read_at)", { count: "exact" })
+    .select("id, recipient_user_id, title, body, severity, is_read, created_at, notification_type, related_entity_type, related_entity_id, entity_reference, notification_read_receipts(user_id, read_at)", { count: "exact" })
     .eq("company_id", context.companyId)
     .or(`recipient_user_id.eq.${context.userId},recipient_user_id.is.null`)
     .order("created_at", { ascending: false })

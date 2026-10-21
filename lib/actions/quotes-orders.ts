@@ -11,6 +11,7 @@ import { getErrorMessage } from "@/lib/utils/errors";
 import { todayIso } from "@/lib/utils/format";
 import { orderSchema, quoteSchema } from "@/lib/validations/schemas";
 import { canTransitionQuoteStatus } from "@/lib/workflow/quote-status";
+import { quoteConfirmationStages, quotePreparationIssues } from "@/lib/workflow/quote-preparation";
 import type { QuoteStatus } from "@/types/app";
 
 const quoteStatusSchema = z.enum(["draft", "internal_review", "approved_for_sending", "sent", "customer_approved", "customer_rejected", "expired", "converted_to_order"]);
@@ -168,6 +169,12 @@ export async function updateQuoteStatusAction(quoteId: string, status: QuoteStat
       return { success: false, error: "This low-margin quote needs owner/admin approval." };
     }
 
+    if (quoteConfirmationStages.includes(parsedStatus.data)) {
+      const items = await supabase.from("quote_items_authorized").select("costing_complete").eq("company_id", context.companyId).eq("quote_id", quoteId);
+      if (items.error) throw items.error;
+      const issues = quotePreparationIssues(items.data ?? []);
+      if (issues.length) return { success: false, error: issues.join(" ") };
+    }
     const nowIso = new Date().toISOString();
     const metadata = {
       ...(parsedStatus.data === "draft" ? { approved_by: null, approved_at: null, sent_at: null, customer_decision_at: null } : {}),

@@ -18,6 +18,7 @@ const noPosts = async () => assert.deepEqual(await page.evaluate(() => window.en
 test("actual quotation paste preserves an existing line and imports only after every profile is resolved", async () => {
   await page.goto(fixture.base);
   const existing = page.locator("[data-quote-line]").first();
+  await existing.getByText("Costing and recovery for item 1", { exact: true }).click();
   await existing.getByLabel("Die charge", { exact: true }).fill("999");
   await existing.getByLabel("Sales override", { exact: true }).fill("777");
   await page.getByLabel("Paste quote lines from Excel").fill("Profile Code\tQuantity (pcs)\tLength (mm)\tFinish\nAL-101\t100\t6000\tMill finish\nUNKNOWN\t5\t6000\tAnodizing");

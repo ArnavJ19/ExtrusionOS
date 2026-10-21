@@ -92,6 +92,8 @@ test.beforeEach(async () => {
   });
   await page.addScriptTag({ content: script });
   await page.getByRole("heading", { name: "Quote creation" }).waitFor();
+  await page.getByText("Terms and internal notes", { exact: true }).click();
+  await page.getByText("Costing and recovery for item 1", { exact: true }).click();
   await page.getByRole("textbox", { name: "Terms and conditions", exact: true }).waitFor();
 });
 

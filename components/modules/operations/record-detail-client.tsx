@@ -17,10 +17,13 @@ import type { SessionContext } from "@/types/app";
 import { displayValue, getPath, titleValue } from "./value";
 import { getModuleConfig, type ModuleKey } from "./module-config";
 import { LocationGuidance } from "./operator-tools";
+import { RecordDiscussion } from "./collaboration-tools";
+import { canUseCollaboration, type DiscussionType } from "@/lib/operations/collaboration-workflows";
 import { getWorkspaceStorage, isSafeWorkspaceHref, readWorkspacePreferences, upsertWorkspaceLink, workspacePreferenceKey, writeWorkspacePreferences } from "@/lib/preferences/workspace-preferences";
 
 export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { moduleKey: ModuleKey; context: SessionContext; recordId: string; canEdit: boolean }) {
   const config = getModuleConfig(moduleKey);
+  const discussionType = ({ orders: "order", production: "production_job", dispatches: "dispatch", quality: "quality_inspection" } as Partial<Record<ModuleKey, DiscussionType>>)[moduleKey];
   const searchParams = useSearchParams();
   const preferenceKey = workspacePreferenceKey(context);
   const supabase = useMemo(() => createClient(), []);
@@ -152,6 +155,7 @@ export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { 
         </Card>
       ) : null}
 
+      {discussionType && !context.dealerId && canUseCollaboration(context.role, "discussions.list", discussionType) ? <RecordDiscussion key={`${context.companyId}:${context.userId}:${context.role}:${moduleKey}:${recordId}`} context={context} entityType={discussionType} entityId={recordId} /> : null}
       {config.relatedRecords?.length ? (
         <Card>
           <CardHeader><h2 className="section-title">Connected Records</h2></CardHeader>

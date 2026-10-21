@@ -43,6 +43,7 @@ test.afterEach(async()=>{await page?.close();});test.after(async()=>{await brows
 
 test("mixed paste stays out of draft until corrected, then appends all lines without inherited charges or writes", async()=>{
   const first=page.locator("[data-quote-line]").first();
+  await first.getByText("Costing and recovery for item 1",{exact:true}).click();
   await first.getByLabel("Die charge",{exact:true}).fill("999");
   await first.getByLabel("Sales override",{exact:true}).fill("777");
   await page.getByLabel("Paste quote lines from Excel").fill("Profile Code\tQuantity (pcs)\tLength (mm)\tFinish\nAL-101\t100\t6000\tMill finish\nUNKNOWN\t5\t6000\tAnodizing");

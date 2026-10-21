@@ -62,3 +62,22 @@ test("the helper bounds its work to one ten-row notification page", async () => 
   const f = fixture(); const result = await loadNotificationActions(f.client, context, Array.from({ length: 100 }, (_, i) => notification(1000 + i)), "2026-10-21");
   assert.equal(Object.keys(result).length, 10); assert.equal(f.calls[0].filters.find(filter => filter[0] === "in")[2].length, 10);
 });
+
+test("a permitted record mention opens its exact thread using a verified identity", async () => {
+  const n = { ...notification(10, "order", "record_mention"), entity_reference: id(900), action_link: "https://untrusted.invalid/secret" };
+  const f = fixture({ orders_authorized: [{ id: id(10), current_stage: "order_confirmed" }] });
+  const action = (await loadNotificationActions(f.client, context, [n], "2026-10-22"))[n.id];
+  assert.equal(action.href, `/orders/${id(10)}?discussion=${id(900)}#record-discussion`); assert.equal(action.label, "Open internal discussion");
+  assert.doesNotMatch(action.href, /untrusted/);
+  n.entity_reference = "../../other-record";
+  assert.equal((await loadNotificationActions(f.client, context, [n], "2026-10-22"))[n.id].href, `/orders/${id(10)}`);
+});
+
+test("record mentions cannot expose a quality thread to an unprivileged role or unavailable parent", async () => {
+  const n = { ...notification(10, "quality_inspection", "record_mention"), entity_reference: id(900) };
+  const f = fixture({ quality_inspections: [{ id: id(10) }] });
+  assert.equal((await loadNotificationActions(f.client, { ...context, role: "sales" }, [n], "2026-10-22"))[n.id].state, "restricted"); assert.equal(f.calls.length, 0);
+  assert.equal((await loadNotificationActions(f.client, { ...context, dealerId: id(88) }, [n], "2026-10-22"))[n.id].state, "restricted"); assert.equal(f.calls.length, 0);
+  assert.equal((await loadNotificationActions(fixture().client, context, [n], "2026-10-22"))[n.id].href, null);
+  const available = (await loadNotificationActions(f.client, context, [n], "2026-10-22"))[n.id]; assert.equal(available.href, `/quality/${id(10)}?discussion=${id(900)}#record-discussion`);
+});

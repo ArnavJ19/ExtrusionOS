@@ -14,6 +14,7 @@ import { getReportTemplate } from "@/lib/reports/pcda/templates";
 import { ErpControlPanel } from "@/components/modules/erp-control-panel";
 import { orderControls } from "@/lib/workflow/erp-control-panels";
 import { loadOrderBillingReconciliation } from "@/lib/orders/billing-reconciliation";
+import { RecordDiscussion } from "@/components/modules/operations/collaboration-tools";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -449,6 +450,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </Card>
         </div>
       </div>
+      {!context.dealerId ? <RecordDiscussion key={`${context.companyId}:${context.userId}:${context.role}:${id}`} context={context} entityType="order" entityId={id} /> : null}
     </div>
   );
 }
