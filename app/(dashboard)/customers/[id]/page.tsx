@@ -8,6 +8,7 @@ import { formatCurrency, formatDate, formatWeight } from "@/lib/utils/format";
 import Link from "next/link";
 import { can } from "@/lib/auth/permissions";
 import { QueryErrorNotice } from "@/components/ui/query-error-notice";
+import { CustomerAliasManager, CustomerCommitments } from "@/components/modules/operations/operator-tools";
 
 function addQuoteWeight(weights: Map<string, number>, item: { quote_id?: string | null; billing_weight_kg?: number | string | null; total_weight_kg?: number | string | null }) {
   if (!item.quote_id) return;
@@ -15,8 +16,9 @@ function addQuoteWeight(weights: Map<string, number>, item: { quote_id?: string 
   weights.set(item.quote_id, (weights.get(item.quote_id) ?? 0) + (Number.isFinite(weight) ? weight : 0));
 }
 
-export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CustomerDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams?: Promise<{ commitment?: string }> }) {
   const { id } = await params;
+  const selectedCommitment = (await searchParams)?.commitment;
   const context = await getSessionContext();
   const supabase = await createClient();
 
@@ -191,6 +193,8 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           </Card>
         </div>
       </div>
+      <CustomerAliasManager key={`aliases:${context.companyId}:${context.userId}:${context.role}:${id}`} context={context} customerId={id} />
+      <div id="customer-commitments"><CustomerCommitments key={`commitments:${context.companyId}:${context.userId}:${context.role}:${id}:${selectedCommitment ?? ""}`} context={context} customerId={id} commitmentId={selectedCommitment} /></div>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import { canEditManualExpense } from "@/lib/financials/expenses";
 import type { SessionContext } from "@/types/app";
 import { displayValue, getPath, titleValue } from "./value";
 import { getModuleConfig, type ModuleKey } from "./module-config";
+import { LocationGuidance } from "./operator-tools";
 import { getWorkspaceStorage, isSafeWorkspaceHref, readWorkspacePreferences, upsertWorkspaceLink, workspacePreferenceKey, writeWorkspacePreferences } from "@/lib/preferences/workspace-preferences";
 
 export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { moduleKey: ModuleKey; context: SessionContext; recordId: string; canEdit: boolean }) {
@@ -112,6 +113,7 @@ export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { 
       </div>
 
       {moduleKey === "invoices" ? <a className="inline-flex rounded-xl border border-neutral-200 px-4 py-2 text-sm font-semibold" href={`/api/pdf/invoice/${recordId}`} target="_blank" rel="noreferrer">Open Invoice PDF</a> : null}
+      {moduleKey === "inventory" ? <LocationGuidance key={`${context.companyId}:${context.userId}:${context.role}:${recordId}`} context={context} entityType="inventory_item" entityId={recordId} /> : null}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {config.card.meta.slice(0, 4).map((item) => <div key={item.label} className="metric-card"><p className="relative z-[1] text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">{item.label}</p><p className="relative z-[1] mt-3 text-xl font-bold text-neutral-950">{displayValue(row, item.path, item.type)}</p></div>)}
       </div>

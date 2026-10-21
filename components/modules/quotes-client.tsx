@@ -12,6 +12,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingState } from "@/components/ui/loading";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { ProfileSelector } from "@/components/ui/profile-selector";
+import { CustomerProfileAliasPicker } from "@/components/modules/operations/operator-tools";
+import { canUseOperatorCommand, type ProfileAliasOption } from "@/lib/operations/operator-workflows";
 import { InTaskCustomer } from "@/components/modules/customers/in-task-customer";
 import { TaskGuidance } from "@/components/forms/task-guidance";
 import { repeatQuoteAction } from "@/lib/actions/repeat-quote";
@@ -152,6 +154,10 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
   const [reviewedCopy, setReviewedCopy] = useState("");
   const [form, setForm] = useState({ customer_id: "", quote_date: todayIso(), valid_until: "", status: "draft" as QuoteStatus, gst_percent: 18, terms_and_conditions: "", delivery_timeline: "", payment_terms: "", approval_notes: "", notes: "" });
   const [items, setItems] = useState<FormItem[]>([{ ...emptyItem }]);
+  const aliasSelectionVersion = useRef(0);
+  const aliasSelectionContext = useRef({ customerId: form.customer_id, items });
+  useEffect(() => { aliasSelectionContext.current = { customerId: form.customer_id, items }; }, [form.customer_id, items]);
+  useEffect(() => { aliasSelectionVersion.current += 1; return () => { aliasSelectionVersion.current += 1; }; }, [form.customer_id]);
   const [quotePasteText, setQuotePasteText] = useState("");
   const [quotePasteRows, setQuotePasteRows] = useState<QuotePasteRow[]>([]);
   const [quotePasteProfiles, setQuotePasteProfiles] = useState<Profile[]>([]);
@@ -340,13 +346,13 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
     if (dieSearchTimer.current) clearTimeout(dieSearchTimer.current);
   }, []);
 
-  function updateItem(index: number, key: keyof FormItem, value: string | number) {
+  function updateItem(index: number, key: keyof FormItem, value: string | number, verifiedProfile?: Profile) {
     if (key === "profile_id") searchDies("", String(value));
     setItems((current) => current.map((item, itemIndex) => {
       if (itemIndex !== index) return item;
       const next = { ...item, [key]: value } as FormItem;
       if (key === "profile_id") {
-        const profile = profiles.find((candidate) => candidate.id === value);
+        const profile = verifiedProfile ?? profiles.find((candidate) => candidate.id === value);
         next.section_weight_kg_per_m = profile?.section_weight_kg_per_m ?? 0;
         next.perimeter_mm = profile?.section_perimeter_mm ?? null;
         next.item_description = profile ? `${profile.profile_code} - ${profile.profile_name}` : "";
@@ -358,6 +364,17 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
       }
       return next;
     }));
+  }
+
+  async function selectCustomerProfileAlias(index: number, option: ProfileAliasOption) {
+    const request = ++aliasSelectionVersion.current;
+    const target = items[index], customerId = form.customer_id;
+    const { data, error } = await supabase.from("aluminium_profiles")
+      .select("id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, section_number, section_code, section_name, cross_section_image_url, circumscribing_circle_diameter_mm, nominal_wall_thickness_mm, number_of_voids, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle")
+      .eq("company_id", context.companyId).eq("is_active", true).eq("id", option.profile_id).maybeSingle();
+    if (error || !data || request !== aliasSelectionVersion.current || customerId !== aliasSelectionContext.current.customerId || target !== aliasSelectionContext.current.items[index]) throw new Error("The profile or quotation line changed before selection");
+    setProfiles(current => mergeLookupRows<Profile>([data as Profile], current, items.map(item => item.profile_id), 120));
+    updateItem(index, "profile_id", data.id, data as Profile);
   }
 
   function parseQuotePasteInput(value: string) {
@@ -658,7 +675,7 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
               return <div key={index} data-quote-line={index} className="rounded-3xl border border-slate-200 bg-gradient-to-br from-aluminium/70 to-white p-4 shadow-sm">
                 <div className="mb-4 flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-orange">Extrusion item</p><h3 className="mt-1 font-black text-slate-950">Item {index + 1}</h3></div>{items.length > 1 ? <Button variant="ghost" type="button" onClick={() => setItems(items.filter((_, itemIndex) => itemIndex !== index))}>Remove</Button> : null}</div>
                 <div className="grid gap-3 md:grid-cols-4">
-                  <label className="block space-y-1.5 md:col-span-2"><span className="form-label">Profile *</span><ProfileSelector value={item.profile_id} profiles={profiles} companyId={context.companyId} onChange={(nextValue) => updateItem(index, "profile_id", nextValue)} onSearchChange={searchProfiles} searching={profileSearchLoading} /></label>
+                  <div className="space-y-1.5 md:col-span-2"><label className="block space-y-1.5"><span className="form-label">Profile *</span><ProfileSelector value={item.profile_id} profiles={profiles} companyId={context.companyId} onChange={(nextValue) => updateItem(index, "profile_id", nextValue)} onSearchChange={searchProfiles} searching={profileSearchLoading} /></label>{form.customer_id && !context.dealerId && canUseOperatorCommand(context.role, "aliases.search") ? <CustomerProfileAliasPicker key={`${context.companyId}:${context.userId}:${context.role}:${form.customer_id}:${index}`} customerId={form.customer_id} onSelect={option => selectCustomerProfileAlias(index, option)} /> : null}</div>
                   <label className="block space-y-1.5"><span className="form-label">Die</span><SearchableSelect value={item.die_id} placeholder={item.profile_id ? "Search compatible die" : "Select a profile first"} options={compatibleDies.map((die) => ({ value: die.id, label: `${die.die_number} · ${labelize(die.die_status)}` }))} onChange={(nextValue) => updateItem(index, "die_id", nextValue)} onSearchChange={(query) => searchDies(query, item.profile_id)} searching={dieSearchLoading} disabled={!item.profile_id} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Qty pcs</span><input className="form-input" type="number" inputMode="numeric" min="1" value={item.quantity_pieces} onChange={(event) => updateItem(index, "quantity_pieces", Number(event.target.value))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Length m</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.001" value={item.length_per_piece_m} onChange={(event) => updateItem(index, "length_per_piece_m", Number(event.target.value))} /></label>

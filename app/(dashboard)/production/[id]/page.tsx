@@ -6,6 +6,7 @@ import { productionJobControls } from "@/lib/workflow/erp-control-panels";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { ProductionExceptions } from "@/components/modules/operations/operator-tools";
 
 export default async function ProductionJobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -43,6 +44,7 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
     <div className="space-y-6">
       <ProductionOutputWorkflow job={floorJob} canUpdate={canUpdate} canCorrect={canCorrect} />
       <ErpControlPanel title="Production controls" description="Billet issue, input evidence, surplus to stock and scrap corrections." actions={controls} />
+      <ProductionExceptions key={`${context.companyId}:${context.userId}:${context.role}:${id}`} context={context} jobId={id} />
       <RecordDetailClient moduleKey="production" context={context} recordId={id} canEdit={canUpdate} />
     </div>
   );

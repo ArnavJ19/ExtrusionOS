@@ -14,6 +14,7 @@ import { TechnicalDocumentUpload } from "@/components/modules/shared/technical-d
 import { GenerateReportButton } from "@/components/modules/shared/generate-report-button";
 import { ReportDownloadList } from "@/components/modules/shared/report-download-list";
 import { RevisionHistory } from "@/components/modules/shared/revision-history";
+import { LocationGuidance } from "@/components/modules/operations/operator-tools";
 function DetailItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
@@ -213,6 +214,7 @@ export default async function DieDetailPage({ params }: { params: Promise<{ id: 
 
       <ReportDownloadList context={context} entityType="die" entityId={id} />
 
+      <LocationGuidance key={`${context.companyId}:${context.userId}:${context.role}:${id}`} context={context} entityType="die" entityId={id} />
       <RevisionHistory context={context} entityType="die" entityId={id} />
 
       {/* Correction history text */}

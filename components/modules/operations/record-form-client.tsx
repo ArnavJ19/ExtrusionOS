@@ -27,6 +27,8 @@ import { calculateFoundryFurnaceMix, calculateRequiredBilletCount, calculateTota
 import { compositionToEditableRows, compositionsMatch, getStandardAlloyComposition, normalizeCompositionRows, type AlloyComposition } from "@/lib/calculations/alloy-composition";
 import type { SessionContext } from "@/types/app";
 import { getModuleConfig, type FieldConfig, type ModuleKey } from "./module-config";
+import { LocationGuidance } from "./operator-tools";
+import { canUseOperatorCommand } from "@/lib/operations/operator-workflows";
 
 type LookupOption = { value: string; label: string; profile_id?: string | null; die_status?: string | null;
   production_job_id?: string | null; status?: string | null; output_weight_kg?: number | string | null; received_date?: string | null; [key: string]: any };
@@ -1088,6 +1090,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
             <Button type="button" variant="secondary" onClick={() => router.back()}>Cancel</Button>
             <Button type="button" disabled={saving} onClick={submit}>{saving ? "Saving..." : editing ? "Update" : "Save"}</Button>
           </div>
+          {moduleKey === "production" && form.die_id && canUseOperatorCommand(context.role, "locations.load", "die") ? <div className="mt-6"><LocationGuidance key={`${context.companyId}:${context.userId}:${context.role}:${form.die_id}`} context={context} entityType="die" entityId={String(form.die_id)} readOnly /></div> : null}
         </CardContent>
       </Card>
     </div>

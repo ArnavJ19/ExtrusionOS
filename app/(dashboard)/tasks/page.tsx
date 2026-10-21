@@ -4,6 +4,8 @@ import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { canUseOperatorCommand } from "@/lib/operations/operator-workflows";
 
 export default async function TasksPage() {
   const context = await getSessionContext();
@@ -22,5 +24,5 @@ export default async function TasksPage() {
   const [tasksResult, usersResult, dealersResult] = await Promise.all([taskQuery, userQuery, dealerQuery]);
   const usersById = new Map((usersResult.data ?? []).map((user: any) => [user.id, user]));
   const tasks = (tasksResult.data ?? []).map((task: any) => ({ ...task, assignee: usersById.get(task.assigned_to) ?? null, creator: usersById.get(task.created_by) ?? null }));
-  return <div className="space-y-6"><PageHeader title="Tasks" description="Dealer and factory task dashboard with daily assignments, employee completion, priority mix, and owner-to-dealer follow-ups." /><TasksDashboardClient context={context} tasks={tasks as any} users={(usersResult.data ?? []) as any} dealers={(dealersResult.data ?? []) as any} /></div>;
+  return <div className="space-y-6"><PageHeader title="Tasks" description="Dealer and factory task dashboard with daily assignments, employee completion, priority mix, and owner-to-dealer follow-ups." />{!context.dealerId && canUseOperatorCommand(context.role, "commitments.queue") ? <Link href="/tasks/commitments" className="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold">Open customer commitment queue</Link> : null}<TasksDashboardClient context={context} tasks={tasks as any} users={(usersResult.data ?? []) as any} dealers={(dealersResult.data ?? []) as any} /></div>;
 }
