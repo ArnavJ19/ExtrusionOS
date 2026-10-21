@@ -302,7 +302,7 @@ function buildCalculatedSummarySection(line: Record<string, any> | null): Report
   return {
     title: PCDA_LINE_REPORT_SECTIONS[3], // "Calculated Summary"
     fields: [
-      { label: "Net Rate", value: dMoney(line?.net_rate) },
+      { label: "Invoice Rate (per actual kg)", value: dMoney(line?.net_rate) },
       { label: "Final Line Value", value: dMoney(line?.final_line_value) },
       { label: "GST %", value: mapNullableToDisplay(line?.gst_percent) },
       { label: "Discount", value: dMoney(line?.discount) },
@@ -340,7 +340,7 @@ function buildBottomSummaryLine(line: Record<string, any> | null): ReportSection
       { label: "Temper", value: d(line?.temper_id) },
       { label: "Cut Length", value: mapNullableToDisplay(line?.cut_length) },
       { label: "Quantity kg", value: mapNullableToDisplay(line?.quantity_kg) },
-      { label: "Net Rate", value: dMoney(line?.net_rate) },
+      { label: "Invoice Rate (per actual kg)", value: dMoney(line?.net_rate) },
       { label: "Final Line Value", value: dMoney(line?.final_line_value) },
     ],
   };

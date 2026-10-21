@@ -32,6 +32,7 @@ export const WAVE2 = [
   "supabase/migrations/20261021270000_kpi_definitions.sql",
   "supabase/migrations/20261021280000_profile_spec_change_control.sql",
   "supabase/migrations/20261021290000_foundry_single_source_charge_fix.sql",
+  "supabase/migrations/20261021310000_quote_invoice_rate_basis.sql",
 ];
 
 const BASE_DIR = "live-20261021";
@@ -812,6 +813,73 @@ scenario("G021-profile-change-with-open-work", "021", async (ctx, candidate) => 
   assert.equal(Number(log.open_work.production_jobs), 1);
   return `spec edit under open work rejected (${r.error}); non-spec edit allowed; owner approval recorded ${JSON.stringify(log)}`;
 });
+
+// ---- EXOS-AUD-026 -------------------------------------------------------
+const quote26 = "f6260000-0000-4000-8000-000000000001";
+const qiAllowance = "f6270000-0000-4000-8000-000000000001";
+const qiMinimum = "f6270000-0000-4000-8000-000000000002";
+// Line 1: 100 pcs x 5 m x 2 kg/m = 1,000 kg physical, 5% scrap allowance, freight 1,500.
+// Line 2: 10 pcs x 5 m x 2 kg/m = 100 kg physical, minimum billing weight 500 kg.
+async function seedQuote26(ctx) {
+  await ctx.replica(`insert into public.quotes (id, company_id, quote_number, customer_id, quote_date, status, gst_percent) values ('${quote26}', '${ids.company}', 'Q-26', '${ids.customer}', current_date, 'draft', 18)`);
+  await ctx.sys(ids.owner, `insert into public.quote_items (id, company_id, quote_id, profile_id, quantity_pieces, length_per_piece_m, section_weight_kg_per_m, scrap_allowance_percent, minimum_billing_weight_kg, billet_rate_per_kg, conversion_charge_per_kg, finishing_charge_type, finishing_charge, die_charge, die_amortization_type, packing_charge, transport_charge, other_charges, margin_percent, gst_percent, invoice_calc_uom)
+    values ('${qiAllowance}', '${ids.company}', '${quote26}', '${ids.profile}', 100, 5, 2, 5, 0, 250, 40, 'per_kg', 0, 0, 'waived', 0, 1500, 0, 10, 18, 'kg'),
+           ('${qiMinimum}', '${ids.company}', '${quote26}', '${ids.profile}', 10, 5, 2, 0, 500, 250, 40, 'per_kg', 0, 0, 'waived', 0, 0, 0, 10, 18, 'kg')`);
+  return ctx.q(`select id, total_weight_kg::numeric kg, billing_weight_kg::numeric bkg, line_total_before_gst::numeric total, net_rate::numeric rate from public.quote_items where quote_id='${quote26}' order by quantity_pieces desc`);
+}
+
+scenario("G026-invoice-rate-loses-quoted-value", "026", async (ctx, candidate) => {
+  const [allowance, minimum] = await seedQuote26(ctx);
+  // The invoice bills the actual net kg shipped at the line's net_rate.
+  const invoiced = (line) => Math.round(Number(line.kg) * Number(line.rate) * 100) / 100;
+  const gapA = Number(allowance.total) - invoiced(allowance);
+  const gapM = Number(minimum.total) - invoiced(minimum);
+  if (!candidate) {
+    assert.ok(gapA > 0.04 * Number(allowance.total), `allowance gap ${gapA}`);
+    assert.ok(gapM > 0.75 * Number(minimum.total), `minimum gap ${gapM}`);
+    return `baseline: shipping the quoted 1,000 kg invoices ${invoiced(allowance)} of ${allowance.total} (-${gapA.toFixed(2)}); the 500 kg minimum line invoices ${invoiced(minimum)} of ${minimum.total}`;
+  }
+  // Rate is rounded to the paisa, so the shipped value may differ by at most 0.005 x kg.
+  assert.ok(Math.abs(gapA) <= 0.005 * Number(allowance.kg), `allowance gap ${gapA}`);
+  assert.ok(Math.abs(gapM) <= 0.005 * Number(minimum.kg), `minimum gap ${gapM}`);
+  return `quoted 1,000 kg invoices ${invoiced(allowance)} of ${allowance.total} at ${allowance.rate}/kg; 100 kg under a 500 kg minimum invoices ${invoiced(minimum)} of ${minimum.total} at ${minimum.rate}/kg`;
+});
+
+scenario("G026-non-kg-invoice-unit-ignored", "026", async (ctx, candidate) => {
+  await seedQuote26(ctx);
+  const r = await attempt(() => ctx.sys(ids.owner, `update public.quote_items set invoice_calc_uom='meter' where id='${qiAllowance}'`));
+  if (!candidate) { assert.equal(r.ok, true, r.error); return "baseline: per-metre invoicing stored and silently ignored"; }
+  assert.equal(r.ok, false); assert.match(r.error, /invoice_calc_uom_kg/);
+  return `rejected: ${r.error}`;
+});
+
+scenario("G026-billing-reconciliation", "026", async (ctx) => {
+  const [allowance] = await seedQuote26(ctx);
+  const line = "f6280000-0000-4000-8000-000000000001";
+  const d = "f6290000-0000-4000-8000-000000000001";
+  const p = "f6300000-0000-4000-8000-000000000001";
+  const inv = "f6310000-0000-4000-8000-000000000001";
+  const rate = Number(allowance.rate);
+  const value = Math.round(600 * rate * 100) / 100;
+  await ctx.replica(`
+    insert into public.order_items (id, company_id, order_id, profile_id, quote_item_id, quantity_kg, net_rate, gst_percent, final_line_value, theoretical_weight)
+      values ('${line}', '${ids.company}', '${ids.orderB}', '${ids.profile}', '${qiAllowance}', ${allowance.bkg}, ${rate}, 18, ${allowance.total}, ${allowance.kg});
+    insert into public.dispatches (id, company_id, order_id, dispatch_number, dispatch_date, number_of_bundles, total_weight_kg, total_tare_weight_kg, delivery_status, actual_dispatched_at)
+      values ('${d}', '${ids.company}', '${ids.orderB}', 'D-26', current_date, 1, 600, 0, 'delivered', now());
+    insert into public.packing_list_items (id, company_id, dispatch_id, profile_id, bundle_number, source_kind, source_record_id, source_line_id, number_of_pieces, net_length_m, gross_weight_kg, tare_weight_kg, order_item_id, net_rate, gst_percent, finishing_type)
+      values ('${p}', '${ids.company}', '${d}', '${ids.profile}', 'B1', 'production', '${ids.orderB}', '${ids.jobB}', 60, 300, 600, 0, '${line}', ${rate}, 18, 'mill_finish');
+    insert into public.invoices (id, company_id, customer_id, order_id, dispatch_id, invoice_number, invoice_date, status, subtotal, tax_total, grand_total)
+      values ('${inv}', '${ids.company}', '${ids.customer}', '${ids.orderB}', '${d}', 'INV-26', current_date, 'sent', ${value}, 0, ${value});
+    insert into public.invoice_items (company_id, invoice_id, profile_id, source_line_id, order_item_id, quantity, unit_rate, line_total, gst_percent)
+      values ('${ids.company}', '${inv}', '${ids.profile}', '${p}', '${line}', 600, ${rate}, ${value}, 18)`);
+  const [rec] = await ctx.as(ids.accounts, `select public.get_order_billing_reconciliation('${ids.orderB}') r`);
+  const row = rec.r.find((x) => x.orderItemId === line);
+  assert.equal(Number(row.invoicedKg), 600); assert.equal(Number(row.invoicedValue), value);
+  assert.equal(Number(row.uninvoicedValue), Math.round((Number(allowance.total) - value) * 100) / 100);
+  const op = await attempt(() => ctx.as(ids.production, `select public.get_order_billing_reconciliation('${ids.orderB}') r`));
+  assert.equal(op.ok, false); assert.match(op.error, /owner, admin or accounts/);
+  return `600 of 1,000 kg invoiced ${value}; ${row.uninvoicedValue} of the quoted ${allowance.total} still to invoice; production role refused`;
+}, { candidateOnly: true });
 
 // ---- runner ---------------------------------------------------------------
 let failures = 0;

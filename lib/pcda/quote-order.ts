@@ -45,6 +45,7 @@ type CalculatedQuoteItemSnapshot = {
   margin_amount: number;
   line_total_before_gst: number;
   price_per_kg: number;
+  invoice_rate_per_kg?: number;
   sales_price_override?: number | null;
   minimum_billing_weight_kg?: number | null;
 };
@@ -112,7 +113,7 @@ export function buildQuoteItemPcdaFields(input: QuoteItemPcdaInput) {
     gst_percent: gstPercent,
     discount: null,
     margin: roundMoney(item.line_total_before_gst - item.raw_material_cost - item.conversion_cost - item.finishing_cost - item.die_amortization_amount - item.packing_charge - item.transport_charge - item.other_charges),
-    net_rate: item.price_per_kg ?? 0,
+    net_rate: item.invoice_rate_per_kg ?? item.price_per_kg ?? 0,
     final_line_value: item.line_total_before_gst ?? 0,
     theoretical_weight: item.total_weight_kg,
     actual_weight: null,

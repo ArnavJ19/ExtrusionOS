@@ -23,3 +23,14 @@ Other hosted checks after apply:
 - Security advisor: no anon-executable definer functions; new view
   inventory_ledger_reconciliation is not flagged (security_invoker); new RPCs are
   in the existing "authenticated may execute definer RPC with internal role check" class.
+
+EXOS-AUD-026 follow-up (20261021310000_quote_invoice_rate_basis), applied 21 Oct 2026:
+object                                          harness (PGlite)                  hosted
+private.get_order_billing_reconciliation        60c86fc4dc40891d047d9f6844a8cd79  60c86fc4dc40891d047d9f6844a8cd79
+public.get_order_billing_reconciliation         8e9a04ac4403cc984a7c5ba07f2823b0  8e9a04ac4403cc984a7c5ba07f2823b0
+public.recalculate_quote_item_financials        d8725b76bea962829a17adbf7df75645  d8725b76bea962829a17adbf7df75645
+CHECK *_invoice_calc_uom_kg on quote_items, order_items, packing_list_items, invoice_items,
+production_jobs: all validated on hosted. Ledger 121 rows. anon cannot execute the RPC;
+authenticated cannot execute the private function.
+(Before applying, hosted recalculate_quote_item_financials matched the snapshot body
+after removing the snapshot file's CR line endings.)

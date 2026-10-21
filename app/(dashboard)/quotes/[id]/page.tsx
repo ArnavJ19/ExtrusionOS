@@ -166,7 +166,7 @@ export default async function QuoteDetailPage({
                       <th>Length</th>
                       <th>Weight</th>
                       <th>Finish</th>
-                      <th>Rate</th>
+                      <th>Invoice rate</th>
                       <th>Amount</th>
                       <th className="text-right">PCDA Report</th>
                     </tr>
@@ -183,7 +183,7 @@ export default async function QuoteDetailPage({
                         <td>{(item.cut_length ?? item.length_per_piece_m) != null ? `${item.cut_length ?? item.length_per_piece_m}m` : "-"}</td>
                         <td>{formatWeight(item.quantity_kg ?? item.billing_weight_kg)}</td>
                         <td>{item.finishing_type?.replace(/_/g, " ") ?? "-"}</td>
-                        <td>{formatCurrency(item.net_rate ?? item.price_per_kg)}/kg</td>
+                        <td>{formatCurrency(item.net_rate ?? item.price_per_kg)}/kg actual</td>
                         <td className="font-bold text-slate-900">{formatCurrency(item.final_line_value ?? item.line_total_before_gst)}</td>
                         <td>
                           <PcdaLineReportControls

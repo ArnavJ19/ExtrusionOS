@@ -1,5 +1,5 @@
 // Audit harness: fingerprints every function, trigger and policy the Wave 2
-// migrations define. Without arguments it prints the hosted-side SQL; with
+// migrations (and the 026 follow-up 20261021310000) define. Without arguments it prints the hosted-side SQL; with
 // --local it applies Wave 2 to the live-20261021 catalog in PGlite and prints the
 // same fingerprint, so the two can be diffed after a hosted apply.
 import { readFileSync, readdirSync } from "node:fs";
@@ -7,7 +7,7 @@ import { createLiveCatalogDb } from "./live-catalog-db.mjs";
 
 const ROOT = new URL("../../../", import.meta.url);
 const files = readdirSync(new URL("supabase/migrations/", ROOT))
-  .filter((f) => f >= "20261021080000" && f <= "20261021300000_~" && f.endsWith(".sql") && !f.startsWith("20261021290100"))
+  .filter((f) => f >= "20261021080000" && f <= "20261021310000_~" && f.endsWith(".sql") && !f.startsWith("20261021290100"))
   .sort();
 
 const functions = new Set();

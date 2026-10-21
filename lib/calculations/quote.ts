@@ -50,6 +50,7 @@ export type QuoteItemCalculated = QuoteItemInput & {
   estimated_profit_percent: number;
   price_per_kg: number;
   price_per_meter: number;
+  invoice_rate_per_kg: number;
 };
 
 export type QuoteSummary = {
@@ -166,7 +167,10 @@ export function calculateQuoteItem(input: QuoteItemInput): QuoteItemCalculated {
     estimated_profit_amount,
     estimated_profit_percent,
     price_per_kg: billing_weight_kg > 0 ? money(line_total_before_gst / billing_weight_kg) : 0,
-    price_per_meter: total_meters > 0 ? money(line_total_before_gst / total_meters) : 0
+    price_per_meter: total_meters > 0 ? money(line_total_before_gst / total_meters) : 0,
+    // Invoices bill actual net kg, so the invoice rate is the line amount per physical kg:
+    // shipping the quoted quantity invoices the quoted amount (EXOS-AUD-026).
+    invoice_rate_per_kg: total_weight_kg > 0 ? money(line_total_before_gst / total_weight_kg) : billing_weight_kg > 0 ? money(line_total_before_gst / billing_weight_kg) : 0
   };
 }
 

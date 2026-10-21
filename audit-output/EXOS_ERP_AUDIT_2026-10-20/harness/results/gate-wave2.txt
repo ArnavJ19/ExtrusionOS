@@ -1,74 +1,141 @@
 PASS G017-low-level-rpc-marks-order-delivered [baseline]: baseline: pending dispatch set the order to delivered
+  rejected: permission denied for function save_dispatch_atomic
 PASS G017-low-level-rpc-marks-order-delivered [candidate]: rejected: permission denied for function save_dispatch_atomic
 PASS G017-ready-dispatch-writer-still-granted [candidate]: {"ready":true,"low":false,"low_anon":false}
 PASS G004-edit-rewrites-consumed-billets [baseline]: baseline: consumed billets rewritten -> [{"n":1,"status":"consumed","alloy":"6061","temper":"T5","kg":"110.000"},{"n":2,"status":"consumed","alloy":"6061","temper":"T5","kg":"110.000"}]
+  rejected: Receipt edit would change 2 committed billet(s); alloy, temper, size, per-billet weight and count of allocated, issued or consumed billets are frozen. Record a correcting receipt instead.
 PASS G004-edit-rewrites-consumed-billets [candidate]: rejected: Receipt edit would change 2 committed billet(s); alloy, temper, size, per-billet weight and count of allocated, issued or consumed billets are frozen. Record a correcting receipt instead.
 PASS G004-reduced-count-leaves-surplus [baseline]: baseline: 6 billets above the new count stay cast
 PASS G004-reduced-count-leaves-surplus [candidate]: count 10 -> 4: billets 5-10 cancelled, consumed 1-2 untouched -> ["1:consumed","2:consumed","3:cast","4:cast","5:cancelled","6:cancelled","7:cancelled","8:cancelled","9:cancelled","10:cancelled"]
 PASS G004-cancelled-receipt-keeps-billets [baseline]: baseline: cancelled receipt left 8 billets in stock
+  rejected: Cannot cancel this receipt: 2 billet(s) are already allocated, issued or consumed
 PASS G004-cancelled-receipt-keeps-billets [candidate]: cancel with consumed billets rejected (Cannot cancel this receipt: 2 billet(s) are already allocated, issued or consumed)
+  rejected: A cancelled outsourced billet receipt cannot be reopened; record a new receipt
 PASS G004-cancel-uncommitted-receipt [candidate]: all 10 billets cancelled; reopen rejected (A cancelled outsourced billet receipt cannot be reopened; record a new receipt)
 PASS G004-uncommitted-edit-and-regrow [candidate]: uncommitted receipt edits still flow to billets; reduced then raised count restores billets 6-8
 PASS G004-allocated-billet-not-reset [candidate]: allocated billet kept its allocation after a receipt edit -> {"status":"allocated","order_id":"f3000000-0000-4000-8000-000000000001"}
 PASS G015-cancel-strands-issued-billets [baseline]: baseline: issued billets stay linked to the cancelled job
 PASS G015-cancel-strands-issued-billets [candidate]: issued billets returned to the order allocation; consumed billet untouched -> [{"n":1,"status":"allocated","job":null,"ord":"f3000000-0000-4000-8000-000000000001","req":"f7100000-0000-4000-8000-000000000015"},{"n":2,"status":"allocated","job":null,"ord":"f3000000-0000-4000-8000-000000000001","req":"f7100000-0000-4000-8000-000000000015"},{"n":3,"status":"consumed","job":"f4000000-0000-4000-8000-000000000003","ord":"f3000000-0000-4000-8000-000000000001","req":"f7100000-0000-4000-8000-000000000015"}]
 PASS G015-save-on-cancelled-job [baseline]: baseline: cancelled job edited through the save RPC
+  rejected: A cancelled production job cannot be edited; use the output correction workflow for completed jobs
 PASS G015-save-on-cancelled-job [candidate]: rejected: A cancelled production job cannot be edited; use the output correction workflow for completed jobs
+  rejected: Committed billet status cannot regress
 PASS G015-deselect-issued-billet-in-save [baseline]: baseline: deselecting an issued in-house billet fails (Committed billet status cannot regress)
 PASS G015-deselect-issued-billet-in-save [candidate]: billet 2 released to allocation; billet 1 kept issued -> ["1:issued","2:allocated","3:consumed"]
 PASS G015-save-cannot-change-status [candidate]: save kept status planned and applied the edit -> {"status":"planned","remarks":"try hold via save"}
 PASS G030-client-truncate-and-anon-writes [baseline]: baseline: {"auth_trunc":true,"audit_trunc":true,"auth_insert":true}
+  rejected: permission denied for table audit_logs_enterprise
 PASS G030-client-truncate-and-anon-writes [candidate]: TRUNCATE revoked; authenticated DML kept; owner truncate rejected (permission denied for table audit_logs_enterprise)
 PASS G018-returned-shipment-blocks-delivery [baseline]: baseline: replacement delivered but the returned shipment keeps the order dispatched
 PASS G018-returned-shipment-blocks-delivery [candidate]: returned shipment is a closed exception; replacement delivery closes the order
+  rejected: function public.short_close_order_delivery_atomic(unknown, unknown) does not exist
 PASS G018-shortfall-never-closes [baseline]: baseline: 980/1000 kg stays dispatched; no short-close path (function public.short_close_order_delivery_atomic(unknown, unknown) does not exist)
 PASS G018-shortfall-never-closes [candidate]: dispatch manager short-closed 980/1000 kg with a reason; order delivered and closure recorded
+  rejected: Permission denied to short-close order delivery
+  rejected: Close or deliver the 1 shipment(s) still in transit before short-closing
+  rejected: permission denied for table order_delivery_short_closures
 PASS G018-short-close-guards [candidate]: viewer rejected; open shipment rejected (Close or deliver the 1 shipment(s) still in transit before short-closing); direct insert rejected
 PASS G018-company-tolerance [candidate]: 985/1000 kg within a 2% company tolerance closes the order
 PASS G020-renumber-die-while-running [baseline]: baseline: running die renumbered
+  rejected: Die number and profile are frozen once the die has production history; register re-cut or transferred tooling as a new die
 PASS G020-renumber-die-while-running [candidate]: rejected: Die number and profile are frozen once the die has production history; register re-cut or transferred tooling as a new die
 PASS G020-manual-die-kpis [baseline]: baseline: production manager typed 250,000 kg / 900 runs
+  rejected: Die usage is derived from completed production; only an owner or admin can adjust the opening (pre-system) usage
 PASS G020-manual-die-kpis [candidate]: production manager rejected (Die usage is derived from completed production; only an owner or admin can adjust the opening (pre-system) usage); owner recorded a 5,000 kg / 12-run opening balance
 PASS G020-usage-derived-from-completion [candidate]: completion refreshed die usage -> {"kg":"1600.000","total_runs":3,"used_today":true,"good":"600.000"}
 PASS G025-small-packaging-unlocks-all-output [baseline]: baseline: 50 kg of completed packaging released 600 kg for dispatch
+  rejected: Dispatch packing exceeds QC-released and packaged output for production job J-Q
 PASS G025-small-packaging-unlocks-all-output [candidate]: rejected (Dispatch packing exceeds QC-released and packaged output for production job J-Q); fully packed 600 kg passes
 PASS G014-complete-without-input [baseline]: baseline: 900 kg output completed with no metal input
+  rejected: Link the billets used by this job, or have a manager record an input exception, before completing it
+  rejected: Only an owner, admin, factory manager or production manager can record a production input exception
+  rejected: permission denied for table production_input_exceptions
 PASS G014-complete-without-input [candidate]: rejected without evidence (Link the billets used by this job, or have a manager record an input exception, before completing it); operator self-exception and direct insert rejected; manager exception allows completion
+  rejected: null value in column "defect_type" of relation "profile_defect_rules" violates not-null constraint
 PASS G033-viewer-writes-tenant-only-tables [baseline]: baseline: viewer created a vendor; production_jobs has 2 tenant-only write policies (defect rule: null value in column "defect_type" of relation "profile_defect_rules" violates not-null constraint)
+  rejected: new row violates row-level security policy for table "vendors"
+  rejected: new row violates row-level security policy for table "profile_defect_rules"
 PASS G033-viewer-writes-tenant-only-tables [candidate]: viewer vendor and defect-rule inserts rejected; production_jobs policies are role-explicit; production manager can still add a vendor
 PASS G033-policy-lint [candidate]: 6 tenant-only write policies remain, all on reviewed tables: audit_logs, notifications, outbound_messages, audit_logs_enterprise, dealer_order_status_history
+  rejected: Recorded transport documents are frozen after activation; record an amendment instead
+  rejected: function public.amend_dispatch_transport_documents(unknown, jsonb, unknown) does not exist
 PASS G011-amend-recorded-eway-bill [baseline]: baseline: no amendment path (function public.amend_dispatch_transport_documents(unknown, jsonb, unknown) does not exist)
+  rejected: Recorded transport documents are frozen after activation; record an amendment instead
+  rejected: Permission denied to amend dispatch transport documents
+  rejected: Recorded transport documents are frozen after activation; record an amendment instead
 PASS G011-amend-recorded-eway-bill [candidate]: amended with audit rows [{"field_name":"eway_bill_number","old_value":"EWB-111","new_value":"EWB-222","actor":"a0000000-0000-4000-8000-000000000007"},{"field_name":"lr_number","old_value":null,"new_value":"LR-9","actor":"a0000000-0000-4000-8000-000000000007"}]; viewer rejected; direct edit still frozen
 PASS G027-breakdown-locks-press-and-signoff [baseline]: baseline: logging a press breakdown leaves the press active and schedulable
+  rejected: Return the machine to service through the maintenance sign-off (all breakdowns resolved)
+  rejected: Resolve the 1 open breakdown(s) of this machine before returning it to service
 PASS G027-breakdown-locks-press-and-signoff [candidate]: breakdown locked press B; direct return and early sign-off rejected; resolved (180 min) then signed off
+  rejected: Select a machine of this company for the breakdown
+  rejected: This breakdown overlaps another downtime record of the same machine
 PASS G027-overlap-unknown-machine-and-spares [candidate]: unknown machine rejected (Select a machine of this company for the breakdown); overlapping downtime rejected; deleted spare usage restored stock 7 -> 10.000
 PASS G027-maintenance-schedule-rolls-forward [candidate]: 40-day-old monthly schedule saved as overdue; completion rolled it forward -> {"status":"scheduled","future":true}
+  rejected: function public.set_books_locked_through(date, unknown) does not exist
 PASS G023-backdated-financial-entries [baseline]: baseline: no period lock exists (function public.set_books_locked_through(date, unknown) does not exist)
-PASS G023-backdated-financial-entries [candidate]: closed-period invoice rejected (Books are closed through 2026-09-30; a invoice dated 2026-08-22 cannot be recorded); accounts cannot reopen; owner reopen recorded
+  rejected: Books are closed through 2026-09-30; invoice dated 2026-08-22 cannot be recorded
+  rejected: Only the owner can reopen a closed period
+PASS G023-backdated-financial-entries [candidate]: closed-period invoice rejected (Books are closed through 2026-09-30; invoice dated 2026-08-22 cannot be recorded); accounts cannot reopen; owner reopen recorded
+  rejected: A payment receipt dated 2026-10-11 cannot predate its invoice dated 2026-10-16
 PASS G023-payment-before-invoice [candidate]: rejected: A payment receipt dated 2026-10-11 cannot predate its invoice dated 2026-10-16
 PASS G029-implausible-receipt [baseline]: baseline: a 100,000 t ingot receipt was accepted
+  rejected: Receipt of 100000000.000 kg exceeds the company limit of 60000.000 kg per receipt; split it or ask the owner to raise the limit
+  rejected: Receipts of 10000.000 kg or more need a weighbridge slip reference
 PASS G029-implausible-receipt [candidate]: 100,000 t rejected; 20 t without slip rejected; 20 t with weighbridge slip accepted
 PASS G006-completion-loss-is-all-clean-scrap [baseline]: baseline: the whole 400 kg loss became a clean, alloy-less furnace lot
 PASS G006-completion-loss-is-all-clean-scrap [candidate]: uncategorised loss is recorded but does not become furnace metal
+  rejected: Unknown scrap category magic
 PASS G006-categorised-scrap-lines [candidate]: 400 kg loss: 300 kg recoverable in two 6063 lots, 100 kg unrecoverable; mass balance held -> [{"kg":"250.000","alloy":"6063","scrap_category":"butt_end"},{"kg":"50.000","alloy":"6063","scrap_category":"saw_cut"}]
+  rejected: Only an owner, admin, factory manager or production manager can reverse a scrap posting
+  rejected: This scrap posting is already reversed
 PASS G002r-reverse-scrap-posting [candidate]: manager reversal retired the unconsumed lot; operator and double reversal rejected
+  rejected: Scrap lot SCR-2026-0001 has already been charged to a furnace; it cannot be reversed
 PASS G002r-consumed-lot-cannot-reverse [candidate]: rejected: Scrap lot SCR-2026-0001 has already been charged to a furnace; it cannot be reversed
 PASS G005-foreign-alloy-charge [baseline]: baseline: alloy-less scrap charged into a 6063 batch (43.780 kg)
+  rejected: Scrap lot alloy is not compatible with batch alloy 6063; segregate it or record an approved alloy deviation
 PASS G005-foreign-alloy-charge [candidate]: 6061 lot rejected (Scrap lot alloy is not compatible with batch alloy 6063; segregate it or record an approved alloy deviation); accepted after an approved deviation
+  rejected: Scrap lot alloy is not compatible with batch alloy 6063; segregate it or record an approved alloy deviation
+  rejected: A scrap lot's alloy cannot be changed once recorded
 PASS G005-compatible-and-unknown-alloy [candidate]: same alloy (AA 6063 = 6063) accepted; unknown alloy rejected until set; alloy set once
 PASS G022-ledger-decoupled-from-balance [baseline]: baseline: viewer posted 9,999 kg with no balance change; manager typed the balance
+  rejected: permission denied for table inventory_movements
+  rejected: Inventory stock moves only through receipts, issues and stock adjustments
+  rejected: Stock of 70.000 kg is less than the 500.000 to remove
 PASS G022-ledger-decoupled-from-balance [candidate]: direct movement and balance edit rejected; adjustment moved 100 -> 70 with a movement; negative rejected
 PASS G013-stock-without-origin [baseline]: baseline: factory stock typed in with no origin or QC
+  rejected: Finished-goods stock is created from QC-released production, an approved opening balance or a return disposition
+  rejected: Batch weight 200.000 kg does not reconcile with 58.000 m x 1.000 kg/m = 58.000 kg (10% tolerance)
 PASS G013-stock-without-origin [candidate]: factory direct insert rejected; dealer entry stores 58 total metres (10 x 5.8); 200 kg for 58 kg of section rejected
+  rejected: Only 10.00 kg of QC-released output of this job is unshipped and not yet in stock
+  rejected: Stock batch is on QC on hold and cannot be reserved or shipped
 PASS G013-surplus-and-qc-hold [candidate]: over-release rejected; 10 kg surplus stocked with job lineage ({"origin_type":"production_surplus","qc_status":"released","alloy":"6063","job":"f4000000-0000-4000-8000-000000000002"}); opening stock held until QC release
 PASS G001-cast-billets-allocatable-immediately [baseline]: baseline: all 3 planned billets became allocatable stock at 'cast'
+  rejected: Record the cast result (good billets, measured weight, rejects) before releasing the batch
 PASS G001-cast-billets-allocatable-immediately [candidate]: billets stay planned after casting; release without a cast result rejected (Record the cast result (good billets, measured weight, rejects) before releasing the batch)
+  rejected: The latest chemistry test of this batch must be an approved pass before release
+  rejected: A chemistry test must be approved by someone other than the person who recorded it
 PASS G001-cast-result-chemistry-release [candidate]: cast result scrapped billet 3 (theoretical-weight 6063 lot) and weighed 2 good billets at 21.6 kg; self-approval rejected; release made 2 billets allocatable
 PASS G031-save-marks-billets-issued [baseline]: baseline: saving the plan marked both billets issued
 PASS G031-save-marks-billets-issued [candidate]: planning links billets as allocated; the physical issue RPC issued billet 1 only
+  rejected: function public.record_material_disposition(unknown, unknown, unknown, unknown, integer, integer, unknown) does not exist
+  rejected: function public.issue_partial_return_credit_note_atomic(unknown, uuid[], unknown, uuid) does not exist
 PASS G016-partial-return-credit [baseline]: baseline: no disposition or partial credit path (only a 100% credit note)
+  rejected: One or more selected packing rows are already credited
+  rejected: Record the return disposition (stock, scrap, rework or write-off) of every credited packing row first
 PASS G016-partial-return-credit [candidate]: one returned bundle credited 1,500 + 270 GST of a 3,540 invoice; stock back on QC hold; double credit and undispositioned bundle rejected
+  rejected: Only 4.00 kg of this material is left to disposition
+  rejected: Only 0.000 kg of this material is left to disposition
 PASS G016-qc-reject-to-scrap [candidate]: rejected kg capped; 4 kg QC reject became a furnace lot; rejected profiles cannot go back to sellable stock
 PASS G021-profile-change-with-open-work [baseline]: baseline: owner changed kg/m and alloy under a running job with no warning
+  rejected: Profile P-100 has open work (1 jobs, 0 billet requirements, 0 reservations, 1 open order lines); an owner or admin must approve a specification change
+  rejected: Only an owner or admin can approve a specification change on a profile with open work
 PASS G021-profile-change-with-open-work [candidate]: spec edit under open work rejected (Profile P-100 has open work (1 jobs, 0 billet requirements, 0 reservations, 1 open order lines); an owner or admin must approve a specification change); non-spec edit allowed; owner approval recorded {"previous_values":{"section_weight_kg_per_m":1},"new_values":{"section_weight_kg_per_m":1.35},"open_work":{"production_jobs":1,"open_order_lines":1,"stock_reservations":0,"billet_requirements":0}}
+PASS G026-invoice-rate-loses-quoted-value [baseline]: baseline: shipping the quoted 1,000 kg invoices 323810 of 340000.00 (-16190.00); the 500 kg minimum line invoices 32222 of 161111.11
+PASS G026-invoice-rate-loses-quoted-value [candidate]: quoted 1,000 kg invoices 340000 of 340000.00 at 340.00/kg; 100 kg under a 500 kg minimum invoices 161111 of 161111.11 at 1611.11/kg
+PASS G026-non-kg-invoice-unit-ignored [baseline]: baseline: per-metre invoicing stored and silently ignored
+  rejected: new row for relation "quote_items" violates check constraint "quote_items_invoice_calc_uom_kg"
+PASS G026-non-kg-invoice-unit-ignored [candidate]: rejected: new row for relation "quote_items" violates check constraint "quote_items_invoice_calc_uom_kg"
+  rejected: Only owner, admin or accounts can see billing reconciliation
+PASS G026-billing-reconciliation [candidate]: 600 of 1,000 kg invoiced 204000; 136000 of the quoted 340000.00 still to invoice; production role refused
 GATE PASSED

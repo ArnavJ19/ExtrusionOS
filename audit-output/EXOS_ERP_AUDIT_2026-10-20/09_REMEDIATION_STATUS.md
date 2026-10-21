@@ -59,15 +59,18 @@ Gate: `node audit-output/EXOS_ERP_AUDIT_2026-10-20/harness/gate-wave1.mjs`. 64 c
 
 **Resolved:** 001, 004, 005, 006, 013, 014, 015, 016, 017, 018, 020, 021 (default: owner/admin approval under open work), 022, 023, 024, 025, 027, 028, 029, 030, 031, 032 (app), 033; follow-ups 002 (scrap reversal), 008 (return-to-service sign-off) and 011 (transport-document amendment); extra defect in `apply_foundry_source_delta` (single-source charge). Per-finding table: `ERP_AUDIT_1.md` §3.
 
-**Pending:** 026 only (billing basis needs a business decision).
+**026 (resolved after the first Wave 2 handover, applied 21 Oct as `20261021310000_quote_invoice_rate_basis`; ledger 120 → 121):** invoices keep billing actual net kg; the invoice rate (`net_rate`) is now quoted amount ÷ physical kg, so the quoted quantity invoices the quoted amount (scrap allowance, minimum billing weight and bundled charges included); non-kg `invoice_calc_uom` rejected by validated CHECK constraints; `public.get_order_billing_reconciliation` (owner/admin/accounts) shows quoted vs invoiced per order line, surfaced on the order page. Not done: separate die/freight invoice lines, and the quote PDF still prints the per-billing-kg rate (file owned by another actor).
+
+**Pending:** none of the 33 findings.
 
 **Follow-up list above:** item 1 done (drifted rows held, constraints validated); items 3 (amendment workflow), 7 (`cnc`) and 8 done; items 2, 4, 5 and 6 remain communication/business-confirmation items.
 
 **Verification**
-- Gate `harness/gate-wave2.mjs` on the post-Wave-1 snapshot `live-20261021`: **73/73** (`results/gate-wave2.txt`). All rejection messages reviewed with `GATE_TRACE=1`.
-- Wave 1 gate with Wave 2 layered on: 62/64; both differences intended (`results/gate-wave1-with-wave2.txt`).
+- Gate `harness/gate-wave2.mjs` on the post-Wave-1 snapshot `live-20261021`: **78/78** (73 + 5 for 026) (`results/gate-wave2.txt`). All rejection messages reviewed with `GATE_TRACE=1`.
+- Wave 1 gate with Wave 2 (incl. 026) layered on in hosted order: 62/64; both differences intended (`results/gate-wave1-with-wave2.txt`).
 - `harness/rehearse-reconciliation.mjs`: the reconciliation migration on the live snapshot passed; a hosted preview before applying showed the same rows.
 - After applying: hosted fingerprint of all 94 functions, 33 triggers and 27 policies the migrations define is **identical** to the gated harness state (`results/wave2-hosted-fingerprint.txt`). SCR-2026-0001/0002 and EAS-2026-0003 are `rejected` (held with a note); the three NOT VALID constraints are validated. Security advisor: no new anon exposure.
-- App: `npm run lint`, `npm run typecheck`, `npm test` (1,980/1,980), `npm run build` pass.
+- App: `npm run lint`, `npm run typecheck`, `npm run build` pass; `npm test` 1,991 tests, 1,990 pass in the full run, and the one Playwright timeout (run under load, unrelated file) passes 6/6 alone.
+- 026 on hosted: the three function fingerprints match the harness exactly; the five CHECK constraints are validated (`results/wave2-hosted-fingerprint.txt`).
 
 **Data found, not changed:** FB-2026-0001 is `cancelled` with 24 billets still `allocated` to an order.

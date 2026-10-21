@@ -70,6 +70,6 @@ PASS G019-viewer-forges-audit-rows [candidate]: rows stamped with the real actor
 PASS G019-server-audit-writers-unchanged [candidate]: machine change audited by the trigger writer -> {"actor_id":"a0000000-0000-4000-8000-000000000002","action":"update_machines"}
 GATE FAILED (2)
 
-NOTE (21 Oct): the two candidate failures above are intended behaviour changes from later findings, not regressions:
+NOTE (21 Oct, re-run with all Wave 2 migrations incl. 20261021310000, in hosted order: GATE_PREFIX_MIGRATIONS = the three 20261020 parallel-session migrations): the two candidate failures above are intended behaviour changes from later findings, not regressions:
 - G002-completion-still-books-scrap: EXOS-AUD-014 now requires billet input or a manager input exception, and EXOS-AUD-006 no longer books uncategorised loss as furnace metal (see gate-wave2 G006/G014).
 - G008-production-manager-returns-press: the EXOS-AUD-008 follow-up requires the return-to-service sign-off (see gate-wave2 G027).

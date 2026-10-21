@@ -13,6 +13,7 @@ import { checkPcdaLineReadiness } from "@/lib/reports/pcda/readiness";
 import { getReportTemplate } from "@/lib/reports/pcda/templates";
 import { ErpControlPanel } from "@/components/modules/erp-control-panel";
 import { orderControls } from "@/lib/workflow/erp-control-panels";
+import { loadOrderBillingReconciliation } from "@/lib/orders/billing-reconciliation";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -103,6 +104,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const dealerLedgerWeight = dealerFulfillments.reduce((sum: number, row: any) => sum + Number(row.fulfilled_weight_kg ?? 0), 0);
   const dealerLedgerLength = dealerFulfillments.reduce((sum: number, row: any) => sum + Number(row.fulfilled_length_m ?? 0), 0);
   const deliveryControls = await orderControls(supabase, context, order.id, order.current_stage ?? null);
+  const billingLines = await loadOrderBillingReconciliation(supabase, context, order.id);
+  const lineLabel = (orderItemId: string) => {
+    const line = items.find((item: any) => item.id === orderItemId);
+    return line?.section_code || line?.aluminium_profiles?.profile_code || line?.item_description || "Line";
+  };
 
   return (
     <div className="space-y-6">
@@ -221,7 +227,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                         <th>Length</th>
                         <th>Weight</th>
                         <th>Finish</th>
-                        {canSeeValue ? <th>Rate</th> : null}
+                        {canSeeValue ? <th>Invoice rate</th> : null}
                         <th className="text-right">PCDA Report</th>
                       </tr>
                     </thead>
@@ -238,7 +244,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                           <td>{(item.cut_length ?? item.length_per_piece_m) != null ? `${item.cut_length ?? item.length_per_piece_m}m` : "-"}</td>
                           <td>{formatWeight(item.quantity_kg ?? item.billing_weight_kg ?? item.total_weight_kg)}</td>
                           <td>{item.finishing_type?.replace(/_/g, " ") ?? "-"}</td>
-                          {canSeeValue ? <td>{formatCurrency(item.net_rate ?? item.price_per_kg)}/kg</td> : null}
+                          {canSeeValue ? <td>{formatCurrency(item.net_rate ?? item.price_per_kg)}/kg actual</td> : null}
                           <td>
                             <PcdaLineReportControls
                               templateKey="order_line"
@@ -260,6 +266,43 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               )}
             </CardContent>
           </Card>
+
+          {billingLines && billingLines.length ? (
+            <Card>
+              <CardHeader>
+                <h3 className="font-bold tracking-tight text-slate-900">Quoted vs Invoiced</h3>
+                <p className="mt-1 text-xs font-semibold text-slate-500">Invoices bill the actual net kg shipped at the invoice rate (quoted amount ÷ physical kg). Shipping the quoted quantity invoices the quoted amount, including scrap allowance, minimum billing weight and bundled charges.</p>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="industrial-table min-w-[760px] text-sm">
+                    <thead>
+                      <tr>
+                        <th>Line</th>
+                        <th className="text-right">Quoted kg</th>
+                        <th className="text-right">Quoted value</th>
+                        <th className="text-right">Invoiced kg</th>
+                        <th className="text-right">Invoiced value</th>
+                        <th className="text-right">Still to invoice</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {billingLines.map((line) => (
+                        <tr key={line.orderItemId}>
+                          <td className="font-medium text-slate-900">{lineLabel(line.orderItemId)}</td>
+                          <td className="text-right">{formatWeight(line.quotedKg)}</td>
+                          <td className="text-right">{formatCurrency(line.quotedValue)}</td>
+                          <td className="text-right">{formatWeight(line.invoicedKg)}</td>
+                          <td className="text-right">{formatCurrency(line.invoicedValue)}</td>
+                          <td className={`text-right font-bold ${line.uninvoicedValue > 0.5 ? "text-amber-700" : "text-slate-900"}`}>{formatCurrency(line.uninvoicedValue)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">

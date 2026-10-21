@@ -174,7 +174,8 @@ const technicalLineItemBaseSchema = z.object({
     weight_tolerance: nullableNonNegativeNumber("weight_tolerance").optional(),
     quantity_calculation_method: qtyMethodSchema.nullable().optional(),
     packing_mode_id: z.string().uuid().nullable().optional(),
-    invoice_calc_uom: nullableText(50, "invoice_calc_uom").optional(),
+    // Invoices bill actual net kg; per-metre or per-piece invoicing is not supported (EXOS-AUD-026).
+    invoice_calc_uom: z.literal("kg", { message: "Invoices are calculated per kg of actual weight" }).nullable().optional(),
     standard_length: nullablePositiveNumber("standard_length").optional(),
     cut_length: nullablePositiveNumber("cut_length").optional(),
     bundle_quantity: nullablePositiveNumber("bundle_quantity").optional(),
