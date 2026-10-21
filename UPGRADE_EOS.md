@@ -250,6 +250,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 23. Paste multiple lines from Excel
 
+- [ ] **Implemented and audited locally; interactive visual acceptance pending, 21 October 2026.** The quotation editor accepts up to 100 spreadsheet rows, requires declared length units, resolves exact active company profiles, and shows editable errors before importing all accepted lines into the draft. Tests cover stale lookups, malformed quoting, blank/unknown headers, ambiguous profiles, and inherited charges. Final independent verification: 1,769 tests across 76 suites; lint, typecheck, and build passed. Browser access still reports disabled, so this feature is not marked complete. [Delivery audit and remaining checks](docs/UPGRADE_EOS_ENTRY_AND_PREVIEWS_2026-10-21.md).
+
 - **What it does:** Accept tabular clipboard input for fields such as profile code, length, quantity, and finish. Preview parsed rows, units, unmatched references, and validation errors. Let employees correct cells before explicitly importing the valid result into a draft.
 - **Impact:** Speeds preparation of large quotations and orders while replacing uncontrolled copy-and-paste.
 - **Complexity:** High - parsing varied spreadsheet formats, resolving references, validating totals, and preventing unintended partial writes require careful design.
@@ -398,6 +400,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 41. Quick record previews beside lists
 
+- [ ] **Implemented and audited locally; interactive visual acceptance pending, 21 October 2026.** Added read-only previews from operations database rows, with curated fields, no additional query, scope guards, focus restoration, Escape, scroll locking, and a full-record link preserving list context. Mounted tests verify focus, private-field omission, unchanged URL, and current query/session behaviour. Final independent verification: 1,769 tests across 76 suites; lint, typecheck, and build passed. Desktop/mobile visual inspection remains open because browser access reports disabled. [Delivery audit and remaining checks](docs/UPGRADE_EOS_ENTRY_AND_PREVIEWS_2026-10-21.md).
+
 - **What it does:** Open a compact, read-focused side panel from a queue with identifying details, quantities, contact information, and pending work. Keep the queue and current filters visible. Provide a direct route to the full detail screen when the task needs more context.
 - **Impact:** Makes small lookups faster and preserves the employee's place in a list.
 - **Complexity:** Medium - needs a reusable accessible panel, bounded queries, focus restoration, and role-safe field selection.
@@ -471,6 +475,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A reopened task starts the correct current-stage interval without erasing its earlier waiting history.
 
 ### 50. Data freshness and source visibility
+
+- [ ] **Implemented and audited locally; interactive visual acceptance pending, 21 October 2026.** Database pages distinguish successful page-fetch time from source row dates and available observation/verification metadata. Refresh repeats the paginated RPC and cannot make an old physical observation appear newly verified; missing metadata remains unavailable. Tests cover failed refreshes, invalid/future dates, stale evidence, and query/session scope. Final independent verification: 1,769 tests across 76 suites; lint, typecheck, and build passed. Visual acceptance remains open while browser access reports disabled. [Delivery audit and remaining checks](docs/UPGRADE_EOS_ENTRY_AND_PREVIEWS_2026-10-21.md).
 
 - **What it does:** Show when important operational information was recorded, refreshed, or verified and identify its source. Distinguish a recent screen refresh from a recent physical observation. Flag stale or unavailable imports and calculations.
 - **Impact:** Helps employees judge whether a figure is suitable for a new promise or decision.
@@ -750,6 +756,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 83. Length and theoretical weight from pieces
 
+- [ ] **Implemented and audited locally; interactive visual acceptance pending, 21 October 2026.** Quotation lines show total metres and theoretical kg using the shared quote calculation, identify profile-master versus manual kg/m, and flag missing or invalid inputs. Mounted tests verify 100 x 6 m x 0.8 kg/m = 480 kg, length changes, manual overrides, and zero writes during calculation. Master values are not labelled approved merely because populated. Final independent verification: 1,769 tests across 76 suites; lint, typecheck, and build passed. Visual and real-master suitability checks remain open. [Delivery audit and remaining checks](docs/UPGRADE_EOS_ENTRY_AND_PREVIEWS_2026-10-21.md).
+
 - **What it does:** For piece-based work, capture piece count and cut length, then fetch approved section weight. Calculate total metres = pieces x length in metres, and theoretical kg = total metres x kg/m. For 100 pieces x 6 m x 0.8 kg/m, show 600 m and 480 kg theoretical weight.
 - **Impact:** Removes repeated arithmetic and keeps quantity representations consistent.
 - **Complexity:** Medium - formula integration is bounded, but unit conversion, rounding, zero/missing inputs, and measured-weight separation need verification.
@@ -805,6 +813,8 @@ For these features, every field must have a clear source. Maintain approved defa
 - **Acceptance:** Recovery is applied once to the intended manufacturing output; minimum commercial billing weight cannot silently increase physical manufacturing demand.
 
 ### 90. Theoretical billet weight from geometry
+
+- [ ] **Implemented and audited locally; interactive visual acceptance pending, 21 October 2026.** Foundry entry explains the current batch's diameter, length, alloy/density assumption, geometry formula, per-billet estimate, batch estimate, and existing rounding basis. Equivalent mm/cm/m/in displays preserve mass; invalid/missing configuration shows an unavailable estimate. Measured and issued material facts are not altered by this presentation. Final independent verification: 1,769 tests across 76 suites; lint, typecheck, and build passed. Visual inspection and company approval of applicable density assumptions remain open. [Delivery audit and remaining checks](docs/UPGRADE_EOS_ENTRY_AND_PREVIEWS_2026-10-21.md).
 
 - **What it does:** Fetch billet diameter, standard length, alloy, and approved density assumption from the selected specification. Convert dimensions to metres and calculate theoretical kg = pi x (diameter / 2)^2 x length x density. Multiply by count for a planned batch and retain actual measured mass separately.
 - **Impact:** Reduces repeated weight lookup and supports explainable material planning.

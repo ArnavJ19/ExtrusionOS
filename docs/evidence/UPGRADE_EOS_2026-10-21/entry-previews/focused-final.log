@@ -1,0 +1,196 @@
+TAP version 13
+# Subtest: billet estimate displays its source, supports units, and removes invalid results
+ok 1 - billet estimate displays its source, supports units, and removes invalid results
+  ---
+  duration_ms: 2490.1783
+  type: 'test'
+  ...
+# Subtest: equivalent supported units reproduce the batch planning mass
+ok 2 - equivalent supported units reproduce the batch planning mass
+  ---
+  duration_ms: 2.0939
+  type: 'test'
+  ...
+# Subtest: missing or invalid measurements cannot become a zero estimate
+ok 3 - missing or invalid measurements cannot become a zero estimate
+  ---
+  duration_ms: 0.5734
+  type: 'test'
+  ...
+# Subtest: precision overflow and subprecision mass are unavailable
+ok 4 - precision overflow and subprecision mass are unavailable
+  ---
+  duration_ms: 0.2232
+  type: 'test'
+  ...
+# Subtest: changed planning assumptions leave separately recorded actual facts untouched
+ok 5 - changed planning assumptions leave separately recorded actual facts untouched
+  ---
+  duration_ms: 0.2846
+  type: 'test'
+  ...
+# Subtest: refreshing an old stock row updates page-fetch time without changing observation evidence
+ok 6 - refreshing an old stock row updates page-fetch time without changing observation evidence
+  ---
+  duration_ms: 3216.8897
+  type: 'test'
+  ...
+# Subtest: missing record timestamps remain unavailable after a successful page read
+ok 7 - missing record timestamps remain unavailable after a successful page read
+  ---
+  duration_ms: 79.9297
+  type: 'test'
+  ...
+# Subtest: refreshing an old stock row never turns its record timestamp into a new observation
+ok 8 - refreshing an old stock row never turns its record timestamp into a new observation
+  ---
+  duration_ms: 2.8415
+  type: 'test'
+  ...
+# Subtest: explicit observation timestamps and source metadata are reported independently
+ok 9 - explicit observation timestamps and source metadata are reported independently
+  ---
+  duration_ms: 0.4899
+  type: 'test'
+  ...
+# Subtest: missing, invalid, and future timestamps stay explicit and do not appear recent
+ok 10 - missing, invalid, and future timestamps stay explicit and do not appear recent
+  ---
+  duration_ms: 0.2838
+  type: 'test'
+  ...
+# Subtest: query freshness scope changes with tenant and page context
+ok 11 - query freshness scope changes with tenant and page context
+  ---
+  duration_ms: 0.3786
+  type: 'test'
+  ...
+# Subtest: mounted database controls preserve rapid edits, debounce, pagination, sorting, and Back restoration
+ok 12 - mounted database controls preserve rapid edits, debounce, pagination, sorting, and Back restoration
+  ---
+  duration_ms: 4051.3242
+  type: 'test'
+  ...
+# Subtest: mixed paste stays out of draft until corrected, then appends all lines without inherited charges or writes
+ok 13 - mixed paste stays out of draft until corrected, then appends all lines without inherited charges or writes
+  ---
+  duration_ms: 2426.9253
+  type: 'test'
+  ...
+# Subtest: a response for an older paste cannot authorise a new paste
+ok 14 - a response for an older paste cannot authorise a new paste
+  ---
+  duration_ms: 589.2817
+  type: 'test'
+  ...
+# Subtest: changing cut length recalculates theoretical quantity and manual kg/m has honest provenance
+ok 15 - changing cut length recalculates theoretical quantity and manual kg/m has honest provenance
+  ---
+  duration_ms: 664.5323
+  type: 'test'
+  ...
+# Subtest: paste parser requires explicit length units and unambiguous column names
+ok 16 - paste parser requires explicit length units and unambiguous column names
+  ---
+  duration_ms: 2.1427
+  type: 'test'
+  ...
+# Subtest: parser rejects malformed quotes, embedded multiline values, and unknown or unitless columns
+ok 17 - parser rejects malformed quotes, embedded multiline values, and unknown or unitless columns
+  ---
+  duration_ms: 0.4764
+  type: 'test'
+  ...
+# Subtest: preview retains each row and identifies shape errors instead of dropping extra cells
+ok 18 - preview retains each row and identifies shape errors instead of dropping extra cells
+  ---
+  duration_ms: 1.1355
+  type: 'test'
+  ...
+# Subtest: row validation blocks unknown and ambiguous profile codes, bad pieces, units, and finish values
+ok 19 - row validation blocks unknown and ambiguous profile codes, bad pieces, units, and finish values
+  ---
+  duration_ms: 0.3863
+  type: 'test'
+  ...
+# Subtest: valid paste rows convert mm to metres and preserve exact profile identity
+ok 20 - valid paste rows convert mm to metres and preserve exact profile identity
+  ---
+  duration_ms: 1.2453
+  type: 'test'
+  ...
+# Subtest: piece calculation names profile-master only when its current kg/m exactly matches
+ok 21 - piece calculation names profile-master only when its current kg/m exactly matches
+  ---
+  duration_ms: 0.671
+  type: 'test'
+  ...
+# Subtest: pasted lines keep company defaults but never copy prior row overrides or charges
+ok 22 - pasted lines keep company defaults but never copy prior row overrides or charges
+  ---
+  duration_ms: 1.3547
+  type: 'test'
+  ...
+# Subtest: finish preview preserves source values until corrected and recognized finish aliases
+ok 23 - finish preview preserves source values until corrected and recognized finish aliases
+  ---
+  duration_ms: 0.6806
+  type: 'test'
+  ...
+# Subtest: quote editor checks profiles in tenant scope, previews before import, and appends atomically
+ok 24 - quote editor checks profiles in tenant scope, previews before import, and appends atomically
+  ---
+  duration_ms: 0.9021
+  type: 'test'
+  ...
+# Subtest: mounted record preview traps focus, restores the row trigger, preserves return state, and hides stale/private data
+ok 25 - mounted record preview traps focus, restores the row trigger, preserves return state, and hides stale/private data
+  ---
+  duration_ms: 2171.5202
+  type: 'test'
+  ...
+# Subtest: record preview exposes only the module allowlist, including no financial or free-text payloads
+ok 26 - record preview exposes only the module allowlist, including no financial or free-text payloads
+  ---
+  duration_ms: 2.9783
+  type: 'test'
+  ...
+# Subtest: contact details appear only for module rows explicitly configured to expose them
+ok 27 - contact details appear only for module rows explicitly configured to expose them
+  ---
+  duration_ms: 0.4744
+  type: 'test'
+  ...
+# Subtest: representative previews use actual list/RPC identifiers, relation aliases, and quantities
+ok 28 - representative previews use actual list/RPC identifiers, relation aliases, and quantities
+  ---
+  duration_ms: 0.4505
+  type: 'test'
+  ...
+# Subtest: missing primary workload quantities are explicit
+ok 29 - missing primary workload quantities are explicit
+  ---
+  duration_ms: 0.2228
+  type: 'test'
+  ...
+# Subtest: detail links are restricted to the matching internal database path and retain list query state
+ok 30 - detail links are restricted to the matching internal database path and retain list query state
+  ---
+  duration_ms: 0.913
+  type: 'test'
+  ...
+# Subtest: row scope binds previews to authenticated company, user, and role
+ok 31 - row scope binds previews to authenticated company, user, and role
+  ---
+  duration_ms: 0.2835
+  type: 'test'
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 31
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11407.2379
