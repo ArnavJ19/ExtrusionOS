@@ -1,0 +1,75 @@
+PASS G009-dispatch-delivery-update [baseline]: baseline blocked: Permission denied to allocate billets
+PASS G009-dispatch-delivery-update [candidate]: in_transit recorded; order dispatched; allocation deferred (billet cast)
+PASS G009-dispatch_manager-delivery-update [baseline]: baseline blocked: Permission denied to allocate billets
+PASS G009-dispatch_manager-delivery-update [candidate]: in_transit recorded; order dispatched; allocation deferred (billet cast)
+PASS G009-inventory_manager-delivery-update [baseline]: baseline blocked: Permission denied to allocate billets
+PASS G009-inventory_manager-delivery-update [candidate]: in_transit recorded; order dispatched; allocation deferred (billet cast)
+PASS G009-factory-stage-change-unchanged [baseline]: owner transition ok; outcome {"stage":"dispatched","billet":"cast","reqs":[]}
+PASS G009-factory-stage-change-unchanged [candidate]: owner transition ok; outcome {"stage":"dispatched","billet":"cast","reqs":[]}
+PASS G009-sales-quote-conversion [baseline]: baseline blocked: Permission denied to allocate billets
+PASS G009-sales-quote-conversion [candidate]: sales converted the quote; 1 billet requirement row(s) rebuilt, allocation deferred
+PASS G002-viewer-scrap-insert [baseline]: baseline: viewer created a 5000 kg lot
+PASS G002-viewer-scrap-insert [candidate]: rejected: permission denied for table scrap_records
+PASS G002-production-scrap-insert [baseline]: baseline: production created unlinked scrap
+PASS G002-production-scrap-insert [candidate]: rejected: permission denied for table scrap_records
+FAIL G002-completion-still-books-scrap [candidate]: Link the billets used by this job, or have a manager record an input exception, before completing it
+
+false !== true
+
+PASS G003-direct-availability-inflation [baseline]: baseline: available 25000
+PASS G003-direct-availability-inflation [candidate]: client value ignored -> {"w":"1000.000","a":"0.000","status":"used"}
+PASS G003-form-edit-resurrection [baseline]: baseline: resurrected to 1000
+PASS G003-form-edit-resurrection [candidate]: used lot stays used -> {"w":"1000.000","a":"0.000","status":"used"}
+PASS G003-weight-correction-moves-balance [candidate]: +500 kg receipt correction -> {"w":"1500.000","a":"500.000","status":"reserved"}; below-charged rejected (Received weight 900.000 kg is below the 1000.000 kg already charged to furnace batches); rejected hold allowed
+PASS G003-insert-forces-full-availability [baseline]: baseline: available 99999 on a 100 kg receipt
+PASS G003-insert-forces-full-availability [candidate]: receipt availability forced to 100 kg; 'used' receipt rejected
+PASS G003-furnace-charge-and-cancel-still-work [candidate]: charge debited to 9726.375 (reserved); cancel refunded to 10000.000
+PASS G008-viewer-returns-broken-press [baseline]: baseline: viewer moved press to idle
+PASS G008-viewer-returns-broken-press [candidate]: viewer update affected no rows; press stays in breakdown
+FAIL G008-production-manager-returns-press [candidate]: Return the machine to service through the maintenance sign-off (all breakdowns resolved)
+
+false !== true
+
+PASS G008-sales-reactivates-retired-die [baseline]: baseline: sales reactivated the die
+PASS G008-sales-reactivates-retired-die [candidate]: rejected: Only owner, admin, factory or production managers may make a die usable for production
+PASS G008-sales-manager-rpc-reactivates-die [baseline]: baseline: sales manager reactivated the die via RPC
+PASS G008-sales-manager-rpc-reactivates-die [candidate]: status change rejected (Only owner, admin, factory or production managers may make a die usable for production); commercial edit still allowed
+PASS G008-operator-out-of-service-only [candidate]: operator took die out of service; only the production manager returned it
+PASS G008-sales-manager-registers-die [candidate]: ordered die registered; usable die rejected (Only owner, admin, factory or production managers may make a die usable for production)
+PASS G011-viewer-rewrites-shipped-dispatch [baseline]: baseline: viewer rewrote documents and returned the shipment
+PASS G011-viewer-rewrites-shipped-dispatch [candidate]: viewer writes affected no rows -> {"delivery_status":"dispatched","eway_bill_number":"EWB-111","vehicle_number":"MH01AB1234","lr_number":null,"transporter_name":"Shree Roadlines"}
+PASS G011-dispatch-role-document-freeze [baseline]: baseline: shipped e-way bill rewritten by dispatch role
+PASS G011-dispatch-role-document-freeze [candidate]: recorded e-way bill frozen (Recorded transport documents are frozen after activation; record an amendment instead); late LR number filled
+PASS G011-status-only-through-workflow [baseline]: baseline: direct table return accepted
+PASS G011-status-only-through-workflow [candidate]: direct status change rejected (Use the delivery workflow to change dispatch status); workflow return recorded
+PASS G011-pending-dispatch-still-editable [candidate]: pending dispatch documents remain editable
+PASS G010-app-shaped-reservation-line [baseline]: baseline rejected: Packing requires an authoritative commercial source and GST rate
+PASS G010-app-shaped-reservation-line [candidate]: accepted with order A line, Rs 300.00/kg, GST 18.00%
+PASS G010-forged-foreign-line-and-rate [baseline]: baseline: shipped and priced from order B line at Rs 1.00/kg, GST 5.00%
+PASS G010-forged-foreign-line-and-rate [candidate]: client lineage overwritten -> order A line, Rs 300.00/kg, GST 18.00%
+PASS G010-finish-disambiguates-lines [candidate]: mill-finish batch matched the mill-finish line (not the powder-coated one)
+PASS G010-ambiguous-lines-rejected [candidate]: rejected: Reserved stock matches more than one order line for this profile and finish; record the reservation against one line
+PASS G010-reserved-stock-shipment-end-to-end [baseline]: baseline blocked: Packing requires an authoritative commercial source and GST rate
+PASS G010-reserved-stock-shipment-end-to-end [candidate]: dispatch role shipped 1 reserved piece; stock 58 -> 52.200 kg; packed at Rs 300.00/kg
+PASS G007-same-die-two-presses-overlap [baseline]: baseline: overlapping slot for the same die accepted on press B
+PASS G007-same-die-two-presses-overlap [candidate]: second press slot rejected: This die is already scheduled on another press slot in that window
+PASS G007-same-die-later-window-allowed [candidate]: back-to-back windows for the same die are allowed
+PASS G007-completed-job-does-not-block [candidate]: a completed job's released slot does not block the die
+PASS G007-die-already-running [baseline]: baseline: second job started while the die was running
+PASS G007-die-already-running [candidate]: start rejected: Die D-100 is already running on another production job
+PASS G012-production-manager-self-approval [baseline]: baseline: production manager approved own output
+PASS G012-production-manager-self-approval [candidate]: approval rejected (QC approval requires a quality, factory manager, owner or admin user); production manager can still reject
+PASS G012-out-of-spec-approval [baseline]: baseline: 1.6 kg/m and 2 HW approved
+PASS G012-out-of-spec-approval [candidate]: rejected: Actual 1.600 kg/m is outside 1.000 kg/m ± 5.00 %; QC cannot approve | Hardness 2.00 HW is below the required 12 HW; QC cannot approve
+PASS G012-in-spec-approval-records-approver [candidate]: missing hardness rejected (Record Webster hardness: this profile requires at least 12); in-spec approval stored with approver = quality user
+PASS G012-unconfigured-profile-not-checked [candidate]: profiles without a specification approve without measurements (no invented tolerance)
+PASS G012-admin-disables-qc-gate [baseline]: baseline: admin switched the dispatch QC gate off
+PASS G012-admin-disables-qc-gate [candidate]: admin rejected (Only the owner may disable the dispatch quality gate); owner may still disable it
+PASS G019-viewer-forges-audit-rows [baseline]: baseline: rows attributed to the owner
+PASS G019-viewer-forges-audit-rows [candidate]: rows stamped with the real actor -> {"actor_user_id":"a0000000-0000-4000-8000-000000000004","actor_name":"Viewer","actor_role":"viewer"}
+PASS G019-server-audit-writers-unchanged [candidate]: machine change audited by the trigger writer -> {"actor_id":"a0000000-0000-4000-8000-000000000002","action":"update_machines"}
+GATE FAILED (2)
+
+NOTE (21 Oct): the two candidate failures above are intended behaviour changes from later findings, not regressions:
+- G002-completion-still-books-scrap: EXOS-AUD-014 now requires billet input or a manager input exception, and EXOS-AUD-006 no longer books uncategorised loss as furnace metal (see gate-wave2 G006/G014).
+- G008-production-manager-returns-press: the EXOS-AUD-008 follow-up requires the return-to-service sign-off (see gate-wave2 G027).

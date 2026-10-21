@@ -24,13 +24,15 @@ const PREFIX = (process.env.GATE_PREFIX_MIGRATIONS ?? "").split(",").map((file) 
 // Post-apply verification: GATE_POST_APPLY_DIR=live-20261021 runs only the candidate
 // assertions against a fresh capture of the hosted catalog, with no migrations layered on.
 const POST_APPLY_DIR = process.env.GATE_POST_APPLY_DIR ?? "";
+// Regression run: later migrations layered after Wave 1, e.g. GATE_SUFFIX_MIGRATIONS=a.sql,b.sql
+const SUFFIX = (process.env.GATE_SUFFIX_MIGRATIONS ?? "").split(",").map((file) => file.trim()).filter(Boolean);
 
 const attempt = async (fn) => { try { return { ok: true, value: await fn() }; } catch (error) { return { ok: false, error: error.message }; } };
 
 async function fresh(candidate) {
   const { db } = POST_APPLY_DIR
     ? await createLiveCatalogDb({ dir: POST_APPLY_DIR })
-    : await createLiveCatalogDb({ migrations: candidate ? [...PREFIX, ...WAVE1] : [] });
+    : await createLiveCatalogDb({ migrations: candidate ? [...PREFIX, ...WAVE1, ...SUFFIX] : [] });
   await seed(db);
   const q = async (sql) => (await db.query(sql)).rows;
   const replica = (sql) => db.exec(`set session_replication_role = replica; ${sql}; set session_replication_role = origin;`);
