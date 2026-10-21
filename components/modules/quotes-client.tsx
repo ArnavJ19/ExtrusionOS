@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingState } from "@/components/ui/loading";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { ProfileSelector } from "@/components/ui/profile-selector";
+import { InTaskCustomer } from "@/components/modules/customers/in-task-customer";
 import { PageHeader } from "@/components/layout/page-header";
 import { calculateQuoteItem, calculateQuoteSummary, getQuoteItemWarnings, type QuoteItemInput } from "@/lib/calculations/quote";
 import { quoteSchema } from "@/lib/validations/schemas";
@@ -118,8 +119,15 @@ function mergeLookupRows<T extends { id: string }>(incoming: T[], current: T[], 
   return rows;
 }
 
-export function QuotesClient({ context, mode = "full", initialEditId }: { context: SessionContext; mode?: "full" | "form"; initialEditId?: string }) {
+type QuotesClientProps = { context: SessionContext; mode?: "full" | "form"; initialEditId?: string };
+
+export function QuotesClient(props: QuotesClientProps) {
+  return <QuoteWorkspace key={JSON.stringify([props.context.companyId, props.context.userId, props.context.role, props.mode ?? "full", props.initialEditId ?? null])} {...props} />;
+}
+
+function QuoteWorkspace({ context, mode = "full", initialEditId }: QuotesClientProps) {
   const supabase = useMemo(() => createClient(), []);
+  const customerCreationScope = JSON.stringify([context.companyId, context.userId, context.role]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [dies, setDies] = useState<Die[]>([]);
@@ -564,7 +572,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
             {editingId ? <Badge value="draft" className="w-fit" /> : null}
           </div>
           <div className="grid gap-4 sm:grid-cols-4">
-            <label className="block space-y-1.5 sm:col-span-2"><span className="form-label">Customer *</span><input className="form-input" placeholder="Search customer name, company, or GST..." value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} /><SearchableSelect value={form.customer_id} placeholder={filteredCustomers.length ? "Select customer" : customerSearchLoading ? "Searching customers..." : "No matching customers"} options={filteredCustomers.map((customer) => ({ value: customer.id, label: customerLabel(customer) }))} onChange={(nextValue) => { const customer = customers.find((candidate) => candidate.id === nextValue); setForm({ ...form, customer_id: nextValue }); setCustomerSearch(customer ? customerLabel(customer) : ""); }} />{selectedCustomer ? <p className="text-xs font-semibold text-slate-500">Selected: {customerLabel(selectedCustomer)}</p> : customerSearchLoading ? <p className="text-xs font-semibold text-slate-500">Searching customer database...</p> : null}</label>
+            <div className="sm:col-span-2"><label className="block space-y-1.5"><span className="form-label">Customer *</span><input className="form-input" placeholder="Search customer name, company, or GST..." value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} /><SearchableSelect value={form.customer_id} placeholder={filteredCustomers.length ? "Select customer" : customerSearchLoading ? "Searching customers..." : "No matching customers"} options={filteredCustomers.map((customer) => ({ value: customer.id, label: customerLabel(customer) }))} onChange={(nextValue) => { const customer = customers.find((candidate) => candidate.id === nextValue); setForm({ ...form, customer_id: nextValue }); setCustomerSearch(customer ? customerLabel(customer) : ""); }} />{selectedCustomer ? <p className="text-xs font-semibold text-slate-500">Selected: {customerLabel(selectedCustomer)}</p> : customerSearchLoading ? <p className="text-xs font-semibold text-slate-500">Searching customer database...</p> : null}</label><InTaskCustomer key={customerCreationScope} context={context} onSelected={(customer) => { setCustomers((current) => mergeCustomers(current, [customer])); setForm((current) => ({ ...current, customer_id: customer.id })); setCustomerSearch(customerLabel(customer)); }} /></div>
             <label className="block space-y-1.5"><span className="form-label">Quote date</span><input className="form-input" type="date" value={form.quote_date} onChange={(event) => setForm({ ...form, quote_date: event.target.value })} /></label>
             <label className="block space-y-1.5"><span className="form-label">Valid until</span><input className="form-input" type="date" value={form.valid_until} onChange={(event) => setForm({ ...form, valid_until: event.target.value })} /></label>
           </div>
