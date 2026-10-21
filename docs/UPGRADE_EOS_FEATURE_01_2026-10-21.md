@@ -83,6 +83,8 @@ Evidence: [full test log](evidence/UPGRADE_EOS_2026-10-21/feature-01/my-work-fin
 [typecheck log](evidence/UPGRADE_EOS_2026-10-21/feature-01/my-work-final-main-typecheck.log),
 [production build log](evidence/UPGRADE_EOS_2026-10-21/feature-01/my-work-final-main-build.log),
 and [implementation blob identities](evidence/UPGRADE_EOS_2026-10-21/feature-01/implementation-checkpoint.txt).
+Published logs have trailing whitespace trimmed; the original command captures
+remain in this task's local verification folder.
 
 The final focused run passed all 21 tests: fourteen new feature tests and seven
 existing role/access usability tests. The new tests cover all fifteen roles,
