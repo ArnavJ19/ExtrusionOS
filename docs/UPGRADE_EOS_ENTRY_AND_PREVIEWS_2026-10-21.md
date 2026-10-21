@@ -2,6 +2,9 @@
 
 Date: 21 October 2026
 
+Follow-up: [current real-component integration checks and visual-gate status](UPGRADE_EOS_ENTRY_ACCEPTANCE_RECHECK_2026-10-21.md).
+The historical results below remain tied to their original checkpoints.
+
 ## Delivery status
 
 This batch implements catalogue features **23, 41, 50, 83, and 90** in the
