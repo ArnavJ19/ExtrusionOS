@@ -142,6 +142,9 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 10. Create missing master records inside a task
 
+- [x] **Complete for customer/quotation implementation and local verification, 21 October 2026.** A permitted Add new customer dialog checks likely duplicates, supports selecting an active match, and returns a newly created customer to the unsaved quotation without resetting its lines, commercial terms, prices, or notes. Audited and visually inspected at 1280 px, 768 px, and 375 px. Final independent verification passed 1,789 tests across 76 suites, lint, typecheck, and production build; 23 focused regressions cover authorization, tenant isolation, duplicate review, draft preservation, and retry recovery. [Delivery record, screenshots, and verification evidence](docs/UPGRADE_EOS_IN_TASK_CUSTOMER_2026-10-21.md).
+- **Scope:** This delivery implements the customer/quotation acceptance example below. Transporter and other master selectors remain future extensions. Duplicate suggestions are advisory; separate simultaneous requests do not establish a global uniqueness guarantee. Visual inspection used real application components and styles with synthetic data. Authenticated hosted acceptance and deployment remain separate steps.
+
 - **What it does:** Offer a permitted Add New action beside customer, transporter, or other master selectors. Open a short creation dialog, check likely duplicates, and return with the new record selected. Preserve every existing draft value.
 - **Impact:** Prevents employees from abandoning work or entering temporary names that later fragment master data.
 - **Complexity:** Medium - requires reusable dialogs, duplicate checks, permissions, and reliable form-state preservation.

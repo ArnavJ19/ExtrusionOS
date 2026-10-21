@@ -1,0 +1,148 @@
+TAP version 13
+# Subtest: creation derives tenant and author, normalizes contacts, and returns a minimal selection
+ok 1 - creation derives tenant and author, normalizes contacts, and returns a minimal selection
+  ---
+  duration_ms: 2494.1436
+  type: 'test'
+  ...
+# Subtest: role and authentication denials make no reads or writes
+ok 2 - role and authentication denials make no reads or writes
+  ---
+  duration_ms: 4.1524
+  type: 'test'
+  ...
+# Subtest: strict input validation rejects tenant injection, bad contacts and identities
+ok 3 - strict input validation rejects tenant injection, bad contacts and identities
+  ---
+  duration_ms: 6.3605
+  type: 'test'
+  ...
+# Subtest: duplicate evidence is scoped, bounded, and requires explicit review
+ok 4 - duplicate evidence is scoped, bounded, and requires explicit review
+  ---
+  duration_ms: 74.3154
+  type: 'test'
+  ...
+# Subtest: read failures are unavailable rather than evidence of no duplicates
+ok 5 - read failures are unavailable rather than evidence of no duplicates
+  ---
+  duration_ms: 7.6474
+  type: 'test'
+  ...
+# Subtest: legacy phone formatting and escaped name wildcards stay reviewable and bounded
+ok 6 - legacy phone formatting and escaped name wildcards stay reviewable and bounded
+  ---
+  duration_ms: 17.0946
+  type: 'test'
+  ...
+# Subtest: definite policy rejection is editable rather than an ambiguous commit
+ok 7 - definite policy rejection is editable rather than an ambiguous commit
+  ---
+  duration_ms: 26.3948
+  type: 'test'
+  ...
+# Subtest: simultaneous requests with one identity produce one customer
+ok 8 - simultaneous requests with one identity produce one customer
+  ---
+  duration_ms: 87.1304
+  type: 'test'
+  ...
+# Subtest: lost confirmation retries the same author and identity without another insert
+ok 9 - lost confirmation retries the same author and identity without another insert
+  ---
+  duration_ms: 41.4331
+  type: 'test'
+  ...
+# Subtest: select rechecks activity, deletion and company scope
+ok 10 - select rechecks activity, deletion and company scope
+  ---
+  duration_ms: 19.233
+  type: 'test'
+  ...
+# Subtest: the actual existing customer RLS denies cross-company writes and unprivileged inserts
+ok 11 - the actual existing customer RLS denies cross-company writes and unprivileged inserts
+  ---
+  duration_ms: 17.5871
+  type: 'test'
+  ...
+# Subtest: cancel preserves unsaved quote lines, price and terms; dialog opens focused and Escape restores focus
+ok 12 - cancel preserves unsaved quote lines, price and terms; dialog opens focused and Escape restores focus
+  ---
+  duration_ms: 2091.2627
+  type: 'test'
+  ...
+# Subtest: create and select merge the returned customer into the live quote without saving the quote
+ok 13 - create and select merge the returned customer into the live quote without saving the quote
+  ---
+  duration_ms: 822.4254
+  type: 'test'
+  ...
+# Subtest: a new customer without a company name is labelled once and preserves the draft
+ok 14 - a new customer without a company name is labelled once and preserves the draft
+  ---
+  duration_ms: 758.5543
+  type: 'test'
+  ...
+# Subtest: similar matches require acknowledgement and a fresh acknowledgement after recheck
+ok 15 - similar matches require acknowledgement and a fresh acknowledgement after recheck
+  ---
+  duration_ms: 921.4826
+  type: 'test'
+  ...
+# Subtest: using an active match preserves the draft and leaves inactive matches unavailable
+ok 16 - using an active match preserves the draft and leaves inactive matches unavailable
+  ---
+  duration_ms: 988.6004
+  type: 'test'
+  ...
+# Subtest: same-event repeated create is guarded while request is pending
+ok 17 - same-event repeated create is guarded while request is pending
+  ---
+  duration_ms: 742.3915
+  type: 'test'
+  ...
+# Subtest: lost-response retry reuses the unchanged request id and customer details
+ok 18 - lost-response retry reuses the unchanged request id and customer details
+  ---
+  duration_ms: 862.4759
+  type: 'test'
+  ...
+# Subtest: scope changes and unmount ignore delayed create callbacks
+ok 19 - scope changes and unmount ignore delayed create callbacks
+  ---
+  duration_ms: 723.6049
+  type: 'test'
+  ...
+# Subtest: dialog keyboard shortcuts do not add, duplicate, or save quote lines
+ok 20 - dialog keyboard shortcuts do not add, duplicate, or save quote lines
+  ---
+  duration_ms: 675.1035
+  type: 'test'
+  ...
+# Subtest: mixed paste stays out of draft until corrected, then appends all lines without inherited charges or writes
+ok 21 - mixed paste stays out of draft until corrected, then appends all lines without inherited charges or writes
+  ---
+  duration_ms: 2315.9017
+  type: 'test'
+  ...
+# Subtest: a response for an older paste cannot authorise a new paste
+ok 22 - a response for an older paste cannot authorise a new paste
+  ---
+  duration_ms: 638.5717
+  type: 'test'
+  ...
+# Subtest: changing cut length recalculates theoretical quantity and manual kg/m has honest provenance
+ok 23 - changing cut length recalculates theoretical quantity and manual kg/m has honest provenance
+  ---
+  duration_ms: 671.6666
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9453.1536

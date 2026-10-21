@@ -1,0 +1,45 @@
+{
+  "bodyOverflow": "",
+  "customerWrites": "2",
+  "focus": "Add new customer",
+  "quoteWrites": "0",
+  "selected": "Selected: Retry Fixture Customer",
+  "terms": [
+    {
+      "label": "TERMS AND CONDITIONS",
+      "value": "Payment within 30 days. Retain these commercial terms."
+    },
+    {
+      "label": "NOTES",
+      "value": "Keep this quotation draft while creating the customer."
+    }
+  ],
+  "values": [
+    {
+      "label": "QTY PCS",
+      "value": "17"
+    },
+    {
+      "label": "LENGTH M",
+      "value": "4.25"
+    },
+    {
+      "label": "SALES OVERRIDE",
+      "value": "8123"
+    }
+  ],
+  "phone": {
+    "dialogScroll": 327,
+    "dialogWidth": 343.3333435058594,
+    "scrollWidth": 375,
+    "viewport": 375
+  },
+  "afterCancel": {
+    "bodyOverflow": "",
+    "customerWrites": "2",
+    "focus": "Add new customer",
+    "quoteWrites": "0"
+  },
+  "sourceCheckpoint": "cfec93df984560c8f93ae8373e6087a8d177981c",
+  "currentFixtureErrors": []
+}
