@@ -1,0 +1,160 @@
+[
+  {
+    "role": "dispatch",
+    "crossScopeLeak": false,
+    "pageWidth": 753,
+    "queues": [
+      "Assigned to me",
+      "Unassigned team tasks",
+      "Dispatch team queue"
+    ],
+    "width": 768,
+    "expectedQueue": "Dispatch team queue",
+    "passed": true
+  },
+  {
+    "role": "sales",
+    "crossScopeLeak": false,
+    "pageWidth": 753,
+    "queues": [
+      "Assigned to me",
+      "Unassigned team tasks",
+      "Sales team queue"
+    ],
+    "width": 768,
+    "expectedQueue": "Sales team queue",
+    "passed": true
+  },
+  {
+    "role": "quality",
+    "crossScopeLeak": false,
+    "pageWidth": 753,
+    "queues": [
+      "Assigned to me",
+      "Unassigned team tasks",
+      "Quality team queue"
+    ],
+    "width": 768,
+    "expectedQueue": "Quality team queue",
+    "passed": true
+  },
+  {
+    "role": "inventory_manager",
+    "crossScopeLeak": false,
+    "pageWidth": 753,
+    "queues": [
+      "Assigned to me",
+      "Unassigned team tasks",
+      "Stock attention queue"
+    ],
+    "width": 768,
+    "expectedQueue": "Stock attention queue",
+    "passed": true
+  },
+  {
+    "role": "viewer",
+    "crossScopeLeak": false,
+    "pageWidth": 753,
+    "queues": [
+      "Assigned to me",
+      "Unassigned team tasks"
+    ],
+    "width": 768,
+    "expectedQueue": null,
+    "passed": true
+  },
+  {
+    "scenario": "empty",
+    "queues": [
+      "Assigned to me",
+      "Unassigned team tasks",
+      "Production team queue",
+      "Notifications alt+T"
+    ],
+    "width": 1280,
+    "pageWidth": 1265,
+    "emptyVisible": true,
+    "unavailableVisible": false,
+    "jobLinksSuppressed": true,
+    "snapshotFailureVisible": false
+  },
+  {
+    "scenario": "error",
+    "queues": [
+      "Assigned to me",
+      "Unassigned team tasks",
+      "Production team queue",
+      "Notifications alt+T"
+    ],
+    "width": 1280,
+    "pageWidth": 1265,
+    "emptyVisible": false,
+    "unavailableVisible": true,
+    "jobLinksSuppressed": true,
+    "snapshotFailureVisible": false
+  },
+  {
+    "scenario": "disabled",
+    "queues": [
+      "Assigned to me",
+      "Unassigned team tasks",
+      "Notifications alt+T"
+    ],
+    "width": 1280,
+    "pageWidth": 1265,
+    "emptyVisible": false,
+    "unavailableVisible": false,
+    "jobLinksSuppressed": true,
+    "snapshotFailureVisible": false
+  },
+  {
+    "scenario": "snapshot_error",
+    "queues": [
+      "Assigned to me",
+      "Unassigned team tasks",
+      "Production team queue",
+      "Notifications alt+T"
+    ],
+    "width": 1280,
+    "pageWidth": 1265,
+    "emptyVisible": false,
+    "unavailableVisible": false,
+    "jobLinksSuppressed": false,
+    "snapshotFailureVisible": true
+  },
+  {
+    "scenario": "anonymous",
+    "url": "http://127.0.0.1:3580/account-unavailable",
+    "internalHomeVisible": 0
+  },
+  {
+    "scenario": "dealer",
+    "url": "http://127.0.0.1:3580/portal/dashboard",
+    "internalHomeVisible": 0
+  },
+  {
+    "finalResponsiveChecks": [
+      {
+        "assignments": 10,
+        "firstTenLabel": true,
+        "forbiddenRecordVisible": false,
+        "pageWidth": 1265,
+        "width": 1280
+      },
+      {
+        "assignments": 10,
+        "firstTenLabel": true,
+        "forbiddenRecordVisible": false,
+        "pageWidth": 753,
+        "width": 768
+      },
+      {
+        "assignments": 10,
+        "firstTenLabel": true,
+        "forbiddenRecordVisible": false,
+        "pageWidth": 360,
+        "width": 375
+      }
+    ]
+  }
+]
