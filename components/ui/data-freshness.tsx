@@ -17,7 +17,7 @@ export function DataFreshness({ row, fetchedAt }: { row: Record<string, unknown>
     <summary className="flex w-fit cursor-pointer list-none items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-xs font-semibold text-neutral-600 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">
       <Clock3 className="h-3.5 w-3.5" /> Data age <span className="sr-only">and source details</span>
     </summary>
-    <div className="mt-2 w-72 max-w-[75vw] space-y-2 whitespace-normal rounded-xl border border-neutral-200 bg-white p-3 text-xs font-normal text-neutral-700 shadow-sm">
+    <div className="mt-2 w-72 max-w-[75vw] space-y-2 whitespace-normal break-words rounded-xl border border-neutral-200 bg-white p-3 text-xs font-normal text-neutral-700 shadow-sm">
       <p className="flex items-start gap-2"><RefreshCw className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span><strong>Page fetched:</strong> {fetchedAt ? formatFreshnessTimestamp(fetchedAt) : "No successful fetch for this view"}</span></p>
       <p className="flex items-start gap-2"><Database className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span><strong>{record.label}:</strong> {formatFreshnessTimestamp(record.value)} ({freshnessStatusLabel(record.status)}). A page refresh does not change this record timestamp.</span></p>
       <p><strong>Record updated:</strong> {formatFreshnessTimestamp(freshness.updated.value)}</p>

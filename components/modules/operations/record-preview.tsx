@@ -112,8 +112,8 @@ export function RecordPreview({ open, moduleKey, context, row, returnTo, onClose
         <header className="sticky top-0 z-10 flex items-start justify-between gap-5 border-b border-neutral-200 bg-white px-5 py-4 sm:px-7">
           <div className="min-w-0">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-neutral-500">{config.title} preview</p>
-            <h2 id="record-preview-title" className="mt-1 truncate text-xl font-extrabold text-neutral-950">{model?.title ?? "Record preview"}</h2>
-            {model?.subtitle ? <p className="mt-1 truncate text-sm text-neutral-600">{model.subtitle}</p> : null}
+            <h2 id="record-preview-title" className="mt-1 break-words text-xl font-extrabold text-neutral-950">{model?.title ?? "Record preview"}</h2>
+            {model?.subtitle ? <p className="mt-1 break-words text-sm text-neutral-600">{model.subtitle}</p> : null}
           </div>
           <button ref={closeButtonRef} type="button" onClick={() => onCloseRef.current()} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-200 text-neutral-700 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-800" aria-label="Close record preview">
             <X aria-hidden="true" size={18} />
