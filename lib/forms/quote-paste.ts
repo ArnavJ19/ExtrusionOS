@@ -97,7 +97,7 @@ export function parseQuotePaste(text: string): { rows: QuotePasteRow[]; error: s
   if (lines.length - 1 > maxPasteRows) return { rows: [], error: `Paste up to ${maxPasteRows} lines at a time.` };
   const allowedHeaders = new Set(["profile code", "profile", "quantity pcs", "qty pcs", "pieces", "piece count", "length m", "cut length m", "length mm", "cut length mm", "finish"]);
   const unknownHeader = headers.find((header) => !allowedHeaders.has(header));
-  if (unknownHeader) return { rows: [], error: `Unsupported column "${unknownHeader}". Use only Profile Code, Quantity (pcs), Length (m or mm), and optional Finish.` };
+  if (unknownHeader !== undefined) return { rows: [], error: `Unsupported column "${unknownHeader || "(blank header)"}". Use only Profile Code, Quantity (pcs), Length (m or mm), and optional Finish.` };
 
   const rows: QuotePasteRow[] = [];
   for (const [index, line] of lines.slice(1).entries()) {
@@ -184,7 +184,8 @@ export function buildQuotePasteLine(
 
 export function getQuotePasteFinishOptions(current: string) {
   const options = ["Mill finish", "Powder coating", "Anodizing", "Wood finish", "PVDF", "Other"];
-  return options.some((option) => option === current) || !current
+  if (!current) return [{ value: "", label: "Choose finish" }, ...options.map((label) => ({ value: label, label }))];
+  return options.some((option) => option === current)
     ? options.map((label) => ({ value: label, label }))
     : [{ value: current, label: `${current} (as pasted)` }, ...options.map((label) => ({ value: label, label }))];
 }

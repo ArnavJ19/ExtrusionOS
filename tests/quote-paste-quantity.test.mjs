@@ -16,6 +16,7 @@ test("paste parser requires explicit length units and unambiguous column names",
 });
 
 test("parser rejects malformed quotes, embedded multiline values, and unknown or unitless columns", () => {
+  assert.match(parseQuotePaste("Profile Code\tQuantity (pcs)\tLength (m)\t\nAL-101\t2\t6\textra").error, /blank header/);
   assert.match(parseQuotePaste('Profile Code,Quantity (pcs),Length (m),Finish\nAL-101,2,6,"Mill finish').error, /Row 2: Unclosed quoted cell/);
   assert.match(parseQuotePaste('Profile Code,Quantity (pcs),Length (m),Finish\nAL-101,2,6,"Mill\nfinish"').error, /Row 2: Unclosed quoted cell/);
   assert.match(parseQuotePaste("Profile Code\tQuantity (pcs)\tLength (m)\tLength (inches)\nAL-101\t2\t6\t236").error, /Unsupported column/);
@@ -80,6 +81,7 @@ test("pasted lines keep company defaults but never copy prior row overrides or c
 });
 
 test("finish preview preserves source values until corrected and recognized finish aliases", () => {
+  assert.deepEqual(getQuotePasteFinishOptions("")[0], { value: "", label: "Choose finish" });
   const pvdfOptions = getQuotePasteFinishOptions("pvdf");
   assert.equal(pvdfOptions[0].value, "pvdf");
   assert.match(pvdfOptions[0].label, /as pasted/);
