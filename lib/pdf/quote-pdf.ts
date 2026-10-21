@@ -1,4 +1,5 @@
 import { numberToWordsINR } from "../utils/number-to-words.ts";
+import { savedLineInvoiceBasis } from "../calculations/quote.ts";
 import { nodeFontLoader } from "./font-loader-node.ts";
 import { type PdfFontLoader } from "./unicode-text.ts";
 import { PdfDocumentWriter, type PdfTableRow } from "./document-kit.ts";
@@ -95,6 +96,16 @@ export async function buildQuotePdf(data: { company: any; settings: any; quote: 
   ], rows, { emptyText: "No line items on this quotation." });
 
   doc.paragraph(`Physical weight ${pdfQuantity(totalWeight, 3, "kg")}   ·   Billing weight ${pdfQuantity(billingWeight, 3, "kg")}   ·   Total length ${pdfQuantity(totalMeters, 2, "m")}`, { size: 7.5 });
+  // EXOS-AUD-026: invoices bill the actual net weight at the invoice rate; die and freight are billed once.
+  const invoiceBasis = items.map((item, index) => ({ label: item.aluminium_profiles?.profile_code || `Line ${index + 1}`, ...savedLineInvoiceBasis(item) }))
+    .filter((line) => line.invoiceRatePerKg > 0);
+  if (invoiceBasis.length) {
+    const rates = invoiceBasis.map((line) => `${line.label} ${pdfAmount(line.invoiceRatePerKg)} /kg`).join("   ·   ");
+    const charges = invoiceBasis.filter((line) => line.oneOffCharges > 0).map((line) => (line.dieCharge !== null && line.freightCharge !== null
+      ? joinParts([line.dieCharge > 0 ? `die ${pdfAmount(line.dieCharge)}` : null, line.freightCharge > 0 ? `freight ${pdfAmount(line.freightCharge)}` : null], " + ")
+      : `die and freight ${pdfAmount(line.oneOffCharges)}`) + ` (${line.label})`);
+    doc.paragraph(`Invoicing: actual net weight at ${rates}.${charges.length ? ` Billed once on the first invoice: ${charges.join("; ")}.` : ""} Shipping the quoted quantity invoices the quoted amount.`, { size: 7.5 });
+  }
   doc.space(6);
 
   const subtotal = Number(quote.subtotal || 0);

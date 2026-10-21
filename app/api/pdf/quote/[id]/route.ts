@@ -13,7 +13,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       supabase.from("companies").select("name, legal_name, gst_number, billing_address, city, state, pincode, phone, email").eq("id", context.companyId).single(),
       supabase.from("company_settings_authorized").select("default_quote_terms, default_terms_and_conditions, default_payment_terms, default_delivery_terms, bank_details, default_bank_details").eq("company_id", context.companyId).maybeSingle(),
       supabase.from("quotes_authorized").select("id, customer_id, quote_number, revision_number, quote_date, valid_until, subtotal, gst_percent, gst_amount, grand_total, terms_and_conditions, delivery_timeline, payment_terms").eq("company_id", context.companyId).eq("id", id).single(),
-      supabase.from("quote_items_authorized").select("profile_id, quantity_pieces, length_per_piece_m, total_meters, total_weight_kg, billing_weight_kg, price_per_kg, price_per_meter, line_total_before_gst, item_description, finishing_type, finishing_charge_type, costing_complete").eq("company_id", context.companyId).eq("quote_id", id).order("created_at")
+      supabase.from("quote_items_authorized").select("profile_id, quantity_pieces, length_per_piece_m, total_meters, total_weight_kg, billing_weight_kg, price_per_kg, price_per_meter, line_total_before_gst, net_rate, die_service_charge, freight_charge, item_description, finishing_type, finishing_charge_type, costing_complete").eq("company_id", context.companyId).eq("quote_id", id).order("created_at")
     ]);
 
     if (quoteResult.error || !quoteResult.data) return NextResponse.json({ error: "Quote not found" }, { status: 404 });
