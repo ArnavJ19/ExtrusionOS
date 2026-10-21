@@ -10,10 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { getDispatchSourcesAction, saveDispatchAction } from "@/lib/actions/dispatches";
+import { dispatchOrderBalanceAction } from "@/lib/actions/dispatch-order-balance";
 import { createClient } from "@/lib/supabase/browser";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { formatWeight } from "@/lib/utils/format";
 import {readDispatchOrderOptions,readDispatchPreparationSources,readDispatchManifest,type DispatchPreparationSource} from "@/lib/dispatches/preparation";
+import { buildDispatchReview, projectOrderRemainder, type DispatchOrderBalance } from "@/lib/dispatches/review";
+import { ReviewDialog } from "@/components/ui/review-dialog";
+import { TaskGuidance } from "@/components/forms/task-guidance";
 import type { SessionContext } from "@/types/app";
 
 type OrderOption = { value: string; label: string };
@@ -33,11 +37,11 @@ function newBundle(): BundleRow {
   return { key: crypto.randomUUID(), bundle_number: "", source_line_id: "", number_of_pieces: "", net_length_m: "", gross_weight_kg: "", tare_weight_kg: "" };
 }
 
-export function DispatchFormClient({ context }: { context: SessionContext }) {
-  return <DispatchPreparationForm key={context.companyId} context={context} />;
+export function DispatchFormClient({ context, initialOrderId }: { context: SessionContext; initialOrderId?: string }) {
+  return <DispatchPreparationForm key={JSON.stringify([context.companyId, context.userId, context.role, initialOrderId])} context={context} initialOrderId={initialOrderId} />;
 }
 
-function DispatchPreparationForm({context}:{context:SessionContext}) {
+function DispatchPreparationForm({context, initialOrderId}:{context:SessionContext; initialOrderId?:string}) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [orderState, setOrderState] = useState<OrderState>({search:"",status:"loading",rows:[],error:null});
@@ -62,6 +66,29 @@ function DispatchPreparationForm({context}:{context:SessionContext}) {
   const [lrNumber, setLrNumber] = useState("");
   const [remarks, setRemarks] = useState("");
   const [pending, startTransition] = useTransition();
+  const [initializing, setInitializing] = useState(Boolean(initialOrderId));
+  const [initialOption, setInitialOption] = useState<OrderOption | null>(null);
+  const [reviewing, setReviewing] = useState(false);
+  const reviewingRef = useRef(false);
+  const [review, setReview] = useState<{ manifest: ReturnType<typeof buildDispatchReview>; fingerprint: string; orderBalance: DispatchOrderBalance } | null>(null);
+
+  useEffect(() => {
+    if (!initialOrderId) return;
+    let cancelled = false;
+    async function loadInitialOrder() {
+      try {
+        const id = z.string().uuid().parse(initialOrderId);
+        const result = await supabase.from("orders_authorized").select("id, order_number, customer_name, company_name").eq("company_id", context.companyId).eq("id", id).neq("current_stage", "cancelled").maybeSingle();
+        if (cancelled) return;
+        if (result.error || !result.data) throw new Error("Unavailable");
+        const option = readDispatchOrderOptions([result.data])[0];
+        setInitialOption(option); selectedOrderId.current = id; setOrderId(id);
+      } catch { if (!cancelled) setSubmitError("The linked order is unavailable. Select a permitted current order before preparing dispatch."); }
+      finally { if (!cancelled) setInitializing(false); }
+    }
+    void loadInitialOrder();
+    return () => { cancelled = true; };
+  }, [initialOrderId, context.companyId, supabase]);
 
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
 
@@ -118,9 +145,11 @@ function DispatchPreparationForm({context}:{context:SessionContext}) {
   const loadingSources=Boolean(orderId&&(!sourceState||sourceState.orderId!==orderId||sourceState.status==="loading"));
   const sourceError=sourceState?.orderId===orderId&&sourceState.status==="error"?sourceState.error:null;
   const searchingOrders=orderState.search!==orderSearch||orderState.status==="loading";
-  const orders=orderState.search===orderSearch&&orderState.status==="ready"?orderState.rows:[];
+  const loadedOrders=orderState.search===orderSearch&&orderState.status==="ready"?orderState.rows:[];
+  const orders=initialOption&&!loadedOrders.some((order)=>order.value===initialOption.value)?[initialOption,...loadedOrders]:loadedOrders;
   const orderError=orderState.search===orderSearch&&orderState.status==="error"?orderState.error:null;
-  const locked=pending||confirmationUnknown||Boolean(savedId);
+  const locked=pending||confirmationUnknown||Boolean(savedId)||reviewing||initializing;
+  const fingerprint=JSON.stringify({orderId,bundles,dispatchDate,transporterName,vehicleNumber,driverName,driverPhone,ewayBillNumber,lrNumber,remarks});
 
   function selectOrder(value:string){
     if(saving.current||locked||value===selectedOrderId.current)return;
@@ -130,7 +159,7 @@ function DispatchPreparationForm({context}:{context:SessionContext}) {
   }
   function searchOrders(search:string){
     if(saving.current||locked)return;
-    selectedOrderId.current="";setOrderId("");setSourceState(null);setBundles([newBundle()]);setSubmitError(null);setOrderSearch(search);
+    selectedOrderId.current="";setOrderId("");setInitialOption(null);setSourceState(null);setBundles([newBundle()]);setSubmitError(null);setOrderSearch(search);
   }
   function retrySources(){
     if(saving.current||locked||!orderId)return;
@@ -154,8 +183,26 @@ function DispatchPreparationForm({context}:{context:SessionContext}) {
     setBundles((current) => current.map((bundle) => bundle.key === key ? { ...bundle, [field]: value } : bundle));
   }
 
+  async function prepareReview() {
+    if (saving.current || reviewingRef.current || locked) return;
+    reviewingRef.current = true; setReviewing(true); setSubmitError(null);
+    try {
+      const [result, orderResult] = await Promise.all([getDispatchSourcesAction(orderId), dispatchOrderBalanceAction(orderId)]);
+      if (!mounted.current || selectedOrderId.current !== orderId) return;
+      if (!result.success) throw new Error(result.error || "Could not recheck dispatch sources.");
+      if (!orderResult.success) throw new Error(orderResult.error);
+      if (orderResult.balance.orderId !== orderId) throw new Error("Order quantities do not match this load. Select the order again.");
+      const latest = readDispatchPreparationSources(result);
+      const manifest = buildDispatchReview(latest, context.companyId, orderId, bundles);
+      setSourceState({ orderId, status: "ready", rows: latest, error: null });
+      setReview({ manifest, fingerprint, orderBalance: orderResult.balance });
+    } catch (error) { if (mounted.current) setSubmitError(error instanceof Error ? error.message : "Dispatch preview is unavailable. Recheck the source before confirming."); }
+    finally { reviewingRef.current = false; if (mounted.current) setReviewing(false); }
+  }
+
   function submit() {
     if(saving.current||locked)return;
+    if (!review || review.fingerprint !== fingerprint) { setReview(null); setSubmitError("The load changed. Review this dispatch again before confirming."); return; }
     if(!sourceReady||selectedOrderId.current!==orderId)return setSubmitError("Select an order and wait for its current source check.");
     let verifiedBundles;
     try{verifiedBundles=readDispatchManifest(sources,context.companyId,orderId,bundles);}
@@ -163,6 +210,15 @@ function DispatchPreparationForm({context}:{context:SessionContext}) {
     saving.current=true;setSubmitError(null);
     startTransition(async () => {
       try{
+        const currentOrder = await dispatchOrderBalanceAction(orderId);
+        if (!mounted.current) return;
+        if (!currentOrder.success) { setReview(null); setSubmitError(currentOrder.error); return; }
+        if (currentOrder.balance.orderId !== orderId) { setReview(null); setSubmitError("Order quantities do not match this load. Review dispatch again."); return; }
+        if (JSON.stringify(currentOrder.balance) !== JSON.stringify(review.orderBalance)) {
+          setReview({ ...review, orderBalance: currentOrder.balance });
+          setSubmitError("Order or shipped quantities changed. Check the updated preview before confirming again.");
+          return;
+        }
         const result = await saveDispatchAction({
         order_id: orderId,
         dispatch_date: dispatchDate,
@@ -179,13 +235,14 @@ function DispatchPreparationForm({context}:{context:SessionContext}) {
         bundles: verifiedBundles
       });
         if(!mounted.current)return;
-        if(result?.success===false){setSubmitError(result.error||"Could not record dispatch.");return;}
+        if(result?.success===false){setReview(null);setSubmitError(result.error||"Could not record dispatch.");return;}
         const confirmation=z.object({success:z.literal(true),dispatchId:z.string().uuid()}).parse(result);
         setSavedId(confirmation.dispatchId);
+        setReview(null);
         toast.success("Dispatch recorded from operator-verified physical bundles");
         router.push(`/dispatches/${confirmation.dispatchId}`);router.refresh();
       }catch{
-        if(mounted.current){setConfirmationUnknown(true);setSubmitError("Dispatch confirmation could not be received. Check dispatch records before trying again.");}
+        if(mounted.current){setReview(null);setConfirmationUnknown(true);setSubmitError("Dispatch confirmation could not be received. Check dispatch records before trying again.");}
       }finally{saving.current=false;}
     });
   }
@@ -197,6 +254,9 @@ function DispatchPreparationForm({context}:{context:SessionContext}) {
         <h1 className="text-3xl font-black tracking-tight text-slate-950">Load Physical Dispatch</h1>
         <p className="mt-2 max-w-4xl text-sm font-medium leading-6 text-slate-500">Scan each bundle tag, select where that material physically came from, then enter the weighbridge gross, tare, and actual piece count. Stock is consumed from these rows only.</p>
       </div>
+
+      <TaskGuidance task="dispatch" />
+      {initializing ? <p role="status" className="text-sm">Checking the linked order...</p> : null}
 
       <fieldset disabled={locked} className="min-w-0 space-y-6">
       <Card>
@@ -243,10 +303,48 @@ function DispatchPreparationForm({context}:{context:SessionContext}) {
         {manifestError&&sources.length?<p className="mt-4 text-sm text-slate-600">{manifestError}</p>:null}
         {submitError?<div role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><p>{submitError}</p>{confirmationUnknown?<Link href="/dispatches/database" className="mt-2 inline-block font-semibold underline">Check dispatch records</Link>:null}</div>:null}
         {savedId?<Link href={`/dispatches/${savedId}`} className="mt-4 inline-block text-sm font-semibold underline">View recorded dispatch</Link>:null}
-        <div className="mt-5 flex justify-end"><Button type="button" disabled={!canSubmit} onClick={submit}>{pending ? "Verifying and posting stock..." : "Record verified dispatch"}</Button></div></CardContent></Card>
+        <div className="mt-5 flex justify-end"><Button type="button" disabled={!canSubmit} onClick={() => void prepareReview()}>{reviewing ? "Rechecking the load..." : "Review dispatch"}</Button></div></CardContent></Card>
       </fieldset>
+      {review ? <ReviewDialog title="Review physical dispatch" busy={pending} onClose={() => setReview(null)}>
+        <div className="space-y-4 text-sm">
+          <p className="break-words font-bold">{review.orderBalance.orderLabel}</p>
+          <p>{dispatchDate} / {vehicleNumber || "Vehicle not recorded"} / {transporterName || "Transporter not recorded"}</p>
+          <p className="rounded-xl bg-amber-50 p-3 text-amber-950">Confirming records this dispatch and consumes the selected material. Availability was rechecked for this preview and will be checked again when posting. This preview does not reserve stock.</p>
+          <div className="grid grid-cols-2 gap-3 rounded-xl bg-neutral-950 p-4 text-white sm:grid-cols-3">
+            <Metric label="Bundles / pieces" value={`${review.manifest.bundles.length} / ${review.manifest.totals.pieces}`} />
+            <Metric label="Actual length" value={`${review.manifest.totals.metres.toFixed(3)} m`} />
+            <Metric label="Gross / tare" value={`${review.manifest.totals.gross.toFixed(3)} / ${review.manifest.totals.tare.toFixed(3)} kg`} />
+            <Metric label="Measured net" value={formatWeight(review.manifest.totals.net)} />
+          </div>
+          <OrderBalanceSummary balance={review.orderBalance} load={review.manifest.totals} />
+          <section aria-label="Reviewed physical bundles" className="space-y-2">
+            {review.manifest.bundles.map((bundle) => <div key={bundle.bundle_number} className="rounded-xl border p-3">
+              <p className="break-words font-bold">{bundle.bundle_number}</p>
+              <p>{bundle.number_of_pieces} pcs / {bundle.net_length_m.toFixed(3)} m / {formatWeight(bundle.gross_weight_kg - bundle.tare_weight_kg)}</p>
+              <p className="mt-1 break-words text-xs text-neutral-600">{sources.find((source) => source.id === bundle.source_line_id)?.profileLabel} / {sources.find((source) => source.id === bundle.source_line_id)?.sourceLabel}</p>
+            </div>)}
+          </section>
+          <section aria-label="Source balances after proposed load">
+            <h3 className="font-bold">Remaining from these sources after this load</h3>
+            {review.manifest.balances.map((balance) => <p key={balance.id} className="mt-2 break-words">{balance.label}: {formatWeight(balance.kg)} / {balance.pieces} pcs / {balance.metres.toFixed(3)} m</p>)}
+          </section>
+          {submitError ? <p role="alert" className="rounded-xl bg-red-50 p-3 text-red-800">{submitError}</p> : null}
+          <Button type="button" disabled={pending} onClick={submit}>{pending ? "Verifying and posting stock..." : "Confirm dispatch and consume stock"}</Button>
+        </div>
+      </ReviewDialog> : null}
     </div>
   );
+}
+
+function OrderBalanceSummary({ balance, load }: { balance: DispatchOrderBalance; load: { pieces: number; metres: number } }) {
+  const remaining = projectOrderRemainder(balance, load);
+  return <section aria-label="Order balance after proposed load" className="rounded-xl border p-3">
+    <h3 className="font-bold">Remaining order quantity after this load</h3>
+    <p className="mt-2">{remaining.pieces} pcs / {remaining.metres.toFixed(3)} m</p>
+    <p className="mt-1 text-xs text-neutral-600">Ordered: {balance.ordered.pieces} pcs / {balance.ordered.metres.toFixed(3)} m. Previously dispatched: {balance.shipped.pieces} pcs / {balance.shipped.metres.toFixed(3)} m.</p>
+    <p className="mt-1 text-xs text-neutral-600">Total across order lines, based on recorded physical dispatches. This does not confirm each profile or finish is fulfilled.</p>
+    {remaining.pieces < 0 || remaining.metres < 0 ? <p role="alert" className="mt-2 font-semibold text-red-800">This load exceeds the recorded order quantity. Check the order, bundles, and customer instructions before confirming.</p> : null}
+  </section>;
 }
 
 function Metric({ label, value }: { label: string; value: string }) {

@@ -9,6 +9,7 @@ import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { getSearchResourceKeys, type SearchResourceKey } from "@/lib/auth/role-experience";
+import { InstantFind } from "@/components/search/instant-find";
 
 type SearchParams = Promise<{ q?: string }>;
 
@@ -57,7 +58,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const allowedResources = getSearchResourceKeys(context.role);
   const supabase = await createClient();
   const params = await searchParams;
-  const query = (params.q ?? "").trim();
+  const query = typeof params.q === "string" ? params.q.trim().slice(0, 80) : "";
   const safeQuery = cleanSearch(query);
   const like = `*${safeQuery}*`;
 
@@ -84,17 +85,15 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
       <QueryErrorNotice messages={errors} />
       <Card>
         <CardContent>
-          <form className="flex flex-col gap-3 sm:flex-row">
-            <input name="q" defaultValue={query} className="form-input" placeholder="Search customer, profile code, die number, quote, order, vehicle..." />
-            <button className="rounded-xl bg-orange px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-orange/20" type="submit">Search</button>
-          </form>
+          <InstantFind key={JSON.stringify([context.companyId, context.userId, context.role, query])} initialQuery={query} />
           {query.length > 0 && safeQuery.length < 2 ? <p className="mt-3 text-sm font-bold text-orange">Enter at least 2 searchable characters.</p> : null}
         </CardContent>
       </Card>
 
       {safeQuery.length >= 2 && total === 0 ? <EmptyState title="No matching records" description="Try a customer name, company, contact person, phone, GST, email, profile code, die rack, order number, or vehicle number." /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      {safeQuery.length >= 2 ? <h2 className="text-lg font-bold">Submitted search: {query}</h2> : null}
+      {safeQuery.length >= 2 ? <div className="grid gap-6 xl:grid-cols-2">
         {has("customers") ? <SearchSection title="Customers" count={results.customers?.data?.length ?? 0}>{results.customers?.data?.map((item: any) => <ResultCard key={item.id} href={`/customers/${item.id}`} title={item.company_name || item.customer_name} eyebrow={item.contact_person || item.phone || item.email || item.whatsapp_number || item.gst_number || item.city || "Customer"} badge={item.customer_type} />)}</SearchSection> : null}
         {has("profiles") ? <SearchSection title="Profiles" count={results.profiles?.data?.length ?? 0}>{results.profiles?.data?.map((item: any) => <ResultCard key={item.id} href={`/profiles/${item.id}`} title={`${item.profile_code} - ${item.profile_name}`} eyebrow={`${item.section_weight_kg_per_m} kg/m`} badge={item.application_category} />)}</SearchSection> : null}
         {has("dies") ? <SearchSection title="Dies" count={results.dies?.data?.length ?? 0}>{results.dies?.data?.map((item: any) => <ResultCard key={item.id} href={`/dies/${item.id}`} title={item.die_number} eyebrow={item.rack_location || "Die library"} badge={item.die_status} />)}</SearchSection> : null}
@@ -102,7 +101,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
         {has("orders") ? <SearchSection title="Orders" count={results.orders?.data?.length ?? 0}>{results.orders?.data?.map((item: any) => <ResultCard key={item.id} href={`/orders/${item.id}`} title={item.order_number} eyebrow={`${item.company_name || item.customer_name || "Customer"} · ${formatDate(item.order_date)}${item.order_value == null ? "" : ` · ${formatCurrency(item.order_value)}`}`} badge={item.current_stage} />)}</SearchSection> : null}
         {has("dispatches") ? <SearchSection title="Dispatches" count={results.dispatches?.data?.length ?? 0}>{results.dispatches?.data?.map((item: any) => <ResultCard key={item.id} href={`/dispatches/${item.id}`} title={item.dispatch_number || "Dispatch"} eyebrow={`${item.orders?.order_number || "Order"} · ${formatDate(item.dispatch_date)} · ${item.vehicle_number || "Vehicle pending"}`} badge={item.delivery_status} />)}</SearchSection> : null}
         {has("dealer_orders") ? <SearchSection title="Dealer Orders" count={results.dealer_orders?.data?.length ?? 0}>{results.dealer_orders?.data?.map((item: any) => <ResultCard key={item.id} href={`/dealer-orders/${item.id}`} title={item.order_number || "Dealer order"} eyebrow={`${item.dealers?.dealer_name || "Dealer"} · ${formatDate(item.expected_delivery_date)}`} badge={item.status || item.priority} />)}</SearchSection> : null}
-      </div>
+      </div> : null}
     </div>
   );
 }

@@ -129,6 +129,7 @@ export default async function QuoteDetailPage({
         />
         <div className="flex items-center gap-3 pt-2">
           <Badge value={quote.status} />
+          {["owner", "admin"].includes(context.role) && can(context.role, "create", "quotes") ? <Link href={`/quotes/new?repeat_from=${encodeURIComponent(quote.id)}`} className="rounded-xl border border-neutral-200 px-3 py-2 text-sm font-bold">Repeat quotation</Link> : null}
           {!linkedOrder && quote.status === "customer_approved" && !context.dealerId && can(context.role, "create", "orders") ? <Link href={`/orders/new?quoteId=${quote.id}`} className="flex items-center gap-2 rounded-xl bg-charcoal px-3 py-2 text-sm font-bold text-white transition hover:bg-charcoal/90">Review &amp; Create Order</Link> : null}
           {!linkedOrder && quote.status === "customer_approved" && context.dealerId && can(context.role, "create", "dealer_orders") ? <Link href={`/dealer-orders/new?quoteId=${quote.id}`} className="flex items-center gap-2 rounded-xl bg-charcoal px-3 py-2 text-sm font-bold text-white transition hover:bg-charcoal/90">Create Dealer Order</Link> : null}
           {can(context.role, "update", "quotes") && quote.status !== "converted_to_order" ? <Link href={`/quotes/${quote.id}/edit`} className="flex items-center gap-2 rounded-xl bg-orange px-3 py-2 text-sm font-bold text-white shadow-lg shadow-orange/20 transition hover:bg-orange/90"><Pencil className="h-4 w-4" /> Edit</Link> : null}

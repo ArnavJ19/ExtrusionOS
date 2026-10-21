@@ -95,7 +95,7 @@ for(const defect of ["missing-array","duplicate-id","nonfinite-weight","fraction
   });
 }
 test("a valid current manifest submits once, freezes editing while pending and keeps data on a handled rejection",async()=>{
-  await fixture.ready("B");await fixture.fillBundle("B");await fixture.save().evaluate(button=>{button.click();button.click();});
+  await fixture.ready("B");await fixture.fillBundle("B");await fixture.review();await fixture.confirm().evaluate(button=>{button.click();button.click();});
   await page.waitForFunction(()=>window.__dispatch.saveRequests.length>0);const submitted=await saves();assert.equal(submitted.length,1);assert.equal(submitted[0].order_id,f.b);
   assert.deepEqual(submitted[0].bundles,[{bundle_number:"B-MANIFEST",source_line_id:f.sourceB,number_of_pieces:1,net_length_m:2.5,gross_weight_kg:6,tare_weight_kg:1}]);
   assert.ok(await fixture.order().isDisabled());assert.ok(await bundle().isDisabled());
@@ -103,13 +103,13 @@ test("a valid current manifest submits once, freezes editing while pending and k
   assert.equal(await bundle().inputValue(),"B-MANIFEST");assert.ok(await fixture.order().isEnabled());assert.equal(await page.getByText("Fresh availability changed",{exact:true}).count()>0,true);
 });
 test("uncertain dispatch confirmation blocks a second write and directs the operator to existing records",async()=>{
-  await fixture.ready("A");await fixture.fillBundle("A");await fixture.save().click();await page.waitForFunction(()=>window.__dispatch.saveRequests.length===1);
+  await fixture.ready("A");await fixture.fillBundle("A");await fixture.review();await fixture.confirm().click();await page.waitForFunction(()=>window.__dispatch.saveRequests.length===1);
   await page.evaluate(()=>window.__dispatch.saveRequests[0].reject(new Error("Lost dispatch confirmation")));await fixture.flush();
   assert.deepEqual(fixture.errors,[]);assert.ok(await fixture.save().isDisabled());assert.equal(await page.getByRole("link",{name:"Check dispatch records",exact:true}).count(),1);
   assert.equal((await saves()).length,1);assert.deepEqual(await page.evaluate(()=>window.__dispatch.navigation),[]);
 });
 test("a successful dispatch confirmation locks the submitted form and navigates to its exact record",async()=>{
-  await fixture.ready("A");await fixture.fillBundle("A");await fixture.save().click();await page.waitForFunction(()=>window.__dispatch.saveRequests.length===1);
+  await fixture.ready("A");await fixture.fillBundle("A");await fixture.review();await fixture.confirm().click();await page.waitForFunction(()=>window.__dispatch.saveRequests.length===1);
   await page.evaluate(id=>window.__dispatch.saveRequests[0].resolve({success:true,dispatchId:id}),f.dispatch);await fixture.flush();
   assert.deepEqual(await page.evaluate(()=>window.__dispatch.navigation),[`/dispatches/${f.dispatch}`]);assert.ok(await fixture.save().isDisabled());
 });
@@ -157,7 +157,7 @@ for(const kind of ["production","dealer_stock"]){
 }
 
 test("old company save completion cannot redirect or populate the new company's form",async()=>{
-  await fixture.ready("A");await fixture.fillBundle("A");await fixture.save().click();await page.waitForFunction(()=>window.__dispatch.saveRequests.length===1);
+  await fixture.ready("A");await fixture.fillBundle("A");await fixture.review();await fixture.confirm().click();await page.waitForFunction(()=>window.__dispatch.saveRequests.length===1);
   await page.evaluate(company=>window.__dispatch.setCompanyId(company),f.otherCompany);await fixture.flush();
   await page.evaluate(id=>window.__dispatch.saveRequests[0].resolve({success:true,dispatchId:id}),f.dispatch);await fixture.flush();
   assert.deepEqual(await page.evaluate(()=>window.__dispatch.navigation),[]);assert.equal(await fixture.order().inputValue(),"");assert.equal(await bundle().inputValue(),"");
@@ -165,9 +165,21 @@ test("old company save completion cannot redirect or populate the new company's 
 
 for(const confirmation of [{success:true,dispatchId:"broken"},{success:"true",dispatchId:f.dispatch}]){
   test(`invalid positive confirmation ${typeof confirmation.success}/${confirmation.dispatchId==="broken"?"invalid-id":"valid-id"} remains uncertain without another write`,async()=>{
-    await fixture.ready("A");await fixture.fillBundle("A");await fixture.save().click();await page.waitForFunction(()=>window.__dispatch.saveRequests.length===1);
+    await fixture.ready("A");await fixture.fillBundle("A");await fixture.review();await fixture.confirm().click();await page.waitForFunction(()=>window.__dispatch.saveRequests.length===1);
     await page.evaluate(value=>window.__dispatch.saveRequests[0].resolve(value),confirmation);await fixture.flush();
     assert.ok(await fixture.save().isDisabled());assert.equal(await page.getByRole("link",{name:"Check dispatch records",exact:true}).count(),1);
     assert.deepEqual(await page.evaluate(()=>window.__dispatch.navigation),[]);assert.equal((await saves()).length,1);
   });
 }
+
+test("preview rechecks sources, lists the exact load, and cancelling posts nothing",async()=>{
+  await fixture.ready("A");await fixture.fillBundle("A");await fixture.review();
+  assert.equal(await page.getByRole("dialog",{name:"Review physical dispatch"}).count(),1);assert.equal(await page.getByRole("region",{name:"Reviewed physical bundles"}).count(),1);
+  assert.deepEqual(await saves(),[]);assert.equal(await page.evaluate(()=>window.__dispatch.sourceRequests.length),2);
+  await page.getByRole("button",{name:"Back to editing",exact:true}).click();assert.equal(await bundle().inputValue(),"A-MANIFEST");assert.deepEqual(await saves(),[]);
+});
+test("material consumed after the first source check blocks the preview and preserves measurements",async()=>{
+  await fixture.ready("A");await fixture.fillBundle("A");await fixture.save().click();await page.waitForFunction(()=>window.__dispatch.sourceRequests.length===2);
+  await fixture.resolveSource(1,{success:true,sources:[{...dispatchSource("A"),availableWeightKg:4}]});
+  assert.equal(await page.getByRole("dialog").count(),0);assert.equal(await bundle().inputValue(),"A-MANIFEST");assert.deepEqual(await saves(),[]);assert.equal(await page.getByRole("alert").count(),1);
+});

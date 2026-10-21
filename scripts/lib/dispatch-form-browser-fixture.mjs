@@ -28,10 +28,11 @@ export async function createDispatchFormBrowserFixture({styled=false}={}){
       return <>{visible?<DispatchFormClient context={{companyId,role:"owner",userId:"${dispatchFixtureId(3)}",dealerId:null}}/>:null}<Toaster/></>;}
     createRoot(document.getElementById("app")).render(<Fixture/>);`,resolveDir:process.cwd(),sourcefile:"dispatch-preparation-fixture.tsx",loader:"tsx"},
     bundle:true,write:false,format:"iife",platform:"browser",jsx:"automatic",define:{"process.env.NODE_ENV":"\"production\""},plugins:[{name:"controlled-dispatch-transport",setup(plugin){
-      for(const [filter,path] of [[/^@\/lib\/actions\/dispatches$/,"actions"],[/^@\/lib\/supabase\/browser$/,"client"],[/^next\/navigation$/,"navigation"],[/^next\/link$/,"link"]])plugin.onResolve({filter},()=>({path,namespace:"fixture"}));
+      for(const [filter,path] of [[/^@\/lib\/actions\/dispatches$/,"actions"],[/^@\/lib\/actions\/dispatch-order-balance$/,"balance"],[/^@\/lib\/supabase\/browser$/,"client"],[/^next\/navigation$/,"navigation"],[/^next\/link$/,"link"]])plugin.onResolve({filter},()=>({path,namespace:"fixture"}));
       plugin.onLoad({filter:/.*/,namespace:"fixture"},args=>({loader:"js",resolveDir:process.cwd(),contents:args.path==="actions"?`
         export const getDispatchSourcesAction=orderId=>new Promise((resolve,reject)=>window.__dispatch.sourceRequests.push({orderId,resolve,reject}));
         export const saveDispatchAction=input=>new Promise((resolve,reject)=>window.__dispatch.saveRequests.push({input,resolve,reject}));`
+        :args.path==="balance"?`export async function dispatchOrderBalanceAction(id){return {success:true,balance:{orderId:id,orderLabel:"Synthetic order",ordered:{pieces:20,metres:50},shipped:{pieces:0,metres:0}}}}`
         :args.path==="client"?`const rows=${JSON.stringify([dispatchOrder("A"),dispatchOrder("B"),{...dispatchOrder("B"),id:f.other,company_id:f.otherCompany,order_number:"OTHER-ORDER"}])};
           export function createClient(){return {from(table){if(table!=="orders_authorized")throw new Error("Unexpected fixture table "+table);
             const call={filters:[],sort:[],search:"",limit:null};const q={select(){return q},eq(key,value){call.filters.push([key,value]);return q},neq(){return q},order(key){call.sort.push(key);return q},limit(count){call.limit=count;return q},or(value){call.search=value;return q},
@@ -59,7 +60,9 @@ export async function createDispatchFormBrowserFixture({styled=false}={}){
     await context.route("**/*",route=>new URL(route.request().url()).origin===base?route.continue():route.abort());const page=await context.newPage(),errors=[];
     page.on("pageerror",error=>errors.push(error.message));
     const fixture={page,base,errors,order:()=>page.getByPlaceholder("Search order or customer PO"),source:()=>page.getByPlaceholder("Select production job or stock batch"),
-      save:()=>page.getByRole("button",{name:/^(Record verified dispatch|Verifying and posting stock\.\.\.)$/}),
+      save:()=>page.getByRole("button",{name:/^(Review dispatch|Rechecking the load\.\.\.)$/}),
+      confirm:()=>page.getByRole("button",{name:/^(Confirm dispatch and consume stock|Verifying and posting stock\.\.\.)$/}),
+      async review(){const count=await page.evaluate(()=>window.__dispatch.sourceRequests.length);const label=(await fixture.order().inputValue()).includes("ORDER-B")?"B":"A";await fixture.save().click();await page.waitForFunction(count=>window.__dispatch.sourceRequests.length>count,count);await fixture.resolveSource(count,{success:true,sources:[dispatchSource(label)]});await page.getByRole("dialog",{name:"Review physical dispatch"}).waitFor();},
       async reset(){errors.length=0;await page.goto(base);await page.getByRole("heading",{name:"Load Physical Dispatch",exact:true}).waitFor();},
       async flush(){await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));},
       async chooseOrder(label){await fixture.order().fill(`ORDER-${label}`);await page.getByRole("button",{name:`ORDER-${label} - Synthetic buyer`,exact:true}).click();

@@ -5,6 +5,7 @@ import { build } from "esbuild";
 import { chromium, expect } from "@playwright/test";
 
 const mocks = {
+  "next/link": `export default function Link({href,children,...props}){return <a href={href} {...props}>{children}</a>;}`,
   "@/lib/supabase/browser": `
     const profiles=[{id:"profile-a",profile_code:"AL-101",profile_name:"Approved window",section_weight_kg_per_m:0.8,drawing_approval_status:"approved",standard_length:6}];
     export function createClient(){return {from(table){const q={table,filters:[],lookup:false,single:false};const chain={
@@ -17,6 +18,7 @@ const mocks = {
   `,
   "@/lib/actions/quotes-orders": `export async function saveQuoteAction(data){window.writes.push(data);return {success:true};} export async function updateQuoteStatusAction(){throw new Error("Unexpected workflow write");}`,
   "@/lib/actions/in-task-customers": `export async function inTaskCustomerAction(request){window.customerActions.push(request);return window.customerAction?window.customerAction(request):{kind:"checked",matches:[],hasMore:false};}`,
+  "@/lib/actions/repeat-quote": `export async function repeatQuoteAction(){return {success:false,error:"No repeat source in this fixture"}}`,
   "sonner": `export const toast={error(message){window.errors.push(String(message));},success(){}};`,
   "@/components/ui/profile-selector": `export function ProfileSelector({value,profiles,onChange}) {return <select aria-label="Profile" value={value} onChange={event=>onChange(event.target.value)}><option value="">Select profile</option>{profiles.map(p=><option key={p.id} value={p.id}>{p.profile_code}</option>)}</select>;}`,
   "@/components/ui/searchable-select": `export function SearchableSelect({value,options,onChange,placeholder,disabled}) {return <select aria-label={placeholder} value={value} disabled={disabled} onChange={event=>onChange(event.target.value)}><option value="">{placeholder}</option>{options.map(p=><option key={p.value} value={p.value}>{p.label}</option>)}</select>;}`,
@@ -31,7 +33,7 @@ test.before(async () => {
       window.writes=[];window.reads=[];window.errors=[];window.customerActions=[];
       const root=createRoot(document.getElementById("app"));root.render(<QuotesClient context={{companyId:"company-a",userId:"user-a",role:"owner"}} mode="form"/>);
     `},bundle:true,write:false,platform:"browser",format:"iife",jsx:"automatic",
-    plugins:[{name:"quote-fixture",setup(b){b.onResolve({filter:/^(?:sonner|@\/lib\/supabase\/browser|@\/lib\/actions\/(?:quotes-orders|in-task-customers)|@\/components\/ui\/profile-selector|@\/components\/ui\/searchable-select)$/},args=>({path:args.path,namespace:"fixture"}));b.onLoad({filter:/.*/,namespace:"fixture"},args=>({contents:mocks[args.path],loader:"tsx",resolveDir:process.cwd()}));}}]
+    plugins:[{name:"quote-fixture",setup(b){b.onResolve({filter:/^(?:next\/link|sonner|@\/lib\/supabase\/browser|@\/lib\/actions\/(?:quotes-orders|in-task-customers|repeat-quote)|@\/components\/ui\/profile-selector|@\/components\/ui\/searchable-select)$/},args=>({path:args.path,namespace:"fixture"}));b.onLoad({filter:/.*/,namespace:"fixture"},args=>({contents:mocks[args.path],loader:"tsx",resolveDir:process.cwd()}));}}]
   });script=bundle.outputFiles[0].text;
   const path=process.env.CHROME_PATH??["C:/Program Files/Google/Chrome/Application/chrome.exe","C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"].find(existsSync);
   browser=await chromium.launch({headless:true,...(path?{executablePath:path}:{})});

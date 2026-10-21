@@ -7,6 +7,7 @@ import { existsSync } from "node:fs";
 
 const root = process.cwd();
 const aliases = new Map([
+  ["@/lib/actions/order-stage-age", `export async function orderStageAgeAction(){return {rows:[]}}`],
   ["@/components/ui/button", `export function Button({children,...props}) { return <button {...props}>{children}</button>; }`],
   ["@/components/data", `
     export function DataPageLayout({title,actions,children}) { return <main><h1>{title}</h1><div>{actions}</div>{children}</main>; }

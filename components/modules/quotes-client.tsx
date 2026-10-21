@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { addDays } from "date-fns";
 import { toast } from "sonner";
 import { Copy, Download } from "lucide-react";
@@ -12,6 +13,8 @@ import { LoadingState } from "@/components/ui/loading";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { ProfileSelector } from "@/components/ui/profile-selector";
 import { InTaskCustomer } from "@/components/modules/customers/in-task-customer";
+import { TaskGuidance } from "@/components/forms/task-guidance";
+import { repeatQuoteAction } from "@/lib/actions/repeat-quote";
 import { PageHeader } from "@/components/layout/page-header";
 import { calculateQuoteItem, calculateQuoteSummary, getQuoteItemWarnings, type QuoteItemInput } from "@/lib/calculations/quote";
 import { quoteSchema } from "@/lib/validations/schemas";
@@ -119,13 +122,13 @@ function mergeLookupRows<T extends { id: string }>(incoming: T[], current: T[], 
   return rows;
 }
 
-type QuotesClientProps = { context: SessionContext; mode?: "full" | "form"; initialEditId?: string };
+type QuotesClientProps = { context: SessionContext; mode?: "full" | "form"; initialEditId?: string; repeatFromId?: string };
 
 export function QuotesClient(props: QuotesClientProps) {
-  return <QuoteWorkspace key={JSON.stringify([props.context.companyId, props.context.userId, props.context.role, props.mode ?? "full", props.initialEditId ?? null])} {...props} />;
+  return <QuoteWorkspace key={JSON.stringify([props.context.companyId, props.context.userId, props.context.role, props.mode ?? "full", props.initialEditId ?? null, props.repeatFromId ?? null])} {...props} />;
 }
 
-function QuoteWorkspace({ context, mode = "full", initialEditId }: QuotesClientProps) {
+function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }: QuotesClientProps) {
   const supabase = useMemo(() => createClient(), []);
   const customerCreationScope = JSON.stringify([context.companyId, context.userId, context.role]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -144,6 +147,9 @@ function QuoteWorkspace({ context, mode = "full", initialEditId }: QuotesClientP
   const quotePasteLookupVersion = useRef(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [repeatActive, setRepeatActive] = useState(Boolean(repeatFromId));
+  const [repeatResult, setRepeatResult] = useState<Awaited<ReturnType<typeof repeatQuoteAction>> | null>(null);
+  const [reviewedCopy, setReviewedCopy] = useState("");
   const [form, setForm] = useState({ customer_id: "", quote_date: todayIso(), valid_until: "", status: "draft" as QuoteStatus, gst_percent: 18, terms_and_conditions: "", delivery_timeline: "", payment_terms: "", approval_notes: "", notes: "" });
   const [items, setItems] = useState<FormItem[]>([{ ...emptyItem }]);
   const [quotePasteText, setQuotePasteText] = useState("");
@@ -224,7 +230,27 @@ function QuoteWorkspace({ context, mode = "full", initialEditId }: QuotesClientP
     }
   }
 
-  useEffect(() => { void loadAll(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    void loadAll().then(async () => {
+      if (!repeatFromId || cancelled) return;
+      try {
+        const result = await repeatQuoteAction(repeatFromId);
+        if (cancelled) return;
+        setRepeatResult(result);
+        if (result.success) {
+          setForm(result.draft.form);
+          setItems(result.draft.items.map((item) => ({ ...emptyItem, ...item, die_id: item.die_id ?? "", item_description: item.item_description ?? "" })));
+          setCustomers((current) => mergeCustomers(current, [result.customer]));
+          setProfiles((current) => mergeLookupRows<Profile>(result.profiles, current, result.profiles.map((profile) => profile.id), 120));
+          setCustomerSearch(customerLabel(result.customer));
+        }
+      } catch { if (!cancelled) setRepeatResult({ success: false, error: "Could not load the previous quotation. No new quotation was saved." }); }
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const copyFingerprint = JSON.stringify({ form, items, specifications: items.map((item) => { const profile = profiles.find((candidate) => candidate.id === item.profile_id); return profile ? [profile.id, profile.section_weight_kg_per_m, profile.section_perimeter_mm, profile.drawing_revision] : null; }) });
 
   useEffect(() => {
     const term = cleanCustomerSearch(customerSearch);
@@ -413,6 +439,7 @@ function QuoteWorkspace({ context, mode = "full", initialEditId }: QuotesClientP
   async function saveQuote() {
     return runWithInFlightGuard(saveGuard.current, async () => {
       try {
+        if (repeatActive && reviewedCopy !== copyFingerprint) return toast.error("Review the copied rates, specifications, and commercial terms before saving this new quotation.");
         const parsed = quoteSchema.safeParse({ ...form, items });
         if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Please check quote details");
         if (!customers.some((customer) => customer.id === parsed.data.customer_id)) return toast.error("Selected customer is not available for this company.");
@@ -428,6 +455,7 @@ function QuoteWorkspace({ context, mode = "full", initialEditId }: QuotesClientP
         const result = await saveQuoteAction({ ...parsed.data, editing_id: editingId });
         if (!result.success) return toast.error(result.error);
         toast.success("Quote saved");
+        setRepeatActive(false);
         setEditingId(null);
         setItems([{ ...emptyItem }]);
         setCustomerSearch("");
@@ -561,7 +589,7 @@ function QuoteWorkspace({ context, mode = "full", initialEditId }: QuotesClientP
   return (
     <div>
       <PageHeader title={mode === "form" ? "Create Quote" : "Quotations"} description={canManageQuoteCosting ? "Prepare priced aluminium extrusion quotations with controlled costing, GST, and PDF output." : "Review company quotations, continue approved workflow steps, and share customer-ready PDFs."} />
-      {loading ? <LoadingState title="Loading quotations" description="Fetching customers, profiles, dies, defaults, and saved quotes." /> : canManageQuoteCosting ? <div className="grid gap-6 2xl:grid-cols-[1fr_440px]" onKeyDown={handleQuoteEditorKeyDown}>
+      {loading || (repeatActive && !repeatResult) ? <LoadingState title="Loading quotations" description="Fetching customers, profiles, dies, defaults, and saved quotes." /> : repeatActive && repeatResult && !repeatResult.success ? <Card><CardContent><p role="alert" className="text-sm text-red-700">{repeatResult.error}</p><Link href="/quotes/new" className="mt-4 inline-block text-sm font-bold underline">Start a blank quotation</Link></CardContent></Card> : canManageQuoteCosting ? <div className="grid gap-6 2xl:grid-cols-[1fr_440px]" onKeyDown={handleQuoteEditorKeyDown}>
         <Card><CardContent>
           <div className="mb-5 flex flex-col gap-2 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -571,8 +599,10 @@ function QuoteWorkspace({ context, mode = "full", initialEditId }: QuotesClientP
             </div>
             {editingId ? <Badge value="draft" className="w-fit" /> : null}
           </div>
+          <div className="mb-5"><TaskGuidance task="quotation" /></div>
+          {repeatActive && repeatResult?.success ? <section aria-label="Review repeated quotation" className="mb-5 space-y-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><h3 className="font-black">New draft from {repeatResult.sourceNumber}</h3><p>Lines, quantities, finishes, terms, and price inputs were copied for review. Dates and profile section weights were refreshed; die assignments and die charges were cleared. The original quotation and its issued documents are unchanged.</p><p className="font-bold">{repeatResult.draft.expired ? "The source quotation has expired. Its copied rates require a fresh commercial review." : "Copied prices are unverified suggestions. Review current rates and availability before saving."}</p><label className="flex items-start gap-2"><input type="checkbox" className="mt-1 h-4 w-4" checked={reviewedCopy === copyFingerprint} onChange={(event) => setReviewedCopy(event.target.checked ? copyFingerprint : "")} /><span>I reviewed the copied rates, current specifications, and commercial terms. Any further edit requires another review.</span></label></section> : null}
           <div className="grid gap-4 sm:grid-cols-4">
-            <div className="sm:col-span-2"><label className="block space-y-1.5"><span className="form-label">Customer *</span><input className="form-input" placeholder="Search customer name, company, or GST..." value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} /><SearchableSelect value={form.customer_id} placeholder={filteredCustomers.length ? "Select customer" : customerSearchLoading ? "Searching customers..." : "No matching customers"} options={filteredCustomers.map((customer) => ({ value: customer.id, label: customerLabel(customer) }))} onChange={(nextValue) => { const customer = customers.find((candidate) => candidate.id === nextValue); setForm({ ...form, customer_id: nextValue }); setCustomerSearch(customer ? customerLabel(customer) : ""); }} />{selectedCustomer ? <p className="text-xs font-semibold text-slate-500">Selected: {customerLabel(selectedCustomer)}</p> : customerSearchLoading ? <p className="text-xs font-semibold text-slate-500">Searching customer database...</p> : null}</label><InTaskCustomer key={customerCreationScope} context={context} onSelected={(customer) => { setCustomers((current) => mergeCustomers(current, [customer])); setForm((current) => ({ ...current, customer_id: customer.id })); setCustomerSearch(customerLabel(customer)); }} /></div>
+            <div className="sm:col-span-2"><label className="block space-y-1.5"><span className="form-label">Customer *</span><input className="form-input" placeholder="Search customer name, company, or GST..." value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} /><SearchableSelect value={form.customer_id} placeholder={filteredCustomers.length ? "Select customer" : customerSearchLoading ? "Searching customers..." : "No matching customers"} options={filteredCustomers.map((customer) => ({ value: customer.id, label: customerLabel(customer) }))} onChange={(nextValue) => { const customer = customers.find((candidate) => candidate.id === nextValue); setForm({ ...form, customer_id: nextValue }); setCustomerSearch(customer ? customerLabel(customer) : ""); }} />{selectedCustomer ? <p className="text-xs font-semibold text-slate-500">Selected: {customerLabel(selectedCustomer)}</p> : customerSearchLoading ? <p className="text-xs font-semibold text-slate-500">Searching customer database...</p> : null}</label><InTaskCustomer key={`${customerCreationScope}:${editingId ?? "new"}`} context={context} onSelected={(customer) => { setCustomers((current) => mergeCustomers(current, [customer])); setForm((current) => ({ ...current, customer_id: customer.id })); setCustomerSearch(customerLabel(customer)); }} /></div>
             <label className="block space-y-1.5"><span className="form-label">Quote date</span><input className="form-input" type="date" value={form.quote_date} onChange={(event) => setForm({ ...form, quote_date: event.target.value })} /></label>
             <label className="block space-y-1.5"><span className="form-label">Valid until</span><input className="form-input" type="date" value={form.valid_until} onChange={(event) => setForm({ ...form, valid_until: event.target.value })} /></label>
           </div>

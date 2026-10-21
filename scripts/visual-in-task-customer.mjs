@@ -15,6 +15,7 @@ const fixtureCustomers = [
   { id: "30000000-0000-4000-8000-000000000003", customer_name: "Mira Shah Works", company_name: "Mira Fabrication - old inactive account", customer_type: "fabricator", phone: "9876543210", email: null, gst_number: null, billing_address: null, shipping_address: null, city: "Pune", is_active: false },
 ];
 const mocks = {
+  "@/lib/actions/repeat-quote": `export async function repeatQuoteAction(){return {success:false,error:"No repeat source in this fixture"}}`,
   "@/lib/supabase/browser": `
     const customers=${JSON.stringify(fixtureCustomers)};
     const profile={id:"profile-a",profile_code:"AL-101",profile_name:"Window section",section_weight_kg_per_m:0.8,section_perimeter_mm:120,drawing_revision:"A",drawing_approval_status:"approved"};
@@ -46,7 +47,7 @@ const bundle = await build({
   ` },
   bundle: true, write: false, platform: "browser", format: "iife", jsx: "automatic",
   plugins: [{ name: "synthetic-customer-boundaries", setup(api) {
-    api.onResolve({ filter: /^(?:sonner|@\/lib\/supabase\/browser|@\/lib\/actions\/(?:quotes-orders|in-task-customers))$/ }, ({ path: name }) => ({ path: name, namespace: "fixture" }));
+    api.onResolve({ filter: /^(?:sonner|@\/lib\/supabase\/browser|@\/lib\/actions\/(?:quotes-orders|in-task-customers|repeat-quote))$/ }, ({ path: name }) => ({ path: name, namespace: "fixture" }));
     api.onLoad({ filter: /.*/, namespace: "fixture" }, ({ path: name }) => ({ contents: mocks[name], loader: "tsx", resolveDir: root }));
   } }],
 });
