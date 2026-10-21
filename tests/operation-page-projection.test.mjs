@@ -5,7 +5,7 @@ import { PGlite } from "@electric-sql/pglite";
 
 const company = "11111111-1111-4111-8111-111111111111";
 const foreign = "22222222-2222-4222-8222-222222222222";
-const migration = readFileSync(new URL("../supabase/migrations/20261021290000_operation_page_null_projection.sql", import.meta.url), "utf8");
+const migration = readFileSync(new URL("../supabase/migrations/20261021290100_operation_page_null_projection.sql", import.meta.url), "utf8");
 const prerequisite = readFileSync(new URL("../supabase/migrations/20261008050000_operation_search_integrity.sql", import.meta.url), "utf8");
 
 test("database page omits masked financial keys while preserving authorized values, tenant scope, pagination and grants", async () => {
