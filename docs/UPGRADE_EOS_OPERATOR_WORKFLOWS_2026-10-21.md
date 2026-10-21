@@ -2,6 +2,12 @@
 
 Date: 21 October 2026
 
+Final edge-case audit continued on 22 October 2026. Locations already stored with
+more than 160 characters can now be moved without truncating the expected old
+value or history; the 160-character limit applies to the new location entry.
+The added real-action/SQL regression verifies stale rejection, full history and
+unchanged stock quantity.
+
 ## Delivery status
 
 This batch implements catalogue features **15, 22, 32, 33 and 47** in the
@@ -88,19 +94,23 @@ write, deployment, external message or new branch/worktree is part of this batch
 
 ## Verification
 
-Source checkpoint: `e99f4b6737e3f6b24626e61a8f442fe839669084` on `codex/v1`,
-fast-forwarded to `main` before independent verification. Both checkouts retain
-unrelated pre-existing changes; the independent checks use the committed source
-in `main`. The delivery-document commit does not change this source checkpoint.
+Initial feature commit: `e99f4b6737e3f6b24626e61a8f442fe839669084`.
+Final combined source checkpoint:
+`8653c3700e5f9fdbea3ffa46d5f69a5bef70b734`, fast-forwarded to `main` before
+final independent verification. It includes the legacy-location repair
+`9d15f89` and preserves concurrent quotation-PDF and audit commits. Both checkouts
+retain unrelated pre-existing changes; the independent checks use the committed
+source in `main`. The final delivery-document commit changes only documentation
+and captured logs.
 
-Development preflight passed **43 new tests**, plus **37 existing** quotation,
+Development checks covered **44 new tests**, plus **37 existing** quotation,
 foundry, preview, freshness and database-state regressions. New tests cover actual
 mounted components, the actual HTTP/server-action path, full migration replay,
 authenticated SQL roles/RLS, permissions, request recovery, pagination and
 read-only execution. Lint, typecheck and the production build passed in
-development. Independent final verification in `main` also passed all checks
-below. Source, tests, migration, configuration and dependencies were unchanged
-from the recorded checkpoint throughout this final run.
+development. All independent final checks in `main` passed on 22 October 2026.
+Source, tests, migration, configuration and dependencies stayed unchanged at
+the recorded final checkpoint throughout these checks.
 
 The browser fixture uses actual application components, global/Tailwind styles,
 server actions, the HTTP route and the new SQL in a disposable PGlite database.
@@ -110,19 +120,27 @@ JWT/RLS behavior, a factory observation, a deployed migration or visual acceptan
 
 | Check | Final independent result |
 | --- | --- |
-| `npm test` | **1,878 passed**, 76 suites; zero failed, skipped, cancelled or todo. 498.28 seconds. [Log](evidence/UPGRADE_EOS_2026-10-21/operator-workflows/main-test.log). |
+| `npm test` | **1,879 passed**, 76 suites; zero failed, skipped, cancelled or todo. 427.81 seconds. [Log](evidence/UPGRADE_EOS_2026-10-21/operator-workflows/main-test.log). |
 | `npm run lint` | **Passed**, exit 0. [Log](evidence/UPGRADE_EOS_2026-10-21/operator-workflows/main-lint.log). |
 | `npm run typecheck` | **Passed**, exit 0. [Log](evidence/UPGRADE_EOS_2026-10-21/operator-workflows/main-typecheck.log). |
 | `npm run build` | **Passed**, exit 0; optimized Next.js build, type checking, route generation. [Log](evidence/UPGRADE_EOS_2026-10-21/operator-workflows/main-build.log). |
-| Focused new and affected regressions | **80 passed**: 43 new and 37 existing affected tests; zero failed, skipped, cancelled or todo. 105.99 seconds. [Log](evidence/UPGRADE_EOS_2026-10-21/operator-workflows/focused.log). |
+| Focused new and affected regressions | **81 passed**: 44 new and 37 existing affected tests; zero failed, skipped, cancelled or todo. 36.02 seconds. [Log](evidence/UPGRADE_EOS_2026-10-21/operator-workflows/focused.log). |
+| Existing billet-allocation fixture recheck | **30 passed** in isolation, zero failed, skipped, cancelled or todo. 25.76 seconds. [Log](evidence/UPGRADE_EOS_2026-10-21/operator-workflows/billet-isolated.log). |
+
+An intermediate full run at `3a7d523` passed 1,877 of 1,878 tests and hit a
+two-second `page.goto` timeout in an existing billet-allocation browser fixture
+while the production build was also running. That entire fixture then passed
+all 30 tests in isolation, and the final full suite passed all 1,879 tests.
+The final build and focused tests finished before the final full suite started.
+The existing timeout and test code are unchanged. [Intermediate log](evidence/UPGRADE_EOS_2026-10-21/operator-workflows/intermediate-test.log).
 
 The independent build uses a synthetic Supabase URL and public key so build-time
 configuration does not authenticate to a business database. Test fixtures bind
 only to loopback and use disposable database state. Required checks are evidence
 for this source checkpoint, not deployment or live business-data acceptance.
 
-The 43 new cases comprise 18 migration/SQL/RLS tests, 12 mounted-browser
-interactions, six real server-action/HTTP tests and seven alert tests. The
+The 44 new cases comprise 18 migration/SQL/RLS tests, 12 mounted-browser
+interactions, seven real server-action/HTTP tests and seven alert tests. The
 37 existing regressions cover quotation entry/paste, entry source selection,
 billet estimates, action previews, source freshness and saved database state.
 The codebase-memory skill guided discovery of existing route and authorization
@@ -148,6 +166,20 @@ For later visual acceptance, run
 chosen checkout. The helper prints loopback links for the actual screens, creates
 only disposable local records and exits on stdin input. It uses synthetic auth;
 it never authenticates to a hosted business database.
+
+The pending interactive checklist is:
+
+- Alerts: open an allowed source, settle its recognized condition and refresh;
+  inspect resolved/read separation and the unavailable-source state.
+- Aliases: record a customer code, resolve an ambiguous code explicitly in a
+  quotation, verify the selected canonical specification, then deactivate it.
+- Locations: inspect stock and die guidance, move a location with a reason,
+  review old/new history, and reject a move from a stale second screen.
+- Exceptions: record a production reason, verify the source context and reporter,
+  require an explanation for Other, and inspect a recovered same-request retry.
+- Commitments: create a promise, find a later queue page and exact linked promise,
+  reschedule with a reason, inspect its original date/history, and close it with
+  an outcome. Repeat each flow at desktop and phone widths with permitted roles.
 
 ## File inventory
 
@@ -185,6 +217,6 @@ Modified application files:
 - `components/modules/operations/record-detail-client.tsx`
 - `components/modules/operations/record-form-client.tsx`
 
-The modified catalogue, this new delivery report and the five captured logs above
+The modified catalogue, this new delivery report and the seven captured logs above
 retain the exact verification evidence and open acceptance gates. Unrelated
 pre-existing PDF, report, audit and migration changes remain outside these commits.

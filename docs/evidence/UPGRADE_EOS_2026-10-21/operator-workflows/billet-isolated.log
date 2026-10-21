@@ -1,0 +1,190 @@
+TAP version 13
+# Subtest: allocation panel exposes initial loading and a recoverable billet read error
+ok 1 - allocation panel exposes initial loading and a recoverable billet read error
+  ---
+  duration_ms: 946.9266
+  type: 'test'
+  ...
+# Subtest: successful allocation refreshes and leaves the panel usable
+ok 2 - successful allocation refreshes and leaves the panel usable
+  ---
+  duration_ms: 280.4669
+  type: 'test'
+  ...
+# Subtest: a failed post-save refresh preserves the confirmed allocation and can be retried
+ok 3 - a failed post-save refresh preserves the confirmed allocation and can be retried
+  ---
+  duration_ms: 315.8718
+  type: 'test'
+  ...
+# Subtest: requirement errors stay unavailable instead of becoming an empty order list
+ok 4 - requirement errors stay unavailable instead of becoming an empty order list
+  ---
+  duration_ms: 156.9133
+  type: 'test'
+  ...
+# Subtest: an older billet response cannot overwrite the new billet
+ok 5 - an older billet response cannot overwrite the new billet
+  ---
+  duration_ms: 108.5515
+  type: 'test'
+  ...
+# Subtest: an older requirement response cannot replace current order options
+ok 6 - an older requirement response cannot replace current order options
+  ---
+  duration_ms: 236.2804
+  type: 'test'
+  ...
+# Subtest: changing company for the same billet clears old choices and reloads in the new scope
+ok 7 - changing company for the same billet clears old choices and reloads in the new scope
+  ---
+  duration_ms: 210.3753
+  type: 'test'
+  ...
+# Subtest: changing billet discards the prior order selection
+ok 8 - changing billet discards the prior order selection
+  ---
+  duration_ms: 258.6478
+  type: 'test'
+  ...
+# Subtest: a rejected action reports uncertainty, clears saving and requires a fresh read
+ok 9 - a rejected action reports uncertainty, clears saving and requires a fresh read
+  ---
+  duration_ms: 539.7405
+  type: 'test'
+  ...
+# Subtest: a failed action cannot be resubmitted from stale readiness
+ok 10 - a failed action cannot be resubmitted from stale readiness
+  ---
+  duration_ms: 290.29
+  type: 'test'
+  ...
+# Subtest: a malformed success response cannot report a confirmed allocation
+ok 11 - a malformed success response cannot report a confirmed allocation
+  ---
+  duration_ms: 352.0184
+  type: 'test'
+  ...
+# Subtest: same-event duplicate clicks send one write and pending controls remain disabled
+ok 12 - same-event duplicate clicks send one write and pending controls remain disabled
+  ---
+  duration_ms: 339.6306
+  type: 'test'
+  ...
+# Subtest: a late save after switching billets cannot clear or refresh the new panel
+ok 13 - a late save after switching billets cannot clear or refresh the new panel
+  ---
+  duration_ms: 521.0514
+  type: 'test'
+  ...
+# Subtest: unmounted load and save completions are ignored
+ok 14 - unmounted load and save completions are ignored
+  ---
+  duration_ms: 448.3908
+  type: 'test'
+  ...
+# Subtest: a rejected read offers retry without an unhandled rejection
+ok 15 - a rejected read offers retry without an unhandled rejection
+  ---
+  duration_ms: 145.006
+  type: 'test'
+  ...
+# Subtest: invalid missing billet response cannot expose allocation controls
+ok 16 - invalid missing billet response cannot expose allocation controls
+  ---
+  duration_ms: 131.7723
+  type: 'test'
+  ...
+# Subtest: invalid another billet response cannot expose allocation controls
+ok 17 - invalid another billet response cannot expose allocation controls
+  ---
+  duration_ms: 123.1018
+  type: 'test'
+  ...
+# Subtest: invalid another company response cannot expose allocation controls
+ok 18 - invalid another company response cannot expose allocation controls
+  ---
+  duration_ms: 139.9541
+  type: 'test'
+  ...
+# Subtest: invalid invalid allocated order response cannot expose allocation controls
+ok 19 - invalid invalid allocated order response cannot expose allocation controls
+  ---
+  duration_ms: 124.2306
+  type: 'test'
+  ...
+# Subtest: a missing requirement payload is unavailable instead of verified empty
+ok 20 - a missing requirement payload is unavailable instead of verified empty
+  ---
+  duration_ms: 131.6348
+  type: 'test'
+  ...
+# Subtest: non-allocatable billets retain their status and do not query requirements
+ok 21 - non-allocatable billets retain their status and do not query requirements
+  ---
+  duration_ms: 277.7625
+  type: 'test'
+  ...
+# Subtest: the browser's allocation reaches the actual action and SQL, then refreshes persisted quantities
+ok 22 - the browser's allocation reaches the actual action and SQL, then refreshes persisted quantities
+  ---
+  duration_ms: 7232.593
+  type: 'test'
+  ...
+# Subtest: an obsolete requirement failure cannot replace a newer ready panel
+ok 23 - an obsolete requirement failure cannot replace a newer ready panel
+  ---
+  duration_ms: 172.8121
+  type: 'test'
+  ...
+# Subtest: manual refresh clears selection and disables writes until the new read completes
+ok 24 - manual refresh clears selection and disables writes until the new read completes
+  ---
+  duration_ms: 377.948
+  type: 'test'
+  ...
+# Subtest: a changed user or role resets same-company readiness
+ok 25 - a changed user or role resets same-company readiness
+  ---
+  duration_ms: 632.3462
+  type: 'test'
+  ...
+# Subtest: invalid requirement null row cannot become an allocation option
+ok 26 - invalid requirement null row cannot become an allocation option
+  ---
+  duration_ms: 149.496
+  type: 'test'
+  ...
+# Subtest: invalid requirement foreign company cannot become an allocation option
+ok 27 - invalid requirement foreign company cannot become an allocation option
+  ---
+  duration_ms: 155.532
+  type: 'test'
+  ...
+# Subtest: invalid requirement invalid order cannot become an allocation option
+ok 28 - invalid requirement invalid order cannot become an allocation option
+  ---
+  duration_ms: 137.7362
+  type: 'test'
+  ...
+# Subtest: browser reallocation preserves physical billet data and updates both order counters
+ok 29 - browser reallocation preserves physical billet data and updates both order counters
+  ---
+  duration_ms: 5107.16
+  type: 'test'
+  ...
+# Subtest: a committed SQL allocation with a lost confirmation requires review and never silently posts twice
+ok 30 - a committed SQL allocation with a lost confirmation requires review and never silently posts twice
+  ---
+  duration_ms: 4570.7221
+  type: 'test'
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 25755.1655
