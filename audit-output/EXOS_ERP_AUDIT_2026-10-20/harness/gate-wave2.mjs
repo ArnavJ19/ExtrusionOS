@@ -33,6 +33,7 @@ export const WAVE2 = [
   "supabase/migrations/20261021280000_profile_spec_change_control.sql",
   "supabase/migrations/20261021290000_foundry_single_source_charge_fix.sql",
   "supabase/migrations/20261021310000_quote_invoice_rate_basis.sql",
+  "supabase/migrations/20261021330000_invoice_die_freight_charge_lines.sql",
 ];
 
 const BASE_DIR = "live-20261021";
@@ -825,13 +826,16 @@ async function seedQuote26(ctx) {
   await ctx.sys(ids.owner, `insert into public.quote_items (id, company_id, quote_id, profile_id, quantity_pieces, length_per_piece_m, section_weight_kg_per_m, scrap_allowance_percent, minimum_billing_weight_kg, billet_rate_per_kg, conversion_charge_per_kg, finishing_charge_type, finishing_charge, die_charge, die_amortization_type, packing_charge, transport_charge, other_charges, margin_percent, gst_percent, invoice_calc_uom)
     values ('${qiAllowance}', '${ids.company}', '${quote26}', '${ids.profile}', 100, 5, 2, 5, 0, 250, 40, 'per_kg', 0, 0, 'waived', 0, 1500, 0, 10, 18, 'kg'),
            ('${qiMinimum}', '${ids.company}', '${quote26}', '${ids.profile}', 10, 5, 2, 0, 500, 250, 40, 'per_kg', 0, 0, 'waived', 0, 0, 0, 10, 18, 'kg')`);
-  return ctx.q(`select id, total_weight_kg::numeric kg, billing_weight_kg::numeric bkg, line_total_before_gst::numeric total, net_rate::numeric rate from public.quote_items where quote_id='${quote26}' order by quantity_pieces desc`);
+  return ctx.q(`select id, total_weight_kg::numeric kg, billing_weight_kg::numeric bkg, line_total_before_gst::numeric total, net_rate::numeric rate,
+    case when to_jsonb(quote_items)->>'charges_billed_separately' = 'true' then coalesce(die_service_charge, 0) + coalesce(freight_charge, 0) else 0 end::numeric charges
+    from public.quote_items where quote_id='${quote26}' order by quantity_pieces desc`);
 }
 
 scenario("G026-invoice-rate-loses-quoted-value", "026", async (ctx, candidate) => {
   const [allowance, minimum] = await seedQuote26(ctx);
-  // The invoice bills the actual net kg shipped at the line's net_rate.
-  const invoiced = (line) => Math.round(Number(line.kg) * Number(line.rate) * 100) / 100;
+  // The invoice bills the actual net kg shipped at the line's net_rate, plus any die and
+  // freight charges billed once as separate lines (20261021330000).
+  const invoiced = (line) => Math.round((Number(line.kg) * Number(line.rate) + Number(line.charges ?? 0)) * 100) / 100;
   const gapA = Number(allowance.total) - invoiced(allowance);
   const gapM = Number(minimum.total) - invoiced(minimum);
   if (!candidate) {
@@ -879,6 +883,64 @@ scenario("G026-billing-reconciliation", "026", async (ctx) => {
   const op = await attempt(() => ctx.as(ids.production, `select public.get_order_billing_reconciliation('${ids.orderB}') r`));
   assert.equal(op.ok, false); assert.match(op.error, /owner, admin or accounts/);
   return `600 of 1,000 kg invoiced ${value}; ${row.uninvoicedValue} of the quoted ${allowance.total} still to invoice; production role refused`;
+}, { candidateOnly: true });
+
+// ---- EXOS-AUD-026 follow-up: die and freight as separate invoice lines --------
+scenario("G026-die-freight-rate-excludes-charges", "026", async (ctx) => {
+  await ctx.replica(`insert into public.quotes (id, company_id, quote_number, customer_id, quote_date, status, gst_percent) values ('${quote26}', '${ids.company}', 'Q-26', '${ids.customer}', current_date, 'draft', 18)`);
+  await ctx.sys(ids.owner, `insert into public.quote_items (id, company_id, quote_id, profile_id, quantity_pieces, length_per_piece_m, section_weight_kg_per_m, scrap_allowance_percent, billet_rate_per_kg, conversion_charge_per_kg, finishing_charge_type, finishing_charge, die_charge, die_amortization_type, packing_charge, transport_charge, other_charges, margin_percent, gst_percent)
+    values ('${qiAllowance}', '${ids.company}', '${quote26}', '${ids.profile}', 100, 5, 2, 5, 250, 40, 'per_kg', 0, 20000, 'full_die_charge', 0, 1500, 0, 10, 18),
+           ('${qiMinimum}', '${ids.company}', '${quote26}', '${ids.profile}', 100, 5, 2, 0, 250, 40, 'per_kg', 0, 0, 'waived', 0, 0, 0, 10, 18)`);
+  const [withCharges, plain] = await ctx.q(`select total_weight_kg::numeric kg, line_total_before_gst::numeric total, net_rate::numeric rate, die_service_charge::numeric die, freight_charge::numeric freight, charges_billed_separately sep
+    from public.quote_items where quote_id='${quote26}' order by die_charge desc`);
+  assert.equal(withCharges.sep, true); assert.equal(Number(withCharges.die), 20000); assert.equal(Number(withCharges.freight), 1500);
+  const shipped = Number(withCharges.kg) * Number(withCharges.rate) + 21500;
+  assert.ok(Math.abs(shipped - Number(withCharges.total)) <= 0.005 * Number(withCharges.kg), `charges line ${shipped} vs ${withCharges.total}`);
+  assert.equal(plain.sep, false);
+  assert.ok(Math.abs(Number(plain.kg) * Number(plain.rate) - Number(plain.total)) <= 0.005 * Number(plain.kg));
+  return `goods rate ${withCharges.rate}/kg x ${withCharges.kg} kg + die 20,000 + freight 1,500 = ${shipped.toFixed(2)} of quoted ${withCharges.total}; a line without charges keeps the all-in rate`;
+}, { candidateOnly: true });
+
+scenario("G026-die-freight-billed-once", "026", async (ctx) => {
+  await seedPackedOutputForOrderB(ctx);
+  const d1 = "f6500000-0000-4000-8000-000000000001", d2 = "f6500000-0000-4000-8000-000000000002";
+  const p1 = "f6510000-0000-4000-8000-000000000001", p2 = "f6510000-0000-4000-8000-000000000002";
+  await ctx.replica(`
+    update public.companies set gst_state_code='24', gst_number='24ABCDE1234F1Z5' where id='${ids.company}';
+    update public.aluminium_profiles set hsn_code='760421' where id='${ids.profile}';
+    update public.order_items set hsn_code='760421', net_rate=300, die_service_charge=20000, freight_charge=1500, charges_billed_separately=true where id='${lineB}';
+    update public.production_jobs set completed_at=now() - interval '3 hours', actual_quantity_kg=10, actual_pieces=2, actual_meters=10 where id='${ids.jobB}';
+    insert into public.dispatches (id, company_id, order_id, dispatch_number, dispatch_date, number_of_bundles, total_weight_kg, total_tare_weight_kg, delivery_status, actual_dispatched_at, created_at)
+      values ('${d1}', '${ids.company}', '${ids.orderB}', 'D-C1', current_date, 1, 5, 0, 'delivered', now() - interval '1 hour', now() - interval '2 hours'),
+             ('${d2}', '${ids.company}', '${ids.orderB}', 'D-C2', current_date, 1, 5, 0, 'delivered', now() - interval '1 hour', now() - interval '2 hours');
+    insert into public.packing_list_items (id, company_id, dispatch_id, profile_id, bundle_number, source_kind, source_record_id, source_line_id, number_of_pieces, net_length_m, gross_weight_kg, tare_weight_kg, order_item_id, net_rate, gst_percent, finishing_type, operator_verified_at, operator_verified_by)
+      values ('${p1}', '${ids.company}', '${d1}', '${ids.profile}', 'C1', 'production', '${ids.orderB}', '${ids.jobB}', 1, 5, 5, 0, '${lineB}', 300, 18, 'mill_finish', now() - interval '90 minutes', '${ids.factoryManager}'),
+             ('${p2}', '${ids.company}', '${d2}', '${ids.profile}', 'C2', 'production', '${ids.orderB}', '${ids.jobB}', 1, 5, 5, 0, '${lineB}', 300, 18, 'mill_finish', now() - interval '90 minutes', '${ids.factoryManager}')`);
+  const lines = (pid, d) => `jsonb_build_array(jsonb_build_object('source_record_id','${d}','source_line_id','${pid}','order_item_id','${lineB}','profile_id','${ids.profile}','quantity',5,'unit_rate',300,'line_total',1500))`;
+  const save = (d, pid) => attempt(() => ctx.as(ids.accounts, `select public.save_invoice_atomic(null, jsonb_build_object('order_id','${ids.orderB}','dispatch_id','${d}','invoice_date',current_date,'place_of_supply_state_code','24','status','generated'), ${lines(pid, d)}, true) id`));
+  const first = await save(d1, p1);
+  assert.equal(first.ok, true, first.error);
+  const inv1 = first.value[0].id;
+  const rows1 = await ctx.q(`select line_kind, quantity, unit_rate, line_total::numeric total, hsn_code, gst_percent::numeric gst, item_description from public.invoice_items where invoice_id='${inv1}' order by line_kind`);
+  assert.deepEqual(rows1.map((r) => [r.line_kind, Number(r.total)]), [["die_charge", 20000], ["freight_charge", 1500], ["goods", 1500]]);
+  assert.ok(rows1.filter((r) => r.line_kind !== "goods").every((r) => r.quantity === null && r.unit_rate === null && r.hsn_code === "760421" && Number(r.gst) === 18));
+  const [t1] = await ctx.q(`select subtotal::numeric s, tax_total::numeric t, grand_total::numeric g from public.invoices where id='${inv1}'`);
+  assert.deepEqual([Number(t1.s), Number(t1.t), Number(t1.g)], [23000, 4140, 27140]);
+  const second = await save(d2, p2);
+  assert.equal(second.ok, true, second.error);
+  const rows2 = await ctx.q(`select line_kind from public.invoice_items where invoice_id='${second.value[0].id}'`);
+  assert.deepEqual(rows2.map((r) => r.line_kind), ["goods"]);
+  const dup = await attempt(() => ctx.sys(ids.accounts, `insert into public.invoice_items (company_id, invoice_id, order_item_id, line_kind, line_total) values ('${ids.company}', '${second.value[0].id}', '${lineB}', 'die_charge', 1)`));
+  assert.equal(dup.ok, false); assert.match(dup.error, /already billed/);
+  await ctx.replica(`update public.invoices set status='cancelled' where id='${inv1}'`);
+  const regen = await attempt(() => ctx.as(ids.accounts, `select public.replace_invoice_items_atomic('${second.value[0].id}', ${lines(p2, d2)}) id`));
+  assert.equal(regen.ok, true, regen.error);
+  const rows3 = await ctx.q(`select line_kind from public.invoice_items where invoice_id='${second.value[0].id}' order by line_kind`);
+  assert.deepEqual(rows3.map((r) => r.line_kind), ["die_charge", "freight_charge", "goods"]);
+  const [rec] = await ctx.as(ids.accounts, `select public.get_order_billing_reconciliation('${ids.orderB}') r`);
+  const row = rec.r.find((x) => x.orderItemId === lineB);
+  assert.equal(Number(row.invoicedKg), 5);
+  return `invoice 1: goods 1,500 + die 20,000 + freight 1,500 = 23,000 + 4,140 GST; invoice 2: goods only; duplicate charge rejected; after invoice 1 was cancelled, regenerating invoice 2 took the charges; reconciliation counts 5 kg (goods only)`;
 }, { candidateOnly: true });
 
 // ---- runner ---------------------------------------------------------------

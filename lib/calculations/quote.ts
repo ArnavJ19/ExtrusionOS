@@ -51,6 +51,8 @@ export type QuoteItemCalculated = QuoteItemInput & {
   price_per_kg: number;
   price_per_meter: number;
   invoice_rate_per_kg: number;
+  charges_billed_separately: boolean;
+  separately_billed_charges: number;
 };
 
 export type QuoteSummary = {
@@ -168,10 +170,36 @@ export function calculateQuoteItem(input: QuoteItemInput): QuoteItemCalculated {
     estimated_profit_percent,
     price_per_kg: billing_weight_kg > 0 ? money(line_total_before_gst / billing_weight_kg) : 0,
     price_per_meter: total_meters > 0 ? money(line_total_before_gst / total_meters) : 0,
-    // Invoices bill actual net kg, so the invoice rate is the line amount per physical kg:
-    // shipping the quoted quantity invoices the quoted amount (EXOS-AUD-026).
-    invoice_rate_per_kg: total_weight_kg > 0 ? money(line_total_before_gst / total_weight_kg) : billing_weight_kg > 0 ? money(line_total_before_gst / billing_weight_kg) : 0
+    ...invoiceBasis(line_total_before_gst, total_weight_kg, billing_weight_kg, die_amortization_amount, nonNegative(input.transport_charge))
   };
+}
+
+// Invoice basis of a saved quote line, for printing. net_rate is the stored invoice rate per actual kg.
+// Whatever the quoted quantity at that rate leaves of the line amount (beyond paisa rounding) is the
+// die and freight billed once (20261021330000); lines that carry them inside the rate leave nothing.
+// The split into die and freight is shown only when the viewer may see those amounts.
+export function savedLineInvoiceBasis(item: { net_rate?: unknown; total_weight_kg?: unknown; line_total_before_gst?: unknown; die_service_charge?: unknown; freight_charge?: unknown }) {
+  const rate = nonNegative(Number(item.net_rate));
+  const kg = nonNegative(Number(item.total_weight_kg));
+  const remainder = nonNegative(Number(item.line_total_before_gst)) - rate * kg;
+  const oneOffCharges = rate > 0 && remainder > 0.005 * kg + 0.01 ? money(remainder) : 0;
+  const die = nonNegative(Number(item.die_service_charge));
+  const freight = nonNegative(Number(item.freight_charge));
+  const split = oneOffCharges > 0 && Math.abs(die + freight - oneOffCharges) <= 0.005 * kg + 0.01;
+  return { invoiceRatePerKg: rate, oneOffCharges, dieCharge: split ? money(die) : null, freightCharge: split ? money(freight) : null };
+}
+
+// Invoices bill actual net kg, so the invoice rate is the line amount per physical kg and
+// shipping the quoted quantity invoices the quoted amount (EXOS-AUD-026). Die and freight
+// are billed once as separate invoice lines, so the per-kg rate excludes them. Mirrors
+// public.recalculate_quote_item_financials.
+function invoiceBasis(lineTotal: number, physicalKg: number, billingKg: number, dieCharge: number, freightCharge: number) {
+  const separately_billed_charges = money(dieCharge + freightCharge);
+  const charges_billed_separately = physicalKg > 0 && separately_billed_charges > 0 && lineTotal - separately_billed_charges > 0;
+  const invoice_rate_per_kg = charges_billed_separately
+    ? money((lineTotal - separately_billed_charges) / physicalKg)
+    : physicalKg > 0 ? money(lineTotal / physicalKg) : billingKg > 0 ? money(lineTotal / billingKg) : 0;
+  return { invoice_rate_per_kg, charges_billed_separately, separately_billed_charges: charges_billed_separately ? separately_billed_charges : 0 };
 }
 
 export function calculateQuoteSummary(items: QuoteItemCalculated[], gstPercent: number): QuoteSummary {

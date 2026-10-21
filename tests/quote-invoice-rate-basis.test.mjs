@@ -11,7 +11,8 @@ const base = { quantity_pieces: 10, length_per_piece_m: 5, section_weight_kg_per
   packing_charge: 40, transport_charge: 50, other_charges: 60, margin_percent: 20, minimum_margin_percent: 20 };
 const physicalKg = base.quantity_pieces * base.length_per_piece_m * base.section_weight_kg_per_m;
 // The rate is rounded to the paisa, so rate x kg may differ from the amount by 0.005 per kg.
-const reproduces = (line) => Math.abs(line.invoice_rate_per_kg * line.total_weight_kg - line.line_total_before_gst) <= 0.005 * line.total_weight_kg;
+// Die and freight are billed once as separate invoice lines when the line has them.
+const reproduces = (line) => Math.abs(line.invoice_rate_per_kg * line.total_weight_kg + line.separately_billed_charges - line.line_total_before_gst) <= 0.005 * line.total_weight_kg;
 
 test("scrap allowance: shipping the quoted kg invoices the quoted amount", () => {
   const line = calculateQuoteItem({ ...base, scrap_allowance_percent: 5 });
@@ -27,8 +28,18 @@ test("minimum billing weight is invoiced when the quoted quantity ships", () => 
   assert.ok(reproduces(line));
 });
 
-test("without allowance or minimum the invoice rate equals the per-kg price", () => {
+test("die and freight are excluded from the per-kg rate and billed once", () => {
   const line = calculateQuoteItem(base);
+  assert.equal(line.charges_billed_separately, true);
+  assert.equal(line.separately_billed_charges, base.die_charge + base.transport_charge);
+  assert.ok(reproduces(line));
+  const waived = calculateQuoteItem({ ...base, die_amortization_type: "waived", transport_charge: 0 });
+  assert.equal(waived.charges_billed_separately, false);
+  assert.equal(waived.separately_billed_charges, 0);
+});
+
+test("without allowance, minimum or one-off charges the invoice rate equals the per-kg price", () => {
+  const line = calculateQuoteItem({ ...base, die_amortization_type: "waived", transport_charge: 0 });
   assert.equal(line.invoice_rate_per_kg, line.price_per_kg);
 });
 
@@ -45,4 +56,20 @@ test("billing reconciliation rows are parsed defensively", () => {
   assert.equal(row.quotedKg, 1000);
   assert.equal(row.profileId, null);
   assert.equal(row.uninvoicedValue, 136000);
+});
+
+test("printed invoice basis separates die and freight only when the stored rate excludes them", async () => {
+  const { savedLineInvoiceBasis } = await import("../lib/calculations/quote.ts");
+  const line = calculateQuoteItem(base);
+  const stored = { net_rate: line.invoice_rate_per_kg, total_weight_kg: line.total_weight_kg, line_total_before_gst: line.line_total_before_gst, die_service_charge: line.die_amortization_amount, freight_charge: base.transport_charge };
+  const split = savedLineInvoiceBasis(stored);
+  assert.equal(split.dieCharge, base.die_charge);
+  assert.equal(split.freightCharge, base.transport_charge);
+  // A sales viewer does not see the die and freight amounts; the one-off total is still printed.
+  const masked = savedLineInvoiceBasis({ ...stored, die_service_charge: null, freight_charge: null });
+  assert.equal(masked.dieCharge, null);
+  assert.ok(Math.abs(masked.oneOffCharges - (base.die_charge + base.transport_charge)) <= 0.005 * line.total_weight_kg + 0.01);
+  // A line saved before the split carries the charges inside the rate: nothing is billed once.
+  const legacy = savedLineInvoiceBasis({ ...stored, net_rate: Math.round(line.line_total_before_gst / line.total_weight_kg * 100) / 100 });
+  assert.equal(legacy.oneOffCharges, 0);
 });

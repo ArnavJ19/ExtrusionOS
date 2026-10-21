@@ -271,7 +271,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <Card>
               <CardHeader>
                 <h3 className="font-bold tracking-tight text-slate-900">Quoted vs Invoiced</h3>
-                <p className="mt-1 text-xs font-semibold text-slate-500">Invoices bill the actual net kg shipped at the invoice rate (quoted amount ÷ physical kg). Shipping the quoted quantity invoices the quoted amount, including scrap allowance, minimum billing weight and bundled charges.</p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">Invoices bill the actual net kg shipped at the invoice rate per actual kg. Die and freight charges are billed once, as separate lines on the first invoice of each line. Shipping the quoted quantity invoices the quoted amount, including scrap allowance and minimum billing weight.</p>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
