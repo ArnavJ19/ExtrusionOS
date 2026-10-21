@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { BilletWeightEstimate } from "@/components/modules/foundry/billet-weight-estimate";
 import { saveDispatchAction } from "@/lib/actions/dispatches";
 import { saveManualExpenseAction } from "@/lib/actions/expenses";
 import { saveFoundryBatchAction } from "@/lib/actions/foundry";
@@ -22,7 +23,7 @@ import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { deriveExpenseTotals } from "@/lib/financials/expenses";
 import { isUsableProductionDieForProfile, usableProductionDieStatuses } from "@/lib/workflow/production-dies";
 import { isAcceptedFinishingReceiptForJob } from "@/lib/workflow/finishing-receipts";
-import { calculateBilletWeightKg, calculateFoundryFurnaceMix, calculateRequiredBilletCount, calculateTotalBilletWeightKg, inchesToMm } from "@/lib/calculations/foundry";
+import { calculateFoundryFurnaceMix, calculateRequiredBilletCount, calculateTotalBilletWeightKg, inchesToMm } from "@/lib/calculations/foundry";
 import { compositionToEditableRows, compositionsMatch, getStandardAlloyComposition, normalizeCompositionRows, type AlloyComposition } from "@/lib/calculations/alloy-composition";
 import type { SessionContext } from "@/types/app";
 import { getModuleConfig, type FieldConfig, type ModuleKey } from "./module-config";
@@ -915,8 +916,6 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
   if (loading) return <LoadingState title={`Loading ${config.title.toLowerCase()} form`} description="Preparing clean data-entry fields." />;
   if (error) return <ErrorState description={error} onRetry={() => void loadForm()} />;
 
-  const billetWeightKg = moduleKey === "foundry" ? calculateBilletWeightKg(Number(form.billet_length_mm ?? 0), Number(form.billet_diameter_mm ?? 0), Number(form.alloy_density_kg_m3 ?? 2700)) : 0;
-  const totalBilletWeightKg = moduleKey === "foundry" ? calculateTotalBilletWeightKg(Number(form.billet_length_mm ?? 0), Number(form.billet_diameter_mm ?? 0), Number(form.billet_count ?? 0), Number(form.alloy_density_kg_m3 ?? 2700)) : 0;
   const chemistryRows = moduleKey === "foundry" ? compositionToEditableRows((form.alloy_composition_actual ?? {}) as AlloyComposition) : [];
 
   return (
@@ -1004,9 +1003,10 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
           ) : null}
           {moduleKey === "foundry" ? (
             <div className="mt-4 rounded-2xl border border-orange/20 bg-orange/5 px-4 py-3 text-sm font-semibold text-slate-700">
-              Calculated billet weight: {billetWeightKg.toLocaleString("en-IN")} kg each, {totalBilletWeightKg.toLocaleString("en-IN")} kg total. Furnace charge: {Number(form.required_furnace_charge_kg ?? 0).toLocaleString("en-IN")} kg at {Number(form.furnace_efficiency_percent ?? 80).toLocaleString("en-IN")}% efficiency. Billet IDs follow Furnace-Date-Batch-Diameter-Billet Number.
+              Planned furnace charge: {Number(form.required_furnace_charge_kg ?? 0).toLocaleString("en-IN")} kg at {Number(form.furnace_efficiency_percent ?? 80).toLocaleString("en-IN")}% efficiency. Billet IDs follow Furnace-Date-Batch-Diameter-Billet Number.
             </div>
           ) : null}
+          {moduleKey === "foundry" ? <BilletWeightEstimate lengthMm={form.billet_length_mm} diameterMm={form.billet_diameter_mm} densityKgPerM3={form.alloy_density_kg_m3} count={form.billet_count} alloy={String(form.alloy ?? "")} source={editing ? "Saved batch configuration with current draft changes" : "Current planned batch configuration"} /> : null}
           {moduleKey === "foundry" ? (
             <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

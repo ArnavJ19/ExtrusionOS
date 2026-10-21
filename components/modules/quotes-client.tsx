@@ -20,6 +20,7 @@ import { getErrorMessage } from "@/lib/utils/errors";
 import { can } from "@/lib/auth/permissions";
 import { rowMatchesSearch } from "@/lib/utils/search";
 import { canSaveQuoteDraft, duplicateQuoteDraftLine, getQuoteFormShortcut, runWithInFlightGuard } from "@/lib/forms/keyboard-entry";
+import { buildQuotePasteLine, getPieceCalculationState, getQuotePasteFinishOptions, getQuotePasteLengthUnit, parseQuotePaste, validateQuotePasteRows, type QuotePasteRow } from "@/lib/forms/quote-paste";
 import { saveQuoteAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
 import { dieAmortizationTypes, labelize, type DieAmortizationType, type FinishingChargeType, type FinishingType, type QuoteStatus, type SessionContext } from "@/types/app";
 
@@ -132,13 +133,32 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
   const [dieSearchLoading, setDieSearchLoading] = useState(false);
   const profileSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dieSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const quotePasteLookupVersion = useRef(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ customer_id: "", quote_date: todayIso(), valid_until: "", status: "draft" as QuoteStatus, gst_percent: 18, terms_and_conditions: "", delivery_timeline: "", payment_terms: "", approval_notes: "", notes: "" });
   const [items, setItems] = useState<FormItem[]>([{ ...emptyItem }]);
+  const [quotePasteText, setQuotePasteText] = useState("");
+  const [quotePasteRows, setQuotePasteRows] = useState<QuotePasteRow[]>([]);
+  const [quotePasteProfiles, setQuotePasteProfiles] = useState<Profile[]>([]);
+  const [quotePasteError, setQuotePasteError] = useState<string | null>(null);
+  const [quotePasteLoading, setQuotePasteLoading] = useState(false);
   const saveGuard = useRef({ current: false });
   const lineContainerRef = useRef<HTMLDivElement>(null);
   const [focusLineIndex, setFocusLineIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    quotePasteLookupVersion.current += 1;
+    setQuotePasteText("");
+    setQuotePasteRows([]);
+    setQuotePasteProfiles([]);
+    setQuotePasteError(null);
+    setQuotePasteLoading(false);
+  }, [context.companyId, context.role, context.userId]);
+
+  useEffect(() => () => {
+    quotePasteLookupVersion.current += 1;
+  }, []);
 
   const calculatedItems = items.map((item) => calculateQuoteItem({ ...item, perimeter_mm: profiles.find((profile) => profile.id === item.profile_id)?.section_perimeter_mm ?? item.perimeter_mm }));
   const summary = calculateQuoteSummary(calculatedItems, Number(form.gst_percent));
@@ -304,6 +324,82 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
       }
       return next;
     }));
+  }
+
+  function parseQuotePasteInput(value: string) {
+    quotePasteLookupVersion.current += 1;
+    setQuotePasteLoading(false);
+    setQuotePasteText(value);
+    const result = parseQuotePaste(value);
+    setQuotePasteRows(result.rows);
+    setQuotePasteError(result.error);
+    setQuotePasteProfiles([]);
+  }
+
+  async function resolveQuotePasteProfiles(rows: QuotePasteRow[] = quotePasteRows) {
+    const codes = Array.from(new Set(rows.map((row) => row.profileCode.trim()).filter(Boolean)));
+    if (!codes.length) return setQuotePasteError("Paste profile codes before looking them up.");
+    const requestVersion = ++quotePasteLookupVersion.current;
+    setQuotePasteLoading(true);
+    setQuotePasteError(null);
+    setQuotePasteProfiles([]);
+    try {
+      const { data, error } = await supabase
+        .from("aluminium_profiles")
+        .select("id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, section_number, section_code, section_name, cross_section_image_url, circumscribing_circle_diameter_mm, nominal_wall_thickness_mm, number_of_voids, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle")
+        .eq("company_id", context.companyId)
+        .eq("is_active", true)
+        .in("profile_code", codes.slice(0, 100))
+        .order("profile_code")
+        .limit(100);
+      if (requestVersion !== quotePasteLookupVersion.current) return;
+      if (error) {
+        setQuotePasteProfiles([]);
+        setQuotePasteError(getErrorMessage(error, "Could not resolve pasted profile codes."));
+        return;
+      }
+      setQuotePasteProfiles((data ?? []) as Profile[]);
+      setProfiles((current) => mergeLookupRows<Profile>((data ?? []) as Profile[], current, items.map((item) => item.profile_id), 120));
+      setQuotePasteError(codes.length > 100 ? "Only the first 100 distinct profile codes were checked. Split the paste into smaller batches." : null);
+    } catch (error) {
+      if (requestVersion === quotePasteLookupVersion.current) {
+        setQuotePasteProfiles([]);
+        setQuotePasteError(getErrorMessage(error, "Could not resolve pasted profile codes."));
+      }
+    } finally {
+      if (requestVersion === quotePasteLookupVersion.current) setQuotePasteLoading(false);
+    }
+  }
+
+  function updateQuotePasteRow(index: number, key: "profileCode" | "lengthValue" | "quantityValue" | "finish", value: string) {
+    setQuotePasteRows((current) => current.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row));
+  }
+
+  function removeQuotePasteExtraCells(index: number) {
+    setQuotePasteRows((current) => current.map((row, rowIndex) => rowIndex === index ? { ...row, extraValues: [] } : row));
+  }
+
+  function importQuotePasteRows() {
+    const unit = getQuotePasteLengthUnit(quotePasteText);
+    if (!unit || quotePasteError) return;
+    const validated = validateQuotePasteRows(quotePasteRows, quotePasteProfiles, unit);
+    if (!validated.length || validated.some((row) => row.errors.length)) return;
+    const base: FormItem = {
+      ...emptyItem,
+      conversion_charge_per_kg: settings?.default_conversion_charge_per_kg ?? 0,
+      packing_charge: settings?.default_packing_charge ?? 0,
+      transport_charge: settings?.default_transport_charge ?? 0,
+      margin_percent: settings?.default_margin_percent ?? 10,
+      minimum_margin_percent: settings?.minimum_margin_percent ?? 8,
+    };
+    const lines = validated.map((row) => buildQuotePasteLine(base, row) as FormItem | null);
+    if (lines.some((line) => !line)) return;
+    setItems((current) => [...current, ...(lines as FormItem[])]);
+    setFocusLineIndex(items.length);
+    setQuotePasteText("");
+    setQuotePasteRows([]);
+    setQuotePasteProfiles([]);
+    setQuotePasteError(null);
   }
 
   async function saveQuote() {
@@ -476,9 +572,48 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
             <label className="block space-y-1.5"><span className="form-label">Delivery timeline</span><input className="form-input" placeholder="Example: 10-12 working days after approval" value={form.delivery_timeline} onChange={(event) => setForm({ ...form, delivery_timeline: event.target.value })} /></label>
             <label className="block space-y-1.5"><span className="form-label">Payment terms</span><input className="form-input" placeholder="Example: 50% advance, balance before dispatch" value={form.payment_terms} onChange={(event) => setForm({ ...form, payment_terms: event.target.value })} /></label>
           </div>
+          <section aria-labelledby="quote-paste-title" className="mt-6 rounded-3xl border border-orange/30 bg-orange/5 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 id="quote-paste-title" className="font-black text-slate-950">Paste line items from Excel</h3>
+                <p className="mt-1 max-w-3xl text-xs font-medium leading-5 text-slate-600">Include headers <b>Profile Code</b>, <b>Quantity (pcs)</b>, and exactly one of <b>Length (m)</b> or <b>Length (mm)</b>. Optional Finish accepts Mill finish, Powder coating, Anodizing, Wood finish, PVDF, or Other. Paste only previews; no draft changes occur until you import all valid rows.</p>
+              </div>
+              {quotePasteRows.length ? <Button type="button" variant="secondary" disabled={quotePasteLoading} onClick={() => void resolveQuotePasteProfiles()}>{quotePasteLoading ? "Checking profiles..." : "Check profile codes"}</Button> : null}
+            </div>
+            <label className="mt-3 block space-y-1.5"><span className="form-label">Excel rows</span><textarea aria-label="Paste quote lines from Excel" className="form-input min-h-24 font-mono text-xs" placeholder={'Profile Code\tQuantity (pcs)\tLength (m)\tFinish\nAL-101\t100\t6\tMill finish'} value={quotePasteText} onChange={(event) => parseQuotePasteInput(event.target.value)} /></label>
+            {quotePasteError ? <p role="alert" className="mt-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-800">{quotePasteError}</p> : null}
+            {quotePasteRows.length ? (() => {
+              const unit = getQuotePasteLengthUnit(quotePasteText);
+              const results = unit ? validateQuotePasteRows(quotePasteRows, quotePasteProfiles, unit) : [];
+              const validCount = results.filter((row) => row.errors.length === 0).length;
+              const ready = results.length > 0 && validCount === results.length && !loading && !quotePasteLoading && !quotePasteError;
+              return <>
+                <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                  <table className="w-full min-w-[760px] text-left text-xs">
+                    <caption className="sr-only">Editable quote line preview with row validation status</caption>
+                    <thead className="bg-slate-100 text-slate-600"><tr><th className="p-2">Row</th><th className="p-2">Profile code</th><th className="p-2">Quantity (pcs)</th><th className="p-2">Length ({unit ?? "unit required"})</th><th className="p-2">Finish</th><th className="p-2">Check</th></tr></thead>
+                    <tbody>{results.map((row, index) => <tr key={row.sourceRow} className="border-t border-slate-100 align-top">
+                      <td className="p-2 font-bold text-slate-500">{row.sourceRow}</td>
+                      <td className="p-2"><input aria-label={`Row ${row.sourceRow} profile code`} className="form-input min-w-32 py-2 text-xs" value={quotePasteRows[index].profileCode} onChange={(event) => { quotePasteLookupVersion.current += 1; setQuotePasteProfiles([]); setQuotePasteLoading(false); updateQuotePasteRow(index, "profileCode", event.target.value); }} /></td>
+                      <td className="p-2"><input aria-label={`Row ${row.sourceRow} quantity in pieces`} className="form-input min-w-24 py-2 text-xs" inputMode="numeric" value={quotePasteRows[index].quantityValue} onChange={(event) => updateQuotePasteRow(index, "quantityValue", event.target.value)} /></td>
+                      <td className="p-2"><input aria-label={`Row ${row.sourceRow} length in ${unit ?? "source unit"}`} className="form-input min-w-24 py-2 text-xs" inputMode="decimal" value={quotePasteRows[index].lengthValue} onChange={(event) => updateQuotePasteRow(index, "lengthValue", event.target.value)} /></td>
+                      <td className="p-2"><select aria-label={`Row ${row.sourceRow} finish`} className="form-input min-w-32 py-2 text-xs" value={quotePasteRows[index].finish} onChange={(event) => updateQuotePasteRow(index, "finish", event.target.value)}>{getQuotePasteFinishOptions(quotePasteRows[index].finish).map((finish) => <option key={finish.value} value={finish.value}>{finish.label}</option>)}</select></td>
+                      <td className="max-w-64 p-2">{row.errors.length ? <><ul role="alert" className="list-disc space-y-1 pl-4 text-red-700">{row.errors.map((error) => <li key={error}>{error}</li>)}</ul>{quotePasteRows[index].extraValues?.length ? <><p className="mt-1 break-all text-slate-600">Extra cells: {quotePasteRows[index].extraValues.join(" | ")}</p><button type="button" className="mt-1 font-bold text-orange underline" onClick={() => removeQuotePasteExtraCells(index)}>Remove extra cells</button></> : null}</> : <span className="font-bold text-emerald-700">{row.profile?.profile_code} · {row.profile?.section_weight_kg_per_m ? `${row.profile.section_weight_kg_per_m} kg/m` : "kg/m missing"}</span>}</td>
+                    </tr>)}</tbody>
+                  </table>
+                </div>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <p aria-live="polite" className="text-xs font-semibold text-slate-600">{loading ? "Loading company quote defaults; import will be enabled when ready. " : ""}{validCount} of {results.length} rows valid{unit === "mm" ? "; lengths convert from mm to m" : unit === "m" ? "; lengths are in metres" : "; declare length units in the header"}.</p>
+                  <Button type="button" disabled={!ready} onClick={importQuotePasteRows}>Import {results.length} lines into draft</Button>
+                </div>
+              </>;
+            })() : null}
+          </section>
           <div ref={lineContainerRef} className="mt-6 space-y-5">
             {items.map((item, index) => {
               const calculated = calculatedItems[index];
+              const profile = profiles.find((candidate) => candidate.id === item.profile_id);
+              const pieceState = getPieceCalculationState({ quantityPieces: item.quantity_pieces, lengthPerPieceM: item.length_per_piece_m, sectionWeightKgPerM: item.section_weight_kg_per_m, hasSelectedProfile: Boolean(profile), profileMasterSectionWeightKgPerM: profile?.section_weight_kg_per_m });
               const compatibleDies = dies.filter((die) => !item.profile_id || die.profile_id === item.profile_id);
               const selectedDie = dies.find((die) => die.id === item.die_id);
               const warnings = getQuoteItemWarnings(calculated, { dieStatus: selectedDie?.die_status, customerGstNumber: selectedCustomer?.gst_number, defaultConversionChargePerKg: settings?.default_conversion_charge_per_kg, quoteValidUntil: form.valid_until });
@@ -510,7 +645,8 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
                   <label className="block space-y-1.5"><span className="form-label">Sales override</span><input className="form-input" type="number" inputMode="decimal" min="0" value={item.sales_price_override ?? ""} onChange={(event) => updateItem(index, "sales_price_override", event.target.value === "" ? 0 : Number(event.target.value))} /></label>
                   <label className="block space-y-1.5 md:col-span-4"><span className="form-label">Description</span><input className="form-input" value={item.item_description} onChange={(event) => updateItem(index, "item_description", event.target.value)} /></label>
                 </div>
-                <div className="mt-4 grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-sm sm:grid-cols-5"><p className="text-slate-500">Total<br /><b className="text-slate-950">{formatMeters(calculated.total_meters)}</b></p><p className="text-slate-500">Physical weight<br /><b className="text-slate-950">{formatWeight(calculated.total_weight_kg)}</b></p><p className="text-slate-500">Billing weight<br /><b className="text-slate-950">{formatWeight(calculated.billing_weight_kg)}</b></p><p className="text-slate-500">Profit<br /><b className={calculated.estimated_profit_amount < 0 ? "text-red-700" : "text-slate-950"}>{formatCurrency(calculated.estimated_profit_amount)} ({calculated.estimated_profit_percent.toFixed(2)}%)</b></p><p className="text-slate-500">Line total<br /><b className="text-slate-950">{formatCurrency(calculated.line_total_before_gst)}</b></p></div>
+                <div className="mt-4 grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-sm sm:grid-cols-5"><p className="text-slate-500">Total metres<br /><b className="text-slate-950">{pieceState.source === "invalid" ? "Not calculated" : formatMeters(calculated.total_meters)}</b></p><p className="text-slate-500">Theoretical weight<br /><b className="text-slate-950">{pieceState.source === "missing" || pieceState.source === "invalid" ? "Not available" : formatWeight(calculated.total_weight_kg)}</b></p><p className="text-slate-500">Billing weight<br /><b className="text-slate-950">{formatWeight(calculated.billing_weight_kg)}</b></p><p className="text-slate-500">Profit<br /><b className={calculated.estimated_profit_amount < 0 ? "text-red-700" : "text-slate-950"}>{formatCurrency(calculated.estimated_profit_amount)} ({calculated.estimated_profit_percent.toFixed(2)}%)</b></p><p className="text-slate-500">Line total<br /><b className="text-slate-950">{formatCurrency(calculated.line_total_before_gst)}</b></p></div>
+                <p aria-live="polite" className={pieceState.message ? "mt-2 rounded-xl border border-orange-200 bg-orange-50 p-3 text-xs font-semibold text-orange-900" : "mt-2 text-xs font-semibold text-slate-500"}>{pieceState.message ?? (pieceState.source === "profile-master" ? `Theoretical quantity: ${formatMeters(calculated.total_meters)} x ${item.section_weight_kg_per_m} kg/m from the company profile master = ${formatWeight(calculated.total_weight_kg)}. Measured weight is recorded separately and is not changed here.` : pieceState.source === "manual" ? `Theoretical quantity uses the manually entered ${item.section_weight_kg_per_m} kg/m. Measured weight is recorded separately and is not changed here.` : pieceState.source === "invalid" ? "Calculation unavailable until piece count and cut length are valid." : "Calculation unavailable until a valid section weight source is provided.")}</p>
                 {warnings.length ? <div className="mt-3 grid gap-2 md:grid-cols-2">{warnings.map((warning) => <div key={`${index}-${warning.code}`} className={warning.severity === "critical" ? "rounded-2xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-800" : warning.severity === "warning" ? "rounded-2xl border border-orange-200 bg-orange-50 p-3 text-xs font-semibold text-orange-800" : "rounded-2xl border border-slate-200 bg-white p-3 text-xs font-semibold text-slate-600"}>{warning.message}</div>)}</div> : null}
               </div>;
             })}

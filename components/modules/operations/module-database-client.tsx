@@ -14,8 +14,11 @@ import { labelize, type SessionContext } from "@/types/app";
 import { displayValue } from "./value";
 import { getModuleConfig, type ModuleKey } from "./module-config";
 import { TableColumnPreferences } from "@/components/ui/table-column-preferences";
+import { DataFreshness, DataFreshnessSummary } from "@/components/ui/data-freshness";
 import { getRoleColumnOrder, resolveColumnLayout, type ColumnLayout } from "@/lib/preferences/table-columns";
 import { getWorkspaceStorage, makeViewState, mergeWorkspacePreferenceChanges, readWorkspacePreferences, upsertNamedWorkspaceView, upsertWorkspaceLink, viewStateParams, workspaceListUrl, workspacePreferenceKey, writeWorkspacePreferences, type WorkspacePreferences, type WorkspaceViewState } from "@/lib/preferences/workspace-preferences";
+import { dataFreshnessQueryKey } from "@/lib/workflow/data-freshness";
+import { RecordPreview } from "./record-preview";
 
 const pageSize = 10;
 const relationFilterFields = ["customer_id", "profile_id", "order_id", "quote_id", "production_job_id", "inventory_item_id", "expense_ledger_id", "source_record_id", "material_id", "job_id"];
@@ -39,6 +42,8 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
   const firstState = useMemo(() => initialListState(searchParams.toString(), initialStatus, config.defaultSort), [initialStatus, config.defaultSort, searchParams]);
   const [rows, setRows] = useState<Record<string, any>[]>([]);
   const [loadedRowsScope, setLoadedRowsScope] = useState<string | null>(null);
+  const [loadedQueryKey, setLoadedQueryKey] = useState<string | null>(null);
+  const [lastSuccessfulRefresh, setLastSuccessfulRefresh] = useState<{ queryKey: string; at: string } | null>(null);
   const [search, setSearch] = useState(firstState.search);
   const debouncedSearch = useDebounce(search, 350);
   const [status, setStatus] = useState(firstState.status);
@@ -56,6 +61,8 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
   const workspace = loadedPreferenceKey === preferenceKey ? workspaceState : null;
   const [viewName, setViewName] = useState("");
   const requestVersion = useRef(0);
+  const previewTriggerRef = useRef<HTMLElement | null>(null);
+  const [previewSelection, setPreviewSelection] = useState<{ id: string; scope: string; queryKey: string } | null>(null);
   const historyRestoreSearch = useRef<string | null>(null);
   const [relationFilters, setRelationFilters] = useState(() => Object.entries(firstState.relationFilters).map(([field, value]) => ({ field, value })));
 
@@ -75,6 +82,13 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
   const viewState: WorkspaceViewState = { search, status, secondary, dateFrom, dateTo, page, sort: sortColumn, direction: sortDirection, relationFilters: Object.fromEntries(relationFilters.map(({ field, value }) => [field, value])) };
   const stateParams = viewStateParams(viewState);
   const listHref = `${config.basePath}/database${stateParams.size ? `?${stateParams.toString()}` : ""}`;
+  const dataQueryKey = dataFreshnessQueryKey(requestScope, moduleKey, { search: debouncedSearch, status, secondary, dateFrom, dateTo, page, sortColumn, sortDirection, relationFilters });
+  const refreshedAt = lastSuccessfulRefresh?.queryKey === dataQueryKey ? lastSuccessfulRefresh.at : null;
+  const loadedForView = loadedRowsScope === requestScope && loadedQueryKey === dataQueryKey;
+  const previewOpen = previewSelection?.scope === requestScope && previewSelection.queryKey === dataQueryKey;
+  const previewRow = previewOpen && loadedForView ? rows.find((row) => row.id === previewSelection?.id) ?? null : null;
+
+  useEffect(() => { setPreviewSelection(null); }, [dataQueryKey]);
 
   useEffect(() => {
     function restoreFromLocation() {
@@ -135,6 +149,8 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
     setRows(data.rows);
     setTotalCount(data.count);
     setLoadedRowsScope(requestScope);
+    setLoadedQueryKey(dataQueryKey);
+    setLastSuccessfulRefresh({ queryKey: dataQueryKey, at: new Date().toISOString() });
     } catch (err) {
       if (version !== requestVersion.current) return;
       const message = getErrorMessage(err, `Could not load ${config.databaseTitle.toLowerCase()}`);
@@ -142,6 +158,7 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
       setTotalCount(null);
       setError(message);
       setLoadedRowsScope(requestScope);
+      setLoadedQueryKey(dataQueryKey);
       toast.error(message);
     } finally {
       if (version === requestVersion.current) setLoading(false);
@@ -161,6 +178,8 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
     width: resolvedColumns.widths[column.id],
     sticky: column.id === resolvedColumns.identifier
   }));
+  columns.push({ id: "data_freshness", header: "Data source & age", accessor: (row) => <DataFreshness row={row} fetchedAt={refreshedAt} /> });
+  columns.push({ id: "record_preview", header: "Quick view", accessor: (row) => <button type="button" className="min-h-10 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" aria-label={`Preview ${String(displayValue(row, config.card.titlePath, "text") || "record")}`} onClick={(event) => { event.stopPropagation(); previewTriggerRef.current = event.currentTarget; setPreviewSelection({ id: String(row.id), scope: requestScope, queryKey: dataQueryKey }); }}>Preview</button> });
 
   function persistWorkspace(next: WorkspacePreferences) {
     const storage = getWorkspaceStorage();
@@ -205,7 +224,7 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
       {workspace ? <div className="flex items-center gap-1"><input aria-label="Saved view name" value={viewName} onChange={(event) => setViewName(event.target.value)} placeholder="Name this view" maxLength={100} className="w-36 rounded-xl border border-neutral-200 px-3 py-2 text-sm" /><Button type="button" variant="secondary" onClick={saveNamedView} disabled={!viewName.trim()}>Save view</Button></div> : null}
       {canCreate && (config.fields || config.createHref) ? <Link href={config.createHref ?? `${config.basePath}/new`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"><Plus className="h-4 w-4" /> {config.primaryAction}</Link> : null}
     </>}>
-      <div className="flex justify-end px-4 pt-4"><TableColumnPreferences columns={permittedColumns} identifier={resolvedColumns.identifier} layout={workspace?.columns[moduleKey] ?? { order: getRoleColumnOrder(moduleKey, context.role, permittedColumns), hidden: [], widths: {} }} onChange={saveColumns} /></div>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4"><DataFreshnessSummary refreshedAt={refreshedAt} refreshing={loading} onRefresh={() => void loadRows()} /><TableColumnPreferences columns={permittedColumns} identifier={resolvedColumns.identifier} layout={workspace?.columns[moduleKey] ?? { order: getRoleColumnOrder(moduleKey, context.role, permittedColumns), hidden: [], widths: {} }} onChange={saveColumns} /></div>
       <DataTableToolbar
         search={search}
         searchPlaceholder={config.searchPlaceholder}
@@ -220,8 +239,9 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
         )}
       />
       {relationFilters.length ? <div className="mx-4 mb-3 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-neutral-700">Filtered by connected record. Clear filters to view the full database.</div> : null}
-      <DataTable rows={loadedRowsScope === requestScope ? rows : []} columns={columns} getRowId={(row) => row.id} onRowClick={openRecord} sortColumn={sortColumn} sortDirection={sortDirection} onSort={(column, direction) => { if (sortable.has(column)) { setSortColumn(column); setSortDirection(direction); } }} isLoading={loading || loadedRowsScope !== requestScope} error={error} onRetry={() => void loadRows()} emptyTitle={`No ${config.title.toLowerCase()} found`} emptyDescription="No records match the current search or filter." emptyAction={canCreate && (config.fields || config.createHref) ? <Link href={config.createHref ?? `${config.basePath}/new`} className="inline-flex items-center justify-center rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white">{config.primaryAction}</Link> : null} />
-      <DataTablePagination page={page} pageSize={pageSize} totalCount={loadedRowsScope === requestScope ? totalCount : null} isLoading={loading || loadedRowsScope !== requestScope} onPrevious={() => setPage((current) => Math.max(1, current - 1))} onNext={() => setPage((current) => current + 1)} />
+      <DataTable rows={loadedForView ? rows : []} columns={columns} getRowId={(row) => row.id} onRowClick={openRecord} sortColumn={sortColumn} sortDirection={sortDirection} onSort={(column, direction) => { if (sortable.has(column)) { setSortColumn(column); setSortDirection(direction); } }} isLoading={loading || !loadedForView} error={loadedForView ? error : null} onRetry={() => void loadRows()} emptyTitle={`No ${config.title.toLowerCase()} found`} emptyDescription="No records match the current search or filter." emptyAction={canCreate && (config.fields || config.createHref) ? <Link href={config.createHref ?? `${config.basePath}/new`} className="inline-flex items-center justify-center rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white">{config.primaryAction}</Link> : null} />
+      <DataTablePagination page={page} pageSize={pageSize} totalCount={loadedForView ? totalCount : null} isLoading={loading || !loadedForView} onPrevious={() => setPage((current) => Math.max(1, current - 1))} onNext={() => setPage((current) => current + 1)} />
+      <RecordPreview open={Boolean(previewOpen)} moduleKey={moduleKey} context={context} row={previewRow} returnTo={listHref} onClose={() => setPreviewSelection(null)} triggerRef={previewTriggerRef} loading={loading} error={error} rowScope={loadedRowsScope ?? ""} />
     </DataPageLayout>
   );
 }

@@ -13,17 +13,17 @@ const aliases = new Map([
     export function DataTableToolbar({search,onSearchChange,filters}) { return <section><input aria-label="Search" value={search} onChange={event => onSearchChange(event.target.value)} />{filters}</section>; }
     export function StatusFilter({label,value,onChange,options}) { return <label>{label}<select aria-label={label} value={value} onChange={event => onChange(event.target.value)}><option value="">All</option>{options.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>; }
     export function DateRangeFilter() { return null; }
-    export function DataTable({rows,columns,onSort}) { return <div>{columns.map(column => <button key={column.id} onClick={() => onSort(column.id,"asc")}>Sort {column.header}</button>)}{rows.map(row => <div key={row.id}>{row.order_number}</div>)}</div>; }
+    export function DataTable({rows,columns,onSort,error,isLoading}) { if(error)return <p role="alert">{error}</p>; if(isLoading)return <p>Loading rows</p>;return <div>{columns.map(column => <button key={column.id} onClick={() => onSort(column.id,"asc")}>Sort {column.header}</button>)}{rows.map(row => <div key={row.id}>{columns.map(column=><div key={column.id}>{column.accessor(row)}</div>)}</div>)}</div>; }
     export function DataTablePagination({page,onNext}) { return <div><span>Page {page}</span><button onClick={onNext}>Next</button></div>; }
   `],
-  ["@/lib/supabase/browser", `export function createClient() { return { rpc: async (_name,args) => { window.lastRpcArgs=args; window.rpcCalls=(window.rpcCalls??0)+1; return {data:{rows:[{id:"order-1",order_number:"ORD-2026-05"}],count:33},error:null}; } }; }`],
+  ["@/lib/supabase/browser", `export function createClient() { return { rpc: async (_name,args) => { window.lastRpcArgs=args; window.rpcCalls=(window.rpcCalls??0)+1; return window.failRpc ? {data:null,error:{message:"Synthetic refresh failure"}} : {data:{rows:[{id:"order-1",order_number:"ORD-2026-05",created_at:"2024-01-01T00:00:00Z"}],count:33},error:null}; } }; }`],
   ["@/lib/hooks/use-debounce", `import {useEffect,useState} from "react"; export function useDebounce(value,delay) { const [result,setResult]=useState(value); useEffect(()=>{const id=setTimeout(()=>setResult(value),delay);return()=>clearTimeout(id)},[value,delay]);return result; }`],
   ["@/lib/utils/errors", `export function getErrorMessage(error,fallback) { return error?.message ?? fallback; }`],
   ["@/types/app", `export function labelize(value) { return value.replace(/_/g," ").replace(/\\b\\w/g,char=>char.toUpperCase()); }`],
   ["./value", `export function displayValue(row,path) { return path.split(".").reduce((value,key)=>value?.[key],row) ?? ""; }`],
   ["./module-config", `
     const columns=[{id:"order_number",header:"Order Number",path:"order_number",sortable:true,type:"text"},{id:"current_stage",header:"Stage",path:"current_stage",sortable:true,type:"text"},{id:"priority",header:"Priority",path:"priority",sortable:true,type:"text"}];
-    const config={basePath:"/orders",title:"Orders",databaseTitle:"Orders Database",defaultSort:{column:"order_number",direction:"asc"},columns,card:{titlePath:"order_number"},groupField:"current_stage",groups:["order_confirmed","packing"],secondaryFilter:{field:"priority",label:"Priority",options:[{value:"high",label:"High"},{value:"normal",label:"Normal"}]},searchPlaceholder:"Search orders"};
+    const config={basePath:"/orders",resource:"orders",title:"Orders",databaseTitle:"Orders Database",defaultSort:{column:"order_number",direction:"asc"},columns,card:{titlePath:"order_number"},groupField:"current_stage",groups:["order_confirmed","packing"],secondaryFilter:{field:"priority",label:"Priority",options:[{value:"high",label:"High"},{value:"normal",label:"Normal"}]},searchPlaceholder:"Search orders"};
     export function getModuleConfig(){return config;}
   `],
   ["@/lib/preferences/table-columns", `export function getRoleColumnOrder(_key,_role,columns){return columns.map(item=>item.id);} export function moveColumn(columns){return [...columns];} export function resolveColumnLayout(_key,_role,columns,preferences){const identifier=columns[0]?.id??"";const hidden=new Set(preferences?.hidden??[]);return {columns:columns.filter(column=>column.id===identifier||!hidden.has(column.id)),permittedColumns:[...columns],widths:preferences?.widths??{},identifier};}`],
@@ -80,6 +80,27 @@ test("mounted database controls preserve rapid edits, debounce, pagination, sort
     assert.equal(current.rpc.p_filters.status, "order_confirmed");
     assert.equal(current.rpc.p_filters.secondary, "high");
     assert.equal(current.rpc.p_page, 2);
+    const queueUrl = page.url();
+    await page.getByRole("button", { name: "Preview ORD-2026-05", exact: true }).click();
+    await page.getByRole("dialog", { name: "ORD-2026-05", exact: true }).waitFor();
+    assert.equal(page.url(), queueUrl);
+    assert.match(await page.getByRole("link", {name:"Open full record"}).getAttribute("href"), /returnTo=/);
+    await page.keyboard.press("Escape");
+    await page.getByRole("dialog").waitFor({state:"detached"});
+    assert.equal(await page.getByRole("button", { name:"Preview ORD-2026-05" }).evaluate(element=>element===document.activeElement),true);
+    assert.equal(page.url(),queueUrl);
+    await page.getByText("Data age", {exact:false}).click();
+    assert.match(await page.locator("details").last().innerText(), /2024/);
+    const successTime = await page.locator("time").getAttribute("datetime");
+    const beforeFailure = await page.evaluate(()=>window.rpcCalls);
+    await page.evaluate(()=>window.failRpc=true);
+    await page.getByRole("button", {name:"Refresh page",exact:true}).click();
+    await page.getByRole("alert").waitFor();
+    assert.equal(await page.locator("time").getAttribute("datetime"),successTime);
+    assert.equal(await page.evaluate(()=>window.rpcCalls),beforeFailure+1);
+    await page.evaluate(()=>window.failRpc=false);
+    await page.getByRole("button", {name:"Refresh page",exact:true}).click();
+    await page.getByRole("button", {name:"Preview ORD-2026-05"}).waitFor();
     await page.evaluate(() => history.pushState(null, "", "/orders/order-1"));
     await page.goBack();
     await page.getByLabel("Search").waitFor();
