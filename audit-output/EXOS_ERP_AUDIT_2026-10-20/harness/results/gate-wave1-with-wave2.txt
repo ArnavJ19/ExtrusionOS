@@ -12,10 +12,7 @@ PASS G002-viewer-scrap-insert [baseline]: baseline: viewer created a 5000 kg lot
 PASS G002-viewer-scrap-insert [candidate]: rejected: permission denied for table scrap_records
 PASS G002-production-scrap-insert [baseline]: baseline: production created unlinked scrap
 PASS G002-production-scrap-insert [candidate]: rejected: permission denied for table scrap_records
-FAIL G002-completion-still-books-scrap [candidate]: Link the billets used by this job, or have a manager record an input exception, before completing it
-
-false !== true
-
+PASS G002-completion-still-books-scrap [candidate]: completion posted 400 kg process scrap -> {"weight_kg":"400.000","available_weight_kg":"400.000","status":"available"}
 PASS G003-direct-availability-inflation [baseline]: baseline: available 25000
 PASS G003-direct-availability-inflation [candidate]: client value ignored -> {"w":"1000.000","a":"0.000","status":"used"}
 PASS G003-form-edit-resurrection [baseline]: baseline: resurrected to 1000
@@ -26,10 +23,7 @@ PASS G003-insert-forces-full-availability [candidate]: receipt availability forc
 PASS G003-furnace-charge-and-cancel-still-work [candidate]: charge debited to 9726.375 (reserved); cancel refunded to 10000.000
 PASS G008-viewer-returns-broken-press [baseline]: baseline: viewer moved press to idle
 PASS G008-viewer-returns-broken-press [candidate]: viewer update affected no rows; press stays in breakdown
-FAIL G008-production-manager-returns-press [candidate]: Return the machine to service through the maintenance sign-off (all breakdowns resolved)
-
-false !== true
-
+PASS G008-production-manager-returns-press [candidate]: production manager returned press to active; free-text status rejected (new row for relation "machines" violates check constraint "machines_status_check")
 PASS G008-sales-reactivates-retired-die [baseline]: baseline: sales reactivated the die
 PASS G008-sales-reactivates-retired-die [candidate]: rejected: Only owner, admin, factory or production managers may make a die usable for production
 PASS G008-sales-manager-rpc-reactivates-die [baseline]: baseline: sales manager reactivated the die via RPC
@@ -68,8 +62,7 @@ PASS G012-admin-disables-qc-gate [candidate]: admin rejected (Only the owner may
 PASS G019-viewer-forges-audit-rows [baseline]: baseline: rows attributed to the owner
 PASS G019-viewer-forges-audit-rows [candidate]: rows stamped with the real actor -> {"actor_user_id":"a0000000-0000-4000-8000-000000000004","actor_name":"Viewer","actor_role":"viewer"}
 PASS G019-server-audit-writers-unchanged [candidate]: machine change audited by the trigger writer -> {"actor_id":"a0000000-0000-4000-8000-000000000002","action":"update_machines"}
-GATE FAILED (2)
+GATE PASSED
+exit 0
 
-NOTE (21 Oct, re-run with all Wave 2 migrations incl. 20261021310000, in hosted order: GATE_PREFIX_MIGRATIONS = the three 20261020 parallel-session migrations): the two candidate failures above are intended behaviour changes from later findings, not regressions:
-- G002-completion-still-books-scrap: EXOS-AUD-014 now requires billet input or a manager input exception, and EXOS-AUD-006 no longer books uncategorised loss as furnace metal (see gate-wave2 G006/G014).
-- G008-production-manager-returns-press: the EXOS-AUD-008 follow-up requires the return-to-service sign-off (see gate-wave2 G027).
+Run 21 Oct (late) with the updated G002/G008 checks: GATE_PREFIX_MIGRATIONS = 20261020120000, 20261020142106, 20261020162949; GATE_SUFFIX_MIGRATIONS = the gate-wave2 list (080000 ... 310000 and 330000). Both checks take the Wave 2 path (input exception + categorised scrap; return-to-service sign-off). Wave 1 gate alone: 64/64.

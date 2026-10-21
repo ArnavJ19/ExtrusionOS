@@ -154,9 +154,18 @@ scenario("G002-completion-still-books-scrap", "002", async (ctx) => {
     insert into public.production_jobs (id, company_id, job_number, order_id, profile_id, die_id, source_line_id, source_record_id, status, planned_quantity_kg, pieces, length_per_piece_m, extrusion_efficiency_percent, finishing_type, machine_id)
       values ('${ids.jobA}', '${ids.company}', 'J-A', '${ids.orderA}', '${ids.profile}', '${ids.die}', '${lineA}', '${ids.orderA}', 'in_progress', 1000, 172, 5.8, 85, 'mill_finish', '${ids.pressA}');
     insert into public.production_plan_slots (company_id, production_job_id, machine_id, planned_start_at, planned_end_at, status) values ('${ids.company}', '${ids.jobA}', '${ids.pressA}', now(), now() + interval '4 hours', 'released')`);
-  const r = await attempt(() => ctx.as(ids.production, `select public.complete_production_job_atomic('${ids.jobA}', 600, 100, null, 400, 'loss') id`));
+  // With Wave 2 layered on (GATE_SUFFIX_MIGRATIONS), completion needs input evidence (EXOS-AUD-014) and only
+  // weighed, categorised scrap becomes furnace metal (EXOS-AUD-006), so the legitimate flow uses those steps.
+  const [{ wave2 }] = await ctx.q(`select to_regprocedure('public.complete_production_job_with_scrap_atomic(uuid,numeric,integer,numeric,jsonb,text)') is not null wave2`);
+  if (wave2) {
+    const ex = await attempt(() => ctx.as(ids.productionManager, `select public.record_production_input_exception('${ids.jobA}', 'Trial run on customer-supplied billets') id`));
+    assert.equal(ex.ok, true, ex.error);
+  }
+  const r = await attempt(() => ctx.as(ids.production, wave2
+    ? `select public.complete_production_job_with_scrap_atomic('${ids.jobA}', 600, 100, null, '[{"category":"butt_end","weight_kg":400}]'::jsonb, 'loss') id`
+    : `select public.complete_production_job_atomic('${ids.jobA}', 600, 100, null, 400, 'loss') id`));
   assert.equal(r.ok, true, r.error);
-  const lots = await ctx.q(`select weight_kg, available_weight_kg, status from public.foundry_aluminium_scrap where origin_reference like '%${ids.jobA}%'`);
+  const lots = await ctx.q(`select weight_kg, available_weight_kg, status from public.foundry_aluminium_scrap where ${wave2 ? "scrap_source = 'in_house'" : `origin_reference like '%${ids.jobA}%'`}`);
   assert.equal(lots.length, 1);
   assert.equal(Number(lots[0].available_weight_kg), 400);
   return `completion posted 400 kg process scrap -> ${JSON.stringify(lots[0])}`;
@@ -242,7 +251,17 @@ scenario("G008-viewer-returns-broken-press", "008", async (ctx, candidate) => {
 
 scenario("G008-production-manager-returns-press", "008", async (ctx) => {
   await ctx.replica(`update public.machines set status='breakdown' where id='${ids.pressB}'`);
-  const r = await attempt(() => ctx.as(ids.productionManager, `update public.machines set status='active' where id='${ids.pressB}' returning status`));
+  // With Wave 2 layered on, a press leaves 'breakdown' only through the return-to-service sign-off (EXOS-AUD-008 follow-up).
+  const [{ wave2 }] = await ctx.q(`select to_regprocedure('public.return_machine_to_service_atomic(uuid,text)') is not null wave2`);
+  if (wave2) {
+    const direct = await attempt(() => ctx.as(ids.productionManager, `update public.machines set status='active' where id='${ids.pressB}'`));
+    assert.equal(direct.ok, false);
+    const signoff = await attempt(() => ctx.as(ids.productionManager, `select public.return_machine_to_service_atomic('${ids.pressB}', 'Inspected and pressure tested') id`));
+    assert.equal(signoff.ok, true, signoff.error);
+  }
+  const r = wave2
+    ? { ok: true, value: await ctx.q(`select status from public.machines where id='${ids.pressB}'`) }
+    : await attempt(() => ctx.as(ids.productionManager, `update public.machines set status='active' where id='${ids.pressB}' returning status`));
   assert.equal(r.ok, true, r.error); assert.equal(r.value[0]?.status, "active");
   const bad = await attempt(() => ctx.as(ids.productionManager, `update public.machines set status='running fine' where id='${ids.pressB}'`));
   assert.equal(bad.ok, false);

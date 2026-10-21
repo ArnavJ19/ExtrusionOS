@@ -132,10 +132,14 @@ PASS G021-profile-change-with-open-work [baseline]: baseline: owner changed kg/m
   rejected: Only an owner or admin can approve a specification change on a profile with open work
 PASS G021-profile-change-with-open-work [candidate]: spec edit under open work rejected (Profile P-100 has open work (1 jobs, 0 billet requirements, 0 reservations, 1 open order lines); an owner or admin must approve a specification change); non-spec edit allowed; owner approval recorded {"previous_values":{"section_weight_kg_per_m":1},"new_values":{"section_weight_kg_per_m":1.35},"open_work":{"production_jobs":1,"open_order_lines":1,"stock_reservations":0,"billet_requirements":0}}
 PASS G026-invoice-rate-loses-quoted-value [baseline]: baseline: shipping the quoted 1,000 kg invoices 323810 of 340000.00 (-16190.00); the 500 kg minimum line invoices 32222 of 161111.11
-PASS G026-invoice-rate-loses-quoted-value [candidate]: quoted 1,000 kg invoices 340000 of 340000.00 at 340.00/kg; 100 kg under a 500 kg minimum invoices 161111 of 161111.11 at 1611.11/kg
+PASS G026-invoice-rate-loses-quoted-value [candidate]: quoted 1,000 kg invoices 340000 of 340000.00 at 338.50/kg; 100 kg under a 500 kg minimum invoices 161111 of 161111.11 at 1611.11/kg
 PASS G026-non-kg-invoice-unit-ignored [baseline]: baseline: per-metre invoicing stored and silently ignored
   rejected: new row for relation "quote_items" violates check constraint "quote_items_invoice_calc_uom_kg"
 PASS G026-non-kg-invoice-unit-ignored [candidate]: rejected: new row for relation "quote_items" violates check constraint "quote_items_invoice_calc_uom_kg"
   rejected: Only owner, admin or accounts can see billing reconciliation
-PASS G026-billing-reconciliation [candidate]: 600 of 1,000 kg invoiced 204000; 136000 of the quoted 340000.00 still to invoice; production role refused
+PASS G026-billing-reconciliation [candidate]: 600 of 1,000 kg invoiced 203100; 136900 of the quoted 340000.00 still to invoice; production role refused
+PASS G026-die-freight-rate-excludes-charges [candidate]: goods rate 340.72/kg x 1000.000 kg + die 20,000 + freight 1,500 = 362220.00 of quoted 362222.22; a line without charges keeps the all-in rate
+  rejected: This die charge is already billed on another invoice
+PASS G026-die-freight-billed-once [candidate]: invoice 1: goods 1,500 + die 20,000 + freight 1,500 = 23,000 + 4,140 GST; invoice 2: goods only; duplicate charge rejected; after invoice 1 was cancelled, regenerating invoice 2 took the charges; reconciliation counts 5 kg (goods only)
 GATE PASSED
+exit 0
