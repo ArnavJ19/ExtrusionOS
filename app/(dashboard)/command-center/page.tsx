@@ -102,8 +102,10 @@ export default async function CommandCenterPage() {
       .eq("company_id", context.companyId).not("current_stage", "in", "(dispatched,delivered,closed,cancelled)")
       .order("expected_dispatch_date", { ascending: true }).limit(10),
     // Monthly dispatches
+    // KPI dictionary: shipped kg excludes pending, returned and damaged shipments.
     supabase.from("dispatches").select("id, total_weight_kg", { count: "exact" })
-      .eq("company_id", context.companyId).gte("dispatch_date", monthStart).lte("dispatch_date", today),
+      .eq("company_id", context.companyId).gte("dispatch_date", monthStart).lte("dispatch_date", today)
+      .not("delivery_status", "in", "(pending,returned,damaged)"),
     // Delayed orders
     supabase.from("orders_authorized").select("id, order_number, expected_dispatch_date, order_value, customer_name, company_name")
       .eq("company_id", context.companyId).lt("expected_dispatch_date", today)
@@ -164,9 +166,9 @@ export default async function CommandCenterPage() {
 
     // Completed production jobs for weight calculation
     supabase.from("production_jobs").select("id, actual_quantity_kg")
-      .eq("company_id", context.companyId).eq("status", "completed").gte("updated_at", monthStartIso).lt("updated_at", tomorrowStartIso),
+      .eq("company_id", context.companyId).eq("status", "completed").gte("completed_at", monthStartIso).lt("completed_at", tomorrowStartIso),
     // Scrap records weight calculation
-    supabase.from("scrap_records").select("weight_kg")
+    supabase.from("scrap_records").select("id, weight_kg")
       .eq("company_id", context.companyId).gte("created_at", monthStartIso).lt("created_at", tomorrowStartIso),
   ]);
 
@@ -174,11 +176,22 @@ export default async function CommandCenterPage() {
   const completedProductionJobIds = completedProductionJobs.map((job: any) => job.id);
   const issuedBillets = completedProductionJobIds.length
     ? await supabase.from("foundry_billets")
-      .select("production_job_id, weight_kg")
+      .select("production_job_id, weight_kg, measured_weight_kg")
       .eq("company_id", context.companyId)
       .in("production_job_id", completedProductionJobIds)
       .in("status", ["issued", "consumed"])
     : { data: [], error: null };
+  const scrapIds = (scrapRecordsMonthly.data ?? []).map((row: any) => row.id);
+  const [qcRejections, scrapReversals] = await Promise.all([
+    completedProductionJobIds.length
+      ? supabase.from("quality_inspections").select("production_job_id, quantity_checked_kg")
+        .eq("company_id", context.companyId).eq("status", "rejected").in("production_job_id", completedProductionJobIds)
+      : Promise.resolve({ data: [], error: null }),
+    scrapIds.length
+      ? supabase.from("scrap_record_reversals").select("scrap_record_id").eq("company_id", context.companyId).in("scrap_record_id", scrapIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  const reversedScrapIds = new Set((scrapReversals.data ?? []).map((row: any) => row.scrap_record_id));
 
   // Compute derived metrics
   const monthlyQuoteValue = (monthlyQuotes.data ?? []).reduce((s, q: any) => s + Number(q.grand_total ?? 0), 0);
@@ -193,8 +206,9 @@ export default async function CommandCenterPage() {
   // Scrap & yield. Recovery uses only physical billet input linked to each
   // completed job; it is not inferred from output plus recorded scrap.
   const totalProduced = completedProductionJobs.reduce((s: number, j: any) => s + Number(j.actual_quantity_kg ?? 0), 0);
-  const totalScrap = (scrapRecordsMonthly.data ?? []).reduce((s, j: any) => s + Number(j.weight_kg ?? 0), 0);
-  const recovery = calculateIssuedBilletRecovery(completedProductionJobs, issuedBillets.data ?? []);
+  // Reversed (erroneous) scrap postings are excluded; recovery counts good output net of QC rejects.
+  const totalScrap = (scrapRecordsMonthly.data ?? []).filter((j: any) => !reversedScrapIds.has(j.id)).reduce((s, j: any) => s + Number(j.weight_kg ?? 0), 0);
+  const recovery = calculateIssuedBilletRecovery(completedProductionJobs, issuedBillets.data ?? [], qcRejections.data ?? []);
 
   // Low stock filtering
   const lowStockFiltered = (lowStockItems.data ?? []).filter((item: any) => {

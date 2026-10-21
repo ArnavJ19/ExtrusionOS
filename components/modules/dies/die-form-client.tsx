@@ -195,7 +195,7 @@ export function DieFormClient({ context, dieId }: { context: SessionContext; die
         <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-slate-500">Complete die technical identity — design, geometry, material, manufacturing, and performance data.</p>
       </div>
 
-      <DieFormTabs form={form} update={update} profiles={profiles} customers={customers} />
+      <DieFormTabs form={form} update={update} profiles={profiles} customers={customers} canEditUsage={["owner", "admin"].includes(context.role) || !dieId} />
 
       <div className="flex flex-col gap-2 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end">
         <Button type="button" variant="secondary" onClick={() => router.back()}>Cancel</Button>

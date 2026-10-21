@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { formatCurrency, formatWeight } from "@/lib/utils/format";
 import { ProfileRoutingClient } from "@/components/modules/profiles/profile-routing-client";
 import { ProfileQualityPlanClient } from "@/components/modules/profiles/profile-quality-plan-client";
+import { ErpControlPanel } from "@/components/modules/erp-control-panel";
+import { profileSpecControls } from "@/lib/workflow/erp-control-panels";
 import { TechnicalDocumentUpload } from "@/components/modules/shared/technical-document-upload";
 import { GenerateReportButton } from "@/components/modules/shared/generate-report-button";
 import { ReportDownloadList } from "@/components/modules/shared/report-download-list";
@@ -234,6 +236,8 @@ export default async function ProfileDetailPage({ params }: { params: Promise<{ 
           </CardContent>
         </Card>
       )}
+
+      <ErpControlPanel title="Specification change control" actions={profileSpecControls(context, id)} />
 
       {/* Production Routing */}
       <ProfileRoutingClient context={context} profileId={id} canEdit={canEditProfileConfiguration} />

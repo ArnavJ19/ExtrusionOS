@@ -6,6 +6,14 @@ export type CompletedProductionJob = {
 export type IssuedBillet = {
   production_job_id: string | null;
   weight_kg: number | string | null;
+  /** Weighed after casting (EXOS-AUD-001); preferred over the theoretical weight. */
+  measured_weight_kg?: number | string | null;
+};
+
+/** QC-rejected kg of a completed job; recovery counts good output only (KPI dictionary). */
+export type RejectedQuantity = {
+  production_job_id: string | null;
+  quantity_checked_kg: number | string | null;
 };
 
 export type RecoveryMetric = {
@@ -24,11 +32,19 @@ export type RecoveryMetric = {
 export function calculateIssuedBilletRecovery(
   jobs: CompletedProductionJob[],
   billets: IssuedBillet[],
+  rejections: RejectedQuantity[] = [],
 ): RecoveryMetric {
+  const rejectedByJob = new Map<string, number>();
+  for (const rejection of rejections) {
+    if (!rejection.production_job_id) continue;
+    const kg = Number(rejection.quantity_checked_kg ?? 0);
+    if (!Number.isFinite(kg) || kg <= 0) continue;
+    rejectedByJob.set(rejection.production_job_id, (rejectedByJob.get(rejection.production_job_id) ?? 0) + kg);
+  }
   const inputByJob = new Map<string, number>();
   for (const billet of billets) {
     if (!billet.production_job_id) continue;
-    const weight = Number(billet.weight_kg ?? 0);
+    const weight = Number(billet.measured_weight_kg ?? billet.weight_kg ?? 0);
     if (!Number.isFinite(weight) || weight <= 0) continue;
     inputByJob.set(billet.production_job_id, (inputByJob.get(billet.production_job_id) ?? 0) + weight);
   }
@@ -40,7 +56,7 @@ export function calculateIssuedBilletRecovery(
 
   for (const job of jobs) {
     const input = inputByJob.get(job.id) ?? 0;
-    const output = Number(job.actual_quantity_kg ?? 0);
+    const output = Number(job.actual_quantity_kg ?? 0) - (rejectedByJob.get(job.id) ?? 0);
     if (input <= 0 || !Number.isFinite(output) || output < 0) {
       missingJobCount += 1;
       continue;

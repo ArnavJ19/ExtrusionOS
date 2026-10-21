@@ -1,6 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { RecordDetailClient } from "@/components/modules/operations/record-detail-client";
 import { ProductionOutputWorkflow } from "@/components/modules/production-output-workflow";
+import { ErpControlPanel } from "@/components/modules/erp-control-panel";
+import { productionJobControls } from "@/lib/workflow/erp-control-panels";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +22,7 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
       .maybeSingle(),
     supabase
       .from("foundry_billets")
-      .select("id, weight_kg")
+      .select("id, weight_kg, measured_weight_kg, status")
       .eq("company_id", context.companyId)
       .eq("production_job_id", id)
   ]);
@@ -31,14 +33,16 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
   const floorJob = {
     ...job,
     linked_billet_count: linkedBillets.length,
-    linked_billet_input_kg: linkedBillets.reduce((sum, billet) => sum + Number(billet.weight_kg ?? 0), 0)
+    linked_billet_input_kg: linkedBillets.reduce((sum, billet) => sum + Number(billet.measured_weight_kg ?? billet.weight_kg ?? 0), 0)
   };
 
   const canUpdate = can(context.role, "update", "production");
   const canCorrect = ["owner", "admin", "production_manager"].includes(context.role);
+  const controls = await productionJobControls(supabase, context, id);
   return (
     <div className="space-y-6">
       <ProductionOutputWorkflow job={floorJob} canUpdate={canUpdate} canCorrect={canCorrect} />
+      <ErpControlPanel title="Production controls" description="Billet issue, input evidence, surplus to stock and scrap corrections." actions={controls} />
       <RecordDetailClient moduleKey="production" context={context} recordId={id} canEdit={canUpdate} />
     </div>
   );

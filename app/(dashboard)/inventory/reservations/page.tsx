@@ -9,6 +9,8 @@ import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { formatDate, formatWeight } from "@/lib/utils/format";
 import { labelize } from "@/types/app";
+import { ErpControlPanel } from "@/components/modules/erp-control-panel";
+import { stockQcControls } from "@/lib/workflow/erp-control-panels";
 import { getReservationLedgerOptions, loadReservationLedgerPage, reservationSorts, reservationStatuses, type ReservationLedgerPage } from "@/lib/inventory/reservation-ledger";
 import { redirect } from "next/navigation";
 
@@ -23,6 +25,7 @@ export default async function InventoryReservationsPage({ searchParams }: { sear
   } catch {
     // A failed or incomplete ledger cannot establish zero stock commitments.
   }
+  const qcControls = await stockQcControls(supabase, context);
   const pageHref = (page: number) => `/inventory/reservations?${new URLSearchParams({
     page: String(page), q: options.search, status: options.status, sort: options.sort, direction: options.direction
   })}`;
@@ -30,6 +33,7 @@ export default async function InventoryReservationsPage({ searchParams }: { sear
   return (
     <div className="space-y-6">
       <div><Link href="/inventory" className="mb-3 inline-flex items-center gap-2 text-sm font-black text-slate-500 transition hover:text-orange"><ArrowLeft className="h-4 w-4" /> Back to Inventory</Link><PageHeader title="Stock Reservations" description="Trace reserved, consumed and released profile stock against its order. Open holds represent unconsumed commitments; releasing a hold does not add physical stock." /></div>
+      <ErpControlPanel title="Finished stock origin and QC hold" actions={qcControls} />
       <form action="/inventory/reservations" className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4">
         <label className="text-xs font-semibold text-slate-600">Search<input name="q" defaultValue={options.search} placeholder="Profile, order, customer or bundle" className="form-input mt-1 block" /></label>
         <label className="text-xs font-semibold text-slate-600">Status<select name="status" defaultValue={options.status} className="form-input mt-1 block"><option value="">All statuses</option>{reservationStatuses.map(status => <option key={status} value={status}>{labelize(status)}</option>)}</select></label>

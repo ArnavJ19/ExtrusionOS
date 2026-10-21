@@ -25,7 +25,7 @@ export function DealerInventoryEntryClient({ companyId, profiles, stock }: { com
   const [profileOptions, setProfileOptions] = useState(profiles);
   const [profileSearch, setProfileSearch] = useState("");
   const [profileSearching, setProfileSearching] = useState(false);
-  const [form, setForm] = useState({ profile_id: "", finish: "mill_finish", length_m: "5.8", quantity_pieces: "", total_weight_kg: "", bundle_number: "", location: "Dealer warehouse", notes: "" });
+  const [form, setForm] = useState({ profile_id: "", finish: "mill_finish", piece_length_m: "5.8", quantity_pieces: "", total_weight_kg: "", bundle_number: "", location: "Dealer warehouse", notes: "" });
 
   useEffect(() => {
     const term = cleanProfileSearch(profileSearch);
@@ -67,7 +67,7 @@ export function DealerInventoryEntryClient({ companyId, profiles, stock }: { com
     setSaving(false);
     if (!response.ok) return toast.error(payload.error ?? "Could not add inventory");
     toast.success("Dealer inventory added");
-    setForm({ profile_id: "", finish: "mill_finish", length_m: "5.8", quantity_pieces: "", total_weight_kg: "", bundle_number: "", location: "Dealer warehouse", notes: "" });
+    setForm({ profile_id: "", finish: "mill_finish", piece_length_m: "5.8", quantity_pieces: "", total_weight_kg: "", bundle_number: "", location: "Dealer warehouse", notes: "" });
     router.refresh();
   }
 
@@ -79,7 +79,7 @@ export function DealerInventoryEntryClient({ companyId, profiles, stock }: { com
           <div className="grid gap-4 md:grid-cols-3">
             <label className="block space-y-1.5"><span className="form-label">Profile *</span><SearchableSelect value={form.profile_id} options={profileOptions.map((profile) => ({ value: profile.id, label: `${profile.profile_code} - ${profile.profile_name}` }))} placeholder="Search profile code or name" onChange={(profileId) => setForm({ ...form, profile_id: profileId })} onSearchChange={setProfileSearch} searching={profileSearching} /></label>
             <label className="block space-y-1.5"><span className="form-label">Finish *</span><select className="form-input" value={form.finish} onChange={(event) => setForm({ ...form, finish: event.target.value })}><option value="mill_finish">Mill finish</option><option value="powder_coating">Powder coating</option><option value="anodizing">Anodizing</option><option value="wood_finish">Wood finish</option></select></label>
-            <label className="block space-y-1.5"><span className="form-label">Length m *</span><input className="form-input" type="number" min="0" step="0.001" value={form.length_m} onChange={(event) => setForm({ ...form, length_m: event.target.value })} /></label>
+            <label className="block space-y-1.5"><span className="form-label">Length per piece (m) *</span><input className="form-input" type="number" min="0" step="0.001" value={form.piece_length_m} onChange={(event) => setForm({ ...form, piece_length_m: event.target.value })} /></label>
             <label className="block space-y-1.5"><span className="form-label">Pieces *</span><input className="form-input" type="number" min="1" step="1" value={form.quantity_pieces} onChange={(event) => setForm({ ...form, quantity_pieces: event.target.value })} /></label>
             <label className="block space-y-1.5"><span className="form-label">Total kg *</span><input className="form-input" type="number" min="0" step="0.001" value={form.total_weight_kg} onChange={(event) => setForm({ ...form, total_weight_kg: event.target.value })} /></label>
             <label className="block space-y-1.5"><span className="form-label">Bundle number</span><input className="form-input" value={form.bundle_number} onChange={(event) => setForm({ ...form, bundle_number: event.target.value })} /></label>

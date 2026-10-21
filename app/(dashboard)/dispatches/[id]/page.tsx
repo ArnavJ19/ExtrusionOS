@@ -2,6 +2,8 @@ import { RecordDetailClient } from "@/components/modules/operations/record-detai
 import { DispatchDeliveryWorkflow } from "@/components/modules/dispatch-delivery-workflow";
 import { DispatchCreditNoteClient } from "@/components/modules/dispatch-credit-note-client";
 import { CustomerRefundForm } from "@/components/modules/financials/customer-refund-form";
+import { ErpControlPanel } from "@/components/modules/erp-control-panel";
+import { dispatchControls } from "@/lib/workflow/erp-control-panels";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,8 +29,21 @@ export default async function DispatchDetailPage({ params, searchParams }: {
     <DispatchDeliveryPanel dispatchId={id} canUpdate={canUpdate} />
     <DispatchPackingPanel dispatchId={id} />
     <DispatchReservationPanel dispatchId={id} page={reservationPage} />
+    <DispatchControlsPanel dispatchId={id} />
     <DispatchCreditNotePanel dispatchId={id} />
   </div>;
+}
+
+async function DispatchControlsPanel({ dispatchId }: { dispatchId: string }) {
+  const context = await getSessionContext();
+  const supabase = await createClient();
+  const [dispatchResult, invoiceResult] = await Promise.all([
+    supabase.from("dispatches").select("id, delivery_status").eq("company_id", context.companyId).eq("id", dispatchId).maybeSingle(),
+    supabase.from("invoices").select("id").eq("company_id", context.companyId).eq("dispatch_id", dispatchId).not("status", "in", "(cancelled,draft)").maybeSingle()
+  ]);
+  if (dispatchResult.error || !dispatchResult.data) return null;
+  const actions = await dispatchControls(supabase, context, dispatchResult.data, Boolean(invoiceResult.data));
+  return <ErpControlPanel title="Shipment corrections and returns" description="Audited amendments, return dispositions and partial credit notes." actions={actions} />;
 }
 
 async function DispatchCreditNotePanel({ dispatchId }: { dispatchId: string }) {

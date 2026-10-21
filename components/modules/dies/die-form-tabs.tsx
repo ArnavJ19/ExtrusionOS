@@ -16,9 +16,11 @@ type Props = {
   update: <K extends keyof DieFormValues>(key: K, value: DieFormValues[K]) => void;
   profiles: Option[];
   customers: Option[];
+  /** EXOS-AUD-020: usage is derived from completed jobs; only owner/admin may set the pre-system opening. */
+  canEditUsage?: boolean;
 };
 
-export function DieFormTabs({ form, update, profiles, customers }: Props) {
+export function DieFormTabs({ form, update, profiles, customers, canEditUsage = false }: Props) {
   const [tab, setTab] = useState<FormTab>("Basic");
 
   return (
@@ -142,9 +144,10 @@ export function DieFormTabs({ form, update, profiles, customers }: Props) {
           <CardHeader><h2 className="section-title">Performance & Storage</h2></CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <NumField label="Total production (kg)" value={form.total_production_kg} onChange={(v) => update("total_production_kg", v)} step="0.001" />
-              <NumField label="Total runs" value={form.total_runs} onChange={(v) => update("total_runs", v)} step="1" />
-              <DateField label="Last used" value={form.last_used_date} onChange={(v) => update("last_used_date", v)} />
+              <NumField label="Total production (kg)" value={form.total_production_kg} onChange={(v) => update("total_production_kg", v)} step="0.001" disabled={!canEditUsage} />
+              <NumField label="Total runs" value={form.total_runs} onChange={(v) => update("total_runs", v)} step="1" disabled={!canEditUsage} />
+              <DateField label="Last used" value={form.last_used_date} onChange={(v) => update("last_used_date", v)} disabled={!canEditUsage} />
+              <p className="text-xs font-semibold text-slate-500 md:col-span-2 xl:col-span-3">Production kg, runs and last-used date are calculated from completed production jobs. {canEditUsage ? "Edits here set the opening (pre-system) history." : "Only an owner or admin can set the opening (pre-system) history."}</p>
               <SelectField label="Performance grade" value={form.performance_grade} onChange={(v) => update("performance_grade", v)} options={[
                 { value: "excellent", label: "Excellent" }, { value: "good", label: "Good" }, { value: "average", label: "Average" }, { value: "problematic", label: "Problematic" }, { value: "blocked", label: "Blocked" }
               ]} />
@@ -178,12 +181,12 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
   return <label className="block space-y-1.5"><span className="form-label">{label}</span><input className="form-input" value={value} onChange={(e) => onChange(e.target.value)} /></label>;
 }
 
-function NumField({ label, value, onChange, step = "any", min = 0 }: { label: string; value: number | string; onChange: (v: any) => void; step?: string; min?: number }) {
-  return <label className="block space-y-1.5"><span className="form-label">{label}</span><input className="form-input" type="number" min={min} step={step} value={value} onChange={(e) => onChange(e.target.value)} /></label>;
+function NumField({ label, value, onChange, step = "any", min = 0, disabled = false }: { label: string; value: number | string; onChange: (v: any) => void; step?: string; min?: number; disabled?: boolean }) {
+  return <label className="block space-y-1.5"><span className="form-label">{label}</span><input className="form-input" type="number" min={min} step={step} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} /></label>;
 }
 
-function DateField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return <label className="block space-y-1.5"><span className="form-label">{label}</span><input className="form-input" type="date" value={value} onChange={(e) => onChange(e.target.value)} /></label>;
+function DateField({ label, value, onChange, disabled = false }: { label: string; value: string; onChange: (v: string) => void; disabled?: boolean }) {
+  return <label className="block space-y-1.5"><span className="form-label">{label}</span><input className="form-input" type="date" value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} /></label>;
 }
 
 function SelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {

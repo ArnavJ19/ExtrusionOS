@@ -8,7 +8,8 @@ import { getErrorMessage } from "@/lib/utils/errors";
 const schema = z.object({
   profile_id: z.string().uuid("Select a profile"),
   finish: z.string().trim().min(1, "Finish is required"),
-  length_m: z.coerce.number().positive("Length must be positive"),
+  // Per-piece length; the database stores the batch total metres (pieces x length).
+  piece_length_m: z.coerce.number().positive("Length per piece must be positive"),
   quantity_pieces: z.coerce.number().int().positive("Pieces must be positive"),
   total_weight_kg: z.coerce.number().positive("Weight must be positive"),
   bundle_number: z.string().trim().optional(),
@@ -29,13 +30,21 @@ export async function POST(request: Request) {
     const supabase = await createClient();
     const profile = await supabase
       .from("aluminium_profiles")
-      .select("id")
+      .select("id, section_weight_kg_per_m")
       .eq("company_id", context.companyId)
       .eq("id", parsed.data.profile_id)
       .eq("is_active", true)
       .maybeSingle();
     if (profile.error) return NextResponse.json({ error: getErrorMessage(profile.error, "Could not validate profile") }, { status: 500 });
     if (!profile.data) return NextResponse.json({ error: "Profile not found in this company or is inactive." }, { status: 400 });
+    const totalMeters = parsed.data.piece_length_m * parsed.data.quantity_pieces;
+    const sectionWeight = Number(profile.data.section_weight_kg_per_m ?? 0);
+    if (sectionWeight > 0) {
+      const expectedKg = totalMeters * sectionWeight;
+      if (Math.abs(parsed.data.total_weight_kg - expectedKg) > expectedKg * 0.1) {
+        return NextResponse.json({ error: `Weight ${parsed.data.total_weight_kg} kg does not match ${parsed.data.quantity_pieces} pcs x ${parsed.data.piece_length_m} m x ${sectionWeight} kg/m = ${expectedKg.toFixed(3)} kg (10% tolerance).` }, { status: 400 });
+      }
+    }
 
     const { data: batch, error } = await supabase
       .from("profile_stock_batches")
@@ -44,7 +53,8 @@ export async function POST(request: Request) {
         dealer_id: context.dealerId,
         profile_id: parsed.data.profile_id,
         finish: parsed.data.finish,
-        length_m: parsed.data.length_m,
+        piece_length_m: parsed.data.piece_length_m,
+        length_m: Number(totalMeters.toFixed(3)),
         quantity_pieces: parsed.data.quantity_pieces,
         total_weight_kg: parsed.data.total_weight_kg,
         bundle_number: parsed.data.bundle_number || null,

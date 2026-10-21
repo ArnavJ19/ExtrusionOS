@@ -22,7 +22,7 @@ function reset(family="dealer_stock",{packingRows=1501,dispatchRows=1,cap=1000}=
     production_jobs_authorized:family==="production"?[{id:f.sourceB,company_id:f.company,order_id:f.b,profile_id:f.profile,
       status:"completed",finishing_type:"mill_finish",actual_quantity_kg:2000,actual_meters:1000,actual_pieces:2000}]:[],
     quality_inspections:[{company_id:f.company,production_job_id:f.sourceB,finishing_job_id:null,status:"approved",quantity_checked_kg:2000}],
-    packaging_jobs:[{id:id(7000),company_id:f.company,order_id:f.b,production_job_id:f.sourceB,status:"completed"}],
+    packaging_jobs:[{id:id(7000),company_id:f.company,order_id:f.b,production_job_id:f.sourceB,status:"completed",profile_weight_kg:2000}],
     packaging_job_materials:[{company_id:f.company,job_id:id(7000),quantity_required:1}]});
 }
 const remaining=source=>({weightKg:source.availableWeightKg,lengthM:source.availableLengthM,pieces:source.availablePieces});

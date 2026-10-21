@@ -193,7 +193,9 @@ test("production actuals follow completion time and inactive inventory is exclud
 
   assert.equal(snapshot.kpis.productionPlannedKgMtd, 2500);
   assert.equal(snapshot.kpis.productionActualKgMtd, 1500);
-  assert.equal(snapshot.kpis.productionAttainmentPctMtd, 60);
+  // KPI dictionary (EXOS-AUD-028): attainment compares the same job set, the jobs planned this
+  // month (1,700 kg completed of 2,500 kg planned), not all kg completed this month.
+  assert.equal(snapshot.kpis.productionAttainmentPctMtd, 68);
   assert.equal(snapshot.kpis.inventoryAtRiskCount, 1);
   assert.equal(snapshot.kpis.inventoryOutOfStockCount, 1);
   assert.deepEqual(snapshot.lowStock.map((item) => item.itemCode), ["ACTIVE"]);

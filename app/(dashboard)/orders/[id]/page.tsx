@@ -11,6 +11,8 @@ import { Pencil } from "lucide-react";
 import { PcdaLineReportControls } from "@/components/modules/shared/pcda-line-report-controls";
 import { checkPcdaLineReadiness } from "@/lib/reports/pcda/readiness";
 import { getReportTemplate } from "@/lib/reports/pcda/templates";
+import { ErpControlPanel } from "@/components/modules/erp-control-panel";
+import { orderControls } from "@/lib/workflow/erp-control-panels";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -100,6 +102,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const canGeneratePcda = getReportTemplate("order_line")?.roles.includes(context.role) ?? false;
   const dealerLedgerWeight = dealerFulfillments.reduce((sum: number, row: any) => sum + Number(row.fulfilled_weight_kg ?? 0), 0);
   const dealerLedgerLength = dealerFulfillments.reduce((sum: number, row: any) => sum + Number(row.fulfilled_length_m ?? 0), 0);
+  const deliveryControls = await orderControls(supabase, context, order.id, order.current_stage ?? null);
 
   return (
     <div className="space-y-6">
@@ -113,6 +116,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           {can(context.role, "update", "orders") ? <Link href={`/orders/${order.id}/edit`} className="inline-flex items-center gap-2 rounded-xl bg-orange px-3 py-2 text-sm font-bold text-white shadow-lg shadow-orange/20 transition hover:bg-orange/90"><Pencil className="h-4 w-4" /> Edit</Link> : null}
         </div>
       </div>
+
+      <ErpControlPanel title="Delivery closure" actions={deliveryControls} />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">

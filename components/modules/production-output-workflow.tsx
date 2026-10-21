@@ -6,10 +6,11 @@ import { CheckCircle2, CirclePause, Play, Scale } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
-  completeProductionJobAction,
   correctCompletedProductionOutputAction,
   updateProductionJobStatusAction
 } from "@/lib/actions/production";
+import { completeProductionJobWithScrapAction } from "@/lib/actions/production-completion";
+import { PRODUCTION_SCRAP_CATEGORIES, type ProductionScrapCategory } from "@/lib/workflow/production-scrap";
 import { formatWeight } from "@/lib/utils/format";
 
 type ProductionFloorJob = {
@@ -46,7 +47,8 @@ export function ProductionOutputWorkflow({
   const [actualWeight, setActualWeight] = useState("");
   const [actualPieces, setActualPieces] = useState("");
   const [actualMeters, setActualMeters] = useState("");
-  const [scrapWeight, setScrapWeight] = useState("0");
+  const [scrapWeights, setScrapWeights] = useState<Record<ProductionScrapCategory, string>>(() =>
+    Object.fromEntries(PRODUCTION_SCRAP_CATEGORIES.map((category) => [category.value, ""])) as Record<ProductionScrapCategory, string>);
   const [remarks, setRemarks] = useState("");
   const [correctedWeight, setCorrectedWeight] = useState(String(job.actual_quantity_kg ?? ""));
   const [correctedPieces, setCorrectedPieces] = useState(String(job.actual_pieces ?? ""));
@@ -54,6 +56,8 @@ export function ProductionOutputWorkflow({
   const [correctionReason, setCorrectionReason] = useState("");
 
   const derivedMeters = Number(actualPieces || 0) * Number(job.length_per_piece_m || 0);
+  const totalScrap = PRODUCTION_SCRAP_CATEGORIES.reduce((sum, category) => sum + Number(scrapWeights[category.value] || 0), 0);
+  const accountedKg = Number(actualWeight || 0) + totalScrap;
   const isTerminal = ["completed", "cancelled"].includes(job.status);
 
   function moveStatus(status: "ready" | "in_progress" | "on_hold") {
@@ -79,12 +83,12 @@ export function ProductionOutputWorkflow({
       return;
     }
     startTransition(async () => {
-      const result = await completeProductionJobAction({
+      const result = await completeProductionJobWithScrapAction({
         job_id: job.id,
         actual_weight_kg: Number(actualWeight),
         actual_pieces: Number(actualPieces || 0),
         actual_meters: actualMeters ? Number(actualMeters) : null,
-        scrap_weight_kg: Number(scrapWeight || 0),
+        scrap_lines: PRODUCTION_SCRAP_CATEGORIES.map((category) => ({ category: category.value, weight_kg: Number(scrapWeights[category.value] || 0) })),
         remarks: remarks || null
       });
       if (!result.success) {
@@ -197,7 +201,7 @@ export function ProductionOutputWorkflow({
                   Good output plus process scrap must reconcile to {formatWeight(job.linked_billet_input_kg)} linked billet input within the production tolerance.
                 </p>
               ) : (
-                <p className="mt-2 text-sm font-semibold text-amber-700">No billets are linked. Jobs with a billet requirement cannot be completed until allocation is resolved.</p>
+                <p className="mt-2 text-sm font-semibold text-amber-700">No billets are issued to this job. Issue the linked billets, or have a manager record an input exception below, before completing.</p>
               )}
               <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 <label className="block space-y-1.5">
@@ -212,14 +216,23 @@ export function ProductionOutputWorkflow({
                   <span className="form-label">Actual metres</span>
                   <input className="form-input" type="number" min="0" step="0.01" value={actualMeters} onChange={(event) => setActualMeters(event.target.value)} placeholder={derivedMeters > 0 ? "Auto: " + derivedMeters.toFixed(2) : "Optional"} disabled={isPending} />
                 </label>
-                <label className="block space-y-1.5">
-                  <span className="form-label">Process scrap kg</span>
-                  <input className="form-input" type="number" min="0" step="0.001" value={scrapWeight} onChange={(event) => setScrapWeight(event.target.value)} disabled={isPending} />
-                </label>
                 <label className="block space-y-1.5 sm:col-span-2 xl:col-span-1">
                   <span className="form-label">Completion remarks</span>
                   <input className="form-input" value={remarks} onChange={(event) => setRemarks(event.target.value)} placeholder="Press or output exception" disabled={isPending} />
                 </label>
+              </div>
+              <div className="mt-4 rounded-2xl border border-slate-200 p-4">
+                <p className="text-sm font-black text-slate-950">Weighed scrap by category</p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">Butt end, front/back end, saw cut and press rejects go to the furnace scrap store with this job&apos;s alloy. Unrecoverable loss is reported only.</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                  {PRODUCTION_SCRAP_CATEGORIES.map((category) => (
+                    <label key={category.value} className="block space-y-1.5">
+                      <span className="form-label">{category.label}</span>
+                      <input className="form-input" type="number" min="0" step="0.001" value={scrapWeights[category.value]} onChange={(event) => setScrapWeights({ ...scrapWeights, [category.value]: event.target.value })} disabled={isPending} />
+                    </label>
+                  ))}
+                </div>
+                <p className="mt-3 text-xs font-bold text-slate-600">Output {formatWeight(Number(actualWeight || 0))} + scrap {formatWeight(totalScrap)} = {formatWeight(accountedKg)}{job.linked_billet_count > 0 ? ` against ${formatWeight(job.linked_billet_input_kg)} billet input` : ""}</p>
               </div>
               <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Button type="button" onClick={completeJob} disabled={!canUpdate || isPending || !actualWeight || (Number(job.pieces ?? 0) > 0 && !actualPieces)}>

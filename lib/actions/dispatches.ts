@@ -79,7 +79,7 @@ async function loadDispatchSourceLines(
       ? supabase.from("quality_inspections").select("production_job_id, finishing_job_id, quantity_checked_kg, status").eq("company_id", companyId).in("production_job_id", jobIds)
       : Promise.resolve({ data: [], error: null }),
     jobIds.length
-      ? supabase.from("packaging_jobs").select("id, production_job_id, status").eq("company_id", companyId).eq("order_id", orderId).in("production_job_id", jobIds)
+      ? supabase.from("packaging_jobs").select("id, production_job_id, status, profile_weight_kg").eq("company_id", companyId).eq("order_id", orderId).in("production_job_id", jobIds)
       : Promise.resolve({ data: [], error: null }),
     jobs.length || (fulfillmentResult.data ?? []).length
       ? loadDispatchPackingTotals(supabase, companyId, orderId, editingId)
@@ -164,17 +164,21 @@ async function loadDispatchSourceLines(
         blockers.push(`${job.job_number ?? "Production job"} has no QC-released quantity.`);
         return [];
       }
-      const packagingJob = packagingJobs.find(
-        (packaging: any) => packaging.production_job_id === job.id && packaging.status === "completed"
-      );
-      const hasMaterial = packagingJob && (materialsResult.data ?? []).some(
-        (material: any) => material.job_id === packagingJob.id && Number(material.quantity_required ?? 0) > 0
-      );
-      if (!hasMaterial) {
+      // Only completed packaging with issued material releases weight, capped by the kg it packed.
+      const packagedWeight = packagingJobs
+        .filter((packaging: any) => (
+          packaging.production_job_id === job.id
+          && packaging.status === "completed"
+          && (materialsResult.data ?? []).some(
+            (material: any) => material.job_id === packaging.id && Number(material.quantity_required ?? 0) > 0
+          )
+        ))
+        .reduce((sum: number, packaging: any) => sum + Number(packaging.profile_weight_kg ?? 0), 0);
+      if (packagedWeight <= 0) {
         blockers.push(`${job.job_number ?? "Production job"} is waiting for completed packaging with issued material.`);
         return [];
       }
-      releasedWeight = Math.min(actualWeight, approvedWeight);
+      releasedWeight = Math.min(actualWeight, approvedWeight, packagedWeight);
     }
 
     const availableWeight = Math.max(

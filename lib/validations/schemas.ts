@@ -507,6 +507,7 @@ export const externalAluminiumSourceSchema = z.object({
   received_date: optionalText,
   alloy: optionalText,
   quality_grade: optionalText,
+  weighbridge_reference: optionalText,
   status: z.enum(["available", "reserved", "used", "rejected", "returned"]).default("available"),
   notes: optionalText
 }).superRefine((value, ctx) => {
@@ -534,6 +535,9 @@ export const aluminiumScrapSchema = z.object({
   available_weight_kg: z.coerce.number().nonnegative("Available scrap cannot be negative").optional().nullable(),
   vendor_id: z.string().uuid("Select vendor").optional().nullable().or(z.literal("")),
   scrap_quality: z.enum(["clean", "painted", "mixed", "contaminated", "segregation_required", "rejected"]),
+  // EXOS-AUD-005: alloy keeps scrap segregated; set once, required to charge into a batch without a deviation.
+  alloy: optionalText,
+  weighbridge_reference: optionalText,
   received_date: optionalText,
   origin_reference: optionalText,
   status: z.enum(["available", "reserved", "used", "rejected"]).default("available"),

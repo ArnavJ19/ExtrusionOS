@@ -362,7 +362,10 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
   const quoteConvertedMtd = quoteEligibleMtd.filter((quote) => CONVERTED_QUOTE_STATUSES.has(String(quote.status ?? "")));
 
   const verifiedDispatches = input.dispatches.filter((dispatch) => dispatch.delivery_status && dispatch.delivery_status !== "pending" && dispatch.actual_dispatched_at && toNumber(dispatch.movement_weight_kg) > 0);
+  // KPI dictionary: shipped kg excludes returned and damaged shipments.
+  const shippedDispatches = verifiedDispatches.filter((dispatch) => !["returned", "damaged"].includes(String(dispatch.delivery_status)));
   const dispatchesMtd = verifiedDispatches.filter((dispatch) => inMtd(dispatch.actual_dispatched_at));
+  const shippedMtd = shippedDispatches.filter((dispatch) => inMtd(dispatch.actual_dispatched_at));
   const dispatchDecisionMtd = dispatchesMtd.filter((dispatch) => Boolean(dispatch.orders?.expected_dispatch_date));
   const onTimeDispatchesMtd = dispatchDecisionMtd.filter((dispatch) => {
     const actualDate = businessDate(dispatch.actual_dispatched_at);
@@ -374,6 +377,10 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
   const completedProductionMtd = input.productionJobs.filter((job) => String(job.status ?? "") === "completed" && inMtd(job.completed_at));
   const productionPlannedKgMtd = plannedProductionMtd.reduce((sum, job) => sum + toNumber(job.planned_quantity_kg), 0);
   const productionActualKgMtd = completedProductionMtd.reduce((sum, job) => sum + toNumber(job.actual_quantity_kg), 0);
+  // KPI dictionary: attainment compares the same job set (jobs planned this month).
+  const productionPlannedJobsActualKgMtd = plannedProductionMtd
+    .filter((job) => String(job.status ?? "") === "completed")
+    .reduce((sum, job) => sum + toNumber(job.actual_quantity_kg), 0);
 
   const invoiceMtd = input.invoices.filter((invoice) => (
     ISSUED_INVOICE_STATUSES.has(String(invoice.status ?? "")) && inMtd(invoice.invoice_date)
@@ -462,7 +469,7 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
     .slice(0, 8);
 
   const ordersByMonth = groupByMonth(input.orders.filter((row) => row.current_stage !== "cancelled"), (row) => row.order_date, (row) => toNumber(row.order_value), axisKeys, today);
-  const dispatchByMonth = groupByMonth(verifiedDispatches, (row) => row.actual_dispatched_at, (row) => toNumber(row.movement_weight_kg), axisKeys, today);
+  const dispatchByMonth = groupByMonth(shippedDispatches, (row) => row.actual_dispatched_at, (row) => toNumber(row.movement_weight_kg), axisKeys, today);
   const invoiceByMonth = groupByMonth(input.invoices.filter((row) => ISSUED_INVOICE_STATUSES.has(String(row.status))), (row) => row.invoice_date, (row) => toNumber(row.grand_total), axisKeys, today);
   const expenseByMonth = groupByMonth(liveExpenses.filter(isBookedExpense), (row) => row.invoice_date ?? row.created_at, (row) => toNumber(row.total_amount), axisKeys, today);
   const collectionByMonth = groupByMonth(input.payments, (row) => row.payment_date, (row) => toNumber(row.amount), axisKeys, today);
@@ -482,7 +489,7 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
   if (overdueInvoices.length > 0) risks.push(`${overdueInvoices.length} overdue invoices need receivable follow-up.`);
   if (atRiskInventory.length > 0) risks.push(`${atRiskInventory.length} inventory items are at or below reorder level.`);
   if (urgentOpenTasks.length > 0) risks.push(`${urgentOpenTasks.length} urgent/high-priority tasks are still open.`);
-  if (productionPlannedKgMtd > 0 && safePercent(productionActualKgMtd, productionPlannedKgMtd) < 85) {
+  if (productionPlannedKgMtd > 0 && safePercent(productionPlannedJobsActualKgMtd, productionPlannedKgMtd) < 85) {
     risks.push("Production attainment is below 85% of monthly plan.");
   }
 
@@ -493,11 +500,11 @@ export function buildAdvancedAnalyticsSnapshot(input: AnalyticsInput, now = new 
       quoteConversionRateMtd: safePercent(quoteConvertedMtd.length, quoteEligibleMtd.length),
       activeOrders: activeOrders.length,
       delayedOrders: delayedOrders.length,
-      dispatchWeightMtd: dispatchesMtd.reduce((sum, dispatch) => sum + toNumber(dispatch.movement_weight_kg), 0),
+      dispatchWeightMtd: shippedMtd.reduce((sum, dispatch) => sum + toNumber(dispatch.movement_weight_kg), 0),
       dispatchOnTimeRate: safePercent(onTimeDispatchesMtd.length, dispatchDecisionMtd.length),
       productionPlannedKgMtd,
       productionActualKgMtd,
-      productionAttainmentPctMtd: safePercent(productionActualKgMtd, productionPlannedKgMtd),
+      productionAttainmentPctMtd: safePercent(productionPlannedJobsActualKgMtd, productionPlannedKgMtd),
       receivableOutstanding,
       overdueInvoices: overdueInvoices.length,
       invoicedValueMtd,
