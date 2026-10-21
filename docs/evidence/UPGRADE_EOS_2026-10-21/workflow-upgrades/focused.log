@@ -1,0 +1,472 @@
+TAP version 13
+# Subtest: an older A result cannot overwrite the selected B manifest or choices
+ok 1 - an older A result cannot overwrite the selected B manifest or choices
+  ---
+  duration_ms: 1912.4567
+  type: 'test'
+  ...
+# Subtest: an obsolete finalizer cannot unlock an order whose own sources are pending
+ok 2 - an obsolete finalizer cannot unlock an order whose own sources are pending
+  ---
+  duration_ms: 858.6068
+  type: 'test'
+  ...
+# Subtest: an older failed result cannot erase the current order's valid manifest
+ok 3 - an older failed result cannot erase the current order's valid manifest
+  ---
+  duration_ms: 1098.0333
+  type: 'test'
+  ...
+# Subtest: a current source transport rejection is explicit and cannot leave stale choices or an unhandled error
+ok 4 - a current source transport rejection is explicit and cannot leave stale choices or an unhandled error
+  ---
+  duration_ms: 540.2697
+  type: 'test'
+  ...
+# Subtest: retrying a failed source check starts a fresh owned request and permits a valid manifest
+ok 5 - retrying a failed source check starts a fresh owned request and permits a valid manifest
+  ---
+  duration_ms: 806.943
+  type: 'test'
+  ...
+# Subtest: typing a new order search immediately invalidates the old selection, sources and manifest
+ok 6 - typing a new order search immediately invalidates the old selection, sources and manifest
+  ---
+  duration_ms: 781.6794
+  type: 'test'
+  ...
+# Subtest: clearing an order cannot be undone by its late source response
+ok 7 - clearing an order cannot be undone by its late source response
+  ---
+  duration_ms: 605.8724
+  type: 'test'
+  ...
+# Subtest: reselecting the same verified order preserves entered measurements and does not reload sources
+ok 8 - reselecting the same verified order preserves entered measurements and does not reload sources
+  ---
+  duration_ms: 857.343
+  type: 'test'
+  ...
+# Subtest: changing company remounts preparation and rejects source results from the previous company
+ok 9 - changing company remounts preparation and rejects source results from the previous company
+  ---
+  duration_ms: 596.931
+  type: 'test'
+  ...
+# Subtest: an older order-search result cannot replace the newer matching choices
+ok 10 - an older order-search result cannot replace the newer matching choices
+  ---
+  duration_ms: 769.4039
+  type: 'test'
+  ...
+# Subtest: a failed obsolete order search cannot clear the current pending state or report a current failure
+ok 11 - a failed obsolete order search cannot clear the current pending state or report a current failure
+  ---
+  duration_ms: 692.9411
+  type: 'test'
+  ...
+# Subtest: a current catalogue failure is unavailable rather than empty and can be retried
+ok 12 - a current catalogue failure is unavailable rather than empty and can be retried
+  ---
+  duration_ms: 867.6128
+  type: 'test'
+  ...
+# Subtest: unmounted source and catalogue requests cannot report unhandled errors or navigate
+ok 13 - unmounted source and catalogue requests cannot report unhandled errors or navigate
+  ---
+  duration_ms: 861.2202
+  type: 'test'
+  ...
+# Subtest: malformed dispatch sources missing-array remain unavailable before submission
+ok 14 - malformed dispatch sources missing-array remain unavailable before submission
+  ---
+  duration_ms: 506.5007
+  type: 'test'
+  ...
+# Subtest: malformed dispatch sources duplicate-id remain unavailable before submission
+ok 15 - malformed dispatch sources duplicate-id remain unavailable before submission
+  ---
+  duration_ms: 535.7532
+  type: 'test'
+  ...
+# Subtest: malformed dispatch sources nonfinite-weight remain unavailable before submission
+ok 16 - malformed dispatch sources nonfinite-weight remain unavailable before submission
+  ---
+  duration_ms: 529.9195
+  type: 'test'
+  ...
+# Subtest: malformed dispatch sources fractional-pieces remain unavailable before submission
+ok 17 - malformed dispatch sources fractional-pieces remain unavailable before submission
+  ---
+  duration_ms: 518.6277
+  type: 'test'
+  ...
+# Subtest: malformed dispatch sources unknown-source remain unavailable before submission
+ok 18 - malformed dispatch sources unknown-source remain unavailable before submission
+  ---
+  duration_ms: 482.1302
+  type: 'test'
+  ...
+# Subtest: malformed dispatch sources invalid-profile remain unavailable before submission
+ok 19 - malformed dispatch sources invalid-profile remain unavailable before submission
+  ---
+  duration_ms: 516.7604
+  type: 'test'
+  ...
+# Subtest: a valid current manifest submits once, freezes editing while pending and keeps data on a handled rejection
+ok 20 - a valid current manifest submits once, freezes editing while pending and keeps data on a handled rejection
+  ---
+  duration_ms: 815.3242
+  type: 'test'
+  ...
+# Subtest: uncertain dispatch confirmation blocks a second write and directs the operator to existing records
+ok 21 - uncertain dispatch confirmation blocks a second write and directs the operator to existing records
+  ---
+  duration_ms: 820.2505
+  type: 'test'
+  ...
+# Subtest: a successful dispatch confirmation locks the submitted form and navigates to its exact record
+ok 22 - a successful dispatch confirmation locks the submitted form and navigates to its exact record
+  ---
+  duration_ms: 845.3139
+  type: 'test'
+  ...
+# Subtest: returning A to B to A still rejects the first A request despite matching order identity
+ok 23 - returning A to B to A still rejects the first A request despite matching order identity
+  ---
+  duration_ms: 1611.1339
+  type: 'test'
+  ...
+# Subtest: a complete manifest remains blocked when any one source quantity is exceeded
+ok 24 - a complete manifest remains blocked when any one source quantity is exceeded
+  ---
+  duration_ms: 1396.5533
+  type: 'test'
+  ...
+# Subtest: duplicate tags and combined source use are checked across multiple bundle rows
+ok 25 - duplicate tags and combined source use are checked across multiple bundle rows
+  ---
+  duration_ms: 1659.7025
+  type: 'test'
+  ...
+# Subtest: a source check with no rows is a verified empty state and can be refreshed
+ok 26 - a source check with no rows is a verified empty state and can be refreshed
+  ---
+  duration_ms: 754.1668
+  type: 'test'
+  ...
+# Subtest: valid production sources remain selectable with exact manifest quantities
+ok 27 - valid production sources remain selectable with exact manifest quantities
+  ---
+  duration_ms: 678.7513
+  type: 'test'
+  ...
+# Subtest: valid dealer_stock sources remain selectable with exact manifest quantities
+ok 28 - valid dealer_stock sources remain selectable with exact manifest quantities
+  ---
+  duration_ms: 674.5134
+  type: 'test'
+  ...
+# Subtest: old company save completion cannot redirect or populate the new company's form
+ok 29 - old company save completion cannot redirect or populate the new company's form
+  ---
+  duration_ms: 891.1643
+  type: 'test'
+  ...
+# Subtest: invalid positive confirmation boolean/invalid-id remains uncertain without another write
+ok 30 - invalid positive confirmation boolean/invalid-id remains uncertain without another write
+  ---
+  duration_ms: 835.738
+  type: 'test'
+  ...
+# Subtest: invalid positive confirmation string/valid-id remains uncertain without another write
+ok 31 - invalid positive confirmation string/valid-id remains uncertain without another write
+  ---
+  duration_ms: 2261.5908
+  type: 'test'
+  ...
+# Subtest: preview rechecks sources, lists the exact load, and cancelling posts nothing
+ok 32 - preview rechecks sources, lists the exact load, and cancelling posts nothing
+  ---
+  duration_ms: 2582.5836
+  type: 'test'
+  ...
+# Subtest: material consumed after the first source check blocks the preview and preserves measurements
+ok 33 - material consumed after the first source check blocks the preview and preserves measurements
+  ---
+  duration_ms: 1090.5596
+  type: 'test'
+  ...
+# Subtest: cancel preserves unsaved quote lines, price and terms; dialog opens focused and Escape restores focus
+ok 34 - cancel preserves unsaved quote lines, price and terms; dialog opens focused and Escape restores focus
+  ---
+  duration_ms: 1857.1232
+  type: 'test'
+  ...
+# Subtest: create and select merge the returned customer into the live quote without saving the quote
+ok 35 - create and select merge the returned customer into the live quote without saving the quote
+  ---
+  duration_ms: 993.539
+  type: 'test'
+  ...
+# Subtest: a new customer without a company name is labelled once and preserves the draft
+ok 36 - a new customer without a company name is labelled once and preserves the draft
+  ---
+  duration_ms: 876.6234
+  type: 'test'
+  ...
+# Subtest: similar matches require acknowledgement and a fresh acknowledgement after recheck
+ok 37 - similar matches require acknowledgement and a fresh acknowledgement after recheck
+  ---
+  duration_ms: 874.533
+  type: 'test'
+  ...
+# Subtest: using an active match preserves the draft and leaves inactive matches unavailable
+ok 38 - using an active match preserves the draft and leaves inactive matches unavailable
+  ---
+  duration_ms: 904.8715
+  type: 'test'
+  ...
+# Subtest: same-event repeated create is guarded while request is pending
+ok 39 - same-event repeated create is guarded while request is pending
+  ---
+  duration_ms: 748.0535
+  type: 'test'
+  ...
+# Subtest: lost-response retry reuses the unchanged request id and customer details
+ok 40 - lost-response retry reuses the unchanged request id and customer details
+  ---
+  duration_ms: 942.9163
+  type: 'test'
+  ...
+# Subtest: scope changes and unmount ignore delayed create callbacks
+ok 41 - scope changes and unmount ignore delayed create callbacks
+  ---
+  duration_ms: 811.3346
+  type: 'test'
+  ...
+# Subtest: dialog keyboard shortcuts do not add, duplicate, or save quote lines
+ok 42 - dialog keyboard shortcuts do not add, duplicate, or save quote lines
+  ---
+  duration_ms: 691.2368
+  type: 'test'
+  ...
+# Subtest: mounted database controls preserve rapid edits, debounce, pagination, sorting, and Back restoration
+ok 43 - mounted database controls preserve rapid edits, debounce, pagination, sorting, and Back restoration
+  ---
+  duration_ms: 3587.5677
+  type: 'test'
+  ...
+# Subtest: mixed paste stays out of draft until corrected, then appends all lines without inherited charges or writes
+ok 44 - mixed paste stays out of draft until corrected, then appends all lines without inherited charges or writes
+  ---
+  duration_ms: 2024.4975
+  type: 'test'
+  ...
+# Subtest: a response for an older paste cannot authorise a new paste
+ok 45 - a response for an older paste cannot authorise a new paste
+  ---
+  duration_ms: 626.1539
+  type: 'test'
+  ...
+# Subtest: changing cut length recalculates theoretical quantity and manual kg/m has honest provenance
+ok 46 - changing cut length recalculates theoretical quantity and manual kg/m has honest provenance
+  ---
+  duration_ms: 688.6808
+  type: 'test'
+  ...
+# Subtest: instant find is bounded, scoped and excludes financial or private response fields
+ok 47 - instant find is bounded, scoped and excludes financial or private response fields
+  ---
+  duration_ms: 6.5738
+  type: 'test'
+  ...
+# Subtest: quick actions point to an exact permitted source, with repricing restricted
+ok 48 - quick actions point to an exact permitted source, with repricing restricted
+  ---
+  duration_ms: 8.8975
+  type: 'test'
+  ...
+# Subtest: instant find retains slash and hyphen separators used in business record numbers
+ok 49 - instant find retains slash and hyphen separators used in business record numbers
+  ---
+  duration_ms: 0.7004
+  type: 'test'
+  ...
+# Subtest: unavailable search resources are separate from verified empty matches
+ok 50 - unavailable search resources are separate from verified empty matches
+  ---
+  duration_ms: 1.3284
+  type: 'test'
+  ...
+# Subtest: malformed, short and unauthenticated reads perform no business query
+ok 51 - malformed, short and unauthenticated reads perform no business query
+  ---
+  duration_ms: 1.6537
+  type: 'test'
+  ...
+# Subtest: repeat permissions are checked before any priced data is read
+ok 52 - repeat permissions are checked before any priced data is read
+  ---
+  duration_ms: 0.3814
+  type: 'test'
+  ...
+# Subtest: repeat creates no record, strips identity and approvals, and refreshes profile and dates
+ok 53 - repeat creates no record, strips identity and approvals, and refreshes profile and dates
+  ---
+  duration_ms: 4.0718
+  type: 'test'
+  ...
+# Subtest: repeat rejects other-company sources, inactive customers and unavailable profiles
+ok 54 - repeat rejects other-company sources, inactive customers and unavailable profiles
+  ---
+  duration_ms: 1.0088
+  type: 'test'
+  ...
+# Subtest: repeat rejects oversized and invalid legacy lines rather than making partial drafts
+ok 55 - repeat rejects oversized and invalid legacy lines rather than making partial drafts
+  ---
+  duration_ms: 12.2503
+  type: 'test'
+  ...
+# Subtest: stage time uses the latest reopened interval and returns no history notes
+ok 56 - stage time uses the latest reopened interval and returns no history notes
+  ---
+  duration_ms: 0.8183
+  type: 'test'
+  ...
+# Subtest: duplicate stage events do not restart an interval; initial events and truncated history differ
+ok 57 - duplicate stage events do not restart an interval; initial events and truncated history differ
+  ---
+  duration_ms: 0.206
+  type: 'test'
+  ...
+# Subtest: stage reads are bounded and missing or failed evidence stays explicitly unavailable
+ok 58 - stage reads are bounded and missing or failed evidence stays explicitly unavailable
+  ---
+  duration_ms: 0.6449
+  type: 'test'
+  ...
+# Subtest: stage elapsed formatting separates missing, future, invalid and zero elapsed
+ok 59 - stage elapsed formatting separates missing, future, invalid and zero elapsed
+  ---
+  duration_ms: 0.3054
+  type: 'test'
+  ...
+# Subtest: ambiguous simultaneous stage changes and external callers do not receive a fabricated interval
+ok 60 - ambiguous simultaneous stage changes and external callers do not receive a fabricated interval
+  ---
+  duration_ms: 0.2598
+  type: 'test'
+  ...
+# Subtest: dispatch preview reconciles grouped sources and rejects stale or invalid quantities
+ok 61 - dispatch preview reconciles grouped sources and rejects stale or invalid quantities
+  ---
+  duration_ms: 1.357
+  type: 'test'
+  ...
+# Subtest: dispatch order balance uses ordered physical quantities and complete packing history
+ok 62 - dispatch order balance uses ordered physical quantities and complete packing history
+  ---
+  duration_ms: 1.5099
+  type: 'test'
+  ...
+# Subtest: dispatch order balance rejects unauthorized, foreign, closed and malformed sources
+ok 63 - dispatch order balance rejects unauthorized, foreign, closed and malformed sources
+  ---
+  duration_ms: 1.147
+  type: 'test'
+  ...
+# Subtest: order quantity reads paginate past one response and never hide an overdispatch
+ok 64 - order quantity reads paginate past one response and never hide an overdispatch
+  ---
+  duration_ms: 4.2913
+  type: 'test'
+  ...
+# Subtest: instant search updates without submit and offers an exact preselected source action
+ok 65 - instant search updates without submit and offers an exact preselected source action
+  ---
+  duration_ms: 1836.3872
+  type: 'test'
+  ...
+# Subtest: late instant results cannot replace a newer query; failed resources are not empty evidence
+ok 66 - late instant results cannot replace a newer query; failed resources are not empty evidence
+  ---
+  duration_ms: 992.591
+  type: 'test'
+  ...
+# Subtest: repeated quotation keeps structural lines and requires renewed commercial review after edits
+ok 67 - repeated quotation keeps structural lines and requires renewed commercial review after edits
+  ---
+  duration_ms: 759.9076
+  type: 'test'
+  ...
+# Subtest: a failed repeat never falls back to a partially copied editable draft
+ok 68 - a failed repeat never falls back to a partially copied editable draft
+  ---
+  duration_ms: 476.4762
+  type: 'test'
+  ...
+# Subtest: the actual quotation detail page links the exact repeat source only for permitted repricing roles
+ok 69 - the actual quotation detail page links the exact repeat source only for permitted repricing roles
+  ---
+  duration_ms: 542.1832
+  type: 'test'
+  ...
+# Subtest: contextual quotation guidance is available by keyboard and states units and save semantics
+ok 70 - contextual quotation guidance is available by keyboard and states units and save semantics
+  ---
+  duration_ms: 589.7757
+  type: 'test'
+  ...
+# Subtest: stage history is fetched on demand and missing entry is not shown as zero waiting
+ok 71 - stage history is fetched on demand and missing entry is not shown as zero waiting
+  ---
+  duration_ms: 587.0227
+  type: 'test'
+  ...
+# Subtest: linked dispatch opens on its verified order and the review lists bundles, totals and source balance
+ok 72 - linked dispatch opens on its verified order and the review lists bundles, totals and source balance
+  ---
+  duration_ms: 1666.7856
+  type: 'test'
+  ...
+# Subtest: dispatch review shows remaining order demand separately from selected source availability
+ok 73 - dispatch review shows remaining order demand separately from selected source availability
+  ---
+  duration_ms: 1956.8265
+  type: 'test'
+  ...
+# Subtest: a changed shipped balance at confirmation refreshes review and requires another confirmation
+ok 74 - a changed shipped balance at confirmation refreshes review and requires another confirmation
+  ---
+  duration_ms: 2100.834
+  type: 'test'
+  ...
+# Subtest: unavailable order demand cannot be presented as a verified zero balance
+ok 75 - unavailable order demand cannot be presented as a verified zero balance
+  ---
+  duration_ms: 782.8539
+  type: 'test'
+  ...
+# Subtest: a stale preview is rejected before confirmation when the new source check has less material
+ok 76 - a stale preview is rejected before confirmation when the new source check has less material
+  ---
+  duration_ms: 817.3391
+  type: 'test'
+  ...
+# Subtest: only explicit dispatch confirmation posts; server rejection retains the entered manifest
+ok 77 - only explicit dispatch confirmation posts; server rejection retains the entered manifest
+  ---
+  duration_ms: 906.7385
+  type: 'test'
+  ...
+1..77
+# tests 77
+# suites 0
+# pass 77
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 34228.8788

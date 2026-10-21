@@ -84,6 +84,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 3. Instant Find and Act search
 
+- [x] **Complete for local implementation and verification, 21 October 2026.** Immediate permission-aware results provide safe record identifiers and authorized contextual links. Searching an order opens dispatch preparation with that exact order selected; source readiness is checked in the form. Bounded queries, tenant scope, partial outages, slash-containing identifiers, and stale responses are tested. Visually inspected at desktop and phone widths. [Audit, screenshots, and final verification](docs/UPGRADE_EOS_WORKFLOW_UPGRADES_2026-10-21.md).
+
 - **What it does:** Extend global search with immediate results for customers, profiles, dies, orders, dispatches, and other permitted records. Offer context-specific actions such as Open Order or Prepare Dispatch. Display enough identifying information to distinguish similarly named results.
 - **Impact:** Removes the need to remember which module contains a record before acting on it.
 - **Complexity:** High - broad search needs efficient indexed queries, safe result projections, action authorisation, and responsive cancellation of stale requests.
@@ -133,6 +135,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A preparation draft can save incomplete details, but confirmation fails with specific guidance when required information is missing.
 
 ### 9. Repeat Previous and approved templates
+
+- [x] **Complete for the quotation acceptance example and local verification, 21 October 2026.** An authorized owner/admin can repeat prior quotation lines into a new unsaved draft, with fresh dates/current profile weights, cleared identities/approvals/die assignments, expiry warnings, and mandatory commercial review renewed after edits. The original quotation is untouched. The detail-page launch and repeat form were visually inspected on desktop and phone, and the detail page now contains table overflow locally. Transport arrangements, production templates, and approved effective-rate versioning remain future extensions. [Audit and evidence](docs/UPGRADE_EOS_WORKFLOW_UPGRADES_2026-10-21.md).
 
 - **What it does:** Start a draft from an earlier quotation, transport arrangement, or approved production setup. Identify copied fields, clear transaction-specific identifiers, and refresh values whose validity has expired. Require review of changed prices, dates, specifications, and availability.
 - **Impact:** Makes repeat business faster while keeping employees aware of differences from the earlier transaction.
@@ -225,6 +229,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 20. Clear action labels and contextual guidance
 
+- [x] **Complete for quotation/dispatch entry and local verification, 21 October 2026.** Keyboard-accessible guidance explains units, theoretical versus measured weight, recovery assumptions, selling margin, draft saving, stock posting, and uncertain confirmation. Dispatch now uses Review dispatch and Confirm dispatch and consume stock labels. Desktop columns and stacked phone guidance were visually inspected. Wider module coverage, selected translations, and employee training trials remain separate work. [Audit and evidence](docs/UPGRADE_EOS_WORKFLOW_UPGRADES_2026-10-21.md).
+
 - **What it does:** Use explicit labels such as Record Payment or Prepare Dispatch, visible field units, and short explanations beside unfamiliar terms. Provide targeted first-use guidance and appropriate local-language help where employees need it.
 - **Impact:** Reduces ambiguity, training effort, and mistakes caused by unclear controls.
 - **Complexity:** Medium - complete coverage requires a terminology review, accessible interactions, translations where selected, and consistency across modules.
@@ -280,6 +286,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A quantity or finish change is visible, and an earlier issued document remains reproducible from its original version.
 
 ### 26. Preview consequential actions
+
+- [x] **Complete for physical dispatch and local verification, 21 October 2026.** Review shows the customer/order, exact bundles, measured totals, remaining order pieces/metres, and selected-source balances before stock posting. Sources are refreshed for review and rechecked by the authoritative confirmation action; changed order/shipped quantities require another review. Cancelling preserves inputs. Desktop/phone inspection and stale-material/changed-balance/rejected-confirmation regressions passed. The preview is not a reservation; aggregate order balance does not prove each profile/finish is fulfilled. Other consequential actions remain future extensions. [Audit and evidence](docs/UPGRADE_EOS_WORKFLOW_UPGRADES_2026-10-21.md).
 
 - **What it does:** Before important confirmation, display the affected customer, records, quantities, resulting balances, and irreversible consequences. Link directly to editable draft inputs. Recalculate and revalidate on confirmation when underlying state has changed.
 - **Impact:** Gives employees a concise final opportunity to catch costly mistakes.
@@ -470,6 +478,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** Repeated updates to one record form an appropriate summary, and a resolved request stops generating pending-action reminders.
 
 ### 49. Time waiting in each stage
+
+- [x] **Complete for order current-stage timing and local verification, 21 October 2026.** The order database can show recorded stage entry, elapsed calendar time, and the dispatch due date separately. Reopening uses the latest interval while preserving history; duplicate events do not restart it, and ambiguous/missing/truncated history remains unavailable. On-demand bounded reads, role/tenant scope, timing edge cases, and desktop/phone presentation are verified. Active/waiting/held splits and working-hours calendars require additional recorded metadata. Final independent verification for this five-feature batch: 1,822 tests across 76 suites, 77 focused regressions, lint, typecheck, and production build passed. [Audit, screenshots, and boundaries](docs/UPGRADE_EOS_WORKFLOW_UPGRADES_2026-10-21.md).
 
 - **What it does:** Calculate stage-entry times and show how long work has waited, alongside its business due date. Separate active, waiting, and held periods where recorded. Define how reopening and missing historical timestamps affect the display.
 - **Impact:** Helps supervisors distinguish new work from persistent bottlenecks.
