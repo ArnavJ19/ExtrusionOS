@@ -35,7 +35,7 @@ const mocks = {
   "@/lib/supabase/browser": `
     const profile={id:"profile-a",profile_code:"AL-101",profile_name:"Window section",section_weight_kg_per_m:0.8,section_perimeter_mm:120,drawing_revision:"A",drawing_approval_status:"approved"};
     export function createClient(){return {from(table){const q={table,filters:[],single:false};const chain={
-      select(){return this;},eq(key,value){q.filters.push([key,value]);return this;},is(key,value){q.filters.push([key,value]);return this;},order(){return this;},limit(){return this;},or(){return this;},
+      select(){return this;},eq(key,value){q.filters.push([key,value]);return this;},is(key,value){q.filters.push([key,value]);return this;},order(){return this;},limit(){return this;},or(){return this;},ilike(){return this;},
       in(key,values){q.filters.push([key,values]);return this;},maybeSingle(){q.single=true;return this;},
       then(resolve,reject){window.databaseReads.push(q);let data=[];if(table==="aluminium_profiles")data=[profile];else if(table==="company_settings_authorized")data={default_conversion_charge_per_kg:30,default_packing_charge:20,default_transport_charge:10,default_margin_percent:10,minimum_margin_percent:8,default_gst_percent:18};return Promise.resolve({data,error:null}).then(resolve,reject);}
     };return chain;}};}
@@ -159,6 +159,20 @@ test("create and select merge the returned customer into the live quote without 
   assert.deepEqual(await page.evaluate(() => window.customerActions.map((request) => request.intent)), ["check", "create"]);
   assert.deepEqual(await page.evaluate(() => window.quoteWrites), []);
   assert.deepEqual(await snapshotDraft(), { lines: 1, quantity: "17", length: "4.25", price: "8123", terms: "Keep the existing commercial terms.", notes: "Draft operator note." });
+});
+
+test("a new customer without a company name is labelled once and preserves the draft", async () => {
+  await fillDraft();
+  const before = await snapshotDraft();
+  await page.evaluate((customer) => { window.customerAction = async () => ({ kind: "created", customer: { ...customer, company_name: null } }); }, createdCustomer);
+  const dialog = await openCustomerDialog();
+  await dialog.getByLabel("Customer name *", { exact: true }).fill(createdCustomer.customer_name);
+  await dialog.getByRole("button", { name: "Create customer and select" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText("Selected: Mira Shah", { exact: true })).toBeVisible();
+  await expect(page.getByPlaceholder("Search customer name, company, or GST...")).toHaveValue("Mira Shah");
+  assert.deepEqual(await snapshotDraft(), before);
+  assert.deepEqual(await page.evaluate(() => window.quoteWrites), []);
 });
 
 test("similar matches require acknowledgement and a fresh acknowledgement after recheck", async () => {

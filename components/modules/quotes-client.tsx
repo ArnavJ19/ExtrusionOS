@@ -88,7 +88,7 @@ const emptyItem: FormItem = {
 };
 
 function customerLabel(customer: Customer) {
-  return [customer.company_name || customer.customer_name, customer.customer_name, customer.gst_number].filter(Boolean).join(" · ");
+  return [customer.company_name, customer.customer_name, customer.gst_number].filter(Boolean).join(" · ");
 }
 
 function cleanCustomerSearch(value: string) {
