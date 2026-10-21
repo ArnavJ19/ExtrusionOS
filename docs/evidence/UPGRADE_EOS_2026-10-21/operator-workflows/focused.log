@@ -1,0 +1,490 @@
+TAP version 13
+# Subtest: billet estimate displays its source, supports units, and removes invalid results
+ok 1 - billet estimate displays its source, supports units, and removes invalid results
+  ---
+  duration_ms: 16769.9991
+  type: 'test'
+  ...
+# Subtest: equivalent supported units reproduce the batch planning mass
+ok 2 - equivalent supported units reproduce the batch planning mass
+  ---
+  duration_ms: 2.9909
+  type: 'test'
+  ...
+# Subtest: missing or invalid measurements cannot become a zero estimate
+ok 3 - missing or invalid measurements cannot become a zero estimate
+  ---
+  duration_ms: 0.7191
+  type: 'test'
+  ...
+# Subtest: precision overflow and subprecision mass are unavailable
+ok 4 - precision overflow and subprecision mass are unavailable
+  ---
+  duration_ms: 0.2922
+  type: 'test'
+  ...
+# Subtest: changed planning assumptions leave separately recorded actual facts untouched
+ok 5 - changed planning assumptions leave separately recorded actual facts untouched
+  ---
+  duration_ms: 0.382
+  type: 'test'
+  ...
+# Subtest: refreshing an old stock row updates page-fetch time without changing observation evidence
+ok 6 - refreshing an old stock row updates page-fetch time without changing observation evidence
+  ---
+  duration_ms: 3474.9892
+  type: 'test'
+  ...
+# Subtest: missing record timestamps remain unavailable after a successful page read
+ok 7 - missing record timestamps remain unavailable after a successful page read
+  ---
+  duration_ms: 233.9212
+  type: 'test'
+  ...
+# Subtest: refreshing an old stock row never turns its record timestamp into a new observation
+ok 8 - refreshing an old stock row never turns its record timestamp into a new observation
+  ---
+  duration_ms: 2.8463
+  type: 'test'
+  ...
+# Subtest: explicit observation timestamps and source metadata are reported independently
+ok 9 - explicit observation timestamps and source metadata are reported independently
+  ---
+  duration_ms: 1.0485
+  type: 'test'
+  ...
+# Subtest: missing, invalid, and future timestamps stay explicit and do not appear recent
+ok 10 - missing, invalid, and future timestamps stay explicit and do not appear recent
+  ---
+  duration_ms: 0.3344
+  type: 'test'
+  ...
+# Subtest: query freshness scope changes with tenant and page context
+ok 11 - query freshness scope changes with tenant and page context
+  ---
+  duration_ms: 0.2858
+  type: 'test'
+  ...
+# Subtest: actual quotation paste preserves an existing line and imports only after every profile is resolved
+ok 12 - actual quotation paste preserves an existing line and imports only after every profile is resolved
+  ---
+  duration_ms: 10070.6478
+  type: 'test'
+  ...
+# Subtest: actual profile selection distinguishes master quantity, a manual override and a missing weight
+ok 13 - actual profile selection distinguishes master quantity, a manual override and a missing weight
+  ---
+  duration_ms: 1501.5586
+  type: 'test'
+  ...
+# Subtest: actual database preview retains page two and filters, omits private fields, and restores trigger focus
+ok 14 - actual database preview retains page two and filters, omits private fields, and restores trigger focus
+  ---
+  duration_ms: 1543.479
+  type: 'test'
+  ...
+# Subtest: actual database refresh retains old observation evidence and never advances success time on error
+ok 15 - actual database refresh retains old observation evidence and never advances success time on error
+  ---
+  duration_ms: 2045.297
+  type: 'test'
+  ...
+# Subtest: actual foundry form keeps unit display separate from batch configuration and missing density
+ok 16 - actual foundry form keeps unit display separate from batch configuration and missing density
+  ---
+  duration_ms: 1077.6999
+  type: 'test'
+  ...
+# Subtest: phone database keeps long identifiers and expanded source evidence within the page
+ok 17 - phone database keeps long identifiers and expanded source evidence within the page
+  ---
+  duration_ms: 1109.2951
+  type: 'test'
+  ...
+# Subtest: mounted database controls preserve rapid edits, debounce, pagination, sorting, and Back restoration
+ok 18 - mounted database controls preserve rapid edits, debounce, pagination, sorting, and Back restoration
+  ---
+  duration_ms: 25011.6348
+  type: 'test'
+  ...
+# Subtest: an overdue invoice links its exact permitted record and resolves only from current balances
+ok 19 - an overdue invoice links its exact permitted record and resolves only from current balances
+  ---
+  duration_ms: 2.7473
+  type: 'test'
+  ...
+# Subtest: an unprivileged role cannot trigger an invoice query or obtain a financial destination
+ok 20 - an unprivileged role cannot trigger an invoice query or obtain a financial destination
+  ---
+  duration_ms: 0.2072
+  type: 'test'
+  ...
+# Subtest: unavailable or missing sources never turn a query failure into a resolved alert
+ok 21 - unavailable or missing sources never turn a query failure into a resolved alert
+  ---
+  duration_ms: 0.4356
+  type: 'test'
+  ...
+# Subtest: missing balances remain unresolved and a replenished stock alert uses its current source
+ok 22 - missing balances remain unresolved and a replenished stock alert uses its current source
+  ---
+  duration_ms: 0.3741
+  type: 'test'
+  ...
+# Subtest: malformed identities, arbitrary paths and object prototype names produce no destination or query
+ok 23 - malformed identities, arbitrary paths and object prototype names produce no destination or query
+  ---
+  duration_ms: 0.2887
+  type: 'test'
+  ...
+# Subtest: closed tasks resolve while original alert text and read receipts remain separate
+ok 24 - closed tasks resolve while original alert text and read receipts remain separate
+  ---
+  duration_ms: 0.2141
+  type: 'test'
+  ...
+# Subtest: the helper bounds its work to one ten-row notification page
+ok 25 - the helper bounds its work to one ten-row notification page
+  ---
+  duration_ms: 0.5204
+  type: 'test'
+  ...
+# Subtest: the real server action validates roles, session and strict input before querying
+ok 26 - the real server action validates roles, session and strict input before querying
+  ---
+  duration_ms: 3604.1046
+  type: 'test'
+  ...
+# Subtest: the real server action reaches SQL and returns minimal derived confirmation
+ok 27 - the real server action reaches SQL and returns minimal derived confirmation
+  ---
+  duration_ms: 105.5732
+  type: 'test'
+  ...
+# Subtest: a lost acknowledgement is uncertain and retrying the same request creates no duplicate
+ok 28 - a lost acknowledgement is uncertain and retrying the same request creates no duplicate
+  ---
+  duration_ms: 91.7618
+  type: 'test'
+  ...
+# Subtest: a missing migration is explicit, and cache failure cannot turn a confirmed write into uncertainty
+ok 29 - a missing migration is explicit, and cache failure cannot turn a confirmed write into uncertainty
+  ---
+  duration_ms: 45.7884
+  type: 'test'
+  ...
+# Subtest: the actual HTTP route rejects non-JSON and foreign-origin writes before invoking the action
+ok 30 - the actual HTTP route rejects non-JSON and foreign-origin writes before invoking the action
+  ---
+  duration_ms: 64.748
+  type: 'test'
+  ...
+# Subtest: unexpected trigger errors cannot return raw database details to the browser
+ok 31 - unexpected trigger errors cannot return raw database details to the browser
+  ---
+  duration_ms: 38.0359
+  type: 'test'
+  ...
+# Subtest: the actual customer code form saves one mapping through the real action and retains deactivated history
+ok 32 - the actual customer code form saves one mapping through the real action and retains deactivated history
+  ---
+  duration_ms: 17711.3661
+  type: 'test'
+  ...
+# Subtest: actual quotation alias selection requires clarification and populates current canonical profile weight without saving
+ok 33 - actual quotation alias selection requires clarification and populates current canonical profile weight without saving
+  ---
+  duration_ms: 1228.7854
+  type: 'test'
+  ...
+# Subtest: actual location move updates retrieval guidance and keeps the original location and stock quantity
+ok 34 - actual location move updates retrieval guidance and keeps the original location and stock quantity
+  ---
+  duration_ms: 999.2349
+  type: 'test'
+  ...
+# Subtest: actual exception reporting preserves an uncertain request and retries without a second observation
+ok 35 - actual exception reporting preserves an uncertain request and retries without a second observation
+  ---
+  duration_ms: 1032.0878
+  type: 'test'
+  ...
+# Subtest: the actual commitment form preserves the first deadline and reschedule reason before recording a completion outcome
+ok 36 - the actual commitment form preserves the first deadline and reschedule reason before recording a completion outcome
+  ---
+  duration_ms: 1628.6762
+  type: 'test'
+  ...
+# Subtest: notification source resolution updates in place while personal read receipts remain separate
+ok 37 - notification source resolution updates in place while personal read receipts remain separate
+  ---
+  duration_ms: 942.5831
+  type: 'test'
+  ...
+# Subtest: missing migration is explicit and a read-only role sees no write forms
+ok 38 - missing migration is explicit and a read-only role sees no write forms
+  ---
+  duration_ms: 1786.8427
+  type: 'test'
+  ...
+# Subtest: actual source styles keep long phone locations and exception notes within the document
+ok 39 - actual source styles keep long phone locations and exception notes within the document
+  ---
+  duration_ms: 3182.344
+  type: 'test'
+  ...
+# Subtest: the actual personal queue paginates, searches and opens the exact later promise
+ok 40 - the actual personal queue paginates, searches and opens the exact later promise
+  ---
+  duration_ms: 4837.4245
+  type: 'test'
+  ...
+# Subtest: a recovered creation confirmation clears the promise form and retains one authoritative promise
+ok 41 - a recovered creation confirmation clears the promise form and retains one authoritative promise
+  ---
+  duration_ms: 1070.8642
+  type: 'test'
+  ...
+# Subtest: an obsolete alias response cannot replace the result of a later customer-code search
+ok 42 - an obsolete alias response cannot replace the result of a later customer-code search
+  ---
+  duration_ms: 1858.2903
+  type: 'test'
+  ...
+# Subtest: failed source revalidation removes an earlier resolved claim without erasing the historical alert
+ok 43 - failed source revalidation removes an earlier resolved claim without erasing the historical alert
+  ---
+  duration_ms: 751.8951
+  type: 'test'
+  ...
+# Subtest: the full additive migration installs pinned RPC, RLS, bounded reads and denied direct writes
+ok 44 - the full additive migration installs pinned RPC, RLS, bounded reads and denied direct writes
+  ---
+  duration_ms: 2597.4602
+  type: 'test'
+  ...
+# Subtest: customer aliases resolve exact names in customer scope and preserve ambiguity for explicit choice
+ok 45 - customer aliases resolve exact names in customer scope and preserve ambiguity for explicit choice
+  ---
+  duration_ms: 67.0278
+  type: 'test'
+  ...
+# Subtest: alias retries create one mapping, reject changed identity, and deactivation preserves history
+ok 46 - alias retries create one mapping, reject changed identity, and deactivation preserves history
+  ---
+  duration_ms: 43.8552
+  type: 'test'
+  ...
+# Subtest: unapproved company references, inactive sources, tenant injection and ineligible roles fail closed
+ok 47 - unapproved company references, inactive sources, tenant injection and ineligible roles fail closed
+  ---
+  duration_ms: 125.659
+  type: 'test'
+  ...
+# Subtest: location moves retain old locations, source stock, request identity and subsequent picking guidance
+ok 48 - location moves retain old locations, source stock, request identity and subsequent picking guidance
+  ---
+  duration_ms: 154.4984
+  type: 'test'
+  ...
+# Subtest: ordinary location edits are also recorded and an unknown new location stays unknown
+ok 49 - ordinary location edits are also recorded and an unknown new location stays unknown
+  ---
+  duration_ms: 66.8221
+  type: 'test'
+  ...
+# Subtest: production exception capture derives context and reporter without inventing a measurement or changing job state
+ok 50 - production exception capture derives context and reporter without inventing a measurement or changing job state
+  ---
+  duration_ms: 170.4533
+  type: 'test'
+  ...
+# Subtest: commitment rescheduling preserves original deadline, accountable actor and event reason
+ok 51 - commitment rescheduling preserves original deadline, accountable actor and event reason
+  ---
+  duration_ms: 238.9557
+  type: 'test'
+  ...
+# Subtest: closing commitments requires an outcome, removes them from open work and preserves closure history
+ok 52 - closing commitments requires an outcome, removes them from open work and preserves closure history
+  ---
+  duration_ms: 149.882
+  type: 'test'
+  ...
+# Subtest: workflow tables enforce actual authenticated RLS and retain immutable history
+ok 53 - workflow tables enforce actual authenticated RLS and retain immutable history
+  ---
+  duration_ms: 238.8186
+  type: 'test'
+  ...
+# Subtest: every role in the server permission map agrees with SQL command eligibility
+ok 54 - every role in the server permission map agrees with SQL command eligibility
+  ---
+  duration_ms: 468.9367
+  type: 'test'
+  ...
+# Subtest: read commands work inside a read-only transaction without locking source rows
+ok 55 - read commands work inside a read-only transaction without locking source rows
+  ---
+  duration_ms: 156.9826
+  type: 'test'
+  ...
+# Subtest: dealer-linked identities remain excluded even if an internal role was incorrectly assigned
+ok 56 - dealer-linked identities remain excluded even if an internal role was incorrectly assigned
+  ---
+  duration_ms: 132.665
+  type: 'test'
+  ...
+# Subtest: alias and commitment pagination reaches later records with ten rows and complete counts
+ok 57 - alias and commitment pagination reaches later records with ten rows and complete counts
+  ---
+  duration_ms: 1165.5836
+  type: 'test'
+  ...
+# Subtest: response validation rejects missing counts, hidden payloads, duplicate rows and absent confirmations
+ok 58 - response validation rejects missing counts, hidden payloads, duplicate rows and absent confirmations
+  ---
+  duration_ms: 53.0841
+  type: 'test'
+  ...
+# Subtest: the commitment queue defaults to the current employee and keeps search and deep links in company scope
+ok 59 - the commitment queue defaults to the current employee and keeps search and deep links in company scope
+  ---
+  duration_ms: 96.4849
+  type: 'test'
+  ...
+# Subtest: inactivating a customer retains existing promises and permits a recorded closure without new promises
+ok 60 - inactivating a customer retains existing promises and permits a recorded closure without new promises
+  ---
+  duration_ms: 100.1425
+  type: 'test'
+  ...
+# Subtest: a permitted employee cannot inspect or move another company's actual die or stock location
+ok 61 - a permitted employee cannot inspect or move another company's actual die or stock location
+  ---
+  duration_ms: 72.0113
+  type: 'test'
+  ...
+# Subtest: mixed paste stays out of draft until corrected, then appends all lines without inherited charges or writes
+ok 62 - mixed paste stays out of draft until corrected, then appends all lines without inherited charges or writes
+  ---
+  duration_ms: 2765.5986
+  type: 'test'
+  ...
+# Subtest: a response for an older paste cannot authorise a new paste
+ok 63 - a response for an older paste cannot authorise a new paste
+  ---
+  duration_ms: 927.7288
+  type: 'test'
+  ...
+# Subtest: changing cut length recalculates theoretical quantity and manual kg/m has honest provenance
+ok 64 - changing cut length recalculates theoretical quantity and manual kg/m has honest provenance
+  ---
+  duration_ms: 1614.5801
+  type: 'test'
+  ...
+# Subtest: paste parser requires explicit length units and unambiguous column names
+ok 65 - paste parser requires explicit length units and unambiguous column names
+  ---
+  duration_ms: 2.5485
+  type: 'test'
+  ...
+# Subtest: parser rejects malformed quotes, embedded multiline values, and unknown or unitless columns
+ok 66 - parser rejects malformed quotes, embedded multiline values, and unknown or unitless columns
+  ---
+  duration_ms: 0.4869
+  type: 'test'
+  ...
+# Subtest: preview retains each row and identifies shape errors instead of dropping extra cells
+ok 67 - preview retains each row and identifies shape errors instead of dropping extra cells
+  ---
+  duration_ms: 1.1584
+  type: 'test'
+  ...
+# Subtest: row validation blocks unknown and ambiguous profile codes, bad pieces, units, and finish values
+ok 68 - row validation blocks unknown and ambiguous profile codes, bad pieces, units, and finish values
+  ---
+  duration_ms: 0.439
+  type: 'test'
+  ...
+# Subtest: valid paste rows convert mm to metres and preserve exact profile identity
+ok 69 - valid paste rows convert mm to metres and preserve exact profile identity
+  ---
+  duration_ms: 1.4546
+  type: 'test'
+  ...
+# Subtest: piece calculation names profile-master only when its current kg/m exactly matches
+ok 70 - piece calculation names profile-master only when its current kg/m exactly matches
+  ---
+  duration_ms: 0.6124
+  type: 'test'
+  ...
+# Subtest: pasted lines keep company defaults but never copy prior row overrides or charges
+ok 71 - pasted lines keep company defaults but never copy prior row overrides or charges
+  ---
+  duration_ms: 0.5596
+  type: 'test'
+  ...
+# Subtest: finish preview preserves source values until corrected and recognized finish aliases
+ok 72 - finish preview preserves source values until corrected and recognized finish aliases
+  ---
+  duration_ms: 0.4004
+  type: 'test'
+  ...
+# Subtest: quote editor checks profiles in tenant scope, previews before import, and appends atomically
+ok 73 - quote editor checks profiles in tenant scope, previews before import, and appends atomically
+  ---
+  duration_ms: 1.0643
+  type: 'test'
+  ...
+# Subtest: mounted record preview traps focus, restores the row trigger, preserves return state, and hides stale/private data
+ok 74 - mounted record preview traps focus, restores the row trigger, preserves return state, and hides stale/private data
+  ---
+  duration_ms: 2805.5339
+  type: 'test'
+  ...
+# Subtest: record preview exposes only the module allowlist, including no financial or free-text payloads
+ok 75 - record preview exposes only the module allowlist, including no financial or free-text payloads
+  ---
+  duration_ms: 3.2589
+  type: 'test'
+  ...
+# Subtest: contact details appear only for module rows explicitly configured to expose them
+ok 76 - contact details appear only for module rows explicitly configured to expose them
+  ---
+  duration_ms: 0.3522
+  type: 'test'
+  ...
+# Subtest: representative previews use actual list/RPC identifiers, relation aliases, and quantities
+ok 77 - representative previews use actual list/RPC identifiers, relation aliases, and quantities
+  ---
+  duration_ms: 0.4692
+  type: 'test'
+  ...
+# Subtest: missing primary workload quantities are explicit
+ok 78 - missing primary workload quantities are explicit
+  ---
+  duration_ms: 0.2343
+  type: 'test'
+  ...
+# Subtest: detail links are restricted to the matching internal database path and retain list query state
+ok 79 - detail links are restricted to the matching internal database path and retain list query state
+  ---
+  duration_ms: 0.593
+  type: 'test'
+  ...
+# Subtest: row scope binds previews to authenticated company, user, and role
+ok 80 - row scope binds previews to authenticated company, user, and role
+  ---
+  duration_ms: 0.2521
+  type: 'test'
+  ...
+1..80
+# tests 80
+# suites 0
+# pass 80
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 105991.801

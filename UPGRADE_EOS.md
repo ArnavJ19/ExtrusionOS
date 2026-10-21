@@ -189,6 +189,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 15. Actionable alerts and blocker resolution
 
+- [ ] **Implemented and automatically tested locally; visual acceptance deferred, 21 October 2026.** Notifications now open an exact permitted source record, identify the reviewing team, and recheck recognized invoice, stock, task, order and quotation conditions. Resolved conditions are separate from personal read receipts; failed or restricted source reads never become resolved or empty-success claims. The inbox uses ten-row server pagination. Interactive inspection remains pending at the user's direction. [Audit, verification and remaining gates](docs/UPGRADE_EOS_OPERATOR_WORKFLOWS_2026-10-21.md).
+
 - **What it does:** Link each alert to the exact record or correctly filtered queue. Explain the blocker, affected work, responsible person, and available resolution. Remove or resolve the alert when its underlying condition is no longer true.
 - **Impact:** Turns attention signals into useful actions and reduces investigation time.
 - **Complexity:** Medium - alert conditions and destinations must remain consistent with business state and permissions.
@@ -250,6 +252,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** Two similar profiles remain distinguishable by image and dimensions, and missing artwork never displays a misleading substitute.
 
 ### 22. Customer codes and shop-floor aliases
+
+- [ ] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 21 October 2026.** A customer record maintains customer-specific profile aliases with retained deactivation history. Quotation entry resolves exact aliases within the selected customer, requires an explicit canonical choice, and reloads the active company profile before applying its current specification. Tests cover ambiguity, inactive/foreign sources and stale responses. [Audit and remaining gates](docs/UPGRADE_EOS_OPERATOR_WORKFLOWS_2026-10-21.md).
 
 - **What it does:** Map customer item codes, previous profile numbers, and familiar local names to the correct master profile. Scope aliases appropriately to a company or customer, show the canonical identity, and request clarification when an alias is ambiguous.
 - **Impact:** Reduces time spent translating customer descriptions or consulting separate mapping sheets.
@@ -339,6 +343,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 32. Physical stock and die location guidance
 
+- [ ] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 21 October 2026.** Inventory and die records show their recorded location and a permitted, reasoned location-move flow. A stale source location blocks the move, stock quantities are unchanged, and history retains the previous location, including ordinary master edits and unknown locations. Production entry retrieves current die location guidance. Physical factory reconciliation remains separate. [Audit and remaining gates](docs/UPGRADE_EOS_OPERATOR_WORKFLOWS_2026-10-21.md).
+
 - **What it does:** Store consistent physical locations such as Shed B / Rack 04 / Level 2 and show them during picking or die retrieval. Provide a simple location layout where useful and group collection instructions by location. Update references when material moves.
 - **Impact:** Reduces searching and unnecessary trips around the factory.
 - **Complexity:** Medium - location masters, movement discipline, and accurate links are more important than elaborate mapping.
@@ -346,6 +352,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A completed location transfer changes subsequent picking guidance while historical movements retain their original locations.
 
 ### 33. Structured exception capture
+
+- [ ] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 21 October 2026.** Production jobs offer controlled shortage, die-damage, surface-defect, breakdown and other reasons, with an optional note and a required explanation for other exceptions. Company, job, machine, recorded operator, authenticated reporter and timestamp are derived from current records. Reporting requires no invented quantity and does not change stock or job state. Photo evidence and automated hold routing are outside this delivery. [Audit and remaining gates](docs/UPGRADE_EOS_OPERATOR_WORKFLOWS_2026-10-21.md).
 
 - **What it does:** Offer standard reasons for events such as die damage, material shortage, surface defects, or breakdown. Attach current job, machine, operator, and event time automatically. Allow an explanatory note and photo where needed.
 - **Impact:** Makes incident recording faster and produces information that supervisors can compare and act on.
@@ -466,6 +474,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A mentioned authorised colleague opens the relevant thread while internal comments remain absent from customer-facing documents.
 
 ### 47. Customer commitment tracking
+
+- [ ] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 21 October 2026.** Employees record their own customer promises, find them in a paginated personal/company follow-up queue, and open the exact promise from later queue pages. Rescheduling preserves the original date and records a reason; closure requires an outcome and retains history. Stale changes and ambiguous retries are guarded. Existing promises survive customer inactivation; new promises require an active customer. [Audit and remaining gates](docs/UPGRADE_EOS_OPERATOR_WORKFLOWS_2026-10-21.md).
 
 - **What it does:** Record a promised action, responsible employee, date, and relevant customer or transaction. Surface commitments such as sending a sample or revised quote until completed or explicitly rescheduled. Preserve outcome and revised-date history.
 - **Impact:** Reduces missed follow-ups that are otherwise kept in personal notes.
