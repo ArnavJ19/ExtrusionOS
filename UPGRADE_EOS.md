@@ -74,6 +74,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 2. Task-based navigation
 
+- [x] **Complete for local implementation and verification, 21 October 2026.** Added four role-prioritized destinations and grouped More navigation on desktop and phone, preserving role/route/company-feature permissions and aliases. Keyboard focus, scrolling, Escape, and route closure are tested. Visually inspected the desktop menu and 375px production, dispatch, and accounts menus. Final isolated verification: 1,739 tests across 76 suites, plus passing lint, typecheck, and production build. [Delivery audit and evidence](docs/UPGRADE_EOS_USABILITY_BATCH_2026-10-21.md).
+
 - **What it does:** Order navigation around frequent employee tasks and clear groups such as Sales, Factory, Stock, and Accounts. Keep the most-used destinations visible and place occasional tools under More. Continue applying role and company feature permissions.
 - **Impact:** Makes the software easier to learn and reduces menu scanning during routine work.
 - **Complexity:** Low - mainly navigation configuration and responsive presentation, provided the route-permission boundary is already reliable.
@@ -89,6 +91,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** Searching an order number returns the correct permitted record and opens a preselected valid action.
 
 ### 4. Pinned shortcuts and preserved working context
+
+- [ ] **Implemented; final interactive visual acceptance pending, 21 October 2026.** Added company/user-scoped pins, recent records, named views, URL-based list state, return scroll, safe Storage fallbacks, and permission-aware shortcuts. Automated mounted tests cover rapid filters, Back restoration, hide/show, and company/user changes. The user explicitly deferred the final order-return and scope-switch visual checks after browser control became unavailable. [Audit and remaining acceptance](docs/UPGRADE_EOS_USABILITY_BATCH_2026-10-21.md).
 
 - **What it does:** Save personal shortcuts, recent records, and named filtered views. Preserve search text, filters, pagination, and scroll position when employees open a record and return. Scope preferences and recents to the current company and user.
 - **Impact:** Eliminates repeated setup of the same working view throughout the day.
@@ -228,6 +232,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 21. Visual profile selection
 
+- [x] **Complete for local implementation and verification, 21 October 2026.** The quotation editor shows approved cross-section artwork beside section dimensions, weight, and revision, with an accessible enlarged view. Visually distinguished two similar synthetic approved sections in the real editor and inspected explicit unavailable states for unapproved, missing, failed, and non-image artwork. Company-owned authenticated Storage paths, MIME checks, cancellation cleanup, and preview identity resets are audited and tested. Final isolated verification: 1,739 tests across 76 suites; lint, typecheck, and production build passed. Real-company artwork availability and hosted Storage policies remain separate checks. [Delivery audit and evidence](docs/UPGRADE_EOS_USABILITY_BATCH_2026-10-21.md).
+
 - **What it does:** Show the approved profile cross-section beside its code, dimensions, section weight, and drawing revision. Let employees enlarge the image while selecting a section. Clearly distinguish visually similar profiles and show when an approved image is unavailable.
 - **Impact:** Helps staff recognise sections and reduces selection errors caused by remembering codes alone.
 - **Complexity:** Medium - requires reliable image assets, storage access, usable selectors, and accurate links between drawings and profile revisions.
@@ -251,6 +257,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A mixed-validity paste shows row-specific errors and cannot silently import wrong units or unmatched profiles.
 
 ### 24. Efficient keyboard entry
+
+- [x] **Complete for local implementation and verification, 21 October 2026.** Added visible Ctrl+Alt+A/D/S commands for adding lines, duplicating the current draft line, and guarded draft saving. New lines receive focus; duplicates clear database identity; IME/repeated events and duplicate in-flight saves are handled. The real quotation UI was inspected while three lines were entered by keyboard and saved once through the existing server action to the synthetic local draft simulator. Selector Enter caused zero writes before explicit save. Final isolated verification: 1,739 tests across 76 suites; lint, typecheck, and production build passed. [Delivery audit and evidence](docs/UPGRADE_EOS_USABILITY_BATCH_2026-10-21.md).
 
 - **What it does:** Provide predictable Tab order, keyboard-operable selectors, and visible shortcuts for adding lines, duplicating draft rows, and saving drafts. Scope shortcuts to the active task and avoid accidental final submission from routine navigation.
 - **Impact:** Reduces mouse switching for employees entering many similar lines.
@@ -397,6 +405,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** Closing a preview returns focus to the same row and leaves filters and pagination unchanged.
 
 ### 42. Role-specific table columns
+
+- [ ] **Implemented; final interactive visual acceptance pending, 21 October 2026.** Added role-permitted defaults, persistent show/hide/reorder/resize controls, and sticky identifiers. Automated tests cover hiding then showing a column, preference scope, and restricted field omission through the candidate RPC projection migration. Final visual persistence, role-layout, and horizontal-scroll checks were deferred by the user. Migration `20261021290100_operation_page_null_projection.sql` is tested locally and remains unapplied to hosted Supabase. [Audit and remaining acceptance](docs/UPGRADE_EOS_USABILITY_BATCH_2026-10-21.md).
 
 - **What it does:** Supply useful column defaults for dispatch, accounts, production, and other roles. Let employees show, hide, reorder, or resize permitted columns and preserve those preferences. Keep identifiers visible during horizontal scrolling.
 - **Impact:** Reduces visual clutter while retaining the information each department needs.

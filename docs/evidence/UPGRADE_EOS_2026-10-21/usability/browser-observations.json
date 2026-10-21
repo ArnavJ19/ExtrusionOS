@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-21",
+  "environment": "Real Next.js application with synthetic loopback Supabase/session/Storage fixtures and an in-memory draft simulator",
+  "provenance": "Transcribed from the parent interactive browser DOM observations and local fixture evidence tool outputs in this chat; this is not a raw network capture",
+  "hostedVerification": false,
+  "navigation": {
+    "phoneViewportWidth": 375,
+    "documentWidth": 360,
+    "moreTriggerWithinViewport": true,
+    "rolePrimaryDestinations": {
+      "production": ["/dashboard", "/production", "/orders", "/tasks"],
+      "dispatch": ["/dashboard", "/dispatches", "/orders", "/tasks"],
+      "accounts": ["/dashboard", "/invoices", "/payments", "/expenses"]
+    },
+    "escapeReturnedFocusToMore": true,
+    "moreClosedAfterOpeningInvoices": true
+  },
+  "profiles": {
+    "similarApprovedSectionsInspected": [
+      { "code": "EOS-W40-A", "ccdMm": 40, "wallMm": 1.2, "weightKgPerM": 0.45, "revision": "A3", "enlargedArtworkInspected": true },
+      { "code": "EOS-W45-B", "ccdMm": 45, "wallMm": 1.6, "weightKgPerM": 0.62, "revision": "B2", "enlargedArtworkInspected": true }
+    ],
+    "unavailableCasesInspected": ["unapproved", "missing path", "failed download", "non-image MIME"],
+    "unavailableCasesRenderedSubstituteImages": false,
+    "dialogTabStayedOnCloseControl": true,
+    "dialogEscapeRestoredEnlargeFocus": true
+  },
+  "keyboard": {
+    "selectorEnterWritesBeforeSave": 0,
+    "duplicatePreservedProfileAndFivePieces": true,
+    "duplicateFocusedNewLine": true,
+    "addFocusedFreshLine": true,
+    "explicitShortcutSaveWrites": 1,
+    "savedQuoteId": "30000000-0000-0000-0000-000000002000",
+    "savedStatus": "draft",
+    "savedLineCount": 3,
+    "allSavedLinesQuantityPieces": 5,
+    "saveUsedRealApplicationServerAction": true,
+    "databaseMutationTarget": "Synthetic local in-memory simulator only"
+  },
+  "pendingInteractiveAcceptance": {
+    "feature4": "Final filtered order-detail return, saved-view persistence, and company/user switch inspection",
+    "feature42": "Final hide/show repair, reorder/resize persistence, role-layout, and sticky identifier inspection",
+    "reason": "Browser control became disabled; user explicitly selected Leave visual checks pending"
+  }
+}
