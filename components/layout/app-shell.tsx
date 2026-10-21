@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell, FolderSearch, Moon, Search, Settings } from "lucide-react";
+import { Bell, Moon, Search } from "lucide-react";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getFeatureFlagsForCompany, isFeatureEnabled } from "@/lib/enterprise/features";
 import { LogoutButton } from "./logout-button";
 import { ModuleNavigator } from "./module-navigator";
-import { NavLink, type NavIconName } from "./nav-link";
+import { TaskNavigation } from "./task-navigation";
+import type { NavIconName } from "./nav-link";
+import { WorkspaceShortcuts } from "./workspace-shortcuts";
 import { hasRouteAccess } from "@/lib/auth/route-permissions";
 import { getSearchResourceKeys } from "@/lib/auth/role-experience";
+import { buildTaskNavigation } from "@/lib/navigation/task-navigation";
 import type { EnterpriseModuleName, UserRole } from "@/types/app";
 
 const nav = [
@@ -62,13 +65,6 @@ const nav = [
   { href: "/settings", label: "Settings", icon: "Settings", roles: ["owner", "admin"] }
 ] satisfies { href: string; label: string; icon: NavIconName; roles: UserRole[]; module?: EnterpriseModuleName; aliases?: string[] }[];
 
-const primaryNavOrder = ["/dashboard", "/command-center", "/quotes", "/orders", "/tasks", "/dealer-orders", "/production", "/foundry", "/packaging", "/dispatches", "/inventory", "/dealer-inventory", "/discrepancies", "/dies", "/machines", "/customers", "/profiles", "/expenses", "/invoices", "/payments", "/vendors", "/reports", "/analytics", "/settings"];
-const adminNavOrder = ["/settings/access", "/audit-logs", "/settings/enterprise", "/settings/security", "/settings/branding", "/settings/data", "/settings/integrations"];
-
-function ordered(items: typeof nav, order: string[]) {
-  return items.filter((item) => order.includes(item.href)).sort((a, b) => order.indexOf(a.href) - order.indexOf(b.href));
-}
-
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const context = await getSessionContext();
   if (!context.companyId) redirect("/onboarding");
@@ -84,16 +80,16 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const searchPlaceholder = searchableResources.length
     ? `Search ${searchableResources.slice(0, 4).join(", ")}...`
     : "Search accessible records...";
-  const visibleNav = nav.filter((item) => (item.roles as UserRole[]).includes(context.role) && hasRouteAccess(item.href, context.role) && (!item.module || isFeatureEnabled(featureFlags, item.module)));
-  const primaryNav = ordered(visibleNav, primaryNavOrder);
-  const adminNav = ordered(visibleNav, adminNavOrder);
-  const groupedHrefs = new Set([...primaryNavOrder, ...adminNavOrder]);
-  const advancedNav = visibleNav.filter((item) => !groupedHrefs.has(item.href));
-  const moduleNavigation = [...primaryNav, ...advancedNav, ...adminNav].map(({ href, label, aliases }) => ({ href, label, aliases }));
-
-  function renderLinks(items: typeof nav) {
-    return items.map((item) => <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} />);
-  }
+  const navigation = buildTaskNavigation({
+    items: nav as (typeof nav[number])[],
+    role: context.role,
+    featureFlags,
+    hasRouteAccess,
+    isFeatureEnabled,
+    primaryLimit: 4
+  });
+  const visibleDestinations = [...navigation.primary, ...navigation.more.flatMap((group) => group.items)];
+  const moduleNavigation = visibleDestinations.map(({ href, label, aliases }) => ({ href, label, aliases }));
 
   return (
     <div className="min-h-screen bg-[#f7f7f8] text-neutral-950 lg:grid lg:grid-cols-[280px_1fr]">
@@ -109,31 +105,16 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-400">Workspace</p>
           <p className="mt-1 text-sm font-semibold text-neutral-700">Sales, dies, production and dispatch</p>
         </div>
-        <nav className="flex gap-1 overflow-x-auto lg:flex-1 lg:min-h-0 lg:flex-col lg:gap-5 lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain lg:pb-5">
-          <div>
-            <p className="hidden px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-400 lg:block">Menu</p>
-            <div className="flex gap-1.5 lg:block lg:space-y-1 lg:overflow-visible">
-              {renderLinks(primaryNav)}
-            </div>
-          </div>
-          {advancedNav.length ? (
-            <details className="hidden rounded-3xl border border-black/[0.04] bg-white/45 p-2 lg:block">
-              <summary className="cursor-pointer px-2 py-2 text-xs font-bold uppercase tracking-[0.16em] text-neutral-400 transition hover:text-neutral-950">Advanced Tools</summary>
-              <div className="mt-2 space-y-1.5">{renderLinks(advancedNav)}</div>
-            </details>
-          ) : null}
-          {adminNav.length ? (
-            <details className="hidden rounded-3xl border border-black/[0.04] bg-white/45 p-2 lg:block">
-              <summary className="cursor-pointer px-2 py-2 text-xs font-bold uppercase tracking-[0.16em] text-neutral-400 transition hover:text-neutral-950">Admin Setup</summary>
-              <div className="mt-2 space-y-1.5">{renderLinks(adminNav)}</div>
-            </details>
-          ) : null}
+        <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto lg:min-h-0 lg:flex-col lg:gap-5 lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain lg:pb-5">
+          <TaskNavigation
+            model={navigation}
+            desktopShortcuts={<WorkspaceShortcuts context={context} placement="full" allowedRoutes={visibleDestinations.flatMap(({ href, aliases }) => [href, ...(aliases ?? [])])} />}
+            mobileShortcuts={<WorkspaceShortcuts context={context} placement="compact" allowedRoutes={visibleDestinations.flatMap(({ href, aliases }) => [href, ...(aliases ?? [])])} />}
+          />
           <div className="mt-auto hidden space-y-1 lg:block">
-            {visibleNav.some((item) => item.href === "/settings") ? <Link href="/settings" className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-neutral-500 transition hover:bg-white hover:text-neutral-950 hover:shadow-sm"><Settings className="h-4 w-4" /> Settings</Link> : null}
-            {visibleNav.some((item) => item.href === "/documents") ? <Link href="/documents" className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold text-neutral-500 transition hover:bg-white hover:text-neutral-950 hover:shadow-sm"><FolderSearch className="h-4 w-4" /> Documents</Link> : null}
             <div className="flex w-full items-center justify-between rounded-2xl px-3 py-2.5 text-sm font-semibold text-neutral-400" aria-disabled="true"><span className="flex items-center gap-3"><Moon className="h-4 w-4" /> Dark mode</span><span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-neutral-400">Unavailable</span></div>
           </div>
-        </nav>
+        </div>
       </aside>
       <main className="min-w-0 pb-24 lg:pb-0">
         <header className="sticky top-0 z-20 flex flex-col gap-3 border-b border-neutral-200/70 bg-[#fafafa]/85 px-4 py-3 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between lg:px-8">

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Bookmark, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DataPageLayout, DataTable, DataTablePagination, DataTableToolbar, DateRangeFilter, StatusFilter, type DataTableColumn, type SortDirection } from "@/components/data";
@@ -13,6 +13,9 @@ import { getErrorMessage } from "@/lib/utils/errors";
 import { labelize, type SessionContext } from "@/types/app";
 import { displayValue } from "./value";
 import { getModuleConfig, type ModuleKey } from "./module-config";
+import { TableColumnPreferences } from "@/components/ui/table-column-preferences";
+import { getRoleColumnOrder, resolveColumnLayout, type ColumnLayout } from "@/lib/preferences/table-columns";
+import { getWorkspaceStorage, makeViewState, mergeWorkspacePreferenceChanges, readWorkspacePreferences, upsertNamedWorkspaceView, upsertWorkspaceLink, viewStateParams, workspaceListUrl, workspacePreferenceKey, writeWorkspacePreferences, type WorkspacePreferences, type WorkspaceViewState } from "@/lib/preferences/workspace-preferences";
 
 const pageSize = 10;
 const relationFilterFields = ["customer_id", "profile_id", "order_id", "quote_id", "production_job_id", "inventory_item_id", "expense_ledger_id", "source_record_id", "material_id", "job_id"];
@@ -21,25 +24,97 @@ function cleanSearch(value: string) {
   return value.replace(/[%*_,()]/g, " ").replace(/\s+/g, " ").trim();
 }
 
-export function ModuleDatabaseClient({ moduleKey, canCreate, initialStatus = "" }: { moduleKey: ModuleKey; context: SessionContext; canCreate: boolean; initialStatus?: string }) {
+function initialListState(urlSearch: string, initialStatus: string, defaultSort: { column: string; direction: "asc" | "desc" }) {
+  const params = new URLSearchParams(urlSearch);
+  const parsed = makeViewState(params);
+  return { ...parsed, status: params.get("status") ?? initialStatus, sort: params.get("sort") ?? defaultSort.column, direction: params.get("direction") === "desc" ? "desc" as const : params.get("direction") === "asc" ? "asc" as const : defaultSort.direction };
+}
+
+export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialStatus = "" }: { moduleKey: ModuleKey; context: SessionContext; canCreate: boolean; initialStatus?: string }) {
   const config = getModuleConfig(moduleKey);
   const supabase = useMemo(() => createClient(), []);
   const searchParams = useSearchParams();
+  const preferenceKey = workspacePreferenceKey(context);
+  const requestScope = JSON.stringify([context.companyId, context.userId, context.role]);
+  const firstState = useMemo(() => initialListState(searchParams.toString(), initialStatus, config.defaultSort), [initialStatus, config.defaultSort, searchParams]);
   const [rows, setRows] = useState<Record<string, any>[]>([]);
-  const [search, setSearch] = useState("");
+  const [loadedRowsScope, setLoadedRowsScope] = useState<string | null>(null);
+  const [search, setSearch] = useState(firstState.search);
   const debouncedSearch = useDebounce(search, 350);
-  const [status, setStatus] = useState(initialStatus);
-  const [secondary, setSecondary] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [page, setPage] = useState(1);
-  const [sortColumn, setSortColumn] = useState(config.defaultSort.column);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(config.defaultSort.direction);
+  const [status, setStatus] = useState(firstState.status);
+  const [secondary, setSecondary] = useState(firstState.secondary);
+  const [dateFrom, setDateFrom] = useState(firstState.dateFrom);
+  const [dateTo, setDateTo] = useState(firstState.dateTo);
+  const [page, setPage] = useState(firstState.page);
+  const [sortColumn, setSortColumn] = useState(firstState.sort);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(firstState.direction);
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [workspaceState, setWorkspace] = useState<WorkspacePreferences | null>(null);
+  const [loadedPreferenceKey, setLoadedPreferenceKey] = useState<string | null>(null);
+  const workspace = loadedPreferenceKey === preferenceKey ? workspaceState : null;
+  const [viewName, setViewName] = useState("");
   const requestVersion = useRef(0);
-  const relationFilters = useMemo(() => relationFilterFields.map((field) => ({ field, value: searchParams.get(field) ?? "" })).filter((item) => item.value), [searchParams]);
+  const historyRestoreSearch = useRef<string | null>(null);
+  const [relationFilters, setRelationFilters] = useState(() => Object.entries(firstState.relationFilters).map(([field, value]) => ({ field, value })));
+
+  useEffect(() => {
+    const refresh = () => {
+      setWorkspace(readWorkspacePreferences(getWorkspaceStorage(), preferenceKey));
+      setLoadedPreferenceKey(preferenceKey);
+    };
+    refresh();
+    window.addEventListener("extrusionos:workspace-preferences", refresh);
+    return () => window.removeEventListener("extrusionos:workspace-preferences", refresh);
+  }, [preferenceKey]);
+
+  const resolvedColumns = useMemo(() => resolveColumnLayout(moduleKey, context.role, config.columns, workspace?.columns[moduleKey]), [moduleKey, context.role, config.columns, workspace]);
+  const visibleColumns = resolvedColumns.columns;
+  const permittedColumns = resolvedColumns.permittedColumns;
+  const viewState: WorkspaceViewState = { search, status, secondary, dateFrom, dateTo, page, sort: sortColumn, direction: sortDirection, relationFilters: Object.fromEntries(relationFilters.map(({ field, value }) => [field, value])) };
+  const stateParams = viewStateParams(viewState);
+  const listHref = `${config.basePath}/database${stateParams.size ? `?${stateParams.toString()}` : ""}`;
+
+  useEffect(() => {
+    function restoreFromLocation() {
+      const next = makeViewState(new URLSearchParams(window.location.search));
+      historyRestoreSearch.current = next.search;
+      setSearch(next.search);
+      setStatus(new URLSearchParams(window.location.search).get("status") ?? initialStatus);
+      setSecondary(next.secondary);
+      setDateFrom(next.dateFrom);
+      setDateTo(next.dateTo);
+      setPage(next.page);
+      setSortColumn(config.columns.some((column) => column.id === next.sort && column.sortable) ? next.sort : config.defaultSort.column);
+      setSortDirection(next.direction);
+      setRelationFilters(Object.entries(next.relationFilters).map(([field, value]) => ({ field, value })));
+    }
+    window.addEventListener("popstate", restoreFromLocation);
+    return () => window.removeEventListener("popstate", restoreFromLocation);
+  }, [initialStatus, config.columns, config.defaultSort.column]);
+
+  useEffect(() => {
+    if (historyRestoreSearch.current !== null) {
+      if (debouncedSearch !== historyRestoreSearch.current) return;
+      historyRestoreSearch.current = null;
+    }
+    const next = workspaceListUrl(window.location.pathname, window.location.search, viewState, relationFilterFields);
+    if (`${window.location.pathname}${window.location.search}` !== next) {
+      window.history.replaceState(null, "", next);
+    }
+  }, [search, status, secondary, dateFrom, dateTo, page, sortColumn, sortDirection, relationFilters]);
+
+  useEffect(() => {
+    const restoreKey = `extrusionos:list-scroll:${preferenceKey}:${config.basePath}`;
+    try {
+      const saved = window.sessionStorage.getItem(restoreKey);
+      if (saved && !loading) {
+        window.sessionStorage.removeItem(restoreKey);
+        requestAnimationFrame(() => window.scrollTo({ top: Math.max(0, Number(saved) || 0), behavior: "instant" }));
+      }
+    } catch { /* Browser storage can be disabled. */ }
+  }, [loading, rows.length, preferenceKey, config.basePath]);
 
   async function loadRows() {
     const version = ++requestVersion.current;
@@ -59,12 +134,14 @@ export function ModuleDatabaseClient({ moduleKey, canCreate, initialStatus = "" 
     if (!data || !Array.isArray(data.rows) || data.rows.length > pageSize || !Number.isSafeInteger(data.count) || data.count < 0) throw new Error("The database returned an invalid page.");
     setRows(data.rows);
     setTotalCount(data.count);
+    setLoadedRowsScope(requestScope);
     } catch (err) {
       if (version !== requestVersion.current) return;
       const message = getErrorMessage(err, `Could not load ${config.databaseTitle.toLowerCase()}`);
       setRows([]);
       setTotalCount(null);
       setError(message);
+      setLoadedRowsScope(requestScope);
       toast.error(message);
     } finally {
       if (version === requestVersion.current) setLoading(false);
@@ -74,35 +151,77 @@ export function ModuleDatabaseClient({ moduleKey, canCreate, initialStatus = "" 
   useEffect(() => {
     void loadRows();
     return () => { requestVersion.current++; };
-  }, [moduleKey, page, debouncedSearch, status, secondary, dateFrom, dateTo, sortColumn, sortDirection, relationFilters]);
-  useEffect(() => setPage(1), [debouncedSearch, status, secondary, dateFrom, dateTo, relationFilters]);
-
+  }, [moduleKey, requestScope, page, debouncedSearch, status, secondary, dateFrom, dateTo, sortColumn, sortDirection, relationFilters]);
   const sortable = new Set(config.columns.filter((column) => column.sortable).map((column) => column.id));
-  const columns: DataTableColumn<Record<string, any>>[] = config.columns.map((column) => ({
+  const columns: DataTableColumn<Record<string, any>>[] = visibleColumns.map((column) => ({
     id: column.id,
     header: column.header,
     sortable: column.sortable,
-    accessor: (row) => displayValue(row, column.path, column.type)
+    accessor: (row) => displayValue(row, column.path, column.type),
+    width: resolvedColumns.widths[column.id],
+    sticky: column.id === resolvedColumns.identifier
   }));
 
+  function persistWorkspace(next: WorkspacePreferences) {
+    const storage = getWorkspaceStorage();
+    const current = workspace ?? readWorkspacePreferences(storage, preferenceKey);
+    const merged = mergeWorkspacePreferenceChanges(current, next, readWorkspacePreferences(storage, preferenceKey));
+    setWorkspace(merged);
+    writeWorkspacePreferences(storage, preferenceKey, merged);
+  }
+
+  function openRecord(row: Record<string, any>) {
+    const label = String(displayValue(row, config.card.titlePath, "text") || row.id).slice(0, 100);
+    const returnTo = listHref;
+    const href = `${config.basePath}/${encodeURIComponent(String(row.id))}?returnTo=${encodeURIComponent(returnTo)}`;
+    try { window.sessionStorage.setItem(`extrusionos:list-scroll:${preferenceKey}:${config.basePath}`, String(window.scrollY)); } catch { /* Browser storage can be disabled. */ }
+    if (workspace) persistWorkspace({ ...workspace, recent: upsertWorkspaceLink(workspace.recent, { href: `${config.basePath}/${encodeURIComponent(String(row.id))}`, label, moduleKey, recordId: String(row.id), updatedAt: Date.now() }, 20) });
+    window.location.assign(href);
+  }
+
+  function pinCurrentView() {
+    if (!workspace) return;
+    const link = { href: listHref, label: config.databaseTitle, moduleKey, updatedAt: Date.now() };
+    const pinned = workspace.pinned.some((item) => item.href === link.href) ? workspace.pinned.filter((item) => item.href !== link.href) : upsertWorkspaceLink(workspace.pinned, link, 24);
+    persistWorkspace({ ...workspace, pinned });
+  }
+
+  function saveNamedView() {
+    if (!workspace || !viewName.trim()) return;
+    const view = { href: listHref, label: viewName.trim().slice(0, 100), moduleKey, updatedAt: Date.now(), state: viewState };
+    persistWorkspace({ ...workspace, views: upsertNamedWorkspaceView(workspace.views, view) });
+    setViewName("");
+    toast.success("Saved view added to Workspace shortcuts.");
+  }
+
+  function saveColumns(layout: ColumnLayout) {
+    if (!workspace) return;
+    persistWorkspace({ ...workspace, columns: { ...workspace.columns, [moduleKey]: layout } });
+  }
+
   return (
-    <DataPageLayout title={config.databaseTitle} description={`Search, filter, sort, and paginate ${config.title.toLowerCase()} records. The overview remains focused on what needs attention now.`} backHref={config.basePath} backLabel={`Back to ${config.title}`} actions={canCreate && (config.fields || config.createHref) ? <Link href={config.createHref ?? `${config.basePath}/new`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"><Plus className="h-4 w-4" /> {config.primaryAction}</Link> : null}>
+    <DataPageLayout title={config.databaseTitle} description={`Search, filter, sort, and paginate ${config.title.toLowerCase()} records. The overview remains focused on what needs attention now.`} backHref={config.basePath} backLabel={`Back to ${config.title}`} actions={<>
+      {workspace ? <Button type="button" variant="secondary" onClick={pinCurrentView}><Bookmark className="mr-2 h-4 w-4" />{workspace.pinned.some((item) => item.href === listHref) ? "Unpin view" : "Pin view"}</Button> : null}
+      {workspace ? <div className="flex items-center gap-1"><input aria-label="Saved view name" value={viewName} onChange={(event) => setViewName(event.target.value)} placeholder="Name this view" maxLength={100} className="w-36 rounded-xl border border-neutral-200 px-3 py-2 text-sm" /><Button type="button" variant="secondary" onClick={saveNamedView} disabled={!viewName.trim()}>Save view</Button></div> : null}
+      {canCreate && (config.fields || config.createHref) ? <Link href={config.createHref ?? `${config.basePath}/new`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"><Plus className="h-4 w-4" /> {config.primaryAction}</Link> : null}
+    </>}>
+      <div className="flex justify-end px-4 pt-4"><TableColumnPreferences columns={permittedColumns} identifier={resolvedColumns.identifier} layout={workspace?.columns[moduleKey] ?? { order: getRoleColumnOrder(moduleKey, context.role, permittedColumns), hidden: [], widths: {} }} onChange={saveColumns} /></div>
       <DataTableToolbar
         search={search}
         searchPlaceholder={config.searchPlaceholder}
-        onSearchChange={setSearch}
+        onSearchChange={(value) => { setSearch(value); setPage(1); }}
         filters={(
           <>
-            {config.groupField && config.groups ? <StatusFilter label={labelize(config.groupField)} value={status} onChange={setStatus} options={config.groups.map((value) => ({ value, label: labelize(value) }))} /> : null}
-            {config.secondaryFilter ? <StatusFilter label={config.secondaryFilter.label} value={secondary} onChange={setSecondary} options={config.secondaryFilter.options} /> : null}
-            {config.dateFilterField ? <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} /> : null}
-            {(status || secondary || dateFrom || dateTo || search || relationFilters.length) ? <Button type="button" variant="ghost" onClick={() => { setStatus(""); setSecondary(""); setDateFrom(""); setDateTo(""); setSearch(""); window.history.replaceState(null, "", config.basePath + "/database"); }}>Clear</Button> : null}
+            {config.groupField && config.groups ? <StatusFilter label={labelize(config.groupField)} value={status} onChange={(value) => { setStatus(value); setPage(1); }} options={config.groups.map((value) => ({ value, label: labelize(value) }))} /> : null}
+            {config.secondaryFilter ? <StatusFilter label={config.secondaryFilter.label} value={secondary} onChange={(value) => { setSecondary(value); setPage(1); }} options={config.secondaryFilter.options} /> : null}
+            {config.dateFilterField ? <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={(value) => { setDateFrom(value); setPage(1); }} onToChange={(value) => { setDateTo(value); setPage(1); }} /> : null}
+            {(status || secondary || dateFrom || dateTo || search || relationFilters.length) ? <Button type="button" variant="ghost" onClick={() => { setStatus(""); setSecondary(""); setDateFrom(""); setDateTo(""); setSearch(""); setRelationFilters([]); setPage(1); }}>Clear</Button> : null}
           </>
         )}
       />
       {relationFilters.length ? <div className="mx-4 mb-3 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-neutral-700">Filtered by connected record. Clear filters to view the full database.</div> : null}
-      <DataTable rows={rows} columns={columns} getRowId={(row) => row.id} getRowHref={(row) => `${config.basePath}/${row.id}`} sortColumn={sortColumn} sortDirection={sortDirection} onSort={(column, direction) => { if (sortable.has(column)) { setSortColumn(column); setSortDirection(direction); } }} isLoading={loading} error={error} onRetry={() => void loadRows()} emptyTitle={`No ${config.title.toLowerCase()} found`} emptyDescription="No records match the current search or filter." emptyAction={canCreate && (config.fields || config.createHref) ? <Link href={config.createHref ?? `${config.basePath}/new`} className="inline-flex items-center justify-center rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white">{config.primaryAction}</Link> : null} />
-      <DataTablePagination page={page} pageSize={pageSize} totalCount={totalCount} isLoading={loading} onPrevious={() => setPage((current) => Math.max(1, current - 1))} onNext={() => setPage((current) => current + 1)} />
+      <DataTable rows={loadedRowsScope === requestScope ? rows : []} columns={columns} getRowId={(row) => row.id} onRowClick={openRecord} sortColumn={sortColumn} sortDirection={sortDirection} onSort={(column, direction) => { if (sortable.has(column)) { setSortColumn(column); setSortDirection(direction); } }} isLoading={loading || loadedRowsScope !== requestScope} error={error} onRetry={() => void loadRows()} emptyTitle={`No ${config.title.toLowerCase()} found`} emptyDescription="No records match the current search or filter." emptyAction={canCreate && (config.fields || config.createHref) ? <Link href={config.createHref ?? `${config.basePath}/new`} className="inline-flex items-center justify-center rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white">{config.primaryAction}</Link> : null} />
+      <DataTablePagination page={page} pageSize={pageSize} totalCount={loadedRowsScope === requestScope ? totalCount : null} isLoading={loading || loadedRowsScope !== requestScope} onPrevious={() => setPage((current) => Math.max(1, current - 1))} onNext={() => setPage((current) => current + 1)} />
     </DataPageLayout>
   );
 }

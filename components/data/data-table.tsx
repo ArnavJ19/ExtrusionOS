@@ -14,7 +14,13 @@ export type DataTableColumn<T> = {
   sortable?: boolean;
   className?: string;
   cellClassName?: string;
+  width?: number;
+  sticky?: boolean;
 };
+
+export function isRowActivationKey(key: string): boolean {
+  return key === "Enter" || key === " ";
+}
 
 type DataTableProps<T> = {
   rows: T[];
@@ -63,7 +69,7 @@ export function DataTable<T>({ rows, columns, getRowId, getRowHref, onRowClick, 
               tabIndex={clickable ? 0 : undefined}
               className={cn("rounded-[20px] border border-neutral-200 bg-white p-4 shadow-sm", clickable && "cursor-pointer transition hover:border-neutral-300 hover:bg-neutral-50")}
               onClick={clickable ? () => openRow(row) : undefined}
-              onKeyDown={clickable ? (event) => { if (event.key === "Enter" || event.key === " ") openRow(row); } : undefined}
+              onKeyDown={clickable ? (event) => { if (event.target === event.currentTarget && isRowActivationKey(event.key)) { event.preventDefault(); openRow(row); } } : undefined}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -89,7 +95,7 @@ export function DataTable<T>({ rows, columns, getRowId, getRowHref, onRowClick, 
           <thead>
             <tr>
               {columns.map((column) => (
-                <th key={column.id} className={column.className}>
+                <th key={column.id} className={cn(column.className, column.sticky && "sticky left-0 z-20 bg-white")} style={column.width ? { width: column.width, minWidth: column.width } : undefined}>
                   {column.sortable ? <SortableColumnHeader label={column.header} column={column.id} sortColumn={sortColumn} sortDirection={sortDirection} onSort={onSort} /> : column.header}
                 </th>
               ))}
@@ -99,8 +105,8 @@ export function DataTable<T>({ rows, columns, getRowId, getRowHref, onRowClick, 
             {rows.map((row) => {
               const clickable = Boolean(onRowClick || getRowHref);
               return (
-                 <tr key={getRowId(row)} className={cn(clickable && "cursor-pointer transition hover:bg-neutral-50")} onClick={clickable ? () => openRow(row) : undefined}>
-                  {columns.map((column) => <td key={column.id} className={column.cellClassName}>{column.accessor(row)}</td>)}
+                 <tr key={getRowId(row)} role={clickable ? "link" : undefined} tabIndex={clickable ? 0 : undefined} aria-label={clickable ? `Open record ${getRowId(row)}` : undefined} className={cn(clickable && "cursor-pointer transition hover:bg-neutral-50")} onClick={clickable ? () => openRow(row) : undefined} onKeyDown={clickable ? (event) => { if (event.target === event.currentTarget && isRowActivationKey(event.key)) { event.preventDefault(); openRow(row); } } : undefined}>
+                  {columns.map((column) => <td key={column.id} className={cn(column.cellClassName, column.sticky && "sticky left-0 z-10 bg-white")} style={column.width ? { width: column.width, minWidth: column.width } : undefined}>{column.accessor(row)}</td>)}
                 </tr>
               );
             })}

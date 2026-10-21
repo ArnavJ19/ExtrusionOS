@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingState } from "@/components/ui/loading";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { ProfileSelector } from "@/components/ui/profile-selector";
 import { PageHeader } from "@/components/layout/page-header";
 import { calculateQuoteItem, calculateQuoteSummary, getQuoteItemWarnings, type QuoteItemInput } from "@/lib/calculations/quote";
 import { quoteSchema } from "@/lib/validations/schemas";
@@ -18,6 +19,7 @@ import { formatCurrency, formatDate, formatMeters, formatWeight, todayIso } from
 import { getErrorMessage } from "@/lib/utils/errors";
 import { can } from "@/lib/auth/permissions";
 import { rowMatchesSearch } from "@/lib/utils/search";
+import { canSaveQuoteDraft, duplicateQuoteDraftLine, getQuoteFormShortcut, runWithInFlightGuard } from "@/lib/forms/keyboard-entry";
 import { saveQuoteAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
 import { dieAmortizationTypes, labelize, type DieAmortizationType, type FinishingChargeType, type FinishingType, type QuoteStatus, type SessionContext } from "@/types/app";
 
@@ -31,6 +33,10 @@ type Profile = {
   section_number?: string | null;
   section_code?: string | null;
   section_name?: string | null;
+  cross_section_image_url?: string | null;
+  circumscribing_circle_diameter_mm?: number | null;
+  nominal_wall_thickness_mm?: number | null;
+  number_of_voids?: number | null;
   drawing_document_id?: string | null;
   drawing_revision?: string | null;
   drawing_approval_status?: string | null;
@@ -130,6 +136,9 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ customer_id: "", quote_date: todayIso(), valid_until: "", status: "draft" as QuoteStatus, gst_percent: 18, terms_and_conditions: "", delivery_timeline: "", payment_terms: "", approval_notes: "", notes: "" });
   const [items, setItems] = useState<FormItem[]>([{ ...emptyItem }]);
+  const saveGuard = useRef({ current: false });
+  const lineContainerRef = useRef<HTMLDivElement>(null);
+  const [focusLineIndex, setFocusLineIndex] = useState<number | null>(null);
 
   const calculatedItems = items.map((item) => calculateQuoteItem({ ...item, perimeter_mm: profiles.find((profile) => profile.id === item.profile_id)?.section_perimeter_mm ?? item.perimeter_mm }));
   const summary = calculateQuoteSummary(calculatedItems, Number(form.gst_percent));
@@ -150,7 +159,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
     setLoading(true);
     const [customerResult, profileResult, dieResult, quoteResult, settingsResult] = await Promise.all([
       supabase.from("customers").select("id, customer_name, company_name, gst_number, billing_address, shipping_address").eq("company_id", context.companyId).order("customer_name").limit(40),
-      supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle").eq("company_id", context.companyId).eq("is_active", true).order("profile_code").limit(40),
+      supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, section_number, section_code, section_name, cross_section_image_url, circumscribing_circle_diameter_mm, nominal_wall_thickness_mm, number_of_voids, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle").eq("company_id", context.companyId).eq("is_active", true).order("profile_code").limit(40),
       supabase.from("dies").select("id, die_number, profile_id, die_status, rack_location").eq("company_id", context.companyId).order("die_number").limit(40),
       supabase.from("quotes_authorized").select("*").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(100),
       supabase.from("company_settings_authorized").select("*").eq("company_id", context.companyId).maybeSingle()
@@ -242,7 +251,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
     profileSearchTimer.current = setTimeout(async () => {
       const { data, error } = await supabase
         .from("aluminium_profiles")
-        .select("id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle")
+        .select("id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, section_number, section_code, section_name, cross_section_image_url, circumscribing_circle_diameter_mm, nominal_wall_thickness_mm, number_of_voids, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle")
         .eq("company_id", context.companyId)
         .eq("is_active", true)
         .or(`profile_code.ilike.*${term}*,profile_name.ilike.*${term}*,section_number.ilike.*${term}*,section_code.ilike.*${term}*`)
@@ -298,27 +307,82 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
   }
 
   async function saveQuote() {
-    const parsed = quoteSchema.safeParse({ ...form, items });
-    if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Please check quote details");
-    if (!customers.some((customer) => customer.id === parsed.data.customer_id)) return toast.error("Selected customer is not available for this company.");
-    const invalidItem = parsed.data.items.find((item) => !profiles.some((profile) => profile.id === item.profile_id) || (item.die_id && !dies.some((die) => die.id === item.die_id && die.profile_id === item.profile_id)));
-    if (invalidItem) return toast.error("One quote item has a stale profile or die selection. Refresh and select it again.");
-    const calculatedParsedItems = parsed.data.items.map((item) => calculateQuoteItem(item));
-    const parsedSummary = calculateQuoteSummary(calculatedParsedItems, parsed.data.gst_percent);
-    const restrictedApprovalStatus = ["approved_for_sending", "sent", "customer_approved", "converted_to_order"].includes(parsed.data.status);
-    if (parsedSummary.low_margin_approval_required && restrictedApprovalStatus && !canApproveLowMargin) {
-      return toast.error("This quote is below the company minimum margin and needs owner/admin approval.");
+    return runWithInFlightGuard(saveGuard.current, async () => {
+      try {
+        const parsed = quoteSchema.safeParse({ ...form, items });
+        if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Please check quote details");
+        if (!customers.some((customer) => customer.id === parsed.data.customer_id)) return toast.error("Selected customer is not available for this company.");
+        const invalidItem = parsed.data.items.find((item) => !profiles.some((profile) => profile.id === item.profile_id) || (item.die_id && !dies.some((die) => die.id === item.die_id && die.profile_id === item.profile_id)));
+        if (invalidItem) return toast.error("One quote item has a stale profile or die selection. Refresh and select it again.");
+        const calculatedParsedItems = parsed.data.items.map((item) => calculateQuoteItem(item));
+        const parsedSummary = calculateQuoteSummary(calculatedParsedItems, parsed.data.gst_percent);
+        const restrictedApprovalStatus = ["approved_for_sending", "sent", "customer_approved", "converted_to_order"].includes(parsed.data.status);
+        if (parsedSummary.low_margin_approval_required && restrictedApprovalStatus && !canApproveLowMargin) {
+          return toast.error("This quote is below the company minimum margin and needs owner/admin approval.");
+        }
+        setSaving(true);
+        const result = await saveQuoteAction({ ...parsed.data, editing_id: editingId });
+        if (!result.success) return toast.error(result.error);
+        toast.success("Quote saved");
+        setEditingId(null);
+        setItems([{ ...emptyItem }]);
+        setCustomerSearch("");
+        setForm((current) => ({ ...current, customer_id: "", status: "draft", approval_notes: "", notes: "" }));
+        await loadAll();
+      } finally {
+        setSaving(false);
+      }
+    });
+  }
+
+  function addLine() {
+    setItems((current) => {
+      setFocusLineIndex(current.length);
+      return [...current, { ...emptyItem }];
+    });
+  }
+
+  function duplicateLine() {
+    const active = document.activeElement;
+    const lineElement = active instanceof HTMLElement ? active.closest<HTMLElement>("[data-quote-line]") : null;
+    const index = lineElement ? Number(lineElement.dataset.quoteLine) : focusLineIndex ?? items.length - 1;
+    const source = items[index];
+    if (!source) return;
+    setItems((current) => {
+      const insertAt = index + 1;
+      const next = [...current];
+      next.splice(insertAt, 0, duplicateQuoteDraftLine(source) as FormItem);
+      setFocusLineIndex(insertAt);
+      return next;
+    });
+  }
+
+  useEffect(() => {
+    if (focusLineIndex == null) return;
+    lineContainerRef.current?.querySelector<HTMLElement>(`[data-quote-line="${focusLineIndex}"] input`)?.focus();
+    setFocusLineIndex(null);
+  }, [focusLineIndex, items.length]);
+
+  function handleQuoteEditorKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    const shortcut = getQuoteFormShortcut({
+      key: event.key,
+      ctrlKey: event.ctrlKey,
+      altKey: event.altKey,
+      shiftKey: event.shiftKey,
+      metaKey: event.metaKey,
+      isComposing: event.nativeEvent.isComposing,
+      repeat: event.repeat,
+      defaultPrevented: event.defaultPrevented,
+      targetIsContentEditable: event.target instanceof HTMLElement && event.target.isContentEditable,
+    });
+    if (!shortcut) return;
+    event.preventDefault();
+    if (shortcut === "add-line") addLine();
+    if (shortcut === "duplicate-line") duplicateLine();
+    if (shortcut === "save-draft") {
+      if (!canSaveQuoteDraft(form.status, Boolean(editingId))) return toast.error("A draft cannot be saved from this quote workflow state.");
+      void saveQuote();
     }
-    setSaving(true);
-    const result = await saveQuoteAction({ ...parsed.data, editing_id: editingId });
-    setSaving(false);
-    if (!result.success) return toast.error(result.error);
-    toast.success("Quote saved");
-    setEditingId(null);
-    setItems([{ ...emptyItem }]);
-    setCustomerSearch("");
-    setForm((current) => ({ ...current, customer_id: "", status: "draft", approval_notes: "", notes: "" }));
-    await loadAll();
   }
 
   async function editQuote(quote: QuoteRow) {
@@ -331,7 +395,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
     const [customerResult, profileResult, dieResult] = await Promise.all([
       supabase.from("customers").select("id, customer_name, company_name, gst_number, billing_address, shipping_address").eq("company_id", context.companyId).eq("id", quote.customer_id).maybeSingle(),
       profileIds.length
-        ? supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle").eq("company_id", context.companyId).in("id", profileIds)
+        ? supabase.from("aluminium_profiles").select("id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, section_number, section_code, section_name, cross_section_image_url, circumscribing_circle_diameter_mm, nominal_wall_thickness_mm, number_of_voids, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle").eq("company_id", context.companyId).in("id", profileIds)
         : Promise.resolve({ data: [], error: null }),
       dieIds.length
         ? supabase.from("dies").select("id, die_number, profile_id, die_status, rack_location").eq("company_id", context.companyId).in("id", dieIds)
@@ -393,12 +457,13 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
   return (
     <div>
       <PageHeader title={mode === "form" ? "Create Quote" : "Quotations"} description={canManageQuoteCosting ? "Prepare priced aluminium extrusion quotations with controlled costing, GST, and PDF output." : "Review company quotations, continue approved workflow steps, and share customer-ready PDFs."} />
-      {loading ? <LoadingState title="Loading quotations" description="Fetching customers, profiles, dies, defaults, and saved quotes." /> : canManageQuoteCosting ? <div className="grid gap-6 2xl:grid-cols-[1fr_440px]">
+      {loading ? <LoadingState title="Loading quotations" description="Fetching customers, profiles, dies, defaults, and saved quotes." /> : canManageQuoteCosting ? <div className="grid gap-6 2xl:grid-cols-[1fr_440px]" onKeyDown={handleQuoteEditorKeyDown}>
         <Card><CardContent>
           <div className="mb-5 flex flex-col gap-2 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="section-title">Quote creation</h2>
               <p className="mt-1 text-sm font-medium text-slate-500">Build aluminium extrusion pricing with live weight, meter, margin, and GST totals.</p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">Keyboard: Ctrl+Alt+A add line · Ctrl+Alt+D duplicate current line · Ctrl+Alt+S {canSaveQuoteDraft(form.status, Boolean(editingId)) ? "save draft" : "draft save unavailable for this workflow state"}</p>
             </div>
             {editingId ? <Badge value="draft" className="w-fit" /> : null}
           </div>
@@ -411,16 +476,16 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
             <label className="block space-y-1.5"><span className="form-label">Delivery timeline</span><input className="form-input" placeholder="Example: 10-12 working days after approval" value={form.delivery_timeline} onChange={(event) => setForm({ ...form, delivery_timeline: event.target.value })} /></label>
             <label className="block space-y-1.5"><span className="form-label">Payment terms</span><input className="form-input" placeholder="Example: 50% advance, balance before dispatch" value={form.payment_terms} onChange={(event) => setForm({ ...form, payment_terms: event.target.value })} /></label>
           </div>
-          <div className="mt-6 space-y-5">
+          <div ref={lineContainerRef} className="mt-6 space-y-5">
             {items.map((item, index) => {
               const calculated = calculatedItems[index];
               const compatibleDies = dies.filter((die) => !item.profile_id || die.profile_id === item.profile_id);
               const selectedDie = dies.find((die) => die.id === item.die_id);
               const warnings = getQuoteItemWarnings(calculated, { dieStatus: selectedDie?.die_status, customerGstNumber: selectedCustomer?.gst_number, defaultConversionChargePerKg: settings?.default_conversion_charge_per_kg, quoteValidUntil: form.valid_until });
-              return <div key={index} className="rounded-3xl border border-slate-200 bg-gradient-to-br from-aluminium/70 to-white p-4 shadow-sm">
+              return <div key={index} data-quote-line={index} className="rounded-3xl border border-slate-200 bg-gradient-to-br from-aluminium/70 to-white p-4 shadow-sm">
                 <div className="mb-4 flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-orange">Extrusion item</p><h3 className="mt-1 font-black text-slate-950">Item {index + 1}</h3></div>{items.length > 1 ? <Button variant="ghost" type="button" onClick={() => setItems(items.filter((_, itemIndex) => itemIndex !== index))}>Remove</Button> : null}</div>
                 <div className="grid gap-3 md:grid-cols-4">
-                  <label className="block space-y-1.5 md:col-span-2"><span className="form-label">Profile *</span><SearchableSelect value={item.profile_id} placeholder="Search profile code or name" options={profiles.map((profile) => ({ value: profile.id, label: `${profile.profile_code} · ${profile.profile_name}` }))} onChange={(nextValue) => updateItem(index, "profile_id", nextValue)} onSearchChange={searchProfiles} searching={profileSearchLoading} /></label>
+                  <label className="block space-y-1.5 md:col-span-2"><span className="form-label">Profile *</span><ProfileSelector value={item.profile_id} profiles={profiles} companyId={context.companyId} onChange={(nextValue) => updateItem(index, "profile_id", nextValue)} onSearchChange={searchProfiles} searching={profileSearchLoading} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Die</span><SearchableSelect value={item.die_id} placeholder={item.profile_id ? "Search compatible die" : "Select a profile first"} options={compatibleDies.map((die) => ({ value: die.id, label: `${die.die_number} · ${labelize(die.die_status)}` }))} onChange={(nextValue) => updateItem(index, "die_id", nextValue)} onSearchChange={(query) => searchDies(query, item.profile_id)} searching={dieSearchLoading} disabled={!item.profile_id} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Qty pcs</span><input className="form-input" type="number" inputMode="numeric" min="1" value={item.quantity_pieces} onChange={(event) => updateItem(index, "quantity_pieces", Number(event.target.value))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Length m</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.001" value={item.length_per_piece_m} onChange={(event) => updateItem(index, "length_per_piece_m", Number(event.target.value))} /></label>
@@ -450,7 +515,7 @@ export function QuotesClient({ context, mode = "full", initialEditId }: { contex
               </div>;
             })}
           </div>
-          <Button type="button" variant="secondary" className="mt-4" onClick={() => setItems([...items, { ...emptyItem }])}>Add item</Button>
+          <Button type="button" variant="secondary" className="mt-4" onClick={addLine}>Add item</Button>
           <div className="mt-5 grid gap-4 sm:grid-cols-3"><label className="block space-y-1.5"><span className="form-label">GST %</span><input className="form-input" type="number" value={form.gst_percent} onChange={(event) => setForm({ ...form, gst_percent: Number(event.target.value) })} /></label><div className="space-y-1.5 sm:col-span-2"><span className="form-label">Workflow status</span><div className="flex min-h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4"><Badge value={editingId ? form.status : "draft"} /><span className="text-xs font-semibold text-slate-600">Use the workflow actions after saving. Changing an approved or sent quote creates a new draft revision.</span></div></div></div>
           {summary.low_margin_approval_required ? <div className="mt-4 rounded-3xl border border-orange-200 bg-orange-50 p-4 text-sm font-semibold text-orange-900">This quotation is below the configured minimum margin. Sales users can save it as draft/internal review, but owner/admin approval is required before sending.</div> : null}
           <label className="mt-4 block space-y-1.5"><span className="form-label">Terms and conditions</span><textarea className="form-input min-h-24" value={form.terms_and_conditions} onChange={(event) => setForm({ ...form, terms_and_conditions: event.target.value })} /></label>

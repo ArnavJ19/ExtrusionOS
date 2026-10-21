@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { readFile } from "node:fs/promises";
+import { buildTaskNavigation } from "../lib/navigation/task-navigation.ts";
+import { hasRouteAccess } from "../lib/auth/route-permissions.ts";
+import { isFeatureEnabled } from "../lib/enterprise/features.ts";
 import {
   getCurrentModule,
   getIntraModuleNeighbors,
@@ -70,8 +73,20 @@ describe("intra-module navigation", () => {
       readFile(new URL("../components/layout/module-navigator.tsx", import.meta.url), "utf8"),
     ]);
 
-    assert.match(shell, /hasRouteAccess\(item\.href, context\.role\)/);
-    assert.match(shell, /isFeatureEnabled\(featureFlags, item\.module\)/);
+    assert.match(shell, /buildTaskNavigation\(\{[\s\S]*?role: context\.role,[\s\S]*?featureFlags,[\s\S]*?hasRouteAccess,[\s\S]*?isFeatureEnabled,/);
+    assert.match(shell, /moduleNavigation = visibleDestinations\.map/);
+    const catalog = [
+      { href: "/orders", label: "Orders", icon: "FileText", roles: ["production", "accounts"] },
+      { href: "/production", label: "Production", icon: "Factory", roles: ["production", "accounts"], module: "production_planning" },
+      { href: "/invoices", label: "Invoices", icon: "FileText", roles: ["production", "accounts"] }
+    ];
+    const buildFor = (role, enabled) => {
+      const model = buildTaskNavigation({ items: catalog, role, featureFlags: { production_planning: enabled }, hasRouteAccess, isFeatureEnabled });
+      return [...model.primary, ...model.more.flatMap(group => group.items)].map(item => item.href);
+    };
+    assert.deepEqual(buildFor("production", false), ["/orders"]);
+    assert.deepEqual(buildFor("production", true), ["/production", "/orders"]);
+    assert.deepEqual(buildFor("accounts", true), ["/invoices", "/orders"]);
     assert.match(shell, /<ModuleNavigator items=\{moduleNavigation\}/);
     assert.match(navigator, /Previous in \$\{moduleLabel\}/);
     assert.match(navigator, /Next in \$\{moduleLabel\}/);

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +16,12 @@ import { canEditManualExpense } from "@/lib/financials/expenses";
 import type { SessionContext } from "@/types/app";
 import { displayValue, getPath, titleValue } from "./value";
 import { getModuleConfig, type ModuleKey } from "./module-config";
+import { getWorkspaceStorage, isSafeWorkspaceHref, readWorkspacePreferences, upsertWorkspaceLink, workspacePreferenceKey, writeWorkspacePreferences } from "@/lib/preferences/workspace-preferences";
 
 export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { moduleKey: ModuleKey; context: SessionContext; recordId: string; canEdit: boolean }) {
   const config = getModuleConfig(moduleKey);
+  const searchParams = useSearchParams();
+  const preferenceKey = workspacePreferenceKey(context);
   const supabase = useMemo(() => createClient(), []);
   const [row, setRow] = useState<Record<string, any> | null>(null);
   const [relatedCounts, setRelatedCounts] = useState<Record<string, number>>({});
@@ -50,6 +54,31 @@ export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { 
     }).finally(() => setLoading(false));
   }, [moduleKey, recordId]);
 
+  useEffect(() => {
+    if (!row) return;
+    const label = String(titleValue(row, config.card.titlePath) || recordId).slice(0, 100);
+    const href = `${config.basePath}/${encodeURIComponent(recordId)}`;
+    try {
+      const storage = getWorkspaceStorage();
+      const preferences = readWorkspacePreferences(storage, preferenceKey);
+      writeWorkspacePreferences(storage, preferenceKey, {
+        ...preferences,
+        recent: upsertWorkspaceLink(preferences.recent, { href, label, moduleKey, recordId, updatedAt: Date.now() }, 20)
+      });
+    } catch { /* Browser storage can be disabled. */ }
+  }, [row, config.basePath, config.card.titlePath, moduleKey, preferenceKey, recordId]);
+
+  const requestedReturnTo = searchParams.get("returnTo");
+  const returnTo = (() => {
+    if (!isSafeWorkspaceHref(requestedReturnTo)) return config.basePath;
+    try {
+      const parsed = new URL(requestedReturnTo, "https://extrusionos.invalid");
+      return parsed.pathname === `${config.basePath}/database` ? requestedReturnTo : config.basePath;
+    } catch {
+      return config.basePath;
+    }
+  })();
+
   if (loading) return <LoadingState title={`Loading ${config.title.toLowerCase()} record`} description="Fetching the selected record." />;
   if (error || !row) return <ErrorState description={error ?? "Record not found."} onRetry={() => void loadRecord()} />;
   const risks = getOperationalRisks(moduleKey, row);
@@ -72,7 +101,7 @@ export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { 
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <Link href={config.basePath} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 transition hover:text-neutral-950"><ArrowLeft className="h-4 w-4" /> Back to {config.title}</Link>
+          <Link href={returnTo} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 transition hover:text-neutral-950"><ArrowLeft className="h-4 w-4" /> Back to {config.title}</Link>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight text-neutral-950">{titleValue(row, config.card.titlePath)}</h1>
             {config.card.badgePath ? <Badge value={String(getPath(row, config.card.badgePath) || "active")} /> : null}
