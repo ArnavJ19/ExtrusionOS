@@ -50,3 +50,15 @@ test("unexpected trigger errors cannot return raw database details to the browse
   const result = await f.action(request()); assert.equal(result.success, false); assert.doesNotMatch(JSON.stringify(result), /SECRET|TRIGGER/);
   assert.notEqual(result.uncertain, true);
 });
+
+test("a legacy location longer than the new entry limit retains its complete move precondition and history", async () => {
+  const previous = "Shed A / " + "LegacyRack".repeat(24);
+  await f.db.query("update inventory_items set location=$1 where id=$2", [previous, ids.item]);
+  const move = { command: "locations.move", entity_type: "inventory_item", entity_id: ids.item, expected_location: previous, location: "Shed C / Rack 2", reason: "Move from legacy location", request_id: id(101) };
+  assert.equal((await f.action({ ...move, expected_location: previous + " changed" })).success, false);
+  assert.equal((await f.action({ ...move, location: "X".repeat(161) })).success, false);
+  assert.equal((await f.action(move)).success, true);
+  const history = (await f.db.query("select previous_location,location from operator_location_history where id=$1", [id(101)])).rows[0];
+  assert.deepEqual(history, { previous_location: previous, location: move.location });
+  assert.equal((await f.db.query("select current_stock from inventory_items where id=$1", [ids.item])).rows[0].current_stock, "420");
+});

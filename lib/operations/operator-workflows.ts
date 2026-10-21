@@ -27,7 +27,8 @@ export const operatorCommandSchema = z.discriminatedUnion("command", [
   z.object({ command: z.literal("aliases.create"), customer_id: uuid, profile_code: required(80), alias: required(80), request_id: uuid }).strict(),
   z.object({ command: z.literal("aliases.deactivate"), customer_id: uuid, alias_id: uuid }).strict(),
   z.object({ command: z.literal("locations.load"), entity_type: locationEntity, entity_id: uuid, page }).strict(),
-  z.object({ command: z.literal("locations.move"), entity_type: locationEntity, entity_id: uuid, expected_location: text(160), location: required(160), reason: required(500), request_id: uuid }).strict(),
+  // Existing master locations can predate the new entry limit; preserve their full stale-check reference.
+  z.object({ command: z.literal("locations.move"), entity_type: locationEntity, entity_id: uuid, expected_location: z.string(), location: required(160), reason: required(500), request_id: uuid }).strict(),
   z.object({ command: z.literal("exceptions.list"), job_id: uuid, page }).strict(),
   z.object({ command: z.literal("exceptions.report"), job_id: uuid, reason: exceptionReason, note: text(1000), request_id: uuid }).strict(),
   z.object({ command: z.literal("commitments.list"), customer_id: uuid, commitment_id: uuid.optional(), status: z.enum(["open", "completed", "cancelled", "all"]).default("open"), page }).strict(),
