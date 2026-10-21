@@ -29,13 +29,15 @@ export async function createBilletAllocationBrowserFixture({ styled = false } = 
   const bundle = await build({
     stdin: { resolveDir: process.cwd(), sourcefile: "billet-allocation-fixture.tsx", loader: "tsx", contents: `
       import React, {useState} from 'react'; import {createRoot} from 'react-dom/client';
+      import {flushSync} from 'react-dom';
       import {BilletAllocationClient} from './components/modules/foundry/billet-allocation-client';
       window.__allocation = {reads: [], saves: [], notices: []};
       function Fixture() {
         const [billetId, setBilletId] = useState('${allocationId(3)}');
         const [context, setContext] = useState(${JSON.stringify(allocationContext)});
         const [mounted, setMounted] = useState(true);
-        Object.assign(window.__allocation, {setBilletId, setContext, setMounted});
+        // A controlled unmount must commit before a test resolves an obsolete request.
+        Object.assign(window.__allocation, {setBilletId, setContext, setMounted: value => flushSync(() => setMounted(value))});
         return mounted ? <BilletAllocationClient context={context} billetId={billetId}/> : <p>Panel unmounted</p>;
       }
       createRoot(document.getElementById('app')).render(<Fixture/>);
