@@ -59,6 +59,14 @@ The development branch subsequently received SQL/harness-only work in
 source for these features. It is preserved in the shared history, and is neither
 applied nor accepted as database remediation by this follow-up.
 
+The independent run at `29dbaa6` passed 1,833 tests. After that run, concurrent
+billing follow-up `3aa216eb462f79aa458dfecf51ea55e45a347718` changed the shared
+quotation calculation again. All required checks were repeated against that
+combined checkpoint, which is the final application/test source for the table
+below. Its focused run passed 44 tests: the same 37 entry/preview cases plus
+seven quotation billing-basis cases. The concurrent billing implementation and
+its migrations are not attributed to this upgrade batch.
+
 There is no new migration, RLS/Storage policy, dependency, role permission,
 service-role browser import, hosted write, deployment, or push in this follow-up.
 The fixture is an integration adapter, not proof of hosted JWT or RLS execution.
@@ -86,20 +94,21 @@ Six new mounted integration cases cover:
   automated check compiles the actual global/Tailwind styles from source and
   includes a long unbroken source reference. It is not human visual acceptance.
 
-The focused run passed **37/37** tests: the six new integration cases plus the
-31 existing parser, calculation, preview, freshness, and mounted-state cases.
-The final independent main run passed **1,833 tests across 76 suites**, with
-zero failures, skips, cancellations, or TODOs, in 382.4 seconds. The application
+The focused run passed **44/44** tests: the six new integration cases, 31 existing
+parser, calculation, preview, freshness, and mounted-state cases, and seven
+shared quotation billing-basis cases.
+The final independent main run passed **1,835 tests across 76 suites**, with
+zero failures, skips, cancellations, or TODOs, in 457.7 seconds. The application
 and test sources remained unchanged at the combined checkpoint during these
 checks. An interrupted earlier attempt is not counted as a passing run.
 
 | Check | Final independent result |
 | --- | --- |
-| `npm test` | Passed, 1,833 tests / 76 suites in 382.4 seconds. [Output](evidence/UPGRADE_EOS_2026-10-21/entry-recheck/main-test.log). |
+| `npm test` | Passed, 1,835 tests / 76 suites in 457.7 seconds. [Output](evidence/UPGRADE_EOS_2026-10-21/entry-recheck/main-test.log). |
 | `npm run lint` | Passed. [Output](evidence/UPGRADE_EOS_2026-10-21/entry-recheck/main-lint.log). |
 | `npm run typecheck` | Passed. [Output](evidence/UPGRADE_EOS_2026-10-21/entry-recheck/main-typecheck.log). |
 | `npm run build` | Passed, using synthetic public Supabase settings and an empty service-role key. [Output](evidence/UPGRADE_EOS_2026-10-21/entry-recheck/main-build.log). |
-| Focused regression | Passed, 37 tests in 17.3 seconds. [Output](evidence/UPGRADE_EOS_2026-10-21/entry-recheck/focused.log). |
+| Focused regression | Passed, 44 tests in 41.6 seconds. [Output](evidence/UPGRADE_EOS_2026-10-21/entry-recheck/focused.log). |
 
 ## Remaining visual acceptance
 
