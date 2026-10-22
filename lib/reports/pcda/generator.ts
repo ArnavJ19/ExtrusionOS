@@ -121,7 +121,7 @@ export async function storeReport(
   });
   if (error) {
     if (/bucket not found/i.test(error.message) && bucket === "reports") {
-      throw new Error("Report upload failed: missing private reports storage bucket. Apply migration 0059_reports_storage_bucket.sql.");
+      throw new Error("Report upload failed: missing private reports storage bucket. Apply migration 20260515005900_reports_storage_bucket.sql.");
     }
     throw new Error(`Report upload failed: ${error.message}`);
   }

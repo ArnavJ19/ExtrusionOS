@@ -1,4 +1,4 @@
-﻿begin;
+begin;
 alter table public.production_jobs
   add column if not exists actual_pieces integer not null default 0;
 

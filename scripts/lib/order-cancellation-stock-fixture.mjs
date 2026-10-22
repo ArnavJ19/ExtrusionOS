@@ -55,7 +55,7 @@ export async function createOrderCancellationStockFixture({candidate=existsSync(
     for(const [file,names] of [
       ["20261008020000_factory_workflow_integrity.sql",["private.guard_profile_reservation_capacity","private.guard_reserved_stock_capacity"]],
       ["20260721091620_quote_atomic_dealer_lineage.sql",["private.enforce_dealer_fulfillment_lineage"]],
-      ["0041_dealer_roles_inventory_automation.sql",["public.credit_dealer_stock_on_order_cancel"]]
+      ["20260515004100_dealer_roles_inventory_automation.sql",["public.credit_dealer_stock_on_order_cancel"]]
     ])for(const name of names)await db.exec(sqlDefinition(file,name));
     await installDispatchReservationLedgerObjects(db);
     await db.exec(`create trigger astra_reservation_capacity before insert or update on profile_stock_reservations for each row execute function private.guard_profile_reservation_capacity();

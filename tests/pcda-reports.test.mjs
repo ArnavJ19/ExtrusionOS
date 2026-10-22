@@ -113,7 +113,7 @@ describe("PCDA report generators", () => {
   });
 
   it("keeps the reports storage bucket and tenant policies in migrations", () => {
-    const migration = readFileSync(join(repoRoot, "supabase/migrations/0059_reports_storage_bucket.sql"), "utf8");
+    const migration = readFileSync(join(repoRoot, "supabase/migrations/20260515005900_reports_storage_bucket.sql"), "utf8");
     assert.match(migration, /insert into storage\.buckets[\s\S]*\('reports', 'reports', false\)/);
     assert.match(migration, /bucket_id in \('company-assets','profile-drawings','die-drawings','quote-pdfs','dispatch-documents','reports'\)/);
     assert.match(migration, /\(storage\.foldername\(name\)\)\[1\] = public\.get_current_user_company_id\(\)::text/);

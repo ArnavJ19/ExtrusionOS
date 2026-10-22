@@ -90,7 +90,7 @@ CREATE POLICY "Admins can manage subscriptions" ON public.company_subscriptions 
 
 -- Seed Subscription Plans
 INSERT INTO public.subscription_plans (plan_name, plan_type, monthly_price, annual_price) VALUES
-('Starter Edition', 'Starter', 4999.00, 49990.00),
-('Professional Edition', 'Pro', 14999.00, 149990.00),
-('Enterprise Operating System', 'Enterprise', 34999.00, 349990.00)
+('Starter Edition', 'starter', 4999.00, 49990.00),
+('Professional Edition', 'pro', 14999.00, 149990.00),
+('Enterprise Operating System', 'enterprise', 34999.00, 349990.00)
 ON CONFLICT DO NOTHING;

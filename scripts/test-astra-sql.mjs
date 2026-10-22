@@ -64,7 +64,7 @@ export async function runAstraChecks(db) {
   await db.exec(definition("20260918000000_production_source_line_integrity.sql", "private.validate_production_job_source_line"));
   await db.exec(`create trigger production_job_source_line_guard before insert or update on production_jobs for each row execute function private.validate_production_job_source_line();`);
   // Real older definitions/triggers are present before installing the follow-up.
-  await db.exec(definition("0057_foundry_furnace_mix_and_chemistry.sql", "public.refresh_foundry_batch_calculations"));
+  await db.exec(definition("20260515005700_foundry_furnace_mix_and_chemistry.sql", "public.refresh_foundry_batch_calculations"));
   await db.exec(definition("20260718021500_floor_output_and_finishing_workflows.sql", "public.validate_finishing_transition"));
   await db.exec(`create trigger refresh_foundry_batch_calculations before insert or update on foundry_batches for each row execute function public.refresh_foundry_batch_calculations();
     create trigger validate_finishing_transition before insert or update on finishing_jobs for each row execute function public.validate_finishing_transition();

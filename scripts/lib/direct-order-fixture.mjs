@@ -59,7 +59,7 @@ export async function createDirectOrderFixture({ candidate = true } = {}) {
       ["20260810030000_quote_and_order_financial_integrity.sql",["private.save_order_atomic"]],
       ["20260929000000_business_logic_fixes.sql",["public.derive_order_value_from_quote","private.refresh_direct_order_value","private.canonicalize_invoice_tax_line"]],
       ["20260530000002_foundry_billet_allocation_repairs.sql",["public.repair_order_billet_requirement_links","public.refresh_order_billet_allocations"]],
-      ["0056_order_billet_requirements_and_allocation.sql",["public.rebuild_order_billet_requirements","public.handle_order_billet_requirements"]],
+      ["20260515005600_order_billet_requirements_and_allocation.sql",["public.rebuild_order_billet_requirements","public.handle_order_billet_requirements"]],
       ["20261008020000_factory_workflow_integrity.sql",["private.order_has_remaining_production","public.allocate_billets_by_priority","private.guard_production_order_balance"]],
       ["20261013010000_dealer_fulfillment_integrity.sql",["private.guard_order_workflow_writes","private.guard_order_item_workflow_writes"]],
       ["20260721091620_quote_atomic_dealer_lineage.sql",["private.canonicalize_packing_commercial_lineage","private.canonicalize_invoice_commercial_lineage"]]

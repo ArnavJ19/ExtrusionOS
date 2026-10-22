@@ -76,7 +76,7 @@ try {
   assert.equal(can('factory_manager','update','foundry'),true);
   await db.exec(`create function public.get_current_user_company_id() returns uuid language sql as $$select '${id}'::uuid$$;
     create function public.get_current_user_role() returns text language sql as $$select 'factory_manager'::text$$;`);
-  await db.exec(definition('0056_order_billet_requirements_and_allocation.sql','public.allocate_billet_to_order'));
+  await db.exec(definition('20260515005600_order_billet_requirements_and_allocation.sql','public.allocate_billet_to_order'));
   await db.exec(`alter function public.allocate_billet_to_order(uuid,uuid) set schema private;`);
   await db.exec(definition('20260602000002_security_definer_access_hardening.sql','public.allocate_billet_to_order'));
   await assert.rejects(db.exec(`select public.allocate_billet_to_order('${id}','${id}');`), /You do not have permission to allocate billets/);

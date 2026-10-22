@@ -3,6 +3,7 @@
 begin;
 
 drop policy if exists "app users update admin" on public.app_users;
+drop policy if exists "app users update admin non self" on public.app_users;
 create policy "app users update admin non self" on public.app_users
   for update
   using (
