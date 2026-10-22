@@ -12,6 +12,7 @@ import {
 import { completeProductionJobWithScrapAction } from "@/lib/actions/production-completion";
 import { PRODUCTION_SCRAP_CATEGORIES, type ProductionScrapCategory } from "@/lib/workflow/production-scrap";
 import { formatWeight } from "@/lib/utils/format";
+import { reconcileProcessMass } from "@/lib/calculations/production-performance";
 
 type ProductionFloorJob = {
   id: string;
@@ -26,6 +27,8 @@ type ProductionFloorJob = {
   finishing_type: string | null;
   linked_billet_count: number;
   linked_billet_input_kg: number;
+  // Scrap already posted against the job (null when it could not be read); counted by the completion transaction.
+  existing_scrap_kg?: number | null;
 };
 
 function routeLabel(finishingType: string | null) {
@@ -58,6 +61,10 @@ export function ProductionOutputWorkflow({
   const derivedMeters = Number(actualPieces || 0) * Number(job.length_per_piece_m || 0);
   const totalScrap = PRODUCTION_SCRAP_CATEGORIES.reduce((sum, category) => sum + Number(scrapWeights[category.value] || 0), 0);
   const accountedKg = Number(actualWeight || 0) + totalScrap;
+  // Mirrors the completion transaction: linked input against new output, new scrap and earlier scrap postings.
+  const balancePreview = job.linked_billet_count > 0 && actualWeight && job.existing_scrap_kg != null
+    ? reconcileProcessMass({ inputKg: job.linked_billet_input_kg, goodOutputKg: actualWeight, scrapKg: totalScrap + job.existing_scrap_kg })
+    : { status: "not_captured" as const };
   const isTerminal = ["completed", "cancelled"].includes(job.status);
 
   function moveStatus(status: "ready" | "in_progress" | "on_hold") {
@@ -233,6 +240,18 @@ export function ProductionOutputWorkflow({
                   ))}
                 </div>
                 <p className="mt-3 text-xs font-bold text-slate-600">Output {formatWeight(Number(actualWeight || 0))} + scrap {formatWeight(totalScrap)} = {formatWeight(accountedKg)}{job.linked_billet_count > 0 ? ` against ${formatWeight(job.linked_billet_input_kg)} billet input` : ""}</p>
+                {balancePreview.status !== "not_captured" ? (
+                  <p role="status" className={`mt-1 text-xs font-bold ${balancePreview.withinTolerance ? "text-emerald-700" : "text-amber-700"}`}>
+                    {balancePreview.status === "balanced"
+                      ? "Input fully accounted."
+                      : `${formatWeight(Math.abs(balancePreview.differenceKg))} ${balancePreview.status === "unaccounted" ? "unaccounted" : "more than the linked input, including earlier scrap postings"}. `}
+                    {balancePreview.status === "balanced"
+                      ? null
+                      : balancePreview.withinTolerance
+                        ? `Within the ${formatWeight(balancePreview.toleranceKg)} completion tolerance; the difference stays visible on the job.`
+                        : `Outside the ${formatWeight(balancePreview.toleranceKg)} completion tolerance, so completion will be rejected. Recheck the weighed output and scrap.`}
+                  </p>
+                ) : null}
               </div>
               <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Button type="button" onClick={completeJob} disabled={!canUpdate || isPending || !actualWeight || (Number(job.pieces ?? 0) > 0 && !actualPieces)}>

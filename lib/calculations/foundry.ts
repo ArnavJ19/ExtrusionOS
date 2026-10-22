@@ -1,3 +1,5 @@
+import { ceilQuantity } from "./production-performance.ts";
+
 const ALUMINIUM_DENSITY_KG_PER_M3 = 2700;
 
 export function calculateBilletWeightKg(lengthMm: number, diameterMm: number, densityKgPerM3 = ALUMINIUM_DENSITY_KG_PER_M3) {
@@ -22,7 +24,7 @@ export function inchesToMm(inches: number) {
 
 export function calculateRequiredBilletCount(requiredKg: number, billetWeightKg: number, efficiencyPercent = 75) {
   if (requiredKg <= 0 || billetWeightKg <= 0 || efficiencyPercent <= 0) return 0;
-  return Math.ceil((requiredKg / (efficiencyPercent / 100)) / billetWeightKg);
+  return ceilQuantity((requiredKg / (efficiencyPercent / 100)) / billetWeightKg);
 }
 
 export function calculateFoundryFurnaceMix(totalBilletWeightKg: number, furnaceEfficiencyPercent = 80, scrapPercentage = 0, externalAluminiumPercentage = 100 - scrapPercentage) {

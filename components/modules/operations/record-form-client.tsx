@@ -29,6 +29,7 @@ import type { SessionContext } from "@/types/app";
 import { getModuleConfig, type FieldConfig, type ModuleKey } from "./module-config";
 import { LocationGuidance } from "./operator-tools";
 import { canUseOperatorCommand } from "@/lib/operations/operator-workflows";
+import { planBilletInput, uniformBilletWeightKg } from "@/lib/calculations/production-performance";
 
 type LookupOption = { value: string; label: string; profile_id?: string | null; die_status?: string | null;
   production_job_id?: string | null; status?: string | null; output_weight_kg?: number | string | null; received_date?: string | null; [key: string]: any };
@@ -975,6 +976,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
                 </div>
               ) : (
                 <div className="space-y-3">
+                  <BilletPlanNote plannedKg={form.planned_quantity_kg} recoveryPercent={form.extrusion_efficiency_percent} billets={availableBillets} selected={availableBillets.filter((billet) => selectedBillets.has(billet.id))} />
                   <div className="text-sm text-slate-600">
                     Required for full order: <strong className="text-slate-900">{form.required_billet_count || 0}</strong> &middot; 
                     Selected for this run: <strong className={selectedBillets.size <= 0 ? "text-red-600" : selectedBillets.size < (form.required_billet_count || 0) ? "text-orange" : "text-green-600"}>{selectedBillets.size}</strong>
@@ -1093,6 +1095,26 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
           {moduleKey === "production" && form.die_id && canUseOperatorCommand(context.role, "locations.load", "die") ? <div className="mt-6"><LocationGuidance key={`${context.companyId}:${context.userId}:${context.role}:${form.die_id}`} context={context} entityType="die" entityId={String(form.die_id)} readOnly /></div> : null}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+// UPGRADE_EOS feature 89: planned input kg = planned good output / expected recovery; billets rounded up.
+function BilletPlanNote({ plannedKg, recoveryPercent, billets, selected }: { plannedKg: unknown; recoveryPercent: unknown; billets: { weight_kg?: unknown }[]; selected: { weight_kg?: unknown }[] }) {
+  const billetWeightKg = uniformBilletWeightKg(billets);
+  const plan = planBilletInput({ goodOutputKg: plannedKg, recoveryPercent, billetWeightKg });
+  const kg = (value: number) => `${value.toLocaleString("en-IN", { maximumFractionDigits: 3 })} kg`;
+  if (!plan.ok) return <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">Billet plan: {plan.reason}</p>;
+  const selectedKg = selected.reduce((sum, billet) => sum + (Number(billet.weight_kg) || 0), 0);
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+      <p>Billet plan: {kg(plan.goodOutputKg)} planned good output / {plan.recoveryPercent}% expected recovery = <strong>{kg(plan.plannedInputKg)}</strong> planned billet input.</p>
+      <p className="mt-1">
+        {plan.billetCount !== null && plan.billetWeightKg !== null
+          ? <>{kg(plan.plannedInputKg)} / {kg(plan.billetWeightKg)} per billet = <strong>{plan.billetCount} billets</strong> (rounded up).</>
+          : "Compatible billets have different weights, so the count depends on which billets are selected."}
+        {selected.length ? <> Selected billets: {kg(selectedKg)} nominal ({selectedKg >= plan.plannedInputKg ? "covers" : "short of"} the planned input).</> : null}
+      </p>
     </div>
   );
 }

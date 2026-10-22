@@ -837,6 +837,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 89. Planned billet input and billet count
 
+- [ ] **Implemented and automatically tested locally; visual acceptance pending, 22 October 2026.** Production entry explains planned input kg = planned good output / expected recovery and the rounded-up billet count when compatible billets share one weight, plus whether selected billets cover the plan. A floating-point rounding defect that planned 41 instead of 40 billets (700 kg, 70%, 25 kg) is fixed in the shared count. The quotation-to-order billet preview still uses billing weight and fixed 75%/5.8 m assumptions pending a business decision. [Delivery audit and remaining gates](docs/UPGRADE_EOS_PRODUCTION_PERFORMANCE_2026-10-22.md).
+
 - **What it does:** Fetch planned good output, approved expected recovery, and the selected billet specification. Calculate planned input kg = good output kg / recovery fraction, then round billet count upward. At 900 kg output, 75% recovery, and 30 kg per billet, the plan requires 1,200 kg input and 40 billets.
 - **Impact:** Removes manual planning arithmetic and makes recovery assumptions visible.
 - **Complexity:** High - production-versus-billing basis, recovery validation, usable billet assumptions, and allocation integration need explicit rules.
@@ -857,6 +859,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 91. Production performance from actual transactions
 
+- [ ] **Implemented and automatically tested locally; visual acceptance pending, 22 October 2026.** Production job detail shows recovery, scrap and plan attainment from linked billet input (the completion transaction's statuses and measured-else-nominal basis), recorded good output and non-reversed scrap postings. Missing input or unreadable scrap shows Not captured; a recorded zero output stays 0%. Output per operating hour is not shown because jobs do not record operating time. [Delivery audit and remaining gates](docs/UPGRADE_EOS_PRODUCTION_PERFORMANCE_2026-10-22.md).
+
 - **What it does:** Use recorded material issues and good output to calculate recovery, plan attainment, output per operating hour, and related metrics where inputs exist. Recovery percent = good output kg / issued input kg x 100; 800 kg good output from 1,000 kg input gives 80%.
 - **Impact:** Removes manual performance summaries and gives supervisors a traceable view of production results.
 - **Complexity:** High - source completeness, time boundaries, reversals, work in progress, and shared-job allocation affect meaningful results.
@@ -864,6 +868,8 @@ For these features, every field must have a clear source. Maintain approved defa
 - **Acceptance:** Missing issued input produces Not captured, while a valid zero good-output observation remains a real recorded result.
 
 ### 92. Material discrepancy calculation
+
+- [ ] **Implemented and automatically tested locally; visual acceptance pending, 22 October 2026.** Completed jobs show input - (good output + measured scrap) with the signed difference, kept visible even inside the completion tolerance; completion entry previews the same balance including earlier scrap postings. Nothing is booked as scrap. Work in progress, returns and other classified movements are supported by the calculation but have no job-level source records yet. [Delivery audit and remaining gates](docs/UPGRADE_EOS_PRODUCTION_PERFORMANCE_2026-10-22.md).
 
 - **What it does:** Reconcile a defined process boundary using actual input, good output, measured scrap, returns, work in progress, and other classified movements. For 1,000 kg input, 780 kg good output, 180 kg measured scrap, and 30 kg work in progress, flag 10 kg unaccounted.
 - **Impact:** Exposes unexplained differences without hiding them in an invented scrap figure.
