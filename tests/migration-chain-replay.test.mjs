@@ -17,10 +17,14 @@ test("a fresh database builds from the baseline and every migration in file orde
       to_regclass('public.tasks') is not null as tasks,
       to_regclass('public.production_plan_slots') is not null as plan_slots,
       exists (select 1 from pg_indexes where indexname = 'idx_tasks_company_status_due') as command_center_index,
-      (select array_agg(plan_type order by plan_type) from public.subscription_plans) as plan_types`);
+      (select array_agg(plan_type order by plan_type) from public.subscription_plans) as plan_types,
+      (select pg_get_constraintdef(oid) like '%''nvidia''%' from pg_constraint where conname = 'company_settings_ai_provider_check') as nvidia_provider,
+      (select pg_get_constraintdef(oid) like '%''credit_notes''%' from pg_constraint where conname = 'saved_reports_data_source_check') as credit_note_reports,
+      exists (select 1 from information_schema.columns where table_name = 'orders' and column_name = 'order_source_label') as archived_dealer_column`);
     assert.deepEqual(rows[0], {
       tasks: true, plan_slots: true, command_center_index: true,
-      plan_types: ["enterprise", "free_demo", "pro", "starter"]
+      plan_types: ["enterprise", "free_demo", "pro", "starter"],
+      nvidia_provider: true, credit_note_reports: true, archived_dealer_column: false
     });
   } finally {
     await db.close();

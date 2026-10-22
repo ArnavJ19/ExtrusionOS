@@ -1,6 +1,6 @@
 # Migration chain replay — 22 October 2026
 
-A fresh database can now be built from `supabase/schema.sql`, `supabase/rls.sql` and every file in `supabase/migrations/` in plain file-name order: **219/219 files apply** with zero failures.
+A fresh database can now be built from `supabase/schema.sql`, `supabase/rls.sql` and every file in `supabase/migrations/` in plain file-name order: **219/219 files apply** with zero failures (2 baseline files + 217 migrations, after the follow-up below).
 
 ```bash
 node scripts/replay-migration-chain.mjs
@@ -37,12 +37,20 @@ Both sides were fingerprinted with the same catalog queries: tables, columns, co
   - `20260516000000_core_dealer_improvements` was unrunnable as written. None of its objects exist live: `orders.order_source_label`, `orders_order_origin_check`, `payments` type/status checks, the `idx_tasks_*` / `idx_orders_*` / `idx_payments_*` indexes and the `tasks` policies.
   - `20260515000600_enterprise_phase_1` fails at its seed insert on the live schema. Only `idx_feature_flags_company` exists live; its policies and other indexes do not.
   - `20260515000700_enterprise_phase_2`: none of its indexes exist live.
-  - These three files are still in the chain. Leaving them out of a test rebuild, and adding the five live worktree files, leaves differences on just 4 tables, explained in the next two items.
-- **Live database behind the files (open):**
-  - `company_settings_ai_provider_check` lacks `'nvidia'`. `20260513000300_enterprise_phase2_nvidia_ai_provider` was never applied.
-  - `saved_reports_data_source_check` lacks `'credit_notes'`. The ledger statement recorded for `20261020030000_finance_reporting_integrity` contains no `saved_reports` change, so that part was added to the file after it was applied.
-- **Live database ahead of the files (open):** trigger `set_quote_revisions_updated_at` on `quote_revisions` exists live, but files only ever drop it. `20260512000400_audit_fixes` assumes it exists.
+  - These three files have since moved to `supabase/migrations_archive/` (see follow-up).
+- **Live database behind the files (fixed in follow-up):**
+  - `company_settings_ai_provider_check` lacked `'nvidia'`. `20260513000300_enterprise_phase2_nvidia_ai_provider` was never applied.
+  - `saved_reports_data_source_check` lacked `'credit_notes'`. The ledger statement recorded for `20261020030000_finance_reporting_integrity` contains no `saved_reports` change, so that part was added to the file after it was applied.
+- **Live database ahead of the files (open):**
+  - Trigger `set_quote_revisions_updated_at` on `quote_revisions` exists live, but files only ever drop it. `20260512000400_audit_fixes` assumes it exists.
+  - Index `idx_feature_flags_company` exists live; it came from the archived `enterprise_phase_1`.
 - Known tool difference: the in-memory engine is Postgres 18 (live is 17.6), so NOT NULL constraints were excluded from the constraint comparison.
+
+## Follow-up (same day)
+
+- Moved `20260515000600_enterprise_phase_1`, `20260515000700_enterprise_phase_2` and `20260516000000_core_dealer_improvements` to `supabase/migrations_archive/`, with the evidence in its `README.md`. The rebuild still applies every file.
+- Added `20261022020000_ai_provider_and_report_source_checks`. The application already offers NVIDIA as an AI provider (`lib/validations/schemas.ts`) and credit notes as a report source (`lib/reports/report-builder.ts`), but the live database rejected both. Dry-run on the live database: the existing rows (1 settings row, 2 saved reports) pass the new checks. Applied live as ledger version `20261022014811` (ledger now 129 rows). Both live constraint definitions are now byte-identical to the rebuild.
+- Fresh comparison after the two collaboration migrations reached the live database (ledger 128): the rebuild plus the five live `codex-v1` worktree files differs from live in only 4 places. Two are the checks above, now fixed. The other two are the live-only trigger and index listed above.
 
 ## Old → new file names
 
