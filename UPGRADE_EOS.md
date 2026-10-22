@@ -128,6 +128,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 8. Stage-specific essential fields
 
+- [x] **Complete for the quotation workflow and local verification, 22 October 2026.** Essential preparation fields stay visible; costing/recovery, delivery/payment and terms expand on demand and preserve entered values. Incomplete costing drafts save, while shared server validation and a database trigger reject incomplete confirmation with specific guidance. Audited, tested and visually inspected on desktop and phone. Final development verification passed 2,077 tests across 76 suites, lint, typecheck and production build. [Delivery scope, migration verification and visual evidence](docs/UPGRADE_EOS_COLLABORATION_BATCH_2026-10-22.md).
+
 - **What it does:** Show the information required for the current task stage, with occasional details available on demand. Allow legitimate incomplete drafts, then enforce the full requirements at confirmation. Hidden fields must retain or clear values according to explicit rules.
 - **Impact:** Makes forms less overwhelming and avoids collecting transport or production details before they are known.
 - **Complexity:** Medium - requires stage-aware validation shared between the interface and server.
@@ -156,6 +158,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** Creating a customer during quotation entry preserves the item lines and immediately selects the new authorised customer.
 
 ### 11. Automatic quantity and unit calculations
+
+- [x] **Complete for quotation quantities and local verification, 22 October 2026.** Cut lengths accept m, mm, ft and in, preserve canonical metres when display units change, and derive labelled theoretical metres/weight using the shared calculations. The actual save action, SQL row and visually inspected PDF reconcile 20 ft to 6.096 m, 609.6 total metres and 487.68 kg for 100 pieces at 0.8 kg/m. Measured output remains separately recorded. Desktop/phone inspection and the final 2,077-test suite, lint, typecheck and production build passed. [Audit and export evidence](docs/UPGRADE_EOS_COLLABORATION_BATCH_2026-10-22.md).
 
 - **What it does:** Calculate derived length, theoretical weight, quantities, balances, and compatible unit conversions from trusted inputs. Label the input basis and distinguish estimates from measured quantities. Recalculate dependent fields when source inputs change.
 - **Impact:** Removes calculator work and reduces inconsistent quantities across forms and reports.
@@ -467,6 +471,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 46. Internal discussions attached to records
 
+- [x] **Complete for orders, production jobs, dispatches and quality inspections, 22 October 2026.** Retained messages, replies, supporting references and up to three eligible colleague mentions open the exact internal thread. Record/company/role checks, immutable corrections through replies and exact-request retry protection are enforced on the server. Existing document workflows handle files. Desktop/phone discussion and mention flows were visually inspected; internal discussion is absent from the inspected customer quotation PDF. Both batch migrations are applied and verified hosted. Final verification: 2,077 tests, lint, typecheck and production build passed. [Delivery and security evidence](docs/UPGRADE_EOS_COLLABORATION_BATCH_2026-10-22.md).
+
 - **What it does:** Keep short internal threads, permitted mentions, supporting references, and decisions beside the order, job, dispatch, or complaint they concern. Distinguish discussion from formal approval and retain appropriate edit/history rules.
 - **Impact:** Reduces lost context in separate chats and makes previous decisions easier to find.
 - **Complexity:** Medium - needs comment storage, access checks, mention eligibility, notification links, and attachment handling.
@@ -605,6 +611,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 62. Accountable SOP process owners
 
+- [x] **Complete for procedure ownership and local verification, 22 October 2026.** Added a ten-row procedure directory, owner/backup availability, clarification responsibility, review dates, reasoned reassignment with revision checks, and retained ownership/review history. Procedure responsibility stays separate from task assignment. Creation, ownership changes and prior-owner history were visually inspected on desktop and phone. Hosted schema/RLS/permissions are verified; final 2,077-test suite, lint, typecheck and production build passed. Full SOP publication governance remains feature 77. [Delivery audit and screenshots](docs/UPGRADE_EOS_COLLABORATION_BATCH_2026-10-22.md).
+
 - **What it does:** Assign an owner and appropriate backup to each procedure. Record who resolves unclear cases, approves revisions, and reviews effectiveness. Distinguish ownership of the operating method from assignment of a particular employee's task.
 - **Impact:** Makes responsibility for maintaining the working system clear and reduces unresolved procedural questions.
 - **Complexity:** Medium - requires ownership metadata, review workflows, reassignment, and visibility when an owner becomes unavailable.
@@ -700,6 +708,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A changed approved specification flags affected work without silently rewriting completed records or issued invoices.
 
 ### 74. Standard opening and closing routines
+
+- [x] **Complete for on-demand Indian-business-day routines, 22 October 2026.** An active procedure generates one run per business date, retaining its station/scope, revision and observation prompts; repeat requests open the existing run. Current permitted work/holds/recorded exceptions populate automatically, while required observations, stale-context checks and a retained handover outcome govern completion. Production summaries are explicitly company-wide rather than station-filtered; shift scheduling remains a future extension. Desktop context and phone observation/completion flows were visually inspected. Both migrations are applied and verified hosted; final 2,077-test suite, lint, typecheck and production build passed. [Scope, audit and acceptance evidence](docs/UPGRADE_EOS_COLLABORATION_BATCH_2026-10-22.md).
 
 - **What it does:** Generate concise start/end routines for a shift, station, or business day. Populate assigned work, active holds, unfinished transactions, and known discrepancies automatically. Request human confirmation only for observations the approved routine genuinely requires.
 - **Impact:** Creates a repeatable start and finish to daily work with fewer omissions and less report preparation.

@@ -1,0 +1,643 @@
+{
+  "date": "2026-10-22",
+  "source_checkpoint": "8b4a63da1206b1bbcf605dd270c866b3eecabe50",
+  "final_verification": {
+    "checked_at_utc": "2026-10-22T02:21:53Z",
+    "branch": "codex/v1",
+    "base_commit": "1ff7586c6cd56a6954bb9e90f462f0936c3590b6",
+    "source_manifest": "verified-source-manifest.json",
+    "source_files": 1232,
+    "source_sha256": "99cb343f8f9ede9ec3b807c23339832f95fb47335a98e001dacf0876500f72d9",
+    "source_changed_during_checks": false,
+    "owned_source_files": 37,
+    "owned_source_matches_implementation_commit": true,
+    "lint_exit_code": 0,
+    "typecheck_exit_code": 0,
+    "build_exit_code": 0,
+    "full_suite": {
+      "tests": 2077,
+      "suites": 76,
+      "passed": 2077,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "exit_code": 0,
+      "duration_ms": 1010070.9213
+    },
+    "focused_tests_passed": 36,
+    "browser_regression_tests_passed": 26,
+    "independent_root_suite": {
+      "branch": "fix/migration-chain-replay",
+      "commit": "d31f16166c2f2c6420d9b703edfa88863deb872c",
+      "tests": 1918,
+      "suites": 76,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "duration_ms": 445609.8085
+    },
+    "final_rehearsal": {
+      "exit_code": 0,
+      "catalog_failures": 0,
+      "earlier_migrations_replayed": 28,
+      "actual_quote_save_action": true,
+      "incomplete_draft_saved": true,
+      "incomplete_confirmation_denied": true,
+      "canonical_metres": 6.096,
+      "total_metres": 609.6,
+      "theoretical_kg": 487.68
+    },
+    "visual_inspection": {
+      "desktop": true,
+      "phone_375px": true,
+      "regenerated_pdf": true,
+      "pdf_pages": 1,
+      "pdf_quantities_reconciled": true,
+      "internal_discussion_absent_from_pdf": true
+    }
+  },
+  "final_hosted_catalog_recheck": {
+    "ledger": {
+      "name": "20261021190916_collaboration_procedure_routines",
+      "version": "20261021200851",
+      "source_md5": "2f7c52d70f53c9b02e87e4983e6d43b5",
+      "statements": 1
+    },
+    "tables": [
+      {
+        "rls": true,
+        "name": "daily_routine_completions",
+        "anon_select": false,
+        "auth_delete": false,
+        "auth_insert": false,
+        "auth_select": false,
+        "auth_update": false,
+        "auth_truncate": false
+      },
+      {
+        "rls": true,
+        "name": "daily_routine_runs",
+        "anon_select": false,
+        "auth_delete": false,
+        "auth_insert": false,
+        "auth_select": false,
+        "auth_update": false,
+        "auth_truncate": false
+      },
+      {
+        "rls": true,
+        "name": "operating_procedure_events",
+        "anon_select": false,
+        "auth_delete": false,
+        "auth_insert": false,
+        "auth_select": false,
+        "auth_update": false,
+        "auth_truncate": false
+      },
+      {
+        "rls": true,
+        "name": "operating_procedures",
+        "anon_select": false,
+        "auth_delete": false,
+        "auth_insert": false,
+        "auth_select": false,
+        "auth_update": false,
+        "auth_truncate": false
+      },
+      {
+        "rls": true,
+        "name": "record_discussions",
+        "anon_select": false,
+        "auth_delete": false,
+        "auth_insert": false,
+        "auth_select": false,
+        "auth_update": false,
+        "auth_truncate": false
+      }
+    ],
+    "policies": [
+      {
+        "qual": "((( SELECT auth.uid() AS uid) IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'accounts'::text, 'production_manager'::text, 'factory_manager'::text, 'dispatch_manager'::text, 'dispatch'::text, 'inventory_manager'::text, 'quality'::text, 'viewer'::text])) OR private.customer_has_current_dealer_record(id)))",
+        "roles": [
+          "public"
+        ],
+        "table": "customers",
+        "command": "SELECT"
+      },
+      {
+        "qual": "((company_id = ( SELECT private.get_current_user_company_id() AS get_current_user_company_id)) AND (( SELECT private.get_current_user_dealer_id() AS get_current_user_dealer_id) IS NULL))",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "daily_routine_completions",
+        "command": "SELECT"
+      },
+      {
+        "qual": "((company_id = ( SELECT private.get_current_user_company_id() AS get_current_user_company_id)) AND (( SELECT private.get_current_user_dealer_id() AS get_current_user_dealer_id) IS NULL))",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "daily_routine_runs",
+        "command": "SELECT"
+      },
+      {
+        "qual": "((company_id = ( SELECT private.get_current_user_company_id() AS get_current_user_company_id)) AND (( SELECT private.get_current_user_dealer_id() AS get_current_user_dealer_id) IS NULL))",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "operating_procedure_events",
+        "command": "SELECT"
+      },
+      {
+        "qual": "((company_id = ( SELECT private.get_current_user_company_id() AS get_current_user_company_id)) AND (( SELECT private.get_current_user_dealer_id() AS get_current_user_dealer_id) IS NULL))",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "operating_procedures",
+        "command": "SELECT"
+      },
+      {
+        "qual": "((company_id = ( SELECT private.get_current_user_company_id() AS get_current_user_company_id)) AND (( SELECT private.get_current_user_dealer_id() AS get_current_user_dealer_id) IS NULL))",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "record_discussions",
+        "command": "SELECT"
+      }
+    ],
+    "functions": [
+      {
+        "name": "collaboration_can_read",
+        "schema": "private",
+        "definer": false,
+        "body_md5": "ce4114ae1d2158ae4e57a15cd3ca06f4",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "p_role text, p_entity text",
+        "auth_exec": false,
+        "public_exec": false
+      },
+      {
+        "name": "collaboration_record_visible",
+        "schema": "private",
+        "definer": true,
+        "body_md5": "5471b716518402eae8883befd339a9b4",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "p_entity text, p_id uuid",
+        "auth_exec": false,
+        "public_exec": false
+      },
+      {
+        "name": "collaboration_workflow_command",
+        "schema": "public",
+        "definer": true,
+        "body_md5": "325fc2820a59c0d185380267da5ec1b0",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "p_command text, p_payload jsonb",
+        "auth_exec": true,
+        "public_exec": false
+      },
+      {
+        "name": "customer_has_current_dealer_record",
+        "schema": "private",
+        "definer": true,
+        "body_md5": "b51492fd4d6ea6499088127c079cbca6",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "p_customer uuid",
+        "auth_exec": true,
+        "public_exec": false
+      },
+      {
+        "name": "daily_routine_projection",
+        "schema": "private",
+        "definer": true,
+        "body_md5": "13d6eadedef6317baf71bedbf7b5e008",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "p_id uuid",
+        "auth_exec": false,
+        "public_exec": false
+      },
+      {
+        "name": "daily_routine_sources",
+        "schema": "private",
+        "definer": true,
+        "body_md5": "69921767ad00b93f955df58551ce28a8",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "",
+        "auth_exec": false,
+        "public_exec": false
+      },
+      {
+        "name": "guard_quote_preparation_stage",
+        "schema": "private",
+        "definer": true,
+        "body_md5": "613937c085cc1b20e28c4c1d2d620371",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "",
+        "auth_exec": false,
+        "public_exec": false
+      },
+      {
+        "name": "operating_procedure_projection",
+        "schema": "private",
+        "definer": true,
+        "body_md5": "316fd01088fdeff3325300213ecd68e3",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "p_id uuid",
+        "auth_exec": false,
+        "public_exec": false
+      }
+    ],
+    "quote_columns": {
+      "id": true,
+      "status": true,
+      "subtotal": false,
+      "company_id": true,
+      "grand_total": false
+    },
+    "quote_trigger": "CREATE TRIGGER quote_preparation_stage_guard BEFORE INSERT OR UPDATE OF status ON public.quotes FOR EACH ROW EXECUTE FUNCTION private.guard_quote_preparation_stage()",
+    "new_row_counts": {
+      "runs": 0,
+      "events": 0,
+      "procedures": 0,
+      "completions": 0,
+      "discussions": 0
+    }
+  },
+  "features": [
+    8,
+    11,
+    46,
+    62,
+    74
+  ],
+  "project_ref": "pkawmdxtmsdgigsehcmb",
+  "project_name": "AlExMS",
+  "primary_migration": {
+    "file": "supabase/migrations/20261021190916_collaboration_procedure_routines.sql",
+    "name": "20261021190916_collaboration_procedure_routines",
+    "version": "20261021200851",
+    "source_md5": "2f7c52d70f53c9b02e87e4983e6d43b5",
+    "statements": 1
+  },
+  "index_migration": {
+    "file": "supabase/migrations/20261021201325_collaboration_foreign_key_indexes.sql",
+    "name": "20261021201325_collaboration_foreign_key_indexes",
+    "version": "20261021201717",
+    "source_md5": "47cffe0cd78e8ae5504e4e1e352ffcce"
+  },
+  "hosted_ledger_count": 128,
+  "matched_function_bodies": 8,
+  "function_mismatches": [],
+  "uncovered_new_foreign_keys": [],
+  "read_only_role_probe": {
+    "collaboration_readonly_role_probes_passed": true
+  },
+  "security_advisors": {
+    "before": [
+      {
+        "name": "rls_enabled_no_policy",
+        "count": 1,
+        "level": "INFO"
+      },
+      {
+        "name": "security_definer_view",
+        "count": 22,
+        "level": "ERROR"
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "count": 80,
+        "level": "WARN"
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "count": 1,
+        "level": "WARN"
+      }
+    ],
+    "after": [
+      {
+        "name": "rls_enabled_no_policy",
+        "count": 1,
+        "level": "INFO"
+      },
+      {
+        "name": "security_definer_view",
+        "count": 22,
+        "level": "ERROR"
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "count": 81,
+        "level": "WARN"
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "count": 1,
+        "level": "WARN"
+      }
+    ]
+  },
+  "performance_advisors": {
+    "before": [
+      {
+        "name": "unindexed_foreign_keys",
+        "count": 2,
+        "level": "INFO"
+      },
+      {
+        "name": "unused_index",
+        "count": 739,
+        "level": "INFO"
+      },
+      {
+        "name": "multiple_permissive_policies",
+        "count": 270,
+        "level": "WARN"
+      }
+    ],
+    "after": [
+      {
+        "name": "unindexed_foreign_keys",
+        "count": 2,
+        "level": "INFO"
+      },
+      {
+        "name": "unused_index",
+        "count": 762,
+        "level": "INFO"
+      },
+      {
+        "name": "multiple_permissive_policies",
+        "count": 270,
+        "level": "WARN"
+      }
+    ]
+  },
+  "catalog": {
+    "ledger": {
+      "name": "20261021190916_collaboration_procedure_routines",
+      "version": "20261021200851",
+      "source_md5": "2f7c52d70f53c9b02e87e4983e6d43b5",
+      "statements": 1
+    },
+    "tables": [
+      {
+        "rls": true,
+        "name": "daily_routine_completions",
+        "anon_select": false,
+        "auth_delete": false,
+        "auth_insert": false,
+        "auth_select": false,
+        "auth_update": false,
+        "auth_truncate": false
+      },
+      {
+        "rls": true,
+        "name": "daily_routine_runs",
+        "anon_select": false,
+        "auth_delete": false,
+        "auth_insert": false,
+        "auth_select": false,
+        "auth_update": false,
+        "auth_truncate": false
+      },
+      {
+        "rls": true,
+        "name": "operating_procedure_events",
+        "anon_select": false,
+        "auth_delete": false,
+        "auth_insert": false,
+        "auth_select": false,
+        "auth_update": false,
+        "auth_truncate": false
+      },
+      {
+        "rls": true,
+        "name": "operating_procedures",
+        "anon_select": false,
+        "auth_delete": false,
+        "auth_insert": false,
+        "auth_select": false,
+        "auth_update": false,
+        "auth_truncate": false
+      },
+      {
+        "rls": true,
+        "name": "record_discussions",
+        "anon_select": false,
+        "auth_delete": false,
+        "auth_insert": false,
+        "auth_select": false,
+        "auth_update": false,
+        "auth_truncate": false
+      }
+    ],
+    "policies": [
+      {
+        "qual": "((( SELECT auth.uid() AS uid) IS NOT NULL) AND (company_id = private.get_current_user_company_id()) AND ((private.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text, 'sales_manager'::text, 'sales'::text, 'accounts'::text, 'production_manager'::text, 'factory_manager'::text, 'dispatch_manager'::text, 'dispatch'::text, 'inventory_manager'::text, 'quality'::text, 'viewer'::text])) OR private.customer_has_current_dealer_record(id)))",
+        "roles": [
+          "public"
+        ],
+        "table": "customers",
+        "command": "SELECT"
+      },
+      {
+        "qual": "((company_id = ( SELECT private.get_current_user_company_id() AS get_current_user_company_id)) AND (( SELECT private.get_current_user_dealer_id() AS get_current_user_dealer_id) IS NULL))",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "daily_routine_completions",
+        "command": "SELECT"
+      },
+      {
+        "qual": "((company_id = ( SELECT private.get_current_user_company_id() AS get_current_user_company_id)) AND (( SELECT private.get_current_user_dealer_id() AS get_current_user_dealer_id) IS NULL))",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "daily_routine_runs",
+        "command": "SELECT"
+      },
+      {
+        "qual": "((company_id = ( SELECT private.get_current_user_company_id() AS get_current_user_company_id)) AND (( SELECT private.get_current_user_dealer_id() AS get_current_user_dealer_id) IS NULL))",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "operating_procedure_events",
+        "command": "SELECT"
+      },
+      {
+        "qual": "((company_id = ( SELECT private.get_current_user_company_id() AS get_current_user_company_id)) AND (( SELECT private.get_current_user_dealer_id() AS get_current_user_dealer_id) IS NULL))",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "operating_procedures",
+        "command": "SELECT"
+      },
+      {
+        "qual": "((company_id = ( SELECT private.get_current_user_company_id() AS get_current_user_company_id)) AND (( SELECT private.get_current_user_dealer_id() AS get_current_user_dealer_id) IS NULL))",
+        "roles": [
+          "authenticated"
+        ],
+        "table": "record_discussions",
+        "command": "SELECT"
+      }
+    ],
+    "functions": [
+      {
+        "name": "collaboration_can_read",
+        "schema": "private",
+        "definer": false,
+        "body_md5": "ce4114ae1d2158ae4e57a15cd3ca06f4",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "p_role text, p_entity text",
+        "auth_exec": false,
+        "public_exec": false
+      },
+      {
+        "name": "collaboration_record_visible",
+        "schema": "private",
+        "definer": true,
+        "body_md5": "5471b716518402eae8883befd339a9b4",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "p_entity text, p_id uuid",
+        "auth_exec": false,
+        "public_exec": false
+      },
+      {
+        "name": "collaboration_workflow_command",
+        "schema": "public",
+        "definer": true,
+        "body_md5": "325fc2820a59c0d185380267da5ec1b0",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "p_command text, p_payload jsonb",
+        "auth_exec": true,
+        "public_exec": false
+      },
+      {
+        "name": "customer_has_current_dealer_record",
+        "schema": "private",
+        "definer": true,
+        "body_md5": "b51492fd4d6ea6499088127c079cbca6",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "p_customer uuid",
+        "auth_exec": true,
+        "public_exec": false
+      },
+      {
+        "name": "daily_routine_projection",
+        "schema": "private",
+        "definer": true,
+        "body_md5": "13d6eadedef6317baf71bedbf7b5e008",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "p_id uuid",
+        "auth_exec": false,
+        "public_exec": false
+      },
+      {
+        "name": "daily_routine_sources",
+        "schema": "private",
+        "definer": true,
+        "body_md5": "69921767ad00b93f955df58551ce28a8",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "",
+        "auth_exec": false,
+        "public_exec": false
+      },
+      {
+        "name": "guard_quote_preparation_stage",
+        "schema": "private",
+        "definer": true,
+        "body_md5": "613937c085cc1b20e28c4c1d2d620371",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "",
+        "auth_exec": false,
+        "public_exec": false
+      },
+      {
+        "name": "operating_procedure_projection",
+        "schema": "private",
+        "definer": true,
+        "body_md5": "316fd01088fdeff3325300213ecd68e3",
+        "settings": [
+          "search_path=public, private"
+        ],
+        "anon_exec": false,
+        "arguments": "p_id uuid",
+        "auth_exec": false,
+        "public_exec": false
+      }
+    ],
+    "quote_columns": {
+      "id": true,
+      "status": true,
+      "subtotal": false,
+      "company_id": true,
+      "grand_total": false
+    },
+    "quote_trigger": "CREATE TRIGGER quote_preparation_stage_guard BEFORE INSERT OR UPDATE OF status ON public.quotes FOR EACH ROW EXECUTE FUNCTION private.guard_quote_preparation_stage()",
+    "new_row_counts": {
+      "runs": 0,
+      "events": 0,
+      "procedures": 0,
+      "completions": 0,
+      "discussions": 0
+    }
+  },
+  "proof_boundaries": {
+    "local_synthetic_forms_actions_and_sql": true,
+    "hosted_ddl_and_catalog": true,
+    "hosted_readonly_session_claims": true,
+    "signed_employee_jwt": false,
+    "hosted_business_writes": false,
+    "independent_session_write_races": false,
+    "application_deployment": false
+  }
+}
