@@ -1,0 +1,2 @@
+R01c owner DELETE delivered, not-yet-invoiced dispatch: {"ok":true,"value":[]}
+R01c after: [{"dispatch_rows":0,"packing_rows":0,"history_rows":0,"order_stage":"delivered","delete_audit":1,"sensitive_log":0}]

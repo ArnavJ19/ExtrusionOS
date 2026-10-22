@@ -1,0 +1,4 @@
+R01d control: second dispatch of the same 10 kg while D-1 exists: {"ok":false,"error":"Dispatch packing exceeds QC-released and packaged output for production job J-Q"}
+R01d owner deletes delivered D-1: accepted
+R01d re-ship the same 10 kg after the delete: {"ok":true,"value":[{"id":"3107a255-95e5-47fd-8eab-781bd866e0a6"}]}
+R01d dispatches now: [{"dispatch_number":"D-2026-0001","delivery_status":"dispatched","total_weight_kg":"10.000"}]

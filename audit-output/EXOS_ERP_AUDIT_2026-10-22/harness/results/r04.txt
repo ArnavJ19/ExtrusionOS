@@ -1,0 +1,3 @@
+R04a record 1,020 kg coated output for 1,000 kg mill input: Finishing output plus rejection cannot exceed input weight
+R04a control: record 1,000 kg: accepted
+R04b dispatch weighs the 600 kg job at 600.4 kg: Dispatch packing exceeds QC-released and packaged output for production job J-Q

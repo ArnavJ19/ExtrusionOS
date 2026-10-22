@@ -1,0 +1,17 @@
+R02a operator sets rejected lot to available: accepted
+R02a lot now: [{"status":"reserved","weight_kg":"100000000.000","available_weight_kg":"99994001.119"}]
+R02a operator charges 40 billets from the released lot: Inventory item stock (0.000) is below the 875.600 kg charged from source EAS-X
+R02a batch: []
+R02a audit trail of the status flip: []
+R02b receipt 1000 kg @200: accepted
+R02b after receipt: [{"status":"available","avail":"1000.000","inv_stock":"1000.000","expense_total":"200000.00","approval_status":"pending_approval","payment_status":"unpaid","balance_amount":"200000.00"}]
+R02b operator marks lot returned: accepted
+R02b after return: [{"status":"returned","avail":"1000.000","inv_stock":"1000.000","expense_total":"200000.00","approval_status":"pending_approval","payment_status":"unpaid","balance_amount":"200000.00"}]
+R02b operator un-returns the lot: accepted
+R02b after un-return: [{"status":"available","avail":"1000.000","inv_stock":"1000.000","expense_total":"200000.00","approval_status":"pending_approval","payment_status":"unpaid","balance_amount":"200000.00"}]
+R02c manager rejects lot at incoming inspection: accepted
+R02c control: charge while rejected: Selected foundry source is not usable
+R02c operator releases it (no approval, no reason): accepted
+R02c operator charges the off-spec lot: accepted
+R02c result: [{"batch_number":"FB-2026-0001","external_aluminium_kg":"919.380","src_status":"reserved","available_weight_kg":"1080.620"}]
+R02c any audit row for the lot: [{"n":0}]

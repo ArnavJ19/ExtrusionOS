@@ -1,0 +1,3 @@
+R08 before: [{"batches":1,"reservations":1}]
+R08 owner deletes profile P-200 (696 kg stock, 348 kg reserved for ORD-A): accepted
+R08 after: [{"batches":0,"reservations":0,"audit_rows":0}]

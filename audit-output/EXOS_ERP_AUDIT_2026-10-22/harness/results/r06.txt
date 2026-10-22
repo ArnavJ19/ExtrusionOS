@@ -1,0 +1,6 @@
+R06 issue billet 1 only: {"ok":true,"value":[{"n":1}]}
+R06 before completion: [{"n":1,"status":"issued"},{"n":2,"status":"allocated"},{"n":3,"status":"allocated"}]
+R06a honest completion (500 kg used of the 1,500 kg linked): Billet mass balance failed: linked input 1500.000 kg, accounted output and scrap 500.000 kg, tolerance 15.000 kg
+R06b completion booking 1,000 kg 'loss' for the unissued billets: accepted
+R06 billets after completion: [{"n":1,"status":"consumed"},{"n":2,"status":"consumed"},{"n":3,"status":"consumed"}]
+R06 issue evidence rows: [{"n":1}]
