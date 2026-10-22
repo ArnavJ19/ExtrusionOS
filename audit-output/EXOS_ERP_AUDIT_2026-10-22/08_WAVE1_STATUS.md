@@ -1,6 +1,6 @@
 # Wave 1 status — EXOS-AUD2-001, 004, 005, 006, 007 (22 October 2026)
 
-Branch `audit2/wave1` (worktree `.worktrees/audit2-wave1`). **Nothing has been applied to hosted.**
+Branch `audit2/wave1` (worktree `.worktrees/audit2-wave1`). **The four migrations are applied to hosted (22 October 2026, ledger 133). The 004 app half is not deployed yet.**
 
 ## 007 — Hosted migrations now in git
 
@@ -85,7 +85,32 @@ The gate caught two defects in the candidates before this pass:
 
 The dry run was the four files concatenated with their `begin;`/`commit;` lines removed. They ran inside an explicit `begin`, and a final `DO` block raised `DRYRUN OK …` to force the rollback. The script is `20261022100000…130000` exactly as committed in `f84ff70`.
 
-## Before applying to hosted
+## Applied to hosted (22 October 2026)
+
+Pre-check: hosted was still fn 394 `3272fbb6…`, pol 603 `7f829dc7…`, trg 325 `3108a74b…` at ledger 129.
+
+The files were applied in order with `apply_migration`, without `begin;`/`commit;`:
+
+| Ledger version | Migration |
+| --- | --- |
+| `20261022023509` | `20261022100000_dispatch_delete_lifecycle_guard` |
+| `20261022023534` | `20261022110000_operational_history_retention` |
+| `20261022023553` | `20261022120000_profile_master_delete_restrict` |
+| `20261022023639` | `20261022130000_metal_source_disposition` |
+
+Post-check:
+
+- **Fingerprint:** fn 400 `79e71dbb…`, pol 604 `44294787…`, trg 344 `9db550cb…`. This is **identical to the dry run and the gated candidate replica**. The ledger now has 133 rows.
+- **Profile FKs:** all 7 are validated with NO ACTION.
+- **Disposition RPC:** `set_metal_source_disposition` can be executed by `authenticated` and not by `anon`.
+- **Security advisor:** the only new entry is `set_metal_source_disposition` in the existing "authenticated may execute a SECURITY DEFINER RPC with an internal role check" class (82 entries). There are no new RLS, view or anon findings.
+
+**Open:**
+
+- **App deploy:** deploy the 004 app half (this branch's app changes). Until then, the old record form still offers an editable lot status. The database refuses any status change there with "Lot status changes through the lot disposition…", and there is no UI to hold, release or return a lot.
+- **Merge:** `audit2/wave1` is not merged into `codex/v1` or `main`, and nothing is pushed.
+
+## Before applying to hosted (completed)
 
 1. Re-fingerprint hosted. It must still equal fn 394 `3272fbb6…`, pol 603 `7f829dc7…` and trg 325 `3108a74b…`. If it doesn't, rerun the dry run.
 2. Apply 100000 → 110000 → 120000 → 130000 without `begin;`/`commit;`. The dry run above has already been done.
