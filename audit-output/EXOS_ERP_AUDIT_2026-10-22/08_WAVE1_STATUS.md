@@ -74,9 +74,20 @@ The gate caught two defects in the candidates before this pass:
 | `npm run build` | Not run |
 
 
+## Hosted dry run (22 October 2026, rolled back)
+
+| Step | fn | pol | trg | Notes |
+| --- | --- | --- | --- | --- |
+| Hosted before | 394 `3272fbb6…` | 603 `7f829dc7…` | 325 `3108a74b…` | Ledger 129. Identical to the gate baseline. |
+| Candidate replica (local) | 400 `79e71dbb…` | 604 `44294787…` | 344 `9db550cb…` | Baseline plus the four candidates. |
+| Hosted, inside the dry-run transaction | 400 `79e71dbb…` | 604 `44294787…` | 344 `9db550cb…` | **Identical to the candidate replica.** All 7 re-created profile FKs validated against hosted data (NO ACTION). `metal_source_dispositions` = 0. |
+| Hosted after | 394 `3272fbb6…` | 603 `7f829dc7…` | 325 `3108a74b…` | Ledger 129. `metal_source_dispositions` does not exist. The `profile_stock_batches` FK is still CASCADE. Nothing persisted. |
+
+The dry run was the four files concatenated with their `begin;`/`commit;` lines removed. They ran inside an explicit `begin`, and a final `DO` block raised `DRYRUN OK …` to force the rollback. The script is `20261022100000…130000` exactly as committed in `f84ff70`.
+
 ## Before applying to hosted
 
-1. Re-fingerprint hosted. It must still equal the gate baseline (`node …/harness/current-db.mjs --fingerprint`).
-2. Dry-run each file in a rolled-back transaction on hosted (the `raise exception 'DRYRUN'` pattern), then apply 100000 → 110000 → 120000 → 130000 without `begin;`/`commit;`.
+1. Re-fingerprint hosted. It must still equal fn 394 `3272fbb6…`, pol 603 `7f829dc7…` and trg 325 `3108a74b…`. If it doesn't, rerun the dry run.
+2. Apply 100000 → 110000 → 120000 → 130000 without `begin;`/`commit;`. The dry run above has already been done.
 3. Deploy the app half of 004 at the same time as `20261022130000`. Without it, the record form still shows an editable status, which the database now refuses.
 4. After applying, fingerprint the objects again and rerun the gate in `GATE_POST_APPLY` style against a fresh dump.
