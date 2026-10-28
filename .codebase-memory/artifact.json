@@ -1,11 +1,11 @@
 {
     "schema_version": 2,
-    "commit": "af6d889164e095a68c43a5e463c5e6eaac471011",
-    "indexed_at": "2026-10-20T06:53:50Z",
+    "commit": "f715b4d37ac92598cf1d9841a5401195628a5fa2",
+    "indexed_at": "2026-10-21T08:44:51Z",
     "project": "C-Users-arnav-OneDrive-Desktop-ExtrusionOS",
-    "nodes": 5960,
-    "edges": 15299,
-    "original_size": 18415616,
-    "compressed_size": 3210597,
+    "nodes": 9669,
+    "edges": 26455,
+    "original_size": 28246016,
+    "compressed_size": 4858646,
     "compression_level": 3
 }
