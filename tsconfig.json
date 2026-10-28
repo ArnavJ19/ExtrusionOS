@@ -38,7 +38,13 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     ".next-dev/types/**/*.ts",
-    ".next-dev/dev/types/**/*.ts"
+    ".next-dev/dev/types/**/*.ts",
+    ".next-acceptance/types/**/*.ts",
+    ".next-acceptance/dev/types/**/*.ts",
+    ".next-acceptance-build/types/**/*.ts",
+    ".next-acceptance-build/dev/types/**/*.ts",
+    ".next-upgrade-verify/types/**/*.ts",
+    ".next-upgrade-verify/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { readStagingEnvironment, StagingGateError } from "../tests/e2e/staging/support/environment.ts";
 
 try {
@@ -15,8 +16,8 @@ try {
   throw error;
 }
 
-const executable = process.platform === "win32" ? "npx.cmd" : "npx";
-const child = spawn(executable, ["playwright", "test", "--config=playwright.staging.config.ts"], {
+const playwrightCli = fileURLToPath(import.meta.resolve("@playwright/test/cli"));
+const child = spawn(process.execPath, [playwrightCli, "test", "--config=playwright.staging.config.ts"], {
   stdio: "inherit",
   env: process.env,
 });
