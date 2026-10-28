@@ -91,6 +91,7 @@ export async function createBilletAllocationBrowserFixture({ styled = false } = 
     const context = await browser.newContext(), base = `http://127.0.0.1:${server.address().port}`;
     await context.route("**/*", route => new URL(route.request().url()).origin === base ? route.continue() : route.abort());
     const page = await context.newPage(), errors = [];
+    page.setDefaultNavigationTimeout(15000);
     page.on("pageerror", error => errors.push(error.message));
     return {
       page, errors,

@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { calculateSystemConfiguration, type ComponentRole, type HardwareCategory, type PanelLayout, type SystemTemplate, type SystemType } from "./formula-engine";
 import { optimizeProfileCuts } from "./profile-optimization";
 import { buildProductionJobRemarks, getProductionHandoffReadiness, groupProfileCutsForProduction } from "./production-handoff";
-import { getBatchAvailablePieces, getBatchReservationAllocation, groupProfileReservationRequirements } from "./inventory-reservation";
+import { getBatchAvailablePieces, getBatchReservationAllocation, groupProfileReservationRequirements, isReservableBatch } from "./inventory-reservation";
 import { hasCriticalWarnings } from "./warning-categories";
 import { getSystemsConfiguratorContext } from "./access";
 import { loadCompleteSystemProfileSeries } from "./profile-library";
@@ -540,7 +540,7 @@ export async function reserveSystemBomProfileStock(configurationId: string) {
   const [stockResult, reservationsResult] = await Promise.all([
     supabase
     .from("profile_stock_batches")
-      .select("id, profile_id, total_weight_kg, length_m, quantity_pieces, bundle_number, created_at, status")
+      .select("id, profile_id, total_weight_kg, length_m, quantity_pieces, bundle_number, created_at, status, qc_status")
     .eq("company_id", context.companyId)
     .in("status", ["available", "reserved"])
     .in("profile_id", profileIds)
@@ -572,7 +572,7 @@ export async function reserveSystemBomProfileStock(configurationId: string) {
   for (const requirement of requirements) {
     let remainingLength = requirement.requiredLengthM;
     let remainingWeight = requirement.requiredWeightKg;
-    const batches = (stockResult.data ?? []).filter((batch: any) => batch.profile_id === requirement.profileId);
+    const batches = (stockResult.data ?? []).filter((batch: any) => batch.profile_id === requirement.profileId && isReservableBatch(batch));
     for (const batch of batches) {
       if (remainingWeight <= 0 && remainingLength <= 0) break;
       const availablePieces = getBatchAvailablePieces(batch, reservationsWithConsumption);

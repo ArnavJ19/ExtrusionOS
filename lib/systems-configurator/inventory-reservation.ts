@@ -33,7 +33,7 @@ export function buildProfileReservationStatus(requirements: ProfileReservationRe
   return requirements.map((requirement) => {
     const batches = stockBatches.filter((batch) => batch.profile_id === requirement.profileId);
     const activeReservations = reservations.filter((reservation) => reservation.profile_id === requirement.profileId && reservation.status === "active");
-    const usableBatches = batches.filter((batch) => ["available", "reserved"].includes(batch.status));
+    const usableBatches = batches.filter(isReservableBatch);
     const totalStockWeightKg = round3(usableBatches.reduce((sum, batch) => sum + Number(batch.total_weight_kg ?? 0), 0));
     const reservedWeightKg = round3(activeReservations.reduce((sum, reservation) => sum + Math.max(Number(reservation.reserved_weight_kg ?? 0) - Number(reservation.consumed_weight_kg ?? 0), 0), 0));
     const totalStockLengthM = round3(usableBatches.reduce((sum, batch) => sum + Number(batch.length_m ?? 0), 0));
@@ -44,6 +44,15 @@ export function buildProfileReservationStatus(requirements: ProfileReservationRe
     return { ...requirement, totalStockWeightKg, availableWeightKg, reservedWeightKg, totalStockLengthM, availableLengthM, reservedLengthM, shortageKg,
       ready: shortageKg === 0 && availableLengthM >= requirement.requiredLengthM };
   });
+}
+
+/**
+ * Stock the database will let a reservation draw from: an unsent batch whose QC status is
+ * released or not required (private.guard_stock_batch_qc_release). A batch without a loaded QC
+ * status is treated as reservable, matching rows that predate the QC column.
+ */
+export function isReservableBatch(batch: Record<string, any>) {
+  return ["available", "reserved"].includes(batch.status) && (batch.qc_status === undefined || ["released", "not_required"].includes(batch.qc_status));
 }
 
 export function getBatchAvailableWeightKg(batch: Record<string, any>, reservations: Record<string, any>[]) {

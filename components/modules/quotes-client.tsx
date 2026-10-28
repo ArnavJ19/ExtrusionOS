@@ -19,6 +19,7 @@ import { TaskGuidance } from "@/components/forms/task-guidance";
 import { repeatQuoteAction } from "@/lib/actions/repeat-quote";
 import { PageHeader } from "@/components/layout/page-header";
 import { calculateQuoteItem, calculateQuoteSummary, getQuoteItemWarnings, type QuoteItemInput } from "@/lib/calculations/quote";
+import { FinishingAreaNote } from "@/components/modules/finishing-area-note";
 import { quoteSchema } from "@/lib/validations/schemas";
 import { LengthUnitInput } from "@/components/modules/shared/length-unit-input";
 import { quotePreparationIssues } from "@/lib/workflow/quote-preparation";
@@ -30,6 +31,8 @@ import { rowMatchesSearch } from "@/lib/utils/search";
 import { canSaveQuoteDraft, duplicateQuoteDraftLine, getQuoteFormShortcut, runWithInFlightGuard } from "@/lib/forms/keyboard-entry";
 import { buildQuotePasteLine, getPieceCalculationState, getQuotePasteFinishOptions, getQuotePasteLengthUnit, parseQuotePaste, validateQuotePasteRows, type QuotePasteRow } from "@/lib/forms/quote-paste";
 import { saveQuoteAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
+import { costingRateAction } from "@/lib/actions/costing-rates";
+import { applyApprovedRates, finishingRateKey, rateLookupSchema } from "@/lib/workflow/costing-rates";
 import { dieAmortizationTypes, labelize, type DieAmortizationType, type FinishingChargeType, type FinishingType, type QuoteStatus, type SessionContext } from "@/types/app";
 
 type Customer = { id: string; customer_name: string; company_name: string | null; gst_number: string | null; billing_address: string | null; shipping_address: string | null };
@@ -486,6 +489,34 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
     });
   }
 
+  // UPGRADE_EOS feature 85: fill billet, conversion and finishing rates from the approved rates for
+  // the quote date and customer. Explicit and overridable; the quote page's Rate Check flags differences.
+  const [applyingRates, setApplyingRates] = useState(false);
+  async function applyRates() {
+    if (!form.customer_id) { toast.error("Choose the customer first: a customer agreement takes precedence over the general rate."); return; }
+    setApplyingRates(true);
+    try {
+      const lookup = async (extra: Record<string, string> = {}) => {
+        const result = await costingRateAction({ command: "rates.lookup", date: form.quote_date, customer_id: form.customer_id, ...extra });
+        if (!result.success) throw new Error(result.error);
+        return rateLookupSchema.parse(result.data);
+      };
+      const keys = [...new Set(items.map((item) => finishingRateKey(item)).filter((key): key is string => Boolean(key)))];
+      const [base, ...finishing] = await Promise.all([lookup(), ...keys.map((key) => { const [finishing_type, finishing_basis] = key.split("|"); return lookup({ finishing_type, finishing_basis }); })]);
+      const applied = applyApprovedRates(items, {
+        billet: base.billet?.rate ?? null, conversion: base.conversion?.rate ?? null,
+        finishing: Object.fromEntries(keys.map((key, index) => [key, finishing[index]?.finishing?.rate ?? null]))
+      });
+      setItems(applied.lines);
+      if (applied.missing.length) toast.warning(`No approved ${applied.missing.join(", ")} rate on ${formatDate(form.quote_date)}. Those values were left as entered.`);
+      else toast.success(applied.changed ? `Applied approved rates (${applied.changed} value${applied.changed === 1 ? "" : "s"} changed).` : "Lines already use the approved rates.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Approved rates could not be loaded.");
+    } finally {
+      setApplyingRates(false);
+    }
+  }
+
   function addLine() {
     setItems((current) => {
       setFocusLineIndex(current.length);
@@ -692,6 +723,7 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
                   <label className="block space-y-1.5"><span className="form-label">Finish</span><select className="form-input" value={item.finishing_type} onChange={(event) => updateItem(index, "finishing_type", event.target.value)}>{["mill_finish", "powder_coating", "anodizing", "wood_finish", "pvdf", "other"].map((value) => <option key={value} value={value}>{labelize(value)}</option>)}</select></label>
                   <label className="block space-y-1.5"><span className="form-label">Finish charge type</span><select className="form-input" value={item.finishing_charge_type} onChange={(event) => updateItem(index, "finishing_charge_type", event.target.value as FinishingChargeType)}>{["per_kg", "per_meter", "fixed", "per_sqft"].map((value) => <option key={value} value={value}>{labelize(value)}</option>)}</select></label>
                   <label className="block space-y-1.5"><span className="form-label">Finish charge</span><input className="form-input" type="number" inputMode="decimal" min="0" value={item.finishing_charge} onChange={(event) => updateItem(index, "finishing_charge", Number(event.target.value))} /></label>
+                  {item.finishing_charge_type === "per_sqft" ? <FinishingAreaNote totalMeters={calculated.total_meters} perimeterMm={profile?.section_perimeter_mm ?? item.perimeter_mm} ratePerSqft={Number(item.finishing_charge) || 0} perimeterSource={profile?.section_perimeter_mm != null ? "profile master" : "line value"} /> : null}
                   <label className="block space-y-1.5"><span className="form-label">Die charge</span><input className="form-input" type="number" inputMode="decimal" min="0" value={item.die_charge} onChange={(event) => updateItem(index, "die_charge", Number(event.target.value))} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Die amortization</span><select className="form-input" value={item.die_amortization_type} onChange={(event) => updateItem(index, "die_amortization_type", event.target.value as DieAmortizationType)}>{dieAmortizationTypes.map((value) => <option key={value} value={value}>{labelize(value)}</option>)}</select></label>
                   <label className="block space-y-1.5"><span className="form-label">Amortize over kg</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.001" value={item.die_amortization_quantity_kg ?? 0} onChange={(event) => updateItem(index, "die_amortization_quantity_kg", Number(event.target.value))} /></label>
@@ -711,7 +743,7 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
               </div>;
             })}
           </div>
-          <Button type="button" variant="secondary" className="mt-4" onClick={addLine}>Add item</Button>
+          <div className="mt-4 flex flex-wrap gap-2"><Button type="button" variant="secondary" onClick={addLine}>Add item</Button><Button type="button" variant="secondary" disabled={applyingRates || !items.length} onClick={() => void applyRates()}>{applyingRates ? "Loading rates…" : "Apply approved rates"}</Button></div>
           <div className="mt-5 grid gap-4 sm:grid-cols-3"><label className="block space-y-1.5"><span className="form-label">GST %</span><input className="form-input" type="number" value={form.gst_percent} onChange={(event) => setForm({ ...form, gst_percent: Number(event.target.value) })} /></label><div className="space-y-1.5 sm:col-span-2"><span className="form-label">Workflow status</span><div className="flex min-h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4"><Badge value={editingId ? form.status : "draft"} /><span className="text-xs font-semibold text-slate-600">Use the workflow actions after saving. Changing an approved or sent quote creates a new draft revision.</span></div></div></div>
           {summary.low_margin_approval_required ? <div className="mt-4 rounded-3xl border border-orange-200 bg-orange-50 p-4 text-sm font-semibold text-orange-900">This quotation is below the configured minimum margin. Sales users can save it as draft/internal review, but owner/admin approval is required before sending.</div> : null}
           <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm"><p className="font-bold">Draft preparation</p><p className="mt-1 text-xs text-slate-600">Start with customer, profile, pieces and cut length. Later details stay optional in a draft. Confirmation rechecks costing on the server.</p>{quotePreparationIssues(calculatedItems).map(issue => <p key={issue} className="mt-2 text-xs text-amber-800">{issue}</p>)}</div>

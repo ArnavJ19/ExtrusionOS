@@ -4,6 +4,9 @@ import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { LineDeliveryQueue } from "@/components/modules/orders/order-line-schedule";
+import { loadLineDeliveryQueue } from "@/lib/workflow/order-line-schedule-loader";
+import { canReadLineSchedule } from "@/lib/workflow/order-line-schedule";
 
 export default async function DispatchesPage() {
   const context = await getSessionContext();
@@ -21,6 +24,8 @@ export default async function DispatchesPage() {
   ]);
 
   const rows = allDispatches.data ?? [];
+  // UPGRADE_EOS feature 38: lines still to pack and dispatch, by their own requirement.
+  const lineQueue = canReadLineSchedule(context.role) && !context.dealerId ? await loadLineDeliveryQueue(supabase, "dispatch") : null;
   const inTransit = rows.filter((r: any) => r.delivery_status === "in_transit");
   const delivered = rows.filter((r: any) => r.delivery_status === "delivered");
   const pendingPickup = rows.filter((r: any) => r.delivery_status === "dispatched");
@@ -61,6 +66,7 @@ export default async function DispatchesPage() {
           allDispatches={allDispatchesData}
         />
       </ModuleOverviewClient>
+      {lineQueue ? <LineDeliveryQueue scope="dispatch" initial={lineQueue.data} unavailableMessage={lineQueue.message} /> : null}
     </div>
   );
 }

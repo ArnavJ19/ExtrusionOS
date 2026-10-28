@@ -40,7 +40,8 @@ export default async function NotificationsPage({ searchParams = Promise.resolve
     <div className="space-y-6">
       <PageHeader 
         title="Notifications" 
-        description="Your recent alerts and system messages." 
+        description="Your recent alerts and system messages."
+        actions={!context.dealerId ? <div className="flex gap-2"><Link href="/notifications/following" className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold">Following</Link><Link href="/notifications/requests" className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold">Action requests</Link></div> : null}
       />
       <QueryErrorNotice messages={error ? [error.message] : []} />
 

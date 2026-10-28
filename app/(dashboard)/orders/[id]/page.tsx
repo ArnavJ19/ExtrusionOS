@@ -1,3 +1,7 @@
+import { RestrictionPanel } from "@/components/modules/approvals/exception-requests";
+import { canRequestException } from "@/lib/workflow/exception-requests";
+import { RecordFollow } from "@/components/modules/notifications/record-follow";
+import { canFollow } from "@/lib/workflow/subscriptions";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -15,6 +19,16 @@ import { ErpControlPanel } from "@/components/modules/erp-control-panel";
 import { orderControls } from "@/lib/workflow/erp-control-panels";
 import { loadOrderBillingReconciliation } from "@/lib/orders/billing-reconciliation";
 import { RecordDiscussion } from "@/components/modules/operations/collaboration-tools";
+import { OrderProgressPanel } from "@/components/modules/orders/order-progress-panel";
+import { buildDispatchProgress, buildOrderProgress } from "@/lib/orders/order-progress";
+import { loadDispatchPackingTotals } from "@/lib/dispatches/packing-history";
+import { OrderLineSchedulePanel } from "@/components/modules/orders/order-line-schedule";
+import { loadOrderLineSchedule } from "@/lib/workflow/order-line-schedule-loader";
+import { canReadLineSchedule, canSetLineSchedule } from "@/lib/workflow/order-line-schedule";
+import { WorkRequirementsPanel } from "@/components/modules/orders/work-requirements-panel";
+import { canReviewRequirements, WORK_STAGES } from "@/lib/workflow/customer-step-requirements";
+
+const ORDER_JOB_LIMIT = 200;
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -43,7 +57,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     supabase.from("order_billet_requirements").select("id, alloy, temper, billet_diameter_inch, required_weight_kg, billets_required, billets_allocated, billets_short, status, profile_id").eq("company_id", context.companyId).eq("order_id", id),
     supabase.from("foundry_billets").select("id, billet_code, source_type, alloy, billet_diameter_inch, status, production_job_id").eq("company_id", context.companyId).eq("order_id", id),
     supabase.from("order_stage_history").select("id, stage, changed_at, remarks, changed_by").eq("company_id", context.companyId).eq("order_id", id),
-    supabase.from("order_dealer_stock_fulfillments_authorized").select("id, quote_item_id, order_item_id, finishing_type, unit_rate, fulfilled_weight_kg, fulfilled_length_m, notes, created_at, profile_id, profile_stock_batch_id").eq("company_id", context.companyId).eq("order_id", id),
+    supabase.from("order_dealer_stock_fulfillments_authorized").select("id, quote_item_id, order_item_id, finishing_type, unit_rate, fulfilled_weight_kg, fulfilled_length_m, notes, created_at, credited_at, profile_id, profile_stock_batch_id").eq("company_id", context.companyId).eq("order_id", id),
     supabase.from("dispatches").select("id, dispatch_number, dispatch_date, total_weight_kg, delivery_status").eq("company_id", context.companyId).eq("order_id", id)
   ]);
   const fulfillmentQuoteItemIds = [...new Set((fulfillmentsResult.data ?? []).map((row: any) => row.quote_item_id).filter(Boolean))];
@@ -106,6 +120,33 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const dealerLedgerLength = dealerFulfillments.reduce((sum: number, row: any) => sum + Number(row.fulfilled_length_m ?? 0), 0);
   const deliveryControls = await orderControls(supabase, context, order.id, order.current_stage ?? null);
   const billingLines = await loadOrderBillingReconciliation(supabase, context, order.id);
+  // UPGRADE_EOS feature 6: internal sessions see linked production and dispatch progress.
+  const showProgress = !context.dealerId && !["dealer_admin", "dealer_staff"].includes(context.role);
+  let orderProgress: ReturnType<typeof buildOrderProgress> | null = null;
+  let jobsUnavailable = false;
+  let dispatchProgress: ReturnType<typeof buildDispatchProgress> = { status: "unavailable" };
+  if (showProgress) {
+    const jobsResult = await supabase.from("production_jobs")
+      .select("id, job_number, status, source_line_id, planned_quantity_kg, actual_quantity_kg")
+      .eq("company_id", context.companyId).eq("order_id", order.id)
+      .order("created_at", { ascending: true }).limit(ORDER_JOB_LIMIT + 1);
+    jobsUnavailable = Boolean(jobsResult.error) || (jobsResult.data ?? []).length > ORDER_JOB_LIMIT;
+    if (!jobsUnavailable) {
+      orderProgress = buildOrderProgress({
+        lines: items.map((item: any) => ({ id: item.id, label: item.section_code || item.aluminium_profiles?.profile_code || item.item_description || "Line", quantity_kg: item.quantity_kg, quantity_pieces: item.quantity_pieces, total_meters: item.total_meters })),
+        jobs: jobsResult.data ?? [],
+        fulfillments: dealerFulfillments,
+        orderLevelTargetKg: order.production_quantity_kg ?? order.manufacturing_weight_kg
+      });
+    }
+    try {
+      const packed = await loadDispatchPackingTotals(supabase, context.companyId, order.id, null);
+      const shipped = [...packed.values()].reduce((sum, row) => ({ pieces: sum.pieces + row.pieces, lengthM: sum.lengthM + row.lengthM, weightKg: sum.weightKg + row.weightKg }), { pieces: 0, lengthM: 0, weightKg: 0 });
+      dispatchProgress = buildDispatchProgress(items.map((item: any) => ({ id: item.id, label: "", quantity_pieces: item.quantity_pieces, total_meters: item.total_meters })), shipped);
+    } catch { dispatchProgress = { status: "unavailable" }; }
+  }
+  // UPGRADE_EOS feature 38: per-line delivery requirements for internal readers.
+  const lineSchedule = showProgress && canReadLineSchedule(context.role) ? await loadOrderLineSchedule(supabase, order.id) : null;
   const lineLabel = (orderItemId: string) => {
     const line = items.find((item: any) => item.id === orderItemId);
     return line?.section_code || line?.aluminium_profiles?.profile_code || line?.item_description || "Line";
@@ -113,6 +154,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="space-y-6">
+      {!context.dealerId && canFollow(context.role, "order") ? <RecordFollow entityType="order" entityId={id} /> : null}
+      {!context.dealerId && canRequestException(context.role, "overdue_dispatch") ? <RestrictionPanel exceptionType="overdue_dispatch" entityId={id} /> : null}
+      {!context.dealerId ? WORK_STAGES.filter(stage => canReviewRequirements(context.role, stage)).map(stage => <WorkRequirementsPanel key={stage} companyId={context.companyId} role={context.role} stage={stage} orderId={id} />) : null}
       <div className="flex justify-between items-start">
         <PageHeader 
           title={`Order ${order.order_number}`} 
@@ -125,6 +169,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       </div>
 
       <ErpControlPanel title="Delivery closure" actions={deliveryControls} />
+      {showProgress ? <OrderProgressPanel progress={orderProgress} dispatch={dispatchProgress} jobsUnavailable={jobsUnavailable} canOpenJobs={can(context.role, "read", "production")} /> : null}
+      {lineSchedule ? <OrderLineSchedulePanel orderId={order.id} initial={lineSchedule.data} unavailableMessage={lineSchedule.message} canWrite={canSetLineSchedule(context.role)} /> : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">

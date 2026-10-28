@@ -32,7 +32,7 @@ export default async function InventoryReservationsPage({ searchParams }: { sear
 
   return (
     <div className="space-y-6">
-      <div><Link href="/inventory" className="mb-3 inline-flex items-center gap-2 text-sm font-black text-slate-500 transition hover:text-orange"><ArrowLeft className="h-4 w-4" /> Back to Inventory</Link><PageHeader title="Stock Reservations" description="Trace reserved, consumed and released profile stock against its order. Open holds represent unconsumed commitments; releasing a hold does not add physical stock." /></div>
+      <div><Link href="/inventory" className="mb-3 inline-flex items-center gap-2 text-sm font-black text-slate-500 transition hover:text-orange"><ArrowLeft className="h-4 w-4" /> Back to Inventory</Link><Link href="/inventory/stock-balances" className="mb-3 ml-4 inline-flex items-center gap-2 text-sm font-black text-slate-500 transition hover:text-orange">Explain batch balances</Link><PageHeader title="Stock Reservations" description="Trace reserved, consumed and released profile stock against its order. Open holds represent unconsumed commitments; releasing a hold does not add physical stock." /></div>
       <ErpControlPanel title="Finished stock origin and QC hold" actions={qcControls} />
       <form action="/inventory/reservations" className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4">
         <label className="text-xs font-semibold text-slate-600">Search<input name="q" defaultValue={options.search} placeholder="Profile, order, customer or bundle" className="form-input mt-1 block" /></label>

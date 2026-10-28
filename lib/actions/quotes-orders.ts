@@ -166,7 +166,12 @@ export async function updateQuoteStatusAction(quoteId: string, status: QuoteStat
       return { success: false, error: `Quote cannot move from ${currentStatus.replace(/_/g, " ")} to ${parsedStatus.data.replace(/_/g, " ")}.` };
     }
     if (quoteResult.data.low_margin_approval_required && ["approved_for_sending", "sent", "customer_approved"].includes(parsedStatus.data) && !isLowMarginApprover(context.role)) {
-      return { success: false, error: "This low-margin quote needs owner/admin approval." };
+      // UPGRADE_EOS feature 45: with an approved exception for this exact version, the database
+      // guard decides (it rechecks the version, expiry and non-overridable limits).
+      const exception = await supabase.rpc("exception_command", { p_command: "restriction.check", p_payload: { exception_type: "low_margin_quote", entity_id: quoteId } });
+      const covered = !exception.error && Array.isArray(exception.data?.requests)
+        && exception.data.requests.some((request: { status?: string; covers_current?: boolean }) => request.status === "approved" && request.covers_current === true);
+      if (!covered) return { success: false, error: "This low-margin quote needs owner/admin approval." };
     }
 
     if (quoteConfirmationStages.includes(parsedStatus.data)) {

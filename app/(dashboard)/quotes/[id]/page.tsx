@@ -1,3 +1,7 @@
+import { RestrictionPanel } from "@/components/modules/approvals/exception-requests";
+import { canRequestException } from "@/lib/workflow/exception-requests";
+import { RecordFollow } from "@/components/modules/notifications/record-follow";
+import { canFollow } from "@/lib/workflow/subscriptions";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -14,11 +18,17 @@ import { getReportTemplate } from "@/lib/reports/pcda/templates";
 import { updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
 import { getAllowedQuoteStatusTransitions } from "@/lib/workflow/quote-status";
 import type { QuoteStatus } from "@/types/app";
+import { parseCompareParams } from "@/lib/workflow/quote-revision-compare";
+import { loadQuoteComparison } from "@/lib/workflow/quote-revision-loader";
+import { QuoteRevisionComparison } from "@/components/modules/quotes/quote-revision-comparison";
+import { QuoteRateCheckPanel } from "@/components/modules/quotes/quote-rate-check";
+import { canReadRates, quoteRateCheckSchema } from "@/lib/workflow/costing-rates";
 
 const quoteStatusErrorMessages = {
   invalid_status: "Choose a valid quote status.",
   invalid_transition: "That quote status change is not permitted from its current stage.",
   approval_required: "This low-margin quote needs owner or admin approval before it can move forward.",
+  exception_changed: "The quotation changed after its exception was approved. Request an exception for this version.",
   forbidden: "You do not have permission to update this quote.",
   not_found: "This quote could not be found for your company.",
   update_failed: "The quote status could not be updated. Please try again.",
@@ -28,6 +38,8 @@ type QuoteStatusErrorCode = keyof typeof quoteStatusErrorMessages;
 
 function quoteStatusErrorCode(error?: string): QuoteStatusErrorCode {
   if (error === "This low-margin quote needs owner/admin approval.") return "approval_required";
+  if (error === "The quotation changed after its exception was approved. Request an exception for this version") return "exception_changed";
+  if (error === "Only owners and admins may approve low-margin quotations") return "approval_required";
   if (error === "You do not have permission to update quotations.") return "forbidden";
   if (error === "Quote not found for this company.") return "not_found";
   if (error === "Invalid quote status.") return "invalid_status";
@@ -40,7 +52,7 @@ export default async function QuoteDetailPage({
   searchParams
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ statusError?: string | string[] }>;
+  searchParams: Promise<{ statusError?: string | string[]; compareFrom?: string | string[]; compareTo?: string | string[] }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -82,13 +94,19 @@ export default async function QuoteDetailPage({
     supabase.from("customers").select("customer_name, company_name").eq("company_id", context.companyId).eq("id", quoteRow.customer_id).maybeSingle(),
     supabase.from("quote_items_authorized").select("*").eq("company_id", context.companyId).eq("quote_id", id).order("created_at"),
     supabase.from("orders_authorized").select("id, order_number").eq("company_id", context.companyId).eq("quote_id", id).maybeSingle(),
-    supabase.from("quote_revisions").select("id, revision_number, revised_at, reason").eq("company_id", context.companyId).eq("quote_id", id).order("revision_number", { ascending: false })
+    supabase.from("quote_revisions").select("id, revision_number, revised_at, reason, revised_by").eq("company_id", context.companyId).eq("quote_id", id).order("revision_number", { ascending: false })
   ]);
   const profileIds = [...new Set((itemsResult.data ?? []).map((item: any) => item.profile_id).filter(Boolean))];
   const profilesResult = profileIds.length
     ? await supabase.from("aluminium_profiles").select("id, profile_code, profile_name").eq("company_id", context.companyId).in("id", profileIds)
     : { data: [], error: null };
   const profileById = new Map((profilesResult.data ?? []).map((profile: any) => [profile.id, profile]));
+  // Names for the approver and revision authors; an unreadable name shows as unrecorded, never a placeholder.
+  const personIds = [...new Set([quoteRow.approved_by, ...(revisionsResult.data ?? []).map((rev: any) => rev.revised_by)].filter((value): value is string => typeof value === "string"))];
+  const peopleResult = personIds.length
+    ? await supabase.from("app_users").select("id, full_name").eq("company_id", context.companyId).in("id", personIds)
+    : { data: [], error: null };
+  const personName = new Map((peopleResult.data ?? []).map((person: any) => [person.id, person.full_name as string | null]));
   const quote = {
     ...quoteRow,
     customers: customerResult.data,
@@ -119,6 +137,16 @@ export default async function QuoteDetailPage({
   }
   const canGeneratePcda = getReportTemplate("quote_line")?.roles.includes(context.role) ?? false;
   const allowedQuoteStatuses = getAllowedQuoteStatusTransitions(quote.status as QuoteStatus);
+  // UPGRADE_EOS feature 25: compare two recorded versions (revision numbers or the current version).
+  const comparePair = parseCompareParams(query.compareFrom, query.compareTo);
+  const comparison = comparePair ? await loadQuoteComparison(supabase, context.companyId, quote.id, comparePair.from, comparePair.to) : null;
+  const latestRevision = [...revisions].sort((a: any, b: any) => b.revision_number - a.revision_number)[0];
+  // UPGRADE_EOS feature 85: rate check for commercial roles only; rates are never shown to dealers.
+  const rateCheckResult = !context.dealerId && canReadRates(context.role) && items.length
+    ? await supabase.rpc("costing_rate_command", { p_command: "quote.check", p_payload: { quote_id: quote.id } })
+    : null;
+  const rateCheckParsed = rateCheckResult && !rateCheckResult.error ? quoteRateCheckSchema.safeParse(rateCheckResult.data) : null;
+  const rateCheck = rateCheckParsed?.success ? rateCheckParsed.data : null;
 
   return (
     <div className="space-y-6">
@@ -144,11 +172,15 @@ export default async function QuoteDetailPage({
         </div>
       </div>
 
+      {!context.dealerId && quote.low_margin_approval_required && canRequestException(context.role, "low_margin_quote") ? <RestrictionPanel exceptionType="low_margin_quote" entityId={quote.id} /> : null}
+
       {statusError ? (
         <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
           {statusError}
         </div>
       ) : null}
+
+      {!context.dealerId && canFollow(context.role, "quote") ? <RecordFollow entityType="quote" entityId={quote.id} /> : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="min-w-0 space-y-6">
@@ -203,6 +235,28 @@ export default async function QuoteDetailPage({
               </div>
             </CardContent>
           </Card>
+
+          {comparison ? (
+            <Card id="version-comparison">
+              <CardHeader>
+                <h3 className="font-bold tracking-tight text-slate-900">Version Comparison</h3>
+              </CardHeader>
+              <CardContent>
+                <QuoteRevisionComparison state={comparison} />
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {rateCheck ? (
+            <Card id="rate-check">
+              <CardHeader>
+                <h3 className="font-bold tracking-tight text-slate-900">Rate Check</h3>
+              </CardHeader>
+              <CardContent>
+                <QuoteRateCheckPanel check={rateCheck} />
+              </CardContent>
+            </Card>
+          ) : null}
 
           <Card>
             <CardContent className="space-y-4 pt-5 text-sm">
@@ -304,7 +358,7 @@ export default async function QuoteDetailPage({
               {quote.approved_by && (
                 <div>
                   <p className="font-bold uppercase tracking-wider text-slate-500 text-xs">Approved By</p>
-                  <p className="font-medium text-slate-900 mt-1">Admin User</p>
+                  <p className="font-medium text-slate-900 mt-1">{personName.get(quote.approved_by) || "Name not recorded"}</p>
                 </div>
               )}
             </CardContent>
@@ -320,7 +374,7 @@ export default async function QuoteDetailPage({
                   {revisions.sort((a: any, b: any) => b.revision_number - a.revision_number).map((rev: any) => (
                     <div key={rev.id} className="text-sm border-l-2 border-slate-200 pl-4 py-1">
                       <p className="font-bold text-slate-900">Revision {rev.revision_number}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{formatDate(rev.revised_at)} • {rev.users?.full_name || "System"}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Superseded {formatDate(rev.revised_at)} • {personName.get(rev.revised_by) || "Name not recorded"}</p>
                       {rev.reason && <p className="text-slate-700 mt-1 italic">&quot;{rev.reason}&quot;</p>}
                     </div>
                   ))}
@@ -329,6 +383,24 @@ export default async function QuoteDetailPage({
                     <p className="text-xs text-slate-500 mt-0.5">{formatDate(quote.updated_at || quote.created_at)}</p>
                   </div>
                 </div>
+                <form method="get" action={`/quotes/${quote.id}#version-comparison`} className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Compare versions</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="space-y-1"><span className="form-label">From</span>
+                      <select name="compareFrom" className="form-input" defaultValue={comparePair ? (comparePair.from === null ? "current" : String(comparePair.from)) : String(latestRevision?.revision_number ?? "")}>
+                        {revisions.map((rev: any) => <option key={rev.id} value={String(rev.revision_number)}>Revision {rev.revision_number}</option>)}
+                        <option value="current">Revision {quote.revision_number} (current)</option>
+                      </select>
+                    </label>
+                    <label className="space-y-1"><span className="form-label">To</span>
+                      <select name="compareTo" className="form-input" defaultValue={comparePair ? (comparePair.to === null ? "current" : String(comparePair.to)) : "current"}>
+                        {revisions.map((rev: any) => <option key={rev.id} value={String(rev.revision_number)}>Revision {rev.revision_number}</option>)}
+                        <option value="current">Revision {quote.revision_number} (current)</option>
+                      </select>
+                    </label>
+                  </div>
+                  <button type="submit" className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold text-slate-900 transition hover:bg-slate-50">Compare</button>
+                </form>
               </CardContent>
             </Card>
           )}

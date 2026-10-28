@@ -79,7 +79,7 @@ test("factory date defaults use the shared business calendar", () => {
     "components/modules/dies/dies-overview-client.tsx",
     "components/modules/orders/quote-order-form-client.tsx",
     "components/modules/operations/record-form-client.tsx",
-    "components/modules/invoices-client.tsx",
+    "components/modules/financials/payment-form-client.tsx",
     "lib/calculations/quote.ts",
     "lib/calculations/operations.ts",
     "app/api/dealer-orders/[id]/workflow/route.ts",

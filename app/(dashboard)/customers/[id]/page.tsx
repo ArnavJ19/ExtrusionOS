@@ -9,6 +9,7 @@ import Link from "next/link";
 import { can } from "@/lib/auth/permissions";
 import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 import { CustomerAliasManager, CustomerCommitments } from "@/components/modules/operations/operator-tools";
+import { canManageCustomerRequirements } from "@/lib/workflow/customer-step-requirements";
 
 function addQuoteWeight(weights: Map<string, number>, item: { quote_id?: string | null; billing_weight_kg?: number | string | null; total_weight_kg?: number | string | null }) {
   if (!item.quote_id) return;
@@ -80,6 +81,7 @@ export default async function CustomerDetailPage({ params, searchParams }: { par
 
   return (
     <div className="space-y-6">
+      {!context.dealerId && canManageCustomerRequirements(context.role) ? <Link href={`/customers/${id}/requirements`} className="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold">Customer work requirements</Link> : null}
       <PageHeader 
         title={customer.company_name || customer.customer_name} 
         description={`Customer since ${formatDate(customer.created_at)}`}

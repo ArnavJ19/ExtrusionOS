@@ -1,4 +1,6 @@
 import { ModuleOverviewClient } from "@/components/modules/operations/module-overview-client";
+import Link from "next/link";
+import { canReadRates } from "@/lib/workflow/costing-rates";
 import { QuotesDashboard } from "@/components/modules/dashboards/quotes-dashboard";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
@@ -62,6 +64,9 @@ export default async function QuotesPage() {
     <div className="space-y-2">
       <ModuleOverviewClient moduleKey="quotes" context={context} canCreate={can(context.role, "create", "quotes")} canUpdate={can(context.role, "update", "quotes")} hideHeaderActions={true} hideMetricsAndCharts={true}>
         <QueryErrorNotice messages={queryErrors} />
+        {!context.dealerId && canReadRates(context.role) ? (
+          <div className="flex justify-end"><Link href="/quotes/rates" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold">Costing rates</Link></div>
+        ) : null}
         <QuotesDashboard
           canCreate={can(context.role, "create", "quotes")}
           showQuoteValues={["owner", "admin", "sales_manager", "sales", "accounts", "dealer_admin", "dealer_staff"].includes(context.role)}

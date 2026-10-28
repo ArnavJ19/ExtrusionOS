@@ -1,3 +1,6 @@
+import { RecordFollow } from "@/components/modules/notifications/record-follow";
+import { canFollow } from "@/lib/workflow/subscriptions";
+import { WorkRequirementsPanel } from "@/components/modules/orders/work-requirements-panel";
 import { RecordDetailClient } from "@/components/modules/operations/record-detail-client";
 import { DispatchDeliveryWorkflow } from "@/components/modules/dispatch-delivery-workflow";
 import { DispatchCreditNoteClient } from "@/components/modules/dispatch-credit-note-client";
@@ -26,6 +29,8 @@ export default async function DispatchDetailPage({ params, searchParams }: {
   const reservationPage = getReservationLedgerOptions({ page: query.reservationPage }).page;
   return <div className="space-y-6">
     <RecordDetailClient moduleKey="dispatches" context={context} recordId={id} canEdit={false} />
+    {!context.dealerId ? <WorkRequirementsPanel companyId={context.companyId} role={context.role} stage="dispatch" source={{ type: "dispatch", id }} /> : null}
+    {!context.dealerId && canFollow(context.role, "dispatch") ? <RecordFollow entityType="dispatch" entityId={id} /> : null}
     <DispatchDeliveryPanel dispatchId={id} canUpdate={canUpdate} />
     <DispatchPackingPanel dispatchId={id} />
     <DispatchReservationPanel dispatchId={id} page={reservationPage} />

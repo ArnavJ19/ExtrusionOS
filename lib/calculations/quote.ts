@@ -86,6 +86,21 @@ const money = (value: number) => roundMoney(nonNegative(value));
 const signedMoney = (value: number) => roundMoney(n(value));
 const qty = (value: number) => roundWeight(nonNegative(value));
 
+export const SQFT_PER_M2 = 10.76391041671;
+
+// UPGRADE_EOS feature 84: area m2 = total length m x coating perimeter mm / 1,000, then sq ft.
+// Uses the same arithmetic as calculateQuoteItem so the explanation matches the costed line.
+export function explainFinishingArea(totalMeters: number, perimeterMm: number | null | undefined, ratePerSqft: number) {
+  const perimeter = perimeterMm === null || perimeterMm === undefined ? null : Number(perimeterMm);
+  if (perimeter === null || !Number.isFinite(perimeter) || perimeter <= 0) {
+    return { ok: false as const, reason: "Coating perimeter is not recorded on this profile, so the finishing charge is incomplete (not zero)." };
+  }
+  if (!Number.isFinite(totalMeters) || totalMeters <= 0) return { ok: false as const, reason: "Enter pieces and cut length to calculate the coated area." };
+  const areaM2 = totalMeters * perimeter / 1000;
+  const areaSqft = areaM2 * SQFT_PER_M2;
+  return { ok: true as const, totalMeters, perimeterMm: perimeter, areaM2: roundWeight(areaM2), areaSqft: roundWeight(areaSqft), charge: calculateFinishingCost("per_sqft", ratePerSqft, 0, totalMeters, areaSqft) };
+}
+
 export function calculateFinishingCost(chargeType: FinishingChargeType, charge: number, billingWeightKg: number, totalMeters: number, surfaceAreaSqft?: number) {
   if (chargeType === "per_kg") return money(billingWeightKg * nonNegative(charge));
   if (chargeType === "per_meter") return money(totalMeters * nonNegative(charge));
@@ -94,6 +109,18 @@ export function calculateFinishingCost(chargeType: FinishingChargeType, charge: 
     return money(nonNegative(surfaceAreaSqft) * nonNegative(charge));
   }
   return 0;
+}
+
+// Margin is on the selling price: price = cost / (1 - margin%). 250 at 20% margin is 312.50
+// (a 25% markup). A margin of 100% or more has no price.
+export function sellingPriceFromMargin(cost: number, marginPercent: number) {
+  return marginPercent < 100 ? money(nonNegative(cost) / (1 - nonNegative(marginPercent) / 100)) : 0;
+}
+
+/** The markup on cost that gives a margin on price: 20% margin is a 25% markup. */
+export function marginToMarkup(marginPercent: number) {
+  const margin = nonNegative(marginPercent);
+  return margin < 100 ? Math.round((margin / (100 - margin)) * 1000000) / 10000 : null;
 }
 
 export function calculateDieAmortization(input: { dieCharge: number; billingWeightKg: number; type?: DieAmortizationType; quantityKg?: number }) {
@@ -125,7 +152,7 @@ export function calculateQuoteItem(input: QuoteItemInput): QuoteItemCalculated {
   const recoveryValid = expected_recovery_percent > 0 && expected_recovery_percent <= 100;
   const billetInput = recoveryValid ? billing_weight_kg / (expected_recovery_percent / 100) : 0;
   const billet_input_kg = qty(billetInput);
-  const surface_area_sqft = total_meters * nonNegative(input.perimeter_mm) / 1000 * 10.76391041671;
+  const surface_area_sqft = total_meters * nonNegative(input.perimeter_mm) / 1000 * SQFT_PER_M2;
   const costing_complete = recoveryValid && input.margin_percent >= 0 && input.margin_percent < 100
     && (input.finishing_charge_type !== "per_sqft" || surface_area_sqft > 0);
   const raw_material_cost = money(billetInput * nonNegative(input.billet_rate_per_kg));
@@ -133,7 +160,7 @@ export function calculateQuoteItem(input: QuoteItemInput): QuoteItemCalculated {
   const finishing_cost = calculateFinishingCost(input.finishing_charge_type, input.finishing_charge, billing_weight_kg, total_meters, surface_area_sqft);
   const die_amortization_amount = calculateDieAmortization({ dieCharge: input.die_charge, billingWeightKg: billing_weight_kg, type: die_amortization_type, quantityKg: die_amortization_quantity_kg });
   const line_subtotal = money(raw_material_cost + conversion_cost + finishing_cost + die_amortization_amount + nonNegative(input.packing_charge) + nonNegative(input.transport_charge) + nonNegative(input.other_charges));
-  const calculatedSellingBeforeGst = input.margin_percent < 100 ? money(line_subtotal / (1 - nonNegative(input.margin_percent) / 100)) : 0;
+  const calculatedSellingBeforeGst = sellingPriceFromMargin(line_subtotal, input.margin_percent);
   const margin_amount = signedMoney(calculatedSellingBeforeGst - line_subtotal);
   const line_total_before_gst = sales_price_override ?? calculatedSellingBeforeGst;
   const estimated_profit_amount = signedMoney(line_total_before_gst - line_subtotal);

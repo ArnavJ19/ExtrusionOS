@@ -36,7 +36,7 @@ export default async function SystemBomPage({ params }: { params: Promise<{ id: 
   const reservationSourceRows = profileMaterialRows.length ? profileMaterialRows.map((item: any) => ({ profile_id: item.item_id, profile_code: item.item_code, profile_name: item.item_name, total_weight_kg: item.total_weight_kg, total_length_m: item.total_length_m })) : profileRows;
   const reservationRequirements = groupProfileReservationRequirements(reservationSourceRows);
   const [stockResult, reservationsResult] = reservationRequirements.length ? await Promise.all([
-    supabase.from("profile_stock_batches").select("id, profile_id, total_weight_kg, length_m, status").eq("company_id", context.companyId).in("profile_id", reservationRequirements.map((item) => item.profileId)),
+    supabase.from("profile_stock_batches").select("id, profile_id, total_weight_kg, length_m, status, qc_status").eq("company_id", context.companyId).in("profile_id", reservationRequirements.map((item) => item.profileId)),
     supabase.from("profile_stock_reservations").select("id, profile_stock_batch_id, profile_id, order_id, configuration_id, reserved_weight_kg, reserved_length_m, reserved_pieces, status").eq("company_id", context.companyId).eq("status", "active").in("profile_id", reservationRequirements.map((item) => item.profileId))
   ]) : [{ data: [], error: null }, { data: [], error: null }];
   if (stockResult.error) throw stockResult.error;

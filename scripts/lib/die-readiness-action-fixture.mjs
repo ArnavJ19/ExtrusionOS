@@ -10,7 +10,7 @@ export function createDieReadinessActionFixture(){
   const f=dieFixture,state={};
   function reset(status="active"){
     Object.assign(state,{role:"owner",calls:[],queries:[],paths:[],errors:{},orderStage:"extrusion_planned",dieStatus:status,
-      dieProfile:f.profile,dieCompany:f.company,dieRows:null,queueDieNumber:"D-R15",queueProfile:f.profile,queueDieProfile:f.profile});return state;
+      dieProfile:f.profile,dieCompany:f.company,dieRows:null,billetRows:[],queueDieNumber:"D-R15",queueProfile:f.profile,queueDieProfile:f.profile});return state;
   }
   reset();
   const client={from(table){
@@ -28,7 +28,7 @@ export function createDieReadinessActionFixture(){
           planned_quantity_kg:10,order:{current_stage:state.orderStage},die:die.company_id===f.company?{profile_id:die.profile_id,die_status:die.die_status}:null}]:[],
         system_configurations_authorized:[{id:f.configuration,company_id:f.company,configuration_number:"SC-R15",customer_id:dieFixtureId(8),order_id:f.order,quote_id:null,status:"approved"}],
         system_profile_cuts:[{company_id:f.company,configuration_id:f.configuration,profile_id:f.profile,profile_code:"R15",profile_name:"Synthetic section",total_weight_kg:10,total_length_m:5}],
-        system_beading_cuts:[],dies:state.dieRows??[die],
+        system_beading_cuts:[],dies:state.dieRows??[die],foundry_billets:state.billetRows,
         orders:[{id:f.order,company_id:f.company,current_stage:state.orderStage}],
         aluminium_profiles:[{id:f.profile,company_id:f.company,is_active:true}],
         order_items_authorized:[{id:dieFixtureId(16),company_id:f.company,order_id:f.order,profile_id:f.profile,quantity_kg:10,length_per_piece_m:5}]};

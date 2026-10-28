@@ -126,11 +126,13 @@ test("a late save after switching billets cannot clear or refresh the new panel"
 
 test("unmounted load and save completions are ignored", async () => {
   await fixture.open(); await fixture.page.evaluate(() => window.__allocation.setMounted(false));
+  await expect(fixture.page.getByText("Panel unmounted")).toBeVisible();
   await fixture.read(0, { data: null, error: { message: "Obsolete error" } });
   assert.deepEqual(await fixture.page.evaluate(() => window.__allocation.notices), []);
   await fixture.open(); await fixture.ready(); await fixture.selectOrder(); await allocate().click();
-  await fixture.page.evaluate(() => window.__allocation.setMounted(false)); await fixture.save(0, { success: true, requirementId: id(4) });
+  await fixture.page.evaluate(() => window.__allocation.setMounted(false));
   await expect(fixture.page.getByText("Panel unmounted")).toBeVisible();
+  await fixture.save(0, { success: true, requirementId: id(4) });
   assert.deepEqual(await fixture.page.evaluate(() => window.__allocation.notices), []); assertClean();
 });
 
