@@ -141,10 +141,10 @@ export async function runFoundryMaterialIntegrityChecks() {
     // Load current predecessor function bodies and trigger definitions.
     for (const [file, name] of [
       ['20260930000000_astra_audit_fixes.sql', 'public.refresh_foundry_batch_calculations'],
-      ['0057_foundry_furnace_mix_and_chemistry.sql', 'public.sync_foundry_scrap_usage'],
-      ['0057_foundry_furnace_mix_and_chemistry.sql', 'public.sync_foundry_external_source_usage'],
+      ['20260515005700_foundry_furnace_mix_and_chemistry.sql', 'public.sync_foundry_scrap_usage'],
+      ['20260515005700_foundry_furnace_mix_and_chemistry.sql', 'public.sync_foundry_external_source_usage'],
       ['20260530000002_foundry_billet_allocation_repairs.sql', 'public.sync_foundry_billets'],
-      ['0056_order_billet_requirements_and_allocation.sql', 'public.handle_available_billet_allocation'],
+      ['20260515005600_order_billet_requirements_and_allocation.sql', 'public.handle_available_billet_allocation'],
       ['20260812000000_security_and_notification_integrity.sql', 'public.validate_foundry_billet_lineage']
     ]) await db.exec(definition(file, name));
 
@@ -365,7 +365,7 @@ export async function runFoundryMaterialIntegrityChecks() {
     });
 
     await check('real priority allocator receives only cast billets from the batch sync', async () => {
-      await db.exec(definition('0056_order_billet_requirements_and_allocation.sql', 'public.allocate_billets_by_priority'));
+      await db.exec(definition('20260515005600_order_billet_requirements_and_allocation.sql', 'public.allocate_billets_by_priority'));
       await db.exec(`insert into public.orders(id,company_id,order_number,current_stage,priority,expected_dispatch_date,order_date)
           values ('${autoOrder}','${company}','AUTO-6063','order_confirmed','high','2026-10-10','2026-10-08');
         insert into public.order_billet_requirements(id,company_id,order_id,profile_id,alloy,temper,billet_diameter_inch,billets_required,billets_allocated,billets_short,status)

@@ -1,4 +1,7 @@
 // Keep historical migrations unchanged; copy complete definitions with checked edits.
+// sql/astra-integrity.sql is frozen generator input for 20260930000000. Its
+// private.snapshot_invoice_parties() is superseded by
+// 20261020120000_invoice_supplier_snapshot_contact.sql, which is authoritative.
 import { readFileSync, writeFileSync } from "node:fs";
 const root = new URL("../supabase/migrations/", import.meta.url);
 function definition(file, name) {
@@ -12,7 +15,7 @@ function replace(text, from, to) {
   if (!text.includes(from)) throw new Error(`Missing replacement: ${from}`);
   return text.replace(from, to);
 }
-let foundry = definition("0057_foundry_furnace_mix_and_chemistry.sql", "public.refresh_foundry_batch_calculations");
+let foundry = definition("20260515005700_foundry_furnace_mix_and_chemistry.sql", "public.refresh_foundry_batch_calculations");
 foundry = replace(foundry, "  new.batch_number := concat(new.furnace_number, '-', to_char(new.production_date, 'YYYYMMDD'), '-', new.batch_sequence::text);", "  -- Batch identity is allocated once by aa_assign_business_number.");
 let finishing = definition("20260718021500_floor_output_and_finishing_workflows.sql", "public.validate_finishing_transition");
 finishing = replace(finishing, "if old.status = 'rejected'", "if old.status in ('completed', 'rejected', 'not_required')");

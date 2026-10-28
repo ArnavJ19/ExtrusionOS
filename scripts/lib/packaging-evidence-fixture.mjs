@@ -31,7 +31,7 @@ export async function createPackagingEvidenceFixture({candidate=existsSync(new U
       grant select,insert,update,delete on packaging_jobs,packaging_job_materials,packaging_material_movements to authenticated;
       create policy "packaging_jobs tenant read" on packaging_jobs for select using(company_id=public.get_current_user_company_id());
       create policy "packaging_material_movements tenant read" on packaging_material_movements for select using(company_id=public.get_current_user_company_id());`);
-    const legacy=readFileSync(new URL('../../supabase/migrations/0051_foundry_sources_scrap_billets_packaging.sql',import.meta.url),'utf8');
+    const legacy=readFileSync(new URL('../../supabase/migrations/20260515005100_foundry_sources_scrap_billets_packaging.sql',import.meta.url),'utf8');
     for(const name of ['packaging jobs tenant insert','packaging jobs tenant update','packaging movements tenant insert']){
       const statement=legacy.split(/\r?\n/).find(line=>line.startsWith(`create policy "${name}"`));assert.ok(statement,name);await db.exec(statement);
     }

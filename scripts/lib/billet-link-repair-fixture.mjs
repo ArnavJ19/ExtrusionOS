@@ -17,7 +17,7 @@ export async function createBilletLinkRepairFixture({candidate=existsSync(new UR
   try{
     await createHistoricalTables(db,['notifications'],billetLinkCandidate);
     for(const [file,names]of [
-      ['0056_order_billet_requirements_and_allocation.sql',['public.notify_billet_allocation']],
+      ['20260515005600_order_billet_requirements_and_allocation.sql',['public.notify_billet_allocation']],
       ['20261008020000_factory_workflow_integrity.sql',['private.allocate_billet_to_order','private.reallocate_billet_to_order']],
       ['20260602000002_security_definer_access_hardening.sql',['public.allocate_billet_to_order','public.reallocate_billet_to_order']],
       ['20260718050000_customer_accepted_quote_orders.sql',['private.enforce_customer_accepted_quote_order_link']],

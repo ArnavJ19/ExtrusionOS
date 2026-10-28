@@ -126,7 +126,7 @@ RETURNS UUID
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $function
+AS $function$
 DECLARE
   v_company_id uuid;
   v_user_id uuid;
@@ -268,4 +268,4 @@ BEGIN
   UPDATE public.quotes SET status = 'converted_to_order' WHERE id = p_quote_id AND company_id = v_company_id;
   RETURN v_order_id;
 END;
-$function;
+$function$;

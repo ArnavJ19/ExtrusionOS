@@ -64,7 +64,7 @@ test("production status changes are server-owned and require a released press sl
 
 test("manufacturing references and billet material are database-validated", () => {
   const migration = read("supabase/migrations/20260810010000_manufacturing_reference_and_material_guards.sql");
-  const allocation = read("supabase/migrations/0056_order_billet_requirements_and_allocation.sql");
+  const allocation = read("supabase/migrations/20260515005600_order_billet_requirements_and_allocation.sql");
   const queue = read("supabase/migrations/20260723060000_exact_dispatch_manifest_and_consolidation.sql");
 
   assert.match(migration, /validate_production_job_references/);

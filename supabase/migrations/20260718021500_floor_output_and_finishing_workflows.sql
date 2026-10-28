@@ -1,4 +1,4 @@
-﻿begin;
+begin;
 
 alter table public.finishing_jobs
   add column if not exists retry_of_finishing_job_id uuid

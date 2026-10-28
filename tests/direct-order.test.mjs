@@ -279,7 +279,7 @@ test("historical commercial review is read-only and flags missing or invalid dir
 });
 
 test("the legacy quoted and header-only billet rebuild body is preserved after the direct dispatch branch",()=>{
-  const original=sqlDefinition("0056_order_billet_requirements_and_allocation.sql","public.rebuild_order_billet_requirements");
+  const original=sqlDefinition("20260515005600_order_billet_requirements_and_allocation.sql","public.rebuild_order_billet_requirements");
   const candidate=sqlDefinition(directOrderCandidate,"public.rebuild_order_billet_requirements");
   const marker="  select * into v_order from public.orders where id = p_order_id;";
   assert.equal(candidate.slice(candidate.indexOf(marker)),original.slice(original.indexOf(marker)));

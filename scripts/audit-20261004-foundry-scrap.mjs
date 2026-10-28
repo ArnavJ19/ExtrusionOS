@@ -81,8 +81,8 @@ try {
   // billet synchronization are the latest found in their migration history.
   for (const [file, name] of [
     ['20260930000000_astra_audit_fixes.sql', 'public.refresh_foundry_batch_calculations'],
-    ['0057_foundry_furnace_mix_and_chemistry.sql', 'public.sync_foundry_scrap_usage'],
-    ['0057_foundry_furnace_mix_and_chemistry.sql', 'public.sync_foundry_external_source_usage'],
+    ['20260515005700_foundry_furnace_mix_and_chemistry.sql', 'public.sync_foundry_scrap_usage'],
+    ['20260515005700_foundry_furnace_mix_and_chemistry.sql', 'public.sync_foundry_external_source_usage'],
     ['20260530000002_foundry_billet_allocation_repairs.sql', 'public.sync_foundry_billets'],
     ['20260812000000_security_and_notification_integrity.sql', 'public.validate_foundry_billet_lineage']
   ]) {

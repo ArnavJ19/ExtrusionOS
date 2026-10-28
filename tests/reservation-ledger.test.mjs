@@ -81,7 +81,7 @@ test.before(async () => {
       profile_stock_batch_id=r.profile_stock_batch_id from profile_stock_reservations r
       where c.reservation_id=r.id and c.company_id=r.company_id;`);
   // Only the prepared read function and its explicit ACL are installed; no migration script is applied.
-  const originalIndexes = readFileSync(new URL("../supabase/migrations/0032_profile_stock_consumptions.sql", import.meta.url), "utf8");
+  const originalIndexes = readFileSync(new URL("../supabase/migrations/20260515003201_profile_stock_consumptions.sql", import.meta.url), "utf8");
   const index = originalIndexes.match(/create index if not exists profile_stock_consumptions_reservation_idx[^;]+;/);
   assert.ok(index);
   await db.exec(index[0]);

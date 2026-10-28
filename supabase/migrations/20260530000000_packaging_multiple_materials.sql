@@ -45,6 +45,7 @@ $$;
 
 -- Drop trigger first
 DROP TRIGGER IF EXISTS apply_packaging_material_stock ON public.packaging_jobs;
+DROP TRIGGER IF EXISTS refresh_packaging_job_material ON public.packaging_jobs;
 
 -- Drop columns from packaging_jobs
 ALTER TABLE public.packaging_jobs DROP COLUMN IF EXISTS material_id;

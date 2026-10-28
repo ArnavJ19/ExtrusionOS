@@ -469,8 +469,8 @@ export async function runFactoryWorkflowIntegrityChecks() {
       const autoOrder = "45454545-4545-4545-8545-454545454545";
       const autoWrong = "46464646-4646-4646-8646-464646464646";
       const autoBillet = "48484848-4848-4848-8848-484848484848";
-      await db.exec(functionDefinition("supabase/migrations/0056_order_billet_requirements_and_allocation.sql", "public.refresh_order_billet_allocations"));
-      await db.exec(functionDefinition("supabase/migrations/0056_order_billet_requirements_and_allocation.sql", "public.rebuild_order_billet_requirements"));
+      await db.exec(functionDefinition("supabase/migrations/20260515005600_order_billet_requirements_and_allocation.sql", "public.refresh_order_billet_allocations"));
+      await db.exec(functionDefinition("supabase/migrations/20260515005600_order_billet_requirements_and_allocation.sql", "public.rebuild_order_billet_requirements"));
       await db.exec(`insert into public.orders(id,company_id,current_stage,production_quantity_kg,production_profile_id,billet_diameter_required_inch,order_number,priority,order_date) values ('${autoOrder}','${company}','in_production',1000,'${profile}',5,'ORD-AUTO','high',current_date);
         select public.rebuild_order_billet_requirements('${autoOrder}');
         insert into public.order_billet_requirements(id,company_id,order_id,profile_id,alloy,temper,billet_diameter_inch,billets_required,billets_allocated,status) values

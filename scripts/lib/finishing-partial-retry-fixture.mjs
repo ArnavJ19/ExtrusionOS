@@ -35,7 +35,7 @@ export async function createPartialFinishingFixture({candidate=existsSync(new UR
       ["20260718020500_finishing_route_and_quality_yield.sql",["public.guard_terminal_quality_inspection"]],
       ["20260715000000_atomic_business_workflows.sql",["private.keep_jsonb_keys","private.insert_jsonb_row","private.update_jsonb_row"]],
       ["20260930000000_astra_audit_fixes.sql",["private.next_business_number_locked"]],
-      ["0052_packaging_queue_and_calculation_hardening.sql",["public.refresh_packaging_job_material"]],
+      ["20260515005200_packaging_queue_and_calculation_hardening.sql",["public.refresh_packaging_job_material"]],
       [handoff,["public.guard_terminal_packaging_job","public.guard_terminal_packaging_material","public.validate_completed_packaging_materials",
         "public.sync_packaging_order_stage","private.save_packaging_job_atomic","public.save_packaging_job_atomic"]],
       ["20260721091307_physical_dispatch_stock_provenance.sql",["private.assert_dispatch_ready"]]
