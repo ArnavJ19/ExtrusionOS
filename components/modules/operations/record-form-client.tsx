@@ -29,6 +29,7 @@ import type { SessionContext } from "@/types/app";
 import { getModuleConfig, type FieldConfig, type ModuleKey } from "./module-config";
 import { LocationGuidance } from "./operator-tools";
 import { canUseOperatorCommand } from "@/lib/operations/operator-workflows";
+import { BilletPlanNote } from "@/components/modules/billet-plan-note";
 
 type LookupOption = { value: string; label: string; profile_id?: string | null; die_status?: string | null;
   production_job_id?: string | null; status?: string | null; output_weight_kg?: number | string | null; received_date?: string | null; [key: string]: any };
@@ -975,6 +976,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
                 </div>
               ) : (
                 <div className="space-y-3">
+                  <BilletPlanNote plannedKg={form.planned_quantity_kg} recoveryPercent={form.extrusion_efficiency_percent} billets={availableBillets} selected={availableBillets.filter((billet) => selectedBillets.has(billet.id))} />
                   <div className="text-sm text-slate-600">
                     Required for full order: <strong className="text-slate-900">{form.required_billet_count || 0}</strong> &middot; 
                     Selected for this run: <strong className={selectedBillets.size <= 0 ? "text-red-600" : selectedBillets.size < (form.required_billet_count || 0) ? "text-orange" : "text-green-600"}>{selectedBillets.size}</strong>

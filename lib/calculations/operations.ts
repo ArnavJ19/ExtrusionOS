@@ -104,7 +104,9 @@ export function getDieRisks(row: Record<string, any>, today = todayIso()): Opera
 
 export function planAttainmentPercent(plannedKg: unknown, actualKg: unknown) {
   const planned = Number(plannedKg ?? 0);
-  const actual = Number(actualKg ?? 0);
-  if (planned <= 0) return null;
+  // A missing actual is Not captured, not 0% attainment; a recorded zero remains 0%.
+  if (actualKg === null || actualKg === undefined || actualKg === "") return null;
+  const actual = Number(actualKg);
+  if (!Number.isFinite(planned) || planned <= 0 || !Number.isFinite(actual) || actual < 0) return null;
   return Math.round((actual / planned) * 1000) / 10;
 }

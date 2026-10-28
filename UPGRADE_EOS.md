@@ -112,6 +112,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 6. Connected order workspace
 
+- [ ] **Implemented, automatically tested and checked in isolated Playwright at 1280 and 375 px, 22 October 2026; signed-in trial pending.** Order detail shows per-line ordered, dealer-stock, open-plan, produced and still-to-plan kg on the same basis as the database production guard, with links to each production job. Whole-order dispatched pieces/metres/net kg come from verified packing history, with remaining pieces and metres. Unlinked jobs are listed separately, over-commitment is flagged, and unverifiable jobs or packing are shown as unavailable rather than zero. Dealer sessions do not see it. Linked quotation, inspections, finishing, invoices and payments already have their own sections; per-line dispatch is not possible because packing records are not tied to order lines. [Delivery audit and evidence](docs/UPGRADE_EOS_PRODUCTION_PERFORMANCE_2026-10-22.md).
+
 - **What it does:** Bring the linked quotation, jobs, material allocation, inspections, finishing, bundles, dispatches, invoices, and payments into the order detail page. Show ordered, produced, dispatched, and remaining quantities with their units and relevant source links.
 - **Impact:** Gives staff a practical place to answer customer questions and investigate delays.
 - **Complexity:** High - needs trustworthy lineage, consistent quantity definitions, efficient aggregation, and field-level protection of financial information.
@@ -177,6 +179,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 13. Quick queue updates and safe bulk actions
 
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** `/tasks/bulk` (assign, due date, priority) and `/production/bulk` (planned date, shift for planned jobs) let supervisors select up to 50 records (10/25/50 per server-side page), preview the outcome of every one, then apply. Each selected record gets an explicit outcome: changed, no change needed, not changed with the reason (closed task, dealer task, outside the teams you supervise, handoff of another team, job already on the press schedule or released/running), not available, or selected twice. Apply locks and rechecks each record against the preview's fingerprint, so anything changed in between is reported instead of overwritten; a request id makes retries return the recorded result; every apply is logged. Supervisors assign only within the teams they supervise. 20 tests. [Handover](EOS_UPGRADE_CLAUDE.md).
+
 - **What it does:** Allow suitable updates such as assignment or planned-date changes directly from a work queue. Provide bulk selection, affected-record previews, and per-record outcomes. Retain dedicated detail flows for actions needing more context.
 - **Impact:** Reduces repeated record opening when supervisors manage several similar tasks.
 - **Complexity:** High - bulk operations need explicit permissions, current-state checks, bounded requests, and clear partial-failure handling.
@@ -184,6 +188,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A bulk assignment changes only eligible records and explains every rejection without silently dropping selected work.
 
 ### 14. Automatic department handoffs
+
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** Confirmed events now create the next team's task inside the same transaction: QC release (an approved inspection, including the approved child of a rework resolution, with only the approved kilograms) hands packing to the packaging team; a finishing receipt with accepted output hands inspection to quality; completed packaging hands the packed kilograms to dispatch. Each handoff carries its source record, quantity, the order's priority and a deadline that is never in the past, and a unique key per event means retries, replays and repeated status changes create one task (finishing received then completed still makes one). `/tasks/handoffs` shows each team its queue (managers and viewers see all), team members take a handoff once, and supervisors can recheck one source record safely. 20 tests. [Handover](EOS_UPGRADE_CLAUDE.md).
 
 - **What it does:** Create the next team's work when a confirmed event makes it eligible. Attach the source record, quantity, deadline, and responsible role. Make retries safe so one event cannot create multiple copies of the same handoff.
 - **Impact:** Reduces verbal chasing and makes the next department's responsibility visible.
@@ -289,6 +295,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 25. Revision comparison
 
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** The quotation page compares any two recorded versions (revision snapshots or the current version) with units, signed deltas, added/removed/changed lines, who superseded each version and why, approval and issued status, and the linked order's accepted basis. Lines are paired by profile, cut length and finish because items are rewritten on save. Migration `20261022200000_quote_revision_comparison.sql` also closes a live leak: every company user, including other dealers, could read `quote_revisions.snapshot_json` (billet rates, margins, internal notes); direct reads are now metadata-only and comparisons use a role-projected RPC. Also fixed: hard-coded "Admin User" approver and "System" revision authors. 15 tests. [Handover](EOS_UPGRADE_CLAUDE.md).
+
 - **What it does:** Compare two recorded versions of a quotation, specification, or schedule. Highlight changed values with units, the person and time, and affected approvals. Preserve the accepted version used by downstream work and make superseded instructions identifiable.
 - **Impact:** Helps reviewers concentrate on changes and prevents production from following obsolete instructions.
 - **Complexity:** High - complete comparison requires versioned snapshots, structured line identity, and rules for downstream effects.
@@ -375,6 +383,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 35. Temporary task delegation
 
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** `/tasks/delegations` lets a supervisor cover an absent employee's work for up to 90 days: all open tasks (and anything assigned to them during the period), or tasks chosen from a list. Only assignment moves; roles and permissions never change. A replacement must be eligible for each task (handoffs only to their team; ordinary work within the same team family), and supervisors may delegate only between employees in teams they supervise. Overlapping delegations and chains (a replacement who is away) are refused. When the period ends or is ended early with a reason, unfinished work returns to its owner; if the owner has left it stays with the replacement, so nothing becomes unowned. Tasks completed or reassigned meanwhile are recorded and left alone. Both employees are notified, every task's path is recorded, and activation and expiry run through an idempotent sync. 18 tests. [Handover](EOS_UPGRADE_CLAUDE.md).
+
 - **What it does:** Let an authorised supervisor transfer selected pending tasks to another eligible employee for a defined period. Record the delegator, recipient, scope, and duration. Preserve history and ensure temporary assignment does not grant unrelated privileges.
 - **Impact:** Keeps work moving during leave and shift changes without shared accounts.
 - **Complexity:** High - delegation must interact correctly with task ownership, permissions, expiry, reassignment, and notifications.
@@ -399,6 +409,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 38. Delivery dates and priorities by order line
 
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** The order page lists each line's effective required date and priority (its own, or the order's when unset), its produced, open-planned, packed and from-stock kilograms, and a due state. Authorised commercial and planning roles change a line with a recorded reason; every change keeps the previous and new value, is idempotent by request, rejects stale versions, past dates, dates outside the order window, closed/cancelled orders and fully supplied lines, and never changes the order's own stage, date or priority. Production and dispatch overviews show open lines still to produce or pack, overdue first, then priority and date (10 per page, filters). Schedules sit beside the guarded order lines rather than rewriting them. 25 tests. [Handover](EOS_UPGRADE_CLAUDE.md).
+
 - **What it does:** Record separate delivery requirements for individual order lines or agreed line schedules. Carry these requirements into production and dispatch queues while preserving the parent order and customer commitment history.
 - **Impact:** Supports urgent subsets of a larger order without creating artificial duplicate orders.
 - **Complexity:** High - line schedules affect planning, partial fulfilment, revised commitments, and status aggregation.
@@ -406,6 +418,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** One urgent line can be planned and dispatched independently while later lines retain their original pending requirements.
 
 ### 39. Generated shift-handover summaries
+
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** `/production/handover` lists handovers (10 per page, status filter); `/production/handover/new` offers the latest Day (08:00–20:00) and Night (20:00–08:00) IST shifts or any window up to 24 hours, previews the server-built summary (each job once: completed in the window, else its current held/running/ready state with outstanding kg and recorded hold reason; breakdowns clipped to the window, a resolved breakdown without an end adds no time; exceptions; open inspections; current stock QC holds; pending and overdue loads), then stores it unchanged with the supervisor's note. A different supervisor acknowledges once; overlapping windows are refused; retries are idempotent; a WhatsApp text copy is provided. Quality and dispatch managers can read handovers; sales and dealers cannot. 31 tests. [Handover](EOS_UPGRADE_CLAUDE.md).
 
 - **What it does:** Assemble completed jobs, running work, downtime, shortages, quality holds, and pending loads from recorded activity. Let the outgoing supervisor review and add missing context. Present unresolved work clearly to the incoming shift.
 - **Impact:** Reduces manual report preparation and helps the next shift begin with the right context.
@@ -447,6 +461,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 43. Project and site grouping
 
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** `/customers/projects` lists customer projects with a literal search over code, name, site, city and customer (10 per page, status filter); a project records its delivery site, contact (Indian mobile, 6-digit PIN) and status. Quotations, orders and dispatches are grouped only by explicit links that the database accepts when the record is in the same company and belongs to the same customer; each record belongs to at most one project, and linking an order can also link its source quotation and dispatches with a per-record outcome (skipped, never moved, when another project or customer owns it). Project totals have stated definitions (non-cancelled orders; dispatches that left and were not returned), values are shown only to commercial roles, unlinks need a reason and are recorded. 25 tests. [Handover](EOS_UPGRADE_CLAUDE.md).
+
 - **What it does:** Group related quotations, orders, deliveries, and instructions under a customer project or delivery site. Keep individual transaction identities and show project-level progress with clear quantity/value definitions. Prevent grouping from mixing unrelated customers or companies.
 - **Impact:** Helps staff answer project-level questions without assembling several order numbers manually.
 - **Complexity:** High - may require project/site relationships, scoped selectors, aggregation, and decisions about historical record association.
@@ -455,6 +471,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 44. Dedicated approval inbox
 
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** `/tasks/approvals` lists, oldest first, the requests the employee may decide: quotations in internal review (low-margin ones only for owners and admins, matching the existing quote guard; others also for sales managers) and expenses pending approval (accounts up to the existing Rs 25,000 limit, owners and admins above it), with customer or vendor, amount, estimated profit, requester and any earlier questions. Approve, Reject (reason required) and Request Clarification (keeps the request pending, records the question and notifies the requester) are applied through each record's own workflow and database guards (quote status transitions and costing completeness; `transition_expense_approval`). Each decision names the version it covers: an edited request is refused as superseded, a decided version can never be approved or rejected again, retries are idempotent, and people cannot decide their own requests unless they are the owner. Decision history is paged. 22 tests. [Handover](EOS_UPGRADE_CLAUDE.md).
+
 - **What it does:** Collect permitted approval requests in one queue with the requested decision, business context, requester, and relevant evidence. Support Approve, Reject, and Request Clarification, while showing which records or versions the decision covers.
 - **Impact:** Reduces approval chasing and makes supervisors' pending decisions easier to manage.
 - **Complexity:** High - requires a shared request model, approval eligibility, stale-request detection, and audited server-side decisions.
@@ -462,6 +480,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A supervisor can decide an eligible request once; a superseded or already-decided request cannot be approved again.
 
 ### 45. Approval requests at the point of restriction
+
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** Owners and admins choose, at `/tasks/approvals/exceptions`, which restrictions may be lifted by exception, who approves them and for how long. (1) Releasing a low-margin quotation, which today only owners and admins may do: with the policy on, sales and sales managers see the restriction explained on the quotation and can request an exception. A quotation priced below cost, or short of its required margin by more than the policy allows, is never released this way. (2) A new, opt-in dispatch hold for customers whose overdue balance reaches the set amount. The order page explains the hold, and dispatch staff request an exception for a stated weight; above the policy's hard limit only collecting payment lifts it. Each request is bound to a fingerprint of the record's content (quotation lines and totals; order and customer, plus the weight) and appears in the approval inbox to the policy's approvers. Another person decides against the version they saw; a request whose record moved on, or whose overdue amount grew, is closed as superseded and the requester is asked to request again. The requester is notified with a link back to the paused work. The guards accept an approved, unexpired exception only for that exact record and content. A dispatch exception covers one dispatch on that order up to the approved weight and is used up by it. Changed quantities, other records, more overdue exposure, an expired approval, a disabled policy and non-overridable limits are all refused, through every path including dispatches created already dispatched. Without a policy, behaviour is exactly as before. 18 tests. [Handover](EOS_UPGRADE_CLAUDE_2.md).
 
 - **What it does:** Beside an explainable restriction, allow an eligible employee to request the specific exception permitted by company policy. Attach the source and reason, route it to the appropriate approver, and preserve a route back to the paused work.
 - **Impact:** Replaces informal permission chasing with a visible, contextual request.
@@ -490,6 +510,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A rescheduled customer promise retains its original deadline and reason while presenting the current agreed action.
 
 ### 48. Controlled subscriptions and grouped notifications
+
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** Employees can follow an order, production job, dispatch, inspection, quotation or invoice from its page, but only where their role may open that page, and only in their own company. They choose categories: status, production, quality, dispatch, payment. Triggers on the source tables record changes to followed records only: a dispatch or invoice also updates its order, and an inspection updates its job and order. Delivery groups each person's pending changes into one summary with one line per record ("Order SO-0042 · 3 updates · latest: Stage cutting → aging"). Each change is delivered to a person at most once, their own changes are never sent back to them, and access is rechecked at delivery. `/notifications/following` sets immediate (grouped), hourly or daily summaries, quiet hours in IST (which may wrap midnight) and muted categories. It lists followed records and recent summaries, each with a Copy for WhatsApp button. Requests for action are kept separate (`/notifications/requests`). An employee asks a colleague who can act (for example a sales manager to approve a quotation, or accounts to record a payment) from the record page. The request is resolved against current records (quotation left review, invoice has no balance, inspection no longer pending, material dispatched), or marked done or withdrawn. Reminders respect the recipient's quiet hours, are sent once per number, stop at 10, and stop as soon as the request is resolved. A recipient who leaves closes the request and tells the requester. `private.run_notification_delivery_for_all()` is the scheduler entry point. External email or WhatsApp delivery is not included (no provider). 20 tests. [Handover](EOS_UPGRADE_CLAUDE_2.md).
 
 - **What it does:** Let employees follow permitted records, choose useful notification categories, and receive grouped summaries for routine changes. Separate requests for action from information. Respect selected channels and quiet periods, with deduplication and resolution-aware reminders.
 - **Impact:** Helps employees notice relevant work while reducing repeated interruptions.
@@ -521,6 +543,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 51. Explainable balances
 
+- [x] **Stock half implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** (The invoice half already exists in `lib/financials/receivables.ts`.) `/inventory/stock-balances` lists finished-stock batches with on hand, open reserved and available (filters: in stock, reservable, held, over-reserved; literal search; 10 per page). A batch page expands availability as on hand − open reservations − excluded + shortfall in kg, pieces and metres, using the reservation ledger's basis (initial reserved minus dispatched, so dispatched stock is never counted twice), the QC rule the database enforces, and a shortfall line instead of negative stock; it lists every open reservation and the signed withdrawals behind on hand (dispatches, dealer debits, cancellation credits), and the app refuses to show an explanation that does not reconcile. Dealers see only their own batches without other parties' customer names; commercial rates are never returned. Audit fix: the systems configurator counted QC-held stock as available and then failed at reservation; it now applies the same QC rule. 17 tests. [Handover](EOS_UPGRADE_CLAUDE.md).
+
 - **What it does:** Expand an invoice or stock balance into the source transactions, allocations, adjustments, reservations, and relevant exclusions behind it. Use the same calculation as the displayed total and preserve clear units and signed movements.
 - **Impact:** Lets employees investigate differences without asking another department to reconstruct the calculation.
 - **Complexity:** High - complete explanations depend on reconciled ledgers, reversals, access-safe financial details, and consistent definitions.
@@ -545,6 +569,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 54. Approved inspection plans in quality entry
 
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** `/quality/plans` holds versioned inspection plans per profile (or a company default): characteristics with unit (mm, kg/m, Webster hardness, coating micron, percent, visual), method, nominal and limits, plus the sampling instruction. A draft is approved by a different quality employee (or an owner/admin), which supersedes the previous version; approved versions are immutable. The inspection page loads the applicable plan (the profile's own, else the default). The inspector records each observation explicitly: nothing is pre-filled and unrecorded items stay "missing". The database judges each result against inclusive limits and refuses to approve an inspection (through any path, including a direct insert) while a result is missing or out of limits; failing material must be put to rework or rejected. Results recorded under a superseded version do not count. Inspections without an applicable plan, and the approved children of a rework resolution, are unaffected. Audit adjustment: plan approval was opened to `quality` users with a four-eyes rule, because `quality_manager` is not an app role. 19 tests. [Handover](EOS_UPGRADE_CLAUDE.md).
+
 - **What it does:** Load the applicable approved tests, measurement units, acceptance limits, and sampling instructions from the selected job/specification. Capture actual observations and highlight deviations. Retain missing results explicitly and require the appropriate disposition decision.
 - **Impact:** Reduces repeated specification lookup and makes quality records more consistent.
 - **Complexity:** High - requires versioned inspection plans, applicability rules, result validation, and controlled release/hold behaviour.
@@ -568,6 +594,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A partial return cannot restore more stock or issue more credit than the authorised eligible source permits.
 
 ### 57. Customer requirements at the relevant work step
+
+- [x] **Implemented and verified locally, 28 October 2026.** Existing customer compliance requirements now carry work stages and revisions. Relevant order, production, quality, packing and dispatch pages show them. Stage-authorized employees acknowledge the exact revision for an order; mandatory requirements gate real source transitions, including a dispatch inserted already dispatched. Changes invalidate prior acknowledgements without rewriting their snapshots. [Batch 3 delivery and verification](EOS_UPGRADE_BATCH_3.md). Hosted rollout and signed-in acceptance remain separate.
 
 - **What it does:** Present approved customer requirements when the employee can act on them: packing rules during packaging, label rules during printing, and certificate requirements during dispatch preparation. Record their applicable version and any authorised deviation.
 - **Impact:** Reduces reliance on memory, notebooks, and last-minute customer-specific rework.
@@ -603,6 +631,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 61. Standard blueprint for every task
 
+- [x] **Implemented and verified locally, 28 October 2026.** Task kinds share the purpose, trigger, inputs, responsibility, prerequisites, versioned instructions, completion evidence and exception structure. Start prerequisites are enforced by task triggers; revisions and routed exceptions retain history. [Batch 3 delivery and verification](EOS_UPGRADE_BATCH_3.md).
+
 - **What it does:** Define a reusable task format covering purpose, trigger, inputs, responsible role, prerequisites, steps, completion evidence, and exception route. Apply it to approved operational task types while keeping instructions linked to the actual business records and actions.
 - **Impact:** Gives employees one consistent way to understand and complete different kinds of work.
 - **Complexity:** High - a useful blueprint needs a structured schema, applicability rules, permissions, and integration with existing tasks rather than isolated documents.
@@ -621,6 +651,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 63. Ready-to-start conditions
 
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** Production job detail lists every unmet release/start/resume prerequisite together with a link to its resolution, computed by the database with the same rules its start guards enforce (order stage, die eligibility and exclusivity, press eligibility, released slot, issued billets). Parity tests run the real guard functions extracted from their latest migrations. Newly enforced at start: an ineligible linked billet. Also fixed: the floor "Mark Ready" button always failed (planned to ready is not a legal transition); it now links to the press schedule. [Handover](EOS_UPGRADE_CLAUDE.md).
+
 - **What it does:** Evaluate whether a task has its approved specification, eligible resources, source records, and other required inputs before releasing it. Present all missing prerequisites together and link to their resolution. Recheck critical conditions when work is committed.
 - **Impact:** Reduces time lost starting tasks that cannot be completed correctly.
 - **Complexity:** High - readiness depends on changing cross-module facts and must agree with authoritative business guards.
@@ -628,6 +660,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A production task with missing required input remains explainably blocked, and stale readiness cannot bypass a later hold.
 
 ### 64. Tasks created and assigned from defined triggers
+
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** `/tasks/triggers` lets owners, admins and factory managers define rules for five confirmed events. An order more than N days past its expected dispatch date, a breakdown open more than N hours, a sent quotation within N days of expiry, and an invoice balance N days past due are picked up by a run. A rejected quality inspection raises its work in the same transaction. Each rule names the receiver: a role (the least-loaded active employee of that role) or a named employee with an optional fallback role, limited to the roles that can do that kind of work. It also sets a due policy in calendar or working days (Monday to Saturday) and a priority. Every task carries a unique key per rule, source record and occurrence (a rescheduled order that slips again is a new occurrence). Retried, replayed, concurrent and scheduled runs therefore create at most one task. A run is recorded by its request id, so retrying a request whose response was lost returns the original result without evaluating again. The page retries automatically with the same id. A task's source reference and event time cannot be changed. Work that cannot be assigned is still created, flagged with the reason, notified to the responsible manager role, and listed under Unassigned work, where a supervisor assigns it within their team or retries the rule. Raised work shows whether its source condition still holds. Supervisors see and run only their own events. `private.run_task_triggers_for_all()` is the scheduler entry point. 21 tests. [Handover](EOS_UPGRADE_CLAUDE_2.md).
 
 - **What it does:** Specify the confirmed event or schedule that creates each recurring task, its source reference, default assignee rule, and due-date policy. Ensure replayed events produce one intended task and recover visibly from failed assignment.
 - **Impact:** Removes manual task creation and makes routine follow-on work less dependent on memory.
@@ -637,6 +671,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 65. Guided SOP execution
 
+- [x] **Implemented and verified locally, 28 October 2026.** A second person releases the execution rules for a published instruction version. Employees follow ordered steps with durable observations; source task completion is guarded even outside the guided screen. Reopening creates a new attempt and retains the completed attempt. [Batch 3 delivery and verification](EOS_UPGRADE_BATCH_3.md).
+
 - **What it does:** Present the applicable procedure as a task runner with short instructions, relevant data, and real action controls. Enforce dependent steps, permit independent work in parallel, and expose progress, pending evidence, and blocked steps without creating duplicate transaction forms.
 - **Impact:** Helps employees execute an agreed process without memorising it or referring to a separate manual.
 - **Complexity:** Very High - execution state, branching, parallelism, retries, revisions, and authoritative actions form a broad workflow capability.
@@ -644,6 +680,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** Reloading a partially completed task resumes the correct state and cannot repeat an already-posted business transaction.
 
 ### 66. Approved decision branches
+
+- [x] **Implemented and verified locally, 28 October 2026.** Reviewed measurement limits define continue versus review/rework branches. Out-of-range readings remain recorded and cannot be replaced by an in-range value until an independent authorized reviewer routes rework. All measurements and decisions are retained. Scope is measured range decisions in guided SOPs. [Batch 3 delivery and verification](EOS_UPGRADE_BATCH_3.md).
 
 - **What it does:** Define validated rules for permitted paths such as inspection pass, inspection hold, or missing-information return. Version the rules and show why a branch applies. Keep decisions that need human judgement explicitly assigned to an authorised person.
 - **Impact:** Reduces repeated interpretation of routine cases while preserving appropriate review.
@@ -653,6 +691,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 67. Objective completion criteria
 
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** A task can carry completion criteria that define its business outcome, evaluated on the server from current records. Five kinds are supported: the linked order, inspection, production job, dispatch, quotation, invoice or breakdown is in a required state (an invoice with no balance counts as paid); the linked inspection is not rejected and every result of its approved plan (feature 54) is recorded and within limits; the receiving team accepted the handoff (feature 69); a recorded observation is within limits; or a named role other than the assignee has signed off, which any later result invalidates. A criterion binds the record the task linked to when it was attached, so a task re-linked to another record, even in the same update as completion, fails as linked to the wrong source. A trigger refuses completion through every path (task list, task page, API) while a criterion is unmet, and names the first reasons. Completion stores the evaluation. Managers keep standard criteria per kind of task (`type:<task type>` or `handoff:<team>`) at `/tasks/criteria`; these attach to new internal tasks, never to dealer tasks. Supervisors add or remove (with a reason) criteria on one open task from the task page, where the assignee records observations. Completed tasks whose outcome is later reversed (for example a dispatch sent back) are listed for review and can be reopened with a reason, notifying the assignee. Completing a checklist is therefore separate from completing the work. 20 tests. [Handover](EOS_UPGRADE_CLAUDE_2.md).
+
 - **What it does:** Define the required business outcome for each task, including source transaction state, observations, disposition, and sign-off where applicable. Evaluate that outcome on the server. Distinguish completing a checklist item from completing the underlying business work.
 - **Impact:** Makes Done meaningful and reduces prematurely closed tasks that still need another employee's attention.
 - **Complexity:** High - each task type needs explicit criteria, evidence sources, failure reasons, and rules for later invalidation.
@@ -660,6 +700,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A task cannot close when its required result is missing, reversed, rejected, or linked to the wrong source.
 
 ### 68. Existing transactions as completion evidence
+
+- [x] **Implemented and verified locally, 28 October 2026.** Execution rules choose accepted transaction states; employees select related records. Company, lineage, role and current state are checked; completion locks and rechecks source evidence, so a reversal prevents completion. Supports linked orders, jobs, inspections, dispatches, quotations, invoices and breakdowns within each role's access. [Batch 3 delivery and verification](EOS_UPGRADE_BATCH_3.md).
 
 - **What it does:** Link the actual inspection, stock movement, posted receipt, document, or authorised acknowledgement that proves a task step. Reuse existing evidence automatically and request only missing observations. Track the version and validity of each referenced item.
 - **Impact:** Reduces repeated entry and makes later review possible without assembling evidence manually.
@@ -669,6 +711,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 69. Accepted department handovers
 
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** Every new handoff (feature 14) has an acceptance state. The receiving team's prerequisites are evaluated from current records: packaging needs the QC release to still stand, a live job and order, and an open packaging job; quality needs the finishing receipt to still have accepted output; dispatch needs the packaging to still be complete and the order live. A team can be set to auto-accept when nothing is missing; otherwise a member accepts explicitly, confirming the received kilograms within the team tolerance (default 0.5%). A handoff cannot be started or completed through any path before it is accepted. Returning a handoff records the missing prerequisite and creates exactly one return task for the source team, assigned to the person whose action raised the handoff if they are still eligible. Completing that task puts the handoff back for acceptance. Handoffs created before this change keep working. 17 tests. [Handover](EOS_UPGRADE_CLAUDE.md).
+
 - **What it does:** Define the information and condition the next department requires before accepting responsibility. Automatically accept straightforward handovers when approved criteria are satisfied; provide contextual return-for-clarification reasons for exceptions and explicit acceptance where the process requires it.
 - **Impact:** Reduces incomplete handoffs and uncertainty over who should resolve missing information.
 - **Complexity:** High - responsibility transitions, quantities, readiness changes, returns, and duplicate acceptance need a coherent lifecycle.
@@ -676,6 +720,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** Returning a packaging handoff identifies the missing prerequisite and leaves one accountable owner for its resolution.
 
 ### 70. Risk-based verification and approval matrix
+
+- [x] **Implemented and verified locally, 28 October 2026.** Reviewed execution rules specify normal and elevated verification roles. High/urgent task priority and observed out-of-range results require elevated review. Performers cannot verify their own work; changed risk and source evidence are rechecked before completion. A ten-row oldest-first verification queue contains only work the viewer may verify. Scope is internal guided SOP tasks. [Batch 3 delivery and verification](EOS_UPGRADE_BATCH_3.md).
 
 - **What it does:** Define which actions permit self-checking, require supervision, or need an independent reviewer. Apply approved thresholds, roles, and separation-of-duty rules on the server. Make the required review clear before employees reach the decision point.
 - **Impact:** Concentrates review on consequential work while avoiding unnecessary approvals for routine tasks.
@@ -685,6 +731,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 71. Turnaround targets and escalation rules
 
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** `/tasks/turnaround` lets owners, admins and factory managers agree, per kind of work (handoffs by team, returned handoffs, or a task type), a start target, a completion target, the working time they run on (round the clock, or Mon–Sat 08:00–20:00 IST, Sundays excluded) and the escalation role. The task page shows total elapsed time, working time, recorded waiting and active time. The assignee or a supervisor records waiting with a reason; waiting pauses the target clock only, and total elapsed time is never reduced. The first start is remembered even if work is reopened. An escalation check raises each breached level once (not started in time; not completed in time), notifies the escalation role, and resolves escalations when work starts, finishes, comes back within target after a recorded wait, or loses its target. The handoff queue shows a status chip per row. Audit fix: the waiting-time permission check let any user act on an unassigned task (a NULL comparison); the same class of bug made the approval inbox's "can decide" flag unknown for requests with no recorded requester. Both are fixed and regression-tested. 18 tests. [Handover](EOS_UPGRADE_CLAUDE.md).
+
 - **What it does:** Give task types agreed response and completion targets, responsible escalation roles, and calendar rules. Track active work, recorded waiting reasons, and total elapsed time separately. Resolve or update escalations when the underlying work changes.
 - **Impact:** Makes delayed work actionable and identifies whether a bottleneck is internal or waiting on an external input.
 - **Complexity:** High - calendars, pause semantics, reassignment, event timing, and notification deduplication require explicit policy.
@@ -692,6 +740,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** Placing work on an authorised hold changes the appropriate target calculation without erasing total elapsed time.
 
 ### 72. Hold and resume procedure
+
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** A recorded hold captures reason, note, material/work condition, responsible employee, resume condition and progress at hold (output, issued billets) and moves the job on hold through the authoritative transition. Resume rechecks material and resources that may have changed, restores the earlier state (planned/ready/running), preserves progress, and is idempotent; a held job cannot be started through the ordinary transition; cancellation closes the hold. 20 tests across SQL and unit suites. [Handover](EOS_UPGRADE_CLAUDE.md).
 
 - **What it does:** Record why work stopped, its current material/task condition, the responsible person, and what permits resumption. Preserve completed actions and affected quantities. Re-evaluate prerequisites that could change before resuming through the permitted action.
 - **Impact:** Prevents paused work from becoming lost work and gives the next employee a clear restart condition.
@@ -727,6 +777,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 76. Competency-linked task authorisation
 
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** `/tasks/competencies` keeps a competency catalogue, optionally linked to an operating procedure (SOP) and a validity period. Employees hold one of three levels: trained (the procedure was read), supervised, or independent. Training acknowledgement is therefore separate from confirmed competency. Grants keep their history; nobody grants their own except the owner. A grant lapses on expiry or withdrawal, and a revision of the linked procedure makes an independent holder supervised until re-qualified. A company can require a competency for QC release (an inspection becoming approved) and for starting a production job. The database then refuses the step unless the employee is independent, or supervised with a confirmation (valid 8 hours, used once) from a different independent holder. A trained-only employee cannot confirm the step just because the SOP was read. A requirement needs at least one independent holder, and nothing changes for companies that set none. Refusals explain what is missing, including through the production hold/resume action. 16 tests. [Handover](EOS_UPGRADE_CLAUDE.md).
+
 - **What it does:** Record which procedures an employee is trained and authorised to perform independently and which require supervision. Keep training acknowledgement separate from demonstrated competency. Define how qualification expiry or procedure revision changes task eligibility.
 - **Impact:** Supports structured employee development and clearer supervision of unfamiliar work.
 - **Complexity:** High - qualification records, authorisation rules, version applicability, and fair reassignment need consistent administration.
@@ -734,6 +786,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** An employee requiring supervision cannot independently confirm a restricted task merely by acknowledging that the SOP was read.
 
 ### 77. Controlled SOP versions and effective dates
+
+- [x] **Implemented and verified locally, 28 October 2026.** Numbered immutable releases, independent reviewers, effective dates, scheduled withdrawal and explicit in-flight policies bind each task to its instructions. Completed and reopened work retain historical instructions. Qualifications now bind to the applicable released instruction version as well as the ownership metadata revision. [Batch 3 delivery and verification](EOS_UPGRADE_BATCH_3.md).
 
 - **What it does:** Give each procedure an identifier, approved revision, effective date, reviewer, and change history. Bind task execution to the applicable version and define how a new release affects work already underway. Retain earlier versions for historical interpretation.
 - **Impact:** Keeps employees on the correct instructions and makes completed work understandable later.
@@ -743,6 +797,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 78. Outage and recovery procedure
 
+- [x] **Implemented and verified locally, 28 October 2026.** Versioned continuity rules define permitted work, prohibited work and reconciliation responsibility. Printable instructions support numbered paper observations; recovered notes retain actual time and a policy snapshot. An independent designated reconciler links confirmed related transactions or rejects with a reason. Unique temporary references and unique transaction reconciliation prevent duplication; notes do not post stock or financial transactions. [Batch 3 delivery and verification](EOS_UPGRADE_BATCH_3.md).
+
 - **What it does:** Define which work may continue when the application or connection is unavailable, how observations receive temporary references, and who reconciles them afterward. Prevent ambiguous retries or temporary notes from becoming duplicate authoritative transactions.
 - **Impact:** Gives employees a dependable continuity method and makes post-outage reconciliation manageable.
 - **Complexity:** High - safe continuity needs identity, numbering, reconciliation, capacity checks, and clear limits on disconnected actions.
@@ -751,6 +807,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 79. Validate SOPs through observed employee work
 
+- [x] **Implemented and verified locally, 28 October 2026.** Supervisors observe another employee's active guided execution, retain its exact SOP version, record every step and employee feedback, and submit for independent process-owner review. A revise decision opens a traced controlled improvement; observations and decisions cannot be rewritten. [Batch 3 delivery and verification](EOS_UPGRADE_BATCH_3.md).
+
 - **What it does:** Observe employees completing the real task, including interruptions, information searches, and informal workarounds. Trial the proposed method with the relevant roles and record confusing or unnecessary steps. Approve the procedure after the trial findings are resolved.
 - **Impact:** Helps procedures reflect actual work and reduces instructions that look correct but fail on the factory floor.
 - **Complexity:** Medium - the main effort is process observation, representative scenarios, employee availability, and turning findings into verified changes.
@@ -758,6 +816,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A representative employee can complete the pilot task with the documented method and identified support requirements.
 
 ### 80. Review SOP effectiveness using outcomes
+
+- [x] **Implemented and verified locally, 28 October 2026.** Per-version outcomes retain denominators and distinguish missing duration evidence from zero. Employees flag steps; process owners trace recurring problems through a controlled trial, reviewed release and frozen before/after outcomes. Small samples are marked insufficient; observed differences do not imply causation. [Batch 3 delivery and verification](EOS_UPGRADE_BATCH_3.md).
 
 - **What it does:** Track first-time acceptance, rework, returned handovers, recurring exceptions, and task duration with their data-quality limits. Let employees flag unclear steps from the task itself. Use reviewed findings to trial and release approved procedural improvements.
 - **Impact:** Creates a practical improvement cycle based on work quality and employee experience.
@@ -807,6 +867,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 84. Finishing area and finishing charges
 
+- [ ] **Implemented, automatically tested and checked in isolated Playwright at 1280 and 375 px, 22 October 2026; signed-in trial pending.** Per-sq-ft finishing lines explain area m2 = total metres x coating perimeter / 1,000, the sq ft conversion and rate x area, reusing the quote calculation so the explanation equals the costed charge. A missing perimeter shows an incomplete-cost alert rather than a zero charge (the existing send-blocking warning still applies). Minimum-charge rules are not implemented because no approved minimum-charge data exists. [Delivery audit and evidence](docs/UPGRADE_EOS_PRODUCTION_PERFORMANCE_2026-10-22.md).
+
 - **What it does:** Fetch the approved coating perimeter and selected finish's charging basis. Calculate area m2 = total length m x coating perimeter mm / 1,000, then convert to square feet if required. Apply the approved rate, minimum-charge rules, and applicable surface assumptions.
 - **Impact:** Eliminates manual area calculation and makes finishing quotations easier to explain.
 - **Complexity:** High - surface applicability, rate bases, approved overrides, precision, and minimum-charge policies must remain consistent.
@@ -814,6 +876,8 @@ For these features, every field must have a clear source. Maintain approved defa
 - **Acceptance:** A missing required coating perimeter produces an incomplete-cost warning instead of a false zero finishing charge.
 
 ### 85. Approved dated costing rates
+
+- [x] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 22 October 2026.** `/quotes/rates` keeps approved, dated billet (optionally per alloy), conversion and finishing (per kg, sq ft or metre) rates, each general or for one customer's agreement. A customer agreement takes precedence over the general rate, and an alloy-specific billet rate over the all-alloy rate. A draft is approved by another person (owner, admin or sales manager); whoever last edits a draft becomes its author, so editing cannot bypass the four-eyes rule. Approving a newer rate ends its predecessor the day before. Rates that have ended, or end within 14 days, with no successor appear under "Needs review". When a quotation is approved for sending, the rates applicable on its quote date are bound to that revision and never change. The quote page's Rate Check compares each line's billet, conversion and finishing rate with the bound or applicable approved rate. Withdrawing a rate bound to an issued quotation is refused. Rates are hidden from production, viewers and dealers. The quote form's "Apply approved rates" fills lines on request and stays overridable. Price from margin is cost ÷ (1 − margin), so 250 at 20% gives 312.50 (a 25% markup), shared with the quote engine. 22 tests. [Handover](EOS_UPGRADE_CLAUDE_2.md).
 
 - **What it does:** Select the applicable approved material, conversion, finishing, packing, and customer-agreement rates using an explicit precedence and effective date. Calculate proposed selling prices by the agreed method. For an illustrative INR 250 cost and 20% selling margin, price = 250 / (1 - 0.20) = INR 312.50.
 - **Impact:** Reduces repeated rate entry and confusion between markup and margin.
@@ -847,6 +911,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 89. Planned billet input and billet count
 
+- [ ] **Implemented and automatically tested locally; isolated Playwright visual check passed at 1280 and 375 px; signed-in operator trial pending, 22 October 2026.** Production entry explains planned input kg = planned good output / expected recovery and the rounded-up billet count when compatible billets share one weight, plus whether selected billets cover the plan. A floating-point rounding defect that planned 41 instead of 40 billets (700 kg, 70%, 25 kg) is fixed in the shared count. The quotation-to-order billet preview still uses billing weight and fixed 75%/5.8 m assumptions pending a business decision. [Delivery audit and evidence](docs/UPGRADE_EOS_PRODUCTION_PERFORMANCE_2026-10-22.md).
+
 - **What it does:** Fetch planned good output, approved expected recovery, and the selected billet specification. Calculate planned input kg = good output kg / recovery fraction, then round billet count upward. At 900 kg output, 75% recovery, and 30 kg per billet, the plan requires 1,200 kg input and 40 billets.
 - **Impact:** Removes manual planning arithmetic and makes recovery assumptions visible.
 - **Complexity:** High - production-versus-billing basis, recovery validation, usable billet assumptions, and allocation integration need explicit rules.
@@ -867,6 +933,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 91. Production performance from actual transactions
 
+- [ ] **Implemented and automatically tested locally; isolated Playwright visual check passed at 1280 and 375 px; signed-in operator trial pending, 22 October 2026.** Production job detail shows recovery, scrap and plan attainment from linked billet input (the completion transaction's statuses and measured-else-nominal basis), recorded good output and non-reversed scrap postings. Missing input or unreadable scrap shows Not captured; a recorded zero output stays 0%. Output per operating hour is not shown because jobs do not record operating time. [Delivery audit and evidence](docs/UPGRADE_EOS_PRODUCTION_PERFORMANCE_2026-10-22.md).
+
 - **What it does:** Use recorded material issues and good output to calculate recovery, plan attainment, output per operating hour, and related metrics where inputs exist. Recovery percent = good output kg / issued input kg x 100; 800 kg good output from 1,000 kg input gives 80%.
 - **Impact:** Removes manual performance summaries and gives supervisors a traceable view of production results.
 - **Complexity:** High - source completeness, time boundaries, reversals, work in progress, and shared-job allocation affect meaningful results.
@@ -874,6 +942,8 @@ For these features, every field must have a clear source. Maintain approved defa
 - **Acceptance:** Missing issued input produces Not captured, while a valid zero good-output observation remains a real recorded result.
 
 ### 92. Material discrepancy calculation
+
+- [ ] **Implemented and automatically tested locally; isolated Playwright visual check passed at 1280 and 375 px; signed-in operator trial pending, 22 October 2026.** Completed jobs show input - (good output + measured scrap) with the signed difference, kept visible even inside the completion tolerance; completion entry previews the same balance including earlier scrap postings. Nothing is booked as scrap. Work in progress, returns and other classified movements are supported by the calculation but have no job-level source records yet. [Delivery audit and evidence](docs/UPGRADE_EOS_PRODUCTION_PERFORMANCE_2026-10-22.md).
 
 - **What it does:** Reconcile a defined process boundary using actual input, good output, measured scrap, returns, work in progress, and other classified movements. For 1,000 kg input, 780 kg good output, 180 kg measured scrap, and 30 kg work in progress, flag 10 kg unaccounted.
 - **Impact:** Exposes unexplained differences without hiding them in an invented scrap figure.

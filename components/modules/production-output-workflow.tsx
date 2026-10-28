@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { CheckCircle2, CirclePause, Play, Scale } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import {
 import { completeProductionJobWithScrapAction } from "@/lib/actions/production-completion";
 import { PRODUCTION_SCRAP_CATEGORIES, type ProductionScrapCategory } from "@/lib/workflow/production-scrap";
 import { formatWeight } from "@/lib/utils/format";
+import { reconcileProcessMass } from "@/lib/calculations/production-performance";
 
 type ProductionFloorJob = {
   id: string;
@@ -26,6 +28,8 @@ type ProductionFloorJob = {
   finishing_type: string | null;
   linked_billet_count: number;
   linked_billet_input_kg: number;
+  // Scrap already posted against the job (null when it could not be read); counted by the completion transaction.
+  existing_scrap_kg?: number | null;
 };
 
 function routeLabel(finishingType: string | null) {
@@ -58,22 +62,20 @@ export function ProductionOutputWorkflow({
   const derivedMeters = Number(actualPieces || 0) * Number(job.length_per_piece_m || 0);
   const totalScrap = PRODUCTION_SCRAP_CATEGORIES.reduce((sum, category) => sum + Number(scrapWeights[category.value] || 0), 0);
   const accountedKg = Number(actualWeight || 0) + totalScrap;
+  // Mirrors the completion transaction: linked input against new output, new scrap and earlier scrap postings.
+  const balancePreview = job.linked_billet_count > 0 && actualWeight && job.existing_scrap_kg != null
+    ? reconcileProcessMass({ inputKg: job.linked_billet_input_kg, goodOutputKg: actualWeight, scrapKg: totalScrap + job.existing_scrap_kg })
+    : { status: "not_captured" as const };
   const isTerminal = ["completed", "cancelled"].includes(job.status);
 
-  function moveStatus(status: "ready" | "in_progress" | "on_hold") {
+  function moveStatus(status: "in_progress") {
     startTransition(async () => {
       const result = await updateProductionJobStatusAction(job.id, status);
       if (!result.success) {
         toast.error(result.error);
         return;
       }
-      toast.success(
-        status === "in_progress"
-          ? "Production is now running"
-          : status === "on_hold"
-            ? "Production placed on hold"
-            : "Production job marked ready"
-      );
+      toast.success(status === "in_progress" ? "Production is now running" : "Production status updated");
       router.refresh();
     });
   }
@@ -169,25 +171,27 @@ export function ProductionOutputWorkflow({
       ) : (
         <>
           <div className="mt-5 flex flex-wrap gap-3">
-            {job.status === "planned" ? (
-              <Button type="button" onClick={() => moveStatus("ready")} disabled={!canUpdate || isPending}>
-                Mark Ready
-              </Button>
+            {/* A job becomes ready only when a press slot is released; the status transition rejects planned to ready. */}
+            {job.status === "planned" && canUpdate ? (
+              <Link href="/production/schedule" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800">
+                Release to a press
+              </Link>
             ) : null}
             {["ready", "on_hold"].includes(job.status) ? (
               <Button type="button" onClick={() => moveStatus("in_progress")} disabled={!canUpdate || isPending}>
                 <Play className="h-4 w-4" /> {job.status === "on_hold" ? "Resume Run" : "Start Run"}
               </Button>
             ) : null}
-            {job.status === "in_progress" ? (
-              <Button type="button" variant="secondary" onClick={() => moveStatus("on_hold")} disabled={!canUpdate || isPending}>
-                <CirclePause className="h-4 w-4" /> Put On Hold
-              </Button>
+            {/* UPGRADE_EOS feature 72: holds are recorded with reason, condition and responsibility. */}
+            {job.status === "in_progress" && canUpdate ? (
+              <a href="#production-hold" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-950 shadow-sm hover:bg-neutral-50">
+                <CirclePause className="h-4 w-4" /> Record a hold
+              </a>
             ) : null}
           </div>
 
           {job.status === "planned" ? (
-            <p className="mt-3 text-sm font-semibold text-amber-700">Assign an extrusion press before marking the job ready.</p>
+            <p className="mt-3 text-sm font-semibold text-amber-700">Assign an extrusion press and release its slot in the press schedule; the job becomes ready when the slot is released.</p>
           ) : null}
 
           {job.status === "in_progress" ? (
@@ -233,6 +237,18 @@ export function ProductionOutputWorkflow({
                   ))}
                 </div>
                 <p className="mt-3 text-xs font-bold text-slate-600">Output {formatWeight(Number(actualWeight || 0))} + scrap {formatWeight(totalScrap)} = {formatWeight(accountedKg)}{job.linked_billet_count > 0 ? ` against ${formatWeight(job.linked_billet_input_kg)} billet input` : ""}</p>
+                {balancePreview.status !== "not_captured" ? (
+                  <p role="status" className={`mt-1 text-xs font-bold ${balancePreview.withinTolerance ? "text-emerald-700" : "text-amber-700"}`}>
+                    {balancePreview.status === "balanced"
+                      ? "Input fully accounted."
+                      : `${formatWeight(Math.abs(balancePreview.differenceKg))} ${balancePreview.status === "unaccounted" ? "unaccounted" : "more than the linked input, including earlier scrap postings"}. `}
+                    {balancePreview.status === "balanced"
+                      ? null
+                      : balancePreview.withinTolerance
+                        ? `Within the ${formatWeight(balancePreview.toleranceKg)} completion tolerance; the difference stays visible on the job.`
+                        : `Outside the ${formatWeight(balancePreview.toleranceKg)} completion tolerance, so completion will be rejected. Recheck the weighed output and scrap.`}
+                  </p>
+                ) : null}
               </div>
               <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Button type="button" onClick={completeJob} disabled={!canUpdate || isPending || !actualWeight || (Number(job.pieces ?? 0) > 0 && !actualPieces)}>
