@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { buildVoucherPdf, creditNoteVoucher } from "@/lib/pdf/finance-vouchers";
+import { companyLogo } from "@/lib/pdf/logo-loader-node";
 import { createClient } from "@/lib/supabase/server";
 
 // Printable return credit note (PDF-05). Party details come from the invoice snapshots so the
@@ -27,7 +28,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (!invoice.data.supplier_snapshot || !invoice.data.customer_snapshot) {
     return NextResponse.json({ error: "This legacy invoice predates party snapshots; its credit note cannot be reproduced from current master data." }, { status: 409 });
   }
-  const bytes = await buildVoucherPdf(creditNoteVoucher({ note: note.data, invoice: invoice.data, dispatchNumber: dispatch.data?.dispatch_number ?? null }));
+  const bytes = await buildVoucherPdf({ ...creditNoteVoucher({ note: note.data, invoice: invoice.data, dispatchNumber: dispatch.data?.dispatch_number ?? null }), logo: await companyLogo(supabase, context.companyId) });
   return new NextResponse(Buffer.from(bytes), { headers: { "Content-Type": "application/pdf",
     "Content-Disposition": `inline; filename="credit-note-${parsed.data}.pdf"`, "Cache-Control": "private, no-store" } });
 }

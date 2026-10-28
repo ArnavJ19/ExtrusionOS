@@ -2,7 +2,7 @@ import { getSystemOutputStatus } from "../systems-configurator/output-status.ts"
 import { nodeFontLoader } from "./font-loader-node.ts";
 import { type PdfFontLoader } from "./unicode-text.ts";
 import { PDF_COLORS, PdfDocumentWriter, type PdfTableRow } from "./document-kit.ts";
-import { joinParts, pdfAmount, pdfDate, pdfInteger, pdfLabel, pdfMoney, pdfNumber, pdfPercent, pdfQuantity, pdfText, toNumber } from "./format.ts";
+import { issuerName, joinParts, legalNameLine, pdfAmount, pdfDate, pdfInteger, pdfLabel, pdfMoney, pdfNumber, pdfPercent, pdfQuantity, pdfText, toNumber } from "./format.ts";
 
 export type SystemReportType = "customer_quote" | "cutting_list" | "glass_list" | "hardware_bom" | "internal_costing" | "production_sheet" | "optimization_report";
 
@@ -19,6 +19,7 @@ type ReportData = {
   reportType: SystemReportType;
   canShowInternalCost: boolean;
   loadFont?: PdfFontLoader;
+  logo?: Uint8Array | null;
 };
 
 const TITLES: Record<SystemReportType, string> = {
@@ -47,9 +48,12 @@ export async function buildSystemConfiguratorPdf(data: ReportData) {
   const doc = await PdfDocumentWriter.create({
     title: TITLES[data.reportType],
     number: c.configuration_number ?? "DRAFT",
+    logo: data.logo ?? null,
     issuer: {
-      name: String(company.legal_name || company.name || "Company"),
+      name: issuerName(company),
       lines: [
+        // The customer quotation carries the trading name only; internal sheets add the legal name.
+        data.reportType === "customer_quote" ? null : legalNameLine(company),
         joinParts([company.billing_address, company.city, company.state, company.pincode]),
         company.gst_number ? `GSTIN: ${company.gst_number}` : null,
         joinParts([company.phone, company.email], "   ·   ")
@@ -89,9 +93,9 @@ export async function buildSystemConfiguratorPdf(data: ReportData) {
     ]);
     if (rows.length) body.push({ kind: "total", cells: ["Total", "", "", "", pdfInteger(sum(rows, "quantity")), pdfQuantity(sum(rows, "total_length_m"), 3), "", pdfQuantity(sum(rows, "total_weight_kg"), 3), ""] });
     doc.table([
-      { header: "Profile", width: 10 }, { header: "Component", width: 15 }, { header: "Cut length (mm)", width: 10, align: "right" },
-      { header: "Angles L / R", width: 10, align: "center", wrap: false }, { header: "Qty (pcs)", width: 7, align: "right" }, { header: "Total length (m)", width: 10, align: "right" },
-      { header: "Section wt (kg/m)", width: 10, align: "right" }, { header: "Weight (kg)", width: 10, align: "right" }, { header: "Remarks", width: 18 }
+      { header: "Profile", width: 10 }, { header: "Component", width: 17 }, { header: "Cut length (mm)", width: 9, align: "right" },
+      { header: "Angle L/R", width: 9, align: "center", wrap: false }, { header: "Qty (pcs)", width: 6, align: "right" }, { header: "Total length (m)", width: 9, align: "right" },
+      { header: "Section wt (kg/m)", width: 9, align: "right" }, { header: "Weight (kg)", width: 9, align: "right" }, { header: "Remarks", width: 22 }
     ], body, { emptyText: "Cutting list has not been generated for this configuration." });
   };
 
@@ -135,32 +139,41 @@ export async function buildSystemConfiguratorPdf(data: ReportData) {
       { label: "Grand total", value: pdfMoney(c.grand_total), emphasis: true }
     ]);
     const terms = String(data.settings?.default_terms_and_conditions ?? data.settings?.default_quote_terms ?? "Prices are subject to final site measurement, applicable taxes and approved specifications.");
+    const signers = ["Customer acceptance (sign and stamp)", "Authorised signatory"];
+    const forName = issuerName(company);
+    doc.closing(signers, { forName });
     doc.sectionTitle("Terms and conditions", 30);
     doc.list(terms.split(/\r?\n/));
     doc.space(8);
-    doc.signatures(["Customer acceptance (sign and stamp)", "Authorised signatory"], { forName: String(company.legal_name || company.name || "Company") });
+    doc.signatures(signers, { forName });
   }
 
   if (data.reportType === "cutting_list") {
     summary();
+    const signers = ["Prepared by", "Checked by (cutting)", "Production supervisor"];
+    doc.closing(signers);
     doc.sectionTitle("Profile cutting list", 60);
     cuttingList();
-    doc.signatures(["Prepared by", "Checked by (cutting)", "Production supervisor"]);
+    doc.signatures(signers);
   }
 
   if (data.reportType === "glass_list") {
     summary();
+    const signers = ["Prepared by", "Checked by (glass)", "Production supervisor"];
+    doc.closing(signers);
     doc.sectionTitle("Glass cutting list", 60);
     glassList();
     beadingList();
-    doc.signatures(["Prepared by", "Checked by (glass)", "Production supervisor"]);
+    doc.signatures(signers);
   }
 
   if (data.reportType === "hardware_bom") {
     summary();
+    const signers = ["Prepared by", "Issued by (stores)", "Received by"];
+    doc.closing(signers);
     doc.sectionTitle("Hardware bill of materials", 60);
     hardwareList();
-    doc.signatures(["Prepared by", "Issued by (stores)", "Received by"]);
+    doc.signatures(signers);
   }
 
   if (data.reportType === "internal_costing") {
@@ -199,12 +212,14 @@ export async function buildSystemConfiguratorPdf(data: ReportData) {
       ["Profile optimisation", data.optimizationRun ? `Run #${data.optimizationRun.run_number ?? "-"}` : "—", status.optimizationReady ? "Ready" : "Pending"]
     ]);
     // The production sheet carries the complete lists; nothing is trimmed to a "top N".
+    const signers = ["Planned by", "Production supervisor", "Quality check"];
+    doc.closing(signers);
     doc.sectionTitle("Profile cutting list", 60);
     cuttingList();
     if (data.glassCuts.length) { doc.sectionTitle("Glass cutting list", 60); glassList(); }
     beadingList();
     if (data.hardwareBom.length) { doc.sectionTitle("Hardware bill of materials", 60); hardwareList(); }
-    doc.signatures(["Planned by", "Production supervisor", "Quality check"]);
+    doc.signatures(signers);
   }
 
   if (data.reportType === "optimization_report") {
@@ -256,7 +271,7 @@ function drawElevation(doc: PdfDocumentWriter, configuration: any) {
   const ratioTotal = ratios.reduce((total, ratio) => total + ratio, 0);
 
   const maxWidth = doc.contentWidth - 90;
-  const maxHeight = 170;
+  const maxHeight = 135;
   const scale = Math.min(maxWidth / widthMm, maxHeight / heightMm);
   const w = widthMm * scale;
   const h = heightMm * scale;

@@ -3,7 +3,7 @@ import { numberToWordsINR } from "../utils/number-to-words.ts";
 import { type PdfFontLoader } from "./unicode-text.ts";
 import { nodeFontLoader } from "./font-loader-node.ts";
 import { PdfDocumentWriter, type PdfTableRow } from "./document-kit.ts";
-import { joinParts, pdfAmount, pdfDate, pdfMoney, pdfPercent, pdfQuantity, toNumber } from "./format.ts";
+import { issuerName, joinParts, legalNameLine, pdfAmount, pdfDate, pdfMoney, pdfPercent, pdfQuantity, toNumber } from "./format.ts";
 
 type InvoiceDocumentData = {
   company: Record<string, any>;
@@ -11,6 +11,8 @@ type InvoiceDocumentData = {
   invoice: Record<string, any>;
   items: Record<string, any>[];
   loadFont?: PdfFontLoader;
+  /** Company logo bytes (lib/pdf/logo-loader-node.ts). */
+  logo?: Uint8Array | null;
 };
 
 // Union-territory GST codes, matching private.canonicalize_invoice_supply().
@@ -18,11 +20,11 @@ const UT_STATE_CODES = new Set(["04", "26", "31", "35", "38"]);
 const paise = (value: number) => Math.round(value * 100);
 const lineTax = (item: Record<string, any>) => Math.round(Number(item.line_total ?? 0) * Number(item.gst_percent ?? 0) + 1e-7) / 100;
 
-export async function buildInvoicePdf({ company, customer, invoice, items, loadFont = nodeFontLoader }: InvoiceDocumentData) {
+export async function buildInvoicePdf({ company, customer, invoice, items, loadFont = nodeFontLoader, logo = null }: InvoiceDocumentData) {
   if (!invoice.supplier_state_code || !invoice.place_of_supply_state_code || !items.length || items.some((item) => !item.hsn_code)) {
     throw new Error("Complete supply states and HSN codes before generating this invoice.");
   }
-  const companyName = String(company.legal_name || company.name || "");
+  const companyName = issuerName(company, "");
   const customerName = String(customer.company_name || customer.customer_name || "");
   const status = String(invoice.status ?? "");
   const title = status === "draft" ? "DRAFT INVOICE" : status === "cancelled" ? "CANCELLED INVOICE" : "TAX INVOICE";
@@ -32,10 +34,11 @@ export async function buildInvoicePdf({ company, customer, invoice, items, loadF
   const doc = await PdfDocumentWriter.create({
     title,
     number: invoice.invoice_number,
+    logo,
     issuer: {
       name: companyName,
       lines: [
-        company.legal_name && company.name && company.legal_name !== company.name ? `Trade name: ${company.name}` : null,
+        legalNameLine(company),
         joinParts([company.billing_address, company.city, company.state, company.pincode]),
         `GSTIN: ${company.gst_number || "Not recorded"}   ·   State: ${gstStateLabel(invoice.supplier_state_code)}`,
         joinParts([company.phone, company.email], "   ·   ")
@@ -127,6 +130,8 @@ export async function buildInvoicePdf({ company, customer, invoice, items, loadF
     ], summaryRows);
   }
 
+  const signers = ["Receiver's signature", "Authorised signatory"];
+  doc.closing(signers, { forName: companyName });
   const totalRows = [{ label: "Taxable value", value: pdfMoney(invoice.subtotal) }];
   if (interState) totalRows.push({ label: "IGST", value: pdfMoney(invoice.igst_amount ?? 0) });
   else {
@@ -154,6 +159,6 @@ export async function buildInvoicePdf({ company, customer, invoice, items, loadF
   }
 
   doc.space(6);
-  doc.signatures(["Receiver's signature", "Authorised signatory"], { forName: companyName });
+  doc.signatures(signers, { forName: companyName });
   return doc.finish();
 }

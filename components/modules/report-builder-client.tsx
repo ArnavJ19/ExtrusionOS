@@ -12,6 +12,7 @@ import { savedReportSchema } from "@/lib/validations/schemas";
 import { formatDate } from "@/lib/utils/format";
 import { recordsToCsv } from "@/lib/utils/csv";
 import { browserFontLoader } from "@/lib/pdf/unicode-text";
+import { loadLogoInBrowser } from "@/lib/pdf/logo";
 import { buildReportBuilderPdf } from "@/lib/reports/report-builder-pdf";
 import { computeReportTotals, deriveReportRow, reportFieldMap, reportImplicitFilters, reportSelectFields, reportSourceDateFieldMap, reportSourceTableMap } from "@/lib/reports/report-builder";
 
@@ -103,11 +104,13 @@ type Props = {
   companyId: string;
   companyName?: string;
   preparedBy?: string | null;
+  /** companies.logo_url, printed on PDF exports. */
+  companyLogoUrl?: string | null;
   role: string;
   initialReports: SavedReportRow[];
 };
 
-export function ReportBuilderClient({ companyId, companyName = "Company", preparedBy = null, role, initialReports }: Props) {
+export function ReportBuilderClient({ companyId, companyName = "Company", companyLogoUrl = null, preparedBy = null, role, initialReports }: Props) {
   const [source, setSource] = useState("quotes");
   const [selectedFields, setSelectedFields] = useState<string[]>(["quote_number", "quote_date", "status", "grand_total"]);
   const [filters, setFilters] = useState([{ field: "status", operator: "equals", value: "sent" }]);
@@ -270,6 +273,7 @@ export function ReportBuilderClient({ companyId, companyName = "Company", prepar
       profile_id: "Profile",
       die_id: "Die",
       production_job_id: "Production Job",
+      vendor_name_snapshot: "Vendor",
       grand_total: "Grand Total",
       total_amount: "Total Amount",
       created_at: "Created At"
@@ -328,7 +332,8 @@ export function ReportBuilderClient({ companyId, companyName = "Company", prepar
       const { rows, selectedFields } = await fetchReportRows(report);
       const displayRows = await enrichRowsForStakeholders(rows, selectedFields);
       const csv = recordsToCsv(selectedFields, displayRows);
-      downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${sanitizeFileName(report.report_name)}.csv`);
+      // The UTF-8 byte-order mark makes Excel read names in Indian scripts and ₹ correctly.
+      downloadBlob(new Blob(["﻿", csv], { type: "text/csv;charset=utf-8" }), `${sanitizeFileName(report.report_name)}.csv`);
       toast.success("CSV export downloaded");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "CSV export failed");
@@ -355,10 +360,13 @@ export function ReportBuilderClient({ companyId, companyName = "Company", prepar
         rules: implicitFilters.map((implicit) => implicit.label),
         fields: grouping ? selectedFields.filter((field) => field !== grouping) : selectedFields,
         rows: displayRows,
-        totals: computeReportTotals(source, rows, grouping, prettyValue),
+        // Totals use the same enriched rows the PDF groups by; raw rows would key linked groups by
+        // UUID and every group subtotal would be lost.
+        totals: computeReportTotals(source, displayRows, grouping, prettyValue),
         prettyFieldLabel,
         prettyValue,
-        loadFont: browserFontLoader()
+        loadFont: browserFontLoader(),
+        logo: await loadLogoInBrowser(companyLogoUrl)
       });
       downloadBlob(new Blob([Uint8Array.from(bytes).buffer], { type: "application/pdf" }), `${sanitizeFileName(report.report_name)}.pdf`);
       toast.success("PDF export downloaded");

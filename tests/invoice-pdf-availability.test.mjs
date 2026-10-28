@@ -73,5 +73,7 @@ test("invoice PDF still enforces financial permission, tenant filters and histor
   const response = await call();
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("cache-control"), "private, no-store");
-  assert.ok(queries.every((query) => query.filters.some(([column, value]) => column === "company_id" && value === "session-company")));
+  // Every query is tenant-scoped: business tables by company_id, the companies row (logo) by its id.
+  assert.ok(queries.every((query) => query.filters.some(([column, value]) => (query.table === "companies" ? column === "id" : column === "company_id") && value === "session-company")));
+  assert.ok(queries.some((query) => query.table === "companies"), "the company logo is looked up for the session company");
 });

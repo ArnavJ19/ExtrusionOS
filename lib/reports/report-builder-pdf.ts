@@ -1,5 +1,5 @@
 import { PdfDocumentWriter, type PdfTableColumn, type PdfTableRow } from "../pdf/document-kit.ts";
-import { pdfAmount, pdfQuantity } from "../pdf/format.ts";
+import { pdfAmount, pdfDate, pdfLabel, pdfQuantity } from "../pdf/format.ts";
 import type { PdfFontLoader } from "../pdf/unicode-text.ts";
 import { planColumnBands, reportAmountFields, type ReportTotals } from "./report-builder.ts";
 
@@ -25,6 +25,8 @@ export type ReportBuilderPdfInput = {
   prettyFieldLabel: (field: string) => string;
   prettyValue: (value: unknown) => string;
   loadFont: PdfFontLoader;
+  /** Company logo bytes (lib/pdf/logo.ts). */
+  logo?: Uint8Array | null;
 };
 
 const COLUMNS_PER_BAND = 7;
@@ -33,6 +35,9 @@ const short = (value: string, limit = 80) => (value.length > limit ? `${value.sl
 /** Amount columns print with two decimals; weight columns (…_kg) with three. */
 const figure = (field: string, value: unknown) => (/_kg$/.test(field) ? pdfQuantity(value ?? 0, 3) : pdfAmount(value ?? 0));
 const withoutId = (value: string) => value.replace(/\s*\((?:ID: [^)]*|[0-9a-f-]{36} \(unmapped\))\)$/i, "").replace(/^([0-9a-f-]{36}) \(unmapped\)$/i, "Unlinked ($1)");
+/** Workflow enums ("partially_paid") print as labels; free text in the same fields is left alone. */
+const ENUM_FIELD = /(?:^|_)(?:status|stage|type|method|category)$/;
+const DATE_VALUE = /^\d{4}-\d{2}-\d{2}(?:$|T)/;
 
 export async function buildReportBuilderPdf(input: ReportBuilderPdfInput) {
   const { prettyFieldLabel, prettyValue, grouping, rows, totals } = input;
@@ -40,14 +45,24 @@ export async function buildReportBuilderPdf(input: ReportBuilderPdfInput) {
   const numericFields = new Set(input.fields.filter((field) => amountFields.has(field)
     || (rows.some((row) => row[field] !== null && row[field] !== undefined && row[field] !== "")
       && rows.every((row) => row[field] === null || row[field] === undefined || row[field] === "" || typeof row[field] === "number"))));
-  const cell = (field: string, value: unknown) => {
-    if (amountFields.has(field) && typeof value === "number") return figure(field, value);
+  // Dates print as stored ("20 Oct 2026"; timestamps in IST) rather than in the browser's locale
+  // and time zone, matching every other ExtrusionOS document.
+  const display = (field: string, value: unknown) => {
+    if (typeof value === "string" && DATE_VALUE.test(value)) return pdfDate(value);
+    if (typeof value === "string" && ENUM_FIELD.test(field) && /^[a-z0-9_]+$/.test(value)) return pdfLabel(value);
     return withoutId(prettyValue(value));
   };
-  const range = input.dateRange?.from || input.dateRange?.to ? `${input.dateRange?.from ? prettyValue(input.dateRange.from) : "Start"} to ${input.dateRange?.to ? prettyValue(input.dateRange.to) : "Today"}` : null;
+  const cell = (field: string, value: unknown) => {
+    if (amountFields.has(field) && typeof value === "number") return figure(field, value);
+    return display(field, value);
+  };
+  // Group totals are keyed by prettyValue(raw value); this maps each key to its printed label.
+  const groupLabels = new Map<string, string>();
+  const range = input.dateRange?.from || input.dateRange?.to ? `${input.dateRange?.from ? pdfDate(input.dateRange.from) : "Start"} to ${input.dateRange?.to ? pdfDate(input.dateRange.to) : "Today"}` : null;
 
   const doc = await PdfDocumentWriter.create({
     title: input.reportName,
+    logo: input.logo ?? null,
     issuer: { name: input.companyName, lines: [`Source: ${prettyFieldLabel(input.source)}`] },
     meta: [
       ["Rows", rows.length.toLocaleString("en-IN")],
@@ -75,7 +90,8 @@ export async function buildReportBuilderPdf(input: ReportBuilderPdfInput) {
     const currencies = Object.keys(group.byCurrency);
     return (currencies.length ? currencies : ["INR"]).map((currency) => {
       const values = group.byCurrency[currency] ?? {};
-      const label = `${kind === "total" ? "Grand total" : "Subtotal"} (${group.count.toLocaleString("en-IN")} rows)${currencies.length > 1 || currency !== "INR" ? ` · ${currency}` : ""}`;
+      const count = group.countByCurrency?.[currency] ?? group.count;
+      const label = `${kind === "total" ? "Grand total" : "Subtotal"} (${count.toLocaleString("en-IN")} ${count === 1 ? "row" : "rows"})${currencies.length > 1 || currency !== "INR" ? ` · ${currency}` : ""}`;
       // The label sits in the first text column of the band; a band of figures only uses the # column.
       const labelIndex = band.findIndex((field) => !totals.fields.includes(field));
       const cells = band.map((field, index) => (totals.fields.includes(field) ? figure(field, values[field]) : index === labelIndex ? label : ""));
@@ -103,7 +119,9 @@ export async function buildReportBuilderPdf(input: ReportBuilderPdfInput) {
         const groupValue = prettyValue(row[grouping]);
         if (groupValue !== activeGroupValue) {
           if (activeGroup && showTotals) tableRows.push(...subtotalRows(band, activeGroup, "subtotal"));
-          tableRows.push({ kind: "group", cells: [`${prettyFieldLabel(grouping)}: ${short(withoutId(groupValue))}`] });
+          const printed = display(grouping, row[grouping]);
+          groupLabels.set(groupValue, printed);
+          tableRows.push({ kind: "group", cells: [`${prettyFieldLabel(grouping)}: ${short(printed)}`] });
           activeGroupValue = groupValue;
           activeGroup = totals.groups.find((group) => group.label === groupValue);
         }
@@ -122,7 +140,8 @@ export async function buildReportBuilderPdf(input: ReportBuilderPdfInput) {
     const summary: PdfTableRow[] = [];
     const push = (group: ReportTotals, kind: "body" | "total") => {
       for (const [currency, values] of Object.entries(group.byCurrency)) {
-        const cells = [kind === "total" ? "Grand total" : withoutId(group.label), group.count.toLocaleString("en-IN"), ...(multiCurrency ? [currency] : []),
+        const cells = [kind === "total" ? "Grand total" : groupLabels.get(group.label) ?? withoutId(group.label),
+          (group.countByCurrency?.[currency] ?? group.count).toLocaleString("en-IN"), ...(multiCurrency ? [currency] : []),
           ...totals.fields.map((field) => figure(field, values[field]))];
         summary.push(kind === "total" ? { kind: "total", cells } : cells);
       }

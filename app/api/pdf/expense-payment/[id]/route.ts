@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { buildVoucherPdf, supplierPaymentVoucher } from "@/lib/pdf/finance-vouchers";
+import { loadCompanyLogo } from "@/lib/pdf/logo-loader-node";
 import { createClient } from "@/lib/supabase/server";
 
 // Printable supplier payment voucher (PDF-05).
@@ -18,12 +19,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (payment.error) return NextResponse.json({ error: "Payment data is unavailable." }, { status: 503 });
   if (!payment.data) return NextResponse.json({ error: "Payment not found" }, { status: 404 });
   const [company, expense] = await Promise.all([
-    supabase.from("companies").select("name, legal_name, gst_number, billing_address").eq("id", context.companyId).maybeSingle(),
+    supabase.from("companies").select("name, legal_name, logo_url, gst_number, billing_address, city, state, pincode").eq("id", context.companyId).maybeSingle(),
     supabase.from("expense_ledger").select("expense_number, description, vendor_name_snapshot, invoice_number, invoice_date, balance_amount")
       .eq("company_id", context.companyId).eq("id", payment.data.expense_ledger_id).maybeSingle()
   ]);
   if (company.error || expense.error || !company.data || !expense.data) return NextResponse.json({ error: "Expense data is unavailable." }, { status: 503 });
-  const bytes = await buildVoucherPdf(supplierPaymentVoucher({ company: company.data, payment: payment.data, expense: expense.data }));
+  const bytes = await buildVoucherPdf({ ...supplierPaymentVoucher({ company: company.data, payment: payment.data, expense: expense.data }), logo: await loadCompanyLogo(company.data.logo_url) });
   return new NextResponse(Buffer.from(bytes), { headers: { "Content-Type": "application/pdf",
     "Content-Disposition": `inline; filename="payment-voucher-${parsed.data}.pdf"`, "Cache-Control": "private, no-store" } });
 }

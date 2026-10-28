@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth";
 import { buildSystemConfiguratorPdf, type SystemReportType } from "@/lib/pdf/systems-configurator-pdf";
+import { loadCompanyLogo } from "@/lib/pdf/logo-loader-node";
 import { getSystemQuoteReadiness } from "@/lib/systems-configurator/quote-readiness";
 import { getErrorMessage } from "@/lib/utils/errors";
 
@@ -22,7 +23,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
     const supabase = await createClient();
     const [companyResult, settingsResult, configurationResult, profileCutsResult, glassCutsResult, beadingCutsResult, hardwareBomResult, materialSummaryResult, optimizationRunResult] = await Promise.all([
-      supabase.from("companies").select("name, legal_name, gst_number, billing_address, city, state, pincode, phone, email").eq("id", context.companyId).single(),
+      supabase.from("companies").select("name, legal_name, logo_url, gst_number, billing_address, city, state, pincode, phone, email").eq("id", context.companyId).single(),
       supabase.from("company_settings_authorized").select("default_quote_terms, default_terms_and_conditions, default_payment_terms, default_delivery_terms, bank_details, default_bank_details").eq("company_id", context.companyId).maybeSingle(),
       supabase.from("system_configurations_authorized").select("*, customers(customer_name, company_name, gst_number, billing_address, shipping_address), system_series(series_code, series_name), glass_items:glass_items_authorized(glass_code, glass_name), finish_options:finish_options_authorized(finish_code, finish_name)").eq("id", id).eq("company_id", context.companyId).single(),
       supabase.from("system_profile_cuts").select("*").eq("company_id", context.companyId).eq("configuration_id", id).order("profile_code", { ascending: true }).order("sort_order", { ascending: true }),
@@ -55,7 +56,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       materialSummary: materialSummaryResult.data ?? [],
       optimizationRun: optimizationRunResult.data,
       reportType: type as SystemReportType,
-      canShowInternalCost
+      canShowInternalCost,
+      logo: await loadCompanyLogo(companyResult.data.logo_url)
     });
 
     return new NextResponse(Buffer.from(bytes), {

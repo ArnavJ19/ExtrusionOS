@@ -1,4 +1,4 @@
-import { PDFDocument, rgb, type Color, type PDFPage } from "pdf-lib";
+import { PDFDocument, rgb, type Color, type PDFImage, type PDFPage } from "pdf-lib";
 import { PdfTextKit, type PdfFontLoader } from "./unicode-text.ts";
 import { PDF_BLANK, pdfDateTime } from "./format.ts";
 
@@ -33,6 +33,7 @@ const MARGIN_TOP = 40;
 const CONTENT_BOTTOM = 54;
 const FOOTER_RULE_Y = 40;
 const FOOTER_TEXT_Y = 29;
+const HEADING_HEIGHT = 14;
 
 export type Align = "left" | "right" | "center";
 export type StampTone = "void" | "warning" | "neutral" | "positive";
@@ -43,6 +44,8 @@ export type DocumentIdentity = {
   /** Document number repeated in the running header and footer. */
   number?: string | null;
   issuer: { name: string; lines?: (string | null | undefined | false)[] };
+  /** Company logo (PNG or JPEG bytes, see lib/pdf/logo.ts); printed above the issuer block. */
+  logo?: Uint8Array | null;
   /** Right-hand header facts: [label, value]. Empty values are skipped. */
   meta?: [string, string | null | undefined][];
   stamp?: { text: string; tone?: StampTone } | null;
@@ -58,7 +61,11 @@ export type DocumentIdentity = {
 export type PdfTableColumn = { header: string; width: number; align?: Align; wrap?: boolean };
 export type PdfCell = string | number | null | undefined;
 export type PdfTableRow = PdfCell[] | { cells: PdfCell[]; kind?: "body" | "group" | "total" | "subtotal" };
-export type PdfTableOptions = { size?: number; headerSize?: number; emptyText?: string; blank?: string };
+export type PdfTableOptions = {
+  size?: number; headerSize?: number; emptyText?: string; blank?: string;
+  /** Points of following content (e.g. signatures) kept on the same page as the table's last row. */
+  keepWithNext?: number;
+};
 export type PdfField = [string, PdfCell | boolean];
 export type PdfTotalRow = { label: string; value: string; emphasis?: boolean; muted?: boolean };
 
@@ -81,6 +88,24 @@ function clean(value: unknown) {
     .replace(/\r\n?/g, "\n");
 }
 
+/** Embeds a PNG/JPEG logo; an unreadable image is left out rather than failing the document. */
+async function embedLogo(pdf: PDFDocument, bytes: Uint8Array | null | undefined): Promise<PDFImage | null> {
+  if (!bytes || bytes.length < 8) return null;
+  try {
+    if (bytes[0] === 0x89 && bytes[1] === 0x50) return await pdf.embedPng(bytes);
+    if (bytes[0] === 0xff && bytes[1] === 0xd8) return await pdf.embedJpg(bytes);
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/** Scales an image to fit a box, keeping its aspect ratio. */
+function fitImage(image: PDFImage, maxWidth: number, maxHeight: number) {
+  const scale = Math.min(maxWidth / image.width, maxHeight / image.height);
+  return { width: image.width * scale, height: image.height * scale };
+}
+
 function cellText(value: PdfCell | boolean, blank: string) {
   if (value === null || value === undefined) return blank;
   if (typeof value === "boolean") return value ? "Yes" : "No";
@@ -100,6 +125,7 @@ export class PdfDocumentWriter {
   readonly bottom = CONTENT_BOTTOM;
   page!: PDFPage;
   y = 0;
+  private logo: PDFImage | null = null;
   private continuationTop = 0;
 
   private constructor(pdf: PDFDocument, kit: PdfTextKit, identity: DocumentIdentity) {
@@ -116,6 +142,7 @@ export class PdfDocumentWriter {
     const pdf = await PDFDocument.create();
     const kit = await PdfTextKit.create(pdf, loadFont, collectStrings([identity, content]).map(clean));
     const writer = new PdfDocumentWriter(pdf, kit, identity);
+    writer.logo = await embedLogo(pdf, identity.logo);
     writer.page = pdf.addPage(PDF_PAGE[identity.orientation ?? "portrait"]);
     writer.continuationTop = writer.height - MARGIN_TOP - 26;
     writer.drawFirstHeader();
@@ -161,12 +188,57 @@ export class PdfDocumentWriter {
     this.y -= height;
   }
 
-  /** Starts a new page when `height` does not fit. Returns true when a page was added. */
+  /**
+   * Starts a new page when `height` does not fit. Returns true when a page was added. A section
+   * heading waiting to be drawn is placed here, so it always lands on the same page as the first
+   * content of its section.
+   */
   ensure(height: number, onBreak?: () => void) {
-    if (this.y - height >= this.bottom) return false;
-    this.addPage();
-    onBreak?.();
-    return true;
+    const broke = this.y - height - this.headingHeight() < this.bottom;
+    if (broke) this.addPage();
+    this.flushHeading();
+    if (broke) onBreak?.();
+    return broke;
+  }
+
+  /** Heading text held by sectionTitle() until the next block is placed. */
+  private pendingHeading: string | null = null;
+
+  private headingHeight() {
+    return this.pendingHeading === null ? 0 : HEADING_HEIGHT;
+  }
+
+  private flushHeading() {
+    if (this.pendingHeading === null) return;
+    this.text(this.pendingHeading, this.left, this.y - 8, { size: 8, bold: true, color: PDF_COLORS.ink });
+    this.y -= HEADING_HEIGHT;
+    this.pendingHeading = null;
+  }
+
+  /** Room kept after each closing block's final line for the signature row (see closing()). */
+  private closingReserve = 0;
+
+  /**
+   * Marks the start of a document's closing section (totals, amount in words, notes, terms, final
+   * list). From here on a heading, and each block's final line or row, is placed only where the
+   * signature row still fits after it, so signatures never stand alone on a page.
+   */
+  closing(labels: string[], options: { forName?: string } = {}) {
+    // Signatures may shrink by 10 pt (see signatures()); builders leave at most 18 pt between the
+    // final block and the signature row, so height - 10 + 18 is always enough.
+    this.closingReserve = this.signatureHeight(labels, options) + 8;
+  }
+
+  /** ensure() for the final unit of a block: in the closing section it also keeps the signatures' room. */
+  private ensureLast(height: number) {
+    const reserve = this.closingReserve;
+    const needed = height + this.headingHeight();
+    if (reserve && this.y - needed >= this.bottom && this.y - needed - reserve < this.bottom && needed + reserve <= this.continuationTop - this.bottom) {
+      this.addPage();
+      this.flushHeading();
+      return true;
+    }
+    return this.ensure(height);
   }
 
   addPage() {
@@ -189,8 +261,13 @@ export class PdfDocumentWriter {
     const rightX = this.right - rightWidth;
     const leftWidth = rightX - this.left - 18;
 
-    // Issuer identity, left.
+    // Issuer identity, left: logo (when the company has one), then name, address and GSTIN.
     let leftY = top;
+    if (this.logo) {
+      const size = fitImage(this.logo, Math.min(leftWidth, 170), 36);
+      this.page.drawImage(this.logo, { x: this.left, y: top - size.height, width: size.width, height: size.height });
+      leftY = top - size.height - 9;
+    }
     // The issuer name steps down to 11 pt to stay on one line before it wraps.
     let nameSize = 13;
     while (nameSize > 11 && this.measure(identity.issuer.name, nameSize, true) > leftWidth) nameSize -= 0.5;
@@ -249,8 +326,14 @@ export class PdfDocumentWriter {
     const reference = [identity.title, identity.number].filter(Boolean).join(" ");
     const rightText = `${reference} (continued)`;
     const rightWidth = this.measure(rightText, 8);
-    const name = this.wrap(identity.issuer.name, 8.5, this.contentWidth - rightWidth - 20, true)[0] ?? "";
-    this.text(name, this.left, top - 8, { size: 8.5, bold: true, color: PDF_COLORS.ink });
+    let nameX = this.left;
+    if (this.logo) {
+      const size = fitImage(this.logo, 70, 11);
+      this.page.drawImage(this.logo, { x: this.left, y: top - 10, width: size.width, height: size.height });
+      nameX += size.width + 8;
+    }
+    const name = this.wrap(identity.issuer.name, 8.5, this.right - rightWidth - 20 - nameX, true)[0] ?? "";
+    this.text(name, nameX, top - 8, { size: 8.5, bold: true, color: PDF_COLORS.ink });
     this.text(rightText, this.right, top - 8, { size: 8, color: PDF_COLORS.muted, align: "right" });
     this.rule(top - 14, { thickness: 0.8, color: PDF_COLORS.ink });
     this.y = top - 26;
@@ -261,16 +344,21 @@ export class PdfDocumentWriter {
     const pages = this.pdf.getPages();
     const generated = `Generated ${pdfDateTime(this.identity.generatedAt ?? new Date())}`;
     const note = this.identity.footerNote ?? "This is a computer-generated document.";
+    let lastLineY = FOOTER_TEXT_Y;
     pages.forEach((page, index) => {
       page.drawLine({ start: { x: this.left, y: FOOTER_RULE_Y }, end: { x: this.right, y: FOOTER_RULE_Y }, thickness: 0.5, color: PDF_COLORS.rule });
       const right = `${this.identity.number ? `${clean(this.identity.number)}   ·   ` : ""}Page ${index + 1} of ${pages.length}`;
       const rightWidth = this.measure(right, 7);
-      const leftText = this.wrap(`${note}  ${generated}`, 7, this.contentWidth - rightWidth - 24)[0] ?? "";
-      this.text(leftText, this.left, FOOTER_TEXT_Y, { size: 7, color: PDF_COLORS.muted, page });
+      // A long note takes a second line rather than being cut off; the timestamp is never dropped.
+      const leftWidth = this.contentWidth - rightWidth - 24;
+      const single = `${note}  ${generated}`;
+      const lines = this.measure(single, 7) <= leftWidth ? [single] : [...this.wrap(note, 7, leftWidth).slice(0, 2), generated];
+      lines.forEach((line, lineIndex) => this.text(line, this.left, FOOTER_TEXT_Y - lineIndex * 9, { size: 7, color: PDF_COLORS.muted, page }));
+      lastLineY = Math.min(lastLineY, FOOTER_TEXT_Y - (lines.length - 1) * 9);
       this.text(right, this.right, FOOTER_TEXT_Y, { size: 7, color: PDF_COLORS.muted, align: "right", page });
     });
     if (this.kit.missing.size) {
-      this.text(`${this.kit.missing.size} character(s) outside the supported scripts are printed as "?".`, this.left, FOOTER_TEXT_Y - 10,
+      this.text(`${this.kit.missing.size} character(s) outside the supported scripts are printed as "?".`, this.left, lastLineY - 9,
         { size: 6.5, color: PDF_COLORS.muted, page: pages[pages.length - 1] });
     }
   }
@@ -295,8 +383,8 @@ export class PdfDocumentWriter {
   sectionTitle(title: string, keepWithNext = 48, options: { uppercase?: boolean } = {}) {
     this.ensure(20 + keepWithNext);
     const text = options.uppercase === false ? clean(title) : clean(title).toUpperCase();
-    this.text(this.wrap(text, 8, this.contentWidth, true)[0] ?? "", this.left, this.y - 8, { size: 8, bold: true, color: PDF_COLORS.ink });
-    this.y -= 14;
+    // Drawn by the next block's ensure(), on whichever page that block starts.
+    this.pendingHeading = this.wrap(text, 8, this.contentWidth, true)[0] ?? "";
   }
 
   paragraph(text: unknown, options: { size?: number; bold?: boolean; color?: Color; indent?: number; width?: number; lineHeight?: number; align?: Align } = {}) {
@@ -304,32 +392,34 @@ export class PdfDocumentWriter {
     const lineHeight = options.lineHeight ?? Math.round(size * 1.42 * 10) / 10;
     const indent = options.indent ?? 0;
     const width = options.width ?? this.contentWidth - indent;
-    for (const line of this.wrap(text, size, width, options.bold)) {
-      this.ensure(lineHeight);
+    const lines = this.wrap(text, size, width, options.bold);
+    lines.forEach((line, index) => {
+      if (index === lines.length - 1) this.ensureLast(lineHeight); else this.ensure(lineHeight);
       const x = options.align === "right" ? this.left + indent + width : this.left + indent;
       if (line) this.text(line, x, this.y - size, { size, bold: options.bold, color: options.color ?? PDF_COLORS.body, align: options.align });
       this.y -= lineHeight;
-    }
+    });
   }
 
   /** Terms and notes. Lines that start with "1.", "a)", "-" or "•" get a hanging indent. */
   list(lines: string[], options: { size?: number; color?: Color } = {}) {
     const size = options.size ?? 8;
     const lineHeight = Math.round(size * 1.45 * 10) / 10;
-    for (const raw of lines.map((line) => clean(line).trim()).filter(Boolean)) {
+    const items = lines.map((line) => clean(line).trim()).filter(Boolean);
+    items.forEach((raw, itemIndex) => {
       const marker = /^((?:\d{1,2}|[a-z]|[ivx]{1,4})[.)]|[-•*–])\s+(.*)$/i.exec(raw);
       const label = marker ? (/^[-•*–]$/.test(marker[1]) ? "•" : marker[1]) : "";
       const body = marker ? marker[2] : raw;
       const indent = label ? 16 : 0;
       const wrapped = this.wrap(body, size, this.contentWidth - indent);
       wrapped.forEach((line, index) => {
-        this.ensure(lineHeight);
+        if (itemIndex === items.length - 1 && index === wrapped.length - 1) this.ensureLast(lineHeight); else this.ensure(lineHeight);
         if (index === 0 && label) this.text(label, this.left, this.y - size, { size, color: options.color ?? PDF_COLORS.body });
         this.text(line, this.left + indent, this.y - size, { size, color: options.color ?? PDF_COLORS.body });
         this.y -= lineHeight;
       });
       this.y -= 1.5;
-    }
+    });
   }
 
   /** Bordered address/identity panels laid side by side (Bill to / Ship to, bank details). */
@@ -345,7 +435,7 @@ export class PdfDocumentWriter {
       lines: (block.lines ?? []).filter((line): line is string => Boolean(line && String(line).trim())).flatMap((line) => this.wrap(line, 8, inner))
     }));
     const height = Math.max(...laid.map((block) => pad + 11 + block.title.length * 12.5 + block.lines.length * 11 + pad - 2), 44);
-    this.ensure(height + 4);
+    this.ensureLast(height + 4);
     const top = this.y;
     laid.forEach((block, index) => {
       const x = this.left + index * (width + gap);
@@ -385,7 +475,8 @@ export class PdfDocumentWriter {
       }));
       const lines = Math.max(...row.map((cell) => Math.max(cell.label.length, cell.value.length)));
       const height = lines * lineHeight + padV * 2;
-      if (this.ensure(height) || first) {
+      const lastRow = index + columns >= items.length;
+      if ((lastRow ? this.ensureLast(height) : this.ensure(height)) || first) {
         this.rule(this.y, { color: PDF_COLORS.rule, thickness: 0.6 });
         first = false;
       }
@@ -419,7 +510,16 @@ export class PdfDocumentWriter {
     // A text column that follows a figure column gets extra lead so the two never touch.
     const lead = columns.map((column, index) => ((column.align ?? "left") === "left" && index > 0 && columns[index - 1].align === "right" ? 7 : 0));
     const inner = widths.map((width, index) => width - padX * 2 - lead[index]);
-    const headerLines = columns.map((column, index) => this.wrap(column.header, headerSize, inner[index], true));
+    // Words are not split mid-word while a slightly smaller size (down to 85%) still fits them;
+    // only longer tokens (codes, references) are hard-broken.
+    const wordFit = (text: string, index: number, bold: boolean, base: number) => {
+      const words = text.split(/\s+/).filter(Boolean);
+      let fitted = base;
+      while (fitted > Math.max(5.5, base * 0.85) && words.some((word) => this.measure(word, fitted, bold) > inner[index])) fitted -= 0.25;
+      return fitted;
+    };
+    const headerSizes = columns.map((column, index) => wordFit(clean(column.header), index, true, headerSize));
+    const headerLines = columns.map((column, index) => this.wrap(column.header, headerSizes[index], inner[index], true));
     const headerHeight = Math.max(...headerLines.map((lines) => lines.length)) * headerLineHeight + padV * 2 + 1;
 
     const wraps = columns.map((column) => column.wrap ?? (column.align ?? "left") !== "right");
@@ -438,26 +538,34 @@ export class PdfDocumentWriter {
       this.rule(top, { thickness: 0.9, color: PDF_COLORS.ink });
       headerLines.forEach((lines, index) => lines.forEach((line, lineIndex) => {
         this.text(line, cellX(index), top - padV - headerSize * 0.92 - lineIndex * headerLineHeight,
-          { size: headerSize, bold: true, color: PDF_COLORS.ink, align: columns[index].align ?? "left" });
+          { size: headerSizes[index], bold: true, color: PDF_COLORS.ink, align: columns[index].align ?? "left" });
       }));
       this.y = top - headerHeight;
       this.rule(this.y, { thickness: 0.6, color: PDF_COLORS.rule });
     };
 
     const normalized = rows.map((row) => (Array.isArray(row) ? { cells: row, kind: "body" as const } : { cells: row.cells, kind: row.kind ?? "body" }));
+    /** Lines per cell plus the font size of each wrapped cell. */
     const layout = (row: (typeof normalized)[number]) => {
-      if (row.kind === "group") return [this.wrap(cellText(row.cells[0], blank), size, this.contentWidth - padX * 2, true)];
+      if (row.kind === "group") return { cells: [this.wrap(cellText(row.cells[0], blank), size, this.contentWidth - padX * 2, true)], sizes: [size] };
       const bold = row.kind === "total" || row.kind === "subtotal";
-      return columns.map((_, index) => {
+      const sizes: number[] = [];
+      const cells = columns.map((_, index) => {
+        sizes.push(size);
         const value = row.cells[index];
         if (value === "" && bold) return [""];
         const text = cellText(value, bold && (value === null || value === undefined) ? "" : blank);
-        return wraps[index] ? this.wrap(text, size, inner[index], bold) : [text.replace(/\s*\n\s*/g, " ")];
+        if (!wraps[index]) return [text.replace(/\s*\n\s*/g, " ")];
+        sizes[index] = wordFit(text, index, bold, size);
+        return this.wrap(text, sizes[index], inner[index], bold);
       });
+      return { cells, sizes };
     };
 
-    const firstHeight = normalized.length ? Math.max(...layout(normalized[0]).map((lines) => lines.length)) * lineHeight + padV * 2 : lineHeight + padV * 2;
-    this.ensure(headerHeight + firstHeight);
+    const firstHeight = normalized.length ? Math.max(...layout(normalized[0]).cells.map((lines) => lines.length)) * lineHeight + padV * 2 : lineHeight + padV * 2;
+    const keep = Math.max(options.keepWithNext ?? 0, this.closingReserve);
+    // An empty or one-row table is kept whole with the following block from the start.
+    this.ensure(headerHeight + firstHeight + (normalized.length <= 1 ? keep : 0));
     drawHeader();
 
     if (!normalized.length) {
@@ -468,14 +576,28 @@ export class PdfDocumentWriter {
       return;
     }
 
-    for (const row of normalized) {
-      let remaining = layout(row);
+    // Trailing total/subtotal rows are kept on the same page as the last body row above them.
+    let tailStart = normalized.length;
+    while (tailStart > 0 && (normalized[tailStart - 1].kind === "total" || normalized[tailStart - 1].kind === "subtotal")) tailStart -= 1;
+    const tailHeight = normalized.slice(tailStart).reduce((sum, row) => sum + Math.max(1, ...layout(row).cells.map((cell) => cell.length)) * lineHeight + padV * 2, 0);
+
+    normalized.forEach((row, rowIndex) => {
+      const laid = layout(row);
+      let remaining = laid.cells;
       const bold = row.kind === "total" || row.kind === "subtotal";
       for (;;) {
         const lines = Math.max(1, ...remaining.map((cell) => cell.length));
         const needed = lines * lineHeight + padV * 2;
         const fullPage = this.continuationTop - this.bottom - headerHeight;
         let slice = lines;
+        // The last row travels with the following block when both cannot share this page.
+        // The last body row travels with the totals below it (and what follows the table); the
+        // table's final row travels with the following block (keepWithNext / closing section).
+        const after = tailStart > 0 && tailStart < normalized.length && rowIndex === tailStart - 1 ? tailHeight + keep
+          : rowIndex === normalized.length - 1 && rowIndex > 0 ? keep : 0;
+        if (after && this.y - needed >= this.bottom && this.y - needed - after < this.bottom && needed + after <= fullPage) {
+          this.addPage(); drawHeader(); continue;
+        }
         if (this.y - needed < this.bottom) {
           const fit = Math.floor((this.y - this.bottom - padV * 2) / lineHeight);
           if (needed > fullPage && fit >= 3) slice = fit;
@@ -495,7 +617,7 @@ export class PdfDocumentWriter {
           remaining.forEach((cell, index) => cell.slice(0, slice).forEach((line, lineIndex) => {
             if (!line) return;
             this.text(line, cellX(index), top - padV - size * 0.95 - lineIndex * lineHeight,
-              { size: wraps[index] ? size : fitSize(line, index, bold), bold, color: PDF_COLORS.ink, align: columns[index].align ?? "left" });
+              { size: wraps[index] ? laid.sizes[index] : fitSize(line, index, bold), bold, color: PDF_COLORS.ink, align: columns[index].align ?? "left" });
           }));
         }
         this.y = top - height;
@@ -505,7 +627,7 @@ export class PdfDocumentWriter {
         this.addPage();
         drawHeader();
       }
-    }
+    });
     this.rule(this.y, { thickness: 0.9, color: PDF_COLORS.ink });
     this.y -= 12;
   }
@@ -518,7 +640,7 @@ export class PdfDocumentWriter {
     const padX = 7;
     const rowHeight = 16;
     const height = rows.reduce((sum, row) => sum + (row.emphasis ? rowHeight + 3 : rowHeight), 0) + (options.caption ? 12 : 0);
-    this.ensure(height + 4);
+    this.ensureLast(height + 4);
     if (options.caption) {
       this.text(options.caption, this.right, this.y - 7, { size: 7, color: PDF_COLORS.muted, align: "right" });
       this.y -= 12;
@@ -548,7 +670,7 @@ export class PdfDocumentWriter {
   amountInWords(words: string, label = "Amount in words") {
     const lines = this.wrap(words, 8.5, this.contentWidth - 16, true);
     const height = 12 + lines.length * 12 + 8;
-    this.ensure(height);
+    this.ensureLast(height);
     const top = this.y;
     this.rect(this.left, top - height, this.contentWidth, height, { border: PDF_COLORS.rule, borderWidth: 0.6 });
     this.text(label.toUpperCase(), this.left + 8, top - 10, { size: 6.8, bold: true, color: PDF_COLORS.muted });
@@ -561,7 +683,7 @@ export class PdfDocumentWriter {
     const color = tone === "void" ? PDF_COLORS.void : tone === "warning" ? PDF_COLORS.warning : tone === "positive" ? PDF_COLORS.positive : PDF_COLORS.ink;
     const lines = this.wrap(message, 8.5, this.contentWidth - 18, true);
     const height = lines.length * 12 + 10;
-    this.ensure(height);
+    this.ensureLast(height);
     const top = this.y;
     this.rect(this.left, top - height, this.contentWidth, height, { border: color, borderWidth: 0.9 });
     this.rect(this.left, top - height, 3, height, { fill: color });
@@ -570,12 +692,26 @@ export class PdfDocumentWriter {
   }
 
   /** Signature boxes; `forName` prints "For <company>" above the last box. */
-  signatures(labels: string[], options: { forName?: string } = {}) {
-    if (!labels.length) return;
+  private signatureLayout(labels: string[], options: { forName?: string }) {
     const gap = 24;
     const width = (this.contentWidth - gap * (labels.length - 1)) / labels.length;
     const forLines = options.forName ? this.wrap(`For ${options.forName}`, 8.5, Math.max(width, this.contentWidth / 2), true) : [];
-    const height = 54 + forLines.length * 11.5;
+    return { gap, width, forLines, height: 54 + forLines.length * 11.5 };
+  }
+
+  /** Height of the signature row drawn by signatures(). */
+  signatureHeight(labels: string[], options: { forName?: string } = {}) {
+    return labels.length ? this.signatureLayout(labels, options).height : 0;
+  }
+
+  signatures(labels: string[], options: { forName?: string } = {}) {
+    this.closingReserve = 0;
+    if (!labels.length) return;
+    const { gap, width, forLines, height: fullHeight } = this.signatureLayout(labels, options);
+    // Up to 10 pt less signing space is used when that keeps the block on the current page,
+    // so a page never carries nothing but the signature lines.
+    let height = fullHeight;
+    if (this.y - height < this.bottom && this.y - (height - 10) >= this.bottom) height -= 10;
     this.ensure(height);
     const top = this.y;
     forLines.forEach((line, index) => this.text(line, this.right, top - 9 - index * 11.5, { size: 8.5, bold: true, color: PDF_COLORS.ink, align: "right" }));

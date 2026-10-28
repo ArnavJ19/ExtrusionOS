@@ -36,6 +36,7 @@ export type DieReportData = {
   nitridings: Record<string, any>[];
   generatedBy: string;
   loadFont?: PdfFontLoader;
+  logo?: Uint8Array | null;
 };
 
 export async function buildDieTechnicalSheetPdf(data: DieReportData): Promise<Uint8Array> {
@@ -43,6 +44,7 @@ export async function buildDieTechnicalSheetPdf(data: DieReportData): Promise<Ui
   const doc = await PdfDocumentWriter.create({
     title: "DIE TECHNICAL SHEET",
     number: d.die_number ?? null,
+    logo: data.logo ?? null,
     issuer: { name: data.company.name, lines: [data.company.gst_number ? `GSTIN: ${data.company.gst_number}` : null] },
     meta: [
       ["Die No.", val(d.die_number)],
@@ -90,8 +92,8 @@ export async function buildDieTechnicalSheetPdf(data: DieReportData): Promise<Ui
 
   doc.sectionTitle("Trial history", 50);
   doc.table([
-    { header: "Date", width: 11 }, { header: "Result", width: 10 }, { header: "Output quality", width: 11 }, { header: "Dimensional", width: 13 },
-    { header: "Surface", width: 11 }, { header: "Correction", width: 9 }, { header: "Remarks", width: 35 }
+    { header: "Date", width: 11, wrap: false }, { header: "Result", width: 10 }, { header: "Output quality", width: 11 }, { header: "Dimensional", width: 13 },
+    { header: "Surface", width: 11 }, { header: "Correction", width: 10 }, { header: "Remarks", width: 34 }
   ], data.trials.map((trial) => [
     pdfDate(trial.trial_date), pdfLabel(trial.trial_result), pdfLabel(trial.output_quality), pdfLabel(trial.dimensional_status),
     pdfLabel(trial.surface_status), pdfYesNo(trial.correction_required), trial.remarks
@@ -99,18 +101,20 @@ export async function buildDieTechnicalSheetPdf(data: DieReportData): Promise<Ui
 
   doc.sectionTitle("Correction history", 50);
   doc.table([
-    { header: "Date", width: 11 }, { header: "Reason", width: 15 }, { header: "Vendor", width: 18 },
-    { header: "Cost (INR)", width: 12, align: "right" }, { header: "Result", width: 10 }, { header: "Notes", width: 34 }
+    { header: "Date", width: 11, wrap: false }, { header: "Reason", width: 15 }, { header: "Vendor", width: 18 },
+    { header: "Cost (INR)", width: 12, align: "right" }, { header: "Result", width: 12 }, { header: "Notes", width: 32 }
   ], data.corrections.map((correction) => [
     pdfDate(correction.correction_date), pdfLabel(correction.correction_reason), correction.correction_vendor,
     pdfAmount(correction.cost), pdfLabel(correction.result_status), correction.notes
   ]), { emptyText: "No die corrections recorded." });
 
+  const signers = ["Prepared by", "Die shop in-charge", "Approved by"];
+  doc.closing(signers);
   doc.sectionTitle("Nitriding history", 50);
   doc.table([
-    { header: "Cycle", width: 6, align: "right" }, { header: "Date", width: 11 }, { header: "Vendor", width: 15 }, { header: "Process", width: 11 },
-    { header: "Temp (°C)", width: 8, align: "right" }, { header: "Duration (h)", width: 9, align: "right" }, { header: "Case depth (mm)", width: 10, align: "right" },
-    { header: "Surface hardness", width: 9, align: "right" }, { header: "Next due", width: 11 }, { header: "Status", width: 10 }
+    { header: "Cycle", width: 5, align: "right" }, { header: "Date", width: 12, wrap: false }, { header: "Vendor", width: 14 }, { header: "Process", width: 12 },
+    { header: "Temp (°C)", width: 7, align: "right" }, { header: "Duration (h)", width: 8, align: "right" }, { header: "Case depth (mm)", width: 10, align: "right" },
+    { header: "Surface hardness", width: 9, align: "right" }, { header: "Next due", width: 12, wrap: false }, { header: "Status", width: 10 }
   ], data.nitridings.map((cycle) => [
     pdfNumber(cycle.nitriding_cycle_number, 0), pdfDate(cycle.nitriding_date), cycle.nitriding_vendor, pdfLabel(cycle.nitriding_process_type),
     pdfNumber(cycle.nitriding_temperature_c, 1), pdfNumber(cycle.nitriding_duration_hours, 1), pdfQuantity(cycle.case_depth_mm, 3),
@@ -118,6 +122,6 @@ export async function buildDieTechnicalSheetPdf(data: DieReportData): Promise<Ui
   ]), { emptyText: "No nitriding cycles recorded." });
 
   doc.space(6);
-  doc.signatures(["Prepared by", "Die shop in-charge", "Approved by"]);
+  doc.signatures(signers);
   return doc.finish();
 }

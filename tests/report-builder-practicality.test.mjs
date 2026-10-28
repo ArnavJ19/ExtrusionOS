@@ -37,7 +37,10 @@ test("grouping changes exported data instead of remaining decorative", () => {
   assert.match(component, /query\.order\(grouping, \{ ascending: true, nullsFirst: false \}\)/);
   assert.match(component, /"Grouped by", grouping \? prettyFieldLabel\(grouping\)/);
   assert.match(component, /let activeGroupValue: string \| null = null/);
-  assert.match(component, /prettyFieldLabel\(grouping\).*short\(withoutId\(groupValue\)\)/);
+  assert.match(component, /const printed = display\(grouping, row\[grouping\]\)/);
+  assert.match(component, /prettyFieldLabel\(grouping\).*short\(printed\)/);
+  // Group totals must be keyed exactly like the printed groups (enriched, not raw UUID rows).
+  assert.match(component, /computeReportTotals\(source, displayRows, grouping, prettyValue\)/);
 });
 
 

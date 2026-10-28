@@ -94,10 +94,29 @@ export function pdfDateTime(value: unknown = new Date(), blank = PDF_BLANK) {
   return `${parts.day} ${MONTHS[parts.month - 1]} ${parts.year}, ${parts.hour}:${parts.minute} IST`;
 }
 
+// Abbreviations printed in capitals when an enum or key is title-cased ("neft" → "NEFT", "ifsc" → "IFSC").
+const ACRONYMS = new Set([
+  "neft", "rtgs", "imps", "upi", "utr", "ifsc", "micr", "swift", "iban", "pan", "tan", "gst", "gstin", "igst", "cgst", "sgst", "utgst",
+  "hsn", "sac", "tds", "tcs", "po", "lr", "ncr", "qc", "qa", "id", "dd", "emi", "pvdf", "dgu", "ccd", "hrc", "hv", "ral", "cnc", "inr", "usd"
+]);
+
+// Joining words stay lower case inside a label ("Out of Tolerance", "Sent for Correction").
+// Single letters are kept as capitals so grades and variants ("Grade A") are not lowered.
+const MINOR_WORDS = new Set(["and", "at", "by", "for", "in", "of", "on", "or", "per", "the", "to", "via", "with"]);
+
 /** snake_case enum → "Title Case". */
 export function pdfLabel(value: unknown, blank = PDF_BLANK) {
   if (value === null || value === undefined || value === "") return blank;
-  return String(value).replace(/_/g, " ").replace(/\s+/g, " ").trim().replace(/\b\w/g, (char) => char.toUpperCase());
+  let first = true;
+  return String(value).replace(/_/g, " ").replace(/\s+/g, " ").trim()
+    .replace(/[A-Za-z0-9]+/g, (word) => {
+      const lower = word.toLowerCase();
+      const result = ACRONYMS.has(lower) ? word.toUpperCase()
+        : !first && MINOR_WORDS.has(lower) && word === lower ? lower
+          : word.charAt(0).toUpperCase() + word.slice(1);
+      first = false;
+      return result;
+    });
 }
 
 export function pdfText(value: unknown, blank = PDF_BLANK) {
@@ -112,7 +131,42 @@ export function pdfYesNo(value: unknown, blank = PDF_BLANK) {
   return value === true || value === "true" ? "Yes" : "No";
 }
 
-/** Joins the non-empty parts of an address or contact line. */
+type CompanyNames = { name?: unknown; legal_name?: unknown } | null | undefined;
+
+/**
+ * The name printed as a document's heading: the company's trading name, the same name its logo
+ * and customers use. The registered legal name follows as a separate line when it differs.
+ */
+export function issuerName(company: CompanyNames, fallback = "Company") {
+  return String(company?.name || company?.legal_name || fallback).trim();
+}
+
+export function legalNameLine(company: CompanyNames) {
+  const name = String(company?.name ?? "").trim();
+  const legal = String(company?.legal_name ?? "").trim();
+  return name && legal && legal.toLowerCase() !== name.toLowerCase() ? `Legal name: ${legal}` : null;
+}
+
+/** Comma-separated segments of an address, with a trailing PIN split off ("Ahmedabad 382445"). */
+function addressSegments(text: string) {
+  return text.split(/[,\n]/).flatMap((segment) => {
+    const pins = segment.match(/\b\d{6}\b/g) ?? [];
+    const rest = segment.replace(/\b\d{6}\b/g, "").replace(/[\s\-–]+$/, "").trim();
+    return [rest, ...pins].map((value) => value.toLowerCase()).filter(Boolean);
+  });
+}
+
+/**
+ * Joins the non-empty parts of an address or contact line. A city, state or PIN that the street
+ * address already ends with ("…, Ahmedabad 382445") is not printed twice.
+ */
 export function joinParts(parts: unknown[], separator = ", ") {
-  return parts.map((part) => (part === null || part === undefined ? "" : String(part).trim())).filter(Boolean).join(separator);
+  const kept: string[] = [];
+  for (const part of parts) {
+    const text = part === null || part === undefined ? "" : String(part).trim();
+    if (!text) continue;
+    if (kept.some((earlier) => addressSegments(earlier).includes(text.toLowerCase()))) continue;
+    kept.push(text);
+  }
+  return kept.join(separator);
 }

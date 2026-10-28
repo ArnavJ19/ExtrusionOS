@@ -4,6 +4,7 @@ import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { buildInvoicePdf } from "@/lib/pdf/invoice-pdf";
+import { companyLogo } from "@/lib/pdf/logo-loader-node";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const context = await getSessionContext();
@@ -19,7 +20,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (!invoice.data) return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
   if (!invoice.data.supplier_snapshot || !invoice.data.customer_snapshot) return NextResponse.json({ error: "This legacy invoice predates party snapshots. Use its original issued document; current master details cannot verify the historical invoice." }, { status: 409 });
   try {
-    const bytes = await buildInvoicePdf({ company: invoice.data.supplier_snapshot, customer: invoice.data.customer_snapshot, invoice: invoice.data, items: items.data ?? [] });
+    const bytes = await buildInvoicePdf({ company: invoice.data.supplier_snapshot, customer: invoice.data.customer_snapshot, invoice: invoice.data, items: items.data ?? [], logo: await companyLogo(supabase, context.companyId) });
     return new NextResponse(Buffer.from(bytes), { headers: { "Content-Type": "application/pdf", "Content-Disposition": `inline; filename="invoice-${parsed.data}.pdf"`, "Cache-Control": "private, no-store" } });
   } catch {
     return NextResponse.json({ error: "Complete invoice supply states and line HSN codes before generating the PDF." }, { status: 409 });

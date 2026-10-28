@@ -37,6 +37,7 @@ export type ProfileReportData = {
   backupDie?: { die_number?: string; die_status?: string } | null;
   generatedBy: string;
   loadFont?: PdfFontLoader;
+  logo?: Uint8Array | null;
 };
 
 export async function buildProfileTechnicalSheetPdf(data: ProfileReportData): Promise<Uint8Array> {
@@ -44,6 +45,7 @@ export async function buildProfileTechnicalSheetPdf(data: ProfileReportData): Pr
   const doc = await PdfDocumentWriter.create({
     title: "PROFILE TECHNICAL SHEET",
     number: p.profile_code ?? null,
+    logo: data.logo ?? null,
     issuer: { name: data.company.name, lines: [data.company.gst_number ? `GSTIN: ${data.company.gst_number}` : null] },
     meta: [
       ["Profile code", val(p.profile_code)],
@@ -94,6 +96,8 @@ export async function buildProfileTechnicalSheetPdf(data: ProfileReportData): Pr
 
   section("Die linkage", [["Primary die", die(data.primaryDie)], ["Backup die", die(data.backupDie)]]);
 
+  const signers = ["Prepared by", "Quality / technical", "Approved by"];
+  doc.closing(signers);
   section("Surface treatment", [
     ["Mill finish", allowed(p.mill_finish_allowed)], ["Powder coating", allowed(p.powder_coating_allowed)],
     ["Anodizing", allowed(p.anodizing_allowed)], ["Coating thickness", num(p.coating_thickness_microns, 1, "µm")],
@@ -101,6 +105,6 @@ export async function buildProfileTechnicalSheetPdf(data: ProfileReportData): Pr
   ]);
 
   doc.space(6);
-  doc.signatures(["Prepared by", "Quality / technical", "Approved by"]);
+  doc.signatures(signers);
   return doc.finish();
 }

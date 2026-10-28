@@ -13,12 +13,15 @@ export default async function ReportBuilderPage() {
   const flags = await getFeatureFlagsForCompany(supabase, context.companyId);
   if (!isFeatureEnabled(flags, "report_builder")) return <ModuleDisabled moduleName="report_builder" title="Report Builder" />;
 
-  const reportsResult = await supabase
-    .from("saved_reports")
-    .select("id, report_name, data_source, visibility, created_at, config_json")
-    .eq("company_id", context.companyId)
-    .order("created_at", { ascending: false })
-    .limit(30);
+  const [reportsResult, companyResult] = await Promise.all([
+    supabase
+      .from("saved_reports")
+      .select("id, report_name, data_source, visibility, created_at, config_json")
+      .eq("company_id", context.companyId)
+      .order("created_at", { ascending: false })
+      .limit(30),
+    supabase.from("companies").select("logo_url").eq("id", context.companyId).maybeSingle()
+  ]);
 
-  return <ReportBuilderClient companyId={context.companyId} companyName={context.companyName} preparedBy={context.fullName ?? null} role={context.role} initialReports={(reportsResult.data ?? []) as any[]} />;
+  return <ReportBuilderClient companyId={context.companyId} companyName={context.companyName} companyLogoUrl={companyResult.data?.logo_url ?? null} preparedBy={context.fullName ?? null} role={context.role} initialReports={(reportsResult.data ?? []) as any[]} />;
 }

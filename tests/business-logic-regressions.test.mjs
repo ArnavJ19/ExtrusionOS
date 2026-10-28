@@ -84,7 +84,13 @@ test("BL-12 signed ties round away from zero, including scientific notation", ()
 });
 test("BL-13 large INR wording supports recursive crore groups", () => {
   assert.equal(numberToWordsINR(1_000_000_000), "Rupees One Hundred Crore Only");
-  assert.equal(numberToWordsINR(1_000_000_000.25), "Rupees One Hundred Crore and Twenty Five Paise Only");
+  assert.equal(numberToWordsINR(1_000_000_000.25), "Rupees One Hundred Crore and Paise Twenty Five Only");
+});
+test("INR wording keeps rupees and paise unambiguous on printed documents", () => {
+  // "One Hundred and Fifty Nine Paise" would read as 159 paise.
+  assert.equal(numberToWordsINR(53100.59), "Rupees Fifty Three Thousand One Hundred and Paise Fifty Nine Only");
+  assert.equal(numberToWordsINR(0.5), "Rupees Zero and Paise Fifty Only");
+  assert.equal(numberToWordsINR(1656055.1), "Rupees Sixteen Lakh Fifty Six Thousand Fifty Five and Paise Ten Only");
 });
 test("BL-14 plan attainment remains distinct from material recovery", () => {
   assert.equal(planAttainmentPercent(100, 120), 120);

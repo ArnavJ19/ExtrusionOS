@@ -3,6 +3,7 @@
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { companyLogo, loadCompanyLogo } from "@/lib/pdf/logo-loader-node";
 import { buildDieTechnicalSheetPdf } from "@/lib/reports/pcda/die-technical-sheet";
 import { buildProfileTechnicalSheetPdf } from "@/lib/reports/pcda/profile-technical-sheet";
 import { buildCustomerSafeReportModel } from "@/lib/reports/pcda/customer-report";
@@ -31,10 +32,10 @@ function canGenerateTemplate(role: string, templateKey: ReportTemplateKey): bool
   return template.roles.includes(role);
 }
 
-function fileForFormat(format: ReportFormat, model: Awaited<ReturnType<typeof buildCustomerSafeReportModel>>): Promise<GeneratedReportFile> | GeneratedReportFile {
+async function fileForFormat(format: ReportFormat, model: Awaited<ReturnType<typeof buildCustomerSafeReportModel>>, logo: () => Promise<Uint8Array | null>): Promise<GeneratedReportFile> {
   if (format === "csv") return generateCSV(model);
   if (format === "excel") return generateExcel(model);
-  return generatePDF(model);
+  return generatePDF(model, undefined, { logo: await logo() });
 }
 
 export async function generateReport(
@@ -57,7 +58,7 @@ export async function generateReport(
     }
 
     const model = await buildCustomerSafeReportModel(templateKey, recordId, context.companyId);
-    const file = await fileForFormat(format, model);
+    const file = await fileForFormat(format, model, () => companyLogo(supabase, context.companyId));
     const safeRecordNumber = model.header.recordNumber.replace(/[^a-z0-9_-]+/gi, "-").replace(/^-|-$/g, "") || recordId;
     const reportVersion = `${Date.now()}-${crypto.randomUUID()}`;
     const storagePath = `${context.companyId}/reports/${template.recordType}/${recordId}/${reportVersion}-${templateKey}-${safeRecordNumber}.${file.extension}`;
@@ -146,7 +147,7 @@ export async function generateDieTechnicalSheet(dieId: string): Promise<{ succes
 
   if (dieError || !die) return { success: false, error: "Die not found" };
 
-  const { data: company } = await supabase.from("companies").select("name, gst_number").eq("id", context.companyId).single();
+  const { data: company } = await supabase.from("companies").select("name, gst_number, logo_url").eq("id", context.companyId).single();
 
   const [trialsResult, correctionsResult, nitridingsResult] = await Promise.all([
     supabase.from("die_trials").select("*").eq("company_id", context.companyId).eq("die_id", dieId).order("trial_date", { ascending: false }).limit(20),
@@ -162,7 +163,8 @@ export async function generateDieTechnicalSheet(dieId: string): Promise<{ succes
     trials: trialsResult.data ?? [],
     corrections: correctionsResult.data ?? [],
     nitridings: nitridingsResult.data ?? [],
-    generatedBy: context.fullName ?? context.email ?? "System"
+    generatedBy: context.fullName ?? context.email ?? "System",
+    logo: await loadCompanyLogo(company?.logo_url)
   });
 
   // Store in Supabase Storage
@@ -203,14 +205,15 @@ export async function generateProfileTechnicalSheet(profileId: string): Promise<
 
   if (profileError || !profile) return { success: false, error: "Profile not found" };
 
-  const { data: company } = await supabase.from("companies").select("name, gst_number").eq("id", context.companyId).single();
+  const { data: company } = await supabase.from("companies").select("name, gst_number, logo_url").eq("id", context.companyId).single();
 
   const pdfBytes = await buildProfileTechnicalSheetPdf({
     company: { name: company?.name ?? "Company", gst_number: company?.gst_number ?? undefined },
     profile,
     primaryDie: profile.primary_die as any,
     backupDie: profile.backup_die as any,
-    generatedBy: context.fullName ?? context.email ?? "System"
+    generatedBy: context.fullName ?? context.email ?? "System",
+    logo: await loadCompanyLogo(company?.logo_url)
   });
 
   const storagePath = `${context.companyId}/reports/profile/${profileId}/${profile.profile_code}-technical-sheet.pdf`;

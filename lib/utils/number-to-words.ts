@@ -54,10 +54,12 @@ export function numberToWordsINR(amount: number): string {
   if (thousand > 0) parts.push(twoDigitWords(thousand) + " Thousand");
   if (remainder > 0) parts.push(threeDigitWords(remainder));
 
-  let result = "Rupees " + parts.join(" ");
+  let result = "Rupees " + (parts.length ? parts.join(" ") : "Zero");
 
+  // "and Paise Fifty Nine" (banking style) instead of "and Fifty Nine Paise": after "…One Hundred"
+  // the latter reads as one hundred and fifty-nine paise.
   if (paise > 0) {
-    result += " and " + twoDigitWords(paise) + " Paise";
+    result += " and Paise " + twoDigitWords(paise);
   }
 
   return result + " Only";

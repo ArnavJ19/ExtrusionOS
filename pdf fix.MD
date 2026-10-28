@@ -4,7 +4,7 @@
 
 **User goal (verbatim intent):** Every PDF and report PDF must be of top quality: completely readable, properly formatted, professional and precise. Fix all the files and the way reports are generated.
 
-> **Status: work STOPPED mid-way at the user's request.** All PDF generators have been rewritten onto one shared engine. **Nothing has been type-checked, linted, built or tested since the rewrite**, one test file still needs updating, and four document types have not yet been rendered for visual QA. See §5 for exact next steps.
+> **Status (updated 2026-10-20, follow-up session): §5 complete.** §5 has been worked through: every document type was rendered with realistic fixtures and inspected page by page, the defects found are fixed, and lint, typecheck, build and the full test suite pass. See **§8** for what the visual audit found and changed, and §8.5 for the items that need a team decision or a database change. §0–§7 are kept as the original handover record.
 
 ---
 
@@ -197,3 +197,70 @@ Check: no text past the margins (span `bbox[2] <= 555.28` in portrait, `<= 801.8
 - Right-aligned columns are numbers and never wrap. Put the unit in the header ("Amount (INR)", "Qty (kg)") rather than in each cell.
 - Use relative `.ts` imports in `lib/pdf/*` and `lib/reports/*` so `node --experimental-strip-types` tests can import them.
 - Customer-facing documents: no cost, margin, profit, supplier rate or internal notes (CLAUDE.md §10).
+
+---
+
+## 8. Follow-up session: visual audit, fixes and verification (2026-10-20)
+
+Work done on `codex/v1` in `.worktrees/codex-v1`, on top of `61a1530`.
+
+### 8.1 Visual QA performed
+Twenty-eight fixture documents (realistic Indian extrusion data) were rendered with PyMuPDF at 110 dpi and inspected page by page, plus automated checks on every page: no text outside the 40 pt margins, no overlapping spans, footer "Page x of y" present, no "?" replacement glyphs. Covered: tax invoice (intra-state 14 lines / 2 pages, inter-state draft, one-line, Devanagari/Gujarati/Tamil/Bengali/₹/Ł), quotation (full and empty), credit note (issued, reversed), expense voucher (INR, USD), payment voucher (posted, reversed), all 7 configurator outputs plus an empty draft production sheet and the restricted internal-costing refusal, die sheet (with and without history), profile sheet, PCDA dispatch (short values) and quality (long values), Report Builder (grouped multi-band receivables, multi-currency payables, empty). Arithmetic on invoice, quote, credit-note and voucher totals was reconciled by hand. A page-break sweep then rendered about 170 more documents (invoices, quotes and expense vouchers with 1–22 lines, die sheets with 0–14 trials, cutting lists, BOMs and production sheets with 0–40 cuts) and checked each page for margin overflow, overlaps, missing footers, headings stranded at a page bottom and pages holding only signatures.
+
+### 8.2 Defects found and fixed
+| # | Defect | Fix |
+|---|--------|-----|
+| 1 | `±`, `µ`, `²`, `³`, `½`, `≤`, `≥`, `→`, `⌀`, `✓` printed as "?" (the Noto Sans Devanagari Latin subset lacks them; the profile sheet itself prints "µm"). | Base face is now plain **Noto Sans** Latin (full Latin-1, `− ′ ″`); accented names use Noto Sans Latin-Ext; new `symbols` face (Noto Sans Math) for Greek, arrows, math operators, `⌀`, `✓`. New devDependencies `@fontsource/noto-sans`, `@fontsource/noto-sans-math` (OFL). `scripts/sync-pdf-fonts.mjs` copies by package (`PDF_FONT_SOURCES`) and removes unused subsets. |
+| 2 | Amount in words was ambiguous: ₹53,100.59 → "…One Hundred and Fifty Nine Paise". Zero rupees printed "Rupees  and … Paise". | `numberToWordsINR` now writes "…One Hundred and Paise Fifty Nine Only" and "Rupees Zero and Paise Fifty Only". |
+| 3 | Report Builder PDF lost every group subtotal and printed raw UUIDs in Statement totals when grouped by a linked field (customer, vendor, invoice): totals were computed from raw rows, groups from enriched rows. | `exportPdf` computes totals from the enriched `displayRows`. |
+| 4 | Multi-currency grand totals said "(12 rows) · INR" and "(12 rows) · USD" (overall count). | `ReportTotals.countByCurrency`; subtotal, grand-total and statement rows print per-currency counts. |
+| 5 | Footer note + timestamp cut off mid-sentence ("…Generated 20") on die/profile sheets. | Footer wraps onto a second line; the timestamp is never dropped. |
+| 6 | Column headers and short words split mid-word ("Correctio/n", "Successf/ul"); dates wrapped ("15 Aug / 2026"). | Table cells and headers shrink up to 15% before any hard break; die-sheet date columns are `wrap: false`; die/configurator column weights rebalanced. |
+| 7 | `pdfLabel` printed "Neft", "Rtgs", "Ifsc", "Dgu", "Out Of Tolerance". | Acronym list and lower-case joining words. |
+| 8 | Report Builder printed raw enums (`partially_paid`, `raw_material`) and browser-locale dates ("30 Sept"; date-only values can shift a day west of UTC). | Enum-like fields (`…status/stage/type/method/category`) print as labels; dates use `pdfDate`. Client label "Vendor Name Snapshot" → "Vendor". |
+| 9 | PCDA header "Generated on" used the server-locale date string (UTC on Vercel) and the footer used a different render time. | Both print `metadata.generatedAt` in IST; "Not Captured" references/revision are omitted from the header. |
+| 10 | Expense/payment vouchers printed only the street line of the company address; blanks printed as "-". | Routes also select `city, state, pincode`; `joinParts` skips a city/state/PIN already in the street line; blanks print "—". |
+| 11 | Signature block left alone on a new page (system quotation, empty production sheet, and in a row-count sweep: invoices with 5–8 lines, quotes, vouchers, die sheets). | Engine `closing(signers)`: from the closing section on, headings and each block's final line/row are placed only where the signature row still fits after them; the last table row travels with the signatures; signatures may use up to 10 pt less space. Called by every builder that signs off. Elevation max height 150 pt (the 3-panel system quote fits on one page). |
+| 12 | Handover §5.5: die/profile sheets and PCDA PDFs (server actions) had no font files traced on Vercel. | `next.config.ts` traces `public/fonts/pdf/**` for `/dies/[id]`, `/profiles/[id]`, `/orders/[id]`, `/quotes/[id]`; verified in `.next/server/**/page.js.nft.json` (23 font files each). |
+| 13 | PCDA Excel export (§6, optional): plain unstyled table; Excel turned 12-digit e-way bill numbers into 3.41E+11 and dropped leading zeros; booleans printed true/false. | Section title bands, Field/Value header row, column widths, long digit strings kept as text; CSV and Excel print Yes/No. |
+| 14 | Quotation for a customer with no company name printed "Attn: <same name>" under the name. | Attn line only when a contact person differs from the company name. |
+
+### 8.3 Tests
+- New `tests/pdf-document-quality.test.mjs`: symbol coverage, label casing, address de-duplication, footer completeness and no mid-word splits (die sheet), Report Builder linked-group subtotals without UUIDs, per-currency counts, enum and date formatting.
+- `tests/business-logic-regressions.test.mjs`: amount-in-words wording.
+- `tests/report-builder-practicality.test.mjs`: source assertions follow the new group-label code and pin totals to `displayRows`.
+
+### 8.4 Engine additions (for future documents)
+- Section headings are held by `sectionTitle()` and drawn by the next block where it actually lands, so a heading never stays behind at a page bottom.
+- `doc.closing(signers, { forName })` before the closing section, then `doc.signatures(signers, …)`; `doc.signatureHeight()` measures the row.
+- `table(…, { keepWithNext })` keeps the last row with the following content.
+- Table headers and wrapped cells shrink up to 15% before a word is split; use `wrap: false` for dates and codes that must stay on one line.
+
+### 8.5 Still open (not changed here)
+- Invoice supplier snapshot: candidate migration `supabase/migrations/20261020120000_invoice_supplier_snapshot_contact.sql` (new invoices also store city, state, PIN, phone and e-mail; PGlite test `tests/invoice-supplier-snapshot-contact.test.mjs` 7/7). **Not applied to the hosted database**; existing invoices keep their original snapshot. `sql/astra-integrity.sql` still holds the older reference copy of the function.
+- The empty legacy `lib/pdf/quote-pdf-new.ts` was deleted (nothing referenced it).
+- Report Builder CSV keeps the (ID: uuid) suffixes by design (§6).
+
+---
+
+## 9. Company logo and quotation fixes (2026-10-20, follow-up request)
+
+### 9.1 Logo on every generated PDF
+- Engine: `DocumentIdentity.logo` (PNG/JPEG bytes) is drawn above the issuer block on page 1 (max 170 × 36 pt) and small beside the company name on every continuation page. An unreadable image is left out; it never fails a document.
+- Source: each tenant's `companies.logo_url` (Settings → Branding). `lib/pdf/logo.ts` accepts only `/brand/<file>.png|jpg` (shipped in `public/brand`) or this project's public Supabase Storage URLs (https, same host), PNG/JPEG magic bytes, ≤ 2 MB, 5 s timeout, no redirects, so a logo URL cannot make the server fetch other hosts.
+- Wired into: quotation, tax invoice, credit note, expense voucher, supplier payment voucher, all 7 configurator outputs (`/api/pdf/*`), die and profile technical sheets and PCDA reports (server actions in `lib/actions/pcda-reports.ts`), and the browser Report Builder export (`loadLogoInBrowser`). `next.config.ts` traces `public/brand/**` with the fonts.
+- Omalco: `public/brand/omalco-logo.png` (cropped from the supplied artwork, transparent, 1000 × 226). With the user's approval the live company row was updated: `logo_url = '/brand/omalco-logo.png'`, `legal_name` "Arnav Jain" → "Omalco Extrusions Pvt. Ltd.", `billing_address` "B-4 Pushpa Timber Complex\nPaharganj, New Del" → "B-4 Pushpa Timber Complex, Paharganj". The image is served by the app, so it appears on the hosted site once this branch is deployed.
+
+### 9.2 Quotation PDF (checked against the live Omalco quotes)
+| Problem | Fix |
+|---|---|
+| Heading printed the stored legal name (a person) with "Trade name:" underneath. | Every document heads with the trading name (`issuerName`); tax documents add "Legal name: …" only when it differs; quotations print no legal-name line. |
+| Rate × billing weight did not equal the line amount (e.g. 4,069.8 kg × 398.15 ≠ 16,20,392.48), because `price_per_kg` is the line amount ÷ weight rounded to paise. | Column "Rate* (INR)" with a footnote stating that line amounts are exact and rates are rounded averages; the Total row adds the printed line amounts, and a red notice appears if they differ from the stored subtotal. |
+| Quotes Q-2026-0013…0016 have totals but no line items. | The route refuses such quotes (409, "has no line items"). |
+| Description repeated the profile code ("1098 - Profile Section 1098 …" beside the "1098" column). | Leading "<code> - " is dropped from the description. |
+| Draft quotations looked final. | "Draft" stamp and a notice for status `draft` (route now selects `status`). |
+| Bank details printed raw "a \| b \| c". | One account per line with the document's middle-dot separator. |
+
+### 9.3 Still for the user
+- GSTIN `24AABCS1234F1ZP` starts with 24 (Gujarat) while the address and state are Delhi; the state is stored as "Delhi NCR". Confirm the GSTIN and state in Settings; the invoice place-of-supply logic depends on them.
+- The PCDA Excel/CSV exports carry no logo (spreadsheet formats).

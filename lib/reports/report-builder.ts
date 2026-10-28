@@ -88,14 +88,17 @@ export type ReportTotals = {
   count: number;
   /** Totals keyed by currency, then by amount field. Non-INR expenses are never added to INR. */
   byCurrency: Record<string, Record<string, number>>;
+  /** Rows behind each currency's totals. */
+  countByCurrency: Record<string, number>;
 };
 
 export function computeReportTotals(source: string, rows: Record<string, unknown>[], grouping: string | null, groupLabel: (value: unknown) => string = (value) => String(value ?? "-")) {
   const fields = reportAmountFields[source] ?? [];
-  const blank = (label: string): ReportTotals => ({ label, count: 0, byCurrency: {} });
+  const blank = (label: string): ReportTotals => ({ label, count: 0, byCurrency: {}, countByCurrency: {} });
   const add = (target: ReportTotals, row: Record<string, unknown>) => {
     target.count += 1;
     const currency = source === "expenses" ? String(row.currency || "INR") : "INR";
+    target.countByCurrency[currency] = (target.countByCurrency[currency] ?? 0) + 1;
     const bucket = (target.byCurrency[currency] ??= Object.fromEntries(fields.map((field) => [field, 0])));
     for (const field of fields) {
       const value = Number(row[field] ?? 0);
