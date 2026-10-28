@@ -33,7 +33,7 @@ test('78: reconciliation rechecks the source after acquiring its lock',async()=>
  await cmd('recovery.record',note);
  const original=(await f.db.query("select pg_get_functiondef('private.lock_sop_source(uuid,text,uuid)'::regprocedure) source")).rows[0].source;
  // Model a reversal winning before the lock; PGlite cannot run two sessions.
- const interleaved=original.replace('begin\n',"begin\n  update public.production_jobs set status='in_progress' where id=p_id and company_id=p_company;\n");
+ const interleaved=original.replace(/\bbegin\r?\n/,"begin\n  update public.production_jobs set status='in_progress' where id=p_id and company_id=p_company;\n");
  assert.notEqual(interleaved,original,'the fixture must reverse the source at the lock boundary');
  await f.db.exec(interleaved);
  try {

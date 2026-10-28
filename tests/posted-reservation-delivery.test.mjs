@@ -154,7 +154,9 @@ test("private helper and readiness implementation retain client execute denial",
 test("the remaining production, QC, finishing, packaging and capacity logic is unchanged", async () => {
   const body = await inspect(async () => (await db.query("select prosrc from pg_proc where oid='private.assert_dispatch_ready(uuid)'::regprocedure")).rows[0].prosrc);
   const updated = "or (v_reservation.status not in ('active','consumed')\n           and not private.closed_reservation_has_exact_dispatch_posting(p_dispatch_id, v_reservation.id)) then";
-  assert.equal(body.replace(updated, "or v_reservation.status not in ('active','consumed') then").replaceAll("\r\n", "\n").trim(), originalBody.replaceAll("\r\n", "\n").trim());
+  const normalizedBody = body.replaceAll("\r\n", "\n");
+  assert.ok(normalizedBody.includes(updated), "the expected reservation guard must be present");
+  assert.equal(normalizedBody.replace(updated, "or v_reservation.status not in ('active','consumed') then").trim(), originalBody.replaceAll("\r\n", "\n").trim());
 });
 test("deployment preflight detects the new private helper and revised readiness body", async () => {
   const source = readFileSync(new URL("../sql/audit-deployment-preflight.sql", import.meta.url), "utf8");

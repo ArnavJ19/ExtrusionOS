@@ -112,7 +112,10 @@ test("private production implementation remains client-inaccessible", async () =
 
 test("remaining production transaction body is unchanged", async () => {
   const body = (await db.query("select prosrc from pg_proc where oid='private.save_production_job_atomic(uuid,jsonb,uuid[])'::regprocedure")).rows[0].prosrc;
-  assert.equal(body.replace("lower(btrim(coalesce(b.alloy, ''))) <> lower(btrim(v_req_alloy))", "lower(coalesce(b.alloy, '')) <> lower(v_req_alloy)"), baselineBody);
+  const updated = "lower(btrim(coalesce(b.alloy, ''))) <> lower(btrim(v_req_alloy))";
+  const normalizedBody = body.replaceAll("\r\n", "\n");
+  assert.ok(normalizedBody.includes(updated), "the normalized billet material check must be present");
+  assert.equal(normalizedBody.replace(updated, "lower(coalesce(b.alloy, '')) <> lower(v_req_alloy)"), baselineBody.replaceAll("\r\n", "\n"));
 });
 
 function actionSave() {
