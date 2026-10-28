@@ -51,6 +51,15 @@ select to_regclass('supabase_migrations.schema_migrations') is not null as migra
 -- supabase_migrations.schema_migrations and compare all checkout prerequisites.
 -- Do not clear historical findings by deleting records or fabricating lineage.
 
+-- The automatic allocator is internal and uses R22's per-profile eligibility.
+select procedure.oid is not null present,procedure.prosecdef security_definer,
+  procedure.proconfig,md5(procedure.prosrc) definition_md5,
+  has_function_privilege('authenticated',procedure.oid,'execute') authenticated_execute,
+  has_function_privilege('anon',procedure.oid,'execute') anonymous_execute,
+  to_regprocedure('private.order_profile_needs_billet_allocation(uuid,uuid,uuid)') is not null profile_helper_present
+from (select to_regprocedure('public.allocate_billets_by_priority(uuid)') oid) required
+left join pg_proc procedure on procedure.oid=required.oid;
+
 -- Retained-shipment invoicing requires revised bodies and its attached header guard.
 with required(signature) as (
   values ('private.invoice_dispatch_is_billable(uuid,uuid,uuid)'),
@@ -197,3 +206,16 @@ select procedure.oid is not null present,procedure.prosecdef security_definer,
   case when procedure.oid is not null then md5(pg_get_functiondef(procedure.oid)) end definition_md5
 from (select to_regprocedure('public.repair_order_billet_requirement_links(uuid)') oid) required
 left join pg_proc procedure on procedure.oid=required.oid;
+
+-- R04/R10/R11 acceptance follow-up retains posted shipments after hold release.
+with required(signature) as (
+  values ('private.closed_reservation_has_exact_dispatch_posting(uuid,uuid)'),
+    ('private.assert_dispatch_ready(uuid)')
+)
+select required.signature,procedure.oid is not null present,procedure.prosecdef security_definer,
+  has_function_privilege('authenticated',procedure.oid,'execute') authenticated_execute,
+  has_function_privilege('anon',procedure.oid,'execute') anonymous_execute,
+  case when procedure.oid is not null then md5(pg_get_functiondef(procedure.oid)) end definition_md5,
+  case when required.signature='private.assert_dispatch_ready(uuid)'
+    then strpos(procedure.prosrc,'private.closed_reservation_has_exact_dispatch_posting')>0 end closed_posting_guard
+from required left join pg_proc procedure on procedure.oid=to_regprocedure(required.signature);

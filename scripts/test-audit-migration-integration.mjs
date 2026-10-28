@@ -73,6 +73,8 @@ export async function runAuditMigrationIntegrationChecks() {
     await db.exec(sqlDefinition("20261020000000_manual_billet_requirement_lineage.sql", "private.order_profile_needs_billet_allocation"));
     await db.exec("revoke all on function private.order_profile_needs_billet_allocation(uuid,uuid,uuid) from public,anon,authenticated;");
     await db.exec(read("20261020070000_manual_billet_allocation_options.sql"));
+    await db.exec(read("20261020090729_priority_billet_allocation_integrity.sql"));
+    await db.exec(read("20261020142106_posted_reservation_delivery_lifecycle.sql"));
     const views = await db.query(`select table_name from information_schema.views where table_schema='public' and table_name like '%_authorized' order by table_name`);
     assert.ok(views.rows.length >= 10);
     await db.exec("set role authenticated;");
@@ -131,7 +133,19 @@ export async function runAuditMigrationIntegrationChecks() {
       has_function_privilege('anon','public.get_manual_billet_allocation_options(uuid,text,integer)','execute') anonymous,
       has_function_privilege('authenticated','private.order_profile_needs_billet_allocation(uuid,uuid,uuid)','execute') private_helper`)).rows[0];
     assert.deepEqual(allocationOptionsAcl,{reader:true,anonymous:false,private_helper:false});
-    return {migrations:names.length,preparedFunctions:6+directObjects.functions+dispatchReservationObjects.functions+cancellationObjects.functions+retainedInvoiceObjects.functions+finishingObjects.functions+partialFinishingObjects.functions+packagingEvidenceObjects.functions+finishingWorkloadObjects.functions+billetLinkRepairObjects.functions,
+    const priorityAcl=(await db.query(`select
+      has_function_privilege('authenticated','public.allocate_billets_by_priority(uuid)','execute') direct_writer,
+      has_function_privilege('anon','public.allocate_billets_by_priority(uuid)','execute') anonymous,
+      p.prosecdef security_definer,p.proconfig
+      from pg_proc p where p.oid='public.allocate_billets_by_priority(uuid)'::regprocedure`)).rows[0];
+    assert.deepEqual(priorityAcl,{direct_writer:false,anonymous:false,security_definer:true,proconfig:['search_path=public, private']});
+    const postedReadiness=(await db.query(`select
+      has_function_privilege('authenticated','private.closed_reservation_has_exact_dispatch_posting(uuid,uuid)','execute') client,
+      has_function_privilege('anon','private.closed_reservation_has_exact_dispatch_posting(uuid,uuid)','execute') anonymous,
+      strpos(p.prosrc,'private.closed_reservation_has_exact_dispatch_posting')>0 closed_posting_guard
+      from pg_proc p where p.oid='private.assert_dispatch_ready(uuid)'::regprocedure`)).rows[0];
+    assert.deepEqual(postedReadiness,{client:false,anonymous:false,closed_posting_guard:true});
+    return {migrations:names.length,preparedFunctions:8+directObjects.functions+dispatchReservationObjects.functions+cancellationObjects.functions+retainedInvoiceObjects.functions+finishingObjects.functions+partialFinishingObjects.functions+packagingEvidenceObjects.functions+finishingWorkloadObjects.functions+billetLinkRepairObjects.functions,
       preparedTriggers:guards.rows.length+directObjects.triggers+cancellationObjects.triggers+retainedInvoiceObjects.triggers+finishingObjects.triggers+partialFinishingObjects.triggers+packagingEvidenceObjects.triggers,views:views.rows.length,tables:tables.length};
   } finally {await db.close();}
 }
