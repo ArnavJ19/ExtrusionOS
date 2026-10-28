@@ -147,6 +147,12 @@ const specs: Record<ErpControlKey, Spec> = {
     args: (i) => ({ p_source_table: i.source_table, p_source_id: i.source_id, p_batch_alloy: i.batch_alloy, p_reason: i.reason }),
     paths: (i) => [i.source_table === "foundry_aluminium_scrap" ? `/foundry/scrap/${i.source_id}` : `/foundry/external-sources/${i.source_id}`]
   },
+  metal_source_disposition: {
+    schema: z.object({ source_table: z.enum(["foundry_aluminium_scrap", "foundry_external_aluminium_sources"]), source_id: uuid, disposition: z.enum(["hold", "release", "return"]), reason: reason(10) }),
+    rpc: "set_metal_source_disposition",
+    args: (i) => ({ p_source_table: i.source_table, p_source_id: i.source_id, p_disposition: i.disposition, p_reason: i.reason }),
+    paths: (i) => [i.source_table === "foundry_aluminium_scrap" ? `/foundry/scrap/${i.source_id}` : `/foundry/external-sources/${i.source_id}`, "/foundry/scrap", "/foundry/external-sources", "/inventory"]
+  },
   stock_from_surplus: {
     schema: z.object({ job_id: uuid, weight_kg: positive, pieces: z.coerce.number().int().positive(), piece_length_m: positive, bundle_number: optionalText, location: optionalText, notes: optionalText }),
     rpc: "create_stock_from_production_surplus",

@@ -1,0 +1,4 @@
+R01b order after owner PATCH: [{"current_stage":"extrusion_planned","order_value":"500000.00","requested_weight_kg":"1000.000","production_quantity_kg":"1000.000"}]
+R01b owner direct PATCH order stage/value/qty: {"ok":false,"error":"permission denied for table orders"}
+R01b stage history rows: []
+R01b control: sales manager same PATCH: {"ok":false,"error":"permission denied for table orders"}

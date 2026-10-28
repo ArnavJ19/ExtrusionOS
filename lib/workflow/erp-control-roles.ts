@@ -19,6 +19,7 @@ export const ERP_CONTROL_ROLES = {
   foundry_chemistry_approve: ["owner", "admin", "quality", "factory_manager"],
   billet_reject: ["owner", "admin", "factory_manager", "production_manager", "quality"],
   alloy_deviation: ["owner", "admin", "factory_manager", "quality"],
+  metal_source_disposition: ["owner", "admin", "factory_manager", "production_manager", "quality"],
   stock_from_surplus: ["owner", "admin", "factory_manager", "production_manager", "inventory_manager"],
   stock_opening: ["owner", "admin"],
   stock_qc_release: ["owner", "admin", "quality", "factory_manager"],

@@ -385,7 +385,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { name: "received_date", label: "Received date", type: "date" },
       { name: "alloy", label: "Alloy" },
       { name: "quality_grade", label: "Quality grade" },
-      { name: "status", label: "Status", type: "select", options: options(["available", "reserved", "used", "rejected", "returned"]) },
+      { name: "status", label: "Status (changed through Lot disposition)", type: "select", readOnly: true, options: options(["available", "reserved", "used", "rejected", "returned"]) },
       { name: "notes", label: "Notes", type: "textarea" }
     ],
     relatedRecords: [
@@ -586,7 +586,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { name: "alloy", label: "Alloy (needed to charge into a furnace batch)", type: "select", options: options([...standardAlloys]) },
       { name: "received_date", label: "Received date", type: "date" },
       { name: "origin_reference", label: "Origin reference" },
-      { name: "status", label: "Status", type: "select", options: options(["available", "reserved", "used", "rejected"]) },
+      { name: "status", label: "Status (changed through Lot disposition)", type: "select", readOnly: true, options: options(["available", "reserved", "used", "rejected", "returned"]) },
       { name: "notes", label: "Notes", type: "textarea" }
     ],
     relatedRecords: [

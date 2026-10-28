@@ -1,0 +1,7 @@
+R05 batch charge: [{"charged":"65.670","per_billet":"21.890","billet_count":3}]
+R05a cast result: 3 good billets at 74.864 kg (charge 65.670 kg) + 5 kg dross: accepted
+R05a recorded balance: [{"charged_kg":"65.670","measured_good_weight_kg":"74.864","dross_kg":"5.000","melt_loss_kg":"-9.194"}]
+R05b record out-of-spec composition as 'pass': accepted
+R05b second person approves: accepted
+R05b batch released: accepted
+R05 billets now: [{"billet_number":1,"status":"cast","measured_weight_kg":"24.955"},{"billet_number":2,"status":"cast","measured_weight_kg":"24.955"},{"billet_number":3,"status":"cast","measured_weight_kg":"24.955"}]

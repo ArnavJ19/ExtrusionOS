@@ -1,0 +1,27 @@
+PASS G001-delete-delivered-dispatch-then-reship [baseline]: baseline: delivered D-1 deleted with its packing row and history; the same 10 kg shipped again
+PASS G001-delete-delivered-dispatch-then-reship [candidate]: rejected (Dispatch D-1 has left the plant (status delivered) and cannot be deleted; record a return or a document amendment instead); re-ship still capped
+PASS G001-in-transit-dispatch-delete [baseline]: baseline: in-transit dispatch deleted
+PASS G001-in-transit-dispatch-delete [candidate]: in-transit dispatch delete rejected
+PASS G001-pending-dispatch-still-deletable [candidate]: a pending dispatch that never left the plant can still be deleted, and its output re-planned
+PASS G001-cancelled-invoice-history-blocks-delete [candidate]: rejected: Dispatch D-1 has invoice history and cannot be deleted
+PASS G005-delete-open-breakdown-lifts-lockout [baseline]: baseline: open breakdown deleted, press signed back into service with no root cause
+PASS G005-delete-open-breakdown-lifts-lockout [candidate]: delete rejected (breakdown logs records are retained as evidence and cannot be deleted; resolve a breakdown logged in error with the reason instead); sign-off still blocked
+PASS G005-resolve-then-sign-off-and-audit [candidate]: resolution and sign-off work; audit row {"action_type":"update_breakdown_logs","actor":"a0000000-0000-4000-8000-000000000002","actor_role":"production_manager","before":"open","after":"resolved"}
+PASS G005-delete-calibration-die-correction-schedule [baseline]: baseline: calibration, failed die correction and PM schedule hard-deleted
+PASS G005-delete-calibration-die-correction-schedule [candidate]: deletes rejected; schedule cancelled and die correction corrected with old/new values audited
+PASS G005-spare-part-usage-reversal-still-works [candidate]: wrong spare-part usage can still be reversed (stock 7 -> 10) and the reversal is audited
+PASS G006-delete-stocked-profile [baseline]: baseline: 696 kg stock and a 348 kg reservation erased
+PASS G006-delete-stocked-profile [candidate]: rejected (Profile P-200 has finished-goods stock; deactivate it instead of deleting it); deactivation works
+PASS G006-fk-blocks-direct-cascade [candidate]: service-context delete blocked by FK: update or delete on table "aluminium_profiles" violates foreign key constraint "profile_st
+PASS G006-unused-profile-deletable [candidate]: a profile with only configuration children can still be deleted
+PASS G004-operator-releases-rejected-lot [baseline]: baseline: operator released the rejected lot and charged it
+PASS G004-operator-releases-rejected-lot [candidate]: operator flip rejected (Lot status changes through the lot disposition (hold, release or return to vendor) with a reason); charge refused
+PASS G004-hold-release-segregation-and-audit [candidate]: operator hold refused; holder cannot release; quality release then charge works; log ["hold","release"]
+PASS G004-release-implausible-held-lot [baseline]: baseline: the held 100,000 t lot was set available by an operator
+PASS G004-release-implausible-held-lot [candidate]: release refused: Lot EAS-X records 100000000.000 kg, above the 60000.000 kg receipt limit; correct the received weight before releasing it
+PASS G004-return-to-vendor [baseline]: baseline: 'returned' lot kept 1,000 kg in inventory and was flipped back to available
+PASS G004-return-to-vendor [candidate]: return emptied the lot (purchase_return 1,000 kg, inventory 0), recorded ₹2,00,000 credit due against the bill, and is final
+PASS G004-partly-charged-lot-return [candidate]: only the unused 1080.620 kg was returned; the charged metal stays with its batch
+PASS G004-client-weight-correction-unchanged [candidate]: received-weight correction still flows to availability and inventory, now audited
+PASS G004-in-house-scrap-cannot-be-returned [candidate]: in-house scrap can be held, not returned
+GATE PASSED (26/26)

@@ -1,0 +1,14 @@
+R03a press after breakdown: [{"status":"breakdown"}]
+R03a repair expense: [{"total_amount":"25000.00","approval_status":"pending_approval","payment_status":"unpaid"}]
+R03a control: sign-off while breakdown open: Give a return-to-service note of at least 10 characters
+R03a owner deletes the open breakdown: accepted
+R03a after delete: {"rows":[{"n":0}],"expense":[{"total_amount":"25000.00","approval_status":"cancelled","deleted":true}],"audit":[{"ent":0,"basic":0,"sens":0}]}
+R03a sign-off after the delete (no root cause / repair ever recorded): accepted
+R03a press now: [{"status":"active"}]
+R03b downtime recorded: [{"downtime_minutes":480}]
+R03b owner deletes resolved breakdown: accepted
+R03b trace left: [{"ent":0,"basic":0,"sens":0}]
+R03c owner deletes overdue spectrometer calibration: accepted
+R03c trace left: [{"ent":0,"basic":0,"sens":0}]
+R03c owner deletes a failed die correction: accepted
+R03c trace left: [{"ent":0,"basic":0,"sens":0}]

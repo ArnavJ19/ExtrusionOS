@@ -1,0 +1,4 @@
+R07 purchase 100 rolls @450: accepted
+R07 after purchase: [{"material_master_stock":"0.000","inventory_item_stock":"100.000","material_movements":0}]
+R07 dispatch user types material stock 5000 directly: accepted
+R07 after direct edit: [{"material_master_stock":"5000.000","inventory_item_stock":"100.000","material_movements":0}]

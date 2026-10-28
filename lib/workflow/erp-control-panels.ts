@@ -263,6 +263,41 @@ export function alloyDeviationControls(context: SessionContext, sourceTable: "fo
   }];
 }
 
+// EXOS-AUD2-004: lot status changes only through this audited disposition.
+const metalReleaseRoles = ["owner", "admin", "factory_manager", "quality"];
+export function metalSourceDispositionControls(
+  context: SessionContext,
+  sourceTable: "foundry_aluminium_scrap" | "foundry_external_aluminium_sources",
+  source: { id: string; status: string | null; available_weight_kg?: number | string | null; scrap_source?: string | null }
+): ErpControlAction[] {
+  if (!canRunErpControl(context.role, "metal_source_disposition")) return [];
+  const fixed = { source_table: sourceTable, source_id: source.id };
+  const actions: ErpControlAction[] = [];
+  const status = source.status ?? "";
+  if (["available", "reserved"].includes(status)) {
+    actions.push({
+      key: "metal_source_disposition", title: "Put lot on hold",
+      description: "Blocks furnace charging until QC or a factory manager releases the lot.",
+      submitLabel: "Put on hold", fixed: { ...fixed, disposition: "hold" }, fields: [reasonField("Reason for the hold")]
+    });
+  }
+  if (status === "rejected" && metalReleaseRoles.includes(context.role)) {
+    actions.push({
+      key: "metal_source_disposition", title: "Release lot",
+      description: "Makes the lot chargeable again. The person who placed the hold cannot release it (owner excepted).",
+      submitLabel: "Release lot", fixed: { ...fixed, disposition: "release" }, fields: [reasonField("Release justification / test reference")]
+    });
+  }
+  if (["available", "reserved", "rejected"].includes(status) && source.scrap_source !== "in_house" && Number(source.available_weight_kg ?? 0) > 0) {
+    actions.push({
+      key: "metal_source_disposition", title: "Return to vendor",
+      description: `Returns the unused ${kg(source.available_weight_kg)} kg: it leaves inventory and the credit due from the vendor is recorded for accounts. This is final.`,
+      submitLabel: "Return to vendor", fixed: { ...fixed, disposition: "return" }, fields: [reasonField("Return reason / gate pass reference")]
+    });
+  }
+  return actions;
+}
+
 export function inventoryControls(context: SessionContext, itemId: string): ErpControlAction[] {
   if (!canRunErpControl(context.role, "inventory_adjust")) return [];
   return [{
