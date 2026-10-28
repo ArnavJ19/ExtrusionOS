@@ -119,8 +119,8 @@ async function validateSelectedBillets(supabase: any, companyId: string, orderId
     if (billet.production_job_id && billet.production_job_id !== jobId) return true;
     if (requirement?.order_id && requirement.order_id !== orderId) return true;
     if (requirement?.status === "cancelled") return true;
-    if (requirement?.alloy && String(requirement.alloy).toLowerCase() !== String(billet.alloy ?? "").toLowerCase()) return true;
-    if (requirement?.temper && String(requirement.temper).toLowerCase() !== String(billet.temper ?? "").toLowerCase()) return true;
+    if (requirement?.alloy && String(requirement.alloy).trim().toLowerCase() !== String(billet.alloy ?? "").trim().toLowerCase()) return true;
+    if (requirement?.temper && String(requirement.temper).trim().toLowerCase() !== String(billet.temper ?? "").trim().toLowerCase()) return true;
     if (requirement?.billet_diameter_inch && Number(requirement.billet_diameter_inch) !== Number(billet.billet_diameter_inch)) return true;
     return false;
   });
