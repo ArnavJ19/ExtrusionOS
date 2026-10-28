@@ -1,0 +1,106 @@
+{
+  "date": "2026-10-29",
+  "timezone": "Asia/Calcutta",
+  "catalogue": "UPGRADE_EOS.md",
+  "features": [
+    5,
+    12,
+    28,
+    34,
+    36,
+    55,
+    81,
+    82,
+    86,
+    87
+  ],
+  "newTests": 64,
+  "commandOutputNormalization": "Trailing spaces and excess final blank lines removed for Git whitespace checks; original raw logs remain in the development checkout.",
+  "checkoutSourceCheckpoint": {
+    "files": 1386,
+    "sha256": "9066d437e561d51f5aa8609573d37b073462923ec98c7831aebbcf955b8ea7ce",
+    "tool": "node scripts/verify-upgrade-source.mjs",
+    "beforeAndAfterFullSuiteEqual": true,
+    "includesExistingUntrackedLocalHelpers": true
+  },
+  "trackedSourceCheckpoint": {
+    "files": 1373,
+    "sha256": "8371aa5e572d1269e345776e5723bc96170ec3fa07fd6bd941ed2a4ac2f340ac",
+    "basis": "Git index paths, modes and blob IDs; source and named configuration files"
+  },
+  "checks": {
+    "tests": {
+      "command": "npm test",
+      "environment": {
+        "PLAYWRIGHT_BROWSERS_PATH": "C:/Users/arnav/AppData/Local/ms-playwright"
+      },
+      "exitCode": 0,
+      "tests": 2668,
+      "suites": 76,
+      "pass": 2668,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "durationMs": 681978.0176,
+      "output": "tests.txt"
+    },
+    "lint": {
+      "command": "npm run lint",
+      "exitCode": 0,
+      "output": "lint.txt"
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "output": "typecheck.txt"
+    },
+    "build": {
+      "command": "npm run build -- --webpack",
+      "environment": {
+        "NEXT_DIST_DIR": ".next-eos-batch4"
+      },
+      "exitCode": 0,
+      "generatedPages": 189,
+      "output": "build.txt",
+      "sourceNote": "Production source is unchanged since this build. Two browser-fixture-only selector/readiness corrections followed it."
+    },
+    "whitespace": {
+      "command": "git diff --cached --check",
+      "exitCode": 0
+    }
+  },
+  "database": {
+    "newMigrations": 8,
+    "fullChainSqlFiles": 261,
+    "newCompanyScopedTablesWithRls": 9,
+    "publicClientDirectAccess": "revoked",
+    "newPrivateHelpersClientExecution": "revoked",
+    "hostedMigrationsApplied": false,
+    "localIntegration": "Complete migration-chain PGlite fixtures reject any replay failure before tests run."
+  },
+  "browser": {
+    "newFlows": 10,
+    "phoneWidth": 375,
+    "desktopWidth": 1280,
+    "images": [
+      "commercial-review-phone.png",
+      "customer-site-phone.png",
+      "quote-conflict-phone.png",
+      "supplier-comparison-desktop.png",
+      "supplier-offer-phone.png"
+    ],
+    "visualInspection": "Rendered files inspected; exercised phone flows assert no page-wide overflow."
+  },
+  "preservation": {
+    "baseAuditCommit": "01466bd",
+    "scopedStash": "48eb98895ce769ce23797040bfdda3238dab09f6",
+    "preexistingFileContentsRestoredAndHashChecked": 5,
+    "existingBranchesOnly": true
+  },
+  "proofLimits": [
+    "Local synthetic session/database adapters do not establish hosted JWT/RLS/Storage behavior.",
+    "Database lock ordering and stale-write interleavings were checked locally; independent database-session contention was not executed.",
+    "No hosted migration, deployment, push or physical inventory reconciliation was performed."
+  ]
+}

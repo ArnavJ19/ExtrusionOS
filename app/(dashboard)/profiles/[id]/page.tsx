@@ -99,6 +99,7 @@ export default async function ProfileDetailPage({ params }: { params: Promise<{ 
         )}
       </div>
 
+      {!context.dealerId && !context.role.startsWith("dealer") ? <Link className="inline-block font-bold underline" href={`/profiles/${id}/specifications`}>Review approved alloy and temper specifications</Link> : null}
       {/* Metrics */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <div className="metric-card"><p className="relative z-[1] text-xs font-black uppercase tracking-[0.14em] text-slate-500">Weight kg/m</p><p className="relative z-[1] mt-3 text-2xl font-black text-slate-950">{profile.section_weight_kg_per_m ? `${profile.section_weight_kg_per_m}` : "Not Captured"}</p></div>

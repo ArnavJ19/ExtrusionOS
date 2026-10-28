@@ -1,0 +1,3 @@
+import {getSessionContext} from "@/lib/auth";import {redirect} from "next/navigation";
+import {PageHeader} from "@/components/layout/page-header";import {NewSupplierComparison} from "@/components/modules/vendors/supplier-comparisons";
+export default async function NewSupplierComparisonPage(){const context=await getSessionContext();if(context.dealerId||!["owner","admin","accounts"].includes(context.role))redirect("/dashboard");return <div className="space-y-5"><PageHeader title="New purchase comparison" description="Specify one purchase requirement before recording supplier offers."/><NewSupplierComparison key={`${context.companyId}:${context.userId}:${context.role}`}/></div>;}

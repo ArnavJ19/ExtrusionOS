@@ -104,6 +104,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 5. Next valid action on every record
 
+- [x] **Implemented and audited locally, 28 October 2026; hosted rollout pending.** Contextual actions on quote, order, production, dispatch and invoice details retain source identity, explain prerequisites and use existing guarded transitions. [Batch 4 scope, tests and audit](EOS_UPGRADE_BATCH_4.md).
+
 - **What it does:** Show the appropriate next action beside the current record, such as creating an order from an accepted quote. Carry the source identity into the next form. Explain missing prerequisites and show only transitions the user is permitted to perform.
 - **Impact:** Helps employees finish a process without memorising the sequence of modules.
 - **Complexity:** High - action availability must match server-side workflow rules, including stale state, duplicate requests, and concurrent changes.
@@ -170,6 +172,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** The same inputs produce the same results in the form, saved transaction, and exported document.
 
 ### 12. Suitable stock and die suggestions
+
+- [x] **Implemented and audited locally, 28 October 2026; hosted rollout pending.** Quotation lines show current stock/reservations, locations, eligible dies and exclusion reasons. Existing commitment guards recheck changed availability. [Batch 4 scope, tests and audit](EOS_UPGRADE_BATCH_4.md).
 
 - **What it does:** Present compatible dies and eligible stock after a profile and specification are selected. Show location, available quantity, reservation status, and exclusion reasons. Offer a traceable allocation suggestion and recheck availability at commitment.
 - **Impact:** Speeds selection and reduces unsuitable allocations or repeated calls to inventory staff.
@@ -323,6 +327,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 28. Protection against conflicting edits
 
+- [x] **Implemented and audited locally, 28 October 2026; hosted rollout pending.** Quotation saves enforce the originally opened revision and timestamp, preserve unsaved entries on conflict and require explicit reconciliation. [Batch 4 scope, tests and audit](EOS_UPGRADE_BATCH_4.md).
+
 - **What it does:** Detect edits made after a user opened a record and show a useful comparison before saving. Preserve their unfinished entries while they reload or reconcile differences. Optional editing presence should support this protection without becoming its sole enforcement.
 - **Impact:** Prevents silent overwrites and reduces repeated work between employees sharing records.
 - **Complexity:** High - requires server-enforced version checks, line-level conflict policy, recovery UI, and concurrency tests.
@@ -375,6 +381,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 34. Progress derived from confirmed transactions
 
+- [x] **Implemented and audited locally, 28 October 2026; hosted rollout pending.** Order evidence derives production, verified departures, physical returns and role-permitted financial balances; missing evidence remains unavailable and quality holds remain independent. [Batch 4 scope, tests and audit](EOS_UPGRADE_BATCH_4.md).
+
 - **What it does:** Derive quantities and relevant progress indicators from authoritative production, dispatch, payment, and correction events. Keep independent quality holds and required approvals intact. Show unavailable or inconsistent source evidence explicitly.
 - **Impact:** Removes repeated bookkeeping and reduces disagreement between operational screens.
 - **Complexity:** High - aggregation, transaction boundaries, source eligibility, and reversal behaviour must be consistent across modules.
@@ -392,6 +400,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** Delegated work reaches an eligible replacement, and expiry does not leave an unfinished task without a responsible owner.
 
 ### 36. Upload once and link attachments
+
+- [x] **Implemented and audited locally, 28 October 2026; hosted rollout pending.** Quotes and orders reuse approved file revisions with purpose, source lineage and a fresh permission/version check before signing each open. [Batch 4 scope, tests and audit](EOS_UPGRADE_BATCH_4.md).
 
 - **What it does:** Store one approved file and link it to relevant quotations, orders, jobs, inspections, or complaints. Show its revision and purpose. Evaluate permission for every access path; linking a file must not broaden its permitted audience.
 - **Impact:** Reduces duplicate uploads and confusion about which drawing or evidence file is current.
@@ -578,6 +588,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** An incomplete or failing inspection cannot become approved merely because default values were populated.
 
 ### 55. Comparable supplier offers
+
+- [x] **Implemented and audited locally, 28 October 2026; hosted rollout pending.** Supplier comparison pages retain requirements/offers, normalize compatible units, expose freight and unmatched conditions, and record a reasoned recommendation with source references. [Batch 4 scope, tests and audit](EOS_UPGRADE_BATCH_4.md).
 
 - **What it does:** Compare offers for the same purchase using a consistent basis for specification, units, quantity, rate, freight, delivery, and payment terms. Keep exclusions and unmatched conditions visible instead of implying that dissimilar offers are equivalent.
 - **Impact:** Reduces spreadsheet rebuilding and helps purchasing staff explain a supplier choice.
@@ -839,6 +851,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 81. Customer details from selected records
 
+- [x] **Implemented and audited locally, 28 October 2026; hosted rollout pending.** Customer/site precedence and reviewed transaction overrides feed immutable issued quote, accepted-order and new-invoice party snapshots. [Batch 4 scope, tests and audit](EOS_UPGRADE_BATCH_4.md).
+
 - **What it does:** The employee selects a customer and delivery site. Populate saved party details, GST information, contacts, approved payment terms, and applicable instructions. Allow authorised transaction-specific changes with clear precedence, then preserve the required issued-document snapshots.
 - **Impact:** Removes repeated customer entry and reduces inconsistent addresses or terms between sales, dispatch, and accounts.
 - **Complexity:** High - master/site precedence, contact permissions, draft refresh, and immutable historical snapshots must be coordinated.
@@ -846,6 +860,8 @@ For these features, every field must have a clear source. Maintain approved defa
 - **Acceptance:** Selecting a site fills its delivery details, while updating the customer master never rewrites an issued invoice's historical party data.
 
 ### 82. Technical specifications from selected profiles
+
+- [x] **Implemented and audited locally, 28 October 2026; hosted rollout pending.** Independently approved profile alloy/temper choices, current drawing/weight/dimensions, missing-data warnings and immutable technical snapshots support sole-option selection and explicit alternatives. [Batch 4 scope, tests and audit](EOS_UPGRADE_BATCH_4.md).
 
 - **What it does:** Selecting a profile supplies its approved section weight, drawing revision, dimensions, coating perimeter, compatible dies, and permitted alloy/temper options. Auto-select a sole approved option and require a choice where alternatives exist. Flag missing specification data.
 - **Impact:** Reduces technical lookup and inconsistent specifications repeated across forms.
@@ -887,6 +903,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 86. Calculated commercial totals
 
+- [x] **Implemented and audited locally, 28 October 2026; hosted rollout pending.** Saved line amounts and per-line rounded GST reconcile in commercial review, with theoretical/billing quantities distinguished and cost/margin projected by role. [Batch 4 scope, tests and audit](EOS_UPGRADE_BATCH_4.md).
+
 - **What it does:** Derive line amounts, authorised discounts, charges, applicable taxes, rounding, and grand total from the approved transaction rules. Keep theoretical, measured, and contractual billing quantities separately labelled. Apply the same rules in draft previews, posting, and PDFs.
 - **Impact:** Reduces manual totals and prevents disagreement between screens and issued documents.
 - **Complexity:** High - commercial basis, line tax treatment, precision, approved exceptions, and snapshot rules require integrated validation.
@@ -894,6 +912,8 @@ For these features, every field must have a clear source. Maintain approved defa
 - **Acceptance:** A multi-line transaction reconciles to its issued totals, with no client-submitted total overriding the authoritative calculation.
 
 ### 87. Orders from accepted quotation versions
+
+- [x] **Implemented and audited locally, 28 October 2026; hosted rollout pending.** Exact-version conversion and immutable accepted-source snapshots preserve lines, parties, specifications and terms, with retry protection and the existing factory/dealer allocation path. [Batch 4 scope, tests and audit](EOS_UPGRADE_BATCH_4.md).
 
 - **What it does:** Carry the accepted quote's customer/site, source lines, quantities, specifications, finishes, agreed prices, and terms into the order. Request only order-specific information such as customer PO and confirmed delivery requirements. Bind the order to the exact accepted revision.
 - **Impact:** Removes re-entry and reduces disagreement between the customer agreement and factory instructions.

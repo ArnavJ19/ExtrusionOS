@@ -17,6 +17,8 @@ import type { SessionContext } from "@/types/app";
 import { displayValue, getPath, titleValue } from "./value";
 import { getModuleConfig, type ModuleKey } from "./module-config";
 import { LocationGuidance } from "./operator-tools";
+import { RecordNextAction } from "@/components/modules/shared/record-next-action";
+import type { NextActionRecord } from "@/lib/workflow/record-next-action";
 import { RecordDiscussion } from "./collaboration-tools";
 import { canUseCollaboration, type DiscussionType } from "@/lib/operations/collaboration-workflows";
 import { getWorkspaceStorage, isSafeWorkspaceHref, readWorkspacePreferences, upsertWorkspaceLink, workspacePreferenceKey, writeWorkspacePreferences } from "@/lib/preferences/workspace-preferences";
@@ -103,6 +105,7 @@ export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { 
 
   return (
     <div className="space-y-6">
+      {(["production", "dispatches", "invoices"] as string[]).includes(moduleKey) ? <RecordNextAction context={context} record={{ kind: ({ production: "production", dispatches: "dispatch", invoices: "invoice" } as Record<string, NextActionRecord["kind"]>)[moduleKey], id: recordId, status: String(row.status ?? row.delivery_status ?? "") }} /> : null}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Link href={returnTo} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 transition hover:text-neutral-950"><ArrowLeft className="h-4 w-4" /> Back to {config.title}</Link>

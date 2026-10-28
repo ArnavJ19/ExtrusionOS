@@ -1,0 +1,42 @@
+"use client";
+import {useEffect,useRef,useState} from "react";
+import {profileTechnicalAction} from "@/lib/actions/profile-technical-options";
+import {soleTechnicalOption,type TechnicalOptions} from "@/lib/workflow/profile-technical-options";
+import {Button} from "@/components/ui/button";
+
+export function ProfileTechnicalChoice({profileId,value,scope,onChange}:{profileId:string;value:string;scope:string;onChange:(value:string)=>void}){
+  const [data,setData]=useState<TechnicalOptions|null>(null),[error,setError]=useState(""),[page,setPage]=useState(1);
+  const callback=useRef(onChange);useEffect(()=>{callback.current=onChange;},[onChange]);
+  useEffect(()=>{let cancelled=false;setData(null);setError("");if(!profileId)return;
+    profileTechnicalAction({command:"options.list",profile_id:profileId,page}).then(result=>{if(cancelled)return;if(!result.success){setError(result.error);return;}if(result.kind==="options"){setData(result.data);const sole=soleTechnicalOption(result.data);if(sole&&!value)callback.current(sole.id);}}).catch(()=>{if(!cancelled)setError("Approved specifications could not be loaded.");});
+    return()=>{cancelled=true;};
+  },[profileId,scope,page]);
+  if(!profileId)return null;
+  const options=data?.items.filter(option=>option.current_source&&option.status==="approved")??[];
+  return <div className="my-3 space-y-2 rounded-xl border border-slate-200 bg-white p-3 text-sm"><p className="font-bold">Approved technical specification</p>
+    {data?<><p>{data.profile.profile_code} · drawing {data.profile.drawing_revision||"Not captured"} · {data.profile.section_weight_kg_per_m} kg/m · perimeter {data.profile.perimeter_mm??"Not captured"} mm</p>
+      {data.eligible_count>0?<select aria-label="Approved alloy and temper" className="form-input" value={value} onChange={e=>onChange(e.target.value)}><option value="">Choose approved alloy and temper</option>{value&&!options.some(option=>option.id===value)?<option value={value}>Previously selected option: revalidation required</option>:null}{options.map(option=><option key={option.id} value={option.id}>{option.snapshot.alloy} / {option.snapshot.temper} · specification {option.revision_number}</option>)}</select>:<p className="text-amber-900">No current independently approved option is recorded. Existing master values remain subject to drawing and technical review.</p>}
+      <p className="text-xs text-slate-600">CCD {data.profile.ccd_mm??"Not captured"} mm · wall {data.profile.wall_thickness_mm??"Not captured"} mm · standard length {data.profile.standard_length_m??"Not captured"} m</p>
+      {page>1||data.items.length===10?<div className="flex gap-2"><Button type="button" variant="secondary" disabled={page===1} onClick={()=>setPage(current=>current-1)}>Previous options</Button><Button type="button" variant="secondary" disabled={data.items.length<10} onClick={()=>setPage(current=>current+1)}>More options</Button></div>:null}</>:<p>{error||"Loading approved choices..."}</p>}
+  </div>;
+}
+
+export function TechnicalOptionsManager({profileId,actorId,canWrite,canApprove}:{profileId:string;actorId:string;canWrite:boolean;canApprove:boolean}){
+  const [data,setData]=useState<TechnicalOptions|null>(null),[error,setError]=useState(""),[busy,setBusy]=useState(false),[page,setPage]=useState(1),[alloy,setAlloy]=useState(""),[temper,setTemper]=useState("");
+  const [catalog,setCatalog]=useState<{alloys:{id:string;value:string}[];tempers:{id:string;value:string}[]}>({alloys:[],tempers:[]}),[catalogSearch,setCatalogSearch]=useState(""),[catalogPage,setCatalogPage]=useState(1);
+  const requestId=useRef(crypto.randomUUID());
+  async function load(nextPage=page){setBusy(true);setError("");try{const result=await profileTechnicalAction({command:"options.list",profile_id:profileId,page:nextPage});if(!result.success)setError(result.error);else if(result.kind==="options"){setData(result.data);setPage(nextPage);}}finally{setBusy(false);}}
+  async function findCatalog(nextPage=1){setBusy(true);setError("");try{const result=await profileTechnicalAction({command:"catalog.list",profile_id:profileId,page:nextPage,search:catalogSearch});if(!result.success)setError(result.error);else if(result.kind==="catalog"){setCatalog(result.data);setCatalogPage(nextPage);}}finally{setBusy(false);}}
+  async function mutate(command:"option.create"|"option.approve"|"option.withdraw",id:string){setBusy(true);setError("");try{const result=await profileTechnicalAction(command==="option.create"?{command,profile_id:profileId,id,alloy_id:alloy,temper_id:temper}:{command,profile_id:profileId,id});if(!result.success){setError(result.error);return;}if(command==="option.create")requestId.current=crypto.randomUUID();await load();}finally{setBusy(false);}}
+  useEffect(()=>{void load(1);},[profileId]);
+  return <section className="space-y-4"><p className="text-sm text-slate-600">Each option retains the drawing revision, geometry, alloy and temper. Another reviewer approves it. Withdrawing an option preserves issued instructions and blocks new selection.</p>
+    {canWrite?<details className="rounded-2xl border bg-white p-4"><summary className="cursor-pointer font-bold">Create a technical option from current masters</summary><div className="mt-3 space-y-3">
+      <div className="flex flex-wrap gap-2"><input aria-label="Find alloy and temper masters" className="form-input flex-1" value={catalogSearch} onChange={e=>setCatalogSearch(e.target.value)}/><Button variant="secondary" disabled={busy} onClick={()=>findCatalog()}>Find active masters</Button></div>
+      <label className="block">Alloy<select className="form-input" value={alloy} onChange={e=>{setAlloy(e.target.value);requestId.current=crypto.randomUUID();}}><option value="">Choose alloy</option>{alloy&&!catalog.alloys.some(item=>item.id===alloy)?<option value={alloy}>Selected alloy</option>:null}{catalog.alloys.map(item=><option key={item.id} value={item.id}>{item.value}</option>)}</select></label>
+      <label className="block">Temper<select className="form-input" value={temper} onChange={e=>{setTemper(e.target.value);requestId.current=crypto.randomUUID();}}><option value="">Choose temper</option>{temper&&!catalog.tempers.some(item=>item.id===temper)?<option value={temper}>Selected temper</option>:null}{catalog.tempers.map(item=><option key={item.id} value={item.id}>{item.value}</option>)}</select></label>
+      <div className="flex gap-2"><Button variant="secondary" disabled={busy||catalogPage===1} onClick={()=>findCatalog(catalogPage-1)}>Previous masters</Button><Button variant="secondary" disabled={busy||(catalog.alloys.length<10&&catalog.tempers.length<10)} onClick={()=>findCatalog(catalogPage+1)}>More masters</Button><Button disabled={busy||!alloy||!temper} onClick={()=>mutate("option.create",requestId.current)}>Save for independent approval</Button></div>
+    </div></details>:null}
+    {data?<><h2 className="font-bold">{data.profile.profile_code}: {data.eligible_count} current approved options</h2><div className="space-y-3">{data.items.map(option=><article key={option.id} className="space-y-2 rounded-2xl border bg-white p-4"><h3 className="font-bold">Specification {option.revision_number}: {option.snapshot.alloy} / {option.snapshot.temper}</h3><p className="text-sm">{option.status} · drawing {option.snapshot.drawing_revision} · {option.snapshot.section_weight_kg_per_m} kg/m · {option.snapshot.perimeter_mm??"Not captured"} mm perimeter · {option.current_source?"Current master source":"Master has changed"}</p>{canApprove&&option.status==="draft"&&option.author_id!==actorId?<Button disabled={busy||!option.current_source} onClick={()=>mutate("option.approve",option.id)}>Approve this option</Button>:null}{canApprove&&option.status!=="withdrawn"?<Button variant="secondary" disabled={busy} onClick={()=>mutate("option.withdraw",option.id)}>Withdraw from new work</Button>:null}</article>)}</div><div className="flex items-center gap-3"><Button variant="secondary" disabled={busy||page===1} onClick={()=>load(page-1)}>Previous</Button><span>Page {page}</span><Button variant="secondary" disabled={busy||data.items.length<10} onClick={()=>load(page+1)}>Next</Button></div></>:<p>{busy?"Loading specifications...":"No specification loaded."}</p>}
+    <Button variant="secondary" disabled={busy} onClick={()=>load()}>Refresh specifications</Button>{error?<p role="alert" className="text-red-700">{error}</p>:null}
+  </section>;
+}

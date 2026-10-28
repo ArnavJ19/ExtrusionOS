@@ -199,6 +199,7 @@ export const dieSchema = z.object({
 });
 
 export const quoteItemSchema = z.object({
+  technical_option_id: z.string().uuid().optional().nullable().or(z.literal("")),
   perimeter_mm: z.coerce.number().nonnegative().max(100000).optional().nullable(),
   gst_percent: z.coerce.number().nonnegative().max(100).optional().nullable(),
   profile_id: z.string().uuid("Select a profile"),

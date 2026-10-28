@@ -1,0 +1,20 @@
+import {z} from "zod";
+const uuid=z.string().uuid(),num=z.number().finite(),date=z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value=>{const parsed=new Date(`${value}T00:00:00Z`);return !Number.isNaN(parsed.valueOf())&&parsed.toISOString().slice(0,10)===value;},"Enter a valid date");
+export const comparisonRequestSchema=z.object({id:uuid,title:z.string().trim().min(3).max(160),specification:z.string().trim().min(5).max(2000),unit:z.enum(["kg","m","piece"]),quantity:num.positive().max(100000000).multipleOf(0.001),required_by:date.nullable()}).strict().refine(value=>value.unit!=="piece"||Number.isInteger(value.quantity),"Piece requirements must be whole numbers");
+export const supplierOfferSchema=z.object({id:uuid,request_id:uuid,vendor_id:uuid,source_reference:z.string().trim().min(2).max(200),document_id:uuid.nullable(),offered_quantity:num.positive().max(100000000),unit:z.enum(["kg","tonne","g","m","mm","piece","dozen"]),unit_rate:num.nonnegative().max(100000000),freight_mode:z.enum(["included","excluded","unknown"]),freight_amount:num.nonnegative().max(100000000).nullable(),gst_percent:num.min(0).max(100),freight_gst_percent:num.min(0).max(100),delivery_date:date.nullable(),valid_until:date.nullable(),payment_terms:z.string().trim().min(2).max(500),specification_matches:z.boolean(),exclusions:z.string().trim().max(1000)}).strict();
+const list={page:z.number().int().min(1).max(10000).default(1),search:z.string().trim().max(80).default("")};
+export const supplierComparisonCommandSchema=z.union([
+  z.object({command:z.literal("request.create"),...comparisonRequestSchema.innerType().shape}).strict().refine(value=>value.unit!=="piece"||Number.isInteger(value.quantity),"Piece requirements must be whole numbers"),
+  supplierOfferSchema.extend({command:z.literal("offer.create")}).strict(),
+  z.object({command:z.literal("requests.list"),...list,sort:z.enum(["newest","title"]).default("newest")}).strict(),
+  z.object({command:z.literal("vendors.list"),...list}).strict(),
+  z.object({command:z.literal("request.load"),request_id:uuid,page:z.number().int().min(1).max(10000).default(1)}).strict(),
+  z.object({command:z.literal("recommendation.record"),id:uuid,request_id:uuid,offer_id:uuid,reason:z.string().trim().min(5).max(1000)}).strict()
+]);
+export const normalizedSupplierOfferSchema=z.object({id:uuid,vendor_id:uuid,vendor_name:z.string(),source_reference:z.string(),offered_quantity:num,offered_unit:z.string(),normalized_quantity:num,normalized_unit:z.string(),normalized_rate:num,freight_mode:z.string(),freight_amount:num.nullable(),landed_before_tax:num.nullable(),tax:num.nullable(),cash_total:num.nullable(),price_basis_matches:z.boolean(),reasons:z.array(z.string()),delivery_date:z.string().nullable(),valid_until:z.string().nullable(),payment_terms:z.string(),exclusions:z.string().nullable(),created_at:z.string()}).strict();
+export const supplierRequestRowSchema=z.object({id:uuid,title:z.string(),specification:z.string(),unit:z.string(),quantity:num,required_by:z.string().nullable(),created_at:z.string()});
+export const supplierComparisonViewSchema=z.object({request:supplierRequestRowSchema.extend({company_id:uuid,created_by:uuid}).strict(),offers:z.array(normalizedSupplierOfferSchema),page:z.number().int(),basis:z.string(),recommendations:z.array(z.object({id:uuid,offer_id:uuid,reason:z.string(),created_at:z.string()}).strict())}).strict();
+export type SupplierComparison=z.infer<typeof supplierComparisonViewSchema>;
+export const supplierDirectorySchema=z.object({items:z.array(supplierRequestRowSchema.strict()),page:z.number().int()}).strict();
+export const comparisonVendorsSchema=z.object({items:z.array(z.object({id:uuid,vendor_name:z.string()}).strict()),page:z.number().int()}).strict();
+export function normalizedSupplierUnit(unit:string){const mapping:Record<string,{unit:string;factor:number}>={kg:{unit:"kg",factor:1},tonne:{unit:"kg",factor:1000},g:{unit:"kg",factor:0.001},m:{unit:"m",factor:1},mm:{unit:"m",factor:0.001},piece:{unit:"piece",factor:1},dozen:{unit:"piece",factor:12}};return mapping[unit]??null;}

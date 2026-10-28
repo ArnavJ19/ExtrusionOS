@@ -23,6 +23,8 @@ type QuoteOption = {
   quote_date: string;
   grand_total: number;
   customer_id: string;
+  revision_number: number;
+  updated_at: string;
   customers?: { customer_name?: string; company_name?: string } | null;
   quote_items?: { id: string; profile_id: string | null; finishing_type: string | null; billing_weight_kg: number | null; total_weight_kg: number | null; aluminium_profiles?: { alloy?: string | null; temper?: string | null; billet_diameter_required_inch?: number | null } | null }[];
 };
@@ -55,7 +57,7 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
       const [quotesResult] = await Promise.all([
         supabase
           .from("quotes_authorized")
-          .select("id, dealer_id, quote_number, quote_date, grand_total, customer_id")
+          .select("id, dealer_id, quote_number, quote_date, grand_total, customer_id, revision_number, updated_at")
           .eq("company_id", context.companyId)
           .eq("status", "customer_approved")
           .order("quote_date", { ascending: false })
@@ -163,6 +165,8 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
       p_notes: notes,
       p_minimum_handling: factoryBlocked ? minimumHandling : "queue",
       p_override_reason: factoryBlocked && minimumHandling === "override" ? overrideReason : null,
+      p_expected_revision: selectedQuote.revision_number,
+      p_expected_updated_at: selectedQuote.updated_at,
     });
     if (error || !data) {
       setSaving(false);

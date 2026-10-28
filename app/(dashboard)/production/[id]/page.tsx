@@ -98,7 +98,7 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
     people = (peopleResult.data ?? []).map((person: { id: string; full_name: string | null }) => ({ id: person.id, name: person.full_name || "Employee" }));
   }
   return (
-    <div className="space-y-6">
+    <div id="production-readiness" className="space-y-6">
       <ProductionOutputWorkflow job={floorJob} canUpdate={canUpdate} canCorrect={canCorrect} />
       {!context.dealerId ? <WorkRequirementsPanel companyId={context.companyId} role={context.role} stage="production" orderId={job.order_id} /> : null}
       {!context.dealerId && canFollow(context.role, "production_job") ? <RecordFollow entityType="production_job" entityId={id} /> : null}

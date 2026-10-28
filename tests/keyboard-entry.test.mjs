@@ -71,7 +71,7 @@ test("draft shortcut never downgrades workflow states outside the guarded revisi
 test("shortcuts stay inside the quote editor and use guarded draft saving", () => {
   assert.match(quoteClient, /onKeyDown=\{handleQuoteEditorKeyDown\}/);
   assert.match(quoteClient, /shortcut === "save-draft"\)[\s\S]*?void saveQuote\(\)/);
-  assert.match(quoteClient, /saveQuoteAction\(\{ \.\.\.parsed\.data, editing_id: editingId \}\)/);
+  assert.match(quoteClient, /saveQuoteAction\(\{ \.\.\.parsed\.data, editing_id: editingId, edit_token: editToken \}\)/);
   assert.match(quoteClient, /runWithInFlightGuard\(saveGuard\.current, async \(\) => \{/);
   assert.match(quoteClient, /finally \{\s*setSaving\(false\)/);
   assert.match(quoteClient, /onClick=\{saveQuote\}/);

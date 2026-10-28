@@ -22,6 +22,7 @@ import { parseCompareParams } from "@/lib/workflow/quote-revision-compare";
 import { loadQuoteComparison } from "@/lib/workflow/quote-revision-loader";
 import { QuoteRevisionComparison } from "@/components/modules/quotes/quote-revision-comparison";
 import { QuoteRateCheckPanel } from "@/components/modules/quotes/quote-rate-check";
+import { RecordNextAction } from "@/components/modules/shared/record-next-action";
 import { canReadRates, quoteRateCheckSchema } from "@/lib/workflow/costing-rates";
 
 const quoteStatusErrorMessages = {
@@ -150,6 +151,7 @@ export default async function QuoteDetailPage({
 
   return (
     <div className="space-y-6">
+      <RecordNextAction context={context} record={{ kind: "quote", id, status: quote.status, linkedOrderId: linkedOrder?.id, completeCosting: items.length > 0 && items.every((item: any) => item.costing_complete === true) }} />
       <div className="flex flex-col items-start justify-between gap-4 xl:flex-row">
         <PageHeader 
           title={`Quote ${quote.quote_number}`} 
@@ -310,7 +312,7 @@ export default async function QuoteDetailPage({
           {can(context.role, "update", "quotes") ? (
             <Card className="border-orange/30 bg-orange/5">
               <CardHeader>
-                <h3 className="font-bold tracking-tight text-slate-900">Change the Status of The Quote</h3>
+                <h3 id="quote-workflow" className="font-bold tracking-tight text-slate-900">Change the Status of The Quote</h3>
               </CardHeader>
               <CardContent>
                 {allowedQuoteStatuses.length ? <form action={changeQuoteStatus} className="space-y-3">

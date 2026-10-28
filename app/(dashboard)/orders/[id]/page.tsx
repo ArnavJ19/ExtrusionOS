@@ -27,6 +27,9 @@ import { loadOrderLineSchedule } from "@/lib/workflow/order-line-schedule-loader
 import { canReadLineSchedule, canSetLineSchedule } from "@/lib/workflow/order-line-schedule";
 import { WorkRequirementsPanel } from "@/components/modules/orders/work-requirements-panel";
 import { canReviewRequirements, WORK_STAGES } from "@/lib/workflow/customer-step-requirements";
+import { RecordNextAction } from "@/components/modules/shared/record-next-action";
+import { TransactionProgressPanel } from "@/components/modules/shared/transaction-evidence";
+import { LinkedDocumentsPanel } from "@/components/modules/shared/linked-documents";
 
 const ORDER_JOB_LIMIT = 200;
 
@@ -154,6 +157,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="space-y-6">
+      <RecordNextAction context={context} record={{ kind: "order", id, status: order.current_stage }} />
+      {!context.dealerId && !context.role.startsWith("dealer") ? <TransactionProgressPanel key={`${context.companyId}:${context.userId}:${context.role}:${id}`} orderId={id} scope={`${context.companyId}:${context.userId}:${context.role}`} /> : null}
+      {!context.dealerId && !context.role.startsWith("dealer") ? <LinkedDocumentsPanel key={`documents:${context.companyId}:${context.userId}:${context.role}:${id}`} entityType="order" entityId={id} canLink={["owner","admin"].includes(context.role)}/> : null}
       {!context.dealerId && canFollow(context.role, "order") ? <RecordFollow entityType="order" entityId={id} /> : null}
       {!context.dealerId && canRequestException(context.role, "overdue_dispatch") ? <RestrictionPanel exceptionType="overdue_dispatch" entityId={id} /> : null}
       {!context.dealerId ? WORK_STAGES.filter(stage => canReviewRequirements(context.role, stage)).map(stage => <WorkRequirementsPanel key={stage} companyId={context.companyId} role={context.role} stage={stage} orderId={id} />) : null}

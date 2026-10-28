@@ -31,6 +31,9 @@ import { rowMatchesSearch } from "@/lib/utils/search";
 import { canSaveQuoteDraft, duplicateQuoteDraftLine, getQuoteFormShortcut, runWithInFlightGuard } from "@/lib/forms/keyboard-entry";
 import { buildQuotePasteLine, getPieceCalculationState, getQuotePasteFinishOptions, getQuotePasteLengthUnit, parseQuotePaste, validateQuotePasteRows, type QuotePasteRow } from "@/lib/forms/quote-paste";
 import { saveQuoteAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
+import { quoteEditToken, type QuoteEditConflict, type QuoteEditToken } from "@/lib/workflow/quote-edit-conflicts";
+import { ProfileTechnicalChoice } from "@/components/modules/profiles/technical-options";
+import { MaterialSuggestionsPanel } from "@/components/modules/shared/transaction-evidence";
 import { costingRateAction } from "@/lib/actions/costing-rates";
 import { applyApprovedRates, finishingRateKey, rateLookupSchema } from "@/lib/workflow/costing-rates";
 import { dieAmortizationTypes, labelize, type DieAmortizationType, type FinishingChargeType, type FinishingType, type QuoteStatus, type SessionContext } from "@/types/app";
@@ -69,7 +72,7 @@ type Die = { id: string; die_number: string; profile_id: string; die_status: str
 type QuoteRow = Record<string, any>;
 type CompanySettingsRow = Record<string, any>;
 
-type FormItem = QuoteItemInput & { profile_id: string; die_id: string; item_description: string; finishing_type: FinishingType; die_amortization_type: DieAmortizationType };
+type FormItem = QuoteItemInput & { profile_id: string; technical_option_id?: string | null; die_id: string; item_description: string; finishing_type: FinishingType; die_amortization_type: DieAmortizationType };
 
 const emptyItem: FormItem = {
   profile_id: "",
@@ -144,6 +147,8 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
   const [quotes, setQuotes] = useState<QuoteRow[]>([]);
   const [settings, setSettings] = useState<CompanySettingsRow | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editToken, setEditToken] = useState<QuoteEditToken | null>(null);
+  const [editConflict, setEditConflict] = useState<QuoteEditConflict | null>(null);
   const [search, setSearch] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
   const [customerSearchLoading, setCustomerSearchLoading] = useState(false);
@@ -362,6 +367,7 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
         next.perimeter_mm = profile?.section_perimeter_mm ?? null;
         next.item_description = profile ? `${profile.profile_code} - ${profile.profile_name}` : "";
         next.die_id = "";
+        next.technical_option_id = null;
       }
       if (key === "die_id") {
         const die = dies.find((candidate) => candidate.id === value);
@@ -474,11 +480,16 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
           return toast.error("This quote is below the company minimum margin and needs owner/admin approval.");
         }
         setSaving(true);
-        const result = await saveQuoteAction({ ...parsed.data, editing_id: editingId });
-        if (!result.success) return toast.error(result.error);
+        const result = await saveQuoteAction({ ...parsed.data, editing_id: editingId, edit_token: editToken });
+        if (!result.success) {
+          if (result.conflict) setEditConflict(result.conflict);
+          return toast.error(result.error);
+        }
         toast.success("Quote saved");
         setRepeatActive(false);
         setEditingId(null);
+        setEditToken(null);
+        setEditConflict(null);
         setItems([{ ...emptyItem }]);
         setCustomerSearch("");
         setForm((current) => ({ ...current, customer_id: "", status: "draft", approval_notes: "", notes: "" }));
@@ -590,6 +601,8 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
     setProfiles((current) => mergeLookupRows<Profile>((profileResult.data ?? []) as Profile[], current, profileIds, 70));
     setDies((current) => mergeLookupRows<Die>((dieResult.data ?? []) as Die[], current, dieIds, 70));
     setEditingId(quote.id);
+    setEditToken(quoteEditToken(quote));
+    setEditConflict(null);
     setForm({ customer_id: quote.customer_id, quote_date: quote.quote_date, valid_until: quote.valid_until ?? "", status: quote.status, gst_percent: quote.gst_percent, terms_and_conditions: quote.terms_and_conditions ?? "", delivery_timeline: quote.delivery_timeline ?? "", payment_terms: quote.payment_terms ?? "", approval_notes: quote.approval_notes ?? "", notes: quote.notes ?? "" });
     const customer = selectedCustomerRow ?? customers.find((candidate) => candidate.id === quote.customer_id);
     setCustomerSearch(customer ? customerLabel(customer) : "");
@@ -707,6 +720,8 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
               const selectedDie = dies.find((die) => die.id === item.die_id);
               const warnings = getQuoteItemWarnings(calculated, { dieStatus: selectedDie?.die_status, customerGstNumber: selectedCustomer?.gst_number, defaultConversionChargePerKg: settings?.default_conversion_charge_per_kg, quoteValidUntil: form.valid_until });
               return <div key={index} data-quote-line={index} className="rounded-3xl border border-slate-200 bg-gradient-to-br from-aluminium/70 to-white p-4 shadow-sm">
+                <ProfileTechnicalChoice key={`${customerCreationScope}:${context.role}:${item.profile_id}:${index}`} profileId={item.profile_id} scope={`${customerCreationScope}:${context.role}`} value={item.technical_option_id??""} onChange={value=>updateItem(index,"technical_option_id",value)} />
+                <MaterialSuggestionsPanel profileId={item.profile_id} technicalOptionId={item.technical_option_id} finish={item.finishing_type} cutLength={item.length_per_piece_m} customerId={form.customer_id} scope={customerCreationScope} onDie={die=>{setDies(current=>mergeLookupRows<Die>([{...die,profile_id:item.profile_id}],current,[die.id],70));updateItem(index,"die_id",die.id);}} />
                 <div className="mb-4 flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-orange">Extrusion item</p><h3 className="mt-1 font-black text-slate-950">Item {index + 1}</h3></div>{items.length > 1 ? <Button variant="ghost" type="button" onClick={() => setItems(items.filter((_, itemIndex) => itemIndex !== index))}>Remove</Button> : null}</div>
                 <div className="grid gap-3 md:grid-cols-4">
                   <div className="space-y-1.5 md:col-span-2"><label className="block space-y-1.5"><span className="form-label">Profile *</span><ProfileSelector value={item.profile_id} profiles={profiles} companyId={context.companyId} onChange={(nextValue) => updateItem(index, "profile_id", nextValue)} onSearchChange={searchProfiles} searching={profileSearchLoading} /></label>{form.customer_id && !context.dealerId && canUseOperatorCommand(context.role, "aliases.search") ? <CustomerProfileAliasPicker key={`${context.companyId}:${context.userId}:${context.role}:${form.customer_id}:${index}`} customerId={form.customer_id} onSelect={option => selectCustomerProfileAlias(index, option)} /> : null}</div>
@@ -750,8 +765,17 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
           <details className="mt-4 rounded-2xl border border-slate-200 p-3"><summary className="cursor-pointer text-sm font-bold">Terms and internal notes</summary>
           <label className="mt-4 block space-y-1.5"><span className="form-label">Terms and conditions</span><textarea className="form-input min-h-24" value={form.terms_and_conditions} onChange={(event) => setForm({ ...form, terms_and_conditions: event.target.value })} /></label>
           <label className="mt-4 block space-y-1.5"><span className="form-label">Approval/revision notes</span><textarea className="form-input min-h-16" value={form.approval_notes} onChange={(event) => setForm({ ...form, approval_notes: event.target.value })} /></label>
-          <label className="mt-4 block space-y-1.5"><span className="form-label">Notes</span><textarea className="form-input min-h-20" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>
-          </details><div className="mt-5 flex gap-2"><Button disabled={saving || loading} onClick={saveQuote}>{saving ? "Saving..." : editingId ? "Update quote" : "Save quote"}</Button>{editingId ? <Button variant="secondary" onClick={() => setEditingId(null)}>Cancel edit</Button> : null}</div>
+          <label className="mt-4 block space-y-1.5"><span className="form-label">Notes</span><textarea aria-label="Internal quotation notes" className="form-input min-h-20" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>
+          </details>
+          {editConflict && editingId ? <div role="alert" className="mt-4 space-y-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+            <h3 className="font-bold">This quotation changed. Your entries are retained.</h3>
+            <p>Latest recorded revision {editConflict.token.revision}, status {editConflict.status.replaceAll("_", " ")}, total {formatCurrency(editConflict.grandTotal)}.</p>
+            <p>Payment: {editConflict.paymentTerms || "Not captured"}. Delivery: {editConflict.deliveryTimeline || "Not captured"}.</p>
+            <p className="whitespace-pre-wrap">Latest notes: {editConflict.notes || "None"}</p>
+            <a className="block underline" href={`/quotes/${editingId}`} target="_blank" rel="noreferrer">Compare all latest lines in a new tab</a>
+            <Button variant="secondary" onClick={() => { setEditToken(editConflict.token); setEditConflict(null); }}>I reviewed the latest lines and reconciled my entries</Button>
+          </div> : null}
+          <div className="mt-5 flex gap-2"><Button disabled={saving || loading || Boolean(editConflict)} onClick={saveQuote}>{saving ? "Saving..." : editingId ? "Update quote" : "Save quote"}</Button>{editingId ? <Button variant="secondary" onClick={() => { setEditingId(null); setEditToken(null); setEditConflict(null); }}>Cancel edit</Button> : null}</div>
         </CardContent></Card>
         <Card className="h-fit 2xl:sticky 2xl:top-24"><CardContent><p className="text-xs font-black uppercase tracking-[0.16em] text-orange">Commercial summary</p><h2 className="section-title mt-1">Quote Summary</h2><div className="mt-4 space-y-3 text-sm font-medium"><div className="flex justify-between"><span className="text-slate-500">Physical weight</span><b>{formatWeight(summary.total_weight_kg)}</b></div><div className="flex justify-between"><span className="text-slate-500">Billing weight</span><b>{formatWeight(summary.total_billing_weight_kg)}</b></div><div className="flex justify-between"><span className="text-slate-500">Total meters</span><b>{formatMeters(summary.total_meters)}</b></div><div className="flex justify-between"><span className="text-slate-500">Subtotal</span><b>{formatCurrency(summary.subtotal)}</b></div><div className="flex justify-between"><span className="text-slate-500">Est. profit</span><b className={summary.estimated_profit_amount < 0 ? "text-red-700" : "text-slate-950"}>{formatCurrency(summary.estimated_profit_amount)} ({summary.estimated_profit_percent.toFixed(2)}%)</b></div><div className="flex justify-between"><span className="text-slate-500">GST</span><b>{formatCurrency(summary.gst_amount)}</b></div><div className="rounded-2xl bg-charcoal p-4 text-white shadow-premium"><div className="flex justify-between text-xl"><span>Grand total</span><b>{formatCurrency(summary.grand_total)}</b></div></div><div className="flex justify-between"><span className="text-slate-500">Avg price/kg</span><b>{formatCurrency(summary.average_price_per_kg)}</b></div><div className="flex justify-between"><span className="text-slate-500">Avg price/m</span><b>{formatCurrency(summary.average_price_per_meter)}</b></div>{summary.low_margin_approval_required ? <div className="rounded-2xl border border-orange-200 bg-orange-50 p-3 text-xs font-bold text-orange-800">Approval required below minimum margin</div> : null}</div></CardContent></Card>
       </div> : <Card><CardContent><h2 className="section-title">Pricing access</h2><p className="mt-2 text-sm font-medium text-slate-600">Only owners and admins can create or reprice quotations because quote line inputs include confidential material, conversion, finishing, and margin data. You can review existing quotes and use the approved workflow actions below.</p></CardContent></Card>}

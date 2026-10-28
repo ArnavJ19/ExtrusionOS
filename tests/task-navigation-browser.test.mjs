@@ -124,6 +124,8 @@ test("More opens on the first permitted destination and reverse Tab returns to i
 test("internal portal scrolling keeps lower destination focus and scroll position", async () => {
   await page.setViewportSize({ width: 375, height: 360 });
   await page.getByRole("button", { name: "More" }).click();
+  await expect(page.getByRole("navigation", { name: "More task destinations" })).toBeVisible();
+  await expect(page.locator('#task-navigation-more a[href="/stock-7"]')).toHaveCount(1);
   const state = await page.evaluate(async () => {
     const panel = document.querySelector("#task-navigation-more");
     const lastDestination = panel?.querySelector('a[href="/stock-7"]');

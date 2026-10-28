@@ -20,6 +20,8 @@ export async function buildEntryAcceptanceBundle() {
     `,
     "@/lib/actions/quotes-orders": mockAction("saveQuoteAction") + mockAction("saveOrderAction") + mockAction("updateQuoteStatusAction"),
     "@/lib/actions/costing-rates": `export async function costingRateAction(){return {success:false,error:"Approved rates are outside this fixture"}}`,
+    "@/lib/actions/profile-technical-options": `export async function profileTechnicalAction(){return {success:false,error:"Technical approval is outside this entry fixture"}}`,
+    "@/lib/actions/transaction-evidence": `export async function materialSuggestionsAction(){return {success:false,error:"Material suggestions are outside this entry fixture"}}export async function orderTransactionProgressAction(){return {success:false,error:"Progress is outside this entry fixture"}}`,
     "@/lib/actions/repeat-quote": `export async function repeatQuoteAction(){return {success:false,error:"This fixture uses a fresh quotation"}}`,
     "@/lib/actions/in-task-customers": `export async function inTaskCustomerAction(){return {kind:"error",error:"Creation is outside this acceptance fixture"}}`,
     "@/lib/actions/order-stage-age": `export async function orderStageAgeAction(){return {rows:[]}}`,

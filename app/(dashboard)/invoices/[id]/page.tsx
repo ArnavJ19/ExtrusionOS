@@ -18,7 +18,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const context = await getSessionContext();
   if (!can(context.role, "read", "financials")) redirect("/dashboard");
   return (
-    <div className="space-y-6">
+    <div id="receipt-history" className="space-y-6">
       <RecordDetailClient moduleKey="invoices" context={context} recordId={id} canEdit={can(context.role, "update", "financials")} />
       {!context.dealerId && canFollow(context.role, "invoice") ? <RecordFollow entityType="invoice" entityId={id} /> : null}
       <InvoiceSettlementPanel invoiceId={id} canManage={can(context.role, "create", "financials")} />

@@ -31,7 +31,7 @@ export default async function DispatchDetailPage({ params, searchParams }: {
     <RecordDetailClient moduleKey="dispatches" context={context} recordId={id} canEdit={false} />
     {!context.dealerId ? <WorkRequirementsPanel companyId={context.companyId} role={context.role} stage="dispatch" source={{ type: "dispatch", id }} /> : null}
     {!context.dealerId && canFollow(context.role, "dispatch") ? <RecordFollow entityType="dispatch" entityId={id} /> : null}
-    <DispatchDeliveryPanel dispatchId={id} canUpdate={canUpdate} />
+    <div id="delivery-history"><DispatchDeliveryPanel dispatchId={id} canUpdate={canUpdate} /></div>
     <DispatchPackingPanel dispatchId={id} />
     <DispatchReservationPanel dispatchId={id} page={reservationPage} />
     <DispatchControlsPanel dispatchId={id} />

@@ -12,6 +12,7 @@ import { todayIso } from "@/lib/utils/format";
 import { orderSchema, quoteSchema } from "@/lib/validations/schemas";
 import { canTransitionQuoteStatus } from "@/lib/workflow/quote-status";
 import { quoteConfirmationStages, quotePreparationIssues } from "@/lib/workflow/quote-preparation";
+import { quoteEditToken, quoteEditTokenSchema, sameQuoteEditToken, type QuoteEditConflict, type QuoteEditToken } from "@/lib/workflow/quote-edit-conflicts";
 import type { QuoteStatus } from "@/types/app";
 
 const quoteStatusSchema = z.enum(["draft", "internal_review", "approved_for_sending", "sent", "customer_approved", "customer_rejected", "expired", "converted_to_order"]);
@@ -20,20 +21,17 @@ const lowMarginApprovalRoles = ["owner", "admin"];
 const profileSelect = "id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, hsn_code, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle";
 const unusableDieStatuses = ["inactive", "dead", "blocked", "retired", "scrapped", "under_maintenance"];
 
-type SaveQuoteInput = z.input<typeof quoteSchema> & { editing_id?: string | null };
+type SaveQuoteInput = z.input<typeof quoteSchema> & { editing_id?: string | null; edit_token?: QuoteEditToken | null };
 type SaveOrderInput = z.input<typeof orderSchema> & { editing_id?: string | null };
-type ActionResult = { success: true; quoteId?: string; orderId?: string } | { success: false; error: string };
+type ActionResult = { success: true; quoteId?: string; orderId?: string } | { success: false; error: string; conflict?: QuoteEditConflict };
 
 function isLowMarginApprover(role: string) {
   return lowMarginApprovalRoles.includes(role);
 }
 function revalidateQuoteOrderPaths(quoteId?: string, orderId?: string) {
-  revalidatePath("/quotes");
-  revalidatePath("/quotes/database");
-  revalidatePath("/orders");
-  revalidatePath("/orders/database");
-  if (quoteId) revalidatePath(`/quotes/${quoteId}`);
-  if (orderId) revalidatePath(`/orders/${orderId}`);
+  for (const path of ["/quotes", "/quotes/database", "/orders", "/orders/database", ...(quoteId ? [`/quotes/${quoteId}`] : []), ...(orderId ? [`/orders/${orderId}`] : [])]) {
+    try { revalidatePath(path); } catch { /* A cache outage cannot undo a confirmed business write. */ }
+  }
 }
 
 function revalidateOrderPaths(orderId?: string) {
@@ -46,8 +44,10 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
   try {
     const context = await getSessionContext();
     const editingId = input.editing_id || null;
-    if (!['owner', 'admin'].includes(context.role)) return { success: false, error: "Only owners and admins can create or reprice quotations. Ask an owner or admin to prepare the priced quote." };
+    if (context.dealerId || !['owner', 'admin'].includes(context.role)) return { success: false, error: "Only owners and admins can create or reprice quotations. Ask an owner or admin to prepare the priced quote." };
     if (!can(context.role, editingId ? "update" : "create", "quotes")) return { success: false, error: "You do not have permission to save quotations." };
+    const editToken = editingId ? quoteEditTokenSchema.safeParse(input.edit_token) : null;
+    if (editingId && !editToken?.success) return { success: false, error: "The edit version is missing. Reopen the quotation before editing." };
 
     const parsed = quoteSchema.safeParse(input);
     if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Please check quote details." };
@@ -87,6 +87,11 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
     const summary = calculateQuoteSummary(calculatedItems, parsed.data.gst_percent);
 
     const currentQuote = currentQuoteResult.data;
+    const currentToken = currentQuote ? quoteEditToken(currentQuote) : null;
+    if (editingId && editToken?.success && !sameQuoteEditToken(editToken.data, currentToken)) {
+      return { success: false, error: "Another employee changed this quotation. Your entries have been retained. Review the latest version before saving.",
+        ...(currentToken ? { conflict: { token: currentToken, status: currentQuote.status, paymentTerms: currentQuote.payment_terms ?? "", deliveryTimeline: currentQuote.delivery_timeline ?? "", notes: currentQuote.notes ?? "", grandTotal: Number(currentQuote.grand_total) } } : {}) };
+    }
     if (currentQuote?.status === "converted_to_order") {
       return { success: false, error: "Converted quotes cannot be revised. Update the linked order instead." };
     }
@@ -121,6 +126,7 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
         other_charges: Number(calculatedItem.other_charges ?? 0),
         packing_charge: Number(calculatedItem.packing_charge ?? 0),
         profile_id: item.profile_id,
+        technical_option_id: item.technical_option_id || null,
         die_id: item.die_id || null,
         item_description: item.item_description || null,
         finishing_type: item.finishing_type,
@@ -131,8 +137,8 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
       p_quote_id: editingId,
       p_quote: quotePayload,
       p_items: itemPayload,
-      p_expected_revision: editingId ? Number(currentQuote?.revision_number ?? 1) : null,
-      p_expected_updated_at: editingId ? currentQuote?.updated_at ?? null : null,
+      p_expected_revision: editToken?.success ? editToken.data.revision : null,
+      p_expected_updated_at: editToken?.success ? editToken.data.updatedAt : null,
       p_revision_reason: parsed.data.approval_notes || "Commercial revision"
     });
     if (quoteResult.error || !quoteResult.data) throw quoteResult.error ?? new Error("Could not save quote");

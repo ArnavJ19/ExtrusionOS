@@ -43,6 +43,8 @@ const mocks = {
   "@/lib/actions/quotes-orders": `export async function saveQuoteAction(data){window.quoteWrites.push(data);return {success:true};} export async function updateQuoteStatusAction(){throw new Error("Unexpected workflow write");}`,
   "@/lib/actions/in-task-customers": `export async function inTaskCustomerAction(request){window.customerActions.push(request);if(window.customerAction)return window.customerAction(request);return {kind:"checked",matches:[],hasMore:false};}`,
   "@/lib/actions/costing-rates": `export async function costingRateAction(){throw new Error("Unexpected costing rate request");}`,
+  "@/lib/actions/profile-technical-options": `export async function profileTechnicalAction(){return {success:false,error:"Technical approval is outside this entry fixture"}}`,
+  "@/lib/actions/transaction-evidence": `export async function materialSuggestionsAction(){return {success:false,error:"Material suggestions are outside this entry fixture"}}export async function orderTransactionProgressAction(){return {success:false,error:"Progress is outside this entry fixture"}}`,
   "@/lib/actions/repeat-quote": `export async function repeatQuoteAction(){return {success:false,error:"No repeat source in this fixture"}}`,
   "sonner": `export const toast={error(message){window.toastErrors.push(String(message));},success(message){window.toastSuccesses.push(String(message));},warning(){}};`,
 };
@@ -69,7 +71,7 @@ test.before(async () => {
     plugins: [{
       name: "in-task-customer-browser-fixture",
       setup(buildApi) {
-        buildApi.onResolve({ filter: /^@\/lib\/(?:supabase\/browser|actions\/(?:quotes-orders|in-task-customers|repeat-quote|costing-rates))$/ }, (args) => ({ path: args.path, namespace: "fixture" }));
+        buildApi.onResolve({ filter: /^@\/lib\/(?:supabase\/browser|actions\/(?:quotes-orders|in-task-customers|repeat-quote|costing-rates|profile-technical-options|transaction-evidence))$/ }, (args) => ({ path: args.path, namespace: "fixture" }));
         buildApi.onLoad({ filter: /.*/, namespace: "fixture" }, (args) => ({ contents: mocks[args.path], loader: "tsx", resolveDir: process.cwd() }));
         buildApi.onResolve({ filter: /^@\// }, (args) => ({ path: resolveAliasFile(args.path) }));
         buildApi.onResolve({ filter: /^sonner$/ }, (args) => ({ path: args.path, namespace: "fixture" }));
@@ -107,7 +109,7 @@ async function fillDraft() {
   await line.getByLabel("Length m", { exact: true }).fill("4.25");
   await line.getByLabel("Sales override", { exact: true }).fill("8123");
   await page.getByRole("textbox", { name: "Terms and conditions", exact: true }).fill("Keep the existing commercial terms.");
-  await page.getByRole("textbox", { name: "Notes", exact: true }).fill("Draft operator note.");
+  await page.getByRole("textbox", { name: "Internal quotation notes", exact: true }).fill("Draft operator note.");
 }
 
 async function snapshotDraft() {
@@ -118,7 +120,7 @@ async function snapshotDraft() {
     length: await line.getByLabel("Length m", { exact: true }).inputValue(),
     price: await line.getByLabel("Sales override", { exact: true }).inputValue(),
     terms: await page.getByRole("textbox", { name: "Terms and conditions", exact: true }).inputValue(),
-    notes: await page.getByRole("textbox", { name: "Notes", exact: true }).inputValue(),
+    notes: await page.getByRole("textbox", { name: "Internal quotation notes", exact: true }).inputValue(),
   };
 }
 
