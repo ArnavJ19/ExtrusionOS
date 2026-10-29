@@ -32,7 +32,7 @@ export const balanceExplanationSchema = z.object({
   }).strict()).max(100),
   reservations_total: n,
   withdrawals: z.array(z.object({
-    kind: z.enum(["dispatch", "dealer_debit", "dealer_credit"]), id: uuid, at: z.string(), reference: str, reference_id: uuid.nullable().optional(), order_number: str,
+    kind: z.enum(["dispatch", "dealer_debit", "dealer_credit", "cutting"]), id: uuid, at: z.string(), reference: str, reference_id: uuid.nullable().optional(), order_number: str,
     weight_kg: n, pieces: n, length_m: n
   }).strict()).max(100),
   withdrawals_total: n,
@@ -78,4 +78,4 @@ export const exclusionText: Record<string, string> = {
   batch_scrap: "Batch is marked scrap",
   batch_dispatched: "Batch has been dispatched"
 };
-export const withdrawalText = { dispatch: "Dispatched", dealer_debit: "Dealer stock debit", dealer_credit: "Credited back on order cancellation" } as const;
+export const withdrawalText = { dispatch: "Dispatched", dealer_debit: "Dealer stock debit", dealer_credit: "Credited back on order cancellation", cutting: "Consumed in a recorded cutting run" } as const;

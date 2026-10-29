@@ -987,6 +987,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 93. Generated cutting requirements
 
+- [x] **Implemented and audited locally for order-line cutting, 29 October 2026; physical saw/hosted acceptance pending.** Independently approved allowances drive feasible stock-bounded sequences. Actual reconciled runs consume one bar once, retain measured output/remnant identity on QC hold and enter the stock explanation; estimates never become stock. [Batch 5 tests and pilot limits](EOS_UPGRADE_BATCH_5.md).
+
 - **What it does:** Fetch required cut lengths/counts, eligible stock lengths, approved saw kerf, and cutting allowances. Propose a cutting sequence, required stock count, expected offcuts, and estimated waste. Capture actual usage and retain eligible reusable remnants as identifiable stock.
 - **Impact:** Reduces manual cut planning and makes potential waste visible before material is used.
 - **Complexity:** Very High - optimisation, dimensional feasibility, stock compatibility, rounding, remnant identity, and actual-result reconciliation need substantial validation.

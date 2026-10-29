@@ -57,6 +57,7 @@ type RoleRule = {
 };
 
 const roleRules: RoleRule[] = [
+  { prefix: "/production/cutting/rules", roles: ["owner", "admin", "production_manager", "quality"] },
   { prefix: "/vendors/comparisons", roles: ["owner", "admin", "accounts"] },
   { prefix: "/settings/access", roles: ["owner"] },
   { prefix: "/settings", roles: ["owner", "admin"] },

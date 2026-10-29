@@ -1,0 +1,2 @@
+import {getSessionContext} from "@/lib/auth";import {redirect} from "next/navigation";import {CuttingWorkspace} from "@/components/modules/production/cutting-workspace";
+export default async function CuttingRulesPage(){const context=await getSessionContext();if(context.dealerId||!["owner","admin","production_manager","quality"].includes(context.role))redirect("/production");return <CuttingWorkspace key={`${context.companyId}:${context.userId}`} manageRules/>;}

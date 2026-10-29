@@ -158,6 +158,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   return (
     <div className="space-y-6">
       <RecordNextAction context={context} record={{ kind: "order", id, status: order.current_stage }} />
+      {!context.dealerId && ["owner","admin","production_manager","production","factory_manager","inventory_manager"].includes(context.role) ? <Link href={`/orders/${id}/cutting`} className="inline-flex rounded-xl border bg-white px-4 py-3 text-sm font-bold">Plan and record stock cutting</Link> : null}
       {!context.dealerId && ["owner","admin","production_manager","factory_manager","inventory_manager"].includes(context.role) ? <Link href={`/orders/${id}/stock-plan`} className="inline-flex rounded-xl border bg-white px-4 py-3 text-sm font-bold">Plan stock and manufacturing requirement</Link> : null}
       {!context.dealerId && !context.role.startsWith("dealer") ? <TransactionProgressPanel key={`${context.companyId}:${context.userId}:${context.role}:${id}`} orderId={id} scope={`${context.companyId}:${context.userId}:${context.role}`} /> : null}
       {!context.dealerId && !context.role.startsWith("dealer") ? <LinkedDocumentsPanel key={`documents:${context.companyId}:${context.userId}:${context.role}:${id}`} entityType="order" entityId={id} canLink={["owner","admin"].includes(context.role)}/> : null}
