@@ -12,7 +12,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { createClient } from "@/lib/supabase/browser";
 import { formatCurrency, formatWeight } from "@/lib/utils/format";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
-import { calculateBilletWeightKg, calculateRequiredBilletCount } from "@/lib/calculations/foundry";
+import { summarizeQuotePhysicalDemand } from "@/lib/orders/quote-physical-demand";
 import { canSubmitQuoteOrder, loadQuoteDealerAvailability } from "@/lib/orders/quote-fulfillment";
 import type { SessionContext } from "@/types/app";
 
@@ -97,18 +97,9 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
   }, [context.companyId, searchParams, supabase]);
 
   const selectedQuote = quotes.find((quote) => quote.id === quoteId) ?? null;
-  const quoteWeightKg = useMemo(() => (selectedQuote?.quote_items ?? []).reduce((sum, item) => sum + Number(item.billing_weight_kg ?? item.total_weight_kg ?? 0), 0), [selectedQuote]);
+  const demand = summarizeQuotePhysicalDemand(selectedQuote?.quote_items ?? []);
+  const quoteWeightKg = demand.physicalKg ?? 0;
   const manufacturingWeightKg = Math.max(quoteWeightKg - dealerFulfilledKg, 0);
-  const billetsRequired = useMemo(() => {
-    if (!selectedQuote || quoteWeightKg <= 0 || manufacturingWeightKg <= 0) return 0;
-    return (selectedQuote.quote_items ?? []).reduce((sum, item) => {
-      const itemWeight = Number(item.billing_weight_kg ?? item.total_weight_kg ?? 0);
-      const manufacturingItemWeight = itemWeight * manufacturingWeightKg / quoteWeightKg;
-      const diameterInch = Number(item.aluminium_profiles?.billet_diameter_required_inch ?? 6);
-      const billetWeight = calculateBilletWeightKg(5800, diameterInch * 25.4, 2700);
-      return sum + calculateRequiredBilletCount(manufacturingItemWeight, billetWeight, 75);
-    }, 0);
-  }, [manufacturingWeightKg, quoteWeightKg, selectedQuote]);
   const factoryBlocked = manufacturingWeightKg > 0 && manufacturingWeightKg < factoryMinimumKg;
   const filteredQuotes = quotes.filter((quote) => {
     const customer = quote.customers?.company_name || quote.customers?.customer_name || "";
@@ -142,12 +133,12 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
     return () => { cancelled = true; };
   }, [context.dealerId, quoteWeightKg, selectedQuote, supabase]);
 
-  const canSubmit = canSubmitQuoteOrder({ quoteSelected: Boolean(selectedQuote), saving,
+  const canSubmit = demand.ok && canSubmitQuoteOrder({ quoteSelected: Boolean(selectedQuote), saving,
     availabilityLoading: availabilityLoading || verifiedAvailabilityQuoteId !== selectedQuote?.id, availabilityError });
 
   async function submit() {
     if (!selectedQuote) return toast.error("Select a quote before creating an order.");
-    if (!canSubmit) return toast.error(availabilityError ?? "Wait for stock availability to finish loading.");
+    if (!canSubmit) return toast.error(demand.reason ?? availabilityError ?? "Wait for stock availability to finish loading.");
     if (dealerFulfilledKg > availableUnreservedKg) return toast.error("Dealer fulfillment cannot use reserved or unavailable stock.");
     if (dealerFulfilledKg > quoteWeightKg) return toast.error("Dealer fulfillment cannot exceed the quote weight.");
     if (factoryBlocked && minimumHandling === "override" && overrideReason.trim().length < 8) {
@@ -201,9 +192,11 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
           <div className="grid gap-4 md:grid-cols-3">
             <ReadOnly label="Customer" value={selectedQuote ? selectedQuote.customers?.company_name || selectedQuote.customers?.customer_name || "Customer" : "Select quote first"} />
             <ReadOnly label="Quote Value" value={selectedQuote ? formatCurrency(selectedQuote.grand_total) : "-"} />
-            <ReadOnly label="Quote Weight" value={formatWeight(quoteWeightKg)} />
-            <ReadOnly label="Billets Required" value={`${billetsRequired} billet${billetsRequired === 1 ? "" : "s"} @ 75% efficiency`} />
+            <ReadOnly label="Physical Profile Demand" value={demand.ok ? formatWeight(quoteWeightKg) : "Not captured"} />
+            <ReadOnly label="Commercial Billing Weight" value={demand.billingKg !== null ? formatWeight(demand.billingKg) : "Not captured"} />
           </div>
+          {selectedQuote && !demand.ok ? <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-800">{demand.reason}</p> : null}
+          <p className="text-sm font-medium text-slate-500">Manufacturing uses physical profile demand. Minimum billing weight remains a commercial charge basis. Plan billet input and count in production using the recorded recovery and compatible billet weights.</p>
         </CardContent>
       </Card>
 
@@ -213,7 +206,7 @@ export function QuoteOrderFormClient({ context }: { context: SessionContext }) {
           <div className="grid gap-4 md:grid-cols-3">
             <ReadOnly label="Unreserved Stock Available" value={formatWeight(availableUnreservedKg)} />
             <label className="block space-y-1.5"><span className="form-label">Dealer Stock Used (kg)</span><input className="form-input" type="number" step="0.001" min="0" max={Math.min(availableUnreservedKg, quoteWeightKg)} value={dealerFulfilledKg} onChange={(event) => setDealerFulfilledKg(Number(event.target.value))} disabled={Boolean(context.dealerId)} /></label>
-            <ReadOnly label="Factory Manufacturing Weight" value={formatWeight(manufacturingWeightKg)} />
+            <ReadOnly label="Factory Manufacturing Weight" value={demand.ok ? formatWeight(manufacturingWeightKg) : "Not captured"} />
           </div>
           {availabilityLoading ? <p className="text-sm font-medium text-slate-500">Checking current unreserved dealer stock...</p> : null}
           {availabilityError ? <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-800">{availabilityError}</p> : null}
