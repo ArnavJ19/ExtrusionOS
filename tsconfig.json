@@ -46,7 +46,9 @@
     ".next-upgrade-verify/types/**/*.ts",
     ".next-upgrade-verify/dev/types/**/*.ts",
     ".next-eos-batch5/types/**/*.ts",
-    ".next-eos-batch5/dev/types/**/*.ts"
+    ".next-eos-batch5/dev/types/**/*.ts",
+    ".next-eos-unchecked/types/**/*.ts",
+    ".next-eos-unchecked/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

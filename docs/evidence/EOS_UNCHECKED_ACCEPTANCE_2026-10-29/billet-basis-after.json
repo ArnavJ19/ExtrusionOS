@@ -1,0 +1,18 @@
+{
+  "feature": 89,
+  "scope": "Actual quote save, commercial review and order conversion in a disposable full-schema PGlite database",
+  "quote": {
+    "total_weight_kg": "480.000",
+    "billing_weight_kg": "700.000"
+  },
+  "order": {
+    "requested_weight_kg": "480.000",
+    "manufacturing_weight_kg": "480.000"
+  },
+  "order_line": {
+    "quantity_kg": "480.000",
+    "manufacturing_weight_kg": "480.000"
+  },
+  "expected_manufacturing_kg": 480,
+  "status": "passed"
+}

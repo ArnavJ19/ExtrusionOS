@@ -226,7 +226,7 @@ const server = createServer(async (request, response) => {
 
 server.listen(3581, "127.0.0.1", () => {
   console.log(`Synthetic fixture chooser: ${fixtureOrigin}`);
-  const child = spawn(process.execPath, [fileURLToPath(import.meta.resolve("next/dist/bin/next")), "dev", "--hostname", "127.0.0.1", "--port", "3580"], {
+  const child = spawn(process.execPath, [fileURLToPath(import.meta.resolve("next/dist/bin/next")), "dev", "--webpack", "--hostname", "127.0.0.1", "--port", "3580"], {
     stdio: "inherit", env: { ...process.env, NODE_ENV: "development", NEXT_DIST_DIR: ".next-my-work", NEXT_PUBLIC_SUPABASE_URL: fixtureOrigin,
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "synthetic-fixture-only", NEXT_PUBLIC_SUPABASE_ANON_KEY: "synthetic-fixture-only", SUPABASE_SERVICE_ROLE_KEY: "",
       RESEND_API_KEY: "", EMAIL_WEBHOOK_URL: "", EMAIL_WEBHOOK_SECRET: "", NVIDIA_API_KEY: "" },

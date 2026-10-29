@@ -9,6 +9,8 @@ Employees should enter new facts once, follow an agreed operating method, and se
 
 This document explains the target behaviour, expected impact, implementation complexity, dependencies, and acceptance example for every feature. It is a planning reference, not a claim that 100 features are missing or delivered. Existing capabilities must be inspected and reused before building extensions. Impact descriptions are expected benefits; measure them with employees rather than treating them as proven savings.
 
+Verification update, 29 October 2026: 77 features have checked delivery records, five remain explicitly unchecked (6, 84, 89, 91 and 92), and 18 have no delivery record. All 17 previously unchecked entries were exercised locally; 12 pending visual gates are now closed. The five retained gates require signed-in operator acceptance beyond the available fixtures. A checked record applies only to its stated implementation and verification scope; it does not prove hosted rollout or physical factory acceptance. [Current evidence and remaining gates](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
+
 ## How to use this catalogue
 
 - [Features 1-20: Navigation and daily work](#features-1-20-navigation-and-daily-work)
@@ -94,7 +96,7 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 4. Pinned shortcuts and preserved working context
 
-- [ ] **Implemented; final interactive visual acceptance pending, 21 October 2026.** Added company/user-scoped pins, recent records, named views, URL-based list state, return scroll, safe Storage fallbacks, and permission-aware shortcuts. Automated mounted tests cover rapid filters, Back restoration, hide/show, and company/user changes. The user explicitly deferred the final order-return and scope-switch visual checks after browser control became unavailable. [Audit and remaining acceptance](docs/UPGRADE_EOS_USABILITY_BATCH_2026-10-21.md).
+- [x] **Implemented and visually verified locally, 29 October 2026.** Pins, recents, named views, exact list query and Back scroll were exercised through real Next.js routes at 1280 and 375 px, including another user and another company. Storage failures and permission-aware shortcuts retain their existing automated coverage. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Save personal shortcuts, recent records, and named filtered views. Preserve search text, filters, pagination, and scroll position when employees open a record and return. Scope preferences and recents to the current company and user.
 - **Impact:** Eliminates repeated setup of the same working view throughout the day.
@@ -114,7 +116,7 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 6. Connected order workspace
 
-- [ ] **Implemented, automatically tested and checked in isolated Playwright at 1280 and 375 px, 22 October 2026; signed-in trial pending.** Order detail shows per-line ordered, dealer-stock, open-plan, produced and still-to-plan kg on the same basis as the database production guard, with links to each production job. Whole-order dispatched pieces/metres/net kg come from verified packing history, with remaining pieces and metres. Unlinked jobs are listed separately, over-commitment is flagged, and unverifiable jobs or packing are shown as unavailable rather than zero. Dealer sessions do not see it. Linked quotation, inspections, finishing, invoices and payments already have their own sections; per-line dispatch is not possible because packing records are not tied to order lines. [Delivery audit and evidence](docs/UPGRADE_EOS_PRODUCTION_PERFORMANCE_2026-10-22.md).
+- [ ] **Local regression and visual checks passed, 29 October 2026; signed-in acceptance remains open.** Per-line order, stock, open-plan and produced kg, whole-order packed pieces/metres/net kg, remaining quantities and unlinked jobs were rechecked at 1280 and 375 px. Failed sources remain unavailable. A signed-in operator trial is still required. Packing records still do not identify order lines, so dispatch progress remains whole-order. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Bring the linked quotation, jobs, material allocation, inspections, finishing, bundles, dispatches, invoices, and payments into the order detail page. Show ordered, produced, dispatched, and remaining quantities with their units and relevant source links.
 - **Impact:** Gives staff a practical place to answer customer questions and investigate delays.
@@ -205,7 +207,7 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 15. Actionable alerts and blocker resolution
 
-- [ ] **Implemented and automatically tested locally; visual acceptance deferred, 21 October 2026.** Notifications now open an exact permitted source record, identify the reviewing team, and recheck recognized invoice, stock, task, order and quotation conditions. Resolved conditions are separate from personal read receipts; failed or restricted source reads never become resolved or empty-success claims. The inbox uses ten-row server pagination. Interactive inspection remains pending at the user's direction. [Audit, verification and remaining gates](docs/UPGRADE_EOS_OPERATOR_WORKFLOWS_2026-10-21.md).
+- [x] **Implemented and visually verified locally, 29 October 2026.** The actual inbox opens the permitted source, keeps read receipts separate, retains resolved alert history and removes a resolved claim when the source read fails. Desktop and phone inspection passed; pagination, permission and tenant guards retain local regression coverage. Hosted rollout remains separate. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Link each alert to the exact record or correctly filtered queue. Explain the blocker, affected work, responsible person, and available resolution. Remove or resolve the alert when its underlying condition is no longer true.
 - **Impact:** Turns attention signals into useful actions and reduces investigation time.
@@ -275,7 +277,7 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 22. Customer codes and shop-floor aliases
 
-- [ ] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 21 October 2026.** A customer record maintains customer-specific profile aliases with retained deactivation history. Quotation entry resolves exact aliases within the selected customer, requires an explicit canonical choice, and reloads the active company profile before applying its current specification. Tests cover ambiguity, inactive/foreign sources and stale responses. [Audit and remaining gates](docs/UPGRADE_EOS_OPERATOR_WORKFLOWS_2026-10-21.md).
+- [x] **Implemented and visually verified locally, 29 October 2026.** The actual customer-code flow retains deactivation history; quotation entry requires an explicit choice for ambiguous aliases and reloads the canonical company profile. Local actions and SQL, desktop and phone interactions passed. Hosted database rollout remains separate. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Map customer item codes, previous profile numbers, and familiar local names to the correct master profile. Scope aliases appropriately to a company or customer, show the canonical identity, and request clarification when an alias is ambiguous.
 - **Impact:** Reduces time spent translating customer descriptions or consulting separate mapping sheets.
@@ -287,7 +289,7 @@ The development checkout already contains navigation, search, mobile entry point
 
 - **Follow-up, 21 October 2026:** Actual-editor integration now verifies mixed-profile correction, millimetre conversion, atomic append, preserved existing charges, clean imported defaults, and zero saves. The user chose to keep interactive visual checks pending. [Current recheck and open gates](docs/UPGRADE_EOS_ENTRY_ACCEPTANCE_RECHECK_2026-10-21.md).
 
-- [ ] **Implemented and audited locally; interactive visual acceptance pending, 21 October 2026.** The quotation editor accepts up to 100 spreadsheet rows, requires declared length units, resolves exact active company profiles, and shows editable errors before importing all accepted lines into the draft. Tests cover stale lookups, malformed quoting, blank/unknown headers, ambiguous profiles, and inherited charges. Final independent verification: 1,769 tests across 76 suites; lint, typecheck, and build passed. Browser access still reports disabled, so this feature is not marked complete. [Delivery audit and remaining checks](docs/UPGRADE_EOS_ENTRY_AND_PREVIEWS_2026-10-21.md).
+- [x] **Implemented and visually verified locally, 29 October 2026.** Mixed spreadsheet rows remain a preview until every row is resolved, then append to the existing draft without inherited charges. The 100-row cap, explicit length units and malformed-input checks retain their tests. Corrected phone grid overflow and added a focusable, horizontally scrollable preview with a scroll hint. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Accept tabular clipboard input for fields such as profile code, length, quantity, and finish. Preview parsed rows, units, unmatched references, and validation errors. Let employees correct cells before explicitly importing the valid result into a draft.
 - **Impact:** Speeds preparation of large quotations and orders while replacing uncontrolled copy-and-paste.
@@ -369,7 +371,7 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 32. Physical stock and die location guidance
 
-- [ ] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 21 October 2026.** Inventory and die records show their recorded location and a permitted, reasoned location-move flow. A stale source location blocks the move, stock quantities are unchanged, and history retains the previous location, including ordinary master edits and unknown locations. Production entry retrieves current die location guidance. Physical factory reconciliation remains separate. [Audit and remaining gates](docs/UPGRADE_EOS_OPERATOR_WORKFLOWS_2026-10-21.md).
+- [x] **Implemented and visually verified locally, 29 October 2026.** The actual inventory move records its previous location and reason without changing stock quantity; die guidance remains visible. Local action/SQL tests and desktop/phone interactions passed. Hosted rollout and reconciliation against physical rack locations remain separate. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Store consistent physical locations such as Shed B / Rack 04 / Level 2 and show them during picking or die retrieval. Provide a simple location layout where useful and group collection instructions by location. Update references when material moves.
 - **Impact:** Reduces searching and unnecessary trips around the factory.
@@ -379,7 +381,7 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 33. Structured exception capture
 
-- [ ] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 21 October 2026.** Production jobs offer controlled shortage, die-damage, surface-defect, breakdown and other reasons, with an optional note and a required explanation for other exceptions. Company, job, machine, recorded operator, authenticated reporter and timestamp are derived from current records. Reporting requires no invented quantity and does not change stock or job state. Photo evidence and automated hold routing are outside this delivery. [Audit and remaining gates](docs/UPGRADE_EOS_OPERATOR_WORKFLOWS_2026-10-21.md).
+- [x] **Implemented and visually verified locally, 29 October 2026.** The actual exception flow records one attributed observation after an uncertain response and retry, without changing job status or stock. Controlled reasons and role/tenant rules retain local SQL coverage. Desktop/phone inspection passed. Photo evidence, automatic hold routing and hosted rollout remain outside this verification. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Offer standard reasons for events such as die damage, material shortage, surface defects, or breakdown. Attach current job, machine, operator, and event time automatically. Allow an explanatory note and photo where needed.
 - **Impact:** Makes incident recording faster and produces information that supervisors can compare and act on.
@@ -461,7 +463,7 @@ The development checkout already contains navigation, search, mobile entry point
 
 - **Follow-up, 21 October 2026:** Long preview identifiers/subtitles now wrap in full. Actual database integration verifies page-two filters, unchanged URL, no additional page query, safe displayed fields, return context, and trigger focus after Escape. Interactive visual inspection remains pending at the user's request. [Current recheck](docs/UPGRADE_EOS_ENTRY_ACCEPTANCE_RECHECK_2026-10-21.md).
 
-- [ ] **Implemented and audited locally; interactive visual acceptance pending, 21 October 2026.** Added read-only previews from operations database rows, with curated fields, no additional query, scope guards, focus restoration, Escape, scroll locking, and a full-record link preserving list context. Mounted tests verify focus, private-field omission, unchanged URL, and current query/session behaviour. Final independent verification: 1,769 tests across 76 suites; lint, typecheck, and build passed. Desktop/mobile visual inspection remains open because browser access reports disabled. [Delivery audit and remaining checks](docs/UPGRADE_EOS_ENTRY_AND_PREVIEWS_2026-10-21.md).
+- [x] **Implemented and visually verified locally, 29 October 2026.** Desktop and phone previews preserve the exact list URL, issue no additional query, omit internal fields, display a long identifier, and restore trigger focus on Escape. The local suite retains scope, scroll-lock and safe-link checks. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Open a compact, read-focused side panel from a queue with identifying details, quantities, contact information, and pending work. Keep the queue and current filters visible. Provide a direct route to the full detail screen when the task needs more context.
 - **Impact:** Makes small lookups faster and preserves the employee's place in a list.
@@ -471,7 +473,7 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 42. Role-specific table columns
 
-- [ ] **Implemented; final interactive visual acceptance pending, 21 October 2026.** Added role-permitted defaults, persistent show/hide/reorder/resize controls, and sticky identifiers. Automated tests cover hiding then showing a column, preference scope, and restricted field omission through the candidate RPC projection migration. Final visual persistence, role-layout, and horizontal-scroll checks were deferred by the user. Migration `20261021290100_operation_page_null_projection.sql` is tested locally and remains unapplied to hosted Supabase. [Audit and remaining acceptance](docs/UPGRADE_EOS_USABILITY_BATCH_2026-10-21.md).
+- [x] **Implemented and visually verified locally, 29 October 2026.** Accounts and dispatch defaults differ as permitted. Show/hide, reorder and width preferences survive reload; identifiers stay visible. Corrected the clipped picker using an anchored viewport-bounded portal with outside-click and Escape handling. Desktop and phone inspection passed. Candidate projection migration 20261021290100 remains local-only. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Supply useful column defaults for dispatch, accounts, production, and other roles. Let employees show, hide, reorder, or resize permitted columns and preserve those preferences. Keep identifiers visible during horizontal scrolling.
 - **Impact:** Reduces visual clutter while retaining the information each department needs.
@@ -521,7 +523,7 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 47. Customer commitment tracking
 
-- [ ] **Implemented and automatically tested locally; database rollout and visual acceptance pending, 21 October 2026.** Employees record their own customer promises, find them in a paginated personal/company follow-up queue, and open the exact promise from later queue pages. Rescheduling preserves the original date and records a reason; closure requires an outcome and retains history. Stale changes and ambiguous retries are guarded. Existing promises survive customer inactivation; new promises require an active customer. [Audit and remaining gates](docs/UPGRADE_EOS_OPERATOR_WORKFLOWS_2026-10-21.md).
+- [x] **Implemented and visually verified locally, 29 October 2026.** The actual promise flow retains its original due date, reasoned reschedule history and completed outcome. Local actions/SQL and desktop/phone interactions passed; stale requests, retry identity, inactive-customer handling and later queue pages retain regression coverage. Hosted rollout remains separate. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Record a promised action, responsible employee, date, and relevant customer or transaction. Surface commitments such as sending a sample or revised quote until completed or explicitly rescheduled. Preserve outcome and revised-date history.
 - **Impact:** Reduces missed follow-ups that are otherwise kept in personal notes.
@@ -553,7 +555,7 @@ The development checkout already contains navigation, search, mobile entry point
 
 - **Follow-up, 21 October 2026:** Long source references now wrap. Actual database integration verifies that refresh preserves old physical observations and source dates, failed refresh does not advance the successful-fetch timestamp, and recovery works. Interactive visual inspection remains pending at the user's request. [Current recheck](docs/UPGRADE_EOS_ENTRY_ACCEPTANCE_RECHECK_2026-10-21.md).
 
-- [ ] **Implemented and audited locally; interactive visual acceptance pending, 21 October 2026.** Database pages distinguish successful page-fetch time from source row dates and available observation/verification metadata. Refresh repeats the paginated RPC and cannot make an old physical observation appear newly verified; missing metadata remains unavailable. Tests cover failed refreshes, invalid/future dates, stale evidence, and query/session scope. Final independent verification: 1,769 tests across 76 suites; lint, typecheck, and build passed. Visual acceptance remains open while browser access reports disabled. [Delivery audit and remaining checks](docs/UPGRADE_EOS_ENTRY_AND_PREVIEWS_2026-10-21.md).
+- [x] **Implemented and visually verified locally, 29 October 2026.** Page-fetch time remains distinct from the original observation and verification dates. A failed refresh cannot advance the last successful fetch. Corrected clipping inside phone record cards and expanded source details; the regression asserts both page and card bounds, including an unbroken long source reference. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Show when important operational information was recorded, refreshed, or verified and identify its source. Distinguish a recent screen refresh from a recent physical observation. Flag stale or unavailable imports and calculations.
 - **Impact:** Helps employees judge whether a figure is suitable for a new promise or decision.
@@ -885,7 +887,7 @@ For these features, every field must have a clear source. Maintain approved defa
 
 - **Follow-up, 21 October 2026:** Actual profile selection and numeric entry now have integration coverage for master-based weight, changed cut length, manual override, missing weight, and zero transaction writes. Interactive visual inspection remains pending at the user's request. [Current recheck](docs/UPGRADE_EOS_ENTRY_ACCEPTANCE_RECHECK_2026-10-21.md).
 
-- [ ] **Implemented and audited locally; interactive visual acceptance pending, 21 October 2026.** Quotation lines show total metres and theoretical kg using the shared quote calculation, identify profile-master versus manual kg/m, and flag missing or invalid inputs. Mounted tests verify 100 x 6 m x 0.8 kg/m = 480 kg, length changes, manual overrides, and zero writes during calculation. Master values are not labelled approved merely because populated. Final independent verification: 1,769 tests across 76 suites; lint, typecheck, and build passed. Visual and real-master suitability checks remain open. [Delivery audit and remaining checks](docs/UPGRADE_EOS_ENTRY_AND_PREVIEWS_2026-10-21.md).
+- [x] **Implemented and visually verified locally, 29 October 2026.** The actual editor shows 100 pieces x 6 m x 0.8 kg/m = 480 kg, recalculates length changes, identifies a manual kg/m override and flags missing weight without writing a business record. Desktop and phone inspection passed. Real-master suitability remains a factory check. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** For piece-based work, capture piece count and cut length, then fetch approved section weight. Calculate total metres = pieces x length in metres, and theoretical kg = total metres x kg/m. For 100 pieces x 6 m x 0.8 kg/m, show 600 m and 480 kg theoretical weight.
 - **Impact:** Removes repeated arithmetic and keeps quantity representations consistent.
@@ -895,7 +897,7 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 84. Finishing area and finishing charges
 
-- [ ] **Implemented, automatically tested and checked in isolated Playwright at 1280 and 375 px, 22 October 2026; signed-in trial pending.** Per-sq-ft finishing lines explain area m2 = total metres x coating perimeter / 1,000, the sq ft conversion and rate x area, reusing the quote calculation so the explanation equals the costed charge. A missing perimeter shows an incomplete-cost alert rather than a zero charge (the existing send-blocking warning still applies). Minimum-charge rules are not implemented because no approved minimum-charge data exists. [Delivery audit and evidence](docs/UPGRADE_EOS_PRODUCTION_PERFORMANCE_2026-10-22.md).
+- [ ] **Local regression and visual checks passed, 29 October 2026; signed-in acceptance remains open.** Finishing area, sq ft conversion, rate and missing-perimeter incomplete-cost warning passed again at 1280 and 375 px using the actual components and shared calculation. A signed-in operator trial is still required. No approved minimum-charge policy exists, so minimum-charge rules remain outside the implemented scope. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Fetch the approved coating perimeter and selected finish's charging basis. Calculate area m2 = total length m x coating perimeter mm / 1,000, then convert to square feet if required. Apply the approved rate, minimum-charge rules, and applicable surface assumptions.
 - **Impact:** Eliminates manual area calculation and makes finishing quotations easier to explain.
@@ -945,7 +947,7 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 89. Planned billet input and billet count
 
-- [ ] **Implemented and automatically tested locally; isolated Playwright visual check passed at 1280 and 375 px; signed-in operator trial pending, 22 October 2026.** Production entry explains planned input kg = planned good output / expected recovery and the rounded-up billet count when compatible billets share one weight, plus whether selected billets cover the plan. A floating-point rounding defect that planned 41 instead of 40 billets (700 kg, 70%, 25 kg) is fixed in the shared count. The quotation-to-order billet preview still uses billing weight and fixed 75%/5.8 m assumptions pending a business decision. [Delivery audit and evidence](docs/UPGRADE_EOS_PRODUCTION_PERFORMANCE_2026-10-22.md).
+- [ ] **Local regression and visual checks passed, 29 October 2026; signed-in acceptance remains open.** Production input/recovery/count explanations passed again at both widths. Fixed new quote conversion so commercial billing minima cannot inflate physical order-line or manufacturing demand; tested authenticated sales conversion, retry identity, mixed profiles, dealer stock and legacy history. Removed the quotation form's fixed 75%/5.8 m count preview. New migration 20261029100000 is local-only. A signed-in operator trial and the existing automatic-allocation assumption review remain open. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Fetch planned good output, approved expected recovery, and the selected billet specification. Calculate planned input kg = good output kg / recovery fraction, then round billet count upward. At 900 kg output, 75% recovery, and 30 kg per billet, the plan requires 1,200 kg input and 40 billets.
 - **Impact:** Removes manual planning arithmetic and makes recovery assumptions visible.
@@ -957,7 +959,7 @@ For these features, every field must have a clear source. Maintain approved defa
 
 - **Follow-up, 21 October 2026:** Integration now exercises the estimate inside the actual foundry form, proving display-unit changes preserve the millimetre configuration and blank density removes the estimate without saving a weighing or batch. Interactive visual inspection remains pending at the user's request. [Current recheck](docs/UPGRADE_EOS_ENTRY_ACCEPTANCE_RECHECK_2026-10-21.md).
 
-- [ ] **Implemented and audited locally; interactive visual acceptance pending, 21 October 2026.** Foundry entry explains the current batch's diameter, length, alloy/density assumption, geometry formula, per-billet estimate, batch estimate, and existing rounding basis. Equivalent mm/cm/m/in displays preserve mass; invalid/missing configuration shows an unavailable estimate. Measured and issued material facts are not altered by this presentation. Final independent verification: 1,769 tests across 76 suites; lint, typecheck, and build passed. Visual inspection and company approval of applicable density assumptions remain open. [Delivery audit and remaining checks](docs/UPGRADE_EOS_ENTRY_AND_PREVIEWS_2026-10-21.md).
+- [x] **Implemented and visually verified locally, 29 October 2026.** The actual foundry form explains geometry, density source, per-billet and batch estimates; equivalent mm/cm/m/in displays preserve mass and missing density removes the estimate. Desktop and phone inspection passed. Applicable factory density assumptions still require company approval; no measured or issued material fact is changed. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Fetch billet diameter, standard length, alloy, and approved density assumption from the selected specification. Convert dimensions to metres and calculate theoretical kg = pi x (diameter / 2)^2 x length x density. Multiply by count for a planned batch and retain actual measured mass separately.
 - **Impact:** Reduces repeated weight lookup and supports explainable material planning.
@@ -967,7 +969,7 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 91. Production performance from actual transactions
 
-- [ ] **Implemented and automatically tested locally; isolated Playwright visual check passed at 1280 and 375 px; signed-in operator trial pending, 22 October 2026.** Production job detail shows recovery, scrap and plan attainment from linked billet input (the completion transaction's statuses and measured-else-nominal basis), recorded good output and non-reversed scrap postings. Missing input or unreadable scrap shows Not captured; a recorded zero output stays 0%. Output per operating hour is not shown because jobs do not record operating time. [Delivery audit and evidence](docs/UPGRADE_EOS_PRODUCTION_PERFORMANCE_2026-10-22.md).
+- [ ] **Local regression and visual checks passed, 29 October 2026; signed-in acceptance remains open.** Recorded input, measured-versus-nominal basis, recovery, non-reversed scrap, plan attainment, missing input and recorded zero output passed again at 1280 and 375 px. A signed-in operator trial is still required. Output per operating hour remains unavailable because these jobs lack an approved operating-time allocation. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Use recorded material issues and good output to calculate recovery, plan attainment, output per operating hour, and related metrics where inputs exist. Recovery percent = good output kg / issued input kg x 100; 800 kg good output from 1,000 kg input gives 80%.
 - **Impact:** Removes manual performance summaries and gives supervisors a traceable view of production results.
@@ -977,7 +979,7 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 92. Material discrepancy calculation
 
-- [ ] **Implemented and automatically tested locally; isolated Playwright visual check passed at 1280 and 375 px; signed-in operator trial pending, 22 October 2026.** Completed jobs show input - (good output + measured scrap) with the signed difference, kept visible even inside the completion tolerance; completion entry previews the same balance including earlier scrap postings. Nothing is booked as scrap. Work in progress, returns and other classified movements are supported by the calculation but have no job-level source records yet. [Delivery audit and evidence](docs/UPGRADE_EOS_PRODUCTION_PERFORMANCE_2026-10-22.md).
+- [ ] **Local regression and visual checks passed, 29 October 2026; signed-in acceptance remains open.** The signed discrepancy, reversal exclusion, within-tolerance warning and completion preview passed again at 1280 and 375 px. No discrepancy is automatically booked as scrap. A signed-in operator trial is still required. The calculation supports work in progress, returns and other classified movements, but job-level source records for them are still absent. [Current verification, screenshots and limits](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
 
 - **What it does:** Reconcile a defined process boundary using actual input, good output, measured scrap, returns, work in progress, and other classified movements. For 1,000 kg input, 780 kg good output, 180 kg measured scrap, and 30 kg work in progress, flag 10 kg unaccounted.
 - **Impact:** Exposes unexplained differences without hiding them in an invented scrap figure.

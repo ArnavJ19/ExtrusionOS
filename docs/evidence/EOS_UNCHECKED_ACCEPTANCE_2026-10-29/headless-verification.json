@@ -1,0 +1,629 @@
+{
+  "date": "2026-10-29",
+  "scope": "Independent headless Playwright with actual components, source CSS and local fonts. Synthetic auth/data and disposable PGlite; no hosted acceptance.",
+  "checks": [
+    {
+      "feature": 23,
+      "width": 1280,
+      "name": "mixed paste requires correction before atomic append",
+      "status": "passed"
+    },
+    {
+      "feature": 83,
+      "width": 1280,
+      "name": "pieces and length recalculate without recording a measurement",
+      "status": "passed"
+    },
+    {
+      "feature": 41,
+      "width": 1280,
+      "name": "preview preserves query and restores focus without a new read",
+      "status": "passed"
+    },
+    {
+      "feature": 50,
+      "width": 1280,
+      "name": "refresh cannot renew old physical evidence or advance on failure",
+      "status": "passed"
+    },
+    {
+      "feature": 90,
+      "width": 1280,
+      "name": "equivalent dimension units preserve mass; missing density has no estimate",
+      "status": "passed"
+    },
+    {
+      "feature": 22,
+      "width": 1280,
+      "name": "customer aliases retain history and require an explicit canonical choice",
+      "status": "passed"
+    },
+    {
+      "feature": 32,
+      "width": 1280,
+      "name": "location changes retain history and do not change stock quantity",
+      "status": "passed"
+    },
+    {
+      "feature": 33,
+      "width": 1280,
+      "name": "uncertain exception confirmation replays one attributed observation",
+      "status": "passed"
+    },
+    {
+      "feature": 47,
+      "width": 1280,
+      "name": "rescheduling retains the original deadline, reason and completed outcome",
+      "status": "passed"
+    },
+    {
+      "feature": 15,
+      "width": 1280,
+      "name": "alert resolution comes from source state and stays separate from read receipts",
+      "status": "passed"
+    },
+    {
+      "feature": 6,
+      "width": 1280,
+      "name": "recorded quantities and honest missing-data states",
+      "status": "passed"
+    },
+    {
+      "feature": 84,
+      "width": 1280,
+      "name": "recorded quantities and honest missing-data states",
+      "status": "passed"
+    },
+    {
+      "feature": 89,
+      "width": 1280,
+      "name": "recorded quantities and honest missing-data states",
+      "status": "passed"
+    },
+    {
+      "feature": 91,
+      "width": 1280,
+      "name": "recorded quantities and honest missing-data states",
+      "status": "passed"
+    },
+    {
+      "feature": 92,
+      "width": 1280,
+      "name": "recorded quantities and honest missing-data states",
+      "status": "passed"
+    },
+    {
+      "feature": 89,
+      "width": 1280,
+      "name": "actual quote conversion review keeps billing minima out of physical demand",
+      "status": "passed"
+    },
+    {
+      "feature": 23,
+      "width": 375,
+      "name": "mixed paste requires correction before atomic append",
+      "status": "passed"
+    },
+    {
+      "feature": 83,
+      "width": 375,
+      "name": "pieces and length recalculate without recording a measurement",
+      "status": "passed"
+    },
+    {
+      "feature": 41,
+      "width": 375,
+      "name": "preview preserves query and restores focus without a new read",
+      "status": "passed"
+    },
+    {
+      "feature": 50,
+      "width": 375,
+      "name": "refresh cannot renew old physical evidence or advance on failure",
+      "status": "passed"
+    },
+    {
+      "feature": 90,
+      "width": 375,
+      "name": "equivalent dimension units preserve mass; missing density has no estimate",
+      "status": "passed"
+    },
+    {
+      "feature": 22,
+      "width": 375,
+      "name": "customer aliases retain history and require an explicit canonical choice",
+      "status": "passed"
+    },
+    {
+      "feature": 32,
+      "width": 375,
+      "name": "location changes retain history and do not change stock quantity",
+      "status": "passed"
+    },
+    {
+      "feature": 33,
+      "width": 375,
+      "name": "uncertain exception confirmation replays one attributed observation",
+      "status": "passed"
+    },
+    {
+      "feature": 47,
+      "width": 375,
+      "name": "rescheduling retains the original deadline, reason and completed outcome",
+      "status": "passed"
+    },
+    {
+      "feature": 15,
+      "width": 375,
+      "name": "alert resolution comes from source state and stays separate from read receipts",
+      "status": "passed"
+    },
+    {
+      "feature": 6,
+      "width": 375,
+      "name": "recorded quantities and honest missing-data states",
+      "status": "passed"
+    },
+    {
+      "feature": 84,
+      "width": 375,
+      "name": "recorded quantities and honest missing-data states",
+      "status": "passed"
+    },
+    {
+      "feature": 89,
+      "width": 375,
+      "name": "recorded quantities and honest missing-data states",
+      "status": "passed"
+    },
+    {
+      "feature": 91,
+      "width": 375,
+      "name": "recorded quantities and honest missing-data states",
+      "status": "passed"
+    },
+    {
+      "feature": 92,
+      "width": 375,
+      "name": "recorded quantities and honest missing-data states",
+      "status": "passed"
+    },
+    {
+      "feature": 89,
+      "width": 375,
+      "name": "actual quote conversion review keeps billing minima out of physical demand",
+      "status": "passed"
+    },
+    {
+      "feature": 4,
+      "width": 1280,
+      "name": "real Next routes preserve the filtered order page, scroll and scope",
+      "status": "passed"
+    },
+    {
+      "feature": 4,
+      "width": 375,
+      "name": "real Next routes preserve the filtered order page, scroll and scope",
+      "status": "passed"
+    },
+    {
+      "feature": 42,
+      "width": 1280,
+      "name": "real accounts and dispatch layouts persist permitted column controls",
+      "status": "passed"
+    }
+  ],
+  "captures": [
+    {
+      "file": "f23-unmatched-preview-1280.png",
+      "feature": 23,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f83-theoretical-1280.png",
+      "feature": 83,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f41-long-identifier-1280.png",
+      "feature": 41,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f50-old-observation-1280.png",
+      "feature": 50,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f50-failed-refresh-1280.png",
+      "feature": 50,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f90-geometry-1280.png",
+      "feature": 90,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f22-ambiguous-code-1280.png",
+      "feature": 22,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f32-recorded-move-1280.png",
+      "feature": 32,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f33-uncertain-retry-1280.png",
+      "feature": 33,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f47-retained-deadline-1280.png",
+      "feature": 47,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f15-resolved-source-1280.png",
+      "feature": 15,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f15-source-unavailable-1280.png",
+      "feature": 15,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f6-order-1280.png",
+      "feature": 6,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f84-finishing-1280.png",
+      "feature": 84,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f84-missing-perimeter-1280.png",
+      "feature": 84,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f89-billets-1280.png",
+      "feature": 89,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f91-performance-1280.png",
+      "feature": 91,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f91-missing-input-1280.png",
+      "feature": 91,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f92-reversed-1280.png",
+      "feature": 92,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f92-completion-preview-1280.png",
+      "feature": 92,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f89-physical-commercial-review-1280.png",
+      "feature": 89,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f23-unmatched-preview-375.png",
+      "feature": 23,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f83-theoretical-375.png",
+      "feature": 83,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f41-long-identifier-375.png",
+      "feature": 41,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f50-old-observation-375.png",
+      "feature": 50,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f50-failed-refresh-375.png",
+      "feature": 50,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f90-geometry-375.png",
+      "feature": 90,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f22-ambiguous-code-375.png",
+      "feature": 22,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f32-recorded-move-375.png",
+      "feature": 32,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f33-uncertain-retry-375.png",
+      "feature": 33,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f47-retained-deadline-375.png",
+      "feature": 47,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f15-resolved-source-375.png",
+      "feature": 15,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f15-source-unavailable-375.png",
+      "feature": 15,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f6-order-375.png",
+      "feature": 6,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f84-finishing-375.png",
+      "feature": 84,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f84-missing-perimeter-375.png",
+      "feature": 84,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f89-billets-375.png",
+      "feature": 89,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f91-performance-375.png",
+      "feature": 91,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f91-missing-input-375.png",
+      "feature": 91,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f92-reversed-375.png",
+      "feature": 92,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f92-completion-preview-375.png",
+      "feature": 92,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f89-physical-commercial-review-375.png",
+      "feature": 89,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f4-order-return-1280.png",
+      "feature": 4,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f4-order-return-375.png",
+      "feature": 4,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f42-accounts-defaults-1280.png",
+      "feature": 42,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f42-dispatch-defaults-1280.png",
+      "feature": 42,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f42-persisted-controls-1280.png",
+      "feature": 42,
+      "viewport": 1280,
+      "document": 1280,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    },
+    {
+      "file": "f42-phone-controls-375.png",
+      "feature": 42,
+      "viewport": 375,
+      "document": 375,
+      "font": "AcceptanceJakarta, sans-serif",
+      "fonts": "loaded"
+    }
+  ],
+  "errors": [],
+  "passed": 35,
+  "failed": 0,
+  "features_exercised": [
+    4,
+    6,
+    15,
+    22,
+    23,
+    32,
+    33,
+    41,
+    42,
+    47,
+    50,
+    83,
+    84,
+    89,
+    90,
+    91,
+    92
+  ],
+  "acceptance_limits": [
+    "Computer Use native browser input is unavailable because URL detection fails.",
+    "Real signed-in employee and physical factory trials are not simulated by these fixtures.",
+    "The feature 89 correction is separately exercised through full-schema SQL; its new migration has not been applied to hosted Supabase."
+  ]
+}

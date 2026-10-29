@@ -1,0 +1,92 @@
+{
+  "date": "2026-10-29",
+  "base": "cd4f9773d649c95a470d1d528267504146e0795f",
+  "correction_commit": "5fcdfd7",
+  "format": "LF-normalized UTF-8 SHA-256; excludes report and evidence files",
+  "files": [
+    {
+      "path": "components/data/data-table.tsx",
+      "sha256_lf_utf8": "6cb628933f070ba588ffb90d84ff4a185483d6b075ab0ea7282cfc3ac28ef475"
+    },
+    {
+      "path": "components/modules/orders/quote-order-form-client.tsx",
+      "sha256_lf_utf8": "567388266f151d9c09724cce39f73174345753c289ff6c5d0781b87d506c7a23"
+    },
+    {
+      "path": "components/modules/quotes-client.tsx",
+      "sha256_lf_utf8": "76d0c6c3b6b3858f804ee27a1cd49e9b71330f4ce529666cc438712cdf5d2ec7"
+    },
+    {
+      "path": "components/ui/data-freshness.tsx",
+      "sha256_lf_utf8": "6614d89f6a200d9d3f7591e951741c55b77b2479de8b9a6647ea272986662d6c"
+    },
+    {
+      "path": "components/ui/table-column-preferences.tsx",
+      "sha256_lf_utf8": "3d6180c571ced01c300342fbb923ede61f2ae2c020875318716e585761ac0f0d"
+    },
+    {
+      "path": "lib/orders/quote-physical-demand.ts",
+      "sha256_lf_utf8": "4afe9b59e7f5524363326ef97d1f9c3f97a4fc58ce277d976684501b6ec23633"
+    },
+    {
+      "path": "supabase/migrations/20261029100000_quote_physical_manufacturing_basis.sql",
+      "sha256_lf_utf8": "47eaa6b463630fccb346d6ad342cffeefe7d580b23d2c1be3738829030e5bfc6"
+    },
+    {
+      "path": "tests/entry-acceptance-integration.test.mjs",
+      "sha256_lf_utf8": "2d23e135a86c2669cc8294357dca2ca1277556a31a8e4bc22dbdc878793ab545"
+    },
+    {
+      "path": "tests/quote-physical-demand.test.mjs",
+      "sha256_lf_utf8": "f87bc5dc722f040d68c4efccd2705e4795aed378d3c7d964cd1a45aab2e09afc"
+    },
+    {
+      "path": "tests/quote-physical-demand-sql.test.mjs",
+      "sha256_lf_utf8": "09defcb577513c875aa5ec5d247aecbf98a4523f7e2813786d5665b0823f369d"
+    },
+    {
+      "path": "tests/quote-physical-demand-browser.test.mjs",
+      "sha256_lf_utf8": "88b1c9650681c97e02612381bbfc342de03c18f9af107a2b7f4cba375739d2e2"
+    },
+    {
+      "path": "scripts/lib/entry-acceptance-browser-fixture.mjs",
+      "sha256_lf_utf8": "dabd083b94366a75b8ca988c993143d0692e658686220220e5d8990c5162c7e2"
+    },
+    {
+      "path": "scripts/serve-my-work-fixture.mjs",
+      "sha256_lf_utf8": "9fde6cd5a0182bacc563ac90796bd64ab9ff8b4f1a4c7e9c8f26c5af9131c250"
+    },
+    {
+      "path": "scripts/visual-entry-acceptance.mjs",
+      "sha256_lf_utf8": "4e2aa57150330be650690aea779f390630730b0b0053d9666a7828852ec95247"
+    },
+    {
+      "path": "scripts/lib/production-visual-fixture.mjs",
+      "sha256_lf_utf8": "d75611083c49c35fe3a5c0495899698a31195bb457f6ea5faddf20dd8938a6d7"
+    },
+    {
+      "path": "scripts/lib/quote-physical-browser-fixture.mjs",
+      "sha256_lf_utf8": "0a69820c3756fd09ad5012ba29efff29ed916067e60279e0da374fd2808e114b"
+    },
+    {
+      "path": "scripts/audit-billet-planning-basis.mjs",
+      "sha256_lf_utf8": "ef7fff0ebf9afec245c266c001d1a0e6f3271a84b270e803cf94427fae84f5dc"
+    },
+    {
+      "path": "scripts/verify-eos-unchecked-headless.mjs",
+      "sha256_lf_utf8": "531d80b8c684fe6fe0ac1b4852d8756cb7643a74bc2228c4034fc7c0ab347fe6"
+    },
+    {
+      "path": "next-env.d.ts",
+      "sha256_lf_utf8": "6e7dfd5fb67094d3dde3d86d27dea98593ab067cff17abcae79ee440d34f1ba7"
+    },
+    {
+      "path": "tsconfig.json",
+      "sha256_lf_utf8": "ff30e253b9a705b7be765a56f55a55bb622a6f74fdd790482e8f2aaa203c16e6"
+    },
+    {
+      "path": "tests/subscription-sql.test.mjs",
+      "sha256_lf_utf8": "3b1d0c2a770180f930b8863ab06ea7d344baa4368672284f7ef03240aee866f7"
+    }
+  ]
+}

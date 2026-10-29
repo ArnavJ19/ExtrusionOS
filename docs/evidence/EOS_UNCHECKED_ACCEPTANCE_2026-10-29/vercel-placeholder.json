@@ -1,0 +1,11 @@
+{
+  "verified_date": "2026-10-29",
+  "scope": "Read-only connector confirmation after staging cancellation",
+  "project_id": "prj_oAsi9I4Afu2XaSedtgcXRqEM1Uos",
+  "project_name": "extrusionos-staging",
+  "live": false,
+  "latest_deployment": null,
+  "deployment_count": 0,
+  "domains": [],
+  "cleanup_status": "The connector only supplies a dashboard confirmation link; the empty project still exists."
+}

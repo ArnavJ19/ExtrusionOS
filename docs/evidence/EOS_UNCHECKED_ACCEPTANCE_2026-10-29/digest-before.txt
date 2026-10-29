@@ -1,0 +1,104 @@
+TAP version 13
+# Subtest: repeated updates to one followed record arrive as one digest line with the latest change
+ok 1 - repeated updates to one followed record arrive as one digest line with the latest change
+  ---
+  duration_ms: 2809.4951
+  type: 'test'
+  ...
+# Subtest: digests group several records, most recent first, and follow only the chosen categories
+ok 2 - digests group several records, most recent first, and follow only the chosen categories
+  ---
+  duration_ms: 63.9217
+  type: 'test'
+  ...
+# Subtest: an employee's own changes are not sent back to them; others following the record get them
+ok 3 - an employee's own changes are not sent back to them; others following the record get them
+  ---
+  duration_ms: 46.6198
+  type: 'test'
+  ...
+# Subtest: events are recorded only for followed records, and only from after the follow began
+ok 4 - events are recorded only for followed records, and only from after the follow began
+  ---
+  duration_ms: 38.6158
+  type: 'test'
+  ...
+# Subtest: access is rechecked at delivery: a role that can no longer open invoices stops receiving them
+ok 5 - access is rechecked at delivery: a role that can no longer open invoices stops receiving them
+  ---
+  duration_ms: 43.242
+  type: 'test'
+  ...
+# Subtest: hourly and daily digests wait for their time; quiet hours defer; digest now delivers on request
+not ok 6 - hourly and daily digests wait for their time; quiet hours defer; digest now delivers on request
+  ---
+  duration_ms: 63.304
+  type: 'test'
+  location: 'C:\\Users\\arnav\\OneDrive\\Desktop\\ExtrusionOS\\.worktrees\\codex-v1\\tests\\subscription-sql.test.mjs:77:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    0 !== 1
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/arnav/OneDrive/Desktop/ExtrusionOS/.worktrees/codex-v1/tests/subscription-sql.test.mjs:94:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: quiet hours wrap midnight; preferences are validated
+ok 7 - quiet hours wrap midnight; preferences are validated
+  ---
+  duration_ms: 55.7079
+  type: 'test'
+  ...
+# Subtest: employees follow only records they may open, in this company, with categories that apply
+ok 8 - employees follow only records they may open, in this company, with categories that apply
+  ---
+  duration_ms: 75.1772
+  type: 'test'
+  ...
+# Subtest: a request reminds on schedule and stops as soon as its condition is resolved
+ok 9 - a request reminds on schedule and stops as soon as its condition is resolved
+  ---
+  duration_ms: 87.3712
+  type: 'test'
+  ...
+# Subtest: requests go only to people who can act on that record, once, and not for work already done
+ok 10 - requests go only to people who can act on that record, once, and not for work already done
+  ---
+  duration_ms: 62.2861
+  type: 'test'
+  ...
+# Subtest: quiet hours defer reminders; a recipient who leaves closes the request and tells the requester
+ok 11 - quiet hours defer reminders; a recipient who leaves closes the request and tells the requester
+  ---
+  duration_ms: 44.8961
+  type: 'test'
+  ...
+# Subtest: payment, QC and dispatch requests resolve from their records; general requests only when closed; reminders stop at 10
+ok 12 - payment, QC and dispatch requests resolve from their records; general requests only when closed; reminders stop at 10
+  ---
+  duration_ms: 89.2807
+  type: 'test'
+  ...
+# Subtest: subscriptions, digests and requests stay private; the scheduler runs every company and is not callable by users
+ok 13 - subscriptions, digests and requests stay private; the scheduler runs every company and is not callable by users
+  ---
+  duration_ms: 63.226
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 12
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3863.8786

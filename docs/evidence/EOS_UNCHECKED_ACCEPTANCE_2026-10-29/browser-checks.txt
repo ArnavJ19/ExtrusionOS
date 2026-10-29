@@ -1,0 +1,60 @@
+PASS 23 1280px mixed paste requires correction before atomic append
+PASS 83 1280px pieces and length recalculate without recording a measurement
+PASS 41 1280px preview preserves query and restores focus without a new read
+PASS 50 1280px refresh cannot renew old physical evidence or advance on failure
+PASS 90 1280px equivalent dimension units preserve mass; missing density has no estimate
+PASS 22 1280px customer aliases retain history and require an explicit canonical choice
+PASS 32 1280px location changes retain history and do not change stock quantity
+PASS 33 1280px uncertain exception confirmation replays one attributed observation
+PASS 47 1280px rescheduling retains the original deadline, reason and completed outcome
+PASS 15 1280px alert resolution comes from source state and stays separate from read receipts
+PASS 6 1280px recorded quantities and honest missing-data states
+PASS 84 1280px recorded quantities and honest missing-data states
+PASS 89 1280px recorded quantities and honest missing-data states
+PASS 91 1280px recorded quantities and honest missing-data states
+PASS 92 1280px recorded quantities and honest missing-data states
+PASS 89 1280px actual quote conversion review keeps billing minima out of physical demand
+PASS 23 375px mixed paste requires correction before atomic append
+PASS 83 375px pieces and length recalculate without recording a measurement
+PASS 41 375px preview preserves query and restores focus without a new read
+PASS 50 375px refresh cannot renew old physical evidence or advance on failure
+PASS 90 375px equivalent dimension units preserve mass; missing density has no estimate
+PASS 22 375px customer aliases retain history and require an explicit canonical choice
+PASS 32 375px location changes retain history and do not change stock quantity
+PASS 33 375px uncertain exception confirmation replays one attributed observation
+PASS 47 375px rescheduling retains the original deadline, reason and completed outcome
+PASS 15 375px alert resolution comes from source state and stays separate from read receipts
+PASS 6 375px recorded quantities and honest missing-data states
+PASS 84 375px recorded quantities and honest missing-data states
+PASS 89 375px recorded quantities and honest missing-data states
+PASS 91 375px recorded quantities and honest missing-data states
+PASS 92 375px recorded quantities and honest missing-data states
+PASS 89 375px actual quote conversion review keeps billing minima out of physical demand
+PASS 4 1280px real Next routes preserve the filtered order page, scroll and scope
+PASS 4 375px real Next routes preserve the filtered order page, scroll and scope
+PASS 42 1280px real accounts and dispatch layouts persist permitted column controls
+{
+  "passed": 35,
+  "failed": 0,
+  "features": [
+    4,
+    6,
+    15,
+    22,
+    23,
+    32,
+    33,
+    41,
+    42,
+    47,
+    50,
+    83,
+    84,
+    89,
+    90,
+    91,
+    92
+  ],
+  "captures": 48,
+  "scope": "Independent headless Playwright with actual components, source CSS and local fonts. Synthetic auth/data and disposable PGlite; no hosted acceptance."
+}
