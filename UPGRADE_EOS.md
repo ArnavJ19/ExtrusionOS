@@ -235,6 +235,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 18. Transaction-linked documents and communication
 
+- [x] **Implemented and audited locally for issued invoices, 29 October 2026; hosted acceptance pending.** Finance users review snapshot-backed recipients/text and the authorized PDF; copying rechecks the invoice version and always retains explicit prepared-only delivery status. [Batch 5 evidence and provider boundary](EOS_UPGRADE_BATCH_5.md).
+
 - **What it does:** Preview, print, download, or prepare an approved message from the current transaction. Use its authoritative data and document version. Show recipients and outgoing content before sending, and record the result where a real provider integration exists.
 - **Impact:** Reduces document assembly and keeps customer communication traceable to the right transaction.
 - **Complexity:** High - document permissions, customer-safe fields, provider delivery results, and duplicate-send protection need careful integration.

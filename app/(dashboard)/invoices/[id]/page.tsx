@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { redirect } from "next/navigation";
+import { TransactionCommunication } from "@/components/modules/financials/transaction-communication";
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,6 +21,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   return (
     <div id="receipt-history" className="space-y-6">
       <RecordDetailClient moduleKey="invoices" context={context} recordId={id} canEdit={can(context.role, "update", "financials")} />
+      {!context.dealerId && ["owner","admin","accounts"].includes(context.role) ? <TransactionCommunication invoiceId={id} /> : null}
       {!context.dealerId && canFollow(context.role, "invoice") ? <RecordFollow entityType="invoice" entityId={id} /> : null}
       <InvoiceSettlementPanel invoiceId={id} canManage={can(context.role, "create", "financials")} />
     </div>
