@@ -63,7 +63,7 @@ export async function createDispatchFormBrowserFixture({styled=false}={}){
       save:()=>page.getByRole("button",{name:/^(Review dispatch|Rechecking the load\.\.\.)$/}),
       confirm:()=>page.getByRole("button",{name:/^(Confirm dispatch and consume stock|Verifying and posting stock\.\.\.)$/}),
       async review(){const count=await page.evaluate(()=>window.__dispatch.sourceRequests.length);const label=(await fixture.order().inputValue()).includes("ORDER-B")?"B":"A";await fixture.save().click();await page.waitForFunction(count=>window.__dispatch.sourceRequests.length>count,count);await fixture.resolveSource(count,{success:true,sources:[dispatchSource(label)]});await page.getByRole("dialog",{name:"Review physical dispatch"}).waitFor();},
-      async reset(){errors.length=0;await page.goto(base);await page.getByRole("heading",{name:"Load Physical Dispatch",exact:true}).waitFor();},
+      async reset(){errors.length=0;if(page.url().startsWith(base))await page.evaluate(()=>localStorage.clear());await page.goto(base);await page.getByRole("heading",{name:"Load Physical Dispatch",exact:true}).waitFor();},
       async flush(){await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));},
       async chooseOrder(label){await fixture.order().fill(`ORDER-${label}`);await page.getByRole("button",{name:`ORDER-${label} - Synthetic buyer`,exact:true}).click();
         await page.waitForFunction(id=>window.__dispatch.sourceRequests.some(request=>request.orderId===id),label==="A"?f.a:f.b);},

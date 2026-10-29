@@ -19,6 +19,7 @@ import { buildDispatchReview, projectOrderRemainder, type DispatchOrderBalance }
 import { ReviewDialog } from "@/components/ui/review-dialog";
 import { TaskGuidance } from "@/components/forms/task-guidance";
 import type { SessionContext } from "@/types/app";
+import { DispatchDraftRecovery, useDispatchDraft } from "@/components/forms/dispatch-draft-recovery";
 
 type OrderOption = { value: string; label: string };
 type SourceState = {orderId:string;status:"loading"|"ready"|"error";rows:DispatchPreparationSource[];error:string|null};
@@ -71,6 +72,14 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
   const [reviewing, setReviewing] = useState(false);
   const reviewingRef = useRef(false);
   const [review, setReview] = useState<{ manifest: ReturnType<typeof buildDispatchReview>; fingerprint: string; orderBalance: DispatchOrderBalance } | null>(null);
+  const draft = useDispatchDraft(context, { orderId, dispatchDate, transporterName, vehicleNumber, driverName, driverPhone,
+    ewayBillNumber, lrNumber, remarks, bundles }, (value) => {
+    selectedOrderId.current = value.orderId; setOrderId(value.orderId); setInitialOption(null);
+    setDispatchDate(value.dispatchDate); setTransporterName(value.transporterName); setVehicleNumber(value.vehicleNumber);
+    setDriverName(value.driverName); setDriverPhone(value.driverPhone); setEwayBillNumber(value.ewayBillNumber);
+    setLrNumber(value.lrNumber); setRemarks(value.remarks); setBundles(value.bundles); setSourceState(null);
+    setSourceRetry(current => current + 1); setReview(null); setSubmitError(null);
+  });
 
   useEffect(() => {
     if (!initialOrderId) return;
@@ -238,6 +247,7 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
         if(result?.success===false){setReview(null);setSubmitError(result.error||"Could not record dispatch.");return;}
         const confirmation=z.object({success:z.literal(true),dispatchId:z.string().uuid()}).parse(result);
         setSavedId(confirmation.dispatchId);
+        draft.confirmed();
         setReview(null);
         toast.success("Dispatch recorded from operator-verified physical bundles");
         router.push(`/dispatches/${confirmation.dispatchId}`);router.refresh();
@@ -256,6 +266,7 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
       </div>
 
       <TaskGuidance task="dispatch" />
+      <DispatchDraftRecovery draft={draft} />
       {initializing ? <p role="status" className="text-sm">Checking the linked order...</p> : null}
 
       <fieldset disabled={locked} className="min-w-0 space-y-6">

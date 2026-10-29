@@ -213,6 +213,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 16. Automatic drafts and dependable recovery
 
+- [x] **Implemented and audited locally, 29 October 2026; signed-in operator acceptance pending.** Dispatch drafts retain scoped identities and unfinished entries, expire after seven days, use cross-tab revision protection and reload authoritative sources on recovery. [Batch 5 evidence](EOS_UPGRADE_BATCH_5.md).
+
 - **What it does:** Save unfinished entries with a visible saving state and a resumable draft identity. Recover after navigation, reload, or connection loss. Keep draft persistence separate from confirming stock, financial, or workflow transactions.
 - **Impact:** Protects lengthy work from accidental loss and allows employees to resume interruptions confidently.
 - **Complexity:** High - requires company-scoped storage, conflict handling, field-version migrations, and safe expiry of sensitive local data.
