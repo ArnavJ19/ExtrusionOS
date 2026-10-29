@@ -30,7 +30,7 @@ export async function buildEntryAcceptanceBundle() {
     "@/lib/actions/foundry": mockAction("saveFoundryBatchAction"),
     "@/lib/actions/packaging": mockAction("savePackagingJobAction"),
     "@/lib/actions/production": mockAction("saveProductionJobAction"),
-    "next/navigation": `export function useRouter(){return {push(url){window.entryFixture.navigations.push(url)},refresh(){}}}export function useSearchParams(){return new URLSearchParams(location.search)}`,
+    "next/navigation": `const params=new URLSearchParams(location.search);export function useRouter(){return {push(url){window.entryFixture.navigations.push(url)},refresh(){}}}export function useSearchParams(){return params}`,
     "next/link": `import React from "react";export default function Link({children,...props}){return <a {...props}>{children}</a>}`,
     "sonner": `export const toast={error(text){window.entryFixture.messages.push(String(text));document.getElementById("fixture-message").textContent=text},success(text){document.getElementById("fixture-message").textContent=text},warning(){}};`,
   };

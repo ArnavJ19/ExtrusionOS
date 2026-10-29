@@ -120,9 +120,59 @@ test("phone database keeps long identifiers and expanded source evidence within 
   await card.getByText("Data age", { exact: false }).click();
   const sizes = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, width: document.documentElement.scrollWidth }));
   assert.ok(sizes.width <= sizes.viewport, `Expanded evidence overflows phone: ${JSON.stringify(sizes)}`);
+  const content = await card.evaluate(element => {
+    const cardRight = element.getBoundingClientRect().right;
+    return { width: element.clientWidth, contentWidth: element.scrollWidth,
+      clipped: [...element.querySelectorAll("*")].filter(child => child.getBoundingClientRect().right > cardRight + 1).map(child => ({ tag: child.tagName, className: child.className, text: child.textContent.slice(0, 100) })).slice(0, 10) };
+  });
+  assert.ok(content.contentWidth <= content.width, `The card clips expanded evidence: ${JSON.stringify(content)}`);
   await card.getByRole("button", { name: `Preview ${entryLongCode}`, exact: true }).click();
   const title = page.getByRole("dialog").getByRole("heading", { name: entryLongCode, exact: true });
   const heading = await title.evaluate((element) => ({ width: element.clientWidth, contentWidth: element.scrollWidth, height: element.clientHeight, contentHeight: element.scrollHeight }));
   assert.ok(heading.contentWidth <= heading.width && heading.contentHeight <= heading.height, `Identifier is clipped: ${JSON.stringify(heading)}`);
   await noPosts();
+});
+
+test("phone spreadsheet preview scrolls inside the editor and keeps invalid rows out of the draft", async () => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto(fixture.base);
+  await page.getByLabel("Paste quote lines from Excel").fill("Profile Code\tQuantity (pcs)\tLength (mm)\tFinish\nAL-101\t100\t6000\tMill finish\nUNKNOWN\t5\t6000\tAnodizing");
+  await page.getByRole("button", { name: "Check profile codes", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Import 2 lines into draft", exact: true })).toBeDisabled();
+  const sizes = await page.evaluate(() => {
+    const table = document.querySelector('section[aria-labelledby="quote-paste-title"] table');
+    return { viewport: innerWidth, document: document.documentElement.scrollWidth, preview: table.parentElement.clientWidth, content: table.parentElement.scrollWidth };
+  });
+  assert.ok(sizes.document <= sizes.viewport, `Paste preview widens the page: ${JSON.stringify(sizes)}`);
+  assert.ok(sizes.content > sizes.preview, "The wide editable preview must scroll within its own container.");
+  const preview = page.getByRole("region", { name: "Pasted quote lines preview", exact: true });
+  await preview.focus(); await preview.press("ArrowRight");
+  await expect.poll(() => preview.evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
+  await expect(page.locator("[data-quote-line]")).toHaveCount(1);
+  await noPosts();
+});
+
+test("column controls remain clickable beside a desktop sidebar and fit on a phone", async () => {
+  await page.setViewportSize({ width: 1100, height: 812 });
+  await page.goto(`${fixture.base}/inventory/database`);
+  await page.addStyleTag({ content: "#app{margin-left:280px;max-width:none}.acceptance-sidebar{position:fixed;top:0;bottom:0;left:0;width:280px;z-index:30;background:white}" });
+  await page.evaluate(() => { const sidebar = document.createElement("aside"); sidebar.className = "acceptance-sidebar"; sidebar.textContent = "Application sidebar"; document.body.append(sidebar); });
+  await page.getByText("Columns", { exact: true }).click();
+  const panel = page.getByRole("region", { name: "Table column preferences", exact: true });
+  await expect(panel).toBeVisible();
+  const bounds = await panel.boundingBox();
+  assert.ok(bounds.x >= 280 && bounds.x + bounds.width <= 1100, "Picker must stay above content without extending under the sidebar.");
+  await panel.getByRole("checkbox", { name: "Location", exact: true }).uncheck();
+  await panel.getByRole("checkbox", { name: "Location", exact: true }).check();
+  await panel.getByRole("slider", { name: "Width for Location", exact: true }).press("End");
+  await expect(panel.getByRole("slider", { name: "Width for Location", exact: true })).toHaveValue("480");
+  await panel.getByRole("checkbox", { name: "Location", exact: true }).press("Escape");
+  await expect(panel).toHaveCount(0);
+  await expect(page.locator("summary").filter({ hasText: "Columns" })).toBeFocused();
+  await page.reload();
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.getByText("Columns", { exact: true }).click();
+  await expect(panel.getByRole("slider", { name: "Width for Location", exact: true })).toHaveValue("480");
+  const phone = await panel.boundingBox();
+  assert.ok(phone.x >= 0 && phone.x + phone.width <= 375);
 });

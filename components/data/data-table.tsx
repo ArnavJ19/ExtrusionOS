@@ -59,7 +59,7 @@ export function DataTable<T>({ rows, columns, getRowId, getRowHref, onRowClick, 
 
   return (
     <>
-      <div className="grid gap-3 p-4 md:hidden">
+      <div className="grid min-w-0 gap-3 p-4 md:hidden">
         {rows.map((row) => {
           const clickable = Boolean(onRowClick || getRowHref);
           return (
@@ -67,22 +67,22 @@ export function DataTable<T>({ rows, columns, getRowId, getRowHref, onRowClick, 
               key={getRowId(row)}
               role={clickable ? "button" : undefined}
               tabIndex={clickable ? 0 : undefined}
-              className={cn("rounded-[20px] border border-neutral-200 bg-white p-4 shadow-sm", clickable && "cursor-pointer transition hover:border-neutral-300 hover:bg-neutral-50")}
+              className={cn("min-w-0 rounded-[20px] border border-neutral-200 bg-white p-4 shadow-sm", clickable && "cursor-pointer transition hover:border-neutral-300 hover:bg-neutral-50")}
               onClick={clickable ? () => openRow(row) : undefined}
               onKeyDown={clickable ? (event) => { if (event.target === event.currentTarget && isRowActivationKey(event.key)) { event.preventDefault(); openRow(row); } } : undefined}
             >
               <div className="flex items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0 flex-1 [overflow-wrap:anywhere]">
                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-neutral-400">{columns[0]?.header}</p>
                    <div className="mt-1 text-base font-bold text-neutral-950">{columns[0]?.accessor(row)}</div>
                 </div>
-                 {columns[2] ? <div className="text-right text-xs font-semibold text-neutral-600">{columns[2].accessor(row)}</div> : null}
+                 {columns[2] ? <div className="min-w-0 max-w-[42%] text-right text-xs font-semibold text-neutral-600 [overflow-wrap:anywhere] [&_span]:whitespace-normal">{columns[2].accessor(row)}</div> : null}
               </div>
-               <div className="mt-4 grid gap-3 border-t border-neutral-100 pt-4 text-sm">
+               <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 border-t border-neutral-100 pt-4 text-sm">
                 {columns.slice(1).map((column) => (
-                  <div key={column.id} className="flex items-start justify-between gap-4">
-                     <span className="text-xs font-bold uppercase tracking-[0.1em] text-neutral-400">{column.header}</span>
-                     <span className="text-right font-semibold text-neutral-800">{column.accessor(row)}</span>
+                  <div key={column.id} className="flex min-w-0 items-start justify-between gap-4 has-[details]:flex-col has-[details]:items-stretch has-[details]:gap-2">
+                     <span className="max-w-[42%] shrink-0 text-xs font-bold uppercase tracking-[0.1em] text-neutral-400">{column.header}</span>
+                     <span className="min-w-0 flex-1 text-right font-semibold text-neutral-800 [overflow-wrap:anywhere] [&>*]:max-w-full [&_span]:whitespace-normal">{column.accessor(row)}</span>
                   </div>
                 ))}
               </div>
