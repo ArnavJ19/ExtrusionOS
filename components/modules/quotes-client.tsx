@@ -652,8 +652,8 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
   return (
     <div>
       <PageHeader title={mode === "form" ? "Create Quote" : "Quotations"} description={canManageQuoteCosting ? "Prepare priced aluminium extrusion quotations with controlled costing, GST, and PDF output." : "Review company quotations, continue approved workflow steps, and share customer-ready PDFs."} />
-      {loading || (repeatActive && !repeatResult) ? <LoadingState title="Loading quotations" description="Fetching customers, profiles, dies, defaults, and saved quotes." /> : repeatActive && repeatResult && !repeatResult.success ? <Card><CardContent><p role="alert" className="text-sm text-red-700">{repeatResult.error}</p><Link href="/quotes/new" className="mt-4 inline-block text-sm font-bold underline">Start a blank quotation</Link></CardContent></Card> : canManageQuoteCosting ? <div className="grid gap-6 2xl:grid-cols-[1fr_440px]" onKeyDown={handleQuoteEditorKeyDown}>
-        <Card><CardContent>
+      {loading || (repeatActive && !repeatResult) ? <LoadingState title="Loading quotations" description="Fetching customers, profiles, dies, defaults, and saved quotes." /> : repeatActive && repeatResult && !repeatResult.success ? <Card><CardContent><p role="alert" className="text-sm text-red-700">{repeatResult.error}</p><Link href="/quotes/new" className="mt-4 inline-block text-sm font-bold underline">Start a blank quotation</Link></CardContent></Card> : canManageQuoteCosting ? <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 2xl:grid-cols-[minmax(0,1fr)_440px]" onKeyDown={handleQuoteEditorKeyDown}>
+        <Card className="min-w-0"><CardContent>
           <div className="mb-5 flex flex-col gap-2 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="section-title">Quote creation</h2>
@@ -690,7 +690,8 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
               const validCount = results.filter((row) => row.errors.length === 0).length;
               const ready = results.length > 0 && validCount === results.length && !loading && !quotePasteLoading && !quotePasteError;
               return <>
-                <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                <p className="mt-3 text-xs font-medium text-slate-500 sm:hidden">Scroll the preview sideways to review every field and row warning.</p>
+                <div role="region" aria-label="Pasted quote lines preview" tabIndex={0} className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">
                   <table className="w-full min-w-[760px] text-left text-xs">
                     <caption className="sr-only">Editable quote line preview with row validation status</caption>
                     <thead className="bg-slate-100 text-slate-600"><tr><th className="p-2">Row</th><th className="p-2">Profile code</th><th className="p-2">Quantity (pcs)</th><th className="p-2">Length ({unit ?? "unit required"})</th><th className="p-2">Finish</th><th className="p-2">Check</th></tr></thead>
