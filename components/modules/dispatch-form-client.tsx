@@ -92,6 +92,7 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
         const result = await supabase.from("orders_authorized").select("id, order_number, customer_name, company_name").eq("company_id", context.companyId).eq("id", id).neq("current_stage", "cancelled").maybeSingle();
         if (cancelled) return;
         if (result.error || !result.data) throw new Error("Unavailable");
+        if (selectedOrderId.current && selectedOrderId.current !== id) return;
         const option = readDispatchOrderOptions([result.data])[0];
         setInitialOption(option); selectedOrderId.current = id; setOrderId(id);
       } catch { if (!cancelled) setSubmitError("The linked order is unavailable. Select a permitted current order before preparing dispatch."); }

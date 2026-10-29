@@ -1039,6 +1039,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 99. Machine time, energy, and related cost
 
+- [x] **Implemented and audited locally for manual machine-meter observations, 29 October 2026; hosted and physical-meter acceptance pending.** Immutable operator events reconcile runtime/downtime and measured energy under an approved dated tariff. Missing stops and decreased readings remain unresolved; independent verified rollover retains the original evidence. No unapproved job allocation is performed. [Batch 5 tests and boundaries](EOS_UPGRADE_BATCH_5.md).
+
 - **What it does:** Capture actual start/stop events and meter observations, or import verified device readings. Calculate duration, recorded downtime, energy used = closing reading - opening reading, and cost using the applicable tariff. Allocate shared usage to jobs only through an approved method.
 - **Impact:** Reduces manual runtime summaries and makes selected operating costs traceable to recorded usage.
 - **Complexity:** Very High - shift boundaries, meter resets, shared loads, device failures, time corrections, and cost allocation need explicit models.

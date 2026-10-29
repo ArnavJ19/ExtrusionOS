@@ -25,7 +25,7 @@ declare v_company uuid;v_order uuid:=(p_payload->>'order_id')::uuid;v_id uuid;v_
   v_source jsonb;v_rows jsonb;v_page integer:=coalesce((p_payload->>'page')::integer,1);v_gross numeric;v_tare numeric;v_length numeric;v_pieces numeric;
 begin
   v_company:=private.commercial_actor(array['owner','admin','factory_manager','dispatch_manager','dispatch','inventory_manager']);
-  if p_payload is null or jsonb_typeof(p_payload)<>'object' then raise exception 'Invalid bundle request'; end if;
+  if p_command is null or p_payload is null or jsonb_typeof(p_payload)<>'object' then raise exception 'Invalid bundle request'; end if;
   perform 1 from public.orders where id=v_order and company_id=v_company and deleted_at is null and current_stage<>'cancelled' for share;
   if not found then raise exception 'Order is unavailable'; end if;
   if p_command='bundles.list' then

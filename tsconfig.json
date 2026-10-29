@@ -44,7 +44,9 @@
     ".next-acceptance-build/types/**/*.ts",
     ".next-acceptance-build/dev/types/**/*.ts",
     ".next-upgrade-verify/types/**/*.ts",
-    ".next-upgrade-verify/dev/types/**/*.ts"
+    ".next-upgrade-verify/dev/types/**/*.ts",
+    ".next-eos-batch5/types/**/*.ts",
+    ".next-eos-batch5/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

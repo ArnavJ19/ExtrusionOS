@@ -1,0 +1,22 @@
+{
+  "context": "Local synthetic dispatch-readiness computation; excludes network and hosted query latency",
+  "jobs": 1000,
+  "inspections": 10000,
+  "packaging": 5000,
+  "materials": 10000,
+  "baseline_ms": [
+    375.269,
+    439.332,
+    318.303,
+    198.094,
+    214.197
+  ],
+  "candidate_ms": [
+    1.726,
+    2.008,
+    1.426,
+    1.734,
+    1.757
+  ],
+  "equivalent": true
+}

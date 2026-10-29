@@ -16,7 +16,7 @@ export function OrderProgressPanel({ progress, dispatch, jobsUnavailable, canOpe
     <section aria-labelledby="order-progress-title" className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       <h3 id="order-progress-title" className="font-bold tracking-tight text-slate-900">Order Progress</h3>
       <p className="mt-1 text-sm font-medium text-slate-500">
-        Production progress is in kg per order line: ordered less dealer stock, open production plans and completed output. Dispatch progress is for the whole order, from packed bundles.
+        Production progress is in kg per order line: ordered less confirmed stock allocations, open production plans and completed output. Stock coverage follows the order weight basis. Dispatch progress is for the whole order, from packed bundles.
       </p>
 
       <div className="mt-4 rounded-2xl border border-slate-200 p-4">
@@ -39,13 +39,13 @@ export function OrderProgressPanel({ progress, dispatch, jobsUnavailable, canOpe
       </div>
 
       {jobsUnavailable || !progress ? (
-        <p role="alert" className="mt-4 text-sm font-semibold text-amber-800">Production jobs for this order could not be loaded completely. Line progress is not shown rather than shown as zero.</p>
+        <p role="alert" className="mt-4 text-sm font-semibold text-amber-800">Production jobs or committed stock for this order could not be verified completely. Line progress is not shown rather than shown as zero.</p>
       ) : (
         <>
           <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200">
             <table className="industrial-table min-w-[720px] w-full text-sm">
               <thead>
-                <tr><th>Line</th><th className="text-right">Ordered</th><th className="text-right">Dealer stock</th><th className="text-right">Open plans</th><th className="text-right">Produced</th><th className="text-right">Still to plan</th><th>Production jobs</th></tr>
+                <tr><th>Line</th><th className="text-right">Ordered</th><th className="text-right">Committed stock</th><th className="text-right">Open plans</th><th className="text-right">Produced</th><th className="text-right">Still to plan</th><th>Production jobs</th></tr>
               </thead>
               <tbody>
                 {progress.lines.map((line) => (

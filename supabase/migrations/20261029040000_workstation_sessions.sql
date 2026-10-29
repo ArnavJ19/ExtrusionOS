@@ -13,7 +13,7 @@ language plpgsql security definer set search_path=public,private as $$
 declare v_company uuid;v_session public.workstation_sessions%rowtype;v_machine public.machines%rowtype;v_items jsonb;v_page integer:=coalesce((p_payload->>'page')::integer,1);
 begin
   v_company:=private.commercial_actor(array['owner','admin','production_manager','production','factory_manager']);
-  if p_payload is null or jsonb_typeof(p_payload)<>'object' then raise exception 'Invalid workstation request'; end if;
+  if p_command is null or p_payload is null or jsonb_typeof(p_payload)<>'object' then raise exception 'Invalid workstation request'; end if;
   if p_command='stations.list' then
     if p_payload-array['page','search']<>'{}' or v_page<1 or v_page>10000 or length(coalesce(p_payload->>'search',''))>80 then raise exception 'Invalid station search'; end if;
     select coalesce(jsonb_agg(to_jsonb(r)),'[]') into v_items from (

@@ -30,6 +30,7 @@ import { canReviewRequirements, WORK_STAGES } from "@/lib/workflow/customer-step
 import { RecordNextAction } from "@/components/modules/shared/record-next-action";
 import { TransactionProgressPanel } from "@/components/modules/shared/transaction-evidence";
 import { LinkedDocumentsPanel } from "@/components/modules/shared/linked-documents";
+import { orderStockCoverageSchema } from "@/lib/orders/stock-coverage";
 
 const ORDER_JOB_LIMIT = 200;
 
@@ -129,16 +130,20 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   let jobsUnavailable = false;
   let dispatchProgress: ReturnType<typeof buildDispatchProgress> = { status: "unavailable" };
   if (showProgress) {
-    const jobsResult = await supabase.from("production_jobs")
+    const [jobsResult, stockResult] = await Promise.all([supabase.from("production_jobs")
       .select("id, job_number, status, source_line_id, planned_quantity_kg, actual_quantity_kg")
       .eq("company_id", context.companyId).eq("order_id", order.id)
-      .order("created_at", { ascending: true }).limit(ORDER_JOB_LIMIT + 1);
-    jobsUnavailable = Boolean(jobsResult.error) || (jobsResult.data ?? []).length > ORDER_JOB_LIMIT;
+      .order("created_at", { ascending: true }).limit(ORDER_JOB_LIMIT + 1),
+      supabase.rpc("order_stock_coverage",{p_order_id:order.id})]);
+    const stockCoverage=orderStockCoverageSchema.safeParse(stockResult.data);
+    jobsUnavailable = Boolean(jobsResult.error) || (jobsResult.data ?? []).length > ORDER_JOB_LIMIT
+      || Boolean(stockResult.error) || !stockCoverage.success || stockCoverage.data.order_id!==order.id;
     if (!jobsUnavailable) {
       orderProgress = buildOrderProgress({
         lines: items.map((item: any) => ({ id: item.id, label: item.section_code || item.aluminium_profiles?.profile_code || item.item_description || "Line", quantity_kg: item.quantity_kg, quantity_pieces: item.quantity_pieces, total_meters: item.total_meters })),
         jobs: jobsResult.data ?? [],
         fulfillments: dealerFulfillments,
+        factoryStock: stockCoverage.success ? stockCoverage.data.items : [],
         orderLevelTargetKg: order.production_quantity_kg ?? order.manufacturing_weight_kg
       });
     }

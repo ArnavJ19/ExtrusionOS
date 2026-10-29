@@ -29,6 +29,7 @@ export function buildOrderProgress(input: {
   lines: ProgressOrderLine[];
   jobs: ProgressJob[];
   fulfillments: ProgressFulfillment[];
+  factoryStock?: {order_item_id:string;covered_weight_kg:number}[];
   orderLevelTargetKg?: unknown;
 }) {
   const singleLine = input.lines.length === 1;
@@ -49,7 +50,9 @@ export function buildOrderProgress(input: {
       else openPlannedKg += planned ?? 0;
       return { id: job.id, jobNumber: job.job_number || "Production job", status: job.status, kg: completed ? actual : planned };
     });
-    const fromStockKg = activeFulfillments.filter((row) => row.order_item_id === line.id).reduce((sum, row) => sum + (amount(row.fulfilled_weight_kg) ?? 0), 0);
+    const dealerStockKg = activeFulfillments.filter((row) => row.order_item_id === line.id).reduce((sum, row) => sum + (amount(row.fulfilled_weight_kg) ?? 0), 0);
+    const factoryStockKg = (input.factoryStock ?? []).filter(row=>row.order_item_id===line.id).reduce((sum,row)=>sum+row.covered_weight_kg,0);
+    const fromStockKg = dealerStockKg + factoryStockKg;
     const remaining = orderedKg === null ? null : roundWeight(orderedKg - fromStockKg - openPlannedKg - producedKg);
     return {
       id: line.id,

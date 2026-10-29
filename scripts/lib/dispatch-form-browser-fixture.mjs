@@ -14,11 +14,11 @@ export function dispatchSource(label){return {id:label==="A"?dispatchFormIds.sou
 export const dispatchOrder=label=>({id:label==="A"?dispatchFormIds.a:dispatchFormIds.b,company_id:dispatchFormIds.company,order_number:`ORDER-${label}`,customer_name:"Synthetic buyer",company_name:null,quote_number:null});
 
 export async function createDispatchFormBrowserFixture({styled=false,mode="form"}={}){
-  const f=dispatchFormIds,staticRoot=resolve(".next/static");let styles="",fonts="";
+  const f=dispatchFormIds,staticRoot=resolve(process.env.NEXT_DIST_DIR||".next","static");let styles="",fonts="";
   if(styled){
-    const files=readdirSync(resolve(staticRoot,"chunks")).filter(name=>name.endsWith(".css"));
-    styles=files.map(name=>`<link rel="stylesheet" href="/_next/static/chunks/${name}">`).join("");
-    fonts=[...new Set(files.flatMap(name=>[...readFileSync(resolve(staticRoot,"chunks",name),"utf8").matchAll(/\.([\w-]+)\s*\{[^{}]*--font-jakarta\s*:/g)].map(match=>match[1])))].join(" ");assert.ok(fonts);
+    const files=["chunks","css"].flatMap(dir=>{try{return readdirSync(resolve(staticRoot,dir)).filter(name=>name.endsWith(".css")).map(name=>`${dir}/${name}`);}catch{return [];}});
+    styles=files.map(name=>`<link rel="stylesheet" href="/_next/static/${name}">`).join("");
+    fonts=[...new Set(files.flatMap(name=>[...readFileSync(resolve(staticRoot,name),"utf8").matchAll(/\.([\w-]+)\s*\{[^{}]*--font-jakarta\s*:/g)].map(match=>match[1])))].join(" ");assert.ok(fonts);
   }
   const bundle=await build({stdin:{contents:`import React,{useState} from "react";import {createRoot} from "react-dom/client";import {Toaster} from "sonner";
     import {DispatchFormClient} from "./components/modules/dispatch-form-client";

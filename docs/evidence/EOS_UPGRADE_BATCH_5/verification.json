@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-29",
+  "catalogue": "UPGRADE_EOS.md",
+  "baseline_commit": "8ed1f24edf0be369370e6be66248a4ca7886c49e",
+  "features": [7, 16, 17, 18, 40, 53, 88, 93, 94, 99],
+  "implementation_status": "verified_locally",
+  "tests": {
+    "passed": 2742,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "todo": 0,
+    "suites": 76,
+    "duration_ms": 464858.2162,
+    "new_cases": 74,
+    "new_unit_edge_property_cases": 29,
+    "new_sql_security_cases": 29,
+    "new_browser_cases": 16,
+    "generated_property_scenarios": 200,
+    "log": "tests-final.txt"
+  },
+  "lint": {"exit_code": 0, "warnings": 0, "log": "lint.txt"},
+  "typecheck": {"exit_code": 0, "log": "typecheck.txt"},
+  "build": {"exit_code": 0, "pages_generated": 194, "dist_dir": ".next-eos-batch5", "engine": "webpack", "log": "build-final.txt"},
+  "database": {"local_migration_files": 268, "local_baseline_files": 2, "replay_failures": 0, "new_migrations": 7, "new_tables": 10, "new_public_rpcs": 8, "hosted_applied": false},
+  "visual": {"captures": 7, "widths_px": [375, 1280], "overflow_failures": 0, "scope": "Actual components and built styles with synthetic server transport", "log": "visual-checks.json"},
+  "source": {"files": 1456, "sha256": "4c0f0707b7bed1826d1ab16feeede9c78a78d195df9a6ebfd892b68dda9eaa56", "unchanged_during_final_suite": true},
+  "git_source": {"files": 1444, "sha256": "fd036dd78d944b3f8f8dc671792a0dd01af3c0c085a257002012bb030443990f", "basis": "Staged Git source blobs and configuration"},
+  "pushed": false,
+  "deployed": false,
+  "pending_acceptance": ["Hosted migration prerequisites and ledger", "Real JWT and Storage checks", "Independent PostgreSQL session contention", "Signed-in operator and physical factory trials"]
+}

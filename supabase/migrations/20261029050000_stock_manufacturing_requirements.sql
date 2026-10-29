@@ -16,7 +16,7 @@ language sql stable security definer set search_path=public,private as $$
     'stock_covered_kg',coalesce((select sum(a.covered_weight_kg) from public.order_stock_allocations a join public.profile_stock_reservations r on r.id=a.reservation_id and r.company_id=a.company_id where a.company_id=p_company and a.order_item_id=i.id and r.status in ('active','consumed')),0),
     'stock_physical_kg',coalesce((select sum(a.physical_weight_kg) from public.order_stock_allocations a join public.profile_stock_reservations r on r.id=a.reservation_id and r.company_id=a.company_id where a.company_id=p_company and a.order_item_id=i.id and r.status in ('active','consumed')),0),
     'stock_pieces',coalesce((select sum(a.pieces) from public.order_stock_allocations a join public.profile_stock_reservations r on r.id=a.reservation_id and r.company_id=a.company_id where a.company_id=p_company and a.order_item_id=i.id and r.status in ('active','consumed')),0),
-    'production_committed_kg',coalesce((select sum(case when j.status='completed' then j.actual_quantity_kg else j.planned_quantity_kg end) from public.production_jobs j where j.company_id=p_company and j.order_id=i.order_id and j.status<>'cancelled' and (j.source_line_id=i.id or (j.source_line_id is null and j.profile_id=i.profile_id))),0))
+    'production_committed_kg',coalesce((select sum(case when j.status='completed' and j.actual_quantity_kg>0 then j.actual_quantity_kg else j.planned_quantity_kg end) from public.production_jobs j where j.company_id=p_company and j.order_id=i.order_id and j.status<>'cancelled' and (j.source_line_id=i.id or (j.source_line_id is null and j.profile_id=i.profile_id))),0))
   from public.order_items i where i.company_id=p_company and i.id=p_line;
 $$;
 revoke all on function private.stock_line_quantities(uuid,uuid) from public,anon,authenticated;
@@ -36,10 +36,10 @@ begin
   select coalesce(sum(a.covered_weight_kg),0) into v_covered from public.order_stock_allocations a join public.profile_stock_reservations r on r.id=a.reservation_id and r.company_id=a.company_id
     where a.company_id=new.company_id and a.order_item_id=v_line.id and r.status in ('active','consumed');
   if v_covered=0 then return new; end if;
-  select coalesce(sum(case when status='completed' then actual_quantity_kg else planned_quantity_kg end),0) into v_jobs from public.production_jobs
+  select coalesce(sum(case when status='completed' and actual_quantity_kg>0 then actual_quantity_kg else planned_quantity_kg end),0) into v_jobs from public.production_jobs
     where company_id=new.company_id and order_id=new.order_id and id<>new.id and status<>'cancelled' and (source_line_id=v_line.id or (source_line_id is null and profile_id=v_line.profile_id));
   v_demand:=coalesce(v_line.manufacturing_weight_kg,v_line.quantity_kg);
-  if v_demand is null or v_covered+v_jobs+coalesce(case when new.status='completed' then new.actual_quantity_kg else new.planned_quantity_kg end,0)>v_demand+0.001 then raise exception 'Stock allocation and production exceed the remaining order-line requirement'; end if;
+  if v_demand is null or v_covered+v_jobs+coalesce(case when new.status='completed' and new.actual_quantity_kg>0 then new.actual_quantity_kg else new.planned_quantity_kg end,0)>v_demand+0.001 then raise exception 'Stock allocation and production exceed the remaining order-line requirement'; end if;
   return new;
 end;
 $$;
@@ -53,7 +53,7 @@ declare v_company uuid;v_order public.orders%rowtype;v_line public.order_items%r
   v_id uuid;v_existing public.order_stock_allocations%rowtype;v_pieces integer;v_physical numeric;v_covered numeric;v_length numeric;v_remaining numeric;v_reservation uuid;v_alloy text;v_temper text;
 begin
   v_company:=private.commercial_actor(array['owner','admin','production_manager','factory_manager','inventory_manager']);
-  if p_payload is null or jsonb_typeof(p_payload)<>'object' or v_page<1 or v_page>10000 then raise exception 'Invalid stock planning request'; end if;
+  if p_command is null or p_payload is null or jsonb_typeof(p_payload)<>'object' or v_page<1 or v_page>10000 then raise exception 'Invalid stock planning request'; end if;
   if p_command='lines.list' then
     if p_payload-array['order_id','page']<>'{}' then raise exception 'Invalid line request'; end if;
     perform 1 from public.orders where company_id=v_company and id=(p_payload->>'order_id')::uuid and deleted_at is null;
@@ -77,7 +77,9 @@ begin
   select * into v_line from public.order_items where id=v_line.id and company_id=v_company for update;
   select * into v_profile from public.aluminium_profiles where company_id=v_company and id=v_line.profile_id for share;
   v_alloy:=coalesce(nullif(v_line.technical_spec_snapshot->>'alloy',''),v_profile.alloy);v_temper:=coalesce(nullif(v_line.technical_spec_snapshot->>'temper',''),v_profile.temper);
-  if v_line.quantity_pieces is null or v_line.quantity_pieces<=0 or v_line.quantity_kg is null or v_line.quantity_kg<=0 or v_line.length_per_piece_m is null then raise exception 'Line requires recorded pieces, length and weight'; end if;
+  if v_line.quantity_pieces is null or v_line.quantity_pieces<=0 or v_line.quantity_kg is null or v_line.quantity_kg<=0 or v_line.length_per_piece_m is null
+    or v_line.quantity_kg::text in ('NaN','Infinity','-Infinity') or v_line.length_per_piece_m::text in ('NaN','Infinity','-Infinity')
+    or coalesce(v_line.manufacturing_weight_kg,v_line.quantity_kg)::text in ('NaN','Infinity','-Infinity') then raise exception 'Line requires recorded pieces, length and weight'; end if;
   if (select count(*) from public.order_items where company_id=v_company and order_id=v_order.id and profile_id=v_line.profile_id and coalesce(finishing_type,'mill_finish')=coalesce(v_line.finishing_type,'mill_finish'))<>1 then raise exception 'Repeated profile and finish lines require a resolved dispatch-line mapping before stock allocation'; end if;
   if exists(select 1 from public.profile_stock_reservations r where r.company_id=v_company and r.order_id=v_order.id and r.profile_id=v_line.profile_id and r.status in ('active','consumed') and not exists(select 1 from public.order_stock_allocations a where a.reservation_id=r.id)) then raise exception 'Reconcile existing unassigned reservations before planning this line'; end if;
   if exists(select 1 from public.production_jobs j where j.company_id=v_company and j.order_id=v_order.id and j.profile_id=v_line.profile_id and j.status<>'cancelled'
@@ -97,7 +99,7 @@ begin
           when coalesce(b.finish,'mill_finish')<>coalesce(v_line.finishing_type,'mill_finish') then 'Finish differs from the order' else null end reason
       from public.profile_stock_batches b where b.company_id=v_company and b.profile_id=v_line.profile_id
     )select coalesce(jsonb_agg(to_jsonb(r)),'[]') into v_rows from(
-      select id,bundle_number,location,balance->'available' available,coalesce(reason,case when (balance#>>'{available,pieces}')::numeric<=0 then 'No unreserved pieces remain' end) reason,
+      select id,bundle_number,location,balance->'available' available,coalesce(reason,case when (balance#>>'{available,pieces}')::numeric<=0 or (balance#>>'{available,weight_kg}')::numeric<=0 or (balance#>>'{available,length_m}')::numeric<=0 then 'No unreserved whole-piece balance remains' end) reason,
         md5(to_jsonb(candidates)::text||to_jsonb(v_line)::text||v_quantities::text) fingerprint
       from candidates order by (reason is null) desc,id limit 10 offset (v_page-1)*10
     )r;
@@ -143,4 +145,42 @@ end;
 $$;
 revoke all on function private.keep_consumed_stock_allocation() from public,anon,authenticated;
 create trigger keep_consumed_stock_allocation before update on public.profile_stock_reservations for each row execute function private.keep_consumed_stock_allocation();
+create function public.order_stock_coverage(p_order_id uuid) returns jsonb
+language plpgsql stable security definer set search_path=public,private as $$
+declare v_company uuid;v_items jsonb;v_count integer;
+begin
+  v_company:=private.commercial_actor(array['owner','admin','sales','sales_manager','production_manager','production','factory_manager','inventory_manager','dispatch_manager','dispatch','accounts','quality','viewer']);
+  perform 1 from public.orders where id=p_order_id and company_id=v_company and deleted_at is null;
+  if not found then raise exception 'Order is unavailable'; end if;
+  select count(distinct a.order_item_id)::integer into v_count from public.order_stock_allocations a join public.order_items i on i.id=a.order_item_id and i.company_id=a.company_id
+    join public.profile_stock_reservations r on r.id=a.reservation_id and r.company_id=a.company_id
+    where a.company_id=v_company and i.order_id=p_order_id and r.status in ('active','consumed');
+  select coalesce(jsonb_agg(to_jsonb(s)),'[]') into v_items from(
+    select a.order_item_id,sum(a.covered_weight_kg) covered_weight_kg from public.order_stock_allocations a join public.order_items i on i.id=a.order_item_id and i.company_id=a.company_id
+      join public.profile_stock_reservations r on r.id=a.reservation_id and r.company_id=a.company_id
+      where a.company_id=v_company and i.order_id=p_order_id and r.status in ('active','consumed') group by a.order_item_id order by a.order_item_id limit 500
+  )s;
+  return jsonb_build_object('order_id',p_order_id,'complete',v_count<=500,'items',v_items);
+end;
+$$;
+revoke all on function public.order_stock_coverage(uuid) from public,anon;
+grant execute on function public.order_stock_coverage(uuid) to authenticated;
+alter function private.order_line_requirements(uuid,uuid) rename to order_line_requirements_before_factory_stock;
+create function private.order_line_requirements(p_company uuid,p_order uuid)
+returns table(
+  order_item_id uuid,order_id uuid,order_number text,customer_name text,order_stage text,line_label text,profile_code text,
+  ordered_kg numeric,from_stock_kg numeric,produced_kg numeric,planned_open_kg numeric,packed_kg numeric,dispatched_kg numeric,
+  line_required_date date,line_priority text,effective_date date,effective_priority text,date_source text,priority_source text,
+  version integer,updated_by_name text,updated_at timestamptz,order_closed boolean
+) language sql stable security definer set search_path=public,private as $$
+  select q.order_item_id,q.order_id,q.order_number,q.customer_name,q.order_stage,q.line_label,q.profile_code,
+    q.ordered_kg,q.from_stock_kg+coalesce(s.covered_kg,0),q.produced_kg,q.planned_open_kg,q.packed_kg,q.dispatched_kg,
+    q.line_required_date,q.line_priority,q.effective_date,q.effective_priority,q.date_source,q.priority_source,
+    q.version,q.updated_by_name,q.updated_at,q.order_closed
+  from private.order_line_requirements_before_factory_stock(p_company,p_order) q
+  left join lateral(select sum(a.covered_weight_kg) covered_kg from public.order_stock_allocations a
+    join public.profile_stock_reservations r on r.id=a.reservation_id and r.company_id=a.company_id
+    where a.company_id=p_company and a.order_item_id=q.order_item_id and r.status in ('active','consumed'))s on true;
+$$;
+revoke all on function private.order_line_requirements(uuid,uuid) from public,anon,authenticated;
 commit;

@@ -14,13 +14,22 @@ export function useDispatchDraft({ companyId, userId }: DraftScope, payload: unk
   const [retry, setRetry] = useState(0);
   const serialized = JSON.stringify(payload);
   useEffect(() => {
+    let cancelled = false;
+    async function initialize() {
     try {
+      if (!navigator.locks) { setBlocked(true); setStatus("This browser cannot protect draft writes between tabs. Keep this page open until confirmation."); return; }
+      await navigator.locks.request(key, () => {
+      if (cancelled) return;
       const raw = localStorage.getItem(key);
       const saved = readDispatchDraft(raw, { companyId, userId });
       if (raw && !saved) localStorage.removeItem(key);
       latest.current = saved; setCandidate(saved); setBlocked(Boolean(saved));
       setStatus(saved ? "Saved draft available. Restore it to recheck its material sources." : "Draft saves on this device after you select an order.");
-    } catch { setBlocked(true); setStatus("Device storage is unavailable. Keep this page open until the transaction is confirmed."); }
+      });
+    } catch { if (!cancelled) { setBlocked(true); setStatus("Device storage is unavailable. Keep this page open until the transaction is confirmed."); } }
+    }
+    void initialize();
+    return () => { cancelled = true; };
   // Scope changes remount the parent form, including its unsaved entries.
   }, [key, companyId, userId]);
   useEffect(() => {
@@ -28,11 +37,12 @@ export function useDispatchDraft({ companyId, userId }: DraftScope, payload: unk
     const parsed = dispatchDraftSchema.safeParse(JSON.parse(serialized));
     if (!parsed.success) return;
     setStatus("Saving draft on this device...");
+    let cancelled = false;
     const timer = setTimeout(async () => {
       try {
         if (!navigator.locks) throw new Error("Cross-tab locking is unavailable");
         await navigator.locks.request(key, () => {
-        if (!enabled.current) return;
+        if (!enabled.current || cancelled) return;
         const raw = localStorage.getItem(key);
         if (!draftRevisionMatches(raw, latest.current?.revision ?? null)) {
           setCandidate(readDispatchDraft(raw, { companyId, userId })); setBlocked(true);
@@ -44,7 +54,7 @@ export function useDispatchDraft({ companyId, userId }: DraftScope, payload: unk
         });
       } catch { setStatus("Draft could not be saved. Your current entries are still on this page."); }
     }, 450);
-    return () => clearTimeout(timer);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [serialized, key, blocked, retry, companyId, userId]);
   function restore() {
     try {

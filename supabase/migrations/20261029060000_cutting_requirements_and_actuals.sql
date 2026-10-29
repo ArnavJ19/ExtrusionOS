@@ -36,7 +36,7 @@ declare v_company uuid;v_role text;v_rule public.cutting_rule_versions%rowtype;v
   v_name text;v_rule_data jsonb;v_version integer;v_cut integer;v_left integer;v_output numeric;v_remnant numeric;v_remnant_weight numeric;v_waste numeric;v_scrap numeric;v_input_weight numeric;v_min_waste numeric;v_stock_mm numeric;v_output_id uuid;v_remnant_id uuid;
 begin
   v_company:=private.commercial_actor(array['owner','admin','production_manager','production','factory_manager','inventory_manager','quality']);v_role:=private.get_current_user_role();
-  if p_payload is null or jsonb_typeof(p_payload)<>'object' or v_page<1 or v_page>10000 then raise exception 'Invalid cutting request'; end if;
+  if p_command is null or p_payload is null or jsonb_typeof(p_payload)<>'object' or v_page<1 or v_page>10000 then raise exception 'Invalid cutting request'; end if;
   if p_command='lines.list' then
     if p_payload-array['order_id','page']<>'{}' then raise exception 'Invalid cutting line request'; end if;
     perform 1 from public.orders where id=(p_payload->>'order_id')::uuid and company_id=v_company and deleted_at is null;

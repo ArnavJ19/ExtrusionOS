@@ -1,0 +1,53 @@
+{
+  "checks": [
+    {
+      "file": "bundle-capture-phone.png",
+      "width": 375,
+      "document": 375,
+      "fonts": "loaded",
+      "scope": "Real component and built CSS; synthetic server transport"
+    },
+    {
+      "file": "bundle-capture-desktop.png",
+      "width": 1280,
+      "document": 1280,
+      "fonts": "loaded",
+      "scope": "Real component and built CSS; synthetic server transport"
+    },
+    {
+      "file": "stock-plan-phone.png",
+      "width": 375,
+      "document": 375,
+      "fonts": "loaded",
+      "scope": "Real component and built CSS; synthetic server transport"
+    },
+    {
+      "file": "cutting-plan-desktop.png",
+      "width": 1280,
+      "document": 1280,
+      "fonts": "loaded",
+      "scope": "Real component and built CSS; synthetic server transport"
+    },
+    {
+      "file": "machine-review-phone.png",
+      "width": 375,
+      "document": 375,
+      "fonts": "loaded",
+      "scope": "Real component and built CSS; synthetic server transport"
+    },
+    {
+      "file": "invoice-message-phone.png",
+      "width": 375,
+      "document": 375,
+      "fonts": "loaded",
+      "scope": "Real component and built CSS; synthetic server transport"
+    },
+    {
+      "file": "workstation-desktop.png",
+      "width": 1280,
+      "document": 1280,
+      "fonts": "loaded",
+      "scope": "Real component and built CSS; synthetic server transport"
+    }
+  ]
+}

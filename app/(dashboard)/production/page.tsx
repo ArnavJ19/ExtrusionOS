@@ -80,6 +80,7 @@ export default async function ProductionPage() {
 
   return (
     <div className="space-y-2">
+      {!context.dealerId ? <Link href="/production/usage" className="inline-flex rounded-xl border bg-white px-4 py-3 text-sm font-bold">Record machine time and energy</Link> : null}
       {!context.dealerId && ["owner","admin","production_manager","production","factory_manager"].includes(context.role) ? <Link href="/production/workstation" className="inline-flex rounded-xl border bg-white px-4 py-3 text-sm font-bold">Open press workstation</Link> : null}
       <ModuleOverviewClient moduleKey="production" context={context} canCreate={can(context.role, "create", "production")} canUpdate={can(context.role, "update", "production")} hideMetricsAndCharts={true}>
         <ProductionDashboard

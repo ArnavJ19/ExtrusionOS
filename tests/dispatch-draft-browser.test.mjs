@@ -25,3 +25,10 @@ test('16: company switch cannot recover the previous company draft',async()=>{
   await f.ready('A');await f.fillBundle('A');await saved();await p.evaluate(id=>window.__dispatch.setCompanyId(id),ids.otherCompany);await f.flush();
   assert.equal(await p.getByRole('button',{name:'Restore saved draft',exact:true}).count(),0);assert.equal(await f.order().inputValue(),'');
 });
+test('16: an expired draft is pruned under the same lock used by autosave',async()=>{
+  await f.ready('A');await f.fillBundle('A');await saved();
+  await p.evaluate(()=>{const key=Object.keys(localStorage).find(k=>k.startsWith('eos:dispatch-draft'));const value=JSON.parse(localStorage.getItem(key));value.savedAt=1;localStorage.setItem(key,JSON.stringify(value));});
+  await p.reload();await p.getByText('Draft saves on this device after you select an order.',{exact:true}).waitFor();
+  assert.equal(await p.getByRole('button',{name:'Restore saved draft',exact:true}).count(),0);
+  assert.equal(await p.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('eos:dispatch-draft')).length),0);
+});
