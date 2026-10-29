@@ -935,6 +935,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 88. Stock-versus-production requirements
 
+- [x] **Implemented and audited locally for whole-piece finished stock, 29 October 2026; hosted contention acceptance pending.** Confirmed reservations reduce order-basis manufacturing demand, retain physical weight separately and guard ordinary production writes. Stale or failed allocation leaves demand unchanged; unresolved legacy/ambiguous mappings are excluded. [Batch 5 evidence](EOS_UPGRADE_BATCH_5.md).
+
 - **What it does:** Match demand to eligible stock by approved specification, location, reservation, and quality rules. Propose an allocation and calculate the remaining manufacturing requirement. A hypothetical 1,000 kg demand with 250 kg eligible for confirmed allocation leaves 750 kg to manufacture on the same quantity basis.
 - **Impact:** Reduces manual checks and helps avoid producing material already available.
 - **Complexity:** Very High - eligibility, prioritisation, cumulative demand, concurrent allocation, and reversals must agree with the inventory authority.

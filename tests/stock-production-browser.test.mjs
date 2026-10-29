@@ -1,0 +1,9 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createFactoryBrowserFixture} from '../scripts/lib/factory-upgrade-browser-fixture.mjs';
+const id=n=>`bc000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+const plan={kind:'plan',order_item_id:id(2),page:1,quantities:{demand_kg:1000,stock_covered_kg:0,stock_physical_kg:0,stock_pieces:0,production_committed_kg:0},remaining_to_plan_kg:1000,manufacture_kg:1000,demand_kg_per_piece:5,stock:[{id:id(3),bundle_number:'STOCK-A',location:'Rack 1',available:{pieces:200,weight_kg:1000,length_m:1200},reason:null,fingerprint:'a'.repeat(32)}]};
+let f,p;test.before(async()=>{f=await createFactoryBrowserFixture({component:'StockProduction',props:{orderId:id(1)},results:{stockProductionAction:{success:true,data:{kind:'lines',page:1,items:[{id:id(2),label:'Profile A'}]}}}});p=f.page;});test.after(async()=>f?.close());test.beforeEach(async()=>f.reset());
+test('88: allocation failure retains the confirmed manufacturing requirement',async()=>{
+  await p.evaluate(plan=>{window.__factory.results.stockProductionAction={success:true,data:plan};},plan);await p.getByLabel('Order line',{exact:true}).selectOption(id(2));await p.getByLabel('Pieces from STOCK-A',{exact:true}).waitFor();await p.getByLabel('Pieces from STOCK-A',{exact:true}).fill('50');
+  await p.evaluate(()=>{window.__factory.results.stockProductionAction={success:false,error:'Stock or demand changed. Review the allocation again'};});await p.getByRole('button',{name:'Confirm stock allocation',exact:true}).click();await p.getByText('Stock or demand changed. Review the allocation again',{exact:true}).waitFor();
+  const calls=await p.evaluate(()=>window.__factory.calls);assert.equal(calls.at(-1).input.pieces,50);assert.equal(calls.at(-1).input.fingerprint,'a'.repeat(32));assert.ok((await p.locator('section').textContent()).includes('Total to manufacture1000 kg'));
+});
