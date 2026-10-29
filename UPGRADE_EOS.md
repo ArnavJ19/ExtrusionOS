@@ -987,6 +987,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 94. Bundle and dispatch totals from selected material
 
+- [x] **Implemented and audited locally, 29 October 2026; hosted and physical acceptance pending.** Record measured source-linked bundles once, generate tags, select them for dispatch and derive reviewed totals. Atomic posting locks each prepared tag and rejects duplicate consumption or changed observations. [Batch 5 evidence](EOS_UPGRADE_BATCH_5.md).
+
 - **What it does:** Selecting eligible source material supplies profile, finish, lineage, and quantity limits. Capture actual pieces and weight observations once, calculate net weight = gross weight - tare, and generate bundle identities. Selecting bundles builds dispatch counts, weights, and order balances automatically.
 - **Impact:** Removes repeated bundle transcription and calculator work during loading.
 - **Complexity:** Very High - packaging, physical weights, source consumption, concurrent selection, partial loads, and reversals cross stock and dispatch boundaries.

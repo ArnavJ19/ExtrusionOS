@@ -21,6 +21,7 @@ import { TaskGuidance } from "@/components/forms/task-guidance";
 import type { SessionContext } from "@/types/app";
 import { DispatchDraftRecovery, useDispatchDraft } from "@/components/forms/dispatch-draft-recovery";
 import { OrderDeliveryContext } from "@/components/modules/dispatches/order-delivery-context";
+import { PreparedBundlePicker } from "@/components/modules/dispatches/physical-bundles";
 
 type OrderOption = { value: string; label: string };
 type SourceState = {orderId:string;status:"loading"|"ready"|"error";rows:DispatchPreparationSource[];error:string|null};
@@ -272,6 +273,14 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
       {initializing ? <p role="status" className="text-sm">Checking the linked order...</p> : null}
 
       <fieldset disabled={locked} className="min-w-0 space-y-6">
+      {orderId ? <PreparedBundlePicker key={orderId} orderId={orderId} onPick={bundle => {
+        if (bundles.some(row => row.bundle_number.trim().toUpperCase() === bundle.bundle_number.trim().toUpperCase())) {
+          setSubmitError("That physical bundle is already on this load."); return;
+        }
+        const row: BundleRow = { key: bundle.id, bundle_number: bundle.bundle_number, source_line_id: bundle.source_line_id,
+          number_of_pieces: String(bundle.number_of_pieces), net_length_m: String(bundle.net_length_m), gross_weight_kg: String(bundle.gross_weight_kg), tare_weight_kg: String(bundle.tare_weight_kg) };
+        setBundles(current => current.length === 1 && !current[0].bundle_number && !current[0].source_line_id ? [row] : [...current, row]); setSubmitError(null);
+      }} /> : null}
       <Card>
         <CardHeader><h2 className="section-title">Order and Vehicle</h2></CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
