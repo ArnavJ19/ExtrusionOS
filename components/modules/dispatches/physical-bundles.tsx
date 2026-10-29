@@ -7,6 +7,7 @@ import { listPhysicalBundlesAction,recordPhysicalBundleAction } from "@/lib/acti
 import { readDispatchPreparationSources,type DispatchPreparationSource } from "@/lib/dispatches/preparation";
 import { physicalBundleTag,type PhysicalBundle } from "@/lib/workflow/physical-bundles";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
+import { parseBundleObservationText } from "@/lib/workflow/mobile-bundle-task";
 
 export function PreparedBundlePicker({orderId,onPick}:{orderId:string;onPick:(bundle:PhysicalBundle)=>void}){
   const [page,setPage]=useState(1),[search,setSearch]=useState(""),[retry,setRetry]=useState(0);
@@ -42,7 +43,7 @@ export function PhysicalBundleCapture({orderId}:{orderId:string}){
   const source=sources?.find(row=>row.id===sourceId),net=Number(gross)-Number(tare);
   async function save(){if(saving.current)return;saving.current=true;setPending(true);setMessage("");
     try{const result=await recordPhysicalBundleAction({id:identity,order_id:orderId,source_line_id:sourceId,bundle_number:tag,
-      number_of_pieces:Number(pieces),net_length_m:Number(length),gross_weight_kg:Number(gross),tare_weight_kg:tare.trim()?Number(tare):NaN});
+      number_of_pieces:parseBundleObservationText(pieces,true),net_length_m:parseBundleObservationText(length),gross_weight_kg:parseBundleObservationText(gross),tare_weight_kg:parseBundleObservationText(tare)});
       if(result.success){setRecorded(true);setMessage("Bundle observations recorded. No stock has been consumed.");}else setMessage(result.error);
     }catch{setMessage("Confirmation is unavailable. Retry with the same bundle identity.");}finally{saving.current=false;setPending(false);}}
   return <div className="mx-auto max-w-2xl space-y-5"><h1 className="text-2xl font-black">Record a physical bundle</h1>

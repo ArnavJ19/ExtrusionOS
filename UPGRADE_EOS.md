@@ -225,6 +225,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 17. Complete short mobile factory tasks
 
+- [x] **Implemented and locally verified for physical bundle recording, 29 October 2026; physical-device trial pending.** A phone order queue opens the same guarded capture action as desktop, with large controls, numeric keyboards, tag entry and retained retry identity. [Batch 5 tests and acceptance](EOS_UPGRADE_BATCH_5.md).
+
 - **What it does:** Extend mobile shortcuts into focused task screens with large controls, appropriate keyboards, relevant photos, and one clear primary action. Offer optional scanning alongside search. Retain the same server-side rules as desktop workflows.
 - **Impact:** Makes recording real work practical near machines, packing areas, and loading points.
 - **Complexity:** High - production-quality mobile flows need responsive design, device behaviour, connection handling, and physical-workflow trials.

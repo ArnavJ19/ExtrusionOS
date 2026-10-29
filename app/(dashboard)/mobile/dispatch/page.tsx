@@ -8,6 +8,7 @@ import { formatWeight } from "@/lib/utils/format";
 import { canAccessMobileDestination } from "@/lib/auth/role-experience";
 import { redirect } from "next/navigation";
 import { MobilePagination } from "@/components/ui/mobile-pagination";
+import { canRecordMobileBundle } from "@/lib/workflow/mobile-bundle-task";
 
 export default async function MobileDispatchPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const context = await getSessionContext();
@@ -25,6 +26,7 @@ export default async function MobileDispatchPage({ searchParams }: { searchParam
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
+      {canRecordMobileBundle(context.role,context.dealerId)?<Link href="/mobile/dispatch/bundles" className="block rounded-2xl bg-orange p-4 text-center font-bold text-white">Measure and tag a physical bundle</Link>:null}
       <div className="rounded-3xl bg-slate-950 p-6 text-white"><Truck className="h-8 w-8 text-orange" /><h1 className="mt-3 text-2xl font-black">Dispatch Loading</h1><p className="mt-1 text-sm font-medium text-slate-300">Open active dispatch records for loading, transporter, vehicle, and delivery updates.</p></div>
       {error ? <ErrorState description="Dispatch records could not be loaded. Refresh and try again before assuming the queue is empty." /> : dispatches?.length ? dispatches.map((load: any) => (
         <Link href={`/dispatches/${load.id}`} key={load.id} className="block rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition active:scale-[0.99]">

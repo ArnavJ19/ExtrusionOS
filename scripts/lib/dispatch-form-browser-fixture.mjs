@@ -13,7 +13,7 @@ export function dispatchSource(label){return {id:label==="A"?dispatchFormIds.sou
   availableWeightKg:10,availablePieces:2,availableLengthM:5};}
 export const dispatchOrder=label=>({id:label==="A"?dispatchFormIds.a:dispatchFormIds.b,company_id:dispatchFormIds.company,order_number:`ORDER-${label}`,customer_name:"Synthetic buyer",company_name:null,quote_number:null});
 
-export async function createDispatchFormBrowserFixture({styled=false}={}){
+export async function createDispatchFormBrowserFixture({styled=false,mode="form"}={}){
   const f=dispatchFormIds,staticRoot=resolve(".next/static");let styles="",fonts="";
   if(styled){
     const files=readdirSync(resolve(staticRoot,"chunks")).filter(name=>name.endsWith(".css"));
@@ -22,15 +22,16 @@ export async function createDispatchFormBrowserFixture({styled=false}={}){
   }
   const bundle=await build({stdin:{contents:`import React,{useState} from "react";import {createRoot} from "react-dom/client";import {Toaster} from "sonner";
     import {DispatchFormClient} from "./components/modules/dispatch-form-client";
+    import {PhysicalBundleCapture} from "./components/modules/dispatches/physical-bundles";
     window.__dispatch={sourceRequests:[],orderRequests:[],saveRequests:[],navigation:[],autoOrders:true};
     function Fixture(){const [companyId,setCompanyId]=useState("${f.company}"),[visible,setVisible]=useState(true);
       Object.assign(window.__dispatch,{setCompanyId,unmount:()=>setVisible(false)});
-      return <>{visible?<DispatchFormClient context={{companyId,role:"owner",userId:"${dispatchFixtureId(3)}",dealerId:null}}/>:null}<Toaster/></>;}
+      return <>{visible?${mode==="capture"?`<PhysicalBundleCapture orderId="${f.a}"/>`:`<DispatchFormClient context={{companyId,role:"owner",userId:"${dispatchFixtureId(3)}",dealerId:null}}/>`}:null}<Toaster/></>;}
     createRoot(document.getElementById("app")).render(<Fixture/>);`,resolveDir:process.cwd(),sourcefile:"dispatch-preparation-fixture.tsx",loader:"tsx"},
     bundle:true,write:false,format:"iife",platform:"browser",jsx:"automatic",define:{"process.env.NODE_ENV":"\"production\""},plugins:[{name:"controlled-dispatch-transport",setup(plugin){
       plugin.onResolve({filter:/^@\/lib\/actions\/downstream-context$/},()=>({path:"context",namespace:"delivery-fixture"}));
       plugin.onResolve({filter:/^@\/lib\/actions\/physical-bundles$/},()=>({path:"bundles",namespace:"bundle-fixture"}));
-      plugin.onLoad({filter:/.*/,namespace:"bundle-fixture"},()=>({loader:"js",contents:`export async function listPhysicalBundlesAction(input){return {success:true,data:{page:input.page,items:window.__dispatch.preparedBundles||[]}}}export async function recordPhysicalBundleAction(input){return {success:true,data:{id:input.id,replayed:false}}}`}));
+      plugin.onLoad({filter:/.*/,namespace:"bundle-fixture"},()=>({loader:"js",contents:`export async function listPhysicalBundlesAction(input){return {success:true,data:{page:input.page,items:window.__dispatch.preparedBundles||[]}}}export async function recordPhysicalBundleAction(input){(window.__dispatch.recordedBundleRequests||=[]).push(input);return window.__dispatch.recordBundleFailure?{success:false,error:'Source changed; recheck available material.'}:{success:true,data:{id:input.id,replayed:false}}}`}));
       plugin.onLoad({filter:/.*/,namespace:"delivery-fixture"},()=>({loader:"js",contents:`export async function downstreamContextAction(input){return {success:true,data:{order_id:input.order_id,order_number:'Synthetic order',basis:'Current customer master',immutable:false,party:{customer_name:'Synthetic buyer',delivery_address:'Fixture gate',contact_name:null,contact_phone:null,site_name:null,instructions:null}}}}`}));
       for(const [filter,path] of [[/^@\/lib\/actions\/dispatches$/,"actions"],[/^@\/lib\/actions\/dispatch-order-balance$/,"balance"],[/^@\/lib\/supabase\/browser$/,"client"],[/^next\/navigation$/,"navigation"],[/^next\/link$/,"link"]])plugin.onResolve({filter},()=>({path,namespace:"fixture"}));
       plugin.onLoad({filter:/.*/,namespace:"fixture"},args=>({loader:"js",resolveDir:process.cwd(),contents:args.path==="actions"?`
@@ -67,7 +68,7 @@ export async function createDispatchFormBrowserFixture({styled=false}={}){
       save:()=>page.getByRole("button",{name:/^(Review dispatch|Rechecking the load\.\.\.)$/}),
       confirm:()=>page.getByRole("button",{name:/^(Confirm dispatch and consume stock|Verifying and posting stock\.\.\.)$/}),
       async review(){const count=await page.evaluate(()=>window.__dispatch.sourceRequests.length);const label=(await fixture.order().inputValue()).includes("ORDER-B")?"B":"A";await fixture.save().click();await page.waitForFunction(count=>window.__dispatch.sourceRequests.length>count,count);await fixture.resolveSource(count,{success:true,sources:[dispatchSource(label)]});await page.getByRole("dialog",{name:"Review physical dispatch"}).waitFor();},
-      async reset(){errors.length=0;if(page.url().startsWith(base))await page.evaluate(()=>localStorage.clear());await page.goto(base);await page.getByRole("heading",{name:"Load Physical Dispatch",exact:true}).waitFor();},
+      async reset(){errors.length=0;if(page.url().startsWith(base))await page.evaluate(()=>localStorage.clear());await page.goto(base);await page.getByRole("heading",{name:mode==="capture"?"Record a physical bundle":"Load Physical Dispatch",exact:true}).waitFor();},
       async flush(){await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));},
       async chooseOrder(label){await fixture.order().fill(`ORDER-${label}`);await page.getByRole("button",{name:`ORDER-${label} - Synthetic buyer`,exact:true}).click();
         await page.waitForFunction(id=>window.__dispatch.sourceRequests.some(request=>request.orderId===id),label==="A"?f.a:f.b);},
