@@ -11,6 +11,7 @@ import { buildVerifiedPackingListItems, type VerifiedDispatchBundleInput } from 
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { dispatchSchema } from "@/lib/validations/schemas";
+import { indexDispatchReadiness } from "@/lib/dispatches/readiness-index";
 
 const deliveryStatusSchema = dispatchSchema.shape.delivery_status;
 
@@ -101,6 +102,7 @@ async function loadDispatchSourceLines(
       .in("job_id", packagingIds)
     : { data: [], error: null };
   if (materialsResult.error) throw materialsResult.error;
+  const readiness = indexDispatchReadiness(qualityResult.data ?? [], packagingJobs, materialsResult.data ?? []);
 
   const qualityRequired = featureResult.data?.is_enabled ?? true;
   const blockers: string[] = [];
@@ -152,28 +154,14 @@ async function loadDispatchSourceLines(
       }
     } else {
       const approvedWeight = qualityRequired
-        ? (qualityResult.data ?? [])
-          .filter((inspection: any) => (
-            inspection.production_job_id === job.id
-            && inspection.status === "approved"
-            && !inspection.finishing_job_id
-          ))
-          .reduce((sum: number, inspection: any) => sum + Number(inspection.quantity_checked_kg ?? 0), 0)
+        ? readiness.approvedByJobKg.get(job.id) ?? 0
         : actualWeight;
       if (approvedWeight <= 0) {
         blockers.push(`${job.job_number ?? "Production job"} has no QC-released quantity.`);
         return [];
       }
       // Only completed packaging with issued material releases weight, capped by the kg it packed.
-      const packagedWeight = packagingJobs
-        .filter((packaging: any) => (
-          packaging.production_job_id === job.id
-          && packaging.status === "completed"
-          && (materialsResult.data ?? []).some(
-            (material: any) => material.job_id === packaging.id && Number(material.quantity_required ?? 0) > 0
-          )
-        ))
-        .reduce((sum: number, packaging: any) => sum + Number(packaging.profile_weight_kg ?? 0), 0);
+      const packagedWeight = readiness.packagedByJobKg.get(job.id) ?? 0;
       if (packagedWeight <= 0) {
         blockers.push(`${job.job_number ?? "Production job"} is waiting for completed packaging with issued material.`);
         return [];

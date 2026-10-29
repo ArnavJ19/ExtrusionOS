@@ -16,3 +16,11 @@ Verification: five unit/edge cases passed; three recovery browser cases passed; 
 Audit: a read/compare/write in localStorage alone could race between tabs; writes and deletion now use the browser Web Locks API. A browser without that API reports that saving failed and retains entries. A stale draft never restores cached availability. Another account/company cannot discover the draft through the application. Drafts remain device-local and are not cross-device backup. Physical operator acceptance remains pending.
 
 Manual acceptance: enter an order and bundle observations, reload, restore, change authoritative availability, verify review is refused, then confirm a valid dispatch and verify its saved draft disappears. Repeat with two tabs and an account/company switch.
+
+## Feature 40: faster dispatch readiness
+
+Replaced repeated inspection, packaging and issued-material scans per production job with shared indexed aggregation. Source fetching, complete paginated packing history, final balance rechecks and the atomic stock writer remain authoritative. Created `lib/dispatches/readiness-index.ts`, `tests/dispatch-readiness-index.test.mjs`, `scripts/benchmark-dispatch-readiness.mjs`; modified `lib/actions/dispatches.ts`. No database or RLS changes.
+
+Verification: three new parity/edge tests plus 40 existing action-boundary/packing-history tests passed (43 total). A five-run synthetic benchmark with 1,000 jobs, 10,000 inspections, 5,000 packaging rows and 10,000 material rows produced identical output: baseline 176.871-253.253 ms; indexed 1.535-2.469 ms. This measures local computation, not hosted query latency or employee task duration. Rerun with `node --experimental-strip-types scripts/benchmark-dispatch-readiness.mjs`.
+
+Audit: only approved mill-finish inspections count; packaging still requires a positive issued-material record and completed status; duplicate material records do not double count packaging. Invalid recorded observations stop readiness. Missing records remain zero as before. Existing tests cover stale availability, API caps, foreign rows, multiple source identities and refused writes. Manual acceptance: measure a representative company's dispatch preparation before/after deployment and reconcile the unchanged source quantities.

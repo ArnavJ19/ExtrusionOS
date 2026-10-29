@@ -441,6 +441,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 40. Fast everyday screens
 
+- [x] **Implemented and audited for dispatch readiness locally, 29 October 2026; hosted task timing pending.** Indexed QC/packaging/material aggregation preserves source quantities and final confirmation checks. Five repeated synthetic computation measurements and large-data parity tests passed. [Batch 5 measurements and limits](EOS_UPGRADE_BATCH_5.md).
+
 - **What it does:** Measure and improve frequently used pages, selectors, and confirmation paths. Fetch only needed data, keep list operations server-paginated, defer heavy reports, and show useful progress feedback. Preserve accurate confirmation semantics while improving responsiveness.
 - **Impact:** Reduces repeated waiting across the employee's working day.
 - **Complexity:** High - meaningful improvements require profiling real bottlenecks, query/index work, and regression checks across data sizes and devices.
