@@ -581,6 +581,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 53. Fixed workstation mode
 
+- [x] **Implemented and audited locally for press workstations, 29 October 2026; shared-device acceptance pending.** Company press context survives operator switching; server leases bind ten-minute queues to the active operator and expire safely. Lock/switch clears work/drafts and signs out. [Batch 5 scope and tests](EOS_UPGRADE_BATCH_5.md).
+
 - **What it does:** Provide a focused screen for a selected press, packing point, or other workstation. Retain station context while securely identifying the current operator. Show relevant queued work and support account switching and appropriate session expiry.
 - **Impact:** Reduces repeated location/machine selection on shared factory terminals.
 - **Complexity:** High - shared-device identity, session handling, station permissions, and physical usability need deliberate design.
