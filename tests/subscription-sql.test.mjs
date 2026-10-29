@@ -91,6 +91,8 @@ test("hourly and daily digests wait for their time; quiet hours defer; digest no
   assert.equal((await f.deliver()).digests, hour === 23 ? 1 : 0, "before the daily hour");
   await f.command("prefs.set", { digest_mode: "daily", daily_hour: hour });
   await f.db.exec(`update notification_preferences set last_digest_at = null`);
+  // At 23:00 the next hour wraps to midnight and the preceding check already delivered aging.
+  await stage(sids.order, "packing");
   assert.equal((await f.deliver()).digests, 1);
   await stage(sids.order, "finishing");
   assert.equal((await f.deliver()).digests, 0, "one daily digest per day");
