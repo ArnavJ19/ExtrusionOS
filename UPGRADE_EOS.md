@@ -124,6 +124,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 7. Enter shared information once
 
+- [x] **Implemented and audited locally, 29 October 2026; hosted rollout pending.** Dispatch entry reuses accepted order party/site details, explicitly labels current-master fallback and freezes immutable dispatch party history. Existing issued invoice history is preserved. [Batch 5 scope and tests](EOS_UPGRADE_BATCH_5.md).
+
 - **What it does:** Populate downstream forms from selected customer, site, order, and specification records. Reuse approved details while allowing authorised transaction-specific changes. Freeze the necessary party and commercial snapshots when documents are issued.
 - **Impact:** Reduces repeated typing and conflicting versions of the same business information.
 - **Complexity:** High - requires clear field ownership, snapshot rules, source precedence, and correct handling of changed master records.

@@ -20,6 +20,7 @@ import { ReviewDialog } from "@/components/ui/review-dialog";
 import { TaskGuidance } from "@/components/forms/task-guidance";
 import type { SessionContext } from "@/types/app";
 import { DispatchDraftRecovery, useDispatchDraft } from "@/components/forms/dispatch-draft-recovery";
+import { OrderDeliveryContext } from "@/components/modules/dispatches/order-delivery-context";
 
 type OrderOption = { value: string; label: string };
 type SourceState = {orderId:string;status:"loading"|"ready"|"error";rows:DispatchPreparationSource[];error:string|null};
@@ -267,6 +268,7 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
 
       <TaskGuidance task="dispatch" />
       <DispatchDraftRecovery draft={draft} />
+      {orderId ? <OrderDeliveryContext key={orderId} orderId={orderId} /> : null}
       {initializing ? <p role="status" className="text-sm">Checking the linked order...</p> : null}
 
       <fieldset disabled={locked} className="min-w-0 space-y-6">

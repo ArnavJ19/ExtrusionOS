@@ -28,6 +28,8 @@ export async function createDispatchFormBrowserFixture({styled=false}={}){
       return <>{visible?<DispatchFormClient context={{companyId,role:"owner",userId:"${dispatchFixtureId(3)}",dealerId:null}}/>:null}<Toaster/></>;}
     createRoot(document.getElementById("app")).render(<Fixture/>);`,resolveDir:process.cwd(),sourcefile:"dispatch-preparation-fixture.tsx",loader:"tsx"},
     bundle:true,write:false,format:"iife",platform:"browser",jsx:"automatic",define:{"process.env.NODE_ENV":"\"production\""},plugins:[{name:"controlled-dispatch-transport",setup(plugin){
+      plugin.onResolve({filter:/^@\/lib\/actions\/downstream-context$/},()=>({path:"context",namespace:"delivery-fixture"}));
+      plugin.onLoad({filter:/.*/,namespace:"delivery-fixture"},()=>({loader:"js",contents:`export async function downstreamContextAction(input){return {success:true,data:{order_id:input.order_id,order_number:'Synthetic order',basis:'Current customer master',immutable:false,party:{customer_name:'Synthetic buyer',delivery_address:'Fixture gate',contact_name:null,contact_phone:null,site_name:null,instructions:null}}}}`}));
       for(const [filter,path] of [[/^@\/lib\/actions\/dispatches$/,"actions"],[/^@\/lib\/actions\/dispatch-order-balance$/,"balance"],[/^@\/lib\/supabase\/browser$/,"client"],[/^next\/navigation$/,"navigation"],[/^next\/link$/,"link"]])plugin.onResolve({filter},()=>({path,namespace:"fixture"}));
       plugin.onLoad({filter:/.*/,namespace:"fixture"},args=>({loader:"js",resolveDir:process.cwd(),contents:args.path==="actions"?`
         export const getDispatchSourcesAction=orderId=>new Promise((resolve,reject)=>window.__dispatch.sourceRequests.push({orderId,resolve,reject}));

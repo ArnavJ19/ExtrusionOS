@@ -17,6 +17,7 @@ import { formatDate, formatWeight } from "@/lib/utils/format";
 import { getReservationLedgerOptions, loadDispatchReservationLedgerPage, type DispatchReservationLedgerPage } from "@/lib/inventory/reservation-ledger";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { OrderDeliveryContext } from "@/components/modules/dispatches/order-delivery-context";
 
 export default async function DispatchDetailPage({ params, searchParams }: {
   params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -29,6 +30,7 @@ export default async function DispatchDetailPage({ params, searchParams }: {
   const reservationPage = getReservationLedgerOptions({ page: query.reservationPage }).page;
   return <div className="space-y-6">
     <RecordDetailClient moduleKey="dispatches" context={context} recordId={id} canEdit={false} />
+    <DispatchPartyPanel dispatchId={id} />
     {!context.dealerId ? <WorkRequirementsPanel companyId={context.companyId} role={context.role} stage="dispatch" source={{ type: "dispatch", id }} /> : null}
     {!context.dealerId && canFollow(context.role, "dispatch") ? <RecordFollow entityType="dispatch" entityId={id} /> : null}
     <div id="delivery-history"><DispatchDeliveryPanel dispatchId={id} canUpdate={canUpdate} /></div>
@@ -37,6 +39,12 @@ export default async function DispatchDetailPage({ params, searchParams }: {
     <DispatchControlsPanel dispatchId={id} />
     <DispatchCreditNotePanel dispatchId={id} />
   </div>;
+}
+
+async function DispatchPartyPanel({ dispatchId }: { dispatchId: string }) {
+  const context = await getSessionContext(), client = await createClient();
+  const result = await client.from("dispatches").select("order_id").eq("company_id", context.companyId).eq("id", dispatchId).maybeSingle();
+  return result.data?.order_id ? <OrderDeliveryContext orderId={result.data.order_id} dispatchId={dispatchId} /> : null;
 }
 
 async function DispatchControlsPanel({ dispatchId }: { dispatchId: string }) {
