@@ -1,0 +1,18 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: vehicle-loads body overflow at 375
+
+true !== false
+
+    at file:///C:/Users/arnav/OneDrive/Desktop/ExtrusionOS/.worktrees/codex-v1/scripts/capture-eos-batch6-browser-evidence.mjs:51:12 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: true,
+  expected: false,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.20.0

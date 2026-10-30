@@ -1,0 +1,1 @@
+Captured 24 styled desktop/phone screenshots without body overflow, runtime errors or outside requests.

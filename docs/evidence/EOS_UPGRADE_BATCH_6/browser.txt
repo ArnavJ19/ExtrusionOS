@@ -1,0 +1,106 @@
+TAP version 13
+# Subtest: 100: the mounted release view prevents self approval and shows unresolved fabrication requirements
+ok 1 - 100: the mounted release view prevents self approval and shows unresolved fabrication requirements
+  ---
+  duration_ms: 10667.3539
+  type: 'test'
+  ...
+# Subtest: 100: uncertain independent approval freezes its exact snapshot, note and retry identity on phone and desktop
+ok 2 - 100: uncertain independent approval freezes its exact snapshot, note and retry identity on phone and desktop
+  ---
+  duration_ms: 10061.5846
+  type: 'test'
+  ...
+# Subtest: 60: the sample operations desk reviews and confirms actual forms, replays once and resets all sample state in isolation
+ok 3 - 60: the sample operations desk reviews and confirms actual forms, replays once and resets all sample state in isolation
+  ---
+  duration_ms: 11694.9399
+  type: 'test'
+  ...
+# Subtest: 60: three practice workflows complete and reset without calling business actions or outside network
+ok 4 - 60: three practice workflows complete and reset without calling business actions or outside network
+  ---
+  duration_ms: 8736.9801
+  type: 'test'
+  ...
+# Subtest: 59: comparison is invalidated by changing the selected canonical identity and author cannot approve own proposal
+ok 5 - 59: comparison is invalidated by changing the selected canonical identity and author cannot approve own proposal
+  ---
+  duration_ms: 2425.0219
+  type: 'test'
+  ...
+# Subtest: 56: uncertain receipt confirmation freezes observations and reuses the same identity
+ok 6 - 56: uncertain receipt confirmation freezes observations and reuses the same identity
+  ---
+  duration_ms: 2899.6166
+  type: 'test'
+  ...
+# Subtest: 52: customer response is submitted against the exact reviewed version and downloaded summary is bound to its order
+ok 7 - 52: customer response is submitted against the exact reviewed version and downloaded summary is bound to its order
+  ---
+  duration_ms: 2960.2727
+  type: 'test'
+  ...
+# Subtest: 31: production staff can review an accessible machine move and confirm it once
+ok 8 - 31: production staff can review an accessible machine move and confirm it once
+  ---
+  duration_ms: 11215.7526
+  type: 'test'
+  ...
+# Subtest: 30: vehicle load UI keeps separate order destinations and blocks over-capacity review
+ok 9 - 30: vehicle load UI keeps separate order destinations and blocks over-capacity review
+  ---
+  duration_ms: 9313.7853
+  type: 'test'
+  ...
+# Subtest: 37: order forecast labels the proposal separately from the customer promise
+ok 10 - 37: order forecast labels the proposal separately from the customer promise
+  ---
+  duration_ms: 3581.5781
+  type: 'test'
+  ...
+# Subtest: 30: an ineligible saved bundle remains reachable for selective release while another order stays assigned
+ok 11 - 30: an ineligible saved bundle remains reachable for selective release while another order stays assigned
+  ---
+  duration_ms: 4725.6089
+  type: 'test'
+  ...
+# Subtest: mounted receipt allocation retries the same request and reconciles accounting CSV failures
+ok 12 - mounted receipt allocation retries the same request and reconciles accounting CSV failures
+  ---
+  duration_ms: 5607.2646
+  type: 'test'
+  ...
+# Subtest: mounted non-cash adjustment stays separate from cash collection
+ok 13 - mounted non-cash adjustment stays separate from cash collection
+  ---
+  duration_ms: 677.1597
+  type: 'test'
+  ...
+# Subtest: mounted invoice eligibility reviews exact dispatch lines and prepares a fingerprinted invoice
+ok 14 - mounted invoice eligibility reviews exact dispatch lines and prepares a fingerprinted invoice
+  ---
+  duration_ms: 916.6161
+  type: 'test'
+  ...
+# Subtest: mounted receiving form records each actual disposition and never merges rejected or held quantities
+ok 15 - mounted receiving form records each actual disposition and never merges rejected or held quantities
+  ---
+  duration_ms: 4554.3061
+  type: 'test'
+  ...
+# Subtest: mounted supplier document review keeps unmatched bills on hold and posts only after a fresh match
+ok 16 - mounted supplier document review keeps unmatched bills on hold and posts only after a fresh match
+  ---
+  duration_ms: 1921.3472
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 30431.8466

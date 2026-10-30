@@ -29,6 +29,8 @@ export default async function DispatchDetailPage({ params, searchParams }: {
   const query = await searchParams ?? {};
   const reservationPage = getReservationLedgerOptions({ page: query.reservationPage }).page;
   return <div className="space-y-6">
+    {!context.dealerId && ["owner","admin","inventory_manager","dispatch_manager","accounts"].includes(context.role) ? <Link href={`/dispatches/${id}/returns`} className="inline-flex rounded-xl border bg-white px-4 py-3 text-sm font-semibold">Receive and inspect a connected return</Link> : null}
+    {!context.dealerId && ["owner","admin","dispatch_manager","inventory_manager","factory_manager","accounts"].includes(context.role) ? <Link href={`/tasks/changes?source_type=dispatch&source_id=${id}`} className="inline-flex rounded-xl border bg-white px-4 py-3 text-sm font-semibold">Reconcile this dispatch boundary</Link> : null}
     <RecordDetailClient moduleKey="dispatches" context={context} recordId={id} canEdit={false} />
     <DispatchPartyPanel dispatchId={id} />
     {!context.dealerId ? <WorkRequirementsPanel companyId={context.companyId} role={context.role} stage="dispatch" source={{ type: "dispatch", id }} /> : null}

@@ -1,0 +1,197 @@
+{
+  "layer": "Mounted real components with mocked actions and production CSS; no authenticated hosted acceptance",
+  "cases": [
+    {
+      "component": "PracticeWorkspace",
+      "width": 1280,
+      "file": "practice-desktop.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "PracticeWorkspace",
+      "width": 375,
+      "file": "practice-phone.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "ConfigurationRelease",
+      "width": 1280,
+      "file": "configuration-release-desktop.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "ConfigurationRelease",
+      "width": 375,
+      "file": "configuration-release-phone.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "CustomerSelfService",
+      "width": 1280,
+      "file": "customer-portal-desktop.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "CustomerSelfService",
+      "width": 375,
+      "file": "customer-portal-phone.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "PartialOrderProgress",
+      "width": 1280,
+      "file": "partial-order-desktop.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "PartialOrderProgress",
+      "width": 375,
+      "file": "partial-order-phone.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "OperationalAssurance",
+      "width": 1280,
+      "file": "source-reconciliation-desktop.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "OperationalAssurance",
+      "width": 375,
+      "file": "source-reconciliation-phone.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "FactoryPlanning",
+      "width": 1280,
+      "file": "factory-capacity-desktop.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "FactoryPlanning",
+      "width": 375,
+      "file": "factory-capacity-phone.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "VehicleLoads",
+      "width": 1280,
+      "file": "vehicle-loads-desktop.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "VehicleLoads",
+      "width": 375,
+      "file": "vehicle-loads-phone.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "PurchaseLifecycle",
+      "width": 1280,
+      "file": "purchase-entry-desktop.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "PurchaseLifecycle",
+      "width": 375,
+      "file": "purchase-entry-phone.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "PurchaseLifecycle",
+      "width": 1280,
+      "file": "purchase-receiving-desktop.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "PurchaseLifecycle",
+      "width": 375,
+      "file": "purchase-receiving-phone.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "PurchaseLifecycle",
+      "width": 1280,
+      "file": "supplier-bill-review-desktop.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "PurchaseLifecycle",
+      "width": 375,
+      "file": "supplier-bill-review-phone.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "ConnectedReturns",
+      "width": 1280,
+      "file": "connected-return-desktop.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "ConnectedReturns",
+      "width": 375,
+      "file": "connected-return-phone.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "FinancialWorkflowReviewClient",
+      "width": 1280,
+      "file": "invoice-eligibility-desktop.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    },
+    {
+      "component": "FinancialWorkflowReviewClient",
+      "width": 375,
+      "file": "invoice-eligibility-phone.png",
+      "bodyOverflow": false,
+      "runtimeErrors": [],
+      "outsideRequests": []
+    }
+  ]
+}

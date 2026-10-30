@@ -1,0 +1,661 @@
+{
+  "base_commit": "09b337b453c2ff3ff044c2d401b3569564c70b51",
+  "generated_at": "2026-10-30T09:26:23.498Z",
+  "hash_basis": "UTF-8 text normalized to LF; sorted path-NUL-filehash records",
+  "source_digest": "713c2efd742c187139d0e054dde17f22d1f1ec3be2c63bde8c2ff5d9e3337378",
+  "source_files": [
+    {
+      "path": "app/(dashboard)/customers/page.tsx",
+      "sha256": "0775ba351421225ae1af0a86ea39b89a1cc4b9ea002668ca946b6d314ed89d37"
+    },
+    {
+      "path": "app/(dashboard)/customers/portal-responses/page.tsx",
+      "sha256": "959fde54776aa28a0c79d9bda7f97bd91fa92a5887e03bc9ca6e2e7ea44310a3"
+    },
+    {
+      "path": "app/(dashboard)/dispatches/[id]/page.tsx",
+      "sha256": "8935d1a2b2cfd1a2fb370115860b43c92a20f401f58f1168549e964ae0a2691f"
+    },
+    {
+      "path": "app/(dashboard)/dispatches/[id]/returns/page.tsx",
+      "sha256": "6747175c642bea0acd2ce5fe78fd69712622604753e68119bdb93f2e68421ac6"
+    },
+    {
+      "path": "app/(dashboard)/dispatches/loads/page.tsx",
+      "sha256": "42a4f700c639bd1e2d2b3fc48f2ee40e83e6109c674900c52290135eb2c0bab2"
+    },
+    {
+      "path": "app/(dashboard)/dispatches/page.tsx",
+      "sha256": "aea70298db005eb7a538af65b1ed5fc520cf632dc524211924299796b477cd81"
+    },
+    {
+      "path": "app/(dashboard)/invoices/eligibility/page.tsx",
+      "sha256": "8de35da1d21ed8f196ecf74e22be61432a770e31d6cac176002c4b3615f02211"
+    },
+    {
+      "path": "app/(dashboard)/invoices/new/page.tsx",
+      "sha256": "b4ef4c9345ce496992922fda59889165b9c1975ca793c33a9219766697693d3b"
+    },
+    {
+      "path": "app/(dashboard)/invoices/page.tsx",
+      "sha256": "44124d14039fdfee5d45b3b0fe23e446a2213300a8c56f91087d4e9d9597afc5"
+    },
+    {
+      "path": "app/(dashboard)/orders/[id]/page.tsx",
+      "sha256": "5e4d915eea9a63195eead12a0dd279d87900d1caccdbefedb7e697671bcbc551"
+    },
+    {
+      "path": "app/(dashboard)/payments/page.tsx",
+      "sha256": "ac67d4ccadefc004a3b43f3fc988e1caaefd13a52c99196feb91e816de131e32"
+    },
+    {
+      "path": "app/(dashboard)/payments/receipts/page.tsx",
+      "sha256": "a3b0e98ca4798777c2dbaf957eaad50482b2c197310d7e195376e7b7658c353e"
+    },
+    {
+      "path": "app/(dashboard)/production/capacity/page.tsx",
+      "sha256": "66eed552a592815bbd7990fa5d8ed023facb34876ef159107111f64c1ea549e6"
+    },
+    {
+      "path": "app/(dashboard)/production/page.tsx",
+      "sha256": "08712f1303f641bbd6bbf3b9dbb3522252d3521ec2c89e509f620266d77e2153"
+    },
+    {
+      "path": "app/(dashboard)/settings/master-cleanup/page.tsx",
+      "sha256": "6ed26c77ad762597b66c29feea4cdf4ff1a71dde868b8838c7cdb4a6d921aee9"
+    },
+    {
+      "path": "app/(dashboard)/settings/page.tsx",
+      "sha256": "257980825d83abecb171acb565ff845d3c0ef37543e2cbaa9818e8e8e6af1dc7"
+    },
+    {
+      "path": "app/(dashboard)/systems-configurator/projects/[id]/page.tsx",
+      "sha256": "28fcbbdcd3254613e2e97c2ce21493e8d1ae2ca011103a1f05bfa0b5f3823fbf"
+    },
+    {
+      "path": "app/(dashboard)/tasks/changes/page.tsx",
+      "sha256": "87f92529cbdc3c23e4d256c80230a66b2e5f4a83980184593f2541ef8f7c7e70"
+    },
+    {
+      "path": "app/(dashboard)/tasks/layout.tsx",
+      "sha256": "b4ac1f861f40b9e308c351f99d545f81011084f36d7f0b57d1395ed3945af476"
+    },
+    {
+      "path": "app/(dashboard)/tasks/practice/page.tsx",
+      "sha256": "4b04e59ebc1993aadbe223ec68c5c6f686e70348b9f5a18aac51a603108d5db1"
+    },
+    {
+      "path": "app/(dashboard)/vendors/page.tsx",
+      "sha256": "3e08b0856583883e33e2ce0793c12b8debf03c648f12176a049f7cf3aadfe7b3"
+    },
+    {
+      "path": "app/(dashboard)/vendors/purchasing/database/page.tsx",
+      "sha256": "9e3b75279d84f8d3184a8027d610939e6025212a5d11de48af9fc762e4ce5b24"
+    },
+    {
+      "path": "app/(dashboard)/vendors/purchasing/page.tsx",
+      "sha256": "0d87d713159bb1b365ecb7a57fba61876927cca05b00443a3af4467ab7cfd32a"
+    },
+    {
+      "path": "app/api/pdf/systems-configurator/[id]/[type]/route.ts",
+      "sha256": "7294d3805bb0870ab011c1931f13876c85f2c5c86bb07ffb60a94f61c3e21376"
+    },
+    {
+      "path": "app/api/portal/orders/[id]/summary/route.ts",
+      "sha256": "9d46f29969a96ceaecdb5ce733c4461c4423f8ce0b787b54ec805aaabd5b949a"
+    },
+    {
+      "path": "app/portal/self-service/page.tsx",
+      "sha256": "422066ee5243360f805bfc393c14d230fc513219b2825e1af312c32d7a395202"
+    },
+    {
+      "path": "components/modules/customer-self-service.tsx",
+      "sha256": "4bd1b99f39ec6f2b0c704a346f3eed77167d55e5c097495569b831fab4d03625"
+    },
+    {
+      "path": "components/modules/dispatches/connected-returns.tsx",
+      "sha256": "3e98330e6e0ef57454e9eae44e18942c94fb22c0733a3dc679c7c568d914f368"
+    },
+    {
+      "path": "components/modules/dispatches/vehicle-loads.tsx",
+      "sha256": "19eac1a4885c5829e4220ecd8ccaeb5cca2c89f064be55eaf2c05f531b34548c"
+    },
+    {
+      "path": "components/modules/financials/financial-workflow-review.tsx",
+      "sha256": "ed6e36fcb3a765f3193e0868f3e89d8919b048159d3b0bc75022e006e0e96cf7"
+    },
+    {
+      "path": "components/modules/financials/invoice-form-client.tsx",
+      "sha256": "7ab29d6722d1ddd8c9d0194b9f670d7a75ba29f8ae15a83231995b1590f5438b"
+    },
+    {
+      "path": "components/modules/master-cleanup.tsx",
+      "sha256": "00358e54ee3ca4e14c7baefb37960392a4660a126920ccde96dc3b1396a33cd9"
+    },
+    {
+      "path": "components/modules/operational-assurance.tsx",
+      "sha256": "c5470f55c9ed9fe61b8ad82f2aafb16893eb4479e936dc17cf2c7ace97f290f4"
+    },
+    {
+      "path": "components/modules/orders/partial-progress.tsx",
+      "sha256": "7d347767962eb2f3240259e8b7da064ac0994b0b9e436aa545a10ac449460c7a"
+    },
+    {
+      "path": "components/modules/practice-transactions.tsx",
+      "sha256": "df85bb541d304627f1743190712214cb0ec9e243a528c0faa9e64d4022382917"
+    },
+    {
+      "path": "components/modules/practice-workspace.tsx",
+      "sha256": "7cea6641282a45d3b28eb0b215bbc7380a46192386e703628a2e6e47c2470125"
+    },
+    {
+      "path": "components/modules/production/factory-planning.tsx",
+      "sha256": "7633e3fcff661a97bec639b6a1bcace3fa65a29d2402319d9b215a1f3f530f99"
+    },
+    {
+      "path": "components/modules/shared/operational-work-links.tsx",
+      "sha256": "e68f30cbc34d763dcc4946dd6ac34de63c0eb8fe615de88231f0fe11a29608f7"
+    },
+    {
+      "path": "components/modules/systems-configurator/configuration-release.tsx",
+      "sha256": "3d460cbd89c7b5a9836559d8a065a044eb8b8bddb941c949b6459f0461e484e9"
+    },
+    {
+      "path": "components/modules/vendors/purchase-lifecycle.tsx",
+      "sha256": "04eccadb38b54d510009771de298fd6bd57779f98d0136e6e0fcc191837a44e7"
+    },
+    {
+      "path": "eslint.config.mjs",
+      "sha256": "0347ea23ecd7cfae7453aae1f8d9d9fde572f759651165ebd10b8e93edbc631c"
+    },
+    {
+      "path": "lib/actions/configuration-release.ts",
+      "sha256": "aea302a1e830e1f97db7fb520ae874d24409cb14eabd96ad1677b1945688ab7e"
+    },
+    {
+      "path": "lib/actions/connected-returns.ts",
+      "sha256": "056bb0a6047ffe2d9b95ff8fd3a5affb08da2c5068bb53f67c6f897de8182066"
+    },
+    {
+      "path": "lib/actions/customer-self-service.ts",
+      "sha256": "5542ddac81c6f0be9f5c7e5f85124563c6ec6eb6ab1eb628c67d1a3e42d763fb"
+    },
+    {
+      "path": "lib/actions/factory-planning.ts",
+      "sha256": "c123e4006268b66f2e56ac839d550b2666c1a9e98eeb7457ae55b8b7c961a306"
+    },
+    {
+      "path": "lib/actions/financial-workflow-review.ts",
+      "sha256": "23879010f66134c19d7bdece0b694fe4564e3b035e02e2631588cce5e945f3d4"
+    },
+    {
+      "path": "lib/actions/invoices.ts",
+      "sha256": "11cd584d82dd6666866fe94ab287ca4173b3d426a4c293204c4e669a02b94665"
+    },
+    {
+      "path": "lib/actions/master-cleanup.ts",
+      "sha256": "4afdd90a9725cc159170ea4c0406d1203e30ab7517145ae1a63cf88e0ea66a58"
+    },
+    {
+      "path": "lib/actions/operational-assurance.ts",
+      "sha256": "c9045242096e64a30285da8603b7fcaec1e1a69b31f7d99750e843e16eb3164e"
+    },
+    {
+      "path": "lib/actions/partial-progress.ts",
+      "sha256": "2005cc81700a609ac14795ce1c8e8a0cedbdd17268ab88c8ae312f48db0fab84"
+    },
+    {
+      "path": "lib/actions/purchase-lifecycle.ts",
+      "sha256": "27547c7962f9f277b97d0bcd8144016c9873fc48b1656f6623b626f3cc8bb6dd"
+    },
+    {
+      "path": "lib/auth/route-permissions.ts",
+      "sha256": "ccb82b770aad156adf445c9cd210aa3c0ed3178b4f8c8a262186f1d62fe38d20"
+    },
+    {
+      "path": "lib/financials/invoice-sources.ts",
+      "sha256": "01d87679dbb437daf34ea4ae506418623b40b80f1fc51e84948dd5d54bc7575b"
+    },
+    {
+      "path": "lib/pcda/invoice.ts",
+      "sha256": "5544aea96af634bf643baf9c464d64c14b706f9ad0e797d209bcd00af2fdbdb7"
+    },
+    {
+      "path": "lib/pdf/systems-configurator-pdf.ts",
+      "sha256": "6f745939c67bdce3588a939ef82b5c81c854de5da82ae6077ec09c143290f145"
+    },
+    {
+      "path": "lib/systems-configurator/actions.ts",
+      "sha256": "ff8fb6ac4f54e11a6034307ff71ac4fdc652c20e5e009f841b5676138e07b06a"
+    },
+    {
+      "path": "lib/training/practice-transactions.ts",
+      "sha256": "b2b99fdaf94f5c86ad11a5b720da59335b128a43c76ebabcd4e517fd47033b57"
+    },
+    {
+      "path": "lib/training/practice.ts",
+      "sha256": "9a4f59f40da2dfc272800cee9abadeb17e11adf30b6f487b1eaa4f949984b60b"
+    },
+    {
+      "path": "lib/workflow/configuration-release.ts",
+      "sha256": "a993e452cf7da176f31a24532d4b0713efc7a8131194c8c9105a9378df73ca5e"
+    },
+    {
+      "path": "lib/workflow/connected-returns.ts",
+      "sha256": "94fc14b484cf6dca15c67eea82b017ab08956944d3abb18b223deb346c9d4ddf"
+    },
+    {
+      "path": "lib/workflow/customer-self-service.ts",
+      "sha256": "50ae5d45713a33672cbdab044924dd4d58e37982c8e89f162f6a12ad1188101d"
+    },
+    {
+      "path": "lib/workflow/factory-planning.ts",
+      "sha256": "191eb36d52703fdf4f136f0f4c90dcd6ae28e3547cb30e712f2f82c5c68e69b0"
+    },
+    {
+      "path": "lib/workflow/financial-workflow-review.ts",
+      "sha256": "b2d1a730823cfd307fe7cedc550e31477170ae9b0c6d849d871c1cad4b1a096b"
+    },
+    {
+      "path": "lib/workflow/master-cleanup.ts",
+      "sha256": "f14c62cedb6d493758c9fdfae21eb651d8f92eff0bc7e3d804973bbab54d6868"
+    },
+    {
+      "path": "lib/workflow/operational-assurance.ts",
+      "sha256": "63ea6abe5ddd617404682851cb6c28e1b1ab898d21d729ecf6a8182a8f9c62ba"
+    },
+    {
+      "path": "lib/workflow/partial-progress.ts",
+      "sha256": "a7313b351783b240cadb7f1a4704337f9e98a98b3d4a71f200b650002feeacdf"
+    },
+    {
+      "path": "lib/workflow/purchase-lifecycle.ts",
+      "sha256": "70a8741f2b6ca15bcc804a70ffd4cc711994f5462649ded2f643ad5935efd7c8"
+    },
+    {
+      "path": "next.config.ts",
+      "sha256": "e5f111a7dd06b758fd3995bb24e7562aa7c156d4fbb1bde04bb93d23395a7efe"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "992f7efb83db469f391941f7ea39b5bfd90b8dd91f7a5c65c4cbe31cf9ab72d3"
+    },
+    {
+      "path": "package.json",
+      "sha256": "a35065d956fd26a132a068100173cf5b894723194b94e65ff673838f10d0fcfd"
+    },
+    {
+      "path": "proxy.ts",
+      "sha256": "67e5754f133df365631e3f8248ac4815013f6f510e0075de31443417b6db8224"
+    },
+    {
+      "path": "scripts/capture-eos-batch6-browser-evidence.mjs",
+      "sha256": "e9b8a371678294a2243a2f1b0af504e47f5004e07adf14817c59a93ee8e0cbc0"
+    },
+    {
+      "path": "scripts/lib/configuration-release-example.mjs",
+      "sha256": "3d9e702115e6f11fd239e7503189c532feab9f811db282d8f7fdb803624482cc"
+    },
+    {
+      "path": "scripts/lib/configuration-release-fixture.mjs",
+      "sha256": "3a1a632f4532f5ff2c8042f9fbdbeeb399861d67aada89f63e7950af33abff94"
+    },
+    {
+      "path": "scripts/lib/eos-batch6-browser-fixture.mjs",
+      "sha256": "9a0991beeaa9827764c0d7e96b3416dfab2b0f43100dee84c0001800e1ee8b81"
+    },
+    {
+      "path": "scripts/lib/eos-batch6-core-fixture.mjs",
+      "sha256": "0a4e7091aa9dcc8333bbc04a80d74e34ce04ec02e805ec953b8ce60b92e7175f"
+    },
+    {
+      "path": "scripts/lib/factory-planning-browser-fixture.mjs",
+      "sha256": "a5ae77eb50b0a58e66e67a11fe267e893f46f2e7c570e1378a054e2a12adcc81"
+    },
+    {
+      "path": "scripts/lib/factory-planning-fixture.mjs",
+      "sha256": "a536df0653114d1ec30fcba5c13410d0acebde2e86eec496088c677e897ba9b6"
+    },
+    {
+      "path": "scripts/lib/financial-workflow-review-browser-fixture.mjs",
+      "sha256": "32009062f30d60b6bcf1d1ae8ad7e562cec058736b49c44c423bb33b0b502b26"
+    },
+    {
+      "path": "scripts/lib/financial-workflow-review-fixture.mjs",
+      "sha256": "3e84dfbab1c3078df5dc8d3915cc2ebb2a601b7dfa0f146ebe79e2a7c7c201ee"
+    },
+    {
+      "path": "scripts/lib/purchase-lifecycle-browser-fixture.mjs",
+      "sha256": "6b8c9cd770dc026a72d6cea7fef753e3684874ea5004806260e2484ec1f89993"
+    },
+    {
+      "path": "scripts/lib/retained-invoice-actions-fixture.mjs",
+      "sha256": "ad7eea2ee4dc7b8ef1d4cbbc549f66fdfcd7f3cf252232380d7f0cfa83ab386e"
+    },
+    {
+      "path": "scripts/write-eos-batch6-manifest.mjs",
+      "sha256": "ebb9b6c490109a69cb07b87d8646e463f9adb47a6353532ef047b6972ca1e568"
+    },
+    {
+      "path": "supabase/migrations/20261029110000_purchase_receipt_matching.sql",
+      "sha256": "79569e7ef5e2c83a399bffbf31f808f7fa5cfc3069b14dd254977516d590a66b"
+    },
+    {
+      "path": "supabase/migrations/20261029120000_factory_capacity_and_loads.sql",
+      "sha256": "b113bd7273633f23b075a98f36e91dee522ae75f26b27c96a341baecda0db10d"
+    },
+    {
+      "path": "supabase/migrations/20261029120001_vehicle_load_proposals.sql",
+      "sha256": "7e1ae2839a669792424219c01a7923dcbf67be68b312d2490cb284ba79ee1ea2"
+    },
+    {
+      "path": "supabase/migrations/20261029120002_vehicle_load_release.sql",
+      "sha256": "6fba81f618836db9a63283d0450abacb9e28073700b68c4612de4d6f8d3b617e"
+    },
+    {
+      "path": "supabase/migrations/20261029130000_financial_workflow_review.sql",
+      "sha256": "7fd1f0adebb7de5e9b2feeb26b3845e89acda76b1e2d1af9d535d88b796cbf8d"
+    },
+    {
+      "path": "supabase/migrations/20261029140000_reviewed_master_consolidation.sql",
+      "sha256": "cad6d6c1300c187e18bca0b58af195053c7b953f9e71a6d0ee0ac4881cc0a7e9"
+    },
+    {
+      "path": "supabase/migrations/20261029141000_partial_line_balances.sql",
+      "sha256": "2260e53d0acfea2ee3343d72870e95dff0d0907b1b662ed0b7bf6b9cc91f5f03"
+    },
+    {
+      "path": "supabase/migrations/20261029142000_connected_return_receipts.sql",
+      "sha256": "7401e7ec79e4e5877e910787008c202d2fd3ffe368fdc660b0de6c2ea634f065"
+    },
+    {
+      "path": "supabase/migrations/20261029143000_source_reviews_and_reconciliation.sql",
+      "sha256": "03fc2d7afd9484b0486084d7e95e21ef4ceeb5cde4e5acf15fba12990a3b73d3"
+    },
+    {
+      "path": "supabase/migrations/20261029144000_customer_self_service.sql",
+      "sha256": "9302ad0a5acf200e2e2e395b68d2acccf9b3ebc9ecdf6c9f52627e515ce5b592"
+    },
+    {
+      "path": "supabase/migrations/20261029150000_configuration_output_release.sql",
+      "sha256": "f629dbf07d2863ab0e1757d712339778f5f1c0e3820d8c1a50545d9e06928ca2"
+    },
+    {
+      "path": "tests/atomic-business-workflows.test.mjs",
+      "sha256": "e9a16b26479e985abb3edceb10e8fa0da0ec2a3d0056883c1e60cd89fe487d98"
+    },
+    {
+      "path": "tests/configuration-release-browser.test.mjs",
+      "sha256": "0c819312934d55e085f4d2d9d726c96e25e68b63f4feb7dac60d14be8090bf4c"
+    },
+    {
+      "path": "tests/configuration-release-sql.test.mjs",
+      "sha256": "fe44b05ed341e086582ed854b52cc628d040a5933c0aa1933bff67c664cc77f6"
+    },
+    {
+      "path": "tests/configuration-release.test.mjs",
+      "sha256": "8c1b769a7a86000d2ae67842be220b6e714a0c6a5a42609a5845abca72f84874"
+    },
+    {
+      "path": "tests/eos-batch6-browser.test.mjs",
+      "sha256": "fd873b20d7d8d81f7e8c28e468e02e10859b74f9219db2fbf070f65c0f430f74"
+    },
+    {
+      "path": "tests/eos-batch6-core-sql.test.mjs",
+      "sha256": "8fb2042191d6bfa59555f5543a0a0c2b9e38e3591f28f8897e50d957c2d74463"
+    },
+    {
+      "path": "tests/factory-planning-browser.test.mjs",
+      "sha256": "edae78a2f2904877a12427b5caa9548f4e3e784127be53723b94df58d13eef31"
+    },
+    {
+      "path": "tests/factory-planning-sql.test.mjs",
+      "sha256": "a3408e2e094fd9650f35061c9002de67d4c0db4903ba775a7236a2e47995eb09"
+    },
+    {
+      "path": "tests/factory-planning-unit.test.mjs",
+      "sha256": "3087366e17b22339a325d389e1830b43f8d019efed79ad5c4805617b03a57dbf"
+    },
+    {
+      "path": "tests/financial-closure.test.mjs",
+      "sha256": "886da9dfc9c16fe73c816d5653d9ba55e15ce9eeaa65318043913abefc70d5df"
+    },
+    {
+      "path": "tests/financial-correction-action.test.mjs",
+      "sha256": "c1b53049c03672537c98eb21abdcf570add199ed1f890df016a412116e6068e9"
+    },
+    {
+      "path": "tests/financial-workflow-review-browser.test.mjs",
+      "sha256": "91e23b5e9e5ea8d8919d35c696fba7763cc170358af8cf1e9abc850e6bb47da9"
+    },
+    {
+      "path": "tests/financial-workflow-review.test.mjs",
+      "sha256": "8677cfe38f1d3ccdac867f7d4fe58f6dcff24c2fdff9bc54f82d9defb1e8cdce"
+    },
+    {
+      "path": "tests/invoice-source-actions.test.mjs",
+      "sha256": "a3a5099ecb8e3a8a6504bbdf576c7936f3f28e3713866dc383a422375cb9c2d3"
+    },
+    {
+      "path": "tests/master-cleanup-sql.test.mjs",
+      "sha256": "5f00ba3c9ebd401d0e3a371e87956de74046dc045c5a767c4517af42c111f8d0"
+    },
+    {
+      "path": "tests/master-cleanup.test.mjs",
+      "sha256": "f8fbeab0c282d5bc7a590df3c7ba7201393327f75b5b8be54924490bdb5ab87d"
+    },
+    {
+      "path": "tests/partial-line-quantity-sql.test.mjs",
+      "sha256": "34514da9a9e0cf13ded129374db136c700d8a9d74de41594445c7ea7f19fbff9"
+    },
+    {
+      "path": "tests/partial-return-assurance.test.mjs",
+      "sha256": "32639bff7144ca3d3b87775d3069bc737a0b1e3895e1cabe46e89b3971c090d4"
+    },
+    {
+      "path": "tests/practice-transactions.test.mjs",
+      "sha256": "4bdd62c901f1f76e0a7cd678cefcee7456d4c2a265bdd236e7d3c4405cdceae5"
+    },
+    {
+      "path": "tests/practice-workspace.test.mjs",
+      "sha256": "cb1bfdb6071594a3b58b7b4daa11e679419c68d8fc3789ced82a566536af75ed"
+    },
+    {
+      "path": "tests/purchase-lifecycle-browser.test.mjs",
+      "sha256": "32838f57d120d225f742ab10d5e5d86f950fc84078fa45d466e7fc930e68ac2d"
+    },
+    {
+      "path": "tests/purchase-lifecycle-sql.test.mjs",
+      "sha256": "6aaf29a431010aae7f6ffca7e403d74516d714cd63638b021e38a94cf7b32ed8"
+    },
+    {
+      "path": "tests/purchase-lifecycle.test.mjs",
+      "sha256": "eb5a09e21e93c4ca42836d9fec2ba4930df354f1e0ac0c5fce8b359be7675c33"
+    },
+    {
+      "path": "tsconfig.json",
+      "sha256": "ff30e253b9a705b7be765a56f55a55bb622a6f74fdd790482e8f2aaa203c16e6"
+    }
+  ],
+  "commit_paths": [
+    "EOS_UPGRADE_BATCH_6.md",
+    "UPGRADE_EOS.md",
+    "app/(dashboard)/customers/page.tsx",
+    "app/(dashboard)/customers/portal-responses/page.tsx",
+    "app/(dashboard)/dispatches/[id]/page.tsx",
+    "app/(dashboard)/dispatches/[id]/returns/page.tsx",
+    "app/(dashboard)/dispatches/loads/page.tsx",
+    "app/(dashboard)/dispatches/page.tsx",
+    "app/(dashboard)/invoices/eligibility/page.tsx",
+    "app/(dashboard)/invoices/new/page.tsx",
+    "app/(dashboard)/invoices/page.tsx",
+    "app/(dashboard)/orders/[id]/page.tsx",
+    "app/(dashboard)/payments/page.tsx",
+    "app/(dashboard)/payments/receipts/page.tsx",
+    "app/(dashboard)/production/capacity/page.tsx",
+    "app/(dashboard)/production/page.tsx",
+    "app/(dashboard)/settings/master-cleanup/page.tsx",
+    "app/(dashboard)/settings/page.tsx",
+    "app/(dashboard)/systems-configurator/projects/[id]/page.tsx",
+    "app/(dashboard)/tasks/changes/page.tsx",
+    "app/(dashboard)/tasks/layout.tsx",
+    "app/(dashboard)/tasks/practice/page.tsx",
+    "app/(dashboard)/vendors/page.tsx",
+    "app/(dashboard)/vendors/purchasing/database/page.tsx",
+    "app/(dashboard)/vendors/purchasing/page.tsx",
+    "app/api/pdf/systems-configurator/[id]/[type]/route.ts",
+    "app/api/portal/orders/[id]/summary/route.ts",
+    "app/portal/self-service/page.tsx",
+    "components/modules/customer-self-service.tsx",
+    "components/modules/dispatches/connected-returns.tsx",
+    "components/modules/dispatches/vehicle-loads.tsx",
+    "components/modules/financials/financial-workflow-review.tsx",
+    "components/modules/financials/invoice-form-client.tsx",
+    "components/modules/master-cleanup.tsx",
+    "components/modules/operational-assurance.tsx",
+    "components/modules/orders/partial-progress.tsx",
+    "components/modules/practice-transactions.tsx",
+    "components/modules/practice-workspace.tsx",
+    "components/modules/production/factory-planning.tsx",
+    "components/modules/shared/operational-work-links.tsx",
+    "components/modules/systems-configurator/configuration-release.tsx",
+    "components/modules/vendors/purchase-lifecycle.tsx",
+    "docs/EOS_BATCH6_CONFIGURATOR.md",
+    "docs/EOS_BATCH6_FACTORY_PLANNING.md",
+    "docs/EOS_BATCH6_FINANCIAL_WORKFLOWS.md",
+    "docs/EOS_BATCH6_OPERATIONAL_CONTROLS.md",
+    "docs/EOS_BATCH6_PURCHASING.md",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/README.md",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/audit-regressions.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/browser.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/build-authorized-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/build-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/build-verified-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/build-webpack-authorized.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/build-webpack.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/build.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/commit-paths.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/configuration-release-desktop.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/configuration-release-phone.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/connected-return-desktop.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/connected-return-phone.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/customer-portal-desktop.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/customer-portal-phone.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/factory-browser.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/factory-capacity-desktop.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/factory-capacity-phone.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/focused-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/focused-sql-unit.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/invoice-eligibility-desktop.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/invoice-eligibility-phone.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/lint-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/lint-verified-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/lint.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/local-probe-diagnostic.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/migration-replay-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/partial-order-desktop.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/partial-order-phone.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/practice-desktop.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/practice-phone.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/purchase-entry-desktop.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/purchase-entry-phone.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/purchase-receiving-desktop.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/purchase-receiving-phone.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/purchasing-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/purchasing-offline-browser.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/purchasing-recovery-sql.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/source-manifest.json",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/source-reconciliation-desktop.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/source-reconciliation-phone.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/supplier-bill-review-desktop.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/supplier-bill-review-phone.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/tests-authorized-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/tests-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/tests-verified-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/tests.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/typecheck-audit.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/typecheck-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/typecheck-purchase-recovery.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/typecheck-verified-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/typecheck.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/vehicle-loads-desktop.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/vehicle-loads-phone.png",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/visual-authorized-final.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/visual-checks.json",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/visual-recheck.txt",
+    "docs/evidence/EOS_UPGRADE_BATCH_6/visual-verified-final.txt",
+    "lib/actions/configuration-release.ts",
+    "lib/actions/connected-returns.ts",
+    "lib/actions/customer-self-service.ts",
+    "lib/actions/factory-planning.ts",
+    "lib/actions/financial-workflow-review.ts",
+    "lib/actions/invoices.ts",
+    "lib/actions/master-cleanup.ts",
+    "lib/actions/operational-assurance.ts",
+    "lib/actions/partial-progress.ts",
+    "lib/actions/purchase-lifecycle.ts",
+    "lib/auth/route-permissions.ts",
+    "lib/financials/invoice-sources.ts",
+    "lib/pcda/invoice.ts",
+    "lib/pdf/systems-configurator-pdf.ts",
+    "lib/systems-configurator/actions.ts",
+    "lib/training/practice-transactions.ts",
+    "lib/training/practice.ts",
+    "lib/workflow/configuration-release.ts",
+    "lib/workflow/connected-returns.ts",
+    "lib/workflow/customer-self-service.ts",
+    "lib/workflow/factory-planning.ts",
+    "lib/workflow/financial-workflow-review.ts",
+    "lib/workflow/master-cleanup.ts",
+    "lib/workflow/operational-assurance.ts",
+    "lib/workflow/partial-progress.ts",
+    "lib/workflow/purchase-lifecycle.ts",
+    "proxy.ts",
+    "scripts/capture-eos-batch6-browser-evidence.mjs",
+    "scripts/lib/configuration-release-example.mjs",
+    "scripts/lib/configuration-release-fixture.mjs",
+    "scripts/lib/eos-batch6-browser-fixture.mjs",
+    "scripts/lib/eos-batch6-core-fixture.mjs",
+    "scripts/lib/factory-planning-browser-fixture.mjs",
+    "scripts/lib/factory-planning-fixture.mjs",
+    "scripts/lib/financial-workflow-review-browser-fixture.mjs",
+    "scripts/lib/financial-workflow-review-fixture.mjs",
+    "scripts/lib/purchase-lifecycle-browser-fixture.mjs",
+    "scripts/lib/retained-invoice-actions-fixture.mjs",
+    "scripts/write-eos-batch6-manifest.mjs",
+    "supabase/migrations/20261029110000_purchase_receipt_matching.sql",
+    "supabase/migrations/20261029120000_factory_capacity_and_loads.sql",
+    "supabase/migrations/20261029120001_vehicle_load_proposals.sql",
+    "supabase/migrations/20261029120002_vehicle_load_release.sql",
+    "supabase/migrations/20261029130000_financial_workflow_review.sql",
+    "supabase/migrations/20261029140000_reviewed_master_consolidation.sql",
+    "supabase/migrations/20261029141000_partial_line_balances.sql",
+    "supabase/migrations/20261029142000_connected_return_receipts.sql",
+    "supabase/migrations/20261029143000_source_reviews_and_reconciliation.sql",
+    "supabase/migrations/20261029144000_customer_self_service.sql",
+    "supabase/migrations/20261029150000_configuration_output_release.sql",
+    "tests/atomic-business-workflows.test.mjs",
+    "tests/configuration-release-browser.test.mjs",
+    "tests/configuration-release-sql.test.mjs",
+    "tests/configuration-release.test.mjs",
+    "tests/eos-batch6-browser.test.mjs",
+    "tests/eos-batch6-core-sql.test.mjs",
+    "tests/factory-planning-browser.test.mjs",
+    "tests/factory-planning-sql.test.mjs",
+    "tests/factory-planning-unit.test.mjs",
+    "tests/financial-closure.test.mjs",
+    "tests/financial-correction-action.test.mjs",
+    "tests/financial-workflow-review-browser.test.mjs",
+    "tests/financial-workflow-review.test.mjs",
+    "tests/invoice-source-actions.test.mjs",
+    "tests/master-cleanup-sql.test.mjs",
+    "tests/master-cleanup.test.mjs",
+    "tests/partial-line-quantity-sql.test.mjs",
+    "tests/partial-return-assurance.test.mjs",
+    "tests/practice-transactions.test.mjs",
+    "tests/practice-workspace.test.mjs",
+    "tests/purchase-lifecycle-browser.test.mjs",
+    "tests/purchase-lifecycle-sql.test.mjs",
+    "tests/purchase-lifecycle.test.mjs"
+  ]
+}

@@ -1,0 +1,298 @@
+TAP version 13
+# Subtest: multi-table business saves use atomic database functions
+ok 1 - multi-table business saves use atomic database functions
+  ---
+  duration_ms: 3.1646
+  type: 'test'
+  ...
+# Subtest: atomic implementations enforce auth, tenant permissions, and row locks
+ok 2 - atomic implementations enforce auth, tenant permissions, and row locks
+  ---
+  duration_ms: 1.03
+  type: 'test'
+  ...
+# Subtest: business numbers are allocated under a company and year lock
+ok 3 - business numbers are allocated under a company and year lock
+  ---
+  duration_ms: 0.3915
+  type: 'test'
+  ...
+# Subtest: quote and dealer conversion retries are idempotent
+ok 4 - quote and dealer conversion retries are idempotent
+  ---
+  duration_ms: 0.4389
+  type: 'test'
+  ...
+# Subtest: die and profile updates are allowlisted, permission checked, and versioned atomically
+ok 5 - die and profile updates are allowlisted, permission checked, and versioned atomically
+  ---
+  duration_ms: 0.7342
+  type: 'test'
+  ...
+# Subtest: RPC JSON payloads are filtered through server-owned field allowlists
+ok 6 - RPC JSON payloads are filtered through server-owned field allowlists
+  ---
+  duration_ms: 0.2319
+  type: 'test'
+  ...
+# Subtest: 100: exact saved outputs require an independent approval and preserve immutable snapshots
+ok 7 - 100: exact saved outputs require an independent approval and preserve immutable snapshots
+  ---
+  duration_ms: 13450.7018
+  type: 'test'
+  ...
+# Subtest: 100: rule, input and saved-output edits each invalidate a reviewed release without changing its captured evidence
+ok 8 - 100: rule, input and saved-output edits each invalidate a reviewed release without changing its captured evidence
+  ---
+  duration_ms: 185.7872
+  type: 'test'
+  ...
+# Subtest: 100: missing rules, stale source revisions, forged outputs, cross-company and direct client writes are refused
+ok 9 - 100: missing rules, stale source revisions, forged outputs, cross-company and direct client writes are refused
+  ---
+  duration_ms: 106.2026
+  type: 'test'
+  ...
+# Subtest: 100: canonical handoff into an existing eligible order rolls back without approval and records its approved snapshot
+ok 10 - 100: canonical handoff into an existing eligible order rolls back without approval and records its approved snapshot
+  ---
+  duration_ms: 384.8001
+  type: 'test'
+  ...
+# Subtest: 100: an unrelated profile addition does not invalidate a quoted project or force a new commercial revision
+ok 11 - 100: an unrelated profile addition does not invalidate a quoted project or force a new commercial revision
+  ---
+  duration_ms: 229.3461
+  type: 'test'
+  ...
+# Subtest: invoice totals are derived from the selected dispatch lines inside one atomic save
+ok 12 - invoice totals are derived from the selected dispatch lines inside one atomic save
+  ---
+  duration_ms: 2.8808
+  type: 'test'
+  ...
+# Subtest: returned and damaged dispatches cannot enter receivables
+ok 13 - returned and damaged dispatches cannot enter receivables
+  ---
+  duration_ms: 0.3322
+  type: 'test'
+  ...
+# Subtest: receipt posting is idempotent, locked, lineage checked, and prevents overpayment
+ok 14 - receipt posting is idempotent, locked, lineage checked, and prevents overpayment
+  ---
+  duration_ms: 0.4591
+  type: 'test'
+  ...
+# Subtest: posted receipts are immutable and corrected by an audited reversal
+ok 15 - posted receipts are immutable and corrected by an audited reversal
+  ---
+  duration_ms: 0.3629
+  type: 'test'
+  ...
+# Subtest: purpose-built financial screens replace generic no-op payment forms
+ok 16 - purpose-built financial screens replace generic no-op payment forms
+  ---
+  duration_ms: 3.1057
+  type: 'test'
+  ...
+# Subtest: collection analytics use dated receipt events rather than cumulative invoice state
+ok 17 - collection analytics use dated receipt events rather than cumulative invoice state
+  ---
+  duration_ms: 0.3664
+  type: 'test'
+  ...
+# Subtest: owner analytics labels match the business facts they aggregate
+ok 18 - owner analytics labels match the business facts they aggregate
+  ---
+  duration_ms: 1.6211
+  type: 'test'
+  ...
+# Subtest: CSV preview maps Indian date formats and grouped INR amounts without accepting ambiguous values
+ok 19 - CSV preview maps Indian date formats and grouped INR amounts without accepting ambiguous values
+  ---
+  duration_ms: 16584.4614
+  type: 'test'
+  ...
+# Subtest: invoice source fingerprints are stable across line order and change with source values
+ok 20 - invoice source fingerprints are stable across line order and change with source values
+  ---
+  duration_ms: 26.7257
+  type: 'test'
+  ...
+# Subtest: reviewed invoice save locks the manifest, rejects stale tax/source review, and seals issued lines
+ok 21 - reviewed invoice save locks the manifest, rejects stale tax/source review, and seals issued lines
+  ---
+  duration_ms: 170.6982
+  type: 'test'
+  ...
+# Subtest: one actual receipt posts through the canonical payment ledger and replays without duplicate rows
+ok 22 - one actual receipt posts through the canonical payment ledger and replays without duplicate rows
+  ---
+  duration_ms: 106.2964
+  type: 'test'
+  ...
+# Subtest: invoice locks prevent over-allocation and duplicate bank references across receipts
+ok 23 - invoice locks prevent over-allocation and duplicate bank references across receipts
+  ---
+  duration_ms: 61.6735
+  type: 'test'
+  ...
+# Subtest: credit adjustments remain distinct from cash and reversals preserve grouped receipt history
+ok 24 - credit adjustments remain distinct from cash and reversals preserve grouped receipt history
+  ---
+  duration_ms: 96.7251
+  type: 'test'
+  ...
+# Subtest: forged receipt context cannot extend a recorded receipt or create an unallocated sibling payment
+ok 25 - forged receipt context cannot extend a recorded receipt or create an unallocated sibling payment
+  ---
+  duration_ms: 38.887
+  type: 'test'
+  ...
+# Subtest: standalone canonical receipts cannot reuse an ungrouped bank reference with a different request identity
+ok 26 - standalone canonical receipts cannot reuse an ungrouped bank reference with a different request identity
+  ---
+  duration_ms: 29.5309
+  type: 'test'
+  ...
+# Subtest: CSV import persists row-level reconciliation failures and same-file replay
+ok 27 - CSV import persists row-level reconciliation failures and same-file replay
+  ---
+  duration_ms: 53.2833
+  type: 'test'
+  ...
+# Subtest: finance roles, company scope, and protected receipt tables are enforced in SQL
+ok 28 - finance roles, company scope, and protected receipt tables are enforced in SQL
+  ---
+  duration_ms: 25.1051
+  type: 'test'
+  ...
+# Subtest: migration seals issued totals and scopes workflow tables to finance readers
+ok 29 - migration seals issued totals and scopes workflow tables to finance readers
+  ---
+  duration_ms: 5.1509
+  type: 'test'
+  ...
+# Subtest: actual invoice action reaches the retained-shipment SQL writer, preserves stock and derives exact GST totals
+ok 30 - actual invoice action reaches the retained-shipment SQL writer, preserves stock and derives exact GST totals
+  ---
+  duration_ms: 5722.7233
+  type: 'test'
+  ...
+# Subtest: invoice action reads the entire manifest beyond the API cap in stable, company-scoped pages
+ok 31 - invoice action reads the entire manifest beyond the API cap in stable, company-scoped pages
+  ---
+  duration_ms: 18782.7057
+  type: 'test'
+  ...
+# Subtest: incomplete manifest missing-count fails before financial writes
+ok 32 - incomplete manifest missing-count fails before financial writes
+  ---
+  duration_ms: 11.2533
+  type: 'test'
+  ...
+# Subtest: incomplete manifest truncated fails before financial writes
+ok 33 - incomplete manifest truncated fails before financial writes
+  ---
+  duration_ms: 8.8998
+  type: 'test'
+  ...
+# Subtest: incomplete manifest changing-count fails before financial writes
+ok 34 - incomplete manifest changing-count fails before financial writes
+  ---
+  duration_ms: 16.7056
+  type: 'test'
+  ...
+# Subtest: incomplete manifest duplicate-id fails before financial writes
+ok 35 - incomplete manifest duplicate-id fails before financial writes
+  ---
+  duration_ms: 13.9236
+  type: 'test'
+  ...
+# Subtest: incomplete manifest invalid-id fails before financial writes
+ok 36 - incomplete manifest invalid-id fails before financial writes
+  ---
+  duration_ms: 10.343
+  type: 'test'
+  ...
+# Subtest: incomplete manifest query-error fails before financial writes
+ok 37 - incomplete manifest query-error fails before financial writes
+  ---
+  duration_ms: 8.6474
+  type: 'test'
+  ...
+# Subtest: incomplete manifest excessive-count fails before financial writes
+ok 38 - incomplete manifest excessive-count fails before financial writes
+  ---
+  duration_ms: 9.9757
+  type: 'test'
+  ...
+# Subtest: source search uses the real authorized SQL projection and exact selected identifiers
+ok 39 - source search uses the real authorized SQL projection and exact selected identifiers
+  ---
+  duration_ms: 48.2082
+  type: 'test'
+  ...
+# Subtest: malformed source projection wrong-kind stays unavailable
+ok 40 - malformed source projection wrong-kind stays unavailable
+  ---
+  duration_ms: 2.0978
+  type: 'test'
+  ...
+# Subtest: malformed source projection foreign-order stays unavailable
+ok 41 - malformed source projection foreign-order stays unavailable
+  ---
+  duration_ms: 1.634
+  type: 'test'
+  ...
+# Subtest: malformed source projection wrong-selected-id stays unavailable
+ok 42 - malformed source projection wrong-selected-id stays unavailable
+  ---
+  duration_ms: 1.9431
+  type: 'test'
+  ...
+# Subtest: malformed source projection duplicate-source stays unavailable
+ok 43 - malformed source projection duplicate-source stays unavailable
+  ---
+  duration_ms: 1.9697
+  type: 'test'
+  ...
+# Subtest: malformed source projection missing-has-more stays unavailable
+ok 44 - malformed source projection missing-has-more stays unavailable
+  ---
+  duration_ms: 1.5943
+  type: 'test'
+  ...
+# Subtest: malformed source projection truncated-page stays unavailable
+ok 45 - malformed source projection truncated-page stays unavailable
+  ---
+  duration_ms: 1.4644
+  type: 'test'
+  ...
+# Subtest: malformed source projection too-many-rows stays unavailable
+ok 46 - malformed source projection too-many-rows stays unavailable
+  ---
+  duration_ms: 2.9895
+  type: 'test'
+  ...
+# Subtest: invalid requests and non-financial roles cannot reach source lookup or invoice writing
+ok 47 - invalid requests and non-financial roles cannot reach source lookup or invoice writing
+  ---
+  duration_ms: 2.6646
+  type: 'test'
+  ...
+# Subtest: regeneration uses all exact source lines and the same retained-shipment eligibility
+ok 48 - regeneration uses all exact source lines and the same retained-shipment eligibility
+  ---
+  duration_ms: 88.1599
+  type: 'test'
+  ...
+1..48
+# tests 48
+# suites 0
+# pass 48
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 25540.0904

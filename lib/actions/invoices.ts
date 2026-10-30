@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
@@ -8,7 +9,8 @@ import { buildInvoiceItems } from "@/lib/pcda/invoice";
 import { isGstStateCode } from "@/lib/calculations/gst";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
-import {canInvoiceOrderDispatch,invoiceSourceRequest,loadInvoiceSourceOptions,type InvoiceSourceRequest,type InvoiceSourceOptions} from "@/lib/financials/invoice-sources";
+import {applyInvoiceSourceTaxBasis,canInvoiceOrderDispatch,invoiceSourceRequest,loadInvoiceSourceOptions,type InvoiceSourceRequest,type InvoiceSourceOptions} from "@/lib/financials/invoice-sources";
+import { buildInvoiceFingerprintPayload } from "@/lib/workflow/financial-workflow-review";
 
 const saveInvoiceInputSchema = z.object({
   place_of_supply_state_code: z.string().refine(isGstStateCode, "Select a supported domestic place of supply"),
@@ -19,6 +21,7 @@ const saveInvoiceInputSchema = z.object({
   invoice_date: z.string().min(1, "Invoice date is required"),
   due_date: z.string().optional().nullable(),
   status: z.enum(["draft", "generated", "sent"]).default("draft"),
+  source_fingerprint: z.string().regex(/^[0-9a-f]{32}$/).optional().nullable(),
   notes: z.string().trim().max(2000).optional().nullable()
 });
 
@@ -71,7 +74,7 @@ async function loadInvoiceSourceLines(supabase: any,companyId: string,dispatchId
       if(!z.string().uuid().safeParse(row?.id).success || identities.has(row.id)) throw new Error("The packing list contains conflicting source identities.");
       identities.add(row.id);rows.push(row);
     }
-    if(rows.length === expected) return rows;
+    if(rows.length === expected) return applyInvoiceSourceTaxBasis(supabase, companyId, rows);
   }
 }
 
@@ -139,7 +142,23 @@ export async function saveInvoiceAction(input: SaveInvoiceInput): Promise<Invoic
     if (!invoiceItemsAreBillable(invoiceItems)) {
       return { success: false, error: "Every packed line needs a positive shipped weight and commercial rate before invoicing." };
     }
-    const result = await supabase.rpc("save_invoice_atomic", {
+    if (parsed.data.source_fingerprint) {
+      const settings = await supabase.from("company_settings").select("default_gst_percent")
+        .eq("company_id", context.companyId).maybeSingle();
+      if (settings.error) throw settings.error;
+      const defaultGst = Number(settings.data?.default_gst_percent ?? 18);
+      if (!Number.isFinite(defaultGst) || defaultGst < 0 || defaultGst > 100) {
+        throw new Error("The configured GST rate could not be verified. Refresh the invoice review.");
+      }
+      const currentFingerprint = createHash("md5")
+        .update(buildInvoiceFingerprintPayload(invoiceItems, defaultGst))
+        .digest("hex");
+      if (currentFingerprint !== parsed.data.source_fingerprint) {
+        return { success: false, error: "The packing manifest or tax basis changed after review. Return to invoice eligibility and review it again." };
+      }
+    }
+    const invoiceWriter = parsed.data.source_fingerprint ? "save_reviewed_invoice_atomic" : "save_invoice_atomic";
+    const result = await supabase.rpc(invoiceWriter, {
       p_invoice_id: editingId,
       p_invoice: {
         customer_id: order.customer_id,
@@ -150,6 +169,7 @@ export async function saveInvoiceAction(input: SaveInvoiceInput): Promise<Invoic
         invoice_date: parsed.data.invoice_date,
         due_date: parsed.data.due_date || null,
         status: parsed.data.status,
+        ...(parsed.data.source_fingerprint ? { source_fingerprint: parsed.data.source_fingerprint } : {}),
         notes: parsed.data.notes || null
       },
       p_items: invoiceItems,

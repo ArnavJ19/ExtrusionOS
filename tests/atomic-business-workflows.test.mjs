@@ -17,7 +17,9 @@ test("multi-table business saves use atomic database functions", () => {
   assert.match(quoteOrders, /rpc\("convert_quote_to_order_atomic"/);
   assert.match(quoteOrders, /rpc\("save_order_atomic"/);
   assert.match(dispatches, /rpc\("save_ready_dispatch_atomic"/);
-  assert.match(invoices, /rpc\("save_invoice_atomic"/);
+  assert.match(invoices, /const invoiceWriter = parsed.data.source_fingerprint \? "save_reviewed_invoice_atomic" : "save_invoice_atomic"/);
+  assert.match(invoices, /rpc\(invoiceWriter/);
+  assert.match(read('supabase/migrations/20261029130000_financial_workflow_review.sql'), /public\.save_invoice_atomic\(p_invoice_id/);
   assert.match(invoices, /rpc\("replace_invoice_items_atomic"/);
   assert.match(production, /rpc\("save_production_job_atomic"/);
   assert.match(dealerRoute, /rpc\("create_dealer_order_from_order_atomic"/);

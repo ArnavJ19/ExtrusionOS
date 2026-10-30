@@ -1,0 +1,2 @@
+import {createClient} from "@/lib/supabase/server";import {redirect} from "next/navigation";import {CustomerSelfService} from "@/components/modules/customer-self-service";
+export default async function SelfServicePage(){const client=await createClient(),user=await client.auth.getUser();if(user.error||!user.data.user)redirect("/login");const identity=await client.rpc("portal_self_service_command",{p_command:"identity.load",p_payload:{}});if(identity.error)redirect("/access-suspended");return <CustomerSelfService key={user.data.user.id}/>;}

@@ -83,16 +83,22 @@ function useInvoiceSources(kind: "order" | "dispatch", enabled: boolean, search:
 
 export function InvoiceFormClient({
   context,
-  recordId
+  recordId,
+  reviewedSource
 }: {
   context: SessionContext;
   recordId?: string;
+  reviewedSource?: { orderId: string; dispatchId: string; fingerprint: string };
 }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [orderSearch, setOrderSearch] = useState("");
   const [dispatchSearch, setDispatchSearch] = useState("");
-  const [form, setForm] = useState<FormState>(initialForm);
+  const [form, setForm] = useState<FormState>(() => ({
+    ...initialForm,
+    order_id: reviewedSource?.orderId ?? "",
+    dispatch_id: reviewedSource?.dispatchId ?? ""
+  }));
   const [record, setRecord] = useState<InvoiceRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -170,6 +176,9 @@ export function InvoiceFormClient({
     startTransition(async () => {
       const result = await saveInvoiceAction({
         editing_id: recordId ?? null,
+        source_fingerprint: reviewedSource?.orderId === form.order_id && reviewedSource.dispatchId === form.dispatch_id
+          ? reviewedSource.fingerprint
+          : null,
         ...form
       });
       if (!result.success || !result.invoiceId) {
@@ -300,6 +309,7 @@ export function InvoiceFormClient({
             <Summary label="Order commercial value" value={selectedOrder ? formatCurrency(selectedOrder.order_value) : "-"} />
             <Summary label="Dispatch" value={selectedDispatch?.dispatch_number ?? "Select a packed dispatch"} />
             <Summary label="Dispatch weight" value={selectedDispatch ? formatWeight(selectedDispatch.total_weight_kg) : "-"} />
+            {reviewedSource && reviewedSource.orderId === form.order_id && reviewedSource.dispatchId === form.dispatch_id ? <Summary label="Eligibility review" value={`Source fingerprint ${reviewedSource.fingerprint.slice(0, 16)}…`} /> : null}
             {selectedOrder?.current_stage === "cancelled" ? <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold leading-5 text-amber-900">This order&apos;s unfulfilled remainder is cancelled. This invoice covers only the verified shipment posted before cancellation; its dispatched stock remains unchanged.</div> : null}
             <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-xs font-semibold leading-5 text-blue-900">The saved invoice total is recalculated from the selected dispatch packing lines. Full-order proformas are intentionally kept out of receivables until a separate proforma workflow is available.</div>
           </CardContent>

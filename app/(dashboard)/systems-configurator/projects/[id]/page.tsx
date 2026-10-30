@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SystemElevationPreview } from "@/components/modules/systems-configurator/system-elevation-preview";
 import { ConfiguratorOutputNav } from "@/components/modules/systems-configurator/output-nav";
+import { ConfigurationRelease } from "@/components/modules/systems-configurator/configuration-release";
 import { createClient } from "@/lib/supabase/server";
 import { getSystemsConfiguratorContext } from "@/lib/systems-configurator/access";
 import { calculateSystemConfigurationProject, generateSystemQuote, handoffSystemConfigurationToProduction, runProfileOptimization } from "@/lib/systems-configurator/actions";
@@ -13,6 +14,7 @@ import { getSystemOutputStatus } from "@/lib/systems-configurator/output-status"
 import { getProductionHandoffReadiness, groupProfileCutsForProduction } from "@/lib/systems-configurator/production-handoff";
 import { summarizeProductionProgress } from "@/lib/systems-configurator/production-progress";
 import { getSystemQuoteReadiness } from "@/lib/systems-configurator/quote-readiness";
+import { configurationReleaseAction } from "@/lib/actions/configuration-release";
 import { getConfiguratorWorkflowStatus, productionJobMatchesConfiguration } from "@/lib/systems-configurator/workflow-status";
 import { can } from "@/lib/auth/permissions";
 import { labelize } from "@/types/app";
@@ -40,6 +42,9 @@ export default async function SystemProjectDetailPage({ params }: { params: Prom
   if (error || !configuration) {
     return <PageHeader title="Configuration Not Found" description="The requested system configuration does not exist or is outside your company workspace." />;
   }
+
+  const releaseResponse = await configurationReleaseAction({ command: "release.load", payload: { configuration_id: id } });
+  const releaseState = releaseResponse.success && releaseResponse.data.kind === "release_state" ? releaseResponse.data : null;
 
   const layout = configuration.panel_layout_json as any;
   const panels = Array.isArray(layout?.panels) ? layout.panels : [];
@@ -75,6 +80,8 @@ export default async function SystemProjectDetailPage({ params }: { params: Prom
   const canCalculateCosting = ["owner", "admin"].includes(context.role);
   const canGenerateSystemQuote = context.role === "owner" || context.role === "admin";
   const productionReadiness = getProductionHandoffReadiness(configuration, productionJobGroups, productionJobs.length);
+  const releaseApproved = releaseState?.status === "approved" || releaseState?.status === "handed_off";
+  const releaseReason = releaseState?.unresolved_reasons.join(" ") || "Calculate and obtain independent approval of the current fabrication release.";
   const productionProgress = summarizeProductionProgress(productionJobs);
   const workflowStatus = getConfiguratorWorkflowStatus({ configurationStatus: configuration.status, quoteId: configuration.quote_id, dataReadiness, outputStatus, quoteReadiness, productionReadiness, productionProgress });
 
@@ -101,7 +108,8 @@ export default async function SystemProjectDetailPage({ params }: { params: Prom
               </label> : null;
             })}
             {linkedOrder.error || handoffLines.error ? <p className="text-sm text-red-700">Could not load order lines. Reload before production handoff.</p> : null}
-            <button type="submit" disabled={!productionReadiness.ready || Boolean(linkedOrder.error || handoffLines.error)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-orange hover:text-orange disabled:cursor-not-allowed disabled:opacity-50">Production Handoff</button>
+            {!linkedOrder.data ? <p className="text-sm text-amber-800">Convert the approved system quotation to a customer order before production handoff.</p> : null}
+            <button type="submit" disabled={!productionReadiness.ready || !releaseApproved || !linkedOrder.data || Boolean(linkedOrder.error || handoffLines.error)} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-orange hover:text-orange disabled:cursor-not-allowed disabled:opacity-50">Production Handoff</button>
           </form> : null}
           {editable ? <Link href={`/systems-configurator/projects/${id}/edit`} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-orange hover:text-orange"><Edit className="h-4 w-4" /> Edit</Link> : <span className="p-2 text-sm text-slate-600">Linked configuration is locked. Create a new configuration for revisions.</span>}
           <Link href={`/api/pdf/systems-configurator/${id}/production_sheet`} target="_blank" className="inline-flex items-center gap-2 rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90"><Download className="h-4 w-4 text-orange" /> Production Sheet</Link>
@@ -133,10 +141,18 @@ export default async function SystemProjectDetailPage({ params }: { params: Prom
 
       <Card className={productionReadiness.ready ? "border-emerald-200 bg-emerald-50 shadow-sm" : "border-slate-200 bg-white shadow-sm"}>
         <CardContent>
-          <p className={productionReadiness.ready ? "text-sm font-black text-emerald-900" : "text-sm font-black text-slate-700"}>{productionReadiness.ready ? `Ready for production handoff: ${productionJobGroups.length} planned profile job${productionJobGroups.length === 1 ? "" : "s"}.` : productionReadiness.reason}</p>
+          <p className={productionReadiness.ready && releaseApproved ? "text-sm font-black text-emerald-900" : "text-sm font-black text-slate-700"}>{!releaseApproved ? releaseReason : productionReadiness.ready ? `Ready for production handoff: ${productionJobGroups.length} planned profile job${productionJobGroups.length === 1 ? "" : "s"}.` : productionReadiness.reason}</p>
           {configuration.order_id ? <p className="mt-1 text-sm font-semibold text-slate-600">Linked order is ready. <Link href="/production" className="font-black text-orange">Open production jobs</Link>.</p> : null}
         </CardContent>
       </Card>
+
+      <ConfigurationRelease
+        configurationId={id}
+        initialState={releaseState}
+        initialError={!releaseResponse.success ? releaseResponse.error : ""}
+        userId={context.userId}
+        canApprove={["owner", "admin"].includes(context.role)}
+      />
 
       {productionJobs.length ? <ProductionProgressCard jobs={productionJobs} summary={productionProgress} /> : null}
 

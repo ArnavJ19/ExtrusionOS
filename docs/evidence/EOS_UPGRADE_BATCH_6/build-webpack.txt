@@ -1,0 +1,14 @@
+
+> extrusionos-pro@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.2.11 (webpack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Failed to compile.
+
+Error: EPERM: operation not permitted, mkdir 'C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\.next-eos-batch6-webpack\server\app\api\pdf\expense-payment'
+
+
+> Build failed because of webpack errors

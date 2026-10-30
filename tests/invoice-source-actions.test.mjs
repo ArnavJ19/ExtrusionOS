@@ -3,9 +3,13 @@ import test from "node:test";
 import {createRetainedInvoiceFixture,invoiceFixtureIds as f} from "../scripts/lib/retained-invoice-fixture.mjs";
 import {createInvoiceActionFixture} from "../scripts/lib/retained-invoice-actions-fixture.mjs";
 import {fixtureId as id} from "../scripts/lib/direct-order-fixture.mjs";
+import {readFileSync} from 'node:fs';
+import {installRetainedInvoiceSettlementObjects} from '../scripts/lib/retained-invoice-fixture.mjs';
 
 let db,fixture;
-test.before(async()=>{db=await createRetainedInvoiceFixture();});
+test.before(async()=>{db=await createRetainedInvoiceFixture();await installRetainedInvoiceSettlementObjects(db);
+  await db.exec('create schema if not exists auth;create table if not exists auth.users(id uuid primary key,email text)');
+  await db.exec(readFileSync('supabase/migrations/20261029130000_financial_workflow_review.sql','utf8'));});
 test.after(async()=>{await db?.close();});
 test.beforeEach(async()=>{
   await db.exec(`reset role;begin;set test.actor='${f.actor}';set role authenticated;`);
@@ -36,6 +40,8 @@ test("invoice action reads the entire manifest beyond the API cap in stable, com
   assert.equal((await db.query("select count(*) n,sum(quantity) quantity from invoice_items where invoice_id=$1",[result.invoiceId])).rows[0].n,1201);
   assert.deepEqual(fixture.state.calls.filter(call=>call.table==="packing_list_items_authorized").map(call=>call.range),
     [[0,199],[200,399],[400,599],[600,799],[800,999],[1000,1199],[1200,1399]]);
+  const taxReads=fixture.state.calls.filter(call=>call.table==='invoice_dispatch_tax_basis_authorized');
+  assert.equal(taxReads.length,7);assert.ok(taxReads.every(call=>call.filters.find(([column])=>column==='packing_line_id')[1].length<=200));
   assert.equal((await db.query("select grand_total from invoices where id=$1",[result.invoiceId])).rows[0].grand_total,"1417180.00");
 });
 

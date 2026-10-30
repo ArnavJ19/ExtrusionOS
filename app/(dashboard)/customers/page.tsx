@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OperationalWorkLinks } from "@/components/modules/shared/operational-work-links";
 import { ModuleOverviewClient } from "@/components/modules/operations/module-overview-client";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
@@ -10,6 +11,7 @@ export default async function CustomersPage() {
   if (!can(context.role, "read", "customers")) redirect("/dashboard");
   return (
     <div className="space-y-2">
+      <OperationalWorkLinks area="customers" role={context.role} dealer={!!context.dealerId}/>
       <ModuleOverviewClient moduleKey="customers" context={context} canCreate={can(context.role, "create", "customers")} />
       {!context.dealerId && canReadProjects(context.role) ? (
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">

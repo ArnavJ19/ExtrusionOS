@@ -1,0 +1,197 @@
+{
+  "code": 1,
+  "received": 0,
+  "checks": [
+    {
+      "check": "rpc:save_system_configuration_atomic",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:submit_dealer_receipt_atomic",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:save_order_atomic",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:create_direct_order_atomic",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:save_ready_dispatch_atomic",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:generate_system_quote_atomic",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:handoff_system_configuration_to_production_atomic",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:complete_production_job_atomic",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:correct_completed_production_output_atomic",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:resolve_quality_rework_atomic",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:list_open_quality_rework_inspections",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:get_profile_stock_consumption_totals",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:get_profile_stock_reservation_ledger_page",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:get_dispatch_reservation_ledger_page",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:get_finished_production_readiness",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:get_finishing_workload",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:get_manual_billet_allocation_options",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:get_invoice_source_options",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:get_dealer_quote_stock_availability",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:issue_dispatch_return_credit_note_atomic",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:reverse_credit_note_atomic",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:get_dashboard_snapshot",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:get_advanced_analytics_snapshot",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "rpc:get_operation_database_page",
+      "status": "unavailable",
+      "detail": "REST schema could not be verified."
+    },
+    {
+      "check": "invoices:supplier_snapshot",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    },
+    {
+      "check": "invoices:customer_snapshot",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    },
+    {
+      "check": "quotes:system_configuration_id",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    },
+    {
+      "check": "quote_items:configuration_cut_snapshot",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    },
+    {
+      "check": "order_items:configuration_cut_snapshot",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    },
+    {
+      "check": "dispatches:actual_dispatched_at",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    },
+    {
+      "check": "packing_list_items:net_length_m",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    },
+    {
+      "check": "packaging_jobs:finishing_job_id",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    },
+    {
+      "check": "finishing_accepted_outputs:receipt_kind",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    },
+    {
+      "check": "profile_stock_reservations:reserved_pieces",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    },
+    {
+      "check": "profile_stock_reservations:initial_reserved_weight_kg",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    },
+    {
+      "check": "profile_stock_reservations:initial_reserved_length_m",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    },
+    {
+      "check": "profile_stock_reservations:initial_reserved_pieces",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    },
+    {
+      "check": "profile_stock_consumptions:consumed_pieces",
+      "status": "unavailable",
+      "detail": "Zero-row column query could not be verified."
+    }
+  ],
+  "stderr": ""
+}

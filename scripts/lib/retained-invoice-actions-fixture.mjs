@@ -17,17 +17,18 @@ let actions;try{actions=require("../../lib/actions/invoices.ts");}finally{Module
 export function createInvoiceActionFixture(db){
   const state={context:{companyId:f.company,userId:f.actor,role:"owner",dealerId:null},calls:[],paths:[],readOverride:null,rpcOverride:null};
   const client={from(table){
-    assert.ok(["orders","dispatches","invoices","packing_list_items_authorized"].includes(table),table);
+    assert.ok(["orders","dispatches","invoices","packing_list_items_authorized","invoice_dispatch_tax_basis_authorized","company_settings"].includes(table),table);
     const call={table,filters:[],sort:[],range:null,count:false};
     const query={select(_columns,options){call.count=options?.count==="exact";return query;},
       eq(column,value){assert.match(column,/^[a-z_]+$/);call.filters.push([column,value]);return query;},
+      in(column,value){assert.match(column,/^[a-z_]+$/);assert.ok(Array.isArray(value));call.filters.push([column,value,'in']);return query;},
       order(column,{ascending=true}={}){assert.match(column,/^[a-z_]+$/);call.sort.push([column,ascending]);return query;},
       range(start,end){call.range=[start,end];return query;},maybeSingle(){return execute(true);},then(resolve,reject){return execute(false).then(resolve,reject);}};
     async function execute(single){
       state.calls.push(call);
       assert.ok(call.filters.some(([column,value])=>column==="company_id"&&value===state.context.companyId),"Source read must derive company from the session");
       const actual=table==="packing_list_items_authorized"?"packing_list_items":table;
-      const where=call.filters.map(([column],i)=>`${column}=$${i+1}`).join(" and "),values=call.filters.map(([,value])=>value);
+      const where=call.filters.map(([column,,operator],i)=>operator==='in'?`${column}=any($${i+1})`:`${column}=$${i+1}`).join(" and "),values=call.filters.map(([,value])=>value);
       const sort=call.sort.map(([column,ascending])=>`${column} ${ascending?"asc":"desc"}`).join(",");
       const [start,end]=call.range??[0,single?0:999];
       const result=await db.query(`select * from ${actual} where ${where}${sort?` order by ${sort}`:""} limit ${end-start+1} offset ${start}`,values);
@@ -44,6 +45,7 @@ export function createInvoiceActionFixture(db){
         let result;
         if(name==="get_invoice_source_options")result=await tx.query("select public.get_invoice_source_options($1,$2,$3,$4,$5) data",[args.p_kind,args.p_search,args.p_order_id,args.p_invoice_id,args.p_selected_id]);
         else if(name==="save_invoice_atomic")result=await tx.query("select public.save_invoice_atomic($1,$2,$3,$4) data",[args.p_invoice_id,args.p_invoice,args.p_items,args.p_replace_items]);
+        else if(name==="save_reviewed_invoice_atomic")result=await tx.query("select public.save_reviewed_invoice_atomic($1,$2,$3,$4) data",[args.p_invoice_id,args.p_invoice,args.p_items,args.p_replace_items]);
         else if(name==="replace_invoice_items_atomic")result=await tx.query("select public.replace_invoice_items_atomic($1,$2) data",[args.p_invoice_id,args.p_items]);
         else throw new Error(`Unexpected invoice RPC ${name}`);
         await tx.exec("set constraints all immediate;set constraints all deferred;");return result.rows[0].data;

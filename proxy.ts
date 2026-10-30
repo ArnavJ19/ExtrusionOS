@@ -95,6 +95,17 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (user && (pathname === "/portal/self-service" || pathname.startsWith("/portal/self-service/"))) {
+    const portalIdentity = await supabase.rpc("portal_self_service_command", { p_command: "identity.load", p_payload: {} });
+    if (portalIdentity.error || portalIdentity.data?.kind !== "identity") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/access-suspended";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return response;
+  }
+
   if (user && isProtectedPath(pathname)) {
     const { data: appUser, error: appUserError } = await supabase
       .from("app_users")

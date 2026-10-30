@@ -1,0 +1,2 @@
+import {getSessionContext} from "@/lib/auth";import {redirect} from "next/navigation";import {PortalResponseReview} from "@/components/modules/customer-self-service";
+export default async function PortalResponsesPage(){const c=await getSessionContext();if(c.dealerId||!["owner","admin","sales_manager","sales"].includes(c.role))redirect("/dashboard");return <PortalResponseReview key={`${c.companyId}:${c.userId}`}/>;}

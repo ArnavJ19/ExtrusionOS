@@ -31,6 +31,7 @@ import { RecordNextAction } from "@/components/modules/shared/record-next-action
 import { TransactionProgressPanel } from "@/components/modules/shared/transaction-evidence";
 import { LinkedDocumentsPanel } from "@/components/modules/shared/linked-documents";
 import { orderStockCoverageSchema } from "@/lib/orders/stock-coverage";
+import { PartialOrderProgress } from "@/components/modules/orders/partial-progress";
 
 const ORDER_JOB_LIMIT = 200;
 
@@ -183,6 +184,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
       <ErpControlPanel title="Delivery closure" actions={deliveryControls} />
       {showProgress ? <OrderProgressPanel progress={orderProgress} dispatch={dispatchProgress} jobsUnavailable={jobsUnavailable} canOpenJobs={can(context.role, "read", "production")} /> : null}
+      {!context.dealerId && !context.role.startsWith("dealer") ? <PartialOrderProgress key={`${context.companyId}:${context.userId}:${id}`} orderId={id}/> : null}
       {lineSchedule ? <OrderLineSchedulePanel orderId={order.id} initial={lineSchedule.data} unavailableMessage={lineSchedule.message} canWrite={canSetLineSchedule(context.role)} /> : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">

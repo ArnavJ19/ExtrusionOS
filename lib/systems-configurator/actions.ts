@@ -2,6 +2,7 @@
 
 import { loadReservationConsumptionTotals } from "@/lib/inventory/reservation-consumption";
 import { isUsableProductionDieForProfile, usableProductionDieStatuses } from "@/lib/workflow/production-dies";
+import { randomUUID } from "node:crypto";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -16,6 +17,13 @@ import { getBatchAvailablePieces, getBatchReservationAllocation, groupProfileRes
 import { hasCriticalWarnings } from "./warning-categories";
 import { getSystemsConfiguratorContext } from "./access";
 import { loadCompleteSystemProfileSeries } from "./profile-library";
+import {
+  assessConfigurationRelease,
+  canonicalJson,
+  configurationReleaseInputSnapshot,
+  configurationReleaseSourceSchema,
+  persistedOutputSnapshot
+} from "@/lib/workflow/configuration-release";
 import {
   finishOptionSchema,
   glassItemSchema,
@@ -276,6 +284,74 @@ function templateFromRows(templateRow: any, systemType: SystemType, systemProfil
   };
 }
 
+async function captureConfigurationReleaseSource(supabase: Awaited<ReturnType<typeof createClient>>, configurationId: string) {
+  const { data, error } = await supabase.rpc("configuration_release_command", {
+    p_command: "source.capture",
+    p_payload: { configuration_id: configurationId }
+  });
+  if (error || !data) throw error ?? new Error("Could not capture configurator source versions.");
+  return configurationReleaseSourceSchema.parse(data);
+}
+
+function sourceVersionsMatch(left: Awaited<ReturnType<typeof captureConfigurationReleaseSource>>, right: Awaited<ReturnType<typeof captureConfigurationReleaseSource>>) {
+  return left.configuration_id === right.configuration_id
+    && left.input_fingerprint === right.input_fingerprint
+    && left.rules_fingerprint === right.rules_fingerprint
+    && left.rules_revision === right.rules_revision
+    && canonicalJson(left.input_snapshot) === canonicalJson(right.input_snapshot)
+    && canonicalJson(left.rules_snapshot) === canonicalJson(right.rules_snapshot);
+}
+
+function nullableNumber(value: unknown) {
+  if (value == null) return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+async function loadPersistedConfigurationOutput(supabase: Awaited<ReturnType<typeof createClient>>, companyId: string, configurationId: string) {
+  const client = supabase as any;
+  const [profiles, glass, beading, hardware, materials] = await Promise.all([
+    client.from("system_profile_cuts").select("*").eq("company_id", companyId).eq("configuration_id", configurationId).order("sort_order").order("id"),
+    client.from("system_glass_cuts_authorized").select("*").eq("company_id", companyId).eq("configuration_id", configurationId).order("panel_index").order("glass_label").order("id"),
+    client.from("system_beading_cuts").select("*").eq("company_id", companyId).eq("configuration_id", configurationId).order("panel_index").order("bead_position").order("profile_id", { nullsFirst: false }).order("id"),
+    client.from("system_hardware_bom_authorized").select("*").eq("company_id", companyId).eq("configuration_id", configurationId).order("hardware_category").order("item_code").order("hardware_item_id", { nullsFirst: false }).order("id"),
+    client.from("system_material_summary_authorized").select("*").eq("company_id", companyId).eq("configuration_id", configurationId).order("material_type").order("item_code", { nullsFirst: false }).order("item_id", { nullsFirst: false }).order("unit").order("rate", { nullsFirst: false }).order("id")
+  ]);
+  for (const result of [profiles, glass, beading, hardware, materials]) if (result.error) throw result.error;
+
+  return {
+    system_profile_cuts: (profiles.data ?? []).map((row: any) => ({
+      profile_id: row.profile_id, component_role: row.component_role, profile_code: row.profile_code, profile_name: row.profile_name,
+      cut_length_mm: nullableNumber(row.cut_length_mm), quantity: nullableNumber(row.quantity), total_length_m: nullableNumber(row.total_length_m),
+      section_weight_kg_per_m: nullableNumber(row.section_weight_kg_per_m), total_weight_kg: nullableNumber(row.total_weight_kg),
+      angle_left: row.angle_left, angle_right: row.angle_right, deduction_mm: nullableNumber(row.deduction_mm), addition_mm: nullableNumber(row.addition_mm),
+      stock_length_mm: nullableNumber(row.stock_length_mm), wastage_percent: nullableNumber(row.wastage_percent), remarks: row.remarks, sort_order: nullableNumber(row.sort_order)
+    })),
+    system_glass_cuts: (glass.data ?? []).map((row: any) => ({
+      glass_id: row.glass_id, panel_index: nullableNumber(row.panel_index), glass_label: row.glass_label,
+      width_mm: nullableNumber(row.width_mm), height_mm: nullableNumber(row.height_mm), quantity: nullableNumber(row.quantity),
+      area_sqft: nullableNumber(row.area_sqft), area_sqm: nullableNumber(row.area_sqm), glass_type: row.glass_type,
+      thickness_mm: nullableNumber(row.thickness_mm), rate: nullableNumber(row.rate), amount: nullableNumber(row.amount),
+      deduction_width_mm: nullableNumber(row.deduction_width_mm), deduction_height_mm: nullableNumber(row.deduction_height_mm), remarks: row.remarks
+    })),
+    system_beading_cuts: (beading.data ?? []).map((row: any) => ({
+      profile_id: row.profile_id, panel_index: nullableNumber(row.panel_index), bead_position: row.bead_position,
+      cut_length_mm: nullableNumber(row.cut_length_mm), quantity: nullableNumber(row.quantity), total_length_m: nullableNumber(row.total_length_m), remarks: row.remarks
+    })),
+    system_hardware_bom: (hardware.data ?? []).map((row: any) => ({
+      hardware_item_id: row.hardware_item_id, item_code: row.item_code, item_name: row.item_name,
+      hardware_category: row.hardware_category, quantity: nullableNumber(row.quantity), unit: row.unit,
+      rate: nullableNumber(row.rate), amount: nullableNumber(row.amount), remarks: row.remarks
+    })),
+    system_material_summary: (materials.data ?? []).map((row: any) => ({
+      material_type: row.material_type, item_id: row.item_id, item_code: row.item_code, item_name: row.item_name,
+      quantity: nullableNumber(row.quantity), unit: row.unit, total_weight_kg: nullableNumber(row.total_weight_kg),
+      total_length_m: nullableNumber(row.total_length_m), total_area_sqft: nullableNumber(row.total_area_sqft), total_area_sqm: nullableNumber(row.total_area_sqm),
+      rate: nullableNumber(row.rate), amount: nullableNumber(row.amount)
+    }))
+  };
+}
+
 export async function calculateSystemConfigurationProject(configurationId: string) {
   const context = await getSystemsConfiguratorContext("read");
   if (!['owner', 'admin'].includes(context.role)) throw new Error("Only owners and admins can calculate internal system costing.");
@@ -287,6 +363,10 @@ export async function calculateSystemConfigurationProject(configurationId: strin
     .eq("company_id", context.companyId)
     .single();
   if (configurationError || !configuration) throw configurationError ?? new Error("Configuration not found");
+  const sourceBefore = await captureConfigurationReleaseSource(supabase, configurationId);
+  if (canonicalJson(configurationReleaseInputSnapshot(configuration)) !== canonicalJson(sourceBefore.input_snapshot)) {
+    throw new Error("Configuration inputs changed before calculation started. Reload and calculate again.");
+  }
 
   const [series, systemProfiles, hardwareItems, glassItem, finishOption, template, settings] = await Promise.all([
     supabase.from("system_series").select("*").eq("id", configuration.series_id).eq("company_id", context.companyId).single(),
@@ -304,6 +384,11 @@ export async function calculateSystemConfigurationProject(configurationId: strin
   if (finishOption.error) throw finishOption.error;
   if (template.error) throw template.error;
   if (settings.error) throw settings.error;
+
+  const sourceAfterReads = await captureConfigurationReleaseSource(supabase, configurationId);
+  if (!sourceVersionsMatch(sourceBefore, sourceAfterReads)) {
+    throw new Error("Configuration inputs or configurator rules changed while they were being loaded. Calculate again.");
+  }
 
   const activeSystemProfiles = systemProfiles.filter((item: any) => item.is_active !== false);
 
@@ -358,14 +443,74 @@ export async function calculateSystemConfigurationProject(configurationId: strin
   };
   const costing = result.costingSummary;
   const hasCriticalCalculationWarnings = hasCriticalWarnings(result.warnings);
+  const marginPercent = toNumber(options.margin_percent, configuration.margin_percent || settings.data?.default_margin_percent || 15);
+  const gstPercent = toNumber(options.gst_percent, configuration.gst_percent || settings.data?.default_gst_percent || 18);
+  const header = {
+    status: hasCriticalCalculationWarnings ? "draft" : "calculated",
+    subtotal: costing?.subtotalBeforeGst ?? 0,
+    gst_amount: costing?.gstAmount ?? 0,
+    grand_total: costing?.grandTotal ?? 0,
+    internal_cost: costing?.internalCost ?? 0,
+    selling_price: costing?.grandTotal ?? 0,
+    margin_percent: marginPercent,
+    gst_percent: gstPercent
+  };
   const { error: updateError } = await supabase.rpc("save_system_configuration_atomic", {
     p_configuration_id: configurationId,
     p_mode: "calculation",
     p_expected_updated_at: configuration.updated_at,
     p_rows: rows,
-    p_header: { status: hasCriticalCalculationWarnings ? "draft" : "calculated", subtotal: costing?.subtotalBeforeGst ?? 0, gst_amount: costing?.gstAmount ?? 0, grand_total: costing?.grandTotal ?? 0, internal_cost: costing?.internalCost ?? 0, selling_price: costing?.grandTotal ?? 0, margin_percent: toNumber(options.margin_percent, configuration.margin_percent || settings.data?.default_margin_percent || 15), gst_percent: toNumber(options.gst_percent, configuration.gst_percent || settings.data?.default_gst_percent || 18) }
+    p_header: header
   });
   if (updateError) throw updateError;
+
+  const outputSourceBeforeRead = await captureConfigurationReleaseSource(supabase, configurationId);
+  if (!sourceVersionsMatch(sourceAfterReads, outputSourceBeforeRead)) {
+    throw new Error("Configuration inputs or source rules changed before the saved calculation could be captured. Calculate again.");
+  }
+  const persistedRows = await loadPersistedConfigurationOutput(supabase, context.companyId, configurationId);
+  const outputSourceAfterRead = await captureConfigurationReleaseSource(supabase, configurationId);
+  if (!sourceVersionsMatch(outputSourceBeforeRead, outputSourceAfterRead)
+    || outputSourceBeforeRead.output_revision !== outputSourceAfterRead.output_revision) {
+    throw new Error("Saved configurator output changed while its release snapshot was being captured. Calculate again.");
+  }
+
+  const releaseAssessment = assessConfigurationRelease({
+    configuration,
+    series: series.data,
+    template: template.data,
+    systemProfiles: activeSystemProfiles,
+    hardwareItems: hardwareItems.data ?? [],
+    glassItem: glassItem.data,
+    finishOption: finishOption.data,
+    companySettings: settings.data,
+    result
+  });
+  const outputSnapshot = persistedOutputSnapshot(persistedRows, result, releaseAssessment, {
+    subtotal: header.subtotal,
+    gst_amount: header.gst_amount,
+    grand_total: header.grand_total,
+    internal_cost: header.internal_cost,
+    selling_price: header.selling_price,
+    margin_percent: header.margin_percent,
+    gst_percent: header.gst_percent
+  });
+  const { error: snapshotError } = await supabase.rpc("configuration_release_command", {
+    p_command: "snapshot.create",
+    p_payload: {
+      configuration_id: configurationId,
+      request_id: randomUUID(),
+      expected_input_fingerprint: sourceAfterReads.input_fingerprint,
+      expected_rules_fingerprint: sourceAfterReads.rules_fingerprint,
+      expected_rules_revision: sourceAfterReads.rules_revision,
+      expected_output_revision: outputSourceAfterRead.output_revision,
+      readiness: releaseAssessment.readiness,
+      unresolved_reasons: releaseAssessment.unresolvedReasons,
+      estimated_fields: releaseAssessment.estimatedFields,
+      output_snapshot: outputSnapshot
+    }
+  });
+  if (snapshotError) throw snapshotError;
 
   revalidatePath(`/systems-configurator/projects/${configurationId}`);
   revalidatePath(`/systems-configurator/projects/${configurationId}/cutting-list`);
@@ -451,7 +596,7 @@ export async function handoffSystemConfigurationToProduction(configurationId: st
     if (existingOrderResult.error) throw existingOrderResult.error;
     existingOrderId = existingOrderResult.data?.id ?? null;
   }
-  if (configuration.quote_id && !existingOrderId) throw new Error("Convert the approved quote to an order before production handoff.");
+  if (!existingOrderId) throw new Error("Convert the approved system quotation to a canonical customer order before production handoff.");
 
   const remarks = buildProductionJobRemarks(configuration.configuration_number, configuration.design_reference);
   const existingJobsForConfiguration = existingOrderId

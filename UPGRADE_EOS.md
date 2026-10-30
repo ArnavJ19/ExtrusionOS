@@ -9,7 +9,7 @@ Employees should enter new facts once, follow an agreed operating method, and se
 
 This document explains the target behaviour, expected impact, implementation complexity, dependencies, and acceptance example for every feature. It is a planning reference, not a claim that 100 features are missing or delivered. Existing capabilities must be inspected and reused before building extensions. Impact descriptions are expected benefits; measure them with employees rather than treating them as proven savings.
 
-Verification update, 29 October 2026: 77 features have checked delivery records, five remain explicitly unchecked (6, 84, 89, 91 and 92), and 18 have no delivery record. All 17 previously unchecked entries were exercised locally; 12 pending visual gates are now closed. The five retained gates require signed-in operator acceptance beyond the available fixtures. A checked record applies only to its stated implementation and verification scope; it does not prove hosted rollout or physical factory acceptance. [Current evidence and remaining gates](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md).
+Verification update, 30 October 2026: 95 features have checked local delivery records and five earlier operator gates remain explicitly unchecked (6, 84, 89, 91 and 92). Batch 6 adds eighteen implemented and audited records: its final full suite passes 2,842 tests across 76 suites, lint/typecheck and the production Webpack build pass, the complete local schema replays 282/282 files, and 24 styled desktop/phone captures pass. A checked record applies only to its stated implementation and verification scope; it does not prove hosted rollout or physical factory acceptance. [Earlier gates](docs/EOS_UNCHECKED_ACCEPTANCE_2026-10-29.md); [Batch 6 source, audit and acceptance boundaries](EOS_UPGRADE_BATCH_6.md).
 
 ## How to use this catalogue
 
@@ -247,6 +247,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 19. Connections to accounting systems and equipment
 
+- [x] **Implemented and audited locally, 30 October 2026.** Mapped receipt CSV import with source/row reconciliation and duplicate protection; no device or external provider connection. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
+
 - **What it does:** Replace selected repeated entry into accounting software, spreadsheets, or weighing equipment with validated import/export or a verified connection. Map fields and units, detect duplicates, and expose failed transfers and reconciliation results.
 - **Impact:** Reduces double entry and disagreement between operational and accounting records.
 - **Complexity:** Very High - effort depends on provider access, hardware protocols, mapping, retries, reconciliation, and ongoing external compatibility.
@@ -329,6 +331,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 27. Controlled correction workflow
 
+- [x] **Implemented and audited locally, 30 October 2026.** State-based draft guidance, audited payment reversal and distinct credit adjustment with retained original history. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
+
 - **What it does:** Explain the permitted correction route for each record state. Allow ordinary draft edits; use authorised reversals, amendments, or adjustments for posted stock and financial transactions. Preserve original entries, reasons, links, and any necessary reapproval.
 - **Impact:** Helps employees recover from mistakes without deleting history or asking developers to patch records.
 - **Complexity:** Very High - linked financial and stock reversals require transactional integrity, dependency checks, auditability, and concurrent-write protection.
@@ -347,6 +351,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 29. Partial completion and remaining quantities
 
+- [x] **Implemented and audited locally, 30 October 2026.** Source-line balances separate production, packing, physical departure, billing and remaining quantities; cumulative source caps remain enforced. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
+
 - **What it does:** Process an eligible portion of an order while preserving the outstanding balance against its original lines. Track production, packaging, dispatch, and billing separately. Show explicit units and prevent cumulative quantities from exceeding their valid source.
 - **Impact:** Matches everyday factory reality and avoids duplicate orders created to represent partial work.
 - **Complexity:** Very High - cumulative quantities span multiple modules, corrections, reservations, and concurrent transactions.
@@ -355,6 +361,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 30. Vehicle-based dispatch loading
 
+- [x] **Implemented and audited locally, 30 October 2026.** Reviewed measured multi-order vehicle loads retain source/destination snapshots and support selective bundle release. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
+
 - **What it does:** Collect eligible bundles into a vehicle load while retaining each order, customer, destination, and document relationship. Show total load weight and configured capacity information. Explain incompatibilities and support a reviewed loading plan.
 - **Impact:** Gives dispatch staff one operational view for preparing a vehicle carrying several orders.
 - **Complexity:** Very High - multi-order loads require compatible customer/document rules, independent source accounting, and reliable partial loading and unloading.
@@ -362,6 +370,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** Removing one order's bundle from a load updates totals and that order's availability without disturbing another order.
 
 ### 31. Visual machine and shift scheduling
+
+- [x] **Implemented and audited locally, 30 October 2026.** Machine and shift proposals expose capacity, maintenance, material readiness, conflicts and reviewed confirmation through accessible controls. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
 
 - **What it does:** Display jobs against machine and shift capacity, maintenance blocks, and material readiness. Support proposed moves through drag-and-drop and ordinary accessible controls. Identify conflicts and confirm the resulting schedule before committing changes.
 - **Impact:** Helps supervisors allocate work and understand the operational effect of moving a job.
@@ -420,6 +430,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** One drawing can support several authorised records while a user denied its contents cannot access it through another link.
 
 ### 37. Capacity-informed delivery proposals
+
+- [x] **Implemented and audited locally, 30 October 2026.** Delivery proposals expose capacity/stock assumptions, finishing lead times and missing inputs while remaining separate from customer promises. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
 
 - **What it does:** Suggest a delivery or dispatch date using eligible stock, existing commitments, production capacity, and configured finishing lead times. Display assumptions and missing inputs. Keep a proposed date distinct from an approved customer commitment.
 - **Impact:** Gives sales a reasoned starting point for delivery discussions and reduces repeated checks with the factory.
@@ -575,6 +587,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 52. Customer and dealer self-service
 
+- [x] **Implemented and audited locally, 30 October 2026.** Enabled external identities receive only their safe customer progress/document projection and submit version-bound responses for internal review. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
+
 - **What it does:** Where enabled, let authorised external users view safe progress, download permitted documents, confirm delivery details, and submit defined requests. Route submitted responses into internal review where required and identify the exact version accepted.
 - **Impact:** Reduces routine status enquiries and repeated staff entry of customer responses.
 - **Complexity:** Very High - external identity, record-level isolation, safe projections, storage access, and response authenticity need end-to-end verification.
@@ -613,6 +627,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 56. Connected returns and rework
 
+- [x] **Implemented and audited locally, 30 October 2026.** Actual partial receipts, independent inspection, held return stock, rework follow-up and separate proportional credit retain exact source lineage. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
+
 - **What it does:** Start a return or complaint from its original order line, dispatch, and affected material. Track actual return receipt, inspection, authorised disposition, rework/replacement, and any separate financial adjustment. Preserve the complete source trail.
 - **Impact:** Reduces repeated history collection and gives teams a common view of exception resolution.
 - **Complexity:** Very High - reverse stock movements, partial quantities, rework lineage, financial adjustments, and double-credit prevention cross several modules.
@@ -631,6 +647,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 58. Purchase order, receipt, and invoice matching
 
+- [x] **Implemented and audited locally, 30 October 2026.** PO snapshots, actual dispositions and reviewed supplier bills reconcile through explicit tolerance/exception holds before a pending expense is posted. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
+
 - **What it does:** Bring ordered, physically received, accepted, and billed quantities/values into one comparison. Highlight rate, quantity, freight, tax, and reference differences according to approved tolerance rules. Route unresolved exceptions to the responsible role.
 - **Impact:** Reduces manual document comparison and helps prevent paying for unexplained discrepancies.
 - **Complexity:** Very High - partial receipts, returns, multiple invoices, tolerances, units, and posting controls require a coherent purchasing lifecycle.
@@ -639,6 +657,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 59. Controlled master-data cleanup
 
+- [x] **Implemented and audited locally, 30 October 2026.** Two-person compatible master consolidation preserves history and rejects cross-company merges or retirement of a profile still needed by unfinished work. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
+
 - **What it does:** Identify likely duplicate customers, vendors, profiles, aliases, or inconsistent units and present a review queue. Let an authorised person compare records and establish the correct canonical identity. Preserve historical snapshots and references through audited consolidation.
 - **Impact:** Improves selector reliability and reduces fragmented customer, stock, and supplier histories.
 - **Complexity:** Very High - merging live references safely requires dependency analysis, ambiguity handling, transactions, and reversible recovery planning.
@@ -646,6 +666,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A reviewed consolidation retains issued-document identities and cannot merge records across companies or incompatible specifications.
 
 ### 60. Safe employee practice environment
+
+- [x] **Implemented and audited locally, 30 October 2026.** Reviewed sample quotation, inspection and partial-dispatch transactions run in a resettable client-only sample ledger without live business writers. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
 
 - **What it does:** Provide clearly labelled sample transactions for learning quotations, inspections, dispatch preparation, and other selected tasks. Keep practice stock, finance, files, identities, and outgoing communications isolated from real operations.
 - **Impact:** Lets employees gain confidence through hands-on work without affecting business records.
@@ -777,6 +799,8 @@ The development checkout already contains navigation, search, mobile entry point
 
 ### 73. Reopening work after important changes
 
+- [x] **Implemented and audited locally, 30 October 2026.** Affected downstream work enters independent source-change review while prior completion evidence and posted records remain intact. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
+
 - **What it does:** Identify downstream tasks affected by changes to approved inputs or reversal of required evidence. Reopen or route those tasks for review according to policy. Preserve previous completion and approval history, with separate correction processes for posted transactions.
 - **Impact:** Prevents previously completed checks from being incorrectly relied on after their basis changes.
 - **Complexity:** Very High - dependency analysis, controlled invalidation, partial completion, and posted financial/stock effects need careful boundaries.
@@ -794,6 +818,8 @@ The development checkout already contains navigation, search, mobile entry point
 - **Acceptance:** A shift routine appears once for the intended station and highlights unresolved work carried over from the previous period.
 
 ### 75. Reconciliation at process boundaries
+
+- [x] **Implemented and audited locally, 30 October 2026.** Selected dispatch weight and invoice value boundaries use source-derived evidence and policy holds without arbitrary balancing values. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
 
 - **What it does:** Define quantity or value checks before closing selected jobs, loads, purchasing stages, or financial tasks. Show expected, recorded, and unexplained amounts together. Route discrepancies through an approved resolution or hold, preserving source evidence.
 - **Impact:** Detects inconsistencies close to the work that created them and reduces later investigation.
@@ -1009,6 +1035,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 95. Purchase receipts from purchase orders
 
+- [x] **Implemented and audited locally, 30 October 2026.** PO-derived partial receipts preserve actual accepted/rejected/held portions, distinct shortages and agreed-rate base values without inventing accepted stock. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
+
 - **What it does:** Selecting a PO supplies vendor, material, specification, units, agreed rates, and expected quantities. Stores records actual receipt and the observed accepted, rejected, or held portions. Calculate remaining PO quantities, shortages, and receipt values using an explicit acceptance policy.
 - **Impact:** Speeds receiving and reduces differences between purchasing expectations and stores records.
 - **Complexity:** High - partial receipts, over-receipt policy, unit conversion, disposition, and supplier returns require transactional consistency.
@@ -1016,6 +1044,8 @@ For these features, every field must have a clear source. Maintain approved defa
 - **Acceptance:** A short or partly rejected receipt updates the correct outstanding quantities without falsely creating fully accepted stock.
 
 ### 96. Invoices from eligible dispatches
+
+- [x] **Implemented and audited locally, 30 October 2026.** Complete eligible dispatch manifests and canonical tax/rate basis produce reviewed drafts through the existing locked invoice writer and immutable issue snapshots. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
 
 - **What it does:** Fetch customer, dispatch references, eligible unbilled quantities, contractual billing basis, agreed rates, and applicable tax configuration. Calculate a reviewable invoice draft and preserve required snapshots on issue. Use recorded actual weight when the contract requires measured-weight billing.
 - **Impact:** Reduces invoice preparation and accidental mismatch with delivered material.
@@ -1025,6 +1055,8 @@ For these features, every field must have a clear source. Maintain approved defa
 
 ### 97. Receivables from recorded receipts
 
+- [x] **Implemented and audited locally, 30 October 2026.** Grouped actual receipts allocate atomically through the canonical ledger, with exact retry/reference protection and separate cash/credit balances. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
+
 - **What it does:** Capture or import the actual received amount, payment date, method, and reference. Suggest invoice allocations for authorised review, then calculate outstanding balances, agreed-term due dates, overdue days, and settlement status after posting. Show cash and credit adjustments separately.
 - **Impact:** Removes manual balance tracking and supports accurate customer collection discussions.
 - **Complexity:** Very High - allocations, reversals, credits, duplicate references, concurrent receipts, and invoice locking require financial integrity controls.
@@ -1032,6 +1064,8 @@ For these features, every field must have a clear source. Maintain approved defa
 - **Acceptance:** A credit adjustment can reduce a balance without being misrepresented as cash collected, and concurrent receipts cannot over-allocate an invoice.
 
 ### 98. Reviewable supplier-document extraction
+
+- [x] **Implemented and audited locally, 30 October 2026.** UTF-8 text/CSV proposals retain exact source hashes, uncertain fields and reviewed versions; arbitrary PDF/image OCR is not configured. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
 
 - **What it does:** Where extraction is implemented, read an uploaded invoice or receipt into proposed vendor, document number/date, line amounts, taxes, and totals. Match known references, flag uncertain fields and likely duplicates, and require review before confirmed financial posting.
 - **Impact:** Reduces transcription while focusing employee attention on uncertain or mismatched data.
@@ -1050,6 +1084,8 @@ For these features, every field must have a clear source. Maintain approved defa
 - **Acceptance:** A meter rollover or missing stop event is flagged for resolution instead of producing a negative consumption or fabricated operating duration.
 
 ### 100. Configurator outputs from project inputs
+
+- [x] **Implemented and audited locally, 30 October 2026.** Version-bound real-engine outputs reconcile cuts, glass, hardware, quantities, waste and cost; independent approval and canonical order lineage gate fabrication. [Tests, audit and acceptance limits](EOS_UPGRADE_BATCH_6.md).
 
 - **What it does:** Capture approved system choice, opening dimensions, quantity, layout, glass, finish, and hardware options. Apply versioned system rules to generate profile cuts, glass sizes, hardware BOM, material quantities, estimated waste, and costing. Show explanations and unresolved requirements where a required rule is missing.
 - **Impact:** Reduces repeated technical calculations and keeps cutting, glass, hardware, and quotation outputs aligned.

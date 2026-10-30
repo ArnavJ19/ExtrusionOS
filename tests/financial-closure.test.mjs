@@ -26,7 +26,9 @@ test("invoice totals are derived from the selected dispatch lines inside one ato
   assert.match(migration, /if v_dispatch_id is null then\s+raise exception 'Select a packed dispatch/);
   assert.match(migration, /invoices_company_dispatch_active_unique/);
   assert.match(invoiceActions, /dispatch_id: z\.string\(\)\.uuid\("Select the packed dispatch to invoice"\)/);
-  assert.match(invoiceActions, /rpc\("save_invoice_atomic"/);
+  assert.match(invoiceActions, /const invoiceWriter = parsed.data.source_fingerprint \? "save_reviewed_invoice_atomic" : "save_invoice_atomic"/);
+  assert.match(invoiceActions, /rpc\(invoiceWriter/);
+  assert.match(read('supabase/migrations/20261029130000_financial_workflow_review.sql'), /public\.save_invoice_atomic\(p_invoice_id/);
   assert.match(invoiceActions, /from\("packing_list_items_authorized"\)/);
   assert.doesNotMatch(invoiceActions, /subtotal\s*:/);
   assert.doesNotMatch(invoiceActions, /grand_total\s*:/);

@@ -4,6 +4,7 @@ import { ErpControlPanel } from "@/components/modules/erp-control-panel";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { booksLockControls } from "@/lib/workflow/erp-control-panels";
+import { OperationalWorkLinks } from "@/components/modules/shared/operational-work-links";
 
 export default async function SettingsPage() {
   const context = await getSessionContext();
@@ -17,6 +18,7 @@ export default async function SettingsPage() {
   const controls = controlsResult.data;
   return (
     <div className="space-y-6">
+      <OperationalWorkLinks area="settings" role={context.role} dealer={!!context.dealerId}/>
       <SettingsClient context={context} company={companyResult.data ?? { id: context.companyId, name: context.companyName }} settings={settingsResult.data} />
       {controls ? <CompanyControlsForm canEdit={["owner", "admin"].includes(context.role)} initial={{
         delivery_completion_tolerance_percent: Number(controls.delivery_completion_tolerance_percent ?? 0),

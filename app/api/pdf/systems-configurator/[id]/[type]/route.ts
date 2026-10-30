@@ -5,6 +5,7 @@ import { buildSystemConfiguratorPdf, type SystemReportType } from "@/lib/pdf/sys
 import { loadCompanyLogo } from "@/lib/pdf/logo-loader-node";
 import { getSystemQuoteReadiness } from "@/lib/systems-configurator/quote-readiness";
 import { getErrorMessage } from "@/lib/utils/errors";
+import { configurationReleaseResultSchema } from "@/lib/workflow/configuration-release";
 
 const allowedTypes = new Set<SystemReportType>(["customer_quote", "cutting_list", "glass_list", "hardware_bom", "internal_costing", "production_sheet", "optimization_report"]);
 
@@ -22,6 +23,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     if (type === "internal_costing" && !canShowInternalCost) return NextResponse.json({ error: "Internal costing report is restricted" }, { status: 403 });
 
     const supabase = await createClient();
+    const releaseBefore = await supabase.rpc("configuration_release_command", { p_command: "release.load", p_payload: { configuration_id: id } });
+    if (releaseBefore.error) throw releaseBefore.error;
+    const releaseState = configurationReleaseResultSchema.parse(releaseBefore.data);
+    if (releaseState.kind !== "release_state") throw new Error("Configuration release evidence is unavailable");
     const [companyResult, settingsResult, configurationResult, profileCutsResult, glassCutsResult, beadingCutsResult, hardwareBomResult, materialSummaryResult, optimizationRunResult] = await Promise.all([
       supabase.from("companies").select("name, legal_name, logo_url, gst_number, billing_address, city, state, pincode, phone, email").eq("id", context.companyId).single(),
       supabase.from("company_settings_authorized").select("default_quote_terms, default_terms_and_conditions, default_payment_terms, default_delivery_terms, bank_details, default_bank_details").eq("company_id", context.companyId).maybeSingle(),
@@ -45,6 +50,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       if (!readiness.ready) return NextResponse.json({ error: readiness.reason ?? "Configuration is not ready for customer quote PDF." }, { status: 409 });
     }
 
+    const releaseAfter = await supabase.rpc("configuration_release_command", { p_command: "release.load", p_payload: { configuration_id: id } });
+    if (releaseAfter.error) throw releaseAfter.error;
+    const currentRelease = configurationReleaseResultSchema.parse(releaseAfter.data);
+    if (currentRelease.kind !== "release_state" || currentRelease.current_rules_revision !== releaseState.current_rules_revision
+      || currentRelease.current_output_revision !== releaseState.current_output_revision || currentRelease.latest?.id !== releaseState.latest?.id
+      || currentRelease.status !== releaseState.status) {
+      return NextResponse.json({ error: "Configurator sources changed while preparing this document. Reload and generate it again." }, { status: 409 });
+    }
     const bytes = await buildSystemConfiguratorPdf({
       company: companyResult.data,
       settings: settingsResult.data,
@@ -57,12 +70,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       optimizationRun: optimizationRunResult.data,
       reportType: type as SystemReportType,
       canShowInternalCost,
+      releaseEvidence: { status: currentRelease.status, snapshotId: currentRelease.latest?.id ?? null, reasons: currentRelease.unresolved_reasons },
       logo: await loadCompanyLogo(companyResult.data.logo_url)
     });
 
     return new NextResponse(Buffer.from(bytes), {
       headers: {
         "Content-Type": "application/pdf",
+        "Cache-Control": "private, no-store",
         "Content-Disposition": `inline; filename="${fileName(configurationResult.data.configuration_number, type)}"`
       }
     });

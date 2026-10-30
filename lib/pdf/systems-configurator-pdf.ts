@@ -18,6 +18,7 @@ type ReportData = {
   optimizationRun?: any;
   reportType: SystemReportType;
   canShowInternalCost: boolean;
+  releaseEvidence?: { status: string; snapshotId: string | null; reasons: string[] };
   loadFont?: PdfFontLoader;
   logo?: Uint8Array | null;
 };
@@ -44,6 +45,8 @@ export async function buildSystemConfiguratorPdf(data: ReportData) {
   const customer = c.customers ?? {};
   const customerName = customer.company_name ?? customer.customer_name ?? "Walk-in customer";
   const company = data.company ?? {};
+  const technicalSheet = ["cutting_list", "glass_list", "hardware_bom", "production_sheet", "optimization_report"].includes(data.reportType);
+  const released = data.releaseEvidence?.status === "approved" || data.releaseEvidence?.status === "handed_off";
 
   const doc = await PdfDocumentWriter.create({
     title: TITLES[data.reportType],
@@ -65,9 +68,17 @@ export async function buildSystemConfiguratorPdf(data: ReportData) {
       ["Customer", customerName],
       ["Date", pdfDate(new Date())]
     ],
-    stamp: data.reportType === "internal_costing" ? { text: "Internal — confidential", tone: "void" } : c.configuration_number ? null : { text: "Draft", tone: "warning" },
+    stamp: technicalSheet && !released ? { text: "Draft - not fabrication released", tone: "warning" }
+      : data.reportType === "internal_costing" ? { text: "Internal — confidential", tone: "void" } : c.configuration_number ? null : { text: "Draft", tone: "warning" },
     subject: `${TITLES[data.reportType]} ${c.configuration_number ?? ""}`.trim()
   }, data.loadFont ?? nodeFontLoader, [data.company, data.configuration, data.profileCuts, data.glassCuts, data.beadingCuts, data.hardwareBom, data.materialSummary, data.optimizationRun]);
+
+  if (technicalSheet) {
+    doc.sectionTitle("Fabrication release", 40);
+    doc.fields([["Release status", released ? "Approved current output" : "Draft - do not use for fabrication"],
+      ["Captured snapshot", data.releaseEvidence?.snapshotId ?? "No captured snapshot"],
+      ["Required review", data.releaseEvidence?.reasons.join(" ") || (released ? "Independent approval recorded" : "Calculate and independently approve the current inputs and output.")]], { columns: 1 });
+  }
 
   const summary = () => {
     doc.sectionTitle("Configuration", 40);

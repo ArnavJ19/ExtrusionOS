@@ -32,6 +32,8 @@ export function buildInvoiceItems(
     item.profile_id = line.profile_id ?? null;
     item.die_id = line.die_id ?? null;
     item.finishing_type = line.finishing_type ?? null;
+    if (Object.prototype.hasOwnProperty.call(line, "hsn_code")) item.hsn_code = line.hsn_code;
+    if (Object.prototype.hasOwnProperty.call(line, "gst_percent")) item.gst_percent = line.gst_percent;
     item.item_description = line.item_description ?? line.component_description ?? line.notes ?? null;
 
     const isDispatchLine = Boolean(line.dispatch_id || line.bundle_number || line.gross_weight_kg);

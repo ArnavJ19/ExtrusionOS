@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { LineDeliveryQueue } from "@/components/modules/orders/order-line-schedule";
 import { loadLineDeliveryQueue } from "@/lib/workflow/order-line-schedule-loader";
 import { canReadLineSchedule } from "@/lib/workflow/order-line-schedule";
+import { OperationalWorkLinks } from "@/components/modules/shared/operational-work-links";
 
 export default async function DispatchesPage() {
   const context = await getSessionContext();
@@ -51,6 +52,7 @@ export default async function DispatchesPage() {
 
   return (
     <div className="space-y-2">
+      <OperationalWorkLinks area="dispatches" role={context.role} dealer={!!context.dealerId}/>
       <ModuleOverviewClient moduleKey="dispatches" context={context} canCreate={can(context.role, "create", "dispatches")} canUpdate={can(context.role, "update", "dispatches")} hideMetricsAndCharts={true}>
         <DispatchesDashboard
           totalDispatches={rows.length}

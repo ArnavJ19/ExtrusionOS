@@ -1,0 +1,106 @@
+TAP version 13
+# Subtest: 60: sample quote review derives quantities and GST while preserving the original ledger
+ok 1 - 60: sample quote review derives quantities and GST while preserving the original ledger
+  ---
+  duration_ms: 5.172
+  type: 'test'
+  ...
+# Subtest: 60: a reviewed partial sample dispatch depletes only its original remaining units and replays once
+ok 2 - 60: a reviewed partial sample dispatch depletes only its original remaining units and replays once
+  ---
+  duration_ms: 1.3403
+  type: 'test'
+  ...
+# Subtest: 60: observation splits reconcile actual pieces and weights without accepting held material as accepted
+ok 3 - 60: observation splits reconcile actual pieces and weights without accepting held material as accepted
+  ---
+  duration_ms: 0.7652
+  type: 'test'
+  ...
+# Subtest: 60: stale or reset reviews and edited totals cannot create sample entries
+ok 4 - 60: stale or reset reviews and edited totals cannot create sample entries
+  ---
+  duration_ms: 1.1092
+  type: 'test'
+  ...
+# Subtest: mounted receiving form records each actual disposition and never merges rejected or held quantities
+ok 5 - mounted receiving form records each actual disposition and never merges rejected or held quantities
+  ---
+  duration_ms: 3233.7239
+  type: 'test'
+  ...
+# Subtest: an edited draft bill cannot post its previously matched version
+ok 6 - an edited draft bill cannot post its previously matched version
+  ---
+  duration_ms: 1487.6939
+  type: 'test'
+  ...
+# Subtest: mounted supplier document review keeps unmatched bills on hold and posts only after a fresh match
+ok 7 - mounted supplier document review keeps unmatched bills on hold and posts only after a fresh match
+  ---
+  duration_ms: 1557.052
+  type: 'test'
+  ...
+# Subtest: receiving retains the exact request after throw and resumes after confirmation
+ok 8 - receiving retains the exact request after throw and resumes after confirmation
+  ---
+  duration_ms: 1382.7172
+  type: 'test'
+  ...
+# Subtest: receiving retains the exact request after action-result and resumes after confirmation
+ok 9 - receiving retains the exact request after action-result and resumes after confirmation
+  ---
+  duration_ms: 1046.6964
+  type: 'test'
+  ...
+# Subtest: 58/59/95/98: draft correction changes PO atomically, mixed-case duplicate lines fail, and a retired supplier can finish an existing PO
+ok 10 - 58/59/95/98: draft correction changes PO atomically, mixed-case duplicate lines fail, and a retired supplier can finish an existing PO
+  ---
+  duration_ms: 19973.7979
+  type: 'test'
+  ...
+# Subtest: purchase lifecycle keeps partial receipts, reviewed source versions, invoice identity, and expense posting atomic
+ok 11 - purchase lifecycle keeps partial receipts, reviewed source versions, invoice identity, and expense posting atomic
+  ---
+  duration_ms: 12356.9928
+  type: 'test'
+  ...
+# Subtest: purchase database pages beyond ten records and selected rows reopen the exact PO or bill source
+ok 12 - purchase database pages beyond ten records and selected rows reopen the exact PO or bill source
+  ---
+  duration_ms: 10740.0468
+  type: 'test'
+  ...
+# Subtest: receipt balances distinguish short delivery from held or rejected acceptance and derive PO base values
+ok 13 - receipt balances distinguish short delivery from held or rejected acceptance and derive PO base values
+  ---
+  duration_ms: 4.4144
+  type: 'test'
+  ...
+# Subtest: reviewable supplier text extraction parses supported invoice text and marks human matching fields
+ok 14 - reviewable supplier text extraction parses supported invoice text and marks human matching fields
+  ---
+  duration_ms: 6.4307
+  type: 'test'
+  ...
+# Subtest: CSV extraction keeps conflicting invoice identifiers uncertain and does not invent a date
+ok 15 - CSV extraction keeps conflicting invoice identifiers uncertain and does not invent a date
+  ---
+  duration_ms: 3.1716
+  type: 'test'
+  ...
+# Subtest: purchasing input contracts reject cross-company fields, invalid receipt splits, and unbalanced bills
+ok 16 - purchasing input contracts reject cross-company fields, invalid receipt splits, and unbalanced bills
+  ---
+  duration_ms: 75.461
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 43546.3131

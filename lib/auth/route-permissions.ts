@@ -57,6 +57,10 @@ type RoleRule = {
 };
 
 const roleRules: RoleRule[] = [
+  { prefix: "/dispatches/loads", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "production_manager", "production", "sales_manager", "sales"] },
+  { prefix: "/vendors/purchasing", roles: ["owner", "admin", "accounts", "inventory_manager"] },
+  { prefix: "/tasks/changes", roles: ["owner", "admin", "sales_manager", "production_manager", "factory_manager", "inventory_manager", "dispatch_manager", "quality", "accounts"] },
+  { prefix: "/customers/portal-responses", roles: ["owner", "admin", "sales_manager", "sales"] },
   { prefix: "/production/usage", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "accounts"] },
   { prefix: "/production/cutting/rules", roles: ["owner", "admin", "production_manager", "quality"] },
   { prefix: "/vendors/comparisons", roles: ["owner", "admin", "accounts"] },
@@ -142,6 +146,7 @@ export function isProtectedPath(pathname: string) {
 }
 
 export function hasRouteAccess(pathname: string, role: UserRole) {
+  if (/^\/dispatches\/[^/]+\/returns$/.test(pathname)) return ["owner", "admin", "quality", "inventory_manager", "dispatch_manager", "accounts"].includes(role);
   if (startsWithPrefix(pathname, "/mobile/jobs")) return canAccessMobileDestination(role, "jobs");
   if (startsWithPrefix(pathname, "/mobile/scan")) return canAccessMobileDestination(role, "scan");
   if (startsWithPrefix(pathname, "/mobile/dispatch")) return canAccessMobileDestination(role, "dispatch");

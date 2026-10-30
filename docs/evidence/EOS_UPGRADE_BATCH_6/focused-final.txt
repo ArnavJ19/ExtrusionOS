@@ -1,0 +1,394 @@
+TAP version 13
+# Subtest: 100: exact saved outputs require an independent approval and preserve immutable snapshots
+ok 1 - 100: exact saved outputs require an independent approval and preserve immutable snapshots
+  ---
+  duration_ms: 9002.7502
+  type: 'test'
+  ...
+# Subtest: 100: rule, input and saved-output edits each invalidate a reviewed release without changing its captured evidence
+ok 2 - 100: rule, input and saved-output edits each invalidate a reviewed release without changing its captured evidence
+  ---
+  duration_ms: 173.1323
+  type: 'test'
+  ...
+# Subtest: 100: missing rules, stale source revisions, forged outputs, cross-company and direct client writes are refused
+ok 3 - 100: missing rules, stale source revisions, forged outputs, cross-company and direct client writes are refused
+  ---
+  duration_ms: 95.7387
+  type: 'test'
+  ...
+# Subtest: 100: canonical handoff into an existing eligible order rolls back without approval and records its approved snapshot
+ok 4 - 100: canonical handoff into an existing eligible order rolls back without approval and records its approved snapshot
+  ---
+  duration_ms: 279.7307
+  type: 'test'
+  ...
+# Subtest: 100: an unrelated profile addition does not invalidate a quoted project or force a new commercial revision
+ok 5 - 100: an unrelated profile addition does not invalidate a quoted project or force a new commercial revision
+  ---
+  duration_ms: 107.0041
+  type: 'test'
+  ...
+# Subtest: 100: explicit versioned rules reconcile profile, glass, BOM, material, costing and stock waste outputs
+ok 6 - 100: explicit versioned rules reconcile profile, glass, BOM, material, costing and stock waste outputs
+  ---
+  duration_ms: 8.431
+  type: 'test'
+  ...
+# Subtest: 100: missing rules, incompatible profiles, unsafe dimensions and unreconciled material cannot be fabrication-ready
+ok 7 - 100: missing rules, incompatible profiles, unsafe dimensions and unreconciled material cannot be fabrication-ready
+  ---
+  duration_ms: 6.9585
+  type: 'test'
+  ...
+# Subtest: 100: absent observed rates stay estimated and command schemas reject client scope and malformed fingerprints
+ok 8 - 100: absent observed rates stay estimated and command schemas reject client scope and malformed fingerprints
+  ---
+  duration_ms: 3.996
+  type: 'test'
+  ...
+# Subtest: 29: exact order line packing and issued billing are independently reconciled for a real partial dispatch
+ok 9 - 29: exact order line packing and issued billing are independently reconciled for a real partial dispatch
+  ---
+  duration_ms: 9077.8694
+  type: 'test'
+  ...
+# Subtest: 56: actual partial return receipts replay exactly and independent inspection precedes measured held stock
+ok 10 - 56: actual partial return receipts replay exactly and independent inspection precedes measured held stock
+  ---
+  duration_ms: 80.8119
+  type: 'test'
+  ...
+# Subtest: 56: a partial return cannot obtain whole-row credit; proportional credit preserves cash and original invoice history
+ok 11 - 56: a partial return cannot obtain whole-row credit; proportional credit preserves cash and original invoice history
+  ---
+  duration_ms: 37.1183
+  type: 'test'
+  ...
+# Subtest: 73: important source changes route completed work for independent review and retain completion history
+ok 12 - 73: important source changes route completed work for independent review and retain completion history
+  ---
+  duration_ms: 62.3999
+  type: 'test'
+  ...
+# Subtest: 75: configured boundary tasks require current source-derived reconciliation and respect a newer hold
+ok 13 - 75: configured boundary tasks require current source-derived reconciliation and respect a newer hold
+  ---
+  duration_ms: 42.2546
+  type: 'test'
+  ...
+# Subtest: 73: source dependency comparisons include actual inspection readings independently of unchanged approval status
+ok 14 - 73: source dependency comparisons include actual inspection readings independently of unchanged approval status
+  ---
+  duration_ms: 3.7636
+  type: 'test'
+  ...
+# Subtest: 73: reviewing the latest of several source changes supersedes older pending reviews without losing their evidence
+ok 15 - 73: reviewing the latest of several source changes supersedes older pending reviews without losing their evidence
+  ---
+  duration_ms: 49.477
+  type: 'test'
+  ...
+# Subtest: 52: active external identities see only their own safe projection, document and exact-version responses
+ok 16 - 52: active external identities see only their own safe projection, document and exact-version responses
+  ---
+  duration_ms: 60.5238
+  type: 'test'
+  ...
+# Subtest: 29/52/56/73/75: new protected boundaries reject anonymous, foreign and nonfinite direct requests
+ok 17 - 29/52/56/73/75: new protected boundaries reject anonymous, foreign and nonfinite direct requests
+  ---
+  duration_ms: 24.4233
+  type: 'test'
+  ...
+# Subtest: 73/75: payment reversal flags dependent work while finance values and invoice boundaries stay restricted
+ok 18 - 73/75: payment reversal flags dependent work while finance values and invoice boundaries stay restricted
+  ---
+  duration_ms: 65.2727
+  type: 'test'
+  ...
+# Subtest: 31: full-chain schedule snapshot, shift guards and reviewed move reject stale fingerprints
+ok 19 - 31: full-chain schedule snapshot, shift guards and reviewed move reject stale fingerprints
+  ---
+  duration_ms: 9373.344
+  type: 'test'
+  ...
+# Subtest: 31: table ACLs are closed and roles are enforced inside the RPC
+ok 20 - 31: table ACLs are closed and roles are enforced inside the RPC
+  ---
+  duration_ms: 5.3808
+  type: 'test'
+  ...
+# Subtest: 37: the proposal RPC returns validated order-specific stock, job, capacity and finishing inputs
+ok 21 - 37: the proposal RPC returns validated order-specific stock, job, capacity and finishing inputs
+  ---
+  duration_ms: 82.9773
+  type: 'test'
+  ...
+# Subtest: 30: reviewed multi-order load uses measured bundles only, locks duplicate assignment and consumes no stock
+ok 22 - 30: reviewed multi-order load uses measured bundles only, locks duplicate assignment and consumes no stock
+  ---
+  duration_ms: 110.8632
+  type: 'test'
+  ...
+# Subtest: 30: assignment uniqueness is released only after a reviewed load removes the bundle
+ok 23 - 30: assignment uniqueness is released only after a reviewed load removes the bundle
+  ---
+  duration_ms: 29.4671
+  type: 'test'
+  ...
+# Subtest: 30: a stale saved bundle can be selectively released from a past load with an inactive vehicle
+ok 24 - 30: a stale saved bundle can be selectively released from a past load with an inactive vehicle
+  ---
+  duration_ms: 40.3633
+  type: 'test'
+  ...
+# Subtest: factory planning inputs reject extra fields, non-finite kg and invalid times
+ok 25 - factory planning inputs reject extra fields, non-finite kg and invalid times
+  ---
+  duration_ms: 4.9317
+  type: 'test'
+  ...
+# Subtest: reviewed schedule inspection recognizes an overnight shift and blocks maintenance and overlap
+ok 26 - reviewed schedule inspection recognizes an overnight shift and blocks maintenance and overlap
+  ---
+  duration_ms: 24.5422
+  type: 'test'
+  ...
+# Subtest: delivery proposal separates covered stock, full planned demand and missing finishing assumptions
+ok 27 - delivery proposal separates covered stock, full planned demand and missing finishing assumptions
+  ---
+  duration_ms: 11.5444
+  type: 'test'
+  ...
+# Subtest: vehicle-load review inputs reject duplicates and the measured weight total is stable
+ok 28 - vehicle-load review inputs reject duplicates and the measured weight total is stable
+  ---
+  duration_ms: 1.0623
+  type: 'test'
+  ...
+# Subtest: 27: uncertain credit adjustment retries its actual original posting date and reason
+ok 29 - 27: uncertain credit adjustment retries its actual original posting date and reason
+  ---
+  duration_ms: 77.7145
+  type: 'test'
+  ...
+# Subtest: 27: a changed retry reason, stale preview or unauthorized role cannot post a correction
+ok 30 - 27: a changed retry reason, stale preview or unauthorized role cannot post a correction
+  ---
+  duration_ms: 60.4257
+  type: 'test'
+  ...
+# Subtest: CSV preview maps Indian date formats and grouped INR amounts without accepting ambiguous values
+ok 31 - CSV preview maps Indian date formats and grouped INR amounts without accepting ambiguous values
+  ---
+  duration_ms: 11682.9368
+  type: 'test'
+  ...
+# Subtest: invoice source fingerprints are stable across line order and change with source values
+ok 32 - invoice source fingerprints are stable across line order and change with source values
+  ---
+  duration_ms: 20.7647
+  type: 'test'
+  ...
+# Subtest: reviewed invoice save locks the manifest, rejects stale tax/source review, and seals issued lines
+ok 33 - reviewed invoice save locks the manifest, rejects stale tax/source review, and seals issued lines
+  ---
+  duration_ms: 139.1906
+  type: 'test'
+  ...
+# Subtest: one actual receipt posts through the canonical payment ledger and replays without duplicate rows
+ok 34 - one actual receipt posts through the canonical payment ledger and replays without duplicate rows
+  ---
+  duration_ms: 92.6901
+  type: 'test'
+  ...
+# Subtest: invoice locks prevent over-allocation and duplicate bank references across receipts
+ok 35 - invoice locks prevent over-allocation and duplicate bank references across receipts
+  ---
+  duration_ms: 52.9402
+  type: 'test'
+  ...
+# Subtest: credit adjustments remain distinct from cash and reversals preserve grouped receipt history
+ok 36 - credit adjustments remain distinct from cash and reversals preserve grouped receipt history
+  ---
+  duration_ms: 79.0528
+  type: 'test'
+  ...
+# Subtest: forged receipt context cannot extend a recorded receipt or create an unallocated sibling payment
+ok 37 - forged receipt context cannot extend a recorded receipt or create an unallocated sibling payment
+  ---
+  duration_ms: 28.5632
+  type: 'test'
+  ...
+# Subtest: standalone canonical receipts cannot reuse an ungrouped bank reference with a different request identity
+ok 38 - standalone canonical receipts cannot reuse an ungrouped bank reference with a different request identity
+  ---
+  duration_ms: 20.5591
+  type: 'test'
+  ...
+# Subtest: CSV import persists row-level reconciliation failures and same-file replay
+ok 39 - CSV import persists row-level reconciliation failures and same-file replay
+  ---
+  duration_ms: 39.2569
+  type: 'test'
+  ...
+# Subtest: finance roles, company scope, and protected receipt tables are enforced in SQL
+ok 40 - finance roles, company scope, and protected receipt tables are enforced in SQL
+  ---
+  duration_ms: 22.3686
+  type: 'test'
+  ...
+# Subtest: migration seals issued totals and scopes workflow tables to finance readers
+ok 41 - migration seals issued totals and scopes workflow tables to finance readers
+  ---
+  duration_ms: 4.1465
+  type: 'test'
+  ...
+# Subtest: 59: reviewed consolidation requires compatible identity, another administrator and an unchanged comparison
+ok 42 - 59: reviewed consolidation requires compatible identity, another administrator and an unchanged comparison
+  ---
+  duration_ms: 8522.0118
+  type: 'test'
+  ...
+# Subtest: 59: consolidation retires a duplicate without rewriting its historical order reference and rejects reactivation/cycles
+ok 43 - 59: consolidation retires a duplicate without rewriting its historical order reference and rejects reactivation/cycles
+  ---
+  duration_ms: 147.8329
+  type: 'test'
+  ...
+# Subtest: 59: foreign masters, incompatible specifications and direct client table access are refused
+ok 44 - 59: foreign masters, incompatible specifications and direct client table access are refused
+  ---
+  duration_ms: 7.2333
+  type: 'test'
+  ...
+# Subtest: 59: retiring a profile with unfinished source work is refused without deactivating it or changing the proposal
+ok 45 - 59: retiring a profile with unfinished source work is refused without deactivating it or changing the proposal
+  ---
+  duration_ms: 58.7517
+  type: 'test'
+  ...
+# Subtest: 59: cleanup requests preserve authority and require a specific reviewed comparison
+ok 46 - 59: cleanup requests preserve authority and require a specific reviewed comparison
+  ---
+  duration_ms: 3.2747
+  type: 'test'
+  ...
+# Subtest: 29: the real packing trigger caps cumulative units across distinct dispatches and guards updates
+ok 47 - 29: the real packing trigger caps cumulative units across distinct dispatches and guards updates
+  ---
+  duration_ms: 2030.6845
+  type: 'test'
+  ...
+# Subtest: 29: processing 600 of 1000 order kg leaves 400, with measured weights on a separate basis
+ok 48 - 29: processing 600 of 1000 order kg leaves 400, with measured weights on a separate basis
+  ---
+  duration_ms: 2.0208
+  type: 'test'
+  ...
+# Subtest: 56: a partial return requires actual weight, whole pieces and metres and cannot exceed the source
+ok 49 - 56: a partial return requires actual weight, whole pieces and metres and cannot exceed the source
+  ---
+  duration_ms: 3.1879
+  type: 'test'
+  ...
+# Subtest: 73/75: assurance refuses invented balancing values, missing sources and unsupported reviewer decisions
+ok 50 - 73/75: assurance refuses invented balancing values, missing sources and unsupported reviewer decisions
+  ---
+  duration_ms: 1.3365
+  type: 'test'
+  ...
+# Subtest: 52: permitted document projection rejects financial/internal fields and a response requires the reviewed source version
+ok 51 - 52: permitted document projection rejects financial/internal fields and a response requires the reviewed source version
+  ---
+  duration_ms: 1.7562
+  type: 'test'
+  ...
+# Subtest: 60: sample quote review derives quantities and GST while preserving the original ledger
+ok 52 - 60: sample quote review derives quantities and GST while preserving the original ledger
+  ---
+  duration_ms: 1.9931
+  type: 'test'
+  ...
+# Subtest: 60: a reviewed partial sample dispatch depletes only its original remaining units and replays once
+ok 53 - 60: a reviewed partial sample dispatch depletes only its original remaining units and replays once
+  ---
+  duration_ms: 0.6086
+  type: 'test'
+  ...
+# Subtest: 60: observation splits reconcile actual pieces and weights without accepting held material as accepted
+ok 54 - 60: observation splits reconcile actual pieces and weights without accepting held material as accepted
+  ---
+  duration_ms: 0.4236
+  type: 'test'
+  ...
+# Subtest: 60: stale or reset reviews and edited totals cannot create sample entries
+ok 55 - 60: stale or reset reviews and edited totals cannot create sample entries
+  ---
+  duration_ms: 0.4825
+  type: 'test'
+  ...
+# Subtest: 60: quotation, inspection and partial dispatch sample tasks use reconciled quantities
+ok 56 - 60: quotation, inspection and partial dispatch sample tasks use reconciled quantities
+  ---
+  duration_ms: 1.5434
+  type: 'test'
+  ...
+# Subtest: 60: missing, negative and nonfinite observations cannot complete a sample task
+ok 57 - 60: missing, negative and nonfinite observations cannot complete a sample task
+  ---
+  duration_ms: 0.282
+  type: 'test'
+  ...
+# Subtest: 58/59/95/98: draft correction changes PO atomically, mixed-case duplicate lines fail, and a retired supplier can finish an existing PO
+ok 58 - 58/59/95/98: draft correction changes PO atomically, mixed-case duplicate lines fail, and a retired supplier can finish an existing PO
+  ---
+  duration_ms: 9120.7869
+  type: 'test'
+  ...
+# Subtest: purchase lifecycle keeps partial receipts, reviewed source versions, invoice identity, and expense posting atomic
+ok 59 - purchase lifecycle keeps partial receipts, reviewed source versions, invoice identity, and expense posting atomic
+  ---
+  duration_ms: 9077.0765
+  type: 'test'
+  ...
+# Subtest: purchase database pages beyond ten records and selected rows reopen the exact PO or bill source
+ok 60 - purchase database pages beyond ten records and selected rows reopen the exact PO or bill source
+  ---
+  duration_ms: 8965.54
+  type: 'test'
+  ...
+# Subtest: receipt balances distinguish short delivery from held or rejected acceptance and derive PO base values
+ok 61 - receipt balances distinguish short delivery from held or rejected acceptance and derive PO base values
+  ---
+  duration_ms: 3.1368
+  type: 'test'
+  ...
+# Subtest: reviewable supplier text extraction parses supported invoice text and marks human matching fields
+ok 62 - reviewable supplier text extraction parses supported invoice text and marks human matching fields
+  ---
+  duration_ms: 2.1306
+  type: 'test'
+  ...
+# Subtest: CSV extraction keeps conflicting invoice identifiers uncertain and does not invent a date
+ok 63 - CSV extraction keeps conflicting invoice identifiers uncertain and does not invent a date
+  ---
+  duration_ms: 1.0592
+  type: 'test'
+  ...
+# Subtest: purchasing input contracts reject cross-company fields, invalid receipt splits, and unbalanced bills
+ok 64 - purchasing input contracts reject cross-company fields, invalid receipt splits, and unbalanced bills
+  ---
+  duration_ms: 34.7341
+  type: 'test'
+  ...
+1..64
+# tests 64
+# suites 0
+# pass 64
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 54402.2667
