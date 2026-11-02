@@ -1,0 +1,130 @@
+TAP version 13
+# Subtest: NOV-018/095: phone task keeps approved reference beside a blank physical observation and reviews before saving
+ok 1 - NOV-018/095: phone task keeps approved reference beside a blank physical observation and reviews before saving
+  ---
+  duration_ms: 3874.1716
+  type: 'test'
+  ...
+# Subtest: NOV-018: same-event repeated confirmation sends one write and a lost response is resolved by a read
+ok 2 - NOV-018: same-event repeated confirmation sends one write and a lost response is resolved by a read
+  ---
+  duration_ms: 874.2005
+  type: 'test'
+  ...
+# Subtest: NOV-018: device drafts recover on reload, while user/company/plan switches cannot restore old measurements
+ok 3 - NOV-018: device drafts recover on reload, while user/company/plan switches cannot restore old measurements
+  ---
+  duration_ms: 434.6887
+  type: 'test'
+  ...
+# Subtest: NOV-018: reload after an interrupted save requires an outcome read before any new submission
+ok 4 - NOV-018: reload after an interrupted save requires an outcome read before any new submission
+  ---
+  duration_ms: 1081.5376
+  type: 'test'
+  ...
+# Subtest: NOV-018/096: rejected observations retain entries, offline posting is disabled and references do not submit
+ok 5 - NOV-018/096: rejected observations retain entries, offline posting is disabled and references do not submit
+  ---
+  duration_ms: 811.7829
+  type: 'test'
+  ...
+# Subtest: NOV-095/100: read-only role sees evidence without an observation input, and missing references are explicit
+ok 6 - NOV-095/100: read-only role sees evidence without an observation input, and missing references are explicit
+  ---
+  duration_ms: 301.9527
+  type: 'test'
+  ...
+# Subtest: NOV-012/094: explicit theoretical plan applies pieces/length/kg while source refresh retains manual overrides
+ok 7 - NOV-012/094: explicit theoretical plan applies pieces/length/kg while source refresh retains manual overrides
+  ---
+  duration_ms: 938.462
+  type: 'test'
+  ...
+# Subtest: NOV-012: missing section weight leaves manual planning intact and disables theoretical application
+ok 8 - NOV-012: missing section weight leaves manual planning intact and disables theoretical application
+  ---
+  duration_ms: 583.087
+  type: 'test'
+  ...
+# Subtest: NOV-012: an estimate cannot replace an order-line cut length with a different customer specification
+ok 9 - NOV-012: an estimate cannot replace an order-line cut length with a different customer specification
+  ---
+  duration_ms: 624.4805
+  type: 'test'
+  ...
+# Subtest: NOV-018: unavailable device draft storage is explicit and observation saving still uses the server action
+ok 10 - NOV-018: unavailable device draft storage is explicit and observation saving still uses the server action
+  ---
+  duration_ms: 645.4552
+  type: 'test'
+  ...
+# Subtest: NOV-094: late responses cannot overwrite a newly selected order and source-specific input is cleared
+ok 11 - NOV-094: late responses cannot overwrite a newly selected order and source-specific input is cleared
+  ---
+  duration_ms: 994.8931
+  type: 'test'
+  ...
+# Subtest: NOV-006/096/100: collapsed invalid measurements expand and receive focus without losing other entries
+ok 12 - NOV-006/096/100: collapsed invalid measurements expand and receive focus without losing other entries
+  ---
+  duration_ms: 710.5615
+  type: 'test'
+  ...
+# Subtest: NOV-006: stage changes expose observations and optional details keep values when collapsed
+ok 13 - NOV-006: stage changes expose observations and optional details keep values when collapsed
+  ---
+  duration_ms: 673.7357
+  type: 'test'
+  ...
+# Subtest: NOV-001: partial refresh retains marked prior tasks and removes their stale action links
+ok 14 - NOV-001: partial refresh retains marked prior tasks and removes their stale action links
+  ---
+  duration_ms: 788.9012
+  type: 'test'
+  ...
+# Subtest: NOV-001: a mismatched refreshed session removes old work and same-event refresh taps stay bounded
+ok 15 - NOV-001: a mismatched refreshed session removes old work and same-event refresh taps stay bounded
+  ---
+  duration_ms: 413.8681
+  type: 'test'
+  ...
+# Subtest: NOV-001: transport failure marks retained queues and disables their stale record actions
+ok 16 - NOV-001: transport failure marks retained queues and disables their stale record actions
+  ---
+  duration_ms: 611.0904
+  type: 'test'
+  ...
+# Subtest: NOV-002: unavailable preference storage does not claim a pin was saved
+ok 17 - NOV-002: unavailable preference storage does not claim a pin was saved
+  ---
+  duration_ms: 330.3201
+  type: 'test'
+  ...
+# Subtest: NOV-002/100: permitted workspace pins support explicit keyboard reordering and company isolation
+ok 18 - NOV-002/100: permitted workspace pins support explicit keyboard reordering and company isolation
+  ---
+  duration_ms: 410.6777
+  type: 'test'
+  ...
+# Subtest: NOV-100: enlarged text and keyboard review keep focused controls visible without page overflow
+ok 19 - NOV-100: enlarged text and keyboard review keep focused controls visible without page overflow
+  ---
+  duration_ms: 487.0754
+  type: 'test'
+  ...
+# Subtest: NOV-100: keyboard navigation to the next phone check is not covered by the sticky action bar
+ok 20 - NOV-100: keyboard navigation to the next phone check is not covered by the sticky action bar
+  ---
+  duration_ms: 350.0804
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 17507.0603

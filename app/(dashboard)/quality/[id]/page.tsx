@@ -9,7 +9,8 @@ import { redirect } from "next/navigation";
 import { ErpControlPanel } from "@/components/modules/erp-control-panel";
 import { qualityRejectControls } from "@/lib/workflow/erp-control-panels";
 import { InspectionResultsPanel } from "@/components/modules/quality/inspection-plans";
-import { canEditPlans, evaluationSchema } from "@/lib/workflow/inspection-plans";
+import { canEditPlans, canReadPlans, evaluationSchema } from "@/lib/workflow/inspection-plans";
+import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 
 export default async function QualityInspectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -30,7 +31,7 @@ export default async function QualityInspectionDetailPage({ params }: { params: 
   return <div className="space-y-6">
     <RecordDetailClient moduleKey="quality" context={context} recordId={id} canEdit={!terminal && can(context.role, "update", "quality")} />
     {!context.dealerId ? <WorkRequirementsPanel companyId={context.companyId} role={context.role} stage="quality" source={{ type: "quality_inspection", id }} /> : null}
-    {evaluation?.success ? <InspectionResultsPanel inspectionId={id} initial={evaluation.data} canRecord={canEditPlans(context.role)} /> : null}
+    {evaluation?.success ? <InspectionResultsPanel inspectionId={id} initial={evaluation.data} canRecord={canEditPlans(context.role)} contextScope={`${context.companyId}:${context.userId}:${context.role}`} referenceHref={evaluation.data.state !== "no_plan" && canReadPlans(context.role) ? `/quality/plans/${evaluation.data.plan_id}` : undefined} /> : inspection && !context.dealerId ? <QueryErrorNotice messages={["The applicable inspection reference could not be loaded. Refresh before recording observations or assuming no plan applies."]} /> : null}
     {!context.dealerId && canFollow(context.role, "quality_inspection") ? <RecordFollow entityType="quality_inspection" entityId={id} /> : null}
     <ErpControlPanel title="Rejected material" actions={controls} />
   </div>;

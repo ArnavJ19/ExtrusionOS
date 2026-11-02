@@ -5,6 +5,7 @@ import { can, type Resource } from "../auth/permissions.ts";
 import { hasRouteAccess } from "../auth/route-permissions.ts";
 import { isFeatureEnabled } from "../enterprise/features.ts";
 import { getBusinessDateBoundaries } from "../utils/business-date.ts";
+import { nextRecordAction, type NextActionRecord } from "../workflow/record-next-action.ts";
 
 export const MY_WORK_LIMIT = 10;
 
@@ -18,6 +19,7 @@ export type WorkItem = {
   href: string;
   actionLabel: string;
   blocker: string | null;
+  ownership?: string;
 };
 
 export type WorkQueue = {
@@ -28,6 +30,7 @@ export type WorkQueue = {
   items: WorkItem[];
   hasMore: boolean;
   error: string | null;
+  errorKind?: "denied" | "unavailable";
 };
 
 export type MyWork = { today: string; assigned: WorkQueue; unassigned: WorkQueue; departments: WorkQueue[] };
@@ -99,7 +102,11 @@ type Row = Record<string, any>;
 async function readQueue(target: WorkQueue, read: () => PromiseLike<{ data: Row[] | null; error: unknown }>, map: (row: Row) => WorkItem) {
   try {
     const result = await read();
-    if (result.error || !Array.isArray(result.data)) throw new Error("Queue unavailable");
+    if (result.error || !Array.isArray(result.data)) {
+      const code = (result.error as { code?: string } | null)?.code;
+      target.errorKind = ["42501", "PGRST301", "PGRST302"].includes(code ?? "") ? "denied" : "unavailable";
+      throw new Error("Queue unavailable");
+    }
     target.hasMore = result.data.length > MY_WORK_LIMIT;
     target.items = result.data.slice(0, MY_WORK_LIMIT).map(map);
   } catch {
@@ -122,7 +129,12 @@ async function resolveTaskLinks(supabase: SupabaseClient, context: SessionContex
       const records = new Map((data as Row[]).map((row) => [row.id, row]));
       for (const item of linked) {
         const record = records.get(item.href.split("/").at(-1)!);
-        if (record) item.blocker = recordedBlocker(String(record[source.statusField]));
+        if (record) {
+          item.blocker = recordedBlocker(String(record[source.statusField]));
+          const kind = ({ production_jobs: "production", dispatches: "dispatch", invoices: "invoice", quotes: "quote", orders: "order", quality_inspections: "quality" } as Record<string, NextActionRecord["kind"]>)[source.table];
+          const action = kind ? nextRecordAction(context.role, { kind, id: record.id, status: String(record[source.statusField]) }, context.dealerId) : null;
+          if (action?.href) { item.href = action.href; item.actionLabel = action.label; }
+        }
         else unavailableTaskLink(item);
       }
     } catch {
@@ -165,8 +177,8 @@ export async function loadMyWork(supabase: SupabaseClient, context: SessionConte
   };
   const reads: Promise<void>[] = [];
   if (can(context.role, "read", "tasks") && hasRouteAccess("/tasks", context.role)) {
-    reads.push(readQueue(assigned, () => readTasks(true), taskItem));
-    reads.push(readQueue(unassigned, () => readTasks(false), taskItem));
+    reads.push(readQueue(assigned, () => readTasks(true), (row) => ({ ...taskItem(row), ownership: "Assigned to you" })));
+    reads.push(readQueue(unassigned, () => readTasks(false), (row) => ({ ...taskItem(row), ownership: "Unassigned; opening does not claim this task" })));
   }
   for (const definition of departments) {
     const source = permitted.find((value) => value.table === definition.table);
@@ -187,10 +199,17 @@ export async function loadMyWork(supabase: SupabaseClient, context: SessionConte
       status: source.table === "inventory_items" ? "Stock attention" : row[source.statusField],
       date: definition.date ? row[definition.date] : null, dateLabel: definition.dateLabel, priority: null,
       href: `${source.route}/${row.id}`, actionLabel: source.action, blocker: recordedBlocker(row[source.statusField]),
+      ownership: "Shared team work; check the record's owner before continuing",
     })));
   }
   await Promise.all(reads);
   await resolveTaskLinks(supabase, context, permitted, [assigned, unassigned]);
+  const kinds: Record<string, NextActionRecord["kind"]> = { production_jobs: "production", dispatches: "dispatch", invoices: "invoice", quotes: "quote", quality_inspections: "quality" };
+  for (const department of work.departments) for (const item of department.items) {
+    const kind = kinds[department.key];
+    const action = kind ? nextRecordAction(context.role, { kind, id: item.id, status: item.status }, context.dealerId) : null;
+    if (action?.href) { item.href = action.href; item.actionLabel = action.label; }
+  }
   return work;
 }
 

@@ -1,11 +1,19 @@
 import { can } from "../auth/permissions.ts";
+import { hasRouteAccess } from "../auth/route-permissions.ts";
 import type { UserRole } from "../../types/app.ts";
 
-export type NextActionRecord = { kind: "quote" | "order" | "production" | "dispatch" | "invoice"; id: string; status: string; linkedOrderId?: string | null; completeCosting?: boolean };
-export type NextRecordAction = { label: string; href?: string; reason: string };
+export type NextActionRecord = { kind: "quote" | "order" | "production" | "dispatch" | "invoice" | "quality" | "packaging"; id: string; status: string; updatedAt?: string | null; linkedOrderId?: string | null; completeCosting?: boolean };
+export type NextRecordAction = { label: string; href?: string; reason: string; source?: { kind: NextActionRecord["kind"]; id: string; status: string; version: string | null }; readiness?: "review_required" | "restricted" };
 const idPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function nextRecordAction(role: UserRole, record: NextActionRecord, dealerId?: string | null): NextRecordAction | null {
+  const action = deriveNextRecordAction(role, record, dealerId);
+  if (!action) return null;
+  if (action.href && !hasRouteAccess(action.href.split(/[?#]/)[0], role)) return null;
+  return { ...action, source: { kind: record.kind, id: record.id, status: record.status, version: record.updatedAt ?? null }, readiness: action.href ? "review_required" : "restricted" };
+}
+
+function deriveNextRecordAction(role: UserRole, record: NextActionRecord, dealerId?: string | null): NextRecordAction | null {
   if (dealerId || role.startsWith("dealer") || !idPattern.test(record.id)) return null;
   const id = encodeURIComponent(record.id);
   if (record.kind === "quote") {
@@ -32,6 +40,16 @@ export function nextRecordAction(role: UserRole, record: NextActionRecord, deale
     return record.status === "pending" && can(role, "update", "dispatches")
       ? { label: "Review dispatch details", href: `/dispatches/${id}/edit`, reason: "Committed material and changed quantities are revalidated when dispatch details are saved." }
       : { label: "Review delivery and return history", href: `/dispatches/${id}#delivery-history`, reason: "Use the delivery controls and recorded corrections for this shipment." };
+  }
+  if (record.kind === "quality") {
+    if (!can(role, "read", "quality")) return null;
+    if (record.status === "pending") return { label: can(role, "update", "quality") ? "Record observations against the inspection plan" : "Review inspection evidence", href: `/quality/${id}#inspection-results`, reason: "The applicable approved plan supplies the limits. Record actual observations; approval remains a separate guarded action." };
+    return { label: "Review the inspection decision", href: `/quality/${id}`, reason: "This inspection has a recorded decision. Use its permitted correction or rework workflow instead of changing historical observations." };
+  }
+  if (record.kind === "packaging") {
+    if (!can(role, "read", "packaging")) return null;
+    if (["scheduled", "in_progress"].includes(record.status) && can(role, "update", "packaging")) return { label: "Review packing quantities and issued materials", href: `/packaging/${id}/edit`, reason: "Accepted source output and issued materials must reconcile before completion. Opening this form does not issue stock." };
+    return { label: "Review packaging evidence", href: `/packaging/${id}`, reason: "Review the recorded quantities, material issues and completion state before preparing a dispatch." };
   }
   if (!can(role, "read", "financials")) return null;
   if (record.status === "draft" && can(role, "update", "financials")) return { label: "Review invoice before issue", href: `/invoices/${id}/edit`, reason: "Dispatch eligibility, commercial snapshots and duplicate billing are checked by invoice confirmation." };

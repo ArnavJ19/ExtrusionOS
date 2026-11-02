@@ -1,0 +1,877 @@
+TAP version 13
+# Subtest: every role gets only its permitted department queues
+ok 1 - every role gets only its permitted department queues
+  ---
+  duration_ms: 117.3837
+  type: 'test'
+  ...
+# Subtest: personal assignments include permitted dealership work while unassigned tasks remain factory-scoped
+ok 2 - personal assignments include permitted dealership work while unassigned tasks remain factory-scoped
+  ---
+  duration_ms: 6.3716
+  type: 'test'
+  ...
+# Subtest: dealer roles and dealer identities cannot call the internal read model
+ok 3 - dealer roles and dealer identities cannot call the internal read model
+  ---
+  duration_ms: 3.4174
+  type: 'test'
+  ...
+# Subtest: disabled modules prevent queue queries and exclude related tasks
+ok 4 - disabled modules prevent queue queries and exclude related tasks
+  ---
+  duration_ms: 2.8633
+  type: 'test'
+  ...
+# Subtest: task source links are checked in the current company and recorded holds are visible
+ok 5 - task source links are checked in the current company and recorded holds are visible
+  ---
+  duration_ms: 3.4021
+  type: 'test'
+  ...
+# Subtest: a deleted or RLS-invisible source falls back only its own task
+ok 6 - a deleted or RLS-invisible source falls back only its own task
+  ---
+  duration_ms: 3.4836
+  type: 'test'
+  ...
+# Subtest: malformed source identifiers never become navigation paths or source queries
+ok 7 - malformed source identifiers never become navigation paths or source queries
+  ---
+  duration_ms: 3.2457
+  type: 'test'
+  ...
+# Subtest: queue errors and null results remain unknown while other queues still load
+ok 8 - queue errors and null results remain unknown while other queues still load
+  ---
+  duration_ms: 5.965
+  type: 'test'
+  ...
+# Subtest: source query failure preserves assigned work and offers the task for review
+ok 9 - source query failure preserves assigned work and offers the task for review
+  ---
+  duration_ms: 2.9721
+  type: 'test'
+  ...
+# Subtest: queues are bounded at ten without presenting a sample as the total workload
+ok 10 - queues are bounded at ten without presenting a sample as the total workload
+  ---
+  duration_ms: 10.0504
+  type: 'test'
+  ...
+# Subtest: department reads exclude inactive jobs, unissued invoices and inactive stock
+ok 11 - department reads exclude inactive jobs, unissued invoices and inactive stock
+  ---
+  duration_ms: 11.3827
+  type: 'test'
+  ...
+# Subtest: the business day follows India across the UTC date boundary
+ok 12 - the business day follows India across the UTC date boundary
+  ---
+  duration_ms: 4.1871
+  type: 'test'
+  ...
+# Subtest: missing and impossible dates are not turned into fabricated deadlines
+ok 13 - missing and impossible dates are not turned into fabricated deadlines
+  ---
+  duration_ms: 0.5253
+  type: 'test'
+  ...
+# Subtest: fresh requests do not share assignments or stale source state across users
+ok 14 - fresh requests do not share assignments or stale source state across users
+  ---
+  duration_ms: 5.7481
+  type: 'test'
+  ...
+# Subtest: NOV-086/088/093: actual phone database shows ten selective cards with unambiguous zero, missing and blocked states
+ok 15 - NOV-086/088/093: actual phone database shows ten selective cards with unambiguous zero, missing and blocked states
+  ---
+  duration_ms: 3576.7873
+  type: 'test'
+  ...
+# Subtest: NOV-088: disclosure and nested controls do not open the record, with keyboard navigation on desktop
+ok 16 - NOV-088: disclosure and nested controls do not open the record, with keyboard navigation on desktop
+  ---
+  duration_ms: 516.1409
+  type: 'test'
+  ...
+# Subtest: NOV-091: filter removal resets page, keeps other filters, and Clear all recovers a matched empty view
+ok 17 - NOV-091: filter removal resets page, keeps other filters, and Clear all recovers a matched empty view
+  ---
+  duration_ms: 2350.7698
+  type: 'test'
+  ...
+# Subtest: NOV-091/099: stale responses cannot replace a newer search and a failed refresh retains successful rows
+ok 18 - NOV-091/099: stale responses cannot replace a newer search and a failed refresh retains successful rows
+  ---
+  duration_ms: 3030.4639
+  type: 'test'
+  ...
+# Subtest: NOV-099: denied reads remove cached rows and do not masquerade as an empty database
+ok 19 - NOV-099: denied reads remove cached rows and do not masquerade as an empty database
+  ---
+  duration_ms: 615.0235
+  type: 'test'
+  ...
+# Subtest: NOV-092: similar names expose identifying context and keyboard selection skips inactive choices
+ok 20 - NOV-092: similar names expose identifying context and keyboard selection skips inactive choices
+  ---
+  duration_ms: 541.6035
+  type: 'test'
+  ...
+# Subtest: NOV-092/099: failed lookup retains the selection, blocks choice and supports recovery
+ok 21 - NOV-092/099: failed lookup retains the selection, blocks choice and supports recovery
+  ---
+  duration_ms: 460.9061
+  type: 'test'
+  ...
+# Subtest: NOV-083/084/085: real edit form keeps identity and values, uses one save, and does not cover the final field
+ok 22 - NOV-083/084/085: real edit form keeps identity and values, uses one save, and does not cover the final field
+  ---
+  duration_ms: 970.3438
+  type: 'test'
+  ...
+# Subtest: NOV-084: switching records or company cannot retain the previous record identity or unsaved text
+ok 23 - NOV-084: switching records or company cannot retain the previous record identity or unsaved text
+  ---
+  duration_ms: 440.9208
+  type: 'test'
+  ...
+# Subtest: NOV-085: a lost save response prevents blind duplicate submission and retains entered values
+ok 24 - NOV-085: a lost save response prevents blind duplicate submission and retains entered values
+  ---
+  duration_ms: 1249.172
+  type: 'test'
+  ...
+# Subtest: NOV-016: blockers name a responsible team, hide forbidden edits and disappear after authoritative refresh
+ok 25 - NOV-016: blockers name a responsible team, hide forbidden edits and disappear after authoritative refresh
+  ---
+  duration_ms: 421.5197
+  type: 'test'
+  ...
+# Subtest: NOV-083: sales, stores, production and accounts use the shared composition at phone and enlarged desktop widths
+ok 26 - NOV-083: sales, stores, production and accounts use the shared composition at phone and enlarged desktop widths
+  ---
+  duration_ms: 1154.3342
+  type: 'test'
+  ...
+# Subtest: NOV-088/091: hidden table columns cannot hide workflow warnings, and saved-view reset differs from clearing filters
+ok 27 - NOV-088/091: hidden table columns cannot hide workflow warnings, and saved-view reset differs from clearing filters
+  ---
+  duration_ms: 815.9867
+  type: 'test'
+  ...
+# Subtest: NOV-099/084: failed connected reads keep the authorized record visible and never show a false zero
+ok 28 - NOV-099/084: failed connected reads keep the authorized record visible and never show a false zero
+  ---
+  duration_ms: 414.8037
+  type: 'test'
+  ...
+# Subtest: NOV-084/093: record context keeps a missing source quantity explicit rather than displaying zero
+ok 29 - NOV-084/093: record context keeps a missing source quantity explicit rather than displaying zero
+  ---
+  duration_ms: 355.3856
+  type: 'test'
+  ...
+# Subtest: NOV-088: the separate die database keeps status, profile and retrieval location in its compact phone card
+ok 30 - NOV-088: the separate die database keeps status, profile and retrieval location in its compact phone card
+  ---
+  duration_ms: 401.5224
+  type: 'test'
+  ...
+# Subtest: NOV-099: a failed form read can be retried repeatedly and recovers to the same record
+ok 31 - NOV-099: a failed form read can be retried repeatedly and recovers to the same record
+  ---
+  duration_ms: 438.9684
+  type: 'test'
+  ...
+# Subtest: NOV-086: production, dispatch, quality and accounts share presentation while retaining their domain codes
+ok 32 - NOV-086: production, dispatch, quality and accounts share presentation while retaining their domain codes
+  ---
+  duration_ms: 1.9647
+  type: 'test'
+  ...
+# Subtest: NOV-086: unknown and blank statuses remain neutral and visible
+ok 33 - NOV-086: unknown and blank statuses remain neutral and visible
+  ---
+  duration_ms: 0.3909
+  type: 'test'
+  ...
+# Subtest: NOV-093: absent, invalid and genuine zero quantities cannot collapse into the same display
+ok 34 - NOV-093: absent, invalid and genuine zero quantities cannot collapse into the same display
+  ---
+  duration_ms: 24.1801
+  type: 'test'
+  ...
+# Subtest: NOV-093: correction signs, Indian scale, dimensions and non-INR currency remain explicit
+ok 35 - NOV-093: correction signs, Indian scale, dimensions and non-INR currency remain explicit
+  ---
+  duration_ms: 1.031
+  type: 'test'
+  ...
+# Subtest: NOV-093: configured record fields retain their piece, length, percentage and section-weight dimensions
+ok 36 - NOV-093: configured record fields retain their piece, length, percentage and section-weight dimensions
+  ---
+  duration_ms: 0.6147
+  type: 'test'
+  ...
+# Subtest: NOV-099: denied access, source failure and filtered emptiness have distinct recovery guidance
+ok 37 - NOV-099: denied access, source failure and filtered emptiness have distinct recovery guidance
+  ---
+  duration_ms: 0.7433
+  type: 'test'
+  ...
+# Subtest: NOV-091: shared URLs preserve combined supported filters, ordering and page
+ok 38 - NOV-091: shared URLs preserve combined supported filters, ordering and page
+  ---
+  duration_ms: 4.7816
+  type: 'test'
+  ...
+# Subtest: NOV-091: malformed or unsupported URL values cannot become query fields
+ok 39 - NOV-091: malformed or unsupported URL values cannot become query fields
+  ---
+  duration_ms: 0.2928
+  type: 'test'
+  ...
+# Subtest: NOV-091: reversed dates, disabled date filtering and long input are bounded
+ok 40 - NOV-091: reversed dates, disabled date filtering and long input are bounded
+  ---
+  duration_ms: 0.595
+  type: 'test'
+  ...
+# Subtest: NOV-016: enforced blockers lead advisories, describe their source and leave ownership honest
+ok 41 - NOV-016: enforced blockers lead advisories, describe their source and leave ownership honest
+  ---
+  duration_ms: 1.1054
+  type: 'test'
+  ...
+# Subtest: NOV-016: unauthorized edit/issue links are withheld and unknown rules do not invent a resolution
+ok 42 - NOV-016: unauthorized edit/issue links are withheld and unknown rules do not invent a resolution
+  ---
+  duration_ms: 0.8686
+  type: 'test'
+  ...
+# Subtest: NOV-092: lookup context uses identifiers and units without financial or internal payloads
+ok 43 - NOV-092: lookup context uses identifiers and units without financial or internal payloads
+  ---
+  duration_ms: 0.6434
+  type: 'test'
+  ...
+# Subtest: PCDA production handoff
+    # Subtest: copies canonical order line fields onto production jobs and stamps source line
+    ok 1 - copies canonical order line fields onto production jobs and stamps source line
+      ---
+      duration_ms: 1.2475
+      type: 'test'
+      ...
+    # Subtest: selects the matching profile line for production
+    ok 2 - selects the matching profile line for production
+      ---
+      duration_ms: 0.4611
+      type: 'test'
+      ...
+    # Subtest: requires an explicit source line when the same profile appears more than once
+    ok 3 - requires an explicit source line when the same profile appears more than once
+      ---
+      duration_ms: 0.2377
+      type: 'test'
+      ...
+    1..3
+ok 44 - PCDA production handoff
+  ---
+  duration_ms: 3.7252
+  type: 'suite'
+  ...
+# Subtest: SQL production issuance accepts canonical material after real allocation
+ok 45 - SQL production issuance accepts canonical material after real allocation
+  ---
+  duration_ms: 3135.6464
+  type: 'test'
+  ...
+# Subtest: SQL production issuance accepts padded billet alloy after real allocation
+ok 46 - SQL production issuance accepts padded billet alloy after real allocation
+  ---
+  duration_ms: 75.5755
+  type: 'test'
+  ...
+# Subtest: SQL production issuance accepts padded profile alloy after real allocation
+ok 47 - SQL production issuance accepts padded profile alloy after real allocation
+  ---
+  duration_ms: 67.2943
+  type: 'test'
+  ...
+# Subtest: SQL production issuance accepts padded lower-case temper after real allocation
+ok 48 - SQL production issuance accepts padded lower-case temper after real allocation
+  ---
+  duration_ms: 67.8188
+  type: 'test'
+  ...
+# Subtest: SQL production issuance accepts padded material on both sides after real allocation
+ok 49 - SQL production issuance accepts padded material on both sides after real allocation
+  ---
+  duration_ms: 67.5931
+  type: 'test'
+  ...
+# Subtest: SQL production issuance still rejects different alloy without partial writes
+ok 50 - SQL production issuance still rejects different alloy without partial writes
+  ---
+  duration_ms: 77.8695
+  type: 'test'
+  ...
+# Subtest: SQL production issuance still rejects different diameter without partial writes
+ok 51 - SQL production issuance still rejects different diameter without partial writes
+  ---
+  duration_ms: 51.6739
+  type: 'test'
+  ...
+# Subtest: allocated billet guards still reject missing alloy and incorrect temper
+ok 52 - allocated billet guards still reject missing alloy and incorrect temper
+  ---
+  duration_ms: 67.849
+  type: 'test'
+  ...
+# Subtest: SQL writer retains stale selection, duplicate identity and wrong-company rejection
+ok 53 - SQL writer retains stale selection, duplicate identity and wrong-company rejection
+  ---
+  duration_ms: 77.7741
+  type: 'test'
+  ...
+# Subtest: SQL edit releases only deselected issued billets and retains material checks
+ok 54 - SQL edit releases only deselected issued billets and retains material checks
+  ---
+  duration_ms: 77.5967
+  type: 'test'
+  ...
+# Subtest: private production implementation remains client-inaccessible
+ok 55 - private production implementation remains client-inaccessible
+  ---
+  duration_ms: 1.2846
+  type: 'test'
+  ...
+# Subtest: remaining production transaction body is unchanged
+ok 56 - remaining production transaction body is unchanged
+  ---
+  duration_ms: 0.743
+  type: 'test'
+  ...
+# Subtest: production action accepts padded billet alloy
+ok 57 - production action accepts padded billet alloy
+  ---
+  duration_ms: 5.4231
+  type: 'test'
+  ...
+# Subtest: production action accepts padded lower-case billet temper
+ok 58 - production action accepts padded lower-case billet temper
+  ---
+  duration_ms: 1.0103
+  type: 'test'
+  ...
+# Subtest: production action accepts padded requirement material
+ok 59 - production action accepts padded requirement material
+  ---
+  duration_ms: 0.4467
+  type: 'test'
+  ...
+# Subtest: production action accepts padded material on both sides
+ok 60 - production action accepts padded material on both sides
+  ---
+  duration_ms: 0.4853
+  type: 'test'
+  ...
+# Subtest: production action still rejects different alloy without calling the writer
+ok 61 - production action still rejects different alloy without calling the writer
+  ---
+  duration_ms: 0.3511
+  type: 'test'
+  ...
+# Subtest: production action still rejects unknown alloy without calling the writer
+ok 62 - production action still rejects unknown alloy without calling the writer
+  ---
+  duration_ms: 0.1942
+  type: 'test'
+  ...
+# Subtest: production action still rejects different temper without calling the writer
+ok 63 - production action still rejects different temper without calling the writer
+  ---
+  duration_ms: 0.1851
+  type: 'test'
+  ...
+# Subtest: production action still rejects unknown temper without calling the writer
+ok 64 - production action still rejects unknown temper without calling the writer
+  ---
+  duration_ms: 0.3171
+  type: 'test'
+  ...
+# Subtest: production action still rejects different diameter without calling the writer
+ok 65 - production action still rejects different diameter without calling the writer
+  ---
+  duration_ms: 0.5479
+  type: 'test'
+  ...
+# Subtest: production action still rejects another order without calling the writer
+ok 66 - production action still rejects another order without calling the writer
+  ---
+  duration_ms: 0.3397
+  type: 'test'
+  ...
+# Subtest: production action still rejects another job without calling the writer
+ok 67 - production action still rejects another job without calling the writer
+  ---
+  duration_ms: 0.3604
+  type: 'test'
+  ...
+# Subtest: production action still rejects cast status without calling the writer
+ok 68 - production action still rejects cast status without calling the writer
+  ---
+  duration_ms: 0.2229
+  type: 'test'
+  ...
+# Subtest: production action still rejects cancelled requirement without calling the writer
+ok 69 - production action still rejects cancelled requirement without calling the writer
+  ---
+  duration_ms: 0.1534
+  type: 'test'
+  ...
+# Subtest: production action still rejects another requirement order without calling the writer
+ok 70 - production action still rejects another requirement order without calling the writer
+  ---
+  duration_ms: 0.1432
+  type: 'test'
+  ...
+# Subtest: production batch reports use recorded output and complete scoped material evidence
+    # Subtest: ignores stale PCDA quantities and derived snapshot percentages
+    ok 1 - ignores stale PCDA quantities and derived snapshot percentages
+      ---
+      duration_ms: 27.9465
+      type: 'test'
+      ...
+    # Subtest: reads both ledgers with company/job filters, exact counts and stable pages
+    ok 2 - reads both ledgers with company/job filters, exact counts and stable pages
+      ---
+      duration_ms: 0.8384
+      type: 'test'
+      ...
+    # Subtest: does not sum other jobs, companies or unlinked/available billets
+    ok 3 - does not sum other jobs, companies or unlinked/available billets
+      ---
+      duration_ms: 0.7157
+      type: 'test'
+      ...
+    # Subtest: includes all allocated/issued/consumed inputs used by completion validation
+    ok 4 - includes all allocated/issued/consumed inputs used by completion validation
+      ---
+      duration_ms: 1.6684
+      type: 'test'
+      ...
+    # Subtest: reads 1,201 rows per ledger across a smaller server cap
+    ok 5 - reads 1,201 rows per ledger across a smaller server cap
+      ---
+      duration_ms: 46.6243
+      type: 'test'
+      ...
+    # Subtest: reports zero recorded scrap for a fully captured lossless completion
+    ok 6 - reports zero recorded scrap for a fully captured lossless completion
+      ---
+      duration_ms: 1.0143
+      type: 'test'
+      ...
+    # Subtest: keeps absent legacy input unknown instead of estimating output plus scrap
+    ok 7 - keeps absent legacy input unknown instead of estimating output plus scrap
+      ---
+      duration_ms: 1.0316
+      type: 'test'
+      ...
+    # Subtest: does not substitute planned/source quantities for missing final output
+    ok 8 - does not substitute planned/source quantities for missing final output
+      ---
+      duration_ms: 1.354
+      type: 'test'
+      ...
+    # Subtest: keeps planned/in-progress/cancelled reports available without final recovery
+    ok 9 - keeps planned/in-progress/cancelled reports available without final recovery
+      ---
+      duration_ms: 2.9104
+      type: 'test'
+      ...
+    # Subtest: shows a mass-balance difference instead of silently treating missing scrap as accounted loss
+    ok 10 - shows a mass-balance difference instead of silently treating missing scrap as accounted loss
+      ---
+      duration_ms: 0.6106
+      type: 'test'
+      ...
+    # Subtest: retains measured over-output and flags it rather than clamping recovery
+    ok 11 - retains measured over-output and flags it rather than clamping recovery
+      ---
+      duration_ms: 0.43
+      type: 'test'
+      ...
+    # Subtest: stops a missing or failed job read before ledger reads or exports
+    ok 12 - stops a missing or failed job read before ledger reads or exports
+      ---
+      duration_ms: 0.9712
+      type: 'test'
+      ...
+    # Subtest: stops on a failed foundry_billets read
+    ok 13 - stops on a failed foundry_billets read
+      ---
+      duration_ms: 0.2558
+      type: 'test'
+      ...
+    # Subtest: stops on a later foundry_billets page failure
+    ok 14 - stops on a later foundry_billets page failure
+      ---
+      duration_ms: 3.736
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects missing count
+    ok 15 - foundry_billets rejects missing count
+      ---
+      duration_ms: 0.6591
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects changing count
+    ok 16 - foundry_billets rejects changing count
+      ---
+      duration_ms: 0.3288
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects oversized count
+    ok 17 - foundry_billets rejects oversized count
+      ---
+      duration_ms: 0.207
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects empty page
+    ok 18 - foundry_billets rejects empty page
+      ---
+      duration_ms: 0.1982
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects overfull page
+    ok 19 - foundry_billets rejects overfull page
+      ---
+      duration_ms: 0.2697
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects duplicate id
+    ok 20 - foundry_billets rejects duplicate id
+      ---
+      duration_ms: 0.2918
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects out of order
+    ok 21 - foundry_billets rejects out of order
+      ---
+      duration_ms: 0.2359
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects foreign company
+    ok 22 - foundry_billets rejects foreign company
+      ---
+      duration_ms: 0.1844
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects foreign job
+    ok 23 - foundry_billets rejects foreign job
+      ---
+      duration_ms: 0.1735
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects malformed weight
+    ok 24 - foundry_billets rejects malformed weight
+      ---
+      duration_ms: 0.745
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects negative weight
+    ok 25 - foundry_billets rejects negative weight
+      ---
+      duration_ms: 0.2658
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects boolean weight
+    ok 26 - foundry_billets rejects boolean weight
+      ---
+      duration_ms: 0.4993
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects unsafe weight
+    ok 27 - foundry_billets rejects unsafe weight
+      ---
+      duration_ms: 0.3109
+      type: 'test'
+      ...
+    # Subtest: foundry_billets rejects extra decimal
+    ok 28 - foundry_billets rejects extra decimal
+      ---
+      duration_ms: 0.3597
+      type: 'test'
+      ...
+    # Subtest: stops on a failed scrap_records read
+    ok 29 - stops on a failed scrap_records read
+      ---
+      duration_ms: 0.1993
+      type: 'test'
+      ...
+    # Subtest: stops on a later scrap_records page failure
+    ok 30 - stops on a later scrap_records page failure
+      ---
+      duration_ms: 0.4635
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects missing count
+    ok 31 - scrap_records rejects missing count
+      ---
+      duration_ms: 0.257
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects changing count
+    ok 32 - scrap_records rejects changing count
+      ---
+      duration_ms: 0.2652
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects oversized count
+    ok 33 - scrap_records rejects oversized count
+      ---
+      duration_ms: 0.1975
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects empty page
+    ok 34 - scrap_records rejects empty page
+      ---
+      duration_ms: 0.1884
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects overfull page
+    ok 35 - scrap_records rejects overfull page
+      ---
+      duration_ms: 0.2496
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects duplicate id
+    ok 36 - scrap_records rejects duplicate id
+      ---
+      duration_ms: 0.2779
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects out of order
+    ok 37 - scrap_records rejects out of order
+      ---
+      duration_ms: 0.4306
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects foreign company
+    ok 38 - scrap_records rejects foreign company
+      ---
+      duration_ms: 0.1892
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects foreign job
+    ok 39 - scrap_records rejects foreign job
+      ---
+      duration_ms: 0.1739
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects malformed weight
+    ok 40 - scrap_records rejects malformed weight
+      ---
+      duration_ms: 0.201
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects negative weight
+    ok 41 - scrap_records rejects negative weight
+      ---
+      duration_ms: 0.1868
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects boolean weight
+    ok 42 - scrap_records rejects boolean weight
+      ---
+      duration_ms: 0.4658
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects unsafe weight
+    ok 43 - scrap_records rejects unsafe weight
+      ---
+      duration_ms: 0.2426
+      type: 'test'
+      ...
+    # Subtest: scrap_records rejects extra decimal
+    ok 44 - scrap_records rejects extra decimal
+      ---
+      duration_ms: 0.2744
+      type: 'test'
+      ...
+    # Subtest: rechecks job revision/output/status after reading evidence
+    ok 45 - rechecks job revision/output/status after reading evidence
+      ---
+      duration_ms: 1.3692
+      type: 'test'
+      ...
+    # Subtest: sums deterministic decimal histories without a floating point balance residue
+    ok 46 - sums deterministic decimal histories without a floating point balance residue
+      ---
+      duration_ms: 43.7687
+      type: 'test'
+      ...
+    # Subtest: does not emit any commercial fields from the job projection
+    ok 47 - does not emit any commercial fields from the job projection
+      ---
+      duration_ms: 0.6706
+      type: 'test'
+      ...
+    # Subtest: rejects malformed actual output rather than substituting a source snapshot
+    ok 48 - rejects malformed actual output rather than substituting a source snapshot
+      ---
+      duration_ms: 2.6929
+      type: 'test'
+      ...
+    # Subtest: preserves exact thousandths for large numeric fields and ordinary decimal values
+    ok 49 - preserves exact thousandths for large numeric fields and ordinary decimal values
+      ---
+      duration_ms: 0.5708
+      type: 'test'
+      ...
+    # Subtest: rejects aggregate and balance overflow
+    ok 50 - rejects aggregate and balance overflow
+      ---
+      duration_ms: 2.7338
+      type: 'test'
+      ...
+    # Subtest: allows an explicit zero scrap entry but rejects zero billet weight
+    ok 51 - allows an explicit zero scrap entry but rejects zero billet weight
+      ---
+      duration_ms: 0.7056
+      type: 'test'
+      ...
+    # Subtest: rejects malformed row identities, unexpected statuses and job identity overrides
+    ok 52 - rejects malformed row identities, unexpected statuses and job identity overrides
+      ---
+      duration_ms: 1.7115
+      type: 'test'
+      ...
+    # Subtest: generates the actual PDF through the authorized action with a scoped captured upload
+    ok 53 - generates the actual PDF through the authorized action with a scoped captured upload
+      ---
+      duration_ms: 324.6269
+      type: 'test'
+      ...
+    # Subtest: denied roles and missing sessions stop before reading or uploading report data
+    ok 54 - denied roles and missing sessions stop before reading or uploading report data
+      ---
+      duration_ms: 0.7087
+      type: 'test'
+      ...
+    # Subtest: all four existing report roles retain access
+    ok 55 - all four existing report roles retain access
+      ---
+      duration_ms: 882.6079
+      type: 'test'
+      ...
+    # Subtest: failed evidence prevents PDF upload and report history
+    ok 56 - failed evidence prevents PDF upload and report history
+      ---
+      duration_ms: 3.5874
+      type: 'test'
+      ...
+    # Subtest: retains the existing PDF-only production template contract
+    ok 57 - retains the existing PDF-only production template contract
+      ---
+      duration_ms: 0.6684
+      type: 'test'
+      ...
+    # Subtest: shared CSV and spreadsheet serializers preserve the corrected model and unknowns
+    ok 58 - shared CSV and spreadsheet serializers preserve the corrected model and unknowns
+      ---
+      duration_ms: 1.8188
+      type: 'test'
+      ...
+    1..58
+ok 71 - production batch reports use recorded output and complete scoped material evidence
+  ---
+  duration_ms: 1374.5261
+  type: 'test'
+  ...
+# Subtest: production source-line integrity
+    # Subtest: enforces order-line ownership and billet presence in the database
+    ok 1 - enforces order-line ownership and billet presence in the database
+      ---
+      duration_ms: 8.2146
+      type: 'test'
+      ...
+    # Subtest: carries the explicit source line through the form and server action
+    ok 2 - carries the explicit source line through the form and server action
+      ---
+      duration_ms: 3.7134
+      type: 'test'
+      ...
+    1..2
+ok 72 - production source-line integrity
+  ---
+  duration_ms: 13.6423
+  type: 'suite'
+  ...
+# Subtest: workspace storage key is isolated by both company and user
+ok 73 - workspace storage key is isolated by both company and user
+  ---
+  duration_ms: 1.6939
+  type: 'test'
+  ...
+# Subtest: shortcut routes honor enabled navigation bases and reject prefix lookalikes
+ok 74 - shortcut routes honor enabled navigation bases and reject prefix lookalikes
+  ---
+  duration_ms: 0.4949
+  type: 'test'
+  ...
+# Subtest: blocked and corrupt storage safely returns an empty workspace
+ok 75 - blocked and corrupt storage safely returns an empty workspace
+  ---
+  duration_ms: 4.7283
+  type: 'test'
+  ...
+# Subtest: storage accessor catches a throwing localStorage property getter
+ok 76 - storage accessor catches a throwing localStorage property getter
+  ---
+  duration_ms: 2.0821
+  type: 'test'
+  ...
+# Subtest: a list preference update cannot restore shell shortcuts removed since the list loaded
+ok 77 - a list preference update cannot restore shell shortcuts removed since the list loaded
+  ---
+  duration_ms: 2.7328
+  type: 'test'
+  ...
+# Subtest: preference sanitizer bounds entries, rejects unsafe URLs, clamps widths and drops financial payloads
+ok 78 - preference sanitizer bounds entries, rejects unsafe URLs, clamps widths and drops financial payloads
+  ---
+  duration_ms: 3.9067
+  type: 'test'
+  ...
+# Subtest: list URL state round trips search, filters, page, sort, and connected-record scope
+ok 79 - list URL state round trips search, filters, page, sort, and connected-record scope
+  ---
+  duration_ms: 2.3283
+  type: 'test'
+  ...
+# Subtest: saving a named view updates its name or URL without duplicate shortcut identities
+ok 80 - saving a named view updates its name or URL without duplicate shortcut identities
+  ---
+  duration_ms: 1.9571
+  type: 'test'
+  ...
+# Subtest: rapid list control updates serialize together and browser Back restores the prior list state
+ok 81 - rapid list control updates serialize together and browser Back restores the prior list state
+  ---
+  duration_ms: 4.2902
+  type: 'test'
+  ...
+1..81
+# tests 142
+# suites 2
+# pass 142
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 19348.2457

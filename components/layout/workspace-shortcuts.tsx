@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Bookmark, Clock3, Star, X } from "lucide-react";
-import { getModuleConfig, type ModuleKey } from "@/components/modules/operations/module-config";
+import { getModuleConfig, moduleConfigs, type ModuleKey } from "@/components/modules/operations/module-config";
+import { moveWorkspaceLink, roleWorkspaceLinks } from "@/lib/preferences/role-workspace";
 import { createClient } from "@/lib/supabase/browser";
 import { can } from "@/lib/auth/permissions";
 import { getWorkspaceStorage, isRouteAllowedByNavigation, readWorkspacePreferences, upsertWorkspaceLink, workspacePreferenceKey, writeWorkspacePreferences, type WorkspaceLink, type WorkspacePreferences } from "@/lib/preferences/workspace-preferences";
@@ -13,6 +14,8 @@ export function WorkspaceShortcuts({ context, allowedRoutes, placement = "full" 
   const scopeSignature = JSON.stringify([context.companyId, context.userId, context.role, [...allowedRoutes].sort()]);
   const supabase = useMemo(() => createClient(), []);
   const [loaded, setLoaded] = useState<{ signature: string; preferences: WorkspacePreferences } | null>(null);
+  const [notice, setNotice] = useState("");
+  const destinations = roleWorkspaceLinks(context.role, Object.values(moduleConfigs).map((config) => ({ href: config.basePath, label: config.title, resource: config.resource, moduleKey: config.key })), allowedRoutes);
 
   useEffect(() => {
     let active = true;
@@ -70,13 +73,39 @@ export function WorkspaceShortcuts({ context, allowedRoutes, placement = "full" 
     const storage = getWorkspaceStorage();
     const latest = readWorkspacePreferences(storage, storageKey);
     const next = { ...latest, [kind]: latest[kind].filter((item) => item.href !== href) } as WorkspacePreferences;
-    writeWorkspacePreferences(storage, storageKey, next);
+    if (!writeWorkspacePreferences(storage, storageKey, next)) { setNotice("Workspace storage is unavailable. This shortcut could not be removed from device storage."); return; }
     setLoaded({ signature: scopeSignature, preferences: { ...currentPreferences, [kind]: currentPreferences[kind].filter((item) => item.href !== href) } as WorkspacePreferences });
+  }
+
+  function pinDestination(link: typeof destinations[number], updatedAt: number) {
+    const storage = getWorkspaceStorage();
+    const latest = readWorkspacePreferences(storage, storageKey);
+    const next = togglePinnedWorkspaceLink(latest, { ...link, updatedAt });
+    if (!writeWorkspacePreferences(storage, storageKey, next)) { setNotice("Workspace storage is unavailable. This pin could not be saved. Check your browser's storage settings."); return; }
+    setLoaded({ signature: scopeSignature, preferences: { ...currentPreferences, pinned: next.pinned } });
+  }
+
+  function move(href: string, direction: -1 | 1) {
+    const storage = getWorkspaceStorage();
+    const latest = readWorkspacePreferences(storage, storageKey);
+    const pinned = moveWorkspaceLink(latest.pinned, href, direction, currentPreferences.pinned.map((item) => item.href));
+    if (!writeWorkspacePreferences(storage, storageKey, { ...latest, pinned })) { setNotice("Workspace storage is unavailable. Your saved order could not be updated."); return; }
+    const allowed = new Set(currentPreferences.pinned.map((item) => item.href));
+    setLoaded({ signature: scopeSignature, preferences: { ...currentPreferences, pinned: pinned.filter((item) => allowed.has(item.href)) } });
   }
 
   const compact = placement === "compact";
   const content = <div className="space-y-4">
-        <ShortcutGroup title="Pinned" icon={<Star className="h-3.5 w-3.5" />} links={preferences.pinned} onRemove={(href) => remove("pinned", href)} />
+        <section aria-label="Role workspace">
+          <h3 className="text-xs font-bold uppercase tracking-wide text-neutral-600">Your role workspace</h3>
+          <a href="/dashboard" className="inline-flex min-h-11 items-center rounded-lg text-sm font-semibold underline">Back to My Work Today</a>
+          <ul>{destinations.map((link) => <li key={link.href} className="flex min-w-0 items-center gap-2">
+            <a href={link.href} className="flex min-h-11 min-w-0 flex-1 items-center break-words rounded-lg px-2 text-sm font-semibold">{link.label}</a>
+            <button type="button" className="min-h-11 rounded-lg px-2 text-xs font-bold" aria-label={`${preferences.pinned.some((item) => item.href === link.href) ? "Unpin" : "Pin"} ${link.label}`} onClick={() => pinDestination(link, Date.now())}>{preferences.pinned.some((item) => item.href === link.href) ? "Unpin" : "Pin"}</button>
+          </li>)}</ul>
+        </section>
+        {notice ? <p role="status" className="text-xs text-amber-900">{notice}</p> : null}
+        <ShortcutGroup title="Pinned" icon={<Star className="h-3.5 w-3.5" />} links={preferences.pinned} onRemove={(href) => remove("pinned", href)} onMove={move} />
         <ShortcutGroup title="Recent records" icon={<Clock3 className="h-3.5 w-3.5" />} links={preferences.recent} onRemove={(href) => remove("recent", href)} />
         <ShortcutGroup title="Saved views" icon={<Bookmark className="h-3.5 w-3.5" />} links={preferences.views} onRemove={(href) => remove("views", href)} />
       </div>;
@@ -90,14 +119,16 @@ export function WorkspaceShortcuts({ context, allowedRoutes, placement = "full" 
   </section>;
 }
 
-function ShortcutGroup({ title, icon, links, onRemove }: { title: string; icon: ReactNode; links: WorkspaceLink[]; onRemove: (href: string) => void }) {
+function ShortcutGroup({ title, icon, links, onRemove, onMove }: { title: string; icon: ReactNode; links: WorkspaceLink[]; onRemove: (href: string) => void; onMove?: (href: string, direction: -1 | 1) => void }) {
   return (
     <section aria-label={title}>
       <h3 className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-neutral-500">{icon}{title}</h3>
       {links.length ? <ul className="space-y-1">
-        {links.map((link) => <li key={link.href} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-neutral-50">
-          <a className="min-w-0 flex-1 truncate text-sm font-semibold text-neutral-800" href={link.href}>{link.label}</a>
-          <button type="button" aria-label={`Remove ${link.label} from ${title.toLowerCase()}`} onClick={() => onRemove(link.href)} className="rounded p-1 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-800"><X className="h-3.5 w-3.5" /></button>
+        {links.map((link, index) => <li key={link.href} className="flex flex-wrap items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-neutral-50">
+          <a className="flex min-h-11 min-w-0 flex-1 items-center break-words text-sm font-semibold text-neutral-800" href={link.href}>{link.label}</a>
+          {onMove ? <button type="button" disabled={index === 0} aria-label={`Move ${link.label} earlier`} onClick={() => onMove(link.href, -1)} className="min-h-11 rounded px-2 text-xs font-semibold disabled:opacity-40">Up</button> : null}
+          {onMove ? <button type="button" disabled={index === links.length - 1} aria-label={`Move ${link.label} later`} onClick={() => onMove(link.href, 1)} className="min-h-11 rounded px-2 text-xs font-semibold disabled:opacity-40">Down</button> : null}
+          <button type="button" aria-label={`Remove ${link.label} from ${title.toLowerCase()}`} onClick={() => onRemove(link.href)} className="flex min-h-11 min-w-11 items-center justify-center rounded text-neutral-500 hover:bg-neutral-200 hover:text-neutral-800"><X className="h-3.5 w-3.5" /></button>
         </li>)}
       </ul> : <p className="px-2 py-1 text-xs text-neutral-400">Nothing saved yet.</p>}
     </section>

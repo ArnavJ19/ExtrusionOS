@@ -10,6 +10,7 @@ import { getErrorMessage } from "@/lib/utils/errors";
 import { isProductionOrderStageOpenForPlanning } from "@/lib/actions/production-order-eligibility";
 import { productionJobSchema } from "@/lib/validations/schemas";
 import { isUsableProductionDieStatus } from "@/lib/workflow/production-dies";
+import { checkPlanningQuantity } from "@/lib/calculations/planning-quantity";
 
 const productionStatusSchema = productionJobSchema.shape.status;
 const completeProductionJobSchema = z.object({
@@ -49,6 +50,7 @@ const billetAllocationSchema = z.object({
 type SaveProductionJobInput = z.input<typeof productionJobSchema> & {
   editing_id?: string | null;
   selected_billet_ids?: string[];
+  quantity_basis?: unknown;
 };
 type ProductionActionResult = { success: true; jobId?: string; slotId?: string; requirementId?: string } | { success: false; error: string };
 
@@ -141,7 +143,7 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
     const supabase = await createClient();
     const [orderResult, profileResult, dieResult, machineValidation, currentJobResult] = await Promise.all([
       supabase.from("orders").select("id, current_stage").eq("company_id", context.companyId).eq("id", parsed.data.order_id).maybeSingle(),
-      supabase.from("aluminium_profiles").select("id, is_active").eq("company_id", context.companyId).eq("id", parsed.data.profile_id).maybeSingle(),
+      supabase.from("aluminium_profiles").select("id, is_active, section_weight_kg_per_m").eq("company_id", context.companyId).eq("id", parsed.data.profile_id).maybeSingle(),
       supabase.from("dies").select("id, profile_id, die_status").eq("company_id", context.companyId).eq("id", parsed.data.die_id).maybeSingle(),
       validateMachineForPlanning(supabase, context.companyId, parsed.data.machine_id),
       editingId ? supabase.from("production_jobs_authorized").select("*").eq("company_id", context.companyId).eq("id", editingId).maybeSingle() : Promise.resolve({ data: null, error: null })
@@ -176,6 +178,10 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
       parsed.data.profile_id,
       parsed.data.source_line_id
     );
+    if (input.quantity_basis !== undefined && input.quantity_basis !== null) {
+      const problem = checkPlanningQuantity(input.quantity_basis, sourceLine ? sourceLine.section_weight_kg_per_m : profileResult.data.section_weight_kg_per_m, parsed.data, sourceLine?.length_per_piece_m);
+      if (problem) return { success: false, error: problem };
+    }
     const payload = {
       ...parsed.data,
       status: editingId ? currentJob?.status ?? "planned" : "planned",
@@ -186,6 +192,7 @@ export async function saveProductionJobAction(input: SaveProductionJobInput): Pr
       operator_name: parsed.data.operator_name || null,
       remarks: parsed.data.remarks || null,
       ...buildProductionJobPcdaFields(sourceLine, context.companyId),
+      ...(input.quantity_basis ? { pieces: parsed.data.pieces, planned_quantity_kg: parsed.data.planned_quantity_kg } : {}),
       job_number: jobNumber,
       created_by: currentJob?.created_by ?? context.userId
     };

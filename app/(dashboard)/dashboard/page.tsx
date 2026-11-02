@@ -7,7 +7,7 @@ import { DashboardTabs } from "@/components/modules/dashboard-client";
 import { getDashboardExperience } from "@/lib/auth/role-experience";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { redirect } from "next/navigation";
-import { MyWorkToday } from "@/components/modules/my-work-today";
+import { LiveMyWork } from "@/components/modules/live-my-work";
 import { loadMyWork } from "@/lib/dashboard/my-work";
 import { getFeatureFlagsForCompany } from "@/lib/enterprise/features";
 
@@ -29,7 +29,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <MyWorkToday work={work} name={context.fullName || ""} role={context.role} />
+      <LiveMyWork initial={work} scope={`${context.companyId}:${context.userId}:${context.role}`} name={context.fullName || ""} role={context.role} />
       <details className="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
         <summary className="cursor-pointer text-base font-bold text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">Business snapshot</summary>
         <div className="mt-6">

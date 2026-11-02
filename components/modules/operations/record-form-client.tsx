@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
@@ -35,6 +35,10 @@ import { RecordIdentityStrip } from "@/components/forms/record-identity-strip";
 import { FormActionBar } from "@/components/forms/form-action-bar";
 import { lookupOptionContext } from "@/lib/ui/lookup-option";
 import { displayValue, getPath, titleValue } from "./value";
+import { FormIssueSummary } from "@/components/forms/form-issue-summary";
+import { PlanningQuantityEntry } from "@/components/forms/planning-quantity-entry";
+import { applyFieldSuggestions, focusFormField, formFieldId, formIssues, formSection, formValidationValues, markFieldOverride, type FieldProvenance, type FormIssue } from "@/lib/ui/form-workflow";
+import type { PlanningQuantityBasis } from "@/lib/calculations/planning-quantity";
 
 type LookupOption = { value: string; label: string; profile_id?: string | null; die_status?: string | null;
   production_job_id?: string | null; status?: string | null; output_weight_kg?: number | string | null; received_date?: string | null; [key: string]: any };
@@ -48,6 +52,7 @@ type ProductionOrderItem = {
   item_description: string | null;
   quantity_pieces: number | null;
   length_per_piece_m: number | null;
+  section_weight_kg_per_m?: number | null;
   total_weight_kg: number | null;
   billing_weight_kg: number | null;
   dealer_fulfilled_weight_kg?: number | null;
@@ -127,6 +132,41 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
   const [error, setError] = useState<string | null>(null);
   const editing = Boolean(recordId);
   const submitInFlight = useRef(false);
+  const formElement = useRef<HTMLFormElement>(null);
+  const fieldScope = useId();
+  const [issues, setIssues] = useState<FormIssue[]>([]);
+  const validationAttempted = useRef(false);
+  const [operationMessage, setOperationMessage] = useState("");
+  const [provenance, setProvenance] = useState<Record<string, FieldProvenance>>({});
+  const provenanceRef = useRef(provenance);
+  const [quantityBasis, setQuantityBasis] = useState<PlanningQuantityBasis | null>(null);
+  const productionAutofillRequest = useRef(0);
+  const billetsRequest = useRef(0);
+
+  useEffect(() => () => { productionAutofillRequest.current++; billetsRequest.current++; }, []);
+  useEffect(() => {
+    if (!validationAttempted.current || !config.schema) return;
+    const parsed = config.schema.safeParse(formValidationValues(moduleKey, form));
+    setIssues(parsed.success ? [] : formIssues(parsed.error.issues, config.fields ?? []));
+  }, [form, config.schema, config.fields, moduleKey]);
+
+  function setFieldProvenance(next: Record<string, FieldProvenance>) {
+    provenanceRef.current = next;
+    setProvenance(next);
+  }
+
+  function applySuggestions(suggestions: Record<string, unknown>, source: { id: string; label: string; revision?: string }) {
+    const previous = provenanceRef.current;
+    const refreshedAt = new Date().toISOString();
+    setFieldProvenance(applyFieldSuggestions({}, previous, suggestions, source, refreshedAt).provenance);
+    setForm((current) => applyFieldSuggestions(current, previous, suggestions, source, refreshedAt).values);
+    setQuantityBasis(null);
+  }
+
+  function showSaveFailure(message: string) {
+    setOperationMessage(message);
+    toast.error(message);
+  }
 
   useEffect(() => () => { packagingAutofillRequest.current++; }, [context.companyId, moduleKey, recordId]);
 
@@ -232,6 +272,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
   }, []);
 
   async function loadAvailableBillets() {
+    const request = ++billetsRequest.current;
     setBilletsLoading(true);
     setBilletsLoadError(null);
     try {
@@ -245,7 +286,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
         .order("created_at", { ascending: true });
         
       if (error) throw error;
-      
+      if (request !== billetsRequest.current) return;
       const profile = lookups.profile_id?.find((p: any) => p.value === form.profile_id);
       const reqDiameter = profile?.billet_diameter_required_inch;
       const reqAlloy = profile?.alloy;
@@ -265,12 +306,13 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
         setSelectedBillets(new Set(filtered.filter((b: any) => b.production_job_id === recordId).map((b: any) => b.id)));
       }
     } catch (err) {
+      if (request !== billetsRequest.current) return;
       const message = getErrorMessage(err, "Could not load compatible billets");
       setAvailableBillets([]);
       setBilletsLoadError(message);
       toast.error(message);
     } finally {
-      setBilletsLoading(false);
+      if (request === billetsRequest.current) setBilletsLoading(false);
     }
   }
 
@@ -396,7 +438,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
     return `Auto-filled ${profile}${die}${pieces}${length}.${location}${multiple}`;
   }
 
-  function applyProductionItemAutofill(items: ProductionOrderItem[], profileId?: string | null, sourceLineId?: string | null) {
+  function applyProductionItemAutofill(items: ProductionOrderItem[], profileId?: string | null, sourceLineId?: string | null, source?: { id: string; label: string; revision?: string; requiredBillets?: number; remarks?: string }) {
     const item = (sourceLineId
       ? items.find((entry) => entry.id === sourceLineId)
       : profileId
@@ -413,17 +455,16 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
     const dieId = item.die_id ? (isUsableProductionDieForProfile(linkedDie, item.profile_id) ? item.die_id : null) : fallbackDie;
     const billetWeight = Number(form.billet_weight_kg ?? 0) || 0;
     const estimatedBillets = calculateRequiredBilletCount(plannedWeight, billetWeight, Number(form.extrusion_efficiency_percent ?? 75));
-    setForm((current) => ({
-      ...current,
+    applySuggestions({
       source_line_id: item.id ?? "",
-      profile_id: item.profile_id ?? current.profile_id,
+      profile_id: item.profile_id,
       die_id: dieId ?? "",
-      planned_quantity_kg: plannedWeight > 0 ? plannedWeight : current.planned_quantity_kg,
-      pieces: item.quantity_pieces ?? item.production_pieces ?? current.pieces ?? 0,
-      length_per_piece_m: item.length_per_piece_m ?? current.length_per_piece_m,
-      required_billet_count: estimatedBillets > 0 ? estimatedBillets : current.required_billet_count,
-      remarks: item.item_description ? `From order quote item: ${item.item_description}` : current.remarks
-    }));
+      planned_quantity_kg: plannedWeight > 0 ? plannedWeight : "",
+      pieces: item.quantity_pieces ?? item.production_pieces ?? 0,
+      length_per_piece_m: item.length_per_piece_m ?? "",
+      required_billet_count: source?.requiredBillets ?? (estimatedBillets > 0 ? estimatedBillets : form.required_billet_count),
+      remarks: item.item_description ? `From order quote item: ${item.item_description}` : source?.remarks ?? ""
+    }, { id: `${source?.id ?? form.order_id}:${item.id ?? "direct"}`, label: source?.label ?? lookups.order_id?.find((entry) => entry.value === form.order_id)?.label ?? "Selected order line", revision: source?.revision });
     setProductionAutofillSummary(dieId ? summarizeProductionItem({ ...item, die_id: dieId }, items.length) : item.die_id
       ? "The assigned die is unavailable for this profile. Review its current status, then select an active or approved die before scheduling production."
       : "Select an active or approved die for this profile before scheduling production.");
@@ -432,7 +473,16 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
   }
 
   async function loadProductionOrderAutofill(orderId: string) {
+    const request = ++productionAutofillRequest.current;
+    const changed = orderId !== form.order_id;
+    if (changed) {
+      billetsRequest.current++;
+      setFieldProvenance({}); setQuantityBasis(null); setProductionOrderItems([]);
+      setSelectedBillets(new Set()); setAvailableBillets([]);
+      setForm((current) => ({ ...current, order_id: orderId, source_line_id: "", profile_id: "", die_id: "", planned_quantity_kg: 0, pieces: 0, required_billet_count: 0, length_per_piece_m: "", remarks: "" }));
+    }
     if (!orderId) {
+      setProductionAutofillLoading(false);
       setProductionOrderItems([]);
       setProductionAutofillSummary(null);
       setForm((current) => ({ ...current, order_id: "", source_line_id: "", profile_id: "", die_id: "", planned_quantity_kg: 0, remarks: "" }));
@@ -443,7 +493,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
     try {
       const { data: order, error: orderError } = await supabase
         .from("orders_authorized")
-        .select("id, order_number, quote_id, expected_dispatch_date, priority, notes, production_profile_id, production_die_id, production_quantity_kg, production_pieces, production_notes, billets_required, billets_allocated, billets_short, billet_allocation_status")
+        .select("id, order_number, updated_at, quote_id, expected_dispatch_date, priority, notes, production_profile_id, production_die_id, production_quantity_kg, production_pieces, production_notes, billets_required, billets_allocated, billets_short, billet_allocation_status")
         .eq("company_id", context.companyId)
         .eq("id", orderId)
         .single();
@@ -452,7 +502,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
       let items: ProductionOrderItem[] = [];
       const { data: orderItems, error: orderItemsError } = await supabase
         .from("order_items_authorized")
-        .select("id, profile_id, die_id, item_description, quantity_pieces, length_per_piece_m, quantity_kg, dealer_fulfilled_weight_kg, manufacturing_weight_kg")
+        .select("id, profile_id, die_id, item_description, quantity_pieces, length_per_piece_m, section_weight_kg_per_m, quantity_kg, dealer_fulfilled_weight_kg, manufacturing_weight_kg")
         .eq("company_id", context.companyId)
         .eq("order_id", orderId)
         .order("created_at", { ascending: true });
@@ -498,21 +548,16 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
         .eq("order_id", orderId)
         .in("status", ["allocated", "issued"]);
       if (billetError) throw billetError;
+      if (request !== productionAutofillRequest.current) return;
       const requiredBilletCount = Number(order?.billets_required ?? 0);
       const allocatedBilletCount = Number(order?.billets_allocated ?? linkedBilletCount ?? 0);
 
       setProductionOrderItems(items);
       setForm((current) => ({
         ...current,
-        order_id: orderId,
-        required_billet_count: requiredBilletCount > 0 ? requiredBilletCount : current.required_billet_count,
-        remarks: order?.production_notes ? `Order production notes: ${order.production_notes}` : order?.notes ? `Order notes: ${order.notes}` : order?.priority === "urgent" || order?.priority === "high" ? `Priority order: ${order.priority}` : current.remarks
+        order_id: orderId
       }));
-      applyProductionItemAutofill(items);
-      setForm((current) => ({
-        ...current,
-        required_billet_count: requiredBilletCount > 0 ? requiredBilletCount : current.required_billet_count
-      }));
+      applyProductionItemAutofill(items, null, changed ? null : form.source_line_id, { id: orderId, label: order.order_number || "Selected order", revision: order.updated_at ?? undefined, requiredBillets: requiredBilletCount, remarks: order.production_notes ? `Order production notes: ${order.production_notes}` : order.notes ? `Order notes: ${order.notes}` : ["urgent", "high"].includes(order.priority) ? `Priority order: ${order.priority}` : "" });
       const allocationSummary = requiredBilletCount > 0
         ? ` Full-order requirement: ${requiredBilletCount}. Allocated to the order: ${allocatedBilletCount}. Linked and available for jobs: ${linkedBilletCount ?? 0}.`
         : linkedBilletCount
@@ -526,11 +571,12 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
         : "";
       setProductionAutofillSummary((current) => `${current ?? "Auto-filled production details."}${allocationSummary}${shortageSummary}${dispatchDeadlineSummary}`);
     } catch (err) {
+      if (request !== productionAutofillRequest.current) return;
       const message = getErrorMessage(err, "Could not auto-fill production details from the selected order");
       setProductionAutofillSummary(message);
       toast.error(message);
     } finally {
-      setProductionAutofillLoading(false);
+      if (request === productionAutofillRequest.current) setProductionAutofillLoading(false);
     }
   }
 
@@ -589,6 +635,8 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
   }
 
   function handleFieldChange(field: FieldConfig, value: string | boolean) {
+    setFieldProvenance(markFieldOverride(provenanceRef.current, field.name, value));
+    if (["pieces", "length_per_piece_m", "planned_quantity_kg", "profile_id", "order_id"].includes(field.name)) setQuantityBasis(null);
     if (moduleKey === "production" && field.name === "order_id" && typeof value === "string") {
       void loadProductionOrderAutofill(value);
       return;
@@ -708,6 +756,8 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
 
   async function submit() {
     if (!config.schema) return;
+    setOperationMessage("");
+    validationAttempted.current = true;
     let formForSubmit = form;
     if (moduleKey === "foundry") {
       const defaultComposition = form.alloy_composition_default && Object.keys(form.alloy_composition_default).length ? form.alloy_composition_default as AlloyComposition : defaultCompositionFor(String(form.alloy ?? ""));
@@ -720,22 +770,26 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
         alloy_composition_source: form.alloy_composition_source || sourceForAlloy(String(form.alloy ?? ""))
       });
     }
-    const parsed = config.schema.safeParse(formForSubmit);
+    const parsed = config.schema.safeParse(formValidationValues(moduleKey, formForSubmit));
     if (!parsed.success) {
+      const nextIssues = formIssues(parsed.error.issues, config.fields ?? []);
+      setIssues(nextIssues);
+      requestAnimationFrame(() => focusFormField(formElement.current, formFieldId(fieldScope, nextIssues[0]?.path.split(".")[0] ?? "")));
       const messages = moduleKey === "foundry"
         ? [...new Set(parsed.error.issues.map((issue) => issue.message))].join(" ")
         : parsed.error.issues[0]?.message;
       return toast.error(messages ?? "Please check the form");
     }
+    setIssues([]);
     setSaving(true);
     const sanitized = Object.fromEntries(Object.entries(parsed.data as Record<string, unknown>).map(([key, value]) => [key, value === "" ? null : value]));
     if (moduleKey === "foundry" && sanitized.scrap_id && !Number(sanitized.scrap_aluminium_kg ?? 0)) {
       setSaving(false);
-      return toast.error("Calculated scrap kg is zero. Increase scrap percentage or clear the selected scrap batch.");
+      return showSaveFailure("Calculated scrap kg is zero. Increase scrap percentage or clear the selected scrap batch.");
     }
     if (moduleKey === "foundry" && sanitized.external_source_id && !Number(sanitized.external_aluminium_kg ?? 0)) {
       setSaving(false);
-      return toast.error("Calculated external aluminium kg is zero. Increase external aluminium percentage or clear the selected source.");
+      return showSaveFailure("Calculated external aluminium kg is zero. Increase external aluminium percentage or clear the selected source.");
     }
     if (moduleKey === "foundry" && sanitized.alloy_composition_altered) {
       toast.warning("Alloy chemistry was altered from the standard composition. This will be saved on the foundry batch.");
@@ -743,17 +797,17 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
     if (moduleKey === "production") {
       if (!sanitized.die_id) {
         setSaving(false);
-        return toast.error("Select an active or approved die for this order/profile before scheduling production.");
+        return showSaveFailure("Select an active or approved die for this order/profile before scheduling production.");
       }
       const required = Number(sanitized.required_billet_count || 0);
       if (required > 0 && selectedBillets.size === 0) {
         setSaving(false);
-        return toast.error("Select at least one allocated billet for this production job. Partial production is allowed when billet supply is tight.");
+        return showSaveFailure("Select at least one allocated billet for this production job. Partial production is allowed when billet supply is tight.");
       }
     }
     if (moduleKey === "profiles" && !sanitized.standard_length_m) {
       setSaving(false);
-      return toast.error("Profile standard length is missing. Add stock length before using this profile for BOM, cutting list, or inventory planning.");
+      return showSaveFailure("Profile standard length is missing. Add stock length before using this profile for BOM, cutting list, or inventory planning.");
     }
     if (moduleKey === "expenses") {
       if (!editing && !expenseCreateKey.current) expenseCreateKey.current = crypto.randomUUID();
@@ -763,7 +817,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
         idempotency_key: editing ? null : expenseCreateKey.current
       } as any);
       setSaving(false);
-      if (!result.success) return toast.error(result.error);
+      if (!result.success) return showSaveFailure(result.error);
       toast.success(`${result.data.expense_number} saved as ${result.data.approval_status.replace(/_/g, " ")}`);
       router.push(`${config.basePath}/${result.data.expense_id}`);
       router.refresh();
@@ -779,11 +833,11 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
       const duplicate = await duplicateRequest;
       if (duplicate.error) {
         setSaving(false);
-        return toast.error(getErrorMessage(duplicate.error, `Could not validate ${config.uniqueLabel ?? config.uniqueField}`));
+        return showSaveFailure(getErrorMessage(duplicate.error, `Could not validate ${config.uniqueLabel ?? config.uniqueField}`));
       }
       if ((duplicate.count ?? 0) > 0) {
         setSaving(false);
-        return toast.error(`${config.uniqueLabel ?? config.uniqueField} already exists for this company. Use a unique code/number to avoid traceability issues.`);
+        return showSaveFailure(`${config.uniqueLabel ?? config.uniqueField} already exists for this company. Use a unique code/number to avoid traceability issues.`);
       }
     }
     let payload: Record<string, any> = { ...sanitized, company_id: context.companyId, created_by: context.userId };
@@ -791,10 +845,11 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
       const result = await saveProductionJobAction({
         ...sanitized,
         editing_id: editing ? recordId : null,
-        selected_billet_ids: Array.from(selectedBillets)
+        selected_billet_ids: Array.from(selectedBillets),
+        ...(quantityBasis ? { quantity_basis: quantityBasis } : {})
       } as any);
       setSaving(false);
-      if (!result.success || !result.jobId) return toast.error(result.success ? "Could not save production job" : result.error);
+      if (!result.success || !result.jobId) return showSaveFailure(result.success ? "Could not save production job" : result.error);
       toast.success(editing ? `${config.title} updated` : `${config.title} saved`);
       router.push(`${config.basePath}/${result.jobId}`);
       router.refresh();
@@ -806,7 +861,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
         editing_id: editing ? recordId : null
       } as any);
       setSaving(false);
-      if (!result.success || !result.dispatchId) return toast.error(result.success ? "Could not save dispatch" : result.error);
+      if (!result.success || !result.dispatchId) return showSaveFailure(result.success ? "Could not save dispatch" : result.error);
       toast.success(editing ? `${config.title} updated` : `${config.title} saved`);
       router.push(`${config.basePath}/${result.dispatchId}`);
       router.refresh();
@@ -822,7 +877,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
         }))
       } as any);
       setSaving(false);
-      if (!result.success) return toast.error(result.error);
+      if (!result.success) return showSaveFailure(result.error);
       toast.success(editing ? `${config.title} updated` : `${config.title} saved`);
       router.push(`${config.basePath}/${result.jobId}`);
       router.refresh();
@@ -831,7 +886,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
     if (moduleKey === "orders") {
       const result = await saveOrderAction({ ...payload, editing_id: editing ? recordId : null } as any);
       setSaving(false);
-      if (!result.success) return toast.error(result.error);
+      if (!result.success) return showSaveFailure(result.error);
       toast.success(editing ? "Order updated" : "Order saved");
       router.push(`/orders/${result.orderId}`);
       router.refresh();
@@ -840,7 +895,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
     if (moduleKey === "foundry") {
       const result = await saveFoundryBatchAction({ ...sanitized, editing_id: editing ? recordId : null } as any);
       setSaving(false);
-      if (!result.success) return toast.error(result.error);
+      if (!result.success) return showSaveFailure(result.error);
       toast.success(editing ? `${config.title} updated` : `${config.title} saved`);
       router.push(`${config.basePath}/${result.batchId}`);
       router.refresh();
@@ -879,22 +934,27 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
       ? await supabase.from(config.table as any).update(payload).eq("id", recordId).eq("company_id", context.companyId).select("id").single()
       : await supabase.from(config.table as any).insert(payload).select("id").single();
     setSaving(false);
-    if (result.error || !result.data) return toast.error(getErrorMessage(result.error, "Could not save record"));
+    if (result.error || !result.data) return showSaveFailure(getErrorMessage(result.error, "Could not save record"));
     toast.success(editing ? `${config.title} updated` : `${config.title} saved`);
     router.push(`${config.basePath}/${result.data.id}`);
     router.refresh();
   }
 
   async function submitOnce() {
-    if (submitInFlight.current || saveOutcomeUncertain) return;
+    if (submitInFlight.current || saveOutcomeUncertain || productionAutofillLoading) return;
     submitInFlight.current = true;
     try { await submit(); }
-    catch { setSaveOutcomeUncertain(true); toast.error("The save outcome could not be confirmed. Check the record before submitting again."); }
+    catch { setSaveOutcomeUncertain(true); showSaveFailure("The save outcome could not be confirmed. Check the record before submitting again."); }
     finally { submitInFlight.current = false; setSaving(false); }
   }
 
   function renderField(field: FieldConfig) {
     const value = form[field.name] ?? "";
+    const id = formFieldId(fieldScope, field.name);
+    const issue = issues.find((entry) => entry.path.split(".")[0] === field.name);
+    const source = provenance[field.name];
+    const describedBy = [issue ? `${id}-error` : "", source ? `${id}-source` : ""].filter(Boolean).join(" ") || undefined;
+    const accessibility = { id, "aria-invalid": issue ? true as const : undefined, "aria-describedby": describedBy, "aria-required": field.required || undefined };
     const options: LookupOption[] = field.lookup ? lookups[field.name] ?? [] : field.options ?? [];
     const productionDieField = (moduleKey === "production" && field.name === "die_id") || (moduleKey === "orders" && field.name === "production_die_id");
     const dieProfileId = moduleKey === "production" ? form.profile_id : form.production_profile_id;
@@ -913,12 +973,18 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
           ? options.filter((option) => option.order_id === form.order_id)
         : options;
     return (
-      <label key={field.name} className={field.type === "textarea" ? "block space-y-1.5 md:col-span-2" : "block space-y-1.5"}>
-        <span className="form-label">{field.label}{field.required ? " *" : ""}</span>
-        {field.type === "textarea" ? <textarea className="form-input min-h-24" value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} /> : field.type === "select" ? <SearchableSelect ariaLabel={field.label} value={String(value)} options={fieldOptions} placeholder="Select" onChange={(nextValue) => handleFieldChange(field, nextValue)} onSearchChange={field.lookup ? (query) => searchLookup(field, query) : undefined} searching={Boolean(field.lookup && lookupSearching[field.name])} error={lookupErrors[field.name]} onRetry={field.lookup ? () => searchLookup(field, "") : undefined} disabled={field.readOnly || receiptReadOnly || (productionAutofillLoading && field.name === "order_id")} /> : field.type === "checkbox" ? <input className="form-input" type="checkbox" checked={Boolean(value)} disabled={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.checked)} /> : <input className="form-input" type={field.type ?? "text"} step={field.step} value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} />}
+      <div key={field.name} className={field.type === "textarea" ? "block space-y-1.5 md:col-span-2" : "block space-y-1.5"} style={{ scrollMarginTop: "12rem" }}>
+        <label htmlFor={id} className="form-label">{field.label}{field.required ? <span aria-hidden="true"> *</span> : null}</label>
+        {field.type === "textarea" ? <textarea {...accessibility} className="form-input min-h-24" value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} /> : field.type === "select" ? <SearchableSelect inputId={id} ariaDescribedBy={describedBy} invalid={Boolean(issue)} ariaLabel={field.label} value={String(value)} options={fieldOptions} placeholder="Select" onChange={(nextValue) => handleFieldChange(field, nextValue)} onSearchChange={field.lookup ? (query) => searchLookup(field, query) : undefined} searching={Boolean(field.lookup && lookupSearching[field.name])} error={lookupErrors[field.name]} onRetry={field.lookup ? () => searchLookup(field, "") : undefined} disabled={field.readOnly || receiptReadOnly} /> : field.type === "checkbox" ? <input {...accessibility} className="h-6 w-6 accent-orange" type="checkbox" checked={Boolean(value)} disabled={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.checked)} /> : <input {...accessibility} className="form-input" inputMode={field.type === "number" ? (field.step === "1" ? "numeric" : "decimal") : undefined} type={field.type ?? "text"} step={field.step} value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} />}
+        {issue ? <p id={`${id}-error`} className="text-sm font-semibold text-red-800">{issue.message}</p> : null}
+        {source ? <div id={`${id}-source`} className="text-xs leading-5 text-neutral-600">
+          <p>{source.overridden ? "Manual override; source suggests" : source.kind === "calculated" ? "Calculated from" : "Copied from"} {source.sourceLabel}{source.revision ? ` (source revision ${source.revision})` : ""}{source.overridden ? `: ${String(source.suggested ?? "Not captured")}` : ""}.</p>
+          <p>Refreshed {new Date(source.refreshedAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" })}. Draft guidance; the server checks current eligibility when saved.</p>
+          {source.overridden ? <button type="button" className="min-h-11 rounded-lg px-2 font-semibold underline" onClick={() => { update(field.name, source.suggested as string); setFieldProvenance(markFieldOverride(provenanceRef.current, field.name, source.suggested)); setQuantityBasis(null); }}>Restore source value for {field.label}</button> : null}
+        </div> : null}
         {receiptField ? <p className="text-xs font-semibold text-slate-500">Select accepted output from one final receipt. Its rejected remainder stays separate.</p> : null}
         {receiptField && receiptReadOnly && value ? <p className="break-words text-xs font-semibold text-slate-700">Recorded receipt: {fieldOptions.find((option) => option.value === value)?.label ?? "Receipt details unavailable. Refresh before completing packaging."}</p> : null}
-      </label>
+      </div>
     );
   }
 
@@ -949,25 +1015,41 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
 
   const chemistryRows = moduleKey === "foundry" ? compositionToEditableRows((form.alloy_composition_actual ?? {}) as AlloyComposition) : [];
   const identityQuantity = config.card.meta.find((item) => item.type === "weight" || item.type === "number");
+  const selectedPlanningLine = productionOrderItems.find((item) => item.id === form.source_line_id);
+  const planningWeight = form.source_line_id ? selectedPlanningLine?.section_weight_kg_per_m : lookups.profile_id?.find((item) => item.value === form.profile_id)?.section_weight_kg_per_m;
 
   return (
-    <div className="operational-record-form space-y-6">
+    <form ref={formElement} noValidate onSubmit={(event) => { event.preventDefault(); void submitOnce(); }} className="operational-record-form space-y-6">
       <PageHeader title={editing ? `Edit ${config.title}` : config.primaryAction} description="Enter the facts for this record, then review your entries before saving." backHref={editing && recordId ? `${config.basePath}/${recordId}` : config.basePath} backLabel={`Back to ${config.title}`} />
       <RecordIdentityStrip kind={config.title} unsaved={!editing} number={savedIdentity ? titleValue(savedIdentity, config.card.titlePath) : undefined} context={savedIdentity && config.card.subtitlePath ? String(getPath(savedIdentity, config.card.subtitlePath) ?? "") : undefined} status={savedIdentity && config.card.badgePath ? String(getPath(savedIdentity, config.card.badgePath) ?? "") : undefined} quantity={savedIdentity && identityQuantity ? <span>Saved {identityQuantity.label}: {displayValue(savedIdentity, identityQuantity.path, identityQuantity.type)}</span> : undefined} />
       <Card>
         <CardHeader><h2 className="section-title">Record Details</h2></CardHeader>
         <CardContent>
+          <FormIssueSummary issues={issues} scope={fieldScope} container={formElement} />
+          {operationMessage ? <p role="alert" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{operationMessage} Your entries are retained.</p> : null}
+          {moduleKey === "production" ? <PlanningQuantityEntry key={`${form.profile_id ?? "none"}:${form.source_line_id ?? "direct"}`} weightSourceLabel={form.source_line_id ? "Order-line technical reference" : "Current profile section weight for a direct-order planning estimate"} sourceLengthM={selectedPlanningLine?.length_per_piece_m} sectionWeight={planningWeight === null || planningWeight === undefined || planningWeight === "" || !Number.isFinite(Number(planningWeight)) || Number(planningWeight) <= 0 ? null : Number(planningWeight)} onApply={(basis, quantity) => {
+            setForm((current) => ({ ...current, pieces: quantity.pieces, length_per_piece_m: quantity.lengthPerPieceM, planned_quantity_kg: quantity.theoreticalKg }));
+            setQuantityBasis(basis);
+            const next = { ...provenanceRef.current };
+            for (const [name, suggested] of Object.entries({ pieces: quantity.pieces, length_per_piece_m: quantity.lengthPerPieceM, planned_quantity_kg: quantity.theoreticalKg })) next[name] = { kind: "calculated", sourceId: next[name]?.sourceId ?? String(form.profile_id), sourceLabel: `${basis.pieces} pieces x ${basis.length} ${basis.unit} x ${basis.sectionWeightKgPerM} kg/m (theoretical plan)`, refreshedAt: new Date().toISOString(), suggested, overridden: false };
+            setFieldProvenance(next);
+          }} /> : null}
           {moduleKey === "foundry" ? (
             <p className="mb-4 rounded-xl border border-orange/20 bg-orange/5 px-4 py-3 text-sm font-medium leading-6 text-slate-700">
               New batches start as planned. Select a same-company source for each mix percentage above 0%; planned batches reserve those materials. Once processing starts or billets are allocated, material, count, and physical dimensions are locked. Cancelling an uncommitted planned batch releases its reservations.
             </p>
           ) : null}
-          <div className="grid gap-4 md:grid-cols-2">{(config.fields ?? []).map(renderField)}</div>
+          <div className="grid gap-4 md:grid-cols-2">{(config.fields ?? []).filter((field) => formSection(moduleKey, field, form) === "essential").map(renderField)}</div>
+          {(["observations", "optional"] as const).map((section) => {
+            const fields = (config.fields ?? []).filter((field) => formSection(moduleKey, field, form) === section);
+            return fields.length ? <details key={section} className="mt-4 rounded-xl border border-neutral-200 p-4"><summary className="min-h-11 cursor-pointer py-2 text-sm font-bold">{section === "observations" ? "Measurements and observations (optional while pending)" : "Optional details"}</summary><p className="mb-3 text-xs text-neutral-600">Entries stay in the form when this section is closed. All requirements for the selected status are checked on save.</p><div className="grid gap-4 md:grid-cols-2">{fields.map(renderField)}</div></details> : null;
+          })}
           {moduleKey === "production" && (productionAutofillLoading || productionAutofillSummary) ? (
             <div className="mt-4 rounded-2xl border border-orange/20 bg-orange/5 px-4 py-3 text-sm font-semibold text-slate-700">
               {productionAutofillLoading ? "Loading order details for production autofill..." : productionAutofillSummary}
             </div>
           ) : null}
+          {moduleKey === "production" && form.order_id ? <button type="button" disabled={productionAutofillLoading || saving} className="mt-3 min-h-11 rounded-xl border border-neutral-300 px-3 text-sm font-semibold" onClick={() => void loadProductionOrderAutofill(String(form.order_id))}>Refresh order suggestions (keep manual overrides)</button> : null}
           {moduleKey === "production" && productionOrderItems.some((item) => item.id) ? (
             <label className="mt-4 block space-y-1.5">
               <span className="form-label">Order line *</span>
@@ -1120,8 +1202,8 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
       <FormActionBar pending={saving} explanation={saving ? "Saving this record. Please wait for the result." : saveOutcomeUncertain ? "Save outcome uncertain. Check the database for this record before starting another save." : "Review the selected status and entered quantities before saving. This uses the current record action."}>
         {saveOutcomeUncertain ? <Link className="rounded-xl border border-neutral-300 px-3 py-2 text-sm font-semibold" href={`${config.basePath}/database`} target="_blank" rel="noreferrer" title="Opens a new tab so your current entries remain available">Check saved records</Link> : null}
         <Button type="button" variant="secondary" disabled={saving} onClick={() => router.back()}>Cancel</Button>
-        <Button type="button" disabled={saving || saveOutcomeUncertain} onClick={() => void submitOnce()}>{saving ? "Saving..." : editing ? "Update record" : "Save record"}</Button>
+        <Button type="submit" disabled={saving || saveOutcomeUncertain || productionAutofillLoading}>{saving ? "Saving..." : editing ? "Update record" : "Save record"}</Button>
       </FormActionBar>
-    </div>
+    </form>
   );
 }

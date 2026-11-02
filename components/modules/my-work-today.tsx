@@ -46,7 +46,8 @@ function Queue({ work, today, personal = false, embedded = false }: { work: Work
       </div>
       {work.error ? (
         <div role="status" className="m-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">{work.error}</div>
-      ) : work.items.length ? (
+      ) : null}
+      {work.items.length ? (
         <ul className="divide-y divide-neutral-100">
           {work.items.map((item) => {
             const dateLabel = workDateLabel(item, today);
@@ -57,14 +58,15 @@ function Queue({ work, today, personal = false, embedded = false }: { work: Work
                   {item.priority && ["urgent", "high"].includes(item.priority) ? <span className="rounded-md bg-amber-50 px-2 py-1 text-amber-900">{item.priority} priority</span> : null}
                 </div>
                 <h3 className="mt-2 break-words text-sm font-bold leading-6 text-neutral-950">{item.title}</h3>
+                {item.ownership ? <p className="mt-1 text-xs text-neutral-500">{item.ownership}</p> : null}
                 {dateLabel ? <p className={`mt-1 text-xs font-medium ${dateLabel.startsWith("Overdue") ? "text-rose-700" : "text-neutral-500"}`}>{dateLabel}</p> : null}
                 {item.blocker ? <p className="mt-3 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs font-medium leading-5 text-amber-950"><CircleAlert aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />{item.blocker}</p> : null}
-                <Link href={item.href} className="mt-3 inline-flex min-h-11 max-w-full items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950 hover:bg-neutral-950 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"><span>{item.actionLabel}</span><ArrowUpRight aria-hidden="true" className="h-4 w-4 shrink-0" /><span className="sr-only">: {item.title}</span></Link>
+                {!work.error ? <Link href={item.href} className="mt-3 inline-flex min-h-11 max-w-full items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2 text-sm font-semibold text-neutral-800 transition hover:border-neutral-950 hover:bg-neutral-950 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"><span>{item.actionLabel}</span><ArrowUpRight aria-hidden="true" className="h-4 w-4 shrink-0" /><span className="sr-only">: {item.title}</span></Link> : null}
               </li>
             );
           })}
         </ul>
-      ) : <p className="p-5 text-sm leading-6 text-neutral-500">{personal ? "No open assignments for you. Review the separate team queues for other available work." : "No matching open work in this queue."}</p>}
+      ) : !work.error ? <p className="p-5 text-sm leading-6 text-neutral-500">{personal ? "No open assignments for you. Review the separate team queues for other available work." : "No matching open work in this queue."}</p> : null}
       <div className={embedded ? "mt-3" : "border-t border-neutral-100 p-4"}>
         <Link href={work.href} className="inline-flex min-h-11 items-center gap-2 rounded-xl px-2 text-sm font-semibold text-neutral-700 underline decoration-neutral-300 underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">{work.hasMore ? "View full queue" : "Open workspace"}<ArrowUpRight aria-hidden="true" className="h-4 w-4" /></Link>
       </div>

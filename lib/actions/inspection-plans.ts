@@ -5,7 +5,7 @@ import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canEditPlans, canReadPlans, evaluationSchema, planCommandSchema, planDetailSchema, planListSchema } from "@/lib/workflow/inspection-plans";
 
-export type PlanActionResult = { success: true; data: unknown } | { success: false; error: string; unavailable?: boolean };
+export type PlanActionResult = { success: true; data: unknown } | { success: false; error: string; unavailable?: boolean; uncertain?: boolean };
 
 const businessErrors = [
   "Profile is unavailable", "Describe the sampling instruction (3 to 500 characters)", "A plan needs between 1 and 50 characteristics",
@@ -18,6 +18,7 @@ const businessErrors = [
 
 // UPGRADE_EOS feature 54. Results are judged and approvals guarded by the database.
 export async function inspectionPlanAction(input: unknown): Promise<PlanActionResult> {
+  let submittedObservations = false;
   try {
     const context = await getSessionContext();
     const parsed = planCommandSchema.safeParse(input);
@@ -26,6 +27,7 @@ export async function inspectionPlanAction(input: unknown): Promise<PlanActionRe
     const writes = ["plan.save_draft", "plan.approve", "plan.discard_draft", "results.record"].includes(command);
     if (context.dealerId || !(writes ? canEditPlans(context.role) : canReadPlans(context.role))) return { success: false, error: "You do not have permission to use this action." };
     const supabase = await createClient();
+    submittedObservations = command === "results.record";
     const result = await supabase.rpc("inspection_plan_command", { p_command: command, p_payload: payload });
     if (result.error) {
       const code = result.error.code ?? "";
@@ -34,6 +36,7 @@ export async function inspectionPlanAction(input: unknown): Promise<PlanActionRe
       // Per-characteristic messages name the characteristic; show them as written.
       if (businessErrors.includes(message) || /^(Characteristic \d+ needs|Enter the measured value for |Record pass or fail for )/.test(message)) return { success: false, error: message };
       if (code === "42501") return { success: false, error: "This action is not permitted for your current session." };
+      if (submittedObservations && !code) return { success: false, uncertain: true, error: "The save outcome could not be confirmed. Check current observations before submitting again." };
       return { success: false, error: "The inspection plan request could not be completed. Refresh and retry." };
     }
     const data = command === "plan.list" ? planListSchema.parse(result.data)
@@ -48,6 +51,8 @@ export async function inspectionPlanAction(input: unknown): Promise<PlanActionRe
     }
     return { success: true, data };
   } catch {
-    return { success: false, error: "The inspection plan request could not be completed. Check your session and retry." };
+    return submittedObservations
+      ? { success: false, uncertain: true, error: "The save outcome could not be confirmed. Check current observations before submitting again." }
+      : { success: false, error: "The inspection plan request could not be completed. Check your session and retry." };
   }
 }

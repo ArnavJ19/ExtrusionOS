@@ -25,11 +25,13 @@ type SearchableSelectProps = {
   searching?: boolean;
   ariaLabel?: string;
   inputId?: string;
+  ariaDescribedBy?: string;
+  invalid?: boolean;
   error?: string | null;
   onRetry?: () => void;
 };
 
-export function SearchableSelect({ value, options, onChange, placeholder = "Select", disabled, className, emptyText = "No matching options", onSearchChange, searching = false, ariaLabel, inputId, error, onRetry }: SearchableSelectProps) {
+export function SearchableSelect({ value, options, onChange, placeholder = "Select", disabled, className, emptyText = "No matching options", onSearchChange, searching = false, ariaLabel, inputId, ariaDescribedBy, invalid, error, onRetry }: SearchableSelectProps) {
   const id = useId();
   const listId = `${id}-options`;
   const selected = options.find((option) => option.value === value) ?? null;
@@ -107,7 +109,8 @@ export function SearchableSelect({ value, options, onChange, placeholder = "Sele
           aria-expanded={open && !disabled}
           aria-controls={open && !disabled ? listId : undefined}
           aria-activedescendant={open && !searching && !error && filteredOptions[activeIndex] ? `${listId}-${activeIndex}` : undefined}
-          aria-describedby={value ? `${id}-selection` : undefined}
+          aria-describedby={[value ? `${id}-selection` : "", ariaDescribedBy].filter(Boolean).join(" ") || undefined}
+          aria-invalid={invalid || undefined}
           className="form-input w-full pl-9 pr-16"
           value={visibleQuery}
           placeholder={placeholder}

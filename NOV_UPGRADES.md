@@ -8,6 +8,8 @@ Status: Proposed targets and extension plans; this document does not implement o
 
 Implementation records: [November batch 1](NOV_UPGRADE_BATCH_1.md) covers the first ten selected U1/N1 interface and workflow improvements (NOV-016, 083, 084, 085, 086, 088, 091, 092, 093, and 099). That record separates implemented scope, local verification, and outstanding hosted/employee acceptance. The original 100 targets and their ratings below remain the planning reference.
 
+[November batch 2](NOV_UPGRADE_BATCH_2.md) covers ten further U1/N1 delivery slices: NOV-001, 002, 004, 006, 012, 018, 094, 095, 096, and 100. Its delivery record tracks implementation, edge verification and the remaining rollout acceptance separately.
+
 ## Purpose and boundaries
 
 Employees should be able to identify their next useful task, find the right source record, enter new facts once, understand a decision, and pass complete work to the next team. Management should be able to see commitments, blockers, material movement, ownership, and outcomes without assembling a parallel spreadsheet.

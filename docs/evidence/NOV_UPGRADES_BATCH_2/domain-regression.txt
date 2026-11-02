@@ -1,0 +1,370 @@
+TAP version 13
+# Subtest: a draft plan is versioned, approved once, and supersedes the previous approved version
+ok 1 - a draft plan is versioned, approved once, and supersedes the previous approved version
+  ---
+  duration_ms: 2654.6982
+  type: 'test'
+  ...
+# Subtest: editing the draft replaces its characteristics; approved versions cannot be edited
+ok 2 - editing the draft replaces its characteristics; approved versions cannot be edited
+  ---
+  duration_ms: 74.9643
+  type: 'test'
+  ...
+# Subtest: characteristic rules: limits enclose the nominal, visual checks have none, units are known
+ok 3 - characteristic rules: limits enclose the nominal, visual checks have none, units are known
+  ---
+  duration_ms: 71.5385
+  type: 'test'
+  ...
+# Subtest: the profile's own plan applies before the company default; profiles without either have no plan
+ok 4 - the profile's own plan applies before the company default; profiles without either have no plan
+  ---
+  duration_ms: 53.4149
+  type: 'test'
+  ...
+# Subtest: results are judged against the limits; an inspection approves only when every result is recorded and passes
+ok 5 - results are judged against the limits; an inspection approves only when every result is recorded and passes
+  ---
+  duration_ms: 70.0833
+  type: 'test'
+  ...
+# Subtest: a fully passing inspection approves; boundary values on the limits pass
+ok 6 - a fully passing inspection approves; boundary values on the limits pass
+  ---
+  duration_ms: 50.7443
+  type: 'test'
+  ...
+# Subtest: a visual failure blocks approval
+ok 7 - a visual failure blocks approval
+  ---
+  duration_ms: 59.0087
+  type: 'test'
+  ...
+# Subtest: inserting an inspection directly as approved is refused when a plan applies
+ok 8 - inserting an inspection directly as approved is refused when a plan applies
+  ---
+  duration_ms: 37.2225
+  type: 'test'
+  ...
+# Subtest: the approved child of a rework resolution is not blocked; its disposition is already decided
+ok 9 - the approved child of a rework resolution is not blocked; its disposition is already decided
+  ---
+  duration_ms: 55.5037
+  type: 'test'
+  ...
+# Subtest: results are recorded only while pending, only against the current applicable plan
+ok 10 - results are recorded only while pending, only against the current applicable plan
+  ---
+  duration_ms: 91.4929
+  type: 'test'
+  ...
+# Subtest: result input is validated per characteristic
+ok 11 - result input is validated per characteristic
+  ---
+  duration_ms: 58.1019
+  type: 'test'
+  ...
+# Subtest: re-recording a result replaces it and keeps who recorded it
+ok 12 - re-recording a result replaces it and keeps who recorded it
+  ---
+  duration_ms: 44.9415
+  type: 'test'
+  ...
+# Subtest: inspectors record, only quality managers approve plans, others read; other companies see nothing
+ok 13 - inspectors record, only quality managers approve plans, others read; other companies see nothing
+  ---
+  duration_ms: 63.4877
+  type: 'test'
+  ...
+# Subtest: the plan list shows drafts and approved plans, default first, paged at 10
+ok 14 - the plan list shows drafts and approved plans, default first, paged at 10
+  ---
+  duration_ms: 33.5038
+  type: 'test'
+  ...
+# Subtest: pass/fail matches the database: inclusive limits, one-sided limits allowed
+ok 15 - pass/fail matches the database: inclusive limits, one-sided limits allowed
+  ---
+  duration_ms: 2626.3237
+  type: 'test'
+  ...
+# Subtest: characteristic rules mirror the database checks
+ok 16 - characteristic rules mirror the database checks
+  ---
+  duration_ms: 3.0587
+  type: 'test'
+  ...
+# Subtest: labels and role gates
+ok 17 - labels and role gates
+  ---
+  duration_ms: 4.228
+  type: 'test'
+  ...
+# Subtest: database plan, list and evaluation responses parse with the app's schemas
+ok 18 - database plan, list and evaluation responses parse with the app's schemas
+  ---
+  duration_ms: 97.5227
+  type: 'test'
+  ...
+# Subtest: pages gate on the plan roles; the inspection page shows the panel for internal users
+ok 19 - pages gate on the plan roles; the inspection page shows the panel for internal users
+  ---
+  duration_ms: 5.5215
+  type: 'test'
+  ...
+# Subtest: every role gets only its permitted department queues
+ok 20 - every role gets only its permitted department queues
+  ---
+  duration_ms: 100.4358
+  type: 'test'
+  ...
+# Subtest: personal assignments include permitted dealership work while unassigned tasks remain factory-scoped
+ok 21 - personal assignments include permitted dealership work while unassigned tasks remain factory-scoped
+  ---
+  duration_ms: 6.1581
+  type: 'test'
+  ...
+# Subtest: dealer roles and dealer identities cannot call the internal read model
+ok 22 - dealer roles and dealer identities cannot call the internal read model
+  ---
+  duration_ms: 2.7029
+  type: 'test'
+  ...
+# Subtest: disabled modules prevent queue queries and exclude related tasks
+ok 23 - disabled modules prevent queue queries and exclude related tasks
+  ---
+  duration_ms: 2.2524
+  type: 'test'
+  ...
+# Subtest: task source links are checked in the current company and recorded holds are visible
+ok 24 - task source links are checked in the current company and recorded holds are visible
+  ---
+  duration_ms: 3.8158
+  type: 'test'
+  ...
+# Subtest: a deleted or RLS-invisible source falls back only its own task
+ok 25 - a deleted or RLS-invisible source falls back only its own task
+  ---
+  duration_ms: 4.3322
+  type: 'test'
+  ...
+# Subtest: malformed source identifiers never become navigation paths or source queries
+ok 26 - malformed source identifiers never become navigation paths or source queries
+  ---
+  duration_ms: 4.3979
+  type: 'test'
+  ...
+# Subtest: queue errors and null results remain unknown while other queues still load
+ok 27 - queue errors and null results remain unknown while other queues still load
+  ---
+  duration_ms: 5.31
+  type: 'test'
+  ...
+# Subtest: source query failure preserves assigned work and offers the task for review
+ok 28 - source query failure preserves assigned work and offers the task for review
+  ---
+  duration_ms: 2.7119
+  type: 'test'
+  ...
+# Subtest: queues are bounded at ten without presenting a sample as the total workload
+ok 29 - queues are bounded at ten without presenting a sample as the total workload
+  ---
+  duration_ms: 6.5225
+  type: 'test'
+  ...
+# Subtest: department reads exclude inactive jobs, unissued invoices and inactive stock
+ok 30 - department reads exclude inactive jobs, unissued invoices and inactive stock
+  ---
+  duration_ms: 8.3534
+  type: 'test'
+  ...
+# Subtest: the business day follows India across the UTC date boundary
+ok 31 - the business day follows India across the UTC date boundary
+  ---
+  duration_ms: 4.2998
+  type: 'test'
+  ...
+# Subtest: missing and impossible dates are not turned into fabricated deadlines
+ok 32 - missing and impossible dates are not turned into fabricated deadlines
+  ---
+  duration_ms: 0.4099
+  type: 'test'
+  ...
+# Subtest: fresh requests do not share assignments or stale source state across users
+ok 33 - fresh requests do not share assignments or stale source state across users
+  ---
+  duration_ms: 5.2257
+  type: 'test'
+  ...
+# Subtest: instant find is bounded, scoped and excludes financial or private response fields
+ok 34 - instant find is bounded, scoped and excludes financial or private response fields
+  ---
+  duration_ms: 8.1185
+  type: 'test'
+  ...
+# Subtest: quick actions point to an exact permitted source, with repricing restricted
+ok 35 - quick actions point to an exact permitted source, with repricing restricted
+  ---
+  duration_ms: 5.1898
+  type: 'test'
+  ...
+# Subtest: instant find retains slash and hyphen separators used in business record numbers
+ok 36 - instant find retains slash and hyphen separators used in business record numbers
+  ---
+  duration_ms: 0.9678
+  type: 'test'
+  ...
+# Subtest: unavailable search resources are separate from verified empty matches
+ok 37 - unavailable search resources are separate from verified empty matches
+  ---
+  duration_ms: 3.1253
+  type: 'test'
+  ...
+# Subtest: malformed, short and unauthenticated reads perform no business query
+ok 38 - malformed, short and unauthenticated reads perform no business query
+  ---
+  duration_ms: 3.0212
+  type: 'test'
+  ...
+# Subtest: repeat permissions are checked before any priced data is read
+ok 39 - repeat permissions are checked before any priced data is read
+  ---
+  duration_ms: 0.4995
+  type: 'test'
+  ...
+# Subtest: repeat creates no record, strips identity and approvals, and refreshes profile and dates
+ok 40 - repeat creates no record, strips identity and approvals, and refreshes profile and dates
+  ---
+  duration_ms: 8.8832
+  type: 'test'
+  ...
+# Subtest: repeat rejects other-company sources, inactive customers and unavailable profiles
+ok 41 - repeat rejects other-company sources, inactive customers and unavailable profiles
+  ---
+  duration_ms: 2.5745
+  type: 'test'
+  ...
+# Subtest: repeat rejects oversized and invalid legacy lines rather than making partial drafts
+ok 42 - repeat rejects oversized and invalid legacy lines rather than making partial drafts
+  ---
+  duration_ms: 27.683
+  type: 'test'
+  ...
+# Subtest: stage time uses the latest reopened interval and returns no history notes
+ok 43 - stage time uses the latest reopened interval and returns no history notes
+  ---
+  duration_ms: 1.3322
+  type: 'test'
+  ...
+# Subtest: duplicate stage events do not restart an interval; initial events and truncated history differ
+ok 44 - duplicate stage events do not restart an interval; initial events and truncated history differ
+  ---
+  duration_ms: 0.2838
+  type: 'test'
+  ...
+# Subtest: stage reads are bounded and missing or failed evidence stays explicitly unavailable
+ok 45 - stage reads are bounded and missing or failed evidence stays explicitly unavailable
+  ---
+  duration_ms: 0.8794
+  type: 'test'
+  ...
+# Subtest: stage elapsed formatting separates missing, future, invalid and zero elapsed
+ok 46 - stage elapsed formatting separates missing, future, invalid and zero elapsed
+  ---
+  duration_ms: 0.7008
+  type: 'test'
+  ...
+# Subtest: ambiguous simultaneous stage changes and external callers do not receive a fabricated interval
+ok 47 - ambiguous simultaneous stage changes and external callers do not receive a fabricated interval
+  ---
+  duration_ms: 0.8343
+  type: 'test'
+  ...
+# Subtest: dispatch preview reconciles grouped sources and rejects stale or invalid quantities
+ok 48 - dispatch preview reconciles grouped sources and rejects stale or invalid quantities
+  ---
+  duration_ms: 1.9012
+  type: 'test'
+  ...
+# Subtest: dispatch order balance uses ordered physical quantities and complete packing history
+ok 49 - dispatch order balance uses ordered physical quantities and complete packing history
+  ---
+  duration_ms: 2.9121
+  type: 'test'
+  ...
+# Subtest: dispatch order balance rejects unauthorized, foreign, closed and malformed sources
+ok 50 - dispatch order balance rejects unauthorized, foreign, closed and malformed sources
+  ---
+  duration_ms: 1.6866
+  type: 'test'
+  ...
+# Subtest: order quantity reads paginate past one response and never hide an overdispatch
+ok 51 - order quantity reads paginate past one response and never hide an overdispatch
+  ---
+  duration_ms: 7.5101
+  type: 'test'
+  ...
+# Subtest: workspace storage key is isolated by both company and user
+ok 52 - workspace storage key is isolated by both company and user
+  ---
+  duration_ms: 1.4145
+  type: 'test'
+  ...
+# Subtest: shortcut routes honor enabled navigation bases and reject prefix lookalikes
+ok 53 - shortcut routes honor enabled navigation bases and reject prefix lookalikes
+  ---
+  duration_ms: 0.3763
+  type: 'test'
+  ...
+# Subtest: blocked and corrupt storage safely returns an empty workspace
+ok 54 - blocked and corrupt storage safely returns an empty workspace
+  ---
+  duration_ms: 1.5661
+  type: 'test'
+  ...
+# Subtest: storage accessor catches a throwing localStorage property getter
+ok 55 - storage accessor catches a throwing localStorage property getter
+  ---
+  duration_ms: 0.2621
+  type: 'test'
+  ...
+# Subtest: a list preference update cannot restore shell shortcuts removed since the list loaded
+ok 56 - a list preference update cannot restore shell shortcuts removed since the list loaded
+  ---
+  duration_ms: 0.3796
+  type: 'test'
+  ...
+# Subtest: preference sanitizer bounds entries, rejects unsafe URLs, clamps widths and drops financial payloads
+ok 57 - preference sanitizer bounds entries, rejects unsafe URLs, clamps widths and drops financial payloads
+  ---
+  duration_ms: 1.5338
+  type: 'test'
+  ...
+# Subtest: list URL state round trips search, filters, page, sort, and connected-record scope
+ok 58 - list URL state round trips search, filters, page, sort, and connected-record scope
+  ---
+  duration_ms: 0.7152
+  type: 'test'
+  ...
+# Subtest: saving a named view updates its name or URL without duplicate shortcut identities
+ok 59 - saving a named view updates its name or URL without duplicate shortcut identities
+  ---
+  duration_ms: 0.2748
+  type: 'test'
+  ...
+# Subtest: rapid list control updates serialize together and browser Back restores the prior list state
+ok 60 - rapid list control updates serialize together and browser Back restores the prior list state
+  ---
+  duration_ms: 1.8256
+  type: 'test'
+  ...
+1..60
+# tests 60
+# suites 0
+# pass 60
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6274.0361
