@@ -1,0 +1,82 @@
+TAP version 13
+# Subtest: NOV-086: production, dispatch, quality and accounts share presentation while retaining their domain codes
+ok 1 - NOV-086: production, dispatch, quality and accounts share presentation while retaining their domain codes
+  ---
+  duration_ms: 2.0668
+  type: 'test'
+  ...
+# Subtest: NOV-086: unknown and blank statuses remain neutral and visible
+ok 2 - NOV-086: unknown and blank statuses remain neutral and visible
+  ---
+  duration_ms: 0.3374
+  type: 'test'
+  ...
+# Subtest: NOV-093: absent, invalid and genuine zero quantities cannot collapse into the same display
+ok 3 - NOV-093: absent, invalid and genuine zero quantities cannot collapse into the same display
+  ---
+  duration_ms: 18.2376
+  type: 'test'
+  ...
+# Subtest: NOV-093: correction signs, Indian scale, dimensions and non-INR currency remain explicit
+ok 4 - NOV-093: correction signs, Indian scale, dimensions and non-INR currency remain explicit
+  ---
+  duration_ms: 0.9021
+  type: 'test'
+  ...
+# Subtest: NOV-093: configured record fields retain their piece, length, percentage and section-weight dimensions
+ok 5 - NOV-093: configured record fields retain their piece, length, percentage and section-weight dimensions
+  ---
+  duration_ms: 0.4982
+  type: 'test'
+  ...
+# Subtest: NOV-099: denied access, source failure and filtered emptiness have distinct recovery guidance
+ok 6 - NOV-099: denied access, source failure and filtered emptiness have distinct recovery guidance
+  ---
+  duration_ms: 0.382
+  type: 'test'
+  ...
+# Subtest: NOV-091: shared URLs preserve combined supported filters, ordering and page
+ok 7 - NOV-091: shared URLs preserve combined supported filters, ordering and page
+  ---
+  duration_ms: 3.577
+  type: 'test'
+  ...
+# Subtest: NOV-091: malformed or unsupported URL values cannot become query fields
+ok 8 - NOV-091: malformed or unsupported URL values cannot become query fields
+  ---
+  duration_ms: 0.2193
+  type: 'test'
+  ...
+# Subtest: NOV-091: reversed dates, disabled date filtering and long input are bounded
+ok 9 - NOV-091: reversed dates, disabled date filtering and long input are bounded
+  ---
+  duration_ms: 0.4988
+  type: 'test'
+  ...
+# Subtest: NOV-016: enforced blockers lead advisories, describe their source and leave ownership honest
+ok 10 - NOV-016: enforced blockers lead advisories, describe their source and leave ownership honest
+  ---
+  duration_ms: 0.9372
+  type: 'test'
+  ...
+# Subtest: NOV-016: unauthorized edit/issue links are withheld and unknown rules do not invent a resolution
+ok 11 - NOV-016: unauthorized edit/issue links are withheld and unknown rules do not invent a resolution
+  ---
+  duration_ms: 0.5312
+  type: 'test'
+  ...
+# Subtest: NOV-092: lookup context uses identifiers and units without financial or internal payloads
+ok 12 - NOV-092: lookup context uses identifiers and units without financial or internal payloads
+  ---
+  duration_ms: 0.5401
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 358.1118
