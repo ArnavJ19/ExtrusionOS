@@ -1,0 +1,172 @@
+TAP version 13
+# Subtest: NOV-012: real production action reconciles the reviewed plan with authoritative order dimensions
+ok 1 - NOV-012: real production action reconciles the reviewed plan with authoritative order dimensions
+  ---
+  duration_ms: 6.8749
+  type: 'test'
+  ...
+# Subtest: NOV-012: changed, missing, forged and inconsistent quantities stop before any production commit
+ok 2 - NOV-012: changed, missing, forged and inconsistent quantities stop before any production commit
+  ---
+  duration_ms: 3.8501
+  type: 'test'
+  ...
+# Subtest: NOV-012: historical section weight survives a master change; direct orders use a rechecked current profile estimate
+ok 3 - NOV-012: historical section weight survives a master change; direct orders use a rechecked current profile estimate
+  ---
+  duration_ms: 1.3338
+  type: 'test'
+  ...
+# Subtest: NOV-012: manual planning remains supported and unauthorized direct callers cannot read sources
+ok 4 - NOV-012: manual planning remains supported and unauthorized direct callers cannot read sources
+  ---
+  duration_ms: 1.2646
+  type: 'test'
+  ...
+# Subtest: NOV-018/096: observation action validates finite values, actor authority and strict tenant-independent input
+ok 5 - NOV-018/096: observation action validates finite values, actor authority and strict tenant-independent input
+  ---
+  duration_ms: 6.8875
+  type: 'test'
+  ...
+# Subtest: NOV-018: lost response and malformed post-write response are uncertain, with no blind retry claim
+ok 6 - NOV-018: lost response and malformed post-write response are uncertain, with no blind retry claim
+  ---
+  duration_ms: 1.2412
+  type: 'test'
+  ...
+# Subtest: NOV-018/095: plan changes and permission denial are definitive rejections, with sanitized errors
+ok 7 - NOV-018/095: plan changes and permission denial are definitive rejections, with sanitized errors
+  ---
+  duration_ms: 0.6916
+  type: 'test'
+  ...
+# Subtest: NOV-001: real refresh action derives scope and applies bounded tenant/user reads
+ok 8 - NOV-001: real refresh action derives scope and applies bounded tenant/user reads
+  ---
+  duration_ms: 23.0526
+  type: 'test'
+  ...
+# Subtest: NOV-001: changed company/user removes former assignments; dealer/unauthenticated refresh fails closed
+ok 9 - NOV-001: changed company/user removes former assignments; dealer/unauthenticated refresh fails closed
+  ---
+  duration_ms: 4.1909
+  type: 'test'
+  ...
+# Subtest: NOV-018: real mobile task rejects invalid IDs, disallowed roles and dealer sessions before record reads
+ok 10 - NOV-018: real mobile task rejects invalid IDs, disallowed roles and dealer sessions before record reads
+  ---
+  duration_ms: 1.6115
+  type: 'test'
+  ...
+# Subtest: NOV-018: real mobile task honors company feature access and refuses a foreign inspection
+ok 11 - NOV-018: real mobile task honors company feature access and refuses a foreign inspection
+  ---
+  duration_ms: 0.6187
+  type: 'test'
+  ...
+# Subtest: NOV-018/095: mobile task displays the authorized plan and distinguishes failed references from no plan
+ok 12 - NOV-018/095: mobile task displays the authorized plan and distinguishes failed references from no plan
+  ---
+  duration_ms: 2.3237
+  type: 'test'
+  ...
+# Subtest: NOV-006: pending observations may collapse, final observations and every required field remain current
+ok 13 - NOV-006: pending observations may collapse, final observations and every required field remain current
+  ---
+  duration_ms: 1.4562
+  type: 'test'
+  ...
+# Subtest: NOV-096: nested issues retain line identity, deduplicate paths and keep safe fallback labels
+ok 14 - NOV-096: nested issues retain line identity, deduplicate paths and keep safe fallback labels
+  ---
+  duration_ms: 1.3452
+  type: 'test'
+  ...
+# Subtest: NOV-006/096: blank optional planning inputs normalize to nullable values without relaxing required quantities
+ok 15 - NOV-006/096: blank optional planning inputs normalize to nullable values without relaxing required quantities
+  ---
+  duration_ms: 0.2575
+  type: 'test'
+  ...
+# Subtest: NOV-094: source refresh preserves deliberate overrides, including zero, and exposes changed suggestions
+ok 16 - NOV-094: source refresh preserves deliberate overrides, including zero, and exposes changed suggestions
+  ---
+  duration_ms: 0.4683
+  type: 'test'
+  ...
+# Subtest: NOV-012: known pieces derive metres and theoretical kg consistently across m/mm/ft/in
+ok 17 - NOV-012: known pieces derive metres and theoretical kg consistently across m/mm/ft/in
+  ---
+  duration_ms: 1.4243
+  type: 'test'
+  ...
+# Subtest: NOV-012: missing/invalid quantities, unsafe counts and overflow never become a convenient zero
+ok 18 - NOV-012: missing/invalid quantities, unsafe counts and overflow never become a convenient zero
+  ---
+  duration_ms: 1.0329
+  type: 'test'
+  ...
+# Subtest: NOV-012: varied production plans reconcile at the supported kg precision
+ok 19 - NOV-012: varied production plans reconcile at the supported kg precision
+  ---
+  duration_ms: 9.9951
+  type: 'test'
+  ...
+# Subtest: NOV-012: reviewed plan rejects source-weight changes and altered or unavailable save values
+ok 20 - NOV-012: reviewed plan rejects source-weight changes and altered or unavailable save values
+  ---
+  duration_ms: 0.5425
+  type: 'test'
+  ...
+# Subtest: NOV-018/095: observations are blank unless entered, accept actual zero, and omit other plan IDs
+ok 21 - NOV-018/095: observations are blank unless entered, accept actual zero, and omit other plan IDs
+  ---
+  duration_ms: 1.1357
+  type: 'test'
+  ...
+# Subtest: NOV-018: draft recovery is scoped, versioned, bounded, expiring and limited to applicable characteristics
+ok 22 - NOV-018: draft recovery is scoped, versioned, bounded, expiring and limited to applicable characteristics
+  ---
+  duration_ms: 2.1936
+  type: 'test'
+  ...
+# Subtest: NOV-001: failed refresh retains marked useful work while revoked or removed queues cannot be resurrected
+ok 23 - NOV-001: failed refresh retains marked useful work while revoked or removed queues cannot be resurrected
+  ---
+  duration_ms: 0.7545
+  type: 'test'
+  ...
+# Subtest: NOV-018: interrupted-save state survives recovery only within the validated draft scope
+ok 24 - NOV-018: interrupted-save state survives recovery only within the validated draft scope
+  ---
+  duration_ms: 0.3352
+  type: 'test'
+  ...
+# Subtest: NOV-002: role workspaces respect permitted routes, resource authority and dealer boundaries
+ok 25 - NOV-002: role workspaces respect permitted routes, resource authority and dealer boundaries
+  ---
+  duration_ms: 3.9432
+  type: 'test'
+  ...
+# Subtest: NOV-002/100: explicit pin ordering is stable and safe at both ends
+ok 26 - NOV-002/100: explicit pin ordering is stable and safe at both ends
+  ---
+  duration_ms: 0.5154
+  type: 'test'
+  ...
+# Subtest: NOV-004: quality and packaging next actions carry exact source context and remain review-only
+ok 27 - NOV-004: quality and packaging next actions carry exact source context and remain review-only
+  ---
+  duration_ms: 1.2143
+  type: 'test'
+  ...
+1..27
+# tests 27
+# suites 0
+# pass 27
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2500.9651

@@ -4,6 +4,7 @@ Date: 2 November 2026 (Asia/Kolkata)
 Final verification: 3 November 2026 (Asia/Kolkata)
 Catalogue: [NOV_UPGRADES.md](NOV_UPGRADES.md)
 Base commit: `78f45232f94c65a6f5f89a801f1c5bbb2ac09d74`
+Implementation commit: `d06fd77eb561dbb3b9c6e5c53dd04b7b18d16df6`
 Development checkout: `.worktrees/codex-v1`
 Delivery state: ten bounded feature slices implemented; local domain, browser, integration and source checks passed. Hosted and employee acceptance remain rollout gates.
 
@@ -74,11 +75,14 @@ Tests and lint were deferred until implementation and meaningful edge fixtures w
 | `npm run typecheck -- --incremental false` | Passed; final source check recorded after build | `typecheck.txt` |
 | `npm run build -- --webpack` | Production build verified in the configured local verification output directory | `build.txt` |
 | Final existing production/PDF/shared-form consumers | Passed: 142 checks | `final-consumer-regression.txt` |
+| Promoted `main` build, lint and domain/action/route checks | Passed: independent production build, lint and all 27 focused checks | `main-build.txt`, `main-lint.txt`, `main-domain.txt` |
 | `git diff --check` | Passed | Final source inspection |
 
 The full suite ran during the final audit. The separate final focused and consumer passes cover the last quantity-reference and validation corrections and additional edge cases after their files had run in that suite. Counts are check-run totals, not a sum of unique tests. Local browser tests need access to their loopback fixture server and the already installed Chromium (`PLAYWRIGHT_BROWSERS_PATH=C:/Users/arnav/AppData/Local/ms-playwright`). A sandbox loopback denial and a build-output permission failure were environmental failures; retrying the local checks used the existing verification build directory. An existing stale Browserslist-data warning does not alter the application result; dependencies were not updated.
 
 Tracked evidence and generated declarations/caches were copied before broad checks, including the pre-existing modified files. Regenerated artifacts outside this batch are restored from that verified copy before handoff. No existing working source is reset or discarded.
+
+The implementation commit was created on `codex/v1` and fast-forwarded into the existing `main` checkout. Main was then built independently without the development checkout's unrelated KPI source, and its 27 focused checks and lint passed. A documentation/evidence follow-up records that result on both branches without changing application code. The root checkout's live-development `next-env.d.ts` change was present before its validation and was restored to that captured state; the development checkout retains its pre-existing unrelated source and evidence changes. No push, hosted database change or deployment was performed.
 
 Hosted deployment, real signed-in role/company checks, physical-device and employee acceptance are separate evidence. No remote mutation or deployment is included in this local implementation task. The representative pilot is production planning plus approved-plan quality observations; other custom form families and full accessibility conformance remain outside this slice.
 
