@@ -8046,8 +8046,8 @@ ok 1006 - development CSP rejects an invalid or non-local configured URL undefin
   duration_ms: 0.1326
   type: 'test'
   ...
-# Subtest: development CSP rejects an invalid or non-local configured URL 
-ok 1007 - development CSP rejects an invalid or non-local configured URL 
+# Subtest: development CSP rejects an invalid or non-local configured URL
+ok 1007 - development CSP rejects an invalid or non-local configured URL
   ---
   duration_ms: 0.0839
   type: 'test'

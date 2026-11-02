@@ -14,9 +14,9 @@ Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
   Finished TypeScript in 2.1min ...
   Collecting page data using 15 workers ...
   Generating static pages using 15 workers (0/208) ...
-  Generating static pages using 15 workers (52/208) 
-  Generating static pages using 15 workers (104/208) 
-  Generating static pages using 15 workers (156/208) 
+  Generating static pages using 15 workers (52/208)
+  Generating static pages using 15 workers (104/208)
+  Generating static pages using 15 workers (156/208)
 ✓ Generating static pages using 15 workers (208/208) in 11.2s
   Finalizing page optimization ...
   Collecting build traces ...
@@ -333,4 +333,3 @@ Route (app)
 
 ○  (Static)   prerendered as static content
 ƒ  (Dynamic)  server-rendered on demand
-
