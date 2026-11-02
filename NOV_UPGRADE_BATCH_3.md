@@ -4,9 +4,11 @@ Date: 3 November 2026 (Asia/Kolkata)
 Catalogue: [NOV_UPGRADES.md](NOV_UPGRADES.md)
 Base commit: 9573426cac124d96acce7d55c6ab9e7e7fd6a360
 Scope commit: c9c9317 (published before application implementation)
+Implementation commit: 512682abb02583a9a3c2a68d1f051b706283783b
+Integrated baseline: 29b30ae preserves main security fix 1b8daec without changing its source.
 Development checkout: .worktrees/codex-v1
 Pull request: [PR #4](https://github.com/ArnavJ19/ExtrusionOS/pull/4)
-Delivery state: ten bounded U1/N1 feature slices implemented; focused local checks passed. Final integration verification is in progress. Hosted rollout and employee acceptance remain separate gates.
+Delivery state: ten bounded U1/N1 feature slices implemented and locally verified. Development domain, browser, security, regression, lint, type and production-build checks passed. Main working-checkout build and focused checks also passed. Hosted rollout and employee acceptance remain separate gates.
 
 ## Selection and gap audit
 
@@ -69,7 +71,7 @@ task/handoff, delegation, request and specification-change boundaries.
 ## Data and security audit
 
 Migration: supabase/migrations/20261103100000_november_coordination.sql.
-It is additive and has not been applied to a hosted database.
+It is additive. This task has not applied it to a hosted database; reconcile the live ledger separately.
 
 New tables: order_coordinators, collection_promises, handoff_service_contracts,
 handoff_service_snapshots, backup_coverages, coordination_sessions,
@@ -122,17 +124,43 @@ authentication, network, router and cache boundaries are synthetic.
 
 | Verification | Result |
 | --- | --- |
-| Migration replay | Passed all 284 development-checkout files, including its pre-existing unrelated KPI migration |
+| Migration replay | Passed the full development chain in the final SQL fixture, including the separately integrated search-path fix and pre-existing unrelated KPI migration |
 | Focused domain, real action and SQL/RLS scenarios | Passed 30 checks, including 150 varied priority-ordering cases |
-| Browser interaction | Eight scenarios passed before final audit refinements; final integration run pending |
-| Typecheck | Passed before final audit refinements; final integrated check pending |
-| Lint, production build and broad regression | Deferred until focused implementation was verified; final run pending |
+| Browser interaction | Passed nine scenarios, including the final storage-failure case, inside the full suite |
+| npm run typecheck -- --incremental false | Passed after the production build; typecheck.txt |
+| npm run lint | Passed with no warnings/errors; lint.txt |
+| npm run build -- --webpack | Passed in .next-upgrade-verify; 209 generated pages including the unrelated KPI route; build.txt |
+| npm test | Passed: 2,959 tests, 76 suites, zero failures/skips; tests.txt |
+| Focused final domain/action/SQL run | Passed 30 checks after integrating the separate main security fix; focused-domain.txt |
+| Main working-checkout production build | Passed, 208 generated pages without the development-only KPI route; main-build.txt |
+| Main focused domain/action/SQL checks | Passed all 30 checks, including the full main migration chain without the unrelated KPI migration; main-domain.txt |
+| git diff --check | Passed on the scoped implementation commit |
 
 Evidence: [docs/evidence/NOV_UPGRADES_BATCH_3](docs/evidence/NOV_UPGRADES_BATCH_3/).
 Phone/enlarged-desktop captures are synthetic interaction evidence, not a hosted
 signed-in deployment. Existing generated evidence/configuration/cache files were
 copied before broad checks. Unrelated KPI/navigation, migration, acceptance,
 audit and report work is excluded from the feature commit.
+
+Broader checks were deferred until feature-specific checks passed. Chromium's
+sandbox loopback denial and the sandbox's generated-build-directory EPERM were
+environmental restrictions; the final local runs used loopback/filesystem access
+and passed. The build retains the existing stale Browserslist-data warning; no
+dependency update was introduced. Eleven regenerated development-checkout files
+were restored from their verified pre-check copies, including pre-existing dirty
+evidence. The independent main security migration was merged normally, preserving
+its original commit and subsequent migration order.
+
+The existing main checkout was fast-forwarded to the feature implementation and
+merged security baseline, then built separately using synthetic public Supabase
+values. Its 30 focused checks also passed. While this verification ran, separate
+uncommitted form/mobile/shared-component fixes appeared in main. They do not touch
+this batch's implementation files and are preserved/excluded from its commit.
+Consequently main-build.txt describes that current working checkout, not a claim
+that every concurrent working change is included in this source publication.
+The main build's generated next-env declaration is restored to the captured
+pre-build value when it still points to this verification output. Other concurrent
+main source, evidence, configuration and cache changes are preserved.
 
 Audit fixes include finance-only promises, cash versus non-cash progress,
 unavailable recipients, profile-edit/specification approval authority,

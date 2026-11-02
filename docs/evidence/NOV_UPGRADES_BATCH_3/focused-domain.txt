@@ -1,0 +1,38 @@
+✔ migration replay and every new domain read match the production contracts (12669.8439ms)
+✔ NOV-041: coordinator transfers keep the original owner until an eligible replacement accepts (143.6725ms)
+✔ NOV-041: inactive, foreign and stale coordinator choices are rejected without a transfer (87.2904ms)
+✔ NOV-043: priority policy has stable ties, retains reasons and never changes the order stage (90.2128ms)
+✔ NOV-040: promise progress follows real net settlements, partial receipts, reversal and credits (258.1889ms)
+✔ NOV-040: duplicates, invalid values, settled races and reschedules preserve the original promise (176.239ms)
+✔ NOV-046: future handoffs bind the exact service revision and elapsed-hour target (50.4137ms)
+✔ NOV-048: backup acknowledgement uses existing delegation and cancellation preserves task history (156.681ms)
+✔ NOV-048: overlaps, chains, changed employees and ineligible teams cannot obtain coverage (97.632ms)
+✔ NOV-049: a meeting retains source snapshots and one unresolved decision carries into the next (130.1034ms)
+✔ NOV-050: recipient acknowledgement, clarification, resolution and requester withdrawal remain distinct (190.4419ms)
+✔ NOV-050: duplicate requests, access loss and late resolution fail without unrelated notifications (70.5264ms)
+✔ NOV-056: independent stewards correct only the current master and retain reviewed evidence (128.0018ms)
+✔ NOV-056: conflicting/stale corrections are superseded and cannot approve a changed profile (94.3771ms)
+✔ NOV-097/098: source changes reject the review; original-request replay returns exactly one outcome (68.0259ms)
+✔ NOV-097/098: expiry, cancellation, unknown requests and authorization loss have truthful outcomes (52.4544ms)
+✔ security: all new tables deny direct writes and cross-company reads; RPC and TypeScript permissions agree (131.5759ms)
+✔ server pagination, literal search, state filters and stable sorting do not fetch the whole database (160.1737ms)
+✔ NOV-040: due, missed and disputed queues use India dates and finance-only projections (80.8318ms)
+✔ NOV-048: expiry preserves completed/reassigned work and keeps unfinished work covered when the primary leaves (100.9228ms)
+✔ NOV-049: failed agenda sources are marked unavailable and never presented as an empty workload (25.6984ms)
+✔ NOV-050: closed requests stop reminders and cannot race a second resolution (64.1514ms)
+✔ NOV-056: changing a drawing revision makes a proposal stale and cannot rewrite order-line snapshots (158.2041ms)
+✔ NOV-097: input contracts reject injected identity, unknown actions, impossible dates and ambiguous units (18.3812ms)
+✔ NOV-043: shared operational comparator is deterministic and transitive for varied priorities and dates (41.7303ms)
+✔ NOV-098: recovery markers are scoped to actor/company, validated and retained beyond review expiry (2.7797ms)
+✔ real server action rejects denied roles, dealer sessions and malformed payload before the RPC (8.0417ms)
+✔ NOV-097/098: real server action preserves confirmed outcome, strips identity input and tolerates cache failure (3.0144ms)
+✔ NOV-098: lost response, malformed post-write response and generic errors remain uncertain (2.2949ms)
+✔ missing database and denied outcome reads never manufacture a successful result (4.4073ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15706.8458
