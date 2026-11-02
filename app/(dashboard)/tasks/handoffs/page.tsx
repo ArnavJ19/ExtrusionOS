@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { turnaroundStatusSchema, type TurnaroundStatus } from "@/lib/workflow/turnaround";
 import { HANDOFF_TEAMS, acceptanceStatusSchema, canReadHandoffs, canReprocessHandoffs, handoffQueueSchema, teamsForRole, type AcceptanceStatus, type HandoffTeam } from "@/lib/workflow/department-handoffs";
+import { handoffServiceSnapshotSchema, type HandoffServiceSnapshot } from "@/lib/workflow/coordination";
 
 const statuses = { active: "Open and in progress", open: "Waiting", in_progress: "In progress", completed: "Completed" } as const;
 type Status = keyof typeof statuses;
@@ -41,6 +42,12 @@ export default async function DepartmentHandoffsPage({ searchParams }: { searchP
     if (tat?.success) turnaround = Object.fromEntries(tat.data.map((row) => [row.task_id, row]));
   }
   const { today } = getBusinessDateBoundaries();
+  let serviceContracts: Record<string, HandoffServiceSnapshot> | null = null;
+  if (queue?.rows.length) {
+    const service = await supabase.from("handoff_service_snapshots").select("task_id,contract_id,response_due_at,handoff_service_contracts(team,revision,requirements,evidence)").eq("company_id", context.companyId).in("task_id", queue.rows.map(row => row.id)).limit(10);
+    const parsedService = service.error ? null : handoffServiceSnapshotSchema.safeParse(service.data);
+    if (parsedService?.success) serviceContracts = Object.fromEntries(parsedService.data.map(row => [row.task_id, row]));
+  }
   const myTeams = teamsForRole(context.role);
   const href = (next: { team?: string; status?: string; page?: number }) => {
     const query = new URLSearchParams({ status: next.status ?? status, page: String(next.page ?? 1) });
@@ -73,7 +80,7 @@ export default async function DepartmentHandoffsPage({ searchParams }: { searchP
         </p>
       ) : !queue.rows.length ? (
         <EmptyState title="No handoffs here" description="New work appears automatically when the previous department confirms its step." />
-      ) : <HandoffQueueList queue={queue} today={today} acceptance={acceptance} canAct={context.role !== "viewer"} turnaround={turnaround} />}
+      ) : <HandoffQueueList queue={queue} today={today} acceptance={acceptance} canAct={context.role !== "viewer"} turnaround={turnaround} serviceContracts={serviceContracts} />}
       {queue && totalPages > 1 ? (
         <nav className="flex items-center justify-between text-sm font-bold" aria-label="Pages">
           {page > 1 ? <Link href={href({ page: page - 1 })} className="rounded-xl border border-slate-200 bg-white px-3 py-2">Previous</Link> : <span />}

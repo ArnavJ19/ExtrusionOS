@@ -9,11 +9,12 @@ import { TurnaroundChip } from "@/components/modules/tasks/turnaround";
 import type { TurnaroundStatus } from "@/lib/workflow/turnaround";
 import { formatDate, formatWeight } from "@/lib/utils/format";
 import { HANDOFF_TEAMS, RETURN_REASONS, handoffOverdue, handoffSourceHref, sourceLabel, withinTolerance, type AcceptanceStatus, type HandoffQueue, type HandoffRow, type ReturnReason } from "@/lib/workflow/department-handoffs";
+import type { HandoffServiceSnapshot } from "@/lib/workflow/coordination";
 
 const priorityTone: Record<string, string> = { urgent: "bg-red-100 text-red-800", high: "bg-amber-100 text-amber-900", normal: "bg-slate-100 text-slate-700", low: "bg-slate-50 text-slate-500" };
 
 // UPGRADE_EOS feature 14: the next team's work, created automatically from confirmed events.
-export function HandoffQueueList({ queue, today, acceptance = {}, canAct = false, turnaround = {} }: { queue: HandoffQueue; today: string; acceptance?: Record<string, AcceptanceStatus>; canAct?: boolean; turnaround?: Record<string, TurnaroundStatus> }) {
+export function HandoffQueueList({ queue, today, acceptance = {}, canAct = false, turnaround = {}, serviceContracts }: { queue: HandoffQueue; today: string; acceptance?: Record<string, AcceptanceStatus>; canAct?: boolean; turnaround?: Record<string, TurnaroundStatus>; serviceContracts?: Record<string, HandoffServiceSnapshot> | null }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -51,6 +52,11 @@ export function HandoffQueueList({ queue, today, acceptance = {}, canAct = false
                 {row.mine && ["open", "in_progress"].includes(row.status) ? <Link href={`/tasks/${row.id}`} className="text-xs font-bold text-slate-700 underline">Open task to complete it</Link> : null}
               </div>
               {acceptance[row.id] ? <AcceptancePanel row={row} status={acceptance[row.id]} canAct={canAct && row.status === "open"} /> : null}
+              {serviceContracts !== undefined ? <div className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
+                {serviceContracts === null ? <p role="status">Service-contract reference unavailable. Check the source before accepting responsibility.</p>
+                  : serviceContracts[row.id] ? <><p className="font-bold">Receiving contract revision {serviceContracts[row.id].handoff_service_contracts.revision} · <Link className="underline" href={`/tasks/coordination/handoffs/${serviceContracts[row.id].contract_id}`}>Open exact contract</Link></p><p>{serviceContracts[row.id].handoff_service_contracts.requirements}</p><p>Evidence: {serviceContracts[row.id].handoff_service_contracts.evidence}</p><p className="text-xs text-slate-600">Response target: {new Date(serviceContracts[row.id].response_due_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST, elapsed hours including nights and holidays.</p></>
+                    : <p>No service contract was recorded when this handoff was created. Existing acceptance prerequisites remain authoritative.</p>}
+              </div> : null}
             </li>
           );
         })}

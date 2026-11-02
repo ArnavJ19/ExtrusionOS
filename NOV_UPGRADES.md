@@ -10,6 +10,8 @@ Implementation records: [November batch 1](NOV_UPGRADE_BATCH_1.md) covers the fi
 
 [November batch 2](NOV_UPGRADE_BATCH_2.md) covers ten further U1/N1 delivery slices: NOV-001, 002, 004, 006, 012, 018, 094, 095, 096, and 100. Its delivery record tracks implementation, edge verification and the remaining rollout acceptance separately.
 
+[November batch 3](NOV_UPGRADE_BATCH_3.md) covers the next ten U1/N1 coordination and responsibility slices: NOV-040, 041, 043, 046, 048, 049, 050, 056, 097, and 098. Its record distinguishes the implemented pilot, local verification, additive migration, and outstanding hosted/operator acceptance.
+
 ## Purpose and boundaries
 
 Employees should be able to identify their next useful task, find the right source record, enter new facts once, understand a decision, and pass complete work to the next team. Management should be able to see commitments, blockers, material movement, ownership, and outcomes without assembling a parallel spreadsheet.

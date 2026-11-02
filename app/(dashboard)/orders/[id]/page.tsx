@@ -32,6 +32,7 @@ import { TransactionProgressPanel } from "@/components/modules/shared/transactio
 import { LinkedDocumentsPanel } from "@/components/modules/shared/linked-documents";
 import { orderStockCoverageSchema } from "@/lib/orders/stock-coverage";
 import { PartialOrderProgress } from "@/components/modules/orders/partial-progress";
+import { OrderResponsibility } from "@/components/modules/coordination/order-responsibility";
 
 const ORDER_JOB_LIMIT = 200;
 
@@ -183,6 +184,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       </div>
 
       <ErpControlPanel title="Delivery closure" actions={deliveryControls} />
+      <OrderResponsibility orderId={order.id} context={context} />
       {showProgress ? <OrderProgressPanel progress={orderProgress} dispatch={dispatchProgress} jobsUnavailable={jobsUnavailable} canOpenJobs={can(context.role, "read", "production")} /> : null}
       {!context.dealerId && !context.role.startsWith("dealer") ? <PartialOrderProgress key={`${context.companyId}:${context.userId}:${id}`} orderId={id}/> : null}
       {lineSchedule ? <OrderLineSchedulePanel orderId={order.id} initial={lineSchedule.data} unavailableMessage={lineSchedule.message} canWrite={canSetLineSchedule(context.role)} /> : null}
