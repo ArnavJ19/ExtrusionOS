@@ -14,8 +14,9 @@ export default async function MobileDispatchPage({ searchParams }: { searchParam
   const context = await getSessionContext();
   if (!canAccessMobileDestination(context.role, "dispatch")) redirect("/dashboard?denied=1");
   const supabase = await createClient();
-  const page = Math.max(1, Number((await searchParams).page ?? 1) || 1);
-  const pageSize = 20;
+  const requestedPage = Number((await searchParams).page ?? 1);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 100000) : 1;
+  const pageSize = 10;
   const { data: dispatches, error, count } = await supabase
     .from("dispatches")
     .select("id, dispatch_number, vehicle_number, transporter_name, number_of_bundles, total_weight_kg, delivery_status, orders(order_number, customers(customer_name, company_name))", { count: "exact" })

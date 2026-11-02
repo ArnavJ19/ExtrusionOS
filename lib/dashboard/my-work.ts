@@ -129,12 +129,8 @@ async function resolveTaskLinks(supabase: SupabaseClient, context: SessionContex
       const records = new Map((data as Row[]).map((row) => [row.id, row]));
       for (const item of linked) {
         const record = records.get(item.href.split("/").at(-1)!);
-        if (record) {
-          item.blocker = recordedBlocker(String(record[source.statusField]));
-          const kind = ({ production_jobs: "production", dispatches: "dispatch", invoices: "invoice", quotes: "quote", orders: "order", quality_inspections: "quality" } as Record<string, NextActionRecord["kind"]>)[source.table];
-          const action = kind ? nextRecordAction(context.role, { kind, id: record.id, status: String(record[source.statusField]) }, context.dealerId) : null;
-          if (action?.href) { item.href = action.href; item.actionLabel = action.label; }
-        }
+        // A task keeps its own purpose: it opens the linked record, whose detail page shows the record's next action.
+        if (record) item.blocker = recordedBlocker(String(record[source.statusField]));
         else unavailableTaskLink(item);
       }
     } catch {

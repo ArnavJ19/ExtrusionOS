@@ -70,7 +70,7 @@ function options(values: string[]) {
 }
 
 const customerLookup = { table: "customers", select: "id, customer_name, company_name, gst_number, city, phone, is_active", labelFields: ["company_name", "customer_name"], searchFields: ["customer_name", "company_name", "gst_number", "city", "phone"], orderBy: "customer_name" };
-const profileLookup = { table: "aluminium_profiles", select: "id, profile_code, profile_name, alloy, temper, billet_diameter_required_inch, section_weight_kg_per_m, is_active", labelFields: ["profile_code", "profile_name"], searchFields: ["profile_code", "profile_name", "alloy", "temper"], orderBy: "profile_code" };
+const profileLookup = { table: "aluminium_profiles", select: "id, profile_code, profile_name, alloy, temper, billet_diameter_required_inch, section_weight_kg_per_m, weight_tolerance_percent, hardness_requirement, is_active", labelFields: ["profile_code", "profile_name"], searchFields: ["profile_code", "profile_name", "alloy", "temper"], orderBy: "profile_code" };
 const orderLookup = { table: "orders", select: "id, order_number, customer_po_number, priority, billets_required, billets_allocated, billets_short, billet_allocation_status, billet_diameter_required_inch", labelFields: ["order_number"], searchFields: ["order_number", "customer_po_number"], orderBy: "order_date" };
 const vendorLookup = { table: "vendors", select: "id, vendor_name, vendor_type, phone", labelFields: ["vendor_name", "vendor_type"], orderBy: "vendor_name" };
 const scrapLookup = { table: "foundry_aluminium_scrap", select: "id, scrap_number, scrap_quality, available_weight_kg, weight_kg, status", labelFields: ["scrap_number", "scrap_quality"], orderBy: "scrap_number", filter: { status: "available" } };

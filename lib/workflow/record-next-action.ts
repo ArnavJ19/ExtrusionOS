@@ -5,6 +5,8 @@ import type { UserRole } from "../../types/app.ts";
 export type NextActionRecord = { kind: "quote" | "order" | "production" | "dispatch" | "invoice" | "quality" | "packaging"; id: string; status: string; updatedAt?: string | null; linkedOrderId?: string | null; completeCosting?: boolean };
 export type NextRecordAction = { label: string; href?: string; reason: string; source?: { kind: NextActionRecord["kind"]; id: string; status: string; version: string | null }; readiness?: "review_required" | "restricted" };
 const idPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const orderPlanningStages = ["order_confirmed", "die_ready", "billet_ready"];
+const orderProductionStages = ["billet_heating", "extrusion_planned", "extruded", "stretching", "cutting", "aging", "surface_treatment", "finishing"];
 
 export function nextRecordAction(role: UserRole, record: NextActionRecord, dealerId?: string | null): NextRecordAction | null {
   const action = deriveNextRecordAction(role, record, dealerId);
@@ -27,8 +29,11 @@ function deriveNextRecordAction(role: UserRole, record: NextActionRecord, dealer
   if (record.kind === "order") {
     if (!can(role, "read", "orders")) return null;
     if (["cancelled", "delivered", "closed"].includes(record.status)) return { label: "Review completed or cancelled work", reason: "New dispatch preparation is unavailable for this order state. Existing shipments and corrections retain their own history." };
-    if (can(role, "create", "dispatches")) return { label: "Review available material for dispatch", href: `/dispatches/new?order_id=${id}`, reason: "The order is preselected. Packing, source eligibility and remaining quantities are checked before posting." };
-    return { label: "Review production and delivery evidence", href: `/orders/${id}#order-progress`, reason: "Department prerequisites, quality holds and the confirmed transaction history determine the next operation." };
+    // The stage decides which department acts next; a dispatch form is only offered once material is being packed or shipped.
+    if (["packing", "dispatched"].includes(record.status) && can(role, "create", "dispatches")) return { label: "Review available material for dispatch", href: `/dispatches/new?order_id=${id}`, reason: "The order is preselected. Packing, source eligibility and remaining quantities are checked before posting." };
+    if (orderPlanningStages.includes(record.status) && can(role, "create", "production")) return { label: "Plan production for this order", href: `/production/new?order_id=${id}`, reason: "The order is preselected. The order line, die, billets and press are rechecked when the job is saved." };
+    if (record.status === "payment_pending" && can(role, "read", "financials")) return { label: "Review billing and receipts", href: `/orders/${id}#order-progress`, reason: "Material has been delivered. Invoices, receipts and credits determine the remaining balance." };
+    return { label: orderProductionStages.includes(record.status) ? "Review production progress" : "Review production and delivery evidence", href: `/orders/${id}#order-progress`, reason: "Department prerequisites, quality holds and the confirmed transaction history determine the next operation." };
   }
   if (record.kind === "production") {
     if (!can(role, "read", "production")) return null;

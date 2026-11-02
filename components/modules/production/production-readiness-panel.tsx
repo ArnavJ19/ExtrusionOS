@@ -57,9 +57,9 @@ export function ProductionReadinessPanel({ jobId, initial, unavailableMessage, l
     if (refreshing) return;
     setRefreshing(true);
     try {
-    const result = await productionHoldAction({ command: "holds.readiness", job_id: jobId });
-    if (result.success) { setData(result.data as ReadinessResponse); setError(""); setReadinessStale(false); }
-    else { setError(result.error); setReadinessStale(true); }
+      const result = await productionHoldAction({ command: "holds.readiness", job_id: jobId });
+      if (result.success) { setData(result.data as ReadinessResponse); setError(""); setReadinessStale(false); }
+      else { setError(result.error); setReadinessStale(true); }
     } catch { setReadinessStale(true); setError("Readiness is unavailable. This does not establish a shortage; retry the check."); }
     finally { setRefreshing(false); }
   }

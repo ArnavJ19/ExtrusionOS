@@ -134,6 +134,7 @@ export function DiesDatabaseClient({ context, canCreate, initialStatus = "" }: {
         rows={rows}
         columns={columns}
         getRowId={(die) => die.id}
+        getRowLabel={(die) => String(die.die_number ?? "")}
         getRowHref={(die) => `/dies/${die.id}`}
         sortColumn={sortColumn}
         sortDirection={sortDirection}

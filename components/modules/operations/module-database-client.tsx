@@ -221,7 +221,7 @@ function ModuleDatabaseWorkspace({ moduleKey, context, canCreate, initialStatus 
   }
 
   function openRecord(row: Record<string, any>) {
-    const label = String(displayValue(row, config.card.titlePath, "text") || row.id).slice(0, 100);
+    const label = String(getPath(row, config.card.titlePath) || `${config.title} record`).slice(0, 100);
     const returnTo = listHref;
     const href = `${config.basePath}/${encodeURIComponent(String(row.id))}?returnTo=${encodeURIComponent(returnTo)}`;
     try { window.sessionStorage.setItem(`extrusionos:list-scroll:${preferenceKey}:${config.basePath}`, String(window.scrollY)); } catch { /* Browser storage can be disabled. */ }
@@ -271,7 +271,7 @@ function ModuleDatabaseWorkspace({ moduleKey, context, canCreate, initialStatus 
       <ActiveFilters filters={activeFilters} count={loadedForView && !error ? totalCount : null} loading={loading || search !== debouncedSearch} onRemove={removeFilter} onClear={clearFilters} onResetSavedView={savedView ? () => applyView(parseDatabaseView(viewStateParams(savedView.state), viewRules)) : undefined} />
       {moduleKey === "orders" && loadedForView && rows.length ? <StageWaiting key={`${requestScope}:${dataQueryKey}:${rows.map((row) => row.id).join(",")}`} orderIds={rows.map((row) => String(row.id))} /> : null}
       <DataTable
-        rows={loadedForView ? rows : []} columns={columns} mobileColumns={mobileColumns} getRowId={(row) => row.id} onRowClick={openRecord}
+        rows={loadedForView ? rows : []} columns={columns} mobileColumns={mobileColumns} getRowId={(row) => row.id} getRowLabel={(row) => String(getPath(row, config.card.titlePath) ?? "")} onRowClick={openRecord}
         sortColumn={sortColumn} sortDirection={sortDirection}
         onSort={(column, direction) => { if (sortable.has(column)) { setSortColumn(column); setSortDirection(direction); setPage(1); } }}
         isLoading={!loadedForView} refreshing={loading && loadedForView} stale={Boolean(error && loadedForView && rows.length)}

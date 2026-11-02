@@ -31,6 +31,8 @@ type DataTableProps<T> = {
   columns: DataTableColumn<T>[];
   mobileColumns?: DataTableColumn<T>[];
   getRowId: (row: T) => string;
+  /** Employee-facing record name for assistive labels; internal IDs are never announced. */
+  getRowLabel?: (row: T) => string;
   getRowHref?: (row: T) => string;
   onRowClick?: (row: T) => void;
   sortColumn?: string;
@@ -47,7 +49,7 @@ type DataTableProps<T> = {
   emptyAction?: ReactNode;
 };
 
-export function DataTable<T>({ rows, columns, mobileColumns = columns, getRowId, getRowHref, onRowClick, sortColumn, sortDirection, onSort, isLoading, error, failureKind = "failed", refreshing, stale, onRetry, emptyTitle, emptyDescription, emptyAction }: DataTableProps<T>) {
+export function DataTable<T>({ rows, columns, mobileColumns = columns, getRowId, getRowLabel, getRowHref, onRowClick, sortColumn, sortDirection, onSort, isLoading, error, failureKind = "failed", refreshing, stale, onRetry, emptyTitle, emptyDescription, emptyAction }: DataTableProps<T>) {
   if (isLoading) return <TableLoadingSkeleton columns={columns.length} />;
   const failure = readStateMessage(failureKind);
   if (error && (!rows.length || !stale || failureKind === "denied")) return <ErrorState title={failure.title} description={failure.description} onRetry={onRetry} />;
@@ -66,6 +68,10 @@ export function DataTable<T>({ rows, columns, mobileColumns = columns, getRowId,
     if (href) window.location.assign(href);
   }
 
+  const rowLabel = (row: T) => {
+    const label = (getRowLabel?.(row) ?? getRowId(row)).trim();
+    return !label || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(label) ? "this record" : label;
+  };
   const identity = mobileColumns.find((column) => column.mobile === "identity") ?? mobileColumns[0];
 
   function isNestedControl(target: EventTarget, current: EventTarget) {
@@ -95,7 +101,7 @@ export function DataTable<T>({ rows, columns, mobileColumns = columns, getRowId,
                 {primary.map((column) => <div key={column.id} className="flex min-w-0 items-start justify-between gap-3"><dt className="max-w-[42%] text-xs font-semibold text-neutral-500">{column.header}</dt><dd className={cn("min-w-0 text-right font-semibold text-neutral-800 [overflow-wrap:anywhere]", column.numeric && "tabular-nums")}>{column.accessor(row)}</dd></div>)}
               </dl> : null}
               {secondary.length ? <details className="mt-3 border-t border-neutral-100 pt-2">
-                <summary className="min-h-10 cursor-pointer rounded-lg py-2 text-sm font-semibold text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">More details<span className="sr-only"> for {getRowId(row)}</span></summary>
+                <summary className="min-h-10 cursor-pointer rounded-lg py-2 text-sm font-semibold text-neutral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">More details<span className="sr-only"> for {rowLabel(row)}</span></summary>
                 <div className="mt-2 grid min-w-0 gap-3 text-sm">
                 {secondary.map((column) => (
                   <div key={column.id} className="flex min-w-0 items-start justify-between gap-4 has-[details]:flex-col has-[details]:items-stretch has-[details]:gap-2">
@@ -124,7 +130,7 @@ export function DataTable<T>({ rows, columns, mobileColumns = columns, getRowId,
             {rows.map((row) => {
               const clickable = Boolean(onRowClick || getRowHref);
               return (
-                 <tr key={getRowId(row)} role={clickable ? "link" : undefined} tabIndex={clickable ? 0 : undefined} aria-label={clickable ? `Open record ${getRowId(row)}` : undefined} className={cn(clickable && "cursor-pointer transition hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange")} onClick={clickable ? (event) => { if (!isNestedControl(event.target, event.currentTarget)) openRow(row); } : undefined} onKeyDown={clickable ? (event) => { if (event.target === event.currentTarget && isRowActivationKey(event.key)) { event.preventDefault(); openRow(row); } } : undefined}>
+                 <tr key={getRowId(row)} role={clickable ? "link" : undefined} tabIndex={clickable ? 0 : undefined} aria-label={clickable ? `Open record ${rowLabel(row)}` : undefined} className={cn(clickable && "cursor-pointer transition hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange")} onClick={clickable ? (event) => { if (!isNestedControl(event.target, event.currentTarget)) openRow(row); } : undefined} onKeyDown={clickable ? (event) => { if (event.target === event.currentTarget && isRowActivationKey(event.key)) { event.preventDefault(); openRow(row); } } : undefined}>
                   {columns.map((column) => <td key={column.id} className={cn(column.cellClassName, column.numeric && "text-right tabular-nums", column.sticky && "sticky left-0 z-10 bg-white")} style={column.width ? { width: column.width, minWidth: column.width } : undefined}>{column.accessor(row)}</td>)}
                 </tr>
               );

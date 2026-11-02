@@ -13,8 +13,9 @@ export default async function MobileJobsPage({ searchParams }: { searchParams: P
   const context = await getSessionContext();
   if (!canAccessMobileDestination(context.role, "jobs")) redirect("/dashboard?denied=1");
   const supabase = await createClient();
-  const page = Math.max(1, Number((await searchParams).page ?? 1) || 1);
-  const pageSize = 20;
+  const requestedPage = Number((await searchParams).page ?? 1);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 100000) : 1;
+  const pageSize = 10;
   const { data: jobs, error, count } = await supabase
     .from("production_jobs")
     .select("id, job_number, status, planned_date, planned_quantity_kg, actual_quantity_kg, machines(machine_name), dies(die_number), orders(order_number, priority, customers(customer_name, company_name)), aluminium_profiles(profile_code, profile_name), scrap_records(weight_kg)", { count: "exact" })

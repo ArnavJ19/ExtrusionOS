@@ -37,7 +37,7 @@ import { lookupOptionContext } from "@/lib/ui/lookup-option";
 import { displayValue, getPath, titleValue } from "./value";
 import { FormIssueSummary } from "@/components/forms/form-issue-summary";
 import { PlanningQuantityEntry } from "@/components/forms/planning-quantity-entry";
-import { applyFieldSuggestions, focusFormField, formFieldId, formIssues, formSection, formValidationValues, markFieldOverride, type FieldProvenance, type FormIssue } from "@/lib/ui/form-workflow";
+import { applyFieldSuggestions, focusFormField, formFieldId, formIssues, formSection, formValidationValues, markFieldOverride, stageRequirementIssues, type FieldProvenance, type FormIssue } from "@/lib/ui/form-workflow";
 import type { PlanningQuantityBasis } from "@/lib/calculations/planning-quantity";
 
 type LookupOption = { value: string; label: string; profile_id?: string | null; die_status?: string | null;
@@ -87,6 +87,8 @@ function normalizeRow(row: Record<string, any>, defaults: Record<string, any>) {
   return Object.fromEntries(Object.entries(defaults).map(([key, fallback]) => [key, row[key] ?? (typeof fallback === "boolean" ? false : "")])) as Record<string, any>;
 }
 
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function initialFormValues(config: ReturnType<typeof getModuleConfig>) {
   const defaults = { ...(config.defaultValues ?? {}) };
   const businessToday = getBusinessDateBoundaries().today;
@@ -96,11 +98,12 @@ function initialFormValues(config: ReturnType<typeof getModuleConfig>) {
   return defaults;
 }
 
-export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: ModuleKey; context: SessionContext; recordId?: string }) {
-  return <RecordFormWorkspace key={`${context.companyId}:${context.userId}:${context.role}:${moduleKey}:${recordId ?? "new"}`} moduleKey={moduleKey} context={context} recordId={recordId} />;
+export function RecordFormClient({ moduleKey, context, recordId, sourceOrderId }: { moduleKey: ModuleKey; context: SessionContext; recordId?: string; sourceOrderId?: string | null }) {
+  const prefillOrderId = !recordId && moduleKey === "production" && sourceOrderId && uuidPattern.test(sourceOrderId) ? sourceOrderId : null;
+  return <RecordFormWorkspace key={`${context.companyId}:${context.userId}:${context.role}:${moduleKey}:${recordId ?? "new"}:${prefillOrderId ?? ""}`} moduleKey={moduleKey} context={context} recordId={recordId} prefillOrderId={prefillOrderId} />;
 }
 
-function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: ModuleKey; context: SessionContext; recordId?: string }) {
+function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: { moduleKey: ModuleKey; context: SessionContext; recordId?: string; prefillOrderId?: string | null }) {
   const config = getModuleConfig(moduleKey);
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -147,8 +150,12 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
   useEffect(() => {
     if (!validationAttempted.current || !config.schema) return;
     const parsed = config.schema.safeParse(formValidationValues(moduleKey, form));
-    setIssues(parsed.success ? [] : formIssues(parsed.error.issues, config.fields ?? []));
-  }, [form, config.schema, config.fields, moduleKey]);
+    setIssues(parsed.success ? stageRequirementIssues(moduleKey, form, selectedProfile(form), config.fields ?? []) : formIssues(parsed.error.issues, config.fields ?? []));
+  }, [form, config.schema, config.fields, moduleKey, lookups]);
+
+  function selectedProfile(values: Record<string, any>) {
+    return lookups.profile_id?.find((option) => option.value === values.profile_id) ?? null;
+  }
 
   function setFieldProvenance(next: Record<string, FieldProvenance>) {
     provenanceRef.current = next;
@@ -244,6 +251,9 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
       loadedForm = normalizeRow(data, config.defaultValues ?? {});
       if (moduleKey === "packaging") setPackagingSourceLocked(Boolean(data.finishing_job_id));
       setForm(loadedForm);
+    } else if (prefillOrderId) {
+      // Read the selected order by exact ID so its label is available even outside the first lookup page.
+      loadedForm = { ...loadedForm, order_id: prefillOrderId };
     }
 
     const lookupFields = (config.fields ?? []).filter((field) => field.lookup);
@@ -252,7 +262,8 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
       await fetchLookupOptions(field, "", String(loadedForm[field.name] ?? ""), loadedForm)
     ] as const));
     setLookups(Object.fromEntries(lookupEntries));
-
+    // A next-action link carries the source order; autofill rereads it under the user's company scope.
+    if (prefillOrderId) await loadProductionOrderAutofill(prefillOrderId);
   }
 
   async function reloadForm() {
@@ -779,6 +790,12 @@ function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: Modu
         ? [...new Set(parsed.error.issues.map((issue) => issue.message))].join(" ")
         : parsed.error.issues[0]?.message;
       return toast.error(messages ?? "Please check the form");
+    }
+    const stageIssues = stageRequirementIssues(moduleKey, formForSubmit, selectedProfile(formForSubmit), config.fields ?? []);
+    if (stageIssues.length) {
+      setIssues(stageIssues);
+      requestAnimationFrame(() => focusFormField(formElement.current, formFieldId(fieldScope, stageIssues[0].path)));
+      return toast.error(stageIssues[0].message);
     }
     setIssues([]);
     setSaving(true);

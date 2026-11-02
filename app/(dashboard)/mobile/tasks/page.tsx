@@ -13,8 +13,9 @@ export default async function MobileTasksPage({ searchParams }: { searchParams: 
   const context = await getSessionContext();
   if (!canAccessMobileDestination(context.role, "tasks")) redirect("/dashboard?denied=1");
   const supabase = await createClient();
-  const page = Math.max(1, Number((await searchParams).page ?? 1) || 1);
-  const pageSize = 30;
+  const requestedPage = Number((await searchParams).page ?? 1);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 100000) : 1;
+  const pageSize = 10;
   const { data: tasks, error, count } = await supabase
     .from("tasks")
     .select("id, title, priority, status, due_date, app_users(full_name, email)", { count: "exact" })

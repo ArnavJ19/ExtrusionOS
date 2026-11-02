@@ -80,3 +80,31 @@ export function markFieldOverride(provenance: Record<string, FieldProvenance>, n
   const previous = provenance[name];
   return previous ? { ...provenance, [name]: { ...previous, overridden: String(value ?? "") !== String(previous.suggested ?? "") } } : provenance;
 }
+
+const hardnessRequirement = /^\s*(?:>=|≥|min\.?|minimum)?\s*([0-9]+(?:\.[0-9]+)?)\s*(?:hw|webster)?\s*$/i;
+const finite = (value: unknown) => value === null || value === undefined || value === "" ? null : Number.isFinite(Number(value)) ? Number(value) : null;
+
+/**
+ * Stage-specific checks shown before saving. They mirror private.enforce_quality_release_rules,
+ * which stays authoritative; an unavailable profile reference adds no client-side rule.
+ */
+export function stageRequirementIssues(moduleKey: string, values: Record<string, unknown>, profile: Record<string, unknown> | null | undefined, fields: readonly Field[]): FormIssue[] {
+  if (moduleKey !== "quality" || values.status !== "approved" || !profile) return [];
+  const label = (name: string) => fields.find((field) => field.name === name)?.label ?? name;
+  const issues: FormIssue[] = [];
+  const nominal = finite(profile.section_weight_kg_per_m);
+  const tolerance = finite(profile.weight_tolerance_percent);
+  if (nominal && nominal > 0 && tolerance && tolerance > 0) {
+    const actual = finite(values.weight_per_meter_actual);
+    if (actual === null) issues.push({ path: "weight_per_meter_actual", label: label("weight_per_meter_actual"), message: `Record the actual kg/m before approval. This profile allows ${nominal} kg/m ± ${tolerance}%.` });
+    else if (Math.abs(actual - nominal) * 100 / nominal > tolerance + 1e-9) issues.push({ path: "weight_per_meter_actual", label: label("weight_per_meter_actual"), message: `${actual} kg/m is outside ${nominal} kg/m ± ${tolerance}%. Choose rejected or rework instead of approved.` });
+  }
+  const match = hardnessRequirement.exec(String(profile.hardness_requirement ?? ""));
+  if (match) {
+    const minimum = Number(match[1]);
+    const hardness = finite(values.hardness_webster);
+    if (hardness === null) issues.push({ path: "hardness_webster", label: label("hardness_webster"), message: `Record Webster hardness before approval. This profile requires at least ${minimum} HW.` });
+    else if (hardness < minimum) issues.push({ path: "hardness_webster", label: label("hardness_webster"), message: `${hardness} HW is below the required ${minimum} HW. Choose rejected or rework instead of approved.` });
+  }
+  return issues;
+}
