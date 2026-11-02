@@ -7,7 +7,7 @@ test.before(async()=>{fixture=await createSearchableSelectBrowserFixture();page=
 test.after(async()=>{await fixture?.close();});
 test.beforeEach(async()=>{await fixture.reset();});
 const input=()=>page.getByLabel("Profile",{exact:true});
-const option=name=>page.getByRole("button",{name,exact:true});
+const option=name=>page.getByRole("option",{name,exact:true});
 const state=()=>page.evaluate(()=>({changes:window.__select.changes,searches:window.__select.searches,submits:window.__select.submits}));
 const choose=async()=>{await input().click();await option("Beta profile").click();assert.equal(await input().inputValue(),"Beta profile");};
 
@@ -28,16 +28,33 @@ test("ArrowDown reopens a closed focused input and Enter chooses once without su
   await input().press("Enter");assert.deepEqual((await state()).changes,["beta","alpha"]);assert.equal((await state()).submits,0);
 });
 
+test("ArrowUp starts at the last available result and ArrowDown wraps to the first",async()=>{
+  await input().focus();await input().press("ArrowUp");await input().press("Enter");
+  assert.deepEqual((await state()).changes,["gamma"]);
+  await input().press("ArrowDown");await input().press("ArrowUp");await input().press("ArrowDown");await input().press("Enter");
+  assert.deepEqual((await state()).changes,["gamma","alpha"]);assert.equal((await state()).submits,0);
+});
+
+test("an external source change clears a previously displayed selected label while the list is open",async()=>{
+  await choose();await input().click();await page.evaluate(()=>window.__select.setValue(""));
+  await page.waitForFunction(()=>document.querySelector('output[data-value]').textContent==='');
+  assert.equal(await input().inputValue(),"");assert.deepEqual((await state()).changes,["beta"]);
+});
+
 test("Escape preserves selection and keyboard reopening does not send another search",async()=>{
   await input().fill("Gamma");await input().press("Escape");await input().press("ArrowDown");
   assert.equal(await input().inputValue(),"Alpha profile");await input().press("Enter");assert.deepEqual((await state()).changes,["alpha"]);
   assert.deepEqual((await state()).searches,["Gamma"]);assert.equal((await state()).submits,0);
 });
 
-test("Tab can move from the input into option buttons and choose after the blur delay",async()=>{
+test("Tab leaves the combobox without choosing; arrow navigation keeps focus on the input",async()=>{
   await input().click();await input().press("Tab");await page.keyboard.press("Tab");await page.waitForTimeout(180);
-  assert.equal(await option("Alpha profile").count(),1);assert.equal(await option("Alpha profile").evaluate(element=>element===document.activeElement),true);
-  await page.keyboard.press("Enter");assert.deepEqual((await state()).changes,["alpha"]);assert.equal((await state()).submits,0);
+  assert.equal(await option("Alpha profile").count(),0);assert.equal(await page.getByLabel("Next field").evaluate(element=>element===document.activeElement),true);
+  assert.deepEqual((await state()).changes,[]);
+  await input().focus();await input().press("ArrowDown");
+  assert.equal(await input().evaluate(element=>element===document.activeElement),true);
+  assert.ok(await input().getAttribute("aria-activedescendant"));
+  await input().press("Enter");assert.deepEqual((await state()).changes,["alpha"]);assert.equal((await state()).submits,0);
 });
 
 test("leaving the control closes it; refocusing before its delayed close keeps the reopened list available",async()=>{
@@ -85,8 +102,8 @@ test("touch selection reopens without an extra tap outside the control",async()=
   try{
     const mobile=await context.newPage();await mobile.route("**/*",route=>new URL(route.request().url()).origin===fixture.base?route.continue():route.abort());
     await mobile.goto(fixture.base);const field=mobile.getByLabel("Profile",{exact:true});await field.tap();
-    await mobile.getByRole("button",{name:"Beta profile",exact:true}).tap();await field.tap();
-    assert.equal(await mobile.getByRole("button",{name:"Beta profile",exact:true}).count(),1);
+    await mobile.getByRole("option",{name:"Beta profile",exact:true}).tap();await field.tap();
+    assert.equal(await mobile.getByRole("option",{name:"Beta profile",exact:true}).count(),1);
     assert.deepEqual(await mobile.evaluate(()=>window.__select.changes),["beta"]);
   }finally{await context.close();}
 });

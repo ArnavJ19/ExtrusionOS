@@ -21,10 +21,10 @@ const aliases = new Map([
   ["@/lib/hooks/use-debounce", `import {useEffect,useState} from "react"; export function useDebounce(value,delay) { const [result,setResult]=useState(value); useEffect(()=>{const id=setTimeout(()=>setResult(value),delay);return()=>clearTimeout(id)},[value,delay]);return result; }`],
   ["@/lib/utils/errors", `export function getErrorMessage(error,fallback) { return error?.message ?? fallback; }`],
   ["@/types/app", `export function labelize(value) { return value.replace(/_/g," ").replace(/\\b\\w/g,char=>char.toUpperCase()); }`],
-  ["./value", `export function displayValue(row,path) { return path.split(".").reduce((value,key)=>value?.[key],row) ?? ""; }`],
+  ["./value", `export function getPath(row,path) { return path.split(".").reduce((value,key)=>value?.[key],row); } export function displayValue(row,path) { return getPath(row,path) ?? ""; }`],
   ["./module-config", `
     const columns=[{id:"order_number",header:"Order Number",path:"order_number",sortable:true,type:"text"},{id:"current_stage",header:"Stage",path:"current_stage",sortable:true,type:"text"},{id:"priority",header:"Priority",path:"priority",sortable:true,type:"text"}];
-    const config={basePath:"/orders",resource:"orders",title:"Orders",databaseTitle:"Orders Database",defaultSort:{column:"order_number",direction:"asc"},columns,card:{titlePath:"order_number"},groupField:"current_stage",groups:["order_confirmed","packing"],secondaryFilter:{field:"priority",label:"Priority",options:[{value:"high",label:"High"},{value:"normal",label:"Normal"}]},searchPlaceholder:"Search orders"};
+    const config={basePath:"/orders",resource:"orders",title:"Orders",databaseTitle:"Orders Database",defaultSort:{column:"order_number",direction:"asc"},columns,card:{titlePath:"order_number",meta:[]},groupField:"current_stage",groups:["order_confirmed","packing"],secondaryFilter:{field:"priority",label:"Priority",options:[{value:"high",label:"High"},{value:"normal",label:"Normal"}]},searchPlaceholder:"Search orders"};
     export function getModuleConfig(){return config;}
   `],
   ["@/lib/preferences/table-columns", `export function getRoleColumnOrder(_key,_role,columns){return columns.map(item=>item.id);} export function moveColumn(columns){return [...columns];} export function resolveColumnLayout(_key,_role,columns,preferences){const identifier=columns[0]?.id??"";const hidden=new Set(preferences?.hidden??[]);return {columns:columns.filter(column=>column.id===identifier||!hidden.has(column.id)),permittedColumns:[...columns],widths:preferences?.widths??{},identifier};}`],
@@ -64,7 +64,7 @@ test("mounted database controls preserve rapid edits, debounce, pagination, sort
     await page.getByRole("checkbox", { name: "Priority" }).check();
     await page.getByRole("button", { name: "Sort Priority" }).waitFor();
     await page.getByText("Columns", { exact: true }).click();
-    await page.getByLabel("Search").fill("ORD-2026-05");
+    await page.getByLabel("Search", { exact: true }).fill("ORD-2026-05");
     await page.getByRole("combobox", { name: "Current Stage", exact: true }).selectOption("order_confirmed");
     await page.getByRole("combobox", { name: "Priority", exact: true }).selectOption("high");
     await page.getByRole("button", { name: "Sort Order Number" }).click();
@@ -104,9 +104,9 @@ test("mounted database controls preserve rapid edits, debounce, pagination, sort
     await page.getByRole("button", {name:"Preview ORD-2026-05"}).waitFor();
     await page.evaluate(() => history.pushState(null, "", "/orders/order-1"));
     await page.goBack();
-    await page.getByLabel("Search").waitFor();
+    await page.getByLabel("Search", { exact: true }).waitFor();
     await page.waitForTimeout(450);
-    assert.equal(await page.getByLabel("Search").inputValue(), "ORD-2026-05");
+    assert.equal(await page.getByLabel("Search", { exact: true }).inputValue(), "ORD-2026-05");
     assert.equal(await page.getByRole("combobox", { name: "Current Stage", exact: true }).inputValue(), "order_confirmed");
     assert.equal(await page.getByRole("combobox", { name: "Priority", exact: true }).inputValue(), "high");
     assert.equal(new URL(page.url()).searchParams.get("page"), "2");
@@ -116,10 +116,12 @@ test("mounted database controls preserve rapid edits, debounce, pagination, sort
     const callsBeforeSwitch = await page.evaluate(() => window.rpcCalls);
     await page.evaluate(() => window.mountDatabase({ companyId: "other-company", userId: "other-user", role: "owner" }));
     await page.getByRole("button", { name: "Sort Priority" }).waitFor();
+    await page.getByText("Columns", { exact: true }).click();
     assert.equal(await page.getByRole("checkbox", { name: "Priority", exact: true }).isChecked(), true);
     assert.ok(await page.evaluate(() => window.rpcCalls) > callsBeforeSwitch, "Scope changes must request a fresh page");
     await page.evaluate(() => window.mountDatabase({ companyId: "company", userId: "user", role: "owner" }));
     await page.getByRole("button", { name: "Sort Priority" }).waitFor({ state: "detached" });
+    await page.getByText("Columns", { exact: true }).click();
     assert.equal(await page.getByRole("checkbox", { name: "Priority", exact: true }).isChecked(), false);
   } finally {
     await browser.close();

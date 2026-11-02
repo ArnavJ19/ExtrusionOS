@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { productionHoldAction } from "@/lib/actions/production-holds";
-import { holdHistorySchema, holdReasons, issueResolution, summariseReadiness, type HoldReason, type ReadinessIssue, type ReadinessResponse, type ResolutionLinks } from "@/lib/workflow/production-readiness";
+import { holdHistorySchema, holdReasons, summariseReadiness, type HoldReason, type ReadinessIssue, type ReadinessResponse, type ResolutionLinks } from "@/lib/workflow/production-readiness";
+import { readinessBlockers } from "@/lib/ui/readiness-blockers";
+import type { UserRole } from "@/types/app";
 import { formatDate, formatWeight } from "@/lib/utils/format";
 import type { z } from "zod";
 
@@ -13,14 +15,14 @@ type Person = { id: string; name: string };
 type History = z.infer<typeof holdHistorySchema>;
 const label = (value: string) => value.replace(/_/g, " ");
 
-function IssueList({ issues, links, tone }: { issues: ReadinessIssue[]; links: ResolutionLinks; tone: "block" | "advice" }) {
+function IssueList({ issues, links, tone, role }: { issues: ReadinessIssue[]; links: ResolutionLinks; tone: "block" | "advice"; role: UserRole }) {
   return (
     <ul className="mt-2 space-y-2">
-      {issues.map((issue, index) => {
-        const resolution = issueResolution(issue.code, links);
+      {readinessBlockers(issues, links, role).map((issue, index) => {
+        const resolution = issue.resolution;
         return (
           <li key={`${issue.code}-${index}`} className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm font-semibold ${tone === "block" ? "border-red-200 bg-red-50 text-red-900" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
-            <span>{issue.message}</span>
+            <div className="min-w-0"><p>{issue.reason}</p><p className="mt-1 text-xs font-medium">{issue.evidence} | Source: {issue.source}</p><p className="mt-1 text-xs font-medium">Team: {issue.team}. A team label does not assign a person.</p>{!resolution ? <p className="mt-1 text-xs font-semibold">Ask the responsible team to review this condition. No permitted resolution link is available here.</p> : null}</div>
             {resolution ? <Link href={resolution.href} className="shrink-0 rounded-lg border border-current px-2 py-1 text-xs font-bold">{resolution.label}</Link> : null}
           </li>
         );
@@ -30,8 +32,8 @@ function IssueList({ issues, links, tone }: { issues: ReadinessIssue[]; links: R
 }
 
 // UPGRADE_EOS features 63 and 72: start prerequisites, recorded holds and guarded resumption.
-export function ProductionReadinessPanel({ jobId, initial, unavailableMessage, links, canWrite, people }: {
-  jobId: string; initial: ReadinessResponse | null; unavailableMessage: string | null; links: ResolutionLinks; canWrite: boolean; people: Person[];
+export function ProductionReadinessPanel({ jobId, initial, unavailableMessage, links, canWrite, people, role = "viewer" }: {
+  jobId: string; initial: ReadinessResponse | null; unavailableMessage: string | null; links: ResolutionLinks; canWrite: boolean; people: Person[]; role?: UserRole;
 }) {
   const router = useRouter();
   const [data, setData] = useState(initial);
@@ -42,6 +44,8 @@ export function ProductionReadinessPanel({ jobId, initial, unavailableMessage, l
   const [history, setHistory] = useState<History | null>(null);
   const [form, setForm] = useState({ reason: "material_shortage" as HoldReason, note: "", material_condition: "", resume_condition: "", responsible_user_id: people[0]?.id ?? "" });
   const [resumeNote, setResumeNote] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [readinessStale, setReadinessStale] = useState(Boolean(unavailableMessage));
   // One request identity per intended action, reused on an uncertain retry so it cannot record twice.
   const pendingRequest = useRef<{ kind: string; id: string } | null>(null);
   const requestId = (kind: string) => {
@@ -50,9 +54,14 @@ export function ProductionReadinessPanel({ jobId, initial, unavailableMessage, l
   };
 
   async function reload() {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
     const result = await productionHoldAction({ command: "holds.readiness", job_id: jobId });
-    if (result.success) { setData(result.data as ReadinessResponse); setError(""); }
-    else setError(result.error);
+    if (result.success) { setData(result.data as ReadinessResponse); setError(""); setReadinessStale(false); }
+    else { setError(result.error); setReadinessStale(true); }
+    } catch { setReadinessStale(true); setError("Readiness is unavailable. This does not establish a shortage; retry the check."); }
+    finally { setRefreshing(false); }
   }
 
   async function submit(kind: "place" | "resume") {
@@ -88,6 +97,7 @@ export function ProductionReadinessPanel({ jobId, initial, unavailableMessage, l
       <section id="production-hold" aria-labelledby="readiness-title" className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 id="readiness-title" className="font-bold tracking-tight text-slate-900">Readiness and holds</h3>
         <p role="alert" className="mt-2 text-sm font-semibold text-amber-800">{error || "Readiness could not be checked. Refresh before starting this job."}</p>
+        <Button type="button" variant="secondary" disabled={refreshing} onClick={() => void reload()}>{refreshing ? "Checking..." : "Retry readiness check"}</Button>
       </section>
     );
   }
@@ -100,15 +110,16 @@ export function ProductionReadinessPanel({ jobId, initial, unavailableMessage, l
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 id="readiness-title" className="font-bold tracking-tight text-slate-900">Readiness and holds</h3>
         {actionLabel ? (
-          <span className={`rounded-full px-3 py-1 text-xs font-black ${summary.ready ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
-            {summary.ready ? `Ready to ${actionLabel}` : `${summary.blockers.length} condition${summary.blockers.length === 1 ? "" : "s"} block this job from ${summary.action === "release" ? "release" : summary.action === "resume" ? "resuming" : "starting"}`}
+          <span className={`rounded-full px-3 py-1 text-xs font-black ${summary.ready && !readinessStale ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
+            {readinessStale ? "Readiness unavailable - last successful check shown" : summary.ready ? `Ready to ${actionLabel}` : `${summary.blockers.length} condition${summary.blockers.length === 1 ? "" : "s"} block this job from ${summary.action === "release" ? "release" : summary.action === "resume" ? "resuming" : "starting"}`}
           </span>
         ) : <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">Job is {label(data.job_status)}</span>}
       </div>
       <p className="mt-1 text-sm font-medium text-slate-500">Checked against the same rules the database applies when the job is committed. Conditions are rechecked at that moment, so a change after this check still blocks it.</p>
 
-      {summary.blockers.length ? <IssueList issues={summary.blockers} links={links} tone="block" /> : null}
-      {summary.advisories.length ? <IssueList issues={summary.advisories} links={links} tone="advice" /> : null}
+      <Button type="button" className="mt-3" variant="secondary" disabled={refreshing || busy} onClick={() => void reload()}>{refreshing ? "Checking..." : "Refresh readiness"}</Button>
+      {summary.blockers.length ? <IssueList issues={summary.blockers} links={links} tone="block" role={role} /> : null}
+      {summary.advisories.length ? <IssueList issues={summary.advisories} links={links} tone="advice" role={role} /> : null}
 
       {data.hold ? (
         <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">

@@ -46,7 +46,7 @@ test("clearing an order cannot be undone by its late source response",async()=>{
   assert.ok(await fixture.source().isDisabled());assert.ok(await fixture.save().isDisabled());assert.deepEqual(await saves(),[]);
 });
 test("reselecting the same verified order preserves entered measurements and does not reload sources",async()=>{
-  await fixture.ready("A");await fixture.fillBundle("A");await fixture.order().click();await page.getByRole("button",{name:"ORDER-A - Synthetic buyer",exact:true}).click();
+  await fixture.ready("A");await fixture.fillBundle("A");await fixture.order().click();await page.getByRole("option",{name:"ORDER-A - Synthetic buyer",exact:true}).click();
   assert.equal(await bundle().inputValue(),"A-MANIFEST");assert.equal(await page.evaluate(()=>window.__dispatch.sourceRequests.length),1);assert.ok(await fixture.save().isEnabled());
 });
 test("changing company remounts preparation and rejects source results from the previous company",async()=>{
@@ -60,7 +60,7 @@ async function resolveOrders(term,result){await page.evaluate(({term,result})=>w
 test("an older order-search result cannot replace the newer matching choices",async()=>{
   await page.evaluate(()=>{window.__dispatch.autoOrders=false;});await searchHeld("ORDER-A");await searchHeld("ORDER-B");
   await resolveOrders("ORDER-B",{data:[dispatchOrder("B")],error:null});await resolveOrders("ORDER-A",{data:[dispatchOrder("A")],error:null});
-  await fixture.order().click();assert.equal(await page.getByRole("button",{name:"ORDER-B - Synthetic buyer",exact:true}).count(),1);
+  await fixture.order().click();assert.equal(await page.getByRole("option",{name:"ORDER-B - Synthetic buyer",exact:true}).count(),1);
   assert.deepEqual(await saves(),[]);
 });
 test("a failed obsolete order search cannot clear the current pending state or report a current failure",async()=>{
@@ -73,7 +73,7 @@ test("a current catalogue failure is unavailable rather than empty and can be re
   const retry=page.getByRole("button",{name:"Retry order search",exact:true});assert.equal(await retry.count(),1);assert.equal(await page.getByRole("alert").count(),1);
   const before=await page.evaluate(()=>window.__dispatch.orderRequests.length);await retry.click();await page.waitForFunction(count=>window.__dispatch.orderRequests.length>count,before);
   await page.evaluate(row=>window.__dispatch.orderRequests.at(-1).resolve({data:[row],error:null}),dispatchOrder("A"));await fixture.flush();
-  await fixture.order().click();assert.equal(await page.getByRole("button",{name:"ORDER-A - Synthetic buyer",exact:true}).count(),1);
+  await fixture.order().click();assert.equal(await page.getByRole("option",{name:"ORDER-A - Synthetic buyer",exact:true}).count(),1);
 });
 test("unmounted source and catalogue requests cannot report unhandled errors or navigate",async()=>{
   await fixture.chooseOrder("A");await page.evaluate(()=>{window.__dispatch.autoOrders=false;});await searchHeld("ORDER-B");
@@ -134,7 +134,7 @@ test("a complete manifest remains blocked when any one source quantity is exceed
 test("duplicate tags and combined source use are checked across multiple bundle rows",async()=>{
   await fixture.ready("A");await fixture.fillBundle("A");await page.getByRole("button",{name:"Add bundle",exact:true}).click();
   const row=page.getByText("Bundle 2",{exact:true}).locator("..").locator("..");await row.getByPlaceholder("Select production job or stock batch").click();
-  await page.getByRole("button",{name:/A profile.*A source/}).click();
+  await page.getByRole("option",{name:/A profile.*A source/}).click();
   for(const [label,value] of [["Scan / Bundle ID *","A-MANIFEST"],["Actual pieces *","1"],["Actual metres *","2.5"],["Gross kg *","6"],["Tare kg *","1"]])await row.getByText(label,{exact:true}).locator("..").locator("input").fill(value);
   assert.ok(await fixture.save().isDisabled());await row.getByText("Scan / Bundle ID *",{exact:true}).locator("..").locator("input").fill("A-SECOND");
   assert.ok(await fixture.save().isEnabled());await row.getByText("Actual metres *",{exact:true}).locator("..").locator("input").fill("3");assert.ok(await fixture.save().isDisabled());

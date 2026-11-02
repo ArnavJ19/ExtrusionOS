@@ -81,8 +81,8 @@ test("essential quotation inputs stay visible and collapsing later details prese
   await expect(line.getByLabel("Length m", { exact: true })).toBeVisible();
   await expect(line.getByText("Costing and recovery for item 1", { exact: true })).toBeVisible();
   assert.equal(await line.locator("details").last().getAttribute("open"), null);
-  await page.getByPlaceholder("Select customer", { exact: true }).click(); await page.getByRole("button", { name: /Mira Aluminium Window Systems/ }).click();
-  await line.getByRole("textbox", { name: "Search aluminium profile by code or name", exact: true }).fill("AL-101"); await line.getByRole("button", { name: /AL-101/ }).first().click();
+  await page.getByPlaceholder("Select customer", { exact: true }).click(); await page.getByRole("option", { name: /Mira Aluminium Window Systems/ }).click();
+  await line.getByRole("combobox", { name: "Search aluminium profile by code or name", exact: true }).fill("AL-101"); await line.getByRole("option", { name: /AL-101/ }).first().click();
   await line.getByLabel("Qty pcs", { exact: true }).fill("100"); await line.getByLabel("Length unit", { exact: true }).selectOption("ft"); await line.getByLabel("Length ft", { exact: true }).fill("20");
   await expect(line.getByText("Saved as 6.096 m.", { exact: false })).toBeVisible();
   for (const unit of ["mm", "in", "m", "ft"]) await line.getByLabel("Length unit", { exact: true }).selectOption(unit);

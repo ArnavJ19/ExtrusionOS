@@ -1,0 +1,1121 @@
+TAP version 13
+# Subtest: the lookup does not offer an order that the actual writer rejects for temper
+ok 1 - the lookup does not offer an order that the actual writer rejects for temper
+  ---
+  duration_ms: 4742.6362
+  type: 'test'
+  ...
+# Subtest: normalized alloy and temper accepted by the writer remain discoverable
+ok 2 - normalized alloy and temper accepted by the writer remain discoverable
+  ---
+  duration_ms: 263.0309
+  type: 'test'
+  ...
+# Subtest: delivered and payment-pending orders do not appear as compatible open orders
+ok 3 - delivered and payment-pending orders do not appear as compatible open orders
+  ---
+  duration_ms: 411.878
+  type: 'test'
+  ...
+# Subtest: fully covered dispatched profiles do not remain allocation choices
+ok 4 - fully covered dispatched profiles do not remain allocation choices
+  ---
+  duration_ms: 206.7539
+  type: 'test'
+  ...
+# Subtest: two matching requirements produce one distinct choice per order
+ok 5 - two matching requirements produce one distinct choice per order
+  ---
+  duration_ms: 188.0403
+  type: 'test'
+  ...
+# Subtest: a small REST row cap cannot hide a later compatible order
+ok 6 - a small REST row cap cannot hide a later compatible order
+  ---
+  duration_ms: 206.6115
+  type: 'test'
+  ...
+# Subtest: ten-row pages reach later orders and clear the prior order selection
+ok 7 - ten-row pages reach later orders and clear the prior order selection
+  ---
+  duration_ms: 1314.7285
+  type: 'test'
+  ...
+# Subtest: global search reaches orders outside the first page and treats percent literally
+ok 8 - global search reaches orders outside the first page and treats percent literally
+  ---
+  duration_ms: 1004.659
+  type: 'test'
+  ...
+# Subtest: a stale search response cannot replace current options
+ok 9 - a stale search response cannot replace current options
+  ---
+  duration_ms: 327.9708
+  type: 'test'
+  ...
+# Subtest: a stale search failure cannot replace current options
+ok 10 - a stale search failure cannot replace current options
+  ---
+  duration_ms: 325.4016
+  type: 'test'
+  ...
+# Subtest: a missing new RPC is explicitly unavailable and never falls back to capped requirements
+ok 11 - a missing new RPC is explicitly unavailable and never falls back to capped requirements
+  ---
+  duration_ms: 87.2043
+  type: 'test'
+  ...
+# Subtest: the read snapshot replaces a billet issued between the header and options requests
+ok 12 - the read snapshot replaces a billet issued between the header and options requests
+  ---
+  duration_ms: 151.5327
+  type: 'test'
+  ...
+# Subtest: a role outside manual allocation cannot retain a mounted mutation panel
+ok 13 - a role outside manual allocation cannot retain a mounted mutation panel
+  ---
+  duration_ms: 180.8141
+  type: 'test'
+  ...
+# Subtest: malformed initial billet field billet_code is unavailable before lookup
+ok 14 - malformed initial billet field billet_code is unavailable before lookup
+  ---
+  duration_ms: 85.4499
+  type: 'test'
+  ...
+# Subtest: malformed initial billet field temper is unavailable before lookup
+ok 15 - malformed initial billet field temper is unavailable before lookup
+  ---
+  duration_ms: 79.6177
+  type: 'test'
+  ...
+# Subtest: malformed initial billet field billet_diameter_inch is unavailable before lookup
+ok 16 - malformed initial billet field billet_diameter_inch is unavailable before lookup
+  ---
+  duration_ms: 74.8049
+  type: 'test'
+  ...
+# Subtest: allocation panel exposes initial loading and a recoverable billet read error
+ok 17 - allocation panel exposes initial loading and a recoverable billet read error
+  ---
+  duration_ms: 1386.1354
+  type: 'test'
+  ...
+# Subtest: successful allocation refreshes and leaves the panel usable
+ok 18 - successful allocation refreshes and leaves the panel usable
+  ---
+  duration_ms: 289.1627
+  type: 'test'
+  ...
+# Subtest: a failed post-save refresh preserves the confirmed allocation and can be retried
+ok 19 - a failed post-save refresh preserves the confirmed allocation and can be retried
+  ---
+  duration_ms: 289.391
+  type: 'test'
+  ...
+# Subtest: requirement errors stay unavailable instead of becoming an empty order list
+ok 20 - requirement errors stay unavailable instead of becoming an empty order list
+  ---
+  duration_ms: 154.7577
+  type: 'test'
+  ...
+# Subtest: an older billet response cannot overwrite the new billet
+ok 21 - an older billet response cannot overwrite the new billet
+  ---
+  duration_ms: 138.0604
+  type: 'test'
+  ...
+# Subtest: an older requirement response cannot replace current order options
+ok 22 - an older requirement response cannot replace current order options
+  ---
+  duration_ms: 272.7619
+  type: 'test'
+  ...
+# Subtest: changing company for the same billet clears old choices and reloads in the new scope
+ok 23 - changing company for the same billet clears old choices and reloads in the new scope
+  ---
+  duration_ms: 204.857
+  type: 'test'
+  ...
+# Subtest: changing billet discards the prior order selection
+ok 24 - changing billet discards the prior order selection
+  ---
+  duration_ms: 184.0188
+  type: 'test'
+  ...
+# Subtest: a rejected action reports uncertainty, clears saving and requires a fresh read
+ok 25 - a rejected action reports uncertainty, clears saving and requires a fresh read
+  ---
+  duration_ms: 359.3864
+  type: 'test'
+  ...
+# Subtest: a failed action cannot be resubmitted from stale readiness
+ok 26 - a failed action cannot be resubmitted from stale readiness
+  ---
+  duration_ms: 227.6576
+  type: 'test'
+  ...
+# Subtest: a malformed success response cannot report a confirmed allocation
+ok 27 - a malformed success response cannot report a confirmed allocation
+  ---
+  duration_ms: 181.0983
+  type: 'test'
+  ...
+# Subtest: same-event duplicate clicks send one write and pending controls remain disabled
+ok 28 - same-event duplicate clicks send one write and pending controls remain disabled
+  ---
+  duration_ms: 185.6524
+  type: 'test'
+  ...
+# Subtest: a late save after switching billets cannot clear or refresh the new panel
+ok 29 - a late save after switching billets cannot clear or refresh the new panel
+  ---
+  duration_ms: 382.0139
+  type: 'test'
+  ...
+# Subtest: unmounted load and save completions are ignored
+ok 30 - unmounted load and save completions are ignored
+  ---
+  duration_ms: 315.9283
+  type: 'test'
+  ...
+# Subtest: a rejected read offers retry without an unhandled rejection
+ok 31 - a rejected read offers retry without an unhandled rejection
+  ---
+  duration_ms: 77.2941
+  type: 'test'
+  ...
+# Subtest: invalid missing billet response cannot expose allocation controls
+ok 32 - invalid missing billet response cannot expose allocation controls
+  ---
+  duration_ms: 88.1253
+  type: 'test'
+  ...
+# Subtest: invalid another billet response cannot expose allocation controls
+ok 33 - invalid another billet response cannot expose allocation controls
+  ---
+  duration_ms: 79.593
+  type: 'test'
+  ...
+# Subtest: invalid another company response cannot expose allocation controls
+ok 34 - invalid another company response cannot expose allocation controls
+  ---
+  duration_ms: 83.9327
+  type: 'test'
+  ...
+# Subtest: invalid invalid allocated order response cannot expose allocation controls
+ok 35 - invalid invalid allocated order response cannot expose allocation controls
+  ---
+  duration_ms: 97.5176
+  type: 'test'
+  ...
+# Subtest: a missing requirement payload is unavailable instead of verified empty
+ok 36 - a missing requirement payload is unavailable instead of verified empty
+  ---
+  duration_ms: 95.0637
+  type: 'test'
+  ...
+# Subtest: non-allocatable billets retain their status and do not query requirements
+ok 37 - non-allocatable billets retain their status and do not query requirements
+  ---
+  duration_ms: 203.9604
+  type: 'test'
+  ...
+# Subtest: the browser's allocation reaches the actual action and SQL, then refreshes persisted quantities
+ok 38 - the browser's allocation reaches the actual action and SQL, then refreshes persisted quantities
+  ---
+  duration_ms: 3656.2537
+  type: 'test'
+  ...
+# Subtest: an obsolete requirement failure cannot replace a newer ready panel
+ok 39 - an obsolete requirement failure cannot replace a newer ready panel
+  ---
+  duration_ms: 120.7004
+  type: 'test'
+  ...
+# Subtest: manual refresh clears selection and disables writes until the new read completes
+ok 40 - manual refresh clears selection and disables writes until the new read completes
+  ---
+  duration_ms: 272.889
+  type: 'test'
+  ...
+# Subtest: a changed user or role resets same-company readiness
+ok 41 - a changed user or role resets same-company readiness
+  ---
+  duration_ms: 425.5653
+  type: 'test'
+  ...
+# Subtest: invalid requirement null row cannot become an allocation option
+ok 42 - invalid requirement null row cannot become an allocation option
+  ---
+  duration_ms: 90.8256
+  type: 'test'
+  ...
+# Subtest: invalid requirement foreign company cannot become an allocation option
+ok 43 - invalid requirement foreign company cannot become an allocation option
+  ---
+  duration_ms: 79.7048
+  type: 'test'
+  ...
+# Subtest: invalid requirement invalid order cannot become an allocation option
+ok 44 - invalid requirement invalid order cannot become an allocation option
+  ---
+  duration_ms: 101.2161
+  type: 'test'
+  ...
+# Subtest: browser reallocation preserves physical billet data and updates both order counters
+ok 45 - browser reallocation preserves physical billet data and updates both order counters
+  ---
+  duration_ms: 3479.1424
+  type: 'test'
+  ...
+# Subtest: a committed SQL allocation with a lost confirmation requires review and never silently posts twice
+ok 46 - a committed SQL allocation with a lost confirmation requires review and never silently posts twice
+  ---
+  duration_ms: 2612.3154
+  type: 'test'
+  ...
+# Subtest: the mounted discussion posts a mention through the actual action and retains replies
+ok 47 - the mounted discussion posts a mention through the actual action and retains replies
+  ---
+  duration_ms: 7884.7712
+  type: 'test'
+  ...
+# Subtest: a lost discussion acknowledgement locks fields and retries the original identity once
+ok 48 - a lost discussion acknowledgement locks fields and retries the original identity once
+  ---
+  duration_ms: 625.4759
+  type: 'test'
+  ...
+# Subtest: the actual procedure create and reassignment screens preserve accountable owner history
+ok 49 - the actual procedure create and reassignment screens preserve accountable owner history
+  ---
+  duration_ms: 914.0478
+  type: 'test'
+  ...
+# Subtest: daily run generation and actual observations close only the routine and retain unfinished work
+ok 50 - daily run generation and actual observations close only the routine and retain unfinished work
+  ---
+  duration_ms: 748.3281
+  type: 'test'
+  ...
+# Subtest: stale routine context refuses completion and refresh requires renewed acknowledgement
+ok 51 - stale routine context refuses completion and refresh requires renewed acknowledgement
+  ---
+  duration_ms: 579.1603
+  type: 'test'
+  ...
+# Subtest: read failures, missing migrations and viewer screens fail explicitly
+ok 52 - read failures, missing migrations and viewer screens fail explicitly
+  ---
+  duration_ms: 641.2297
+  type: 'test'
+  ...
+# Subtest: essential quotation inputs stay visible and collapsing later details preserves a canonical length
+ok 53 - essential quotation inputs stay visible and collapsing later details preserves a canonical length
+  ---
+  duration_ms: 1345.3256
+  type: 'test'
+  ...
+# Subtest: actual source styles retain routine, owner and discussion controls inside a 375px phone
+ok 54 - actual source styles retain routine, owner and discussion controls inside a 375px phone
+  ---
+  duration_ms: 1127.5182
+  type: 'test'
+  ...
+# Subtest: clickable table rows activate with Enter or Space only
+ok 55 - clickable table rows activate with Enter or Space only
+  ---
+  duration_ms: 1.0459
+  type: 'test'
+  ...
+# Subtest: desktop rows guard keyboard activation and mobile identity uses a native button
+ok 56 - desktop rows guard keyboard activation and mobile identity uses a native button
+  ---
+  duration_ms: 1.8905
+  type: 'test'
+  ...
+# Subtest: production form autofill uses a matching active or approved die
+ok 57 - production form autofill uses a matching active or approved die
+  ---
+  duration_ms: 1480.2953
+  type: 'test'
+  ...
+# Subtest: an earlier correction die cannot win fallback autofill
+ok 58 - an earlier correction die cannot win fallback autofill
+  ---
+  duration_ms: 207.4075
+  type: 'test'
+  ...
+# Subtest: an explicitly assigned correction die is not silently substituted
+ok 59 - an explicitly assigned correction die is not silently substituted
+  ---
+  duration_ms: 195.8156
+  type: 'test'
+  ...
+# Subtest: an explicitly assigned approved die retains its identity
+ok 60 - an explicitly assigned approved die retains its identity
+  ---
+  duration_ms: 206.3472
+  type: 'test'
+  ...
+# Subtest: production die choices contain only matching active/approved dies
+ok 61 - production die choices contain only matching active/approved dies
+  ---
+  duration_ms: 475.8734
+  type: 'test'
+  ...
+# Subtest: production die lookup filters eligibility before its 40-row limit
+ok 62 - production die lookup filters eligibility before its 40-row limit
+  ---
+  duration_ms: 444.3323
+  type: 'test'
+  ...
+# Subtest: the older production form also offers approved dies
+ok 63 - the older production form also offers approved dies
+  ---
+  duration_ms: 143.8616
+  type: 'test'
+  ...
+# Subtest: autofill refreshes die choices for its exact profile beyond a crowded company preview
+ok 64 - autofill refreshes die choices for its exact profile beyond a crowded company preview
+  ---
+  duration_ms: 540.0043
+  type: 'test'
+  ...
+# Subtest: an operator can explicitly replace an unavailable assigned die with an approved one
+ok 65 - an operator can explicitly replace an unavailable assigned die with an approved one
+  ---
+  duration_ms: 554.8781
+  type: 'test'
+  ...
+# Subtest: a read-only order preserves its historical die identity without declaring it usable
+ok 66 - a read-only order preserves its historical die identity without declaring it usable
+  ---
+  duration_ms: 95.7753
+  type: 'test'
+  ...
+# Subtest: an older A result cannot overwrite the selected B manifest or choices
+ok 67 - an older A result cannot overwrite the selected B manifest or choices
+  ---
+  duration_ms: 2012.1177
+  type: 'test'
+  ...
+# Subtest: an obsolete finalizer cannot unlock an order whose own sources are pending
+ok 68 - an obsolete finalizer cannot unlock an order whose own sources are pending
+  ---
+  duration_ms: 892.8437
+  type: 'test'
+  ...
+# Subtest: an older failed result cannot erase the current order's valid manifest
+ok 69 - an older failed result cannot erase the current order's valid manifest
+  ---
+  duration_ms: 1026.2112
+  type: 'test'
+  ...
+# Subtest: a current source transport rejection is explicit and cannot leave stale choices or an unhandled error
+ok 70 - a current source transport rejection is explicit and cannot leave stale choices or an unhandled error
+  ---
+  duration_ms: 486.66
+  type: 'test'
+  ...
+# Subtest: retrying a failed source check starts a fresh owned request and permits a valid manifest
+ok 71 - retrying a failed source check starts a fresh owned request and permits a valid manifest
+  ---
+  duration_ms: 670.1468
+  type: 'test'
+  ...
+# Subtest: typing a new order search immediately invalidates the old selection, sources and manifest
+ok 72 - typing a new order search immediately invalidates the old selection, sources and manifest
+  ---
+  duration_ms: 626.8684
+  type: 'test'
+  ...
+# Subtest: clearing an order cannot be undone by its late source response
+ok 73 - clearing an order cannot be undone by its late source response
+  ---
+  duration_ms: 500.0456
+  type: 'test'
+  ...
+# Subtest: reselecting the same verified order preserves entered measurements and does not reload sources
+ok 74 - reselecting the same verified order preserves entered measurements and does not reload sources
+  ---
+  duration_ms: 690.8744
+  type: 'test'
+  ...
+# Subtest: changing company remounts preparation and rejects source results from the previous company
+ok 75 - changing company remounts preparation and rejects source results from the previous company
+  ---
+  duration_ms: 526.42
+  type: 'test'
+  ...
+# Subtest: an older order-search result cannot replace the newer matching choices
+ok 76 - an older order-search result cannot replace the newer matching choices
+  ---
+  duration_ms: 737.3906
+  type: 'test'
+  ...
+# Subtest: a failed obsolete order search cannot clear the current pending state or report a current failure
+ok 77 - a failed obsolete order search cannot clear the current pending state or report a current failure
+  ---
+  duration_ms: 641.8632
+  type: 'test'
+  ...
+# Subtest: a current catalogue failure is unavailable rather than empty and can be retried
+ok 78 - a current catalogue failure is unavailable rather than empty and can be retried
+  ---
+  duration_ms: 791.94
+  type: 'test'
+  ...
+# Subtest: unmounted source and catalogue requests cannot report unhandled errors or navigate
+ok 79 - unmounted source and catalogue requests cannot report unhandled errors or navigate
+  ---
+  duration_ms: 821.9452
+  type: 'test'
+  ...
+# Subtest: malformed dispatch sources missing-array remain unavailable before submission
+ok 80 - malformed dispatch sources missing-array remain unavailable before submission
+  ---
+  duration_ms: 490.7859
+  type: 'test'
+  ...
+# Subtest: malformed dispatch sources duplicate-id remain unavailable before submission
+ok 81 - malformed dispatch sources duplicate-id remain unavailable before submission
+  ---
+  duration_ms: 492.7422
+  type: 'test'
+  ...
+# Subtest: malformed dispatch sources nonfinite-weight remain unavailable before submission
+ok 82 - malformed dispatch sources nonfinite-weight remain unavailable before submission
+  ---
+  duration_ms: 490.824
+  type: 'test'
+  ...
+# Subtest: malformed dispatch sources fractional-pieces remain unavailable before submission
+ok 83 - malformed dispatch sources fractional-pieces remain unavailable before submission
+  ---
+  duration_ms: 482.9928
+  type: 'test'
+  ...
+# Subtest: malformed dispatch sources unknown-source remain unavailable before submission
+ok 84 - malformed dispatch sources unknown-source remain unavailable before submission
+  ---
+  duration_ms: 482.776
+  type: 'test'
+  ...
+# Subtest: malformed dispatch sources invalid-profile remain unavailable before submission
+ok 85 - malformed dispatch sources invalid-profile remain unavailable before submission
+  ---
+  duration_ms: 482.3016
+  type: 'test'
+  ...
+# Subtest: a valid current manifest submits once, freezes editing while pending and keeps data on a handled rejection
+ok 86 - a valid current manifest submits once, freezes editing while pending and keeps data on a handled rejection
+  ---
+  duration_ms: 799.467
+  type: 'test'
+  ...
+# Subtest: uncertain dispatch confirmation blocks a second write and directs the operator to existing records
+ok 87 - uncertain dispatch confirmation blocks a second write and directs the operator to existing records
+  ---
+  duration_ms: 815.1644
+  type: 'test'
+  ...
+# Subtest: a successful dispatch confirmation locks the submitted form and navigates to its exact record
+ok 88 - a successful dispatch confirmation locks the submitted form and navigates to its exact record
+  ---
+  duration_ms: 766.5272
+  type: 'test'
+  ...
+# Subtest: returning A to B to A still rejects the first A request despite matching order identity
+ok 89 - returning A to B to A still rejects the first A request despite matching order identity
+  ---
+  duration_ms: 1331.1016
+  type: 'test'
+  ...
+# Subtest: a complete manifest remains blocked when any one source quantity is exceeded
+ok 90 - a complete manifest remains blocked when any one source quantity is exceeded
+  ---
+  duration_ms: 686.9896
+  type: 'test'
+  ...
+# Subtest: duplicate tags and combined source use are checked across multiple bundle rows
+ok 91 - duplicate tags and combined source use are checked across multiple bundle rows
+  ---
+  duration_ms: 871.5737
+  type: 'test'
+  ...
+# Subtest: a source check with no rows is a verified empty state and can be refreshed
+ok 92 - a source check with no rows is a verified empty state and can be refreshed
+  ---
+  duration_ms: 653.4754
+  type: 'test'
+  ...
+# Subtest: valid production sources remain selectable with exact manifest quantities
+ok 93 - valid production sources remain selectable with exact manifest quantities
+  ---
+  duration_ms: 614.2242
+  type: 'test'
+  ...
+# Subtest: valid dealer_stock sources remain selectable with exact manifest quantities
+ok 94 - valid dealer_stock sources remain selectable with exact manifest quantities
+  ---
+  duration_ms: 642.7535
+  type: 'test'
+  ...
+# Subtest: old company save completion cannot redirect or populate the new company's form
+ok 95 - old company save completion cannot redirect or populate the new company's form
+  ---
+  duration_ms: 767.2307
+  type: 'test'
+  ...
+# Subtest: invalid positive confirmation boolean/invalid-id remains uncertain without another write
+ok 96 - invalid positive confirmation boolean/invalid-id remains uncertain without another write
+  ---
+  duration_ms: 851.3293
+  type: 'test'
+  ...
+# Subtest: invalid positive confirmation string/valid-id remains uncertain without another write
+ok 97 - invalid positive confirmation string/valid-id remains uncertain without another write
+  ---
+  duration_ms: 764.8132
+  type: 'test'
+  ...
+# Subtest: preview rechecks sources, lists the exact load, and cancelling posts nothing
+ok 98 - preview rechecks sources, lists the exact load, and cancelling posts nothing
+  ---
+  duration_ms: 789.4304
+  type: 'test'
+  ...
+# Subtest: material consumed after the first source check blocks the preview and preserves measurements
+ok 99 - material consumed after the first source check blocks the preview and preserves measurements
+  ---
+  duration_ms: 727.8764
+  type: 'test'
+  ...
+# Subtest: actual quotation paste preserves an existing line and imports only after every profile is resolved
+ok 100 - actual quotation paste preserves an existing line and imports only after every profile is resolved
+  ---
+  duration_ms: 4268.6477
+  type: 'test'
+  ...
+# Subtest: actual profile selection distinguishes master quantity, a manual override and a missing weight
+ok 101 - actual profile selection distinguishes master quantity, a manual override and a missing weight
+  ---
+  duration_ms: 849.9606
+  type: 'test'
+  ...
+# Subtest: actual database preview retains page two and filters, omits private fields, and restores trigger focus
+ok 102 - actual database preview retains page two and filters, omits private fields, and restores trigger focus
+  ---
+  duration_ms: 734.6177
+  type: 'test'
+  ...
+# Subtest: actual database refresh retains old observation evidence and never advances success time on error
+ok 103 - actual database refresh retains old observation evidence and never advances success time on error
+  ---
+  duration_ms: 811.2652
+  type: 'test'
+  ...
+# Subtest: actual foundry form keeps unit display separate from batch configuration and missing density
+ok 104 - actual foundry form keeps unit display separate from batch configuration and missing density
+  ---
+  duration_ms: 655.7509
+  type: 'test'
+  ...
+# Subtest: phone database keeps long identifiers and expanded source evidence within the page
+ok 105 - phone database keeps long identifiers and expanded source evidence within the page
+  ---
+  duration_ms: 664.2306
+  type: 'test'
+  ...
+# Subtest: phone spreadsheet preview scrolls inside the editor and keeps invalid rows out of the draft
+ok 106 - phone spreadsheet preview scrolls inside the editor and keeps invalid rows out of the draft
+  ---
+  duration_ms: 705.6814
+  type: 'test'
+  ...
+# Subtest: column controls remain clickable beside a desktop sidebar and fit on a phone
+ok 107 - column controls remain clickable beside a desktop sidebar and fit on a phone
+  ---
+  duration_ms: 986.3793
+  type: 'test'
+  ...
+# Subtest: QC and packaging forms keep accepted finishing receipt identities and quantities
+    # Subtest: QC offers the original accepted receipt and corrective retry as distinct choices
+    ok 1 - QC offers the original accepted receipt and corrective retry as distinct choices
+      ---
+      duration_ms: 735.5263
+      type: 'test'
+      ...
+    # Subtest: changing the production job clears the previous receipt and uses only that job's output
+    ok 2 - changing the production job clears the previous receipt and uses only that job's output
+      ---
+      duration_ms: 870.134
+      type: 'test'
+      ...
+    # Subtest: non-final, zero-output and unrelated receipts never appear in the selected job's choices
+    ok 3 - non-final, zero-output and unrelated receipts never appear in the selected job's choices
+      ---
+      duration_ms: 414.1643
+      type: 'test'
+      ...
+    # Subtest: receipt lookup failure displays a retryable form error without offering a false empty result
+    ok 4 - receipt lookup failure displays a retryable form error without offering a false empty result
+      ---
+      duration_ms: 91.9905
+      type: 'test'
+      ...
+    # Subtest: packaging order autofill starts at zero until an accepted receipt is chosen
+    ok 5 - packaging order autofill starts at zero until an accepted receipt is chosen
+      ---
+      duration_ms: 609.8288
+      type: 'test'
+      ...
+    # Subtest: a queued packaging edit retains its receipt and locks its source identity
+    ok 6 - a queued packaging edit retains its receipt and locks its source identity
+      ---
+      duration_ms: 156.2238
+      type: 'test'
+      ...
+    # Subtest: a late order response cannot replace a more recent packaging selection
+    ok 7 - a late order response cannot replace a more recent packaging selection
+      ---
+      duration_ms: 273.966
+      type: 'test'
+      ...
+    # Subtest: a failed order lookup clears previous packaging quantities and shows the failure
+    ok 8 - a failed order lookup clears previous packaging quantities and shows the failure
+      ---
+      duration_ms: 628.6367
+      type: 'test'
+      ...
+    # Subtest: packaging production choices stay within the order and a source change clears receipt quantities
+    ok 9 - packaging production choices stay within the order and a source change clears receipt quantities
+      ---
+      duration_ms: 951.7634
+      type: 'test'
+      ...
+    # Subtest: explicit production selection invalidates an unfinished order autofill request
+    ok 10 - explicit production selection invalidates an unfinished order autofill request
+      ---
+      duration_ms: 257.3489
+      type: 'test'
+      ...
+    1..10
+ok 108 - QC and packaging forms keep accepted finishing receipt identities and quantities
+  ---
+  duration_ms: 5734.9989
+  type: 'test'
+  ...
+# Subtest: actual browser payloads preserve receipt identity through QC SQL and the packaging server action
+ok 109 - actual browser payloads preserve receipt identity through QC SQL and the packaging server action
+  ---
+  duration_ms: 5438.3971
+  type: 'test'
+  ...
+# Subtest: mounted database controls preserve rapid edits, debounce, pagination, sorting, and Back restoration
+ok 110 - mounted database controls preserve rapid edits, debounce, pagination, sorting, and Back restoration
+  ---
+  duration_ms: 4500.5405
+  type: 'test'
+  ...
+# Subtest: NOV-086/088/093: actual phone database shows ten selective cards with unambiguous zero, missing and blocked states
+ok 111 - NOV-086/088/093: actual phone database shows ten selective cards with unambiguous zero, missing and blocked states
+  ---
+  duration_ms: 3781.6468
+  type: 'test'
+  ...
+# Subtest: NOV-088: disclosure and nested controls do not open the record, with keyboard navigation on desktop
+ok 112 - NOV-088: disclosure and nested controls do not open the record, with keyboard navigation on desktop
+  ---
+  duration_ms: 517.7983
+  type: 'test'
+  ...
+# Subtest: NOV-091: filter removal resets page, keeps other filters, and Clear all recovers a matched empty view
+ok 113 - NOV-091: filter removal resets page, keeps other filters, and Clear all recovers a matched empty view
+  ---
+  duration_ms: 1644.0263
+  type: 'test'
+  ...
+# Subtest: NOV-091/099: stale responses cannot replace a newer search and a failed refresh retains successful rows
+ok 114 - NOV-091/099: stale responses cannot replace a newer search and a failed refresh retains successful rows
+  ---
+  duration_ms: 3143.1939
+  type: 'test'
+  ...
+# Subtest: NOV-099: denied reads remove cached rows and do not masquerade as an empty database
+ok 115 - NOV-099: denied reads remove cached rows and do not masquerade as an empty database
+  ---
+  duration_ms: 859.9164
+  type: 'test'
+  ...
+# Subtest: NOV-092: similar names expose identifying context and keyboard selection skips inactive choices
+ok 116 - NOV-092: similar names expose identifying context and keyboard selection skips inactive choices
+  ---
+  duration_ms: 516.9902
+  type: 'test'
+  ...
+# Subtest: NOV-092/099: failed lookup retains the selection, blocks choice and supports recovery
+ok 117 - NOV-092/099: failed lookup retains the selection, blocks choice and supports recovery
+  ---
+  duration_ms: 393.5786
+  type: 'test'
+  ...
+# Subtest: NOV-083/084/085: real edit form keeps identity and values, uses one save, and does not cover the final field
+ok 118 - NOV-083/084/085: real edit form keeps identity and values, uses one save, and does not cover the final field
+  ---
+  duration_ms: 888.3172
+  type: 'test'
+  ...
+# Subtest: NOV-084: switching records or company cannot retain the previous record identity or unsaved text
+ok 119 - NOV-084: switching records or company cannot retain the previous record identity or unsaved text
+  ---
+  duration_ms: 366.9354
+  type: 'test'
+  ...
+# Subtest: NOV-085: a lost save response prevents blind duplicate submission and retains entered values
+ok 120 - NOV-085: a lost save response prevents blind duplicate submission and retains entered values
+  ---
+  duration_ms: 1344.6833
+  type: 'test'
+  ...
+# Subtest: NOV-016: blockers name a responsible team, hide forbidden edits and disappear after authoritative refresh
+ok 121 - NOV-016: blockers name a responsible team, hide forbidden edits and disappear after authoritative refresh
+  ---
+  duration_ms: 441.1381
+  type: 'test'
+  ...
+# Subtest: NOV-083: sales, stores, production and accounts use the shared composition at phone and enlarged desktop widths
+ok 122 - NOV-083: sales, stores, production and accounts use the shared composition at phone and enlarged desktop widths
+  ---
+  duration_ms: 1364.1779
+  type: 'test'
+  ...
+# Subtest: NOV-088/091: hidden table columns cannot hide workflow warnings, and saved-view reset differs from clearing filters
+ok 123 - NOV-088/091: hidden table columns cannot hide workflow warnings, and saved-view reset differs from clearing filters
+  ---
+  duration_ms: 1187.3987
+  type: 'test'
+  ...
+# Subtest: NOV-099/084: failed connected reads keep the authorized record visible and never show a false zero
+ok 124 - NOV-099/084: failed connected reads keep the authorized record visible and never show a false zero
+  ---
+  duration_ms: 544.2167
+  type: 'test'
+  ...
+# Subtest: NOV-086: production, dispatch, quality and accounts share presentation while retaining their domain codes
+ok 125 - NOV-086: production, dispatch, quality and accounts share presentation while retaining their domain codes
+  ---
+  duration_ms: 2.7168
+  type: 'test'
+  ...
+# Subtest: NOV-086: unknown and blank statuses remain neutral and visible
+ok 126 - NOV-086: unknown and blank statuses remain neutral and visible
+  ---
+  duration_ms: 0.602
+  type: 'test'
+  ...
+# Subtest: NOV-093: absent, invalid and genuine zero quantities cannot collapse into the same display
+ok 127 - NOV-093: absent, invalid and genuine zero quantities cannot collapse into the same display
+  ---
+  duration_ms: 23.2131
+  type: 'test'
+  ...
+# Subtest: NOV-093: correction signs, Indian scale, dimensions and non-INR currency remain explicit
+ok 128 - NOV-093: correction signs, Indian scale, dimensions and non-INR currency remain explicit
+  ---
+  duration_ms: 0.933
+  type: 'test'
+  ...
+# Subtest: NOV-099: denied access, source failure and filtered emptiness have distinct recovery guidance
+ok 129 - NOV-099: denied access, source failure and filtered emptiness have distinct recovery guidance
+  ---
+  duration_ms: 0.4786
+  type: 'test'
+  ...
+# Subtest: NOV-091: shared URLs preserve combined supported filters, ordering and page
+ok 130 - NOV-091: shared URLs preserve combined supported filters, ordering and page
+  ---
+  duration_ms: 4.5235
+  type: 'test'
+  ...
+# Subtest: NOV-091: malformed or unsupported URL values cannot become query fields
+ok 131 - NOV-091: malformed or unsupported URL values cannot become query fields
+  ---
+  duration_ms: 0.3335
+  type: 'test'
+  ...
+# Subtest: NOV-091: reversed dates, disabled date filtering and long input are bounded
+ok 132 - NOV-091: reversed dates, disabled date filtering and long input are bounded
+  ---
+  duration_ms: 0.2662
+  type: 'test'
+  ...
+# Subtest: NOV-016: enforced blockers lead advisories, describe their source and leave ownership honest
+ok 133 - NOV-016: enforced blockers lead advisories, describe their source and leave ownership honest
+  ---
+  duration_ms: 1.5263
+  type: 'test'
+  ...
+# Subtest: NOV-016: unauthorized edit/issue links are withheld and unknown rules do not invent a resolution
+ok 134 - NOV-016: unauthorized edit/issue links are withheld and unknown rules do not invent a resolution
+  ---
+  duration_ms: 1.2445
+  type: 'test'
+  ...
+# Subtest: NOV-092: lookup context uses identifiers and units without financial or internal payloads
+ok 135 - NOV-092: lookup context uses identifiers and units without financial or internal payloads
+  ---
+  duration_ms: 0.8902
+  type: 'test'
+  ...
+# Subtest: the actual customer code form saves one mapping through the real action and retains deactivated history
+ok 136 - the actual customer code form saves one mapping through the real action and retains deactivated history
+  ---
+  duration_ms: 10047.4339
+  type: 'test'
+  ...
+# Subtest: actual quotation alias selection requires clarification and populates current canonical profile weight without saving
+ok 137 - actual quotation alias selection requires clarification and populates current canonical profile weight without saving
+  ---
+  duration_ms: 856.4982
+  type: 'test'
+  ...
+# Subtest: actual location move updates retrieval guidance and keeps the original location and stock quantity
+ok 138 - actual location move updates retrieval guidance and keeps the original location and stock quantity
+  ---
+  duration_ms: 575.9913
+  type: 'test'
+  ...
+# Subtest: actual exception reporting preserves an uncertain request and retries without a second observation
+ok 139 - actual exception reporting preserves an uncertain request and retries without a second observation
+  ---
+  duration_ms: 709.8778
+  type: 'test'
+  ...
+# Subtest: the actual commitment form preserves the first deadline and reschedule reason before recording a completion outcome
+ok 140 - the actual commitment form preserves the first deadline and reschedule reason before recording a completion outcome
+  ---
+  duration_ms: 1099.6424
+  type: 'test'
+  ...
+# Subtest: notification source resolution updates in place while personal read receipts remain separate
+ok 141 - notification source resolution updates in place while personal read receipts remain separate
+  ---
+  duration_ms: 554.9006
+  type: 'test'
+  ...
+# Subtest: missing migration is explicit and a read-only role sees no write forms
+ok 142 - missing migration is explicit and a read-only role sees no write forms
+  ---
+  duration_ms: 544.5507
+  type: 'test'
+  ...
+# Subtest: actual source styles keep long phone locations and exception notes within the document
+ok 143 - actual source styles keep long phone locations and exception notes within the document
+  ---
+  duration_ms: 757.0907
+  type: 'test'
+  ...
+# Subtest: the actual personal queue paginates, searches and opens the exact later promise
+ok 144 - the actual personal queue paginates, searches and opens the exact later promise
+  ---
+  duration_ms: 1186.4052
+  type: 'test'
+  ...
+# Subtest: a recovered creation confirmation clears the promise form and retains one authoritative promise
+ok 145 - a recovered creation confirmation clears the promise form and retains one authoritative promise
+  ---
+  duration_ms: 761.2414
+  type: 'test'
+  ...
+# Subtest: an obsolete alias response cannot replace the result of a later customer-code search
+ok 146 - an obsolete alias response cannot replace the result of a later customer-code search
+  ---
+  duration_ms: 1204.3856
+  type: 'test'
+  ...
+# Subtest: failed source revalidation removes an earlier resolved claim without erasing the historical alert
+ok 147 - failed source revalidation removes an earlier resolved claim without erasing the historical alert
+  ---
+  duration_ms: 480.6731
+  type: 'test'
+  ...
+# Subtest: mouse click reopens the list immediately after choosing while the input still owns focus
+ok 148 - mouse click reopens the list immediately after choosing while the input still owns focus
+  ---
+  duration_ms: 2385.36
+  type: 'test'
+  ...
+# Subtest: clicking an open input preserves the user's current filter without firing another remote search
+ok 149 - clicking an open input preserves the user's current filter without firing another remote search
+  ---
+  duration_ms: 147.7638
+  type: 'test'
+  ...
+# Subtest: ArrowDown reopens a closed focused input and Enter chooses once without submitting the enclosing form
+ok 150 - ArrowDown reopens a closed focused input and Enter chooses once without submitting the enclosing form
+  ---
+  duration_ms: 200.3961
+  type: 'test'
+  ...
+# Subtest: ArrowUp starts at the last available result and ArrowDown wraps to the first
+ok 151 - ArrowUp starts at the last available result and ArrowDown wraps to the first
+  ---
+  duration_ms: 201.2314
+  type: 'test'
+  ...
+# Subtest: an external source change clears a previously displayed selected label while the list is open
+ok 152 - an external source change clears a previously displayed selected label while the list is open
+  ---
+  duration_ms: 239.796
+  type: 'test'
+  ...
+# Subtest: Escape preserves selection and keyboard reopening does not send another search
+ok 153 - Escape preserves selection and keyboard reopening does not send another search
+  ---
+  duration_ms: 123.5403
+  type: 'test'
+  ...
+# Subtest: Tab leaves the combobox without choosing; arrow navigation keeps focus on the input
+ok 154 - Tab leaves the combobox without choosing; arrow navigation keeps focus on the input
+  ---
+  duration_ms: 363.3923
+  type: 'test'
+  ...
+# Subtest: leaving the control closes it; refocusing before its delayed close keeps the reopened list available
+ok 155 - leaving the control closes it; refocusing before its delayed close keeps the reopened list available
+  ---
+  duration_ms: 505.3145
+  type: 'test'
+  ...
+# Subtest: clearing does not submit, trigger a search or choose an option; the still-focused input reopens on click
+ok 156 - clearing does not submit, trigger a search or choose an option; the still-focused input reopens on click
+  ---
+  duration_ms: 324.7165
+  type: 'test'
+  ...
+# Subtest: pending remote search cannot choose an old option by mouse or Enter
+ok 157 - pending remote search cannot choose an old option by mouse or Enter
+  ---
+  duration_ms: 177.7003
+  type: 'test'
+  ...
+# Subtest: empty results never select an option or submit while the list is open
+ok 158 - empty results never select an option or submit while the list is open
+  ---
+  duration_ms: 150.7936
+  type: 'test'
+  ...
+# Subtest: Enter used to compose text does not choose an option
+ok 159 - Enter used to compose text does not choose an option
+  ---
+  duration_ms: 159.8352
+  type: 'test'
+  ...
+# Subtest: disabled controls cannot open or choose, including when disabled during an open list
+ok 160 - disabled controls cannot open or choose, including when disabled during an open list
+  ---
+  duration_ms: 144.1659
+  type: 'test'
+  ...
+# Subtest: touch selection reopens without an extra tap outside the control
+ok 161 - touch selection reopens without an extra tap outside the control
+  ---
+  duration_ms: 490.435
+  type: 'test'
+  ...
+# Subtest: a delayed close is harmless when the control is removed
+ok 162 - a delayed close is harmless when the control is removed
+  ---
+  duration_ms: 328.1696
+  type: 'test'
+  ...
+# Subtest: instant search updates without submit and offers an exact preselected source action
+ok 163 - instant search updates without submit and offers an exact preselected source action
+  ---
+  duration_ms: 1885.9459
+  type: 'test'
+  ...
+# Subtest: late instant results cannot replace a newer query; failed resources are not empty evidence
+ok 164 - late instant results cannot replace a newer query; failed resources are not empty evidence
+  ---
+  duration_ms: 1027.8277
+  type: 'test'
+  ...
+# Subtest: repeated quotation keeps structural lines and requires renewed commercial review after edits
+ok 165 - repeated quotation keeps structural lines and requires renewed commercial review after edits
+  ---
+  duration_ms: 762.9887
+  type: 'test'
+  ...
+# Subtest: a failed repeat never falls back to a partially copied editable draft
+ok 166 - a failed repeat never falls back to a partially copied editable draft
+  ---
+  duration_ms: 485.1459
+  type: 'test'
+  ...
+# Subtest: the actual quotation detail page links the exact repeat source only for permitted repricing roles
+ok 167 - the actual quotation detail page links the exact repeat source only for permitted repricing roles
+  ---
+  duration_ms: 493.4038
+  type: 'test'
+  ...
+# Subtest: contextual quotation guidance is available by keyboard and states units and save semantics
+ok 168 - contextual quotation guidance is available by keyboard and states units and save semantics
+  ---
+  duration_ms: 575.7198
+  type: 'test'
+  ...
+# Subtest: stage history is fetched on demand and missing entry is not shown as zero waiting
+ok 169 - stage history is fetched on demand and missing entry is not shown as zero waiting
+  ---
+  duration_ms: 523.4177
+  type: 'test'
+  ...
+# Subtest: linked dispatch opens on its verified order and the review lists bundles, totals and source balance
+ok 170 - linked dispatch opens on its verified order and the review lists bundles, totals and source balance
+  ---
+  duration_ms: 846.2217
+  type: 'test'
+  ...
+# Subtest: dispatch review shows remaining order demand separately from selected source availability
+ok 171 - dispatch review shows remaining order demand separately from selected source availability
+  ---
+  duration_ms: 795.4498
+  type: 'test'
+  ...
+# Subtest: a changed shipped balance at confirmation refreshes review and requires another confirmation
+ok 172 - a changed shipped balance at confirmation refreshes review and requires another confirmation
+  ---
+  duration_ms: 838.4879
+  type: 'test'
+  ...
+# Subtest: unavailable order demand cannot be presented as a verified zero balance
+ok 173 - unavailable order demand cannot be presented as a verified zero balance
+  ---
+  duration_ms: 742.1062
+  type: 'test'
+  ...
+# Subtest: a stale preview is rejected before confirmation when the new source check has less material
+ok 174 - a stale preview is rejected before confirmation when the new source check has less material
+  ---
+  duration_ms: 784.1679
+  type: 'test'
+  ...
+# Subtest: only explicit dispatch confirmation posts; server rejection retains the entered manifest
+ok 175 - only explicit dispatch confirmation posts; server rejection retains the entered manifest
+  ---
+  duration_ms: 816.1667
+  type: 'test'
+  ...
+1..175
+# tests 185
+# suites 0
+# pass 185
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 85828.7251

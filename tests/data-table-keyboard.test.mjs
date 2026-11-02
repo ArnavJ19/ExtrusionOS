@@ -24,18 +24,23 @@ test("clickable table rows activate with Enter or Space only", () => {
   assert.equal(isRowActivationKey("Escape"), false);
 });
 
-test("desktop and mobile row handlers prevent Space scroll and leave nested controls alone", () => {
+test("desktop rows guard keyboard activation and mobile identity uses a native button", () => {
   let opens = 0;
   const tree = DataTable({ rows: [{ id: "order-1" }], columns: [{ id: "id", header: "Order", accessor: row => row.id }], getRowId: row => row.id, onRowClick: () => opens++, emptyTitle: "Empty", emptyDescription: "Empty" });
   const rows = [];
+  const mobileButtons = [];
   function visit(element) {
     if (!element || typeof element !== "object") return;
     if (["button", "link"].includes(element.props?.role)) rows.push(element);
+    if (element.type === "button" && element.props?.onClick) mobileButtons.push(element);
     const children = element.props?.children;
     for (const child of Array.isArray(children) ? children.flat(Infinity) : [children]) visit(child);
   }
   visit(tree);
-  assert.equal(rows.length, 2);
+  assert.equal(rows.length, 1);
+  assert.equal(mobileButtons.length, 1);
+  assert.equal(mobileButtons[0].props.type, "button");
+  mobileButtons[0].props.onClick();
   for (const row of rows) {
     assert.equal(row.props.tabIndex, 0);
     const target = {};

@@ -70,11 +70,11 @@ export async function createDispatchFormBrowserFixture({styled=false,mode="form"
       async review(){const count=await page.evaluate(()=>window.__dispatch.sourceRequests.length);const label=(await fixture.order().inputValue()).includes("ORDER-B")?"B":"A";await fixture.save().click();await page.waitForFunction(count=>window.__dispatch.sourceRequests.length>count,count);await fixture.resolveSource(count,{success:true,sources:[dispatchSource(label)]});await page.getByRole("dialog",{name:"Review physical dispatch"}).waitFor();},
       async reset(){errors.length=0;if(page.url().startsWith(base))await page.evaluate(()=>localStorage.clear());await page.goto(base);await page.getByRole("heading",{name:mode==="capture"?"Record a physical bundle":"Load Physical Dispatch",exact:true}).waitFor();},
       async flush(){await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));},
-      async chooseOrder(label){await fixture.order().fill(`ORDER-${label}`);await page.getByRole("button",{name:`ORDER-${label} - Synthetic buyer`,exact:true}).click();
+      async chooseOrder(label){await fixture.order().fill(`ORDER-${label}`);await page.getByRole("option",{name:`ORDER-${label} - Synthetic buyer`,exact:true}).click();
         await page.waitForFunction(id=>window.__dispatch.sourceRequests.some(request=>request.orderId===id),label==="A"?f.a:f.b);},
       async resolveSource(index,result){await page.evaluate(({index,result})=>window.__dispatch.sourceRequests[index].resolve(result),{index,result});await fixture.flush();},
       async ready(label,index=0){await fixture.chooseOrder(label);await fixture.resolveSource(index,{success:true,sources:[dispatchSource(label)]});},
-      async chooseSource(label){await fixture.source().click();await page.getByRole("button",{name:new RegExp(`${label} profile.*${label} source`)}).click();},
+      async chooseSource(label){await fixture.source().click();await page.getByRole("option",{name:new RegExp(`${label} profile.*${label} source`)}).click();},
       async fillBundle(label){await fixture.chooseSource(label);await page.getByText("Scan / Bundle ID *",{exact:true}).locator("..").locator("input").fill(`${label}-MANIFEST`);
         for(const [name,value] of [["Actual pieces *","1"],["Actual metres *","2.5"],["Gross kg *","6"],["Tare kg *","1"]])await page.getByText(name,{exact:true}).locator("..").locator("input").fill(value);},
       async close(){await browser.close();server.closeAllConnections();await new Promise(done=>server.close(done));}};

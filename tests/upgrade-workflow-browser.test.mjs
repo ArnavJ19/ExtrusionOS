@@ -50,7 +50,7 @@ test("stage history is fetched on demand and missing entry is not shown as zero 
 
 async function fillDispatch() {
   await screen("dispatch"); await expect(page.getByPlaceholder("Search order or customer PO")).toHaveValue(/ORD-100/);
-  await page.getByPlaceholder("Select production job or stock batch").click(); await page.getByRole("button", { name: /AL-101 Window section.*JOB-100/ }).click();
+  await page.getByPlaceholder("Select production job or stock batch").click(); await page.getByRole("option", { name: /AL-101 Window section.*JOB-100/ }).click();
   for (const [name, value] of [["Scan / Bundle ID *", "BUNDLE-1"], ["Actual pieces *", "10"], ["Actual metres *", "60"], ["Gross kg *", "110"], ["Tare kg *", "10"]]) await page.getByLabel(name, { exact: true }).fill(value);
 }
 test("linked dispatch opens on its verified order and the review lists bundles, totals and source balance", async () => {

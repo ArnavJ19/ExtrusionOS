@@ -85,8 +85,8 @@ export async function createFinishingReceiptsBrowserFixture({tables={},styled=fa
     await context.route("**/*",route=>new URL(route.request().url()).origin===base?route.continue():route.abort());const page=await context.newPage(),errors=[];page.setDefaultTimeout(10000);page.on("pageerror",error=>errors.push(error.message));
     const field=name=>page.getByText(name,{exact:true}).locator("..").locator("input");
     return {page,errors,base,field,
-      async open(params=""){errors.length=0;await page.goto(`${base}/?${params}`);await page.waitForFunction(()=>window.__receipts);if(!params.includes('missingView'))await page.getByRole("button",{name:params.includes('edit=')?'Update':'Save',exact:true}).waitFor();},
-      async choose(label,name){await field(label).click();await page.getByRole('button',{name,exact:typeof name==='string'}).click();},
+      async open(params=""){errors.length=0;await page.goto(`${base}/?${params}`);await page.waitForFunction(()=>window.__receipts);if(!params.includes('missingView'))await page.getByRole("button",{name:params.includes('edit=')?'Update record':'Save record',exact:true}).waitFor();},
+      async choose(label,name){await field(label).click();await page.getByRole('option',{name,exact:typeof name==='string'}).click();},
       async close(){await browser.close();server.closeAllConnections();await new Promise(done=>server.close(done));}
     };
   }catch(error){if(browser)await browser.close();server.closeAllConnections();await new Promise(done=>server.close(done));throw error;}

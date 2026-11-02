@@ -122,7 +122,7 @@ export async function createBilletAllocationBrowserFixture({ styled = false } = 
         await page.getByRole("heading", { name: "Manual Order Allocation" }).waitFor();
         await page.waitForFunction(() => !document.body.innerText.includes("Loading billet allocation"));
       },
-      async selectOrder(name = "ORDER-A") { await page.getByPlaceholder("Select order").click(); await page.getByRole("button", { name: new RegExp(`^${name} -`) }).click(); },
+      async selectOrder(name = "ORDER-A") { await page.getByPlaceholder("Select order").click(); await page.getByRole("option", { name: new RegExp(`^${name} -`) }).click(); },
       async save(index, result, { reject = false } = {}) {
         await page.waitForFunction(index => Boolean(window.__allocation.saves[index]), index);
         await page.evaluate(({ index, result, reject }) => {

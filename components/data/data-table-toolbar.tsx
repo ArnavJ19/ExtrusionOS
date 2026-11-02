@@ -17,8 +17,8 @@ export function DataTableToolbar({ search, searchPlaceholder, onSearchChange, fi
     <div className="flex flex-col gap-3 border-b border-neutral-100 p-4 lg:flex-row lg:items-center lg:justify-between">
       <div className="relative w-full lg:max-w-xl">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-        <input className="form-input w-full pl-9 pr-10" placeholder={searchPlaceholder} value={search} onChange={(event) => onSearchChange(event.target.value)} />
-        {search ? <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-950" onClick={() => onSearchChange("")}><X className="h-4 w-4" /></button> : null}
+        <input aria-label="Search database" maxLength={100} className="form-input w-full pl-9 pr-12" placeholder={searchPlaceholder} value={search} onChange={(event) => onSearchChange(event.target.value.slice(0, 100))} />
+        {search ? <button type="button" aria-label="Clear database search" className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-neutral-500 hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" onClick={() => onSearchChange("")}><X className="h-4 w-4" /></button> : null}
       </div>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
         {filters}

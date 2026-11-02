@@ -1,31 +1,28 @@
 import { format } from "date-fns";
-
-function safeNumber(value: number | string | null | undefined) {
-  const number = Number(value ?? 0);
-  return Number.isFinite(number) ? number : 0;
-}
+import { formatNumeric, readDisplayNumber } from "./numeric-display.ts";
 
 export function formatCurrency(value: number | string | null | undefined) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", minimumFractionDigits: 2 }).format(safeNumber(value));
+  return formatNumeric(value, "currency");
 }
 
 export function formatCompactCurrency(value: number | string | null | undefined) {
-  const amount = safeNumber(value);
-  if (amount >= 10000000) return `\u20B9${(amount / 10000000).toFixed(2)}Cr`;
-  if (amount >= 100000) return `\u20B9${(amount / 100000).toFixed(2)}L`;
+  const amount = readDisplayNumber(value);
+  if (amount === null || !Number.isFinite(amount)) return formatCurrency(value);
+  if (Math.abs(amount) >= 10000000) return `\u20B9${(amount / 10000000).toFixed(2)}Cr`;
+  if (Math.abs(amount) >= 100000) return `\u20B9${(amount / 100000).toFixed(2)}L`;
   return formatCurrency(amount);
 }
 
 export function formatWeight(value: number | string | null | undefined) {
-  return `${new Intl.NumberFormat("en-IN", { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(safeNumber(value))} kg`;
+  return formatNumeric(value, "weight");
 }
 
 export function formatMeters(value: number | string | null | undefined) {
-  return `${new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(safeNumber(value))} m`;
+  return formatNumeric(value, "metres");
 }
 
 export function formatPercent(value: number | string | null | undefined) {
-  return `${safeNumber(value).toFixed(2).replace(/\.00$/, "")}%`;
+  return formatNumeric(value, "percent");
 }
 
 export function formatDate(value: string | Date | null | undefined) {

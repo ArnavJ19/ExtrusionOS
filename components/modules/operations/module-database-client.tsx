@@ -11,16 +11,18 @@ import { Button } from "@/components/ui/button";
 import { DataPageLayout, DataTable, DataTablePagination, DataTableToolbar, DateRangeFilter, StatusFilter, type DataTableColumn, type SortDirection } from "@/components/data";
 import { createClient } from "@/lib/supabase/browser";
 import { useDebounce } from "@/lib/hooks/use-debounce";
-import { getErrorMessage } from "@/lib/utils/errors";
 import { labelize, type SessionContext } from "@/types/app";
-import { displayValue } from "./value";
-import { getModuleConfig, type ModuleKey } from "./module-config";
+import { displayValue, getPath } from "./value";
+import { getModuleConfig, type ColumnConfig, type ModuleKey } from "./module-config";
 import { TableColumnPreferences } from "@/components/ui/table-column-preferences";
 import { DataFreshness, DataFreshnessSummary } from "@/components/ui/data-freshness";
 import { getRoleColumnOrder, resolveColumnLayout, type ColumnLayout } from "@/lib/preferences/table-columns";
-import { getWorkspaceStorage, makeViewState, mergeWorkspacePreferenceChanges, readWorkspacePreferences, upsertNamedWorkspaceView, upsertWorkspaceLink, viewStateParams, workspaceListUrl, workspacePreferenceKey, writeWorkspacePreferences, type WorkspacePreferences, type WorkspaceViewState } from "@/lib/preferences/workspace-preferences";
+import { getWorkspaceStorage, mergeWorkspacePreferenceChanges, readWorkspacePreferences, upsertNamedWorkspaceView, upsertWorkspaceLink, viewStateParams, workspaceListUrl, workspacePreferenceKey, writeWorkspacePreferences, type WorkspacePreferences, type WorkspaceViewState } from "@/lib/preferences/workspace-preferences";
 import { dataFreshnessQueryKey } from "@/lib/workflow/data-freshness";
 import { RecordPreview } from "./record-preview";
+import { ActiveFilters } from "@/components/data/active-filters";
+import { databaseFilterChips, parseDatabaseView, type DatabaseViewRules } from "@/lib/ui/database-view";
+import { classifyReadFailure, readStateMessage, type ReadFailure } from "@/lib/ui/read-state";
 
 const pageSize = 10;
 const relationFilterFields = ["customer_id", "profile_id", "order_id", "quote_id", "production_job_id", "inventory_item_id", "expense_ledger_id", "source_record_id", "material_id", "job_id"];
@@ -29,19 +31,19 @@ function cleanSearch(value: string) {
   return value.replace(/[%*_,()]/g, " ").replace(/\s+/g, " ").trim();
 }
 
-function initialListState(urlSearch: string, initialStatus: string, defaultSort: { column: string; direction: "asc" | "desc" }) {
-  const params = new URLSearchParams(urlSearch);
-  const parsed = makeViewState(params);
-  return { ...parsed, status: params.get("status") ?? initialStatus, sort: params.get("sort") ?? defaultSort.column, direction: params.get("direction") === "desc" ? "desc" as const : params.get("direction") === "asc" ? "asc" as const : defaultSort.direction };
+export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialStatus = "" }: { moduleKey: ModuleKey; context: SessionContext; canCreate: boolean; initialStatus?: string }) {
+  return <ModuleDatabaseWorkspace key={`${context.companyId}:${context.userId}:${context.role}:${moduleKey}`} moduleKey={moduleKey} context={context} canCreate={canCreate} initialStatus={initialStatus} />;
 }
 
-export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialStatus = "" }: { moduleKey: ModuleKey; context: SessionContext; canCreate: boolean; initialStatus?: string }) {
+function ModuleDatabaseWorkspace({ moduleKey, context, canCreate, initialStatus = "" }: { moduleKey: ModuleKey; context: SessionContext; canCreate: boolean; initialStatus?: string }) {
   const config = getModuleConfig(moduleKey);
   const supabase = useMemo(() => createClient(), []);
   const searchParams = useSearchParams();
   const preferenceKey = workspacePreferenceKey(context);
   const requestScope = JSON.stringify([context.companyId, context.userId, context.role]);
-  const firstState = useMemo(() => initialListState(searchParams.toString(), initialStatus, config.defaultSort), [initialStatus, config.defaultSort, searchParams]);
+  const viewRules: DatabaseViewRules = { statuses: config.groups, secondary: config.secondaryFilter?.options, sortable: resolveColumnLayout(moduleKey, context.role, config.columns, undefined).permittedColumns.filter((column) => column.sortable).map((column) => column.id), defaultSort: config.defaultSort, dates: Boolean(config.dateFilterField) };
+  const firstState = parseDatabaseView(new URLSearchParams(searchParams.toString()), viewRules, initialStatus);
+  const [openedViewHref, setOpenedViewHref] = useState(() => `${config.basePath}/database${searchParams.size ? `?${searchParams.toString()}` : ""}`);
   const [rows, setRows] = useState<Record<string, any>[]>([]);
   const [loadedRowsScope, setLoadedRowsScope] = useState<string | null>(null);
   const [loadedQueryKey, setLoadedQueryKey] = useState<string | null>(null);
@@ -58,6 +60,7 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [failureKind, setFailureKind] = useState<ReadFailure>("failed");
   const [workspaceState, setWorkspace] = useState<WorkspacePreferences | null>(null);
   const [loadedPreferenceKey, setLoadedPreferenceKey] = useState<string | null>(null);
   const workspace = loadedPreferenceKey === preferenceKey ? workspaceState : null;
@@ -78,7 +81,7 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
     return () => window.removeEventListener("extrusionos:workspace-preferences", refresh);
   }, [preferenceKey]);
 
-  const resolvedColumns = useMemo(() => resolveColumnLayout(moduleKey, context.role, config.columns, workspace?.columns[moduleKey]), [moduleKey, context.role, config.columns, workspace]);
+  const resolvedColumns = resolveColumnLayout(moduleKey, context.role, config.columns, workspace?.columns[moduleKey]);
   const visibleColumns = resolvedColumns.columns;
   const permittedColumns = resolvedColumns.permittedColumns;
   const viewState: WorkspaceViewState = { search, status, secondary, dateFrom, dateTo, page, sort: sortColumn, direction: sortDirection, relationFilters: Object.fromEntries(relationFilters.map(({ field, value }) => [field, value])) };
@@ -86,7 +89,7 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
   const listHref = `${config.basePath}/database${stateParams.size ? `?${stateParams.toString()}` : ""}`;
   const dataQueryKey = dataFreshnessQueryKey(requestScope, moduleKey, { search: debouncedSearch, status, secondary, dateFrom, dateTo, page, sortColumn, sortDirection, relationFilters });
   const refreshedAt = lastSuccessfulRefresh?.queryKey === dataQueryKey ? lastSuccessfulRefresh.at : null;
-  const loadedForView = loadedRowsScope === requestScope && loadedQueryKey === dataQueryKey;
+  const loadedForView = loadedRowsScope === requestScope && loadedQueryKey === dataQueryKey && search === debouncedSearch;
   const previewOpen = previewSelection?.scope === requestScope && previewSelection.queryKey === dataQueryKey;
   const previewRow = previewOpen && loadedForView ? rows.find((row) => row.id === previewSelection?.id) ?? null : null;
 
@@ -94,15 +97,16 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
 
   useEffect(() => {
     function restoreFromLocation() {
-      const next = makeViewState(new URLSearchParams(window.location.search));
+      setOpenedViewHref(`${window.location.pathname}${window.location.search}`);
+      const next = parseDatabaseView(new URLSearchParams(window.location.search), viewRules, initialStatus);
       historyRestoreSearch.current = next.search;
       setSearch(next.search);
-      setStatus(new URLSearchParams(window.location.search).get("status") ?? initialStatus);
+      setStatus(next.status);
       setSecondary(next.secondary);
       setDateFrom(next.dateFrom);
       setDateTo(next.dateTo);
       setPage(next.page);
-      setSortColumn(config.columns.some((column) => column.id === next.sort && column.sortable) ? next.sort : config.defaultSort.column);
+      setSortColumn(next.sort);
       setSortDirection(next.direction);
       setRelationFilters(Object.entries(next.relationFilters).map(([field, value]) => ({ field, value })));
     }
@@ -155,9 +159,10 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
     setLastSuccessfulRefresh({ queryKey: dataQueryKey, at: new Date().toISOString() });
     } catch (err) {
       if (version !== requestVersion.current) return;
-      const message = getErrorMessage(err, `Could not load ${config.databaseTitle.toLowerCase()}`);
-      setRows([]);
-      setTotalCount(null);
+      const kind = classifyReadFailure(err);
+      const message = readStateMessage(kind).description;
+      if (!loadedForView || kind === "denied") { setRows([]); setTotalCount(null); }
+      setFailureKind(kind);
       setError(message);
       setLoadedRowsScope(requestScope);
       setLoadedQueryKey(dataQueryKey);
@@ -172,16 +177,40 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
     return () => { requestVersion.current++; };
   }, [moduleKey, requestScope, page, debouncedSearch, status, secondary, dateFrom, dateTo, sortColumn, sortDirection, relationFilters]);
   const sortable = new Set(config.columns.filter((column) => column.sortable).map((column) => column.id));
-  const columns: DataTableColumn<Record<string, any>>[] = visibleColumns.map((column) => ({
+  const criticalMobileColumns = permittedColumns.filter((column) => column.path === config.groupField || column.path === config.card.badgePath || /(?:allocation|quality|qc)_status$/.test(column.path));
+  const toColumn = (column: ColumnConfig): DataTableColumn<Record<string, any>> => ({
     id: column.id,
     header: column.header,
     sortable: column.sortable,
     accessor: (row) => displayValue(row, column.path, column.type),
     width: resolvedColumns.widths[column.id],
-    sticky: column.id === resolvedColumns.identifier
-  }));
-  columns.push({ id: "data_freshness", header: "Data source & age", accessor: (row) => <DataFreshness row={row} fetchedAt={refreshedAt} /> });
-  columns.push({ id: "record_preview", header: "Quick view", accessor: (row) => <button type="button" className="min-h-10 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" aria-label={`Preview ${String(displayValue(row, config.card.titlePath, "text") || "record")}`} onClick={(event) => { event.stopPropagation(); previewTriggerRef.current = event.currentTarget; setPreviewSelection({ id: String(row.id), scope: requestScope, queryKey: dataQueryKey }); }}>Preview</button> });
+    sticky: column.id === resolvedColumns.identifier,
+    numeric: ["currency", "weight", "number"].includes(column.type ?? ""),
+    mobile: column.id === resolvedColumns.identifier ? "identity" : criticalMobileColumns.some((critical) => critical.id === column.id) || column.path === config.card.subtitlePath || column.path === config.dateFilterField || config.card.meta.slice(0, 2).some((meta) => meta.path === column.path) ? "primary" : "secondary",
+    mobileWhen: column.path === "priority" ? (row) => ["urgent", "high"].includes(String(getPath(row, column.path))) : undefined
+  });
+  const columns: DataTableColumn<Record<string, any>>[] = visibleColumns.map(toColumn);
+  columns.push({ id: "data_freshness", header: "Data source & age", mobile: "secondary", accessor: (row) => <DataFreshness row={row} fetchedAt={refreshedAt} /> });
+  columns.push({ id: "record_preview", header: "Quick view", mobile: "secondary", accessor: (row) => <button type="button" className="min-h-10 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" aria-label={`Preview ${String(displayValue(row, config.card.titlePath, "text") || "record")}`} onClick={(event) => { event.stopPropagation(); previewTriggerRef.current = event.currentTarget; setPreviewSelection({ id: String(row.id), scope: requestScope, queryKey: dataQueryKey }); }}>Preview</button> });
+  const mobileColumns = [...columns, ...criticalMobileColumns.filter((column) => !visibleColumns.some((visible) => visible.id === column.id)).map(toColumn)];
+
+  const activeFilters = databaseFilterChips(viewState, { status: labelize(config.groupField ?? "status"), secondary: config.secondaryFilter?.label, secondaryOptions: config.secondaryFilter?.options, date: config.dateFilterField ? labelize(config.dateFilterField) : undefined });
+  const savedView = workspace?.views.find((view) => view.moduleKey === moduleKey && view.href === openedViewHref);
+
+  function applyView(next: WorkspaceViewState) {
+    setSearch(next.search); setStatus(next.status); setSecondary(next.secondary); setDateFrom(next.dateFrom); setDateTo(next.dateTo);
+    setPage(next.page); setSortColumn(next.sort); setSortDirection(next.direction);
+    setRelationFilters(Object.entries(next.relationFilters).map(([field, value]) => ({ field, value })));
+  }
+
+  function clearFilters() {
+    applyView({ ...viewState, search: "", status: "", secondary: "", dateFrom: "", dateTo: "", relationFilters: {}, page: 1 });
+  }
+
+  function removeFilter(key: string) {
+    if (["search", "status", "secondary", "dateFrom", "dateTo"].includes(key)) applyView({ ...viewState, [key]: "", page: 1 });
+    else { setRelationFilters((current) => current.filter((filter) => filter.field !== key)); setPage(1); }
+  }
 
   function persistWorkspace(next: WorkspacePreferences) {
     const storage = getWorkspaceStorage();
@@ -236,13 +265,21 @@ export function ModuleDatabaseClient({ moduleKey, context, canCreate, initialSta
             {config.groupField && config.groups ? <StatusFilter label={labelize(config.groupField)} value={status} onChange={(value) => { setStatus(value); setPage(1); }} options={config.groups.map((value) => ({ value, label: labelize(value) }))} /> : null}
             {config.secondaryFilter ? <StatusFilter label={config.secondaryFilter.label} value={secondary} onChange={(value) => { setSecondary(value); setPage(1); }} options={config.secondaryFilter.options} /> : null}
             {config.dateFilterField ? <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={(value) => { setDateFrom(value); setPage(1); }} onToChange={(value) => { setDateTo(value); setPage(1); }} /> : null}
-            {(status || secondary || dateFrom || dateTo || search || relationFilters.length) ? <Button type="button" variant="ghost" onClick={() => { setStatus(""); setSecondary(""); setDateFrom(""); setDateTo(""); setSearch(""); setRelationFilters([]); setPage(1); }}>Clear</Button> : null}
           </>
         )}
       />
-      {relationFilters.length ? <div className="mx-4 mb-3 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-neutral-700">Filtered by connected record. Clear filters to view the full database.</div> : null}
+      <ActiveFilters filters={activeFilters} count={loadedForView && !error ? totalCount : null} loading={loading || search !== debouncedSearch} onRemove={removeFilter} onClear={clearFilters} onResetSavedView={savedView ? () => applyView(parseDatabaseView(viewStateParams(savedView.state), viewRules)) : undefined} />
       {moduleKey === "orders" && loadedForView && rows.length ? <StageWaiting key={`${requestScope}:${dataQueryKey}:${rows.map((row) => row.id).join(",")}`} orderIds={rows.map((row) => String(row.id))} /> : null}
-      <DataTable rows={loadedForView ? rows : []} columns={columns} getRowId={(row) => row.id} onRowClick={openRecord} sortColumn={sortColumn} sortDirection={sortDirection} onSort={(column, direction) => { if (sortable.has(column)) { setSortColumn(column); setSortDirection(direction); } }} isLoading={loading || !loadedForView} error={loadedForView ? error : null} onRetry={() => void loadRows()} emptyTitle={`No ${config.title.toLowerCase()} found`} emptyDescription="No records match the current search or filter." emptyAction={canCreate && (config.fields || config.createHref) ? <Link href={config.createHref ?? `${config.basePath}/new`} className="inline-flex items-center justify-center rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white">{config.primaryAction}</Link> : null} />
+      <DataTable
+        rows={loadedForView ? rows : []} columns={columns} mobileColumns={mobileColumns} getRowId={(row) => row.id} onRowClick={openRecord}
+        sortColumn={sortColumn} sortDirection={sortDirection}
+        onSort={(column, direction) => { if (sortable.has(column)) { setSortColumn(column); setSortDirection(direction); setPage(1); } }}
+        isLoading={!loadedForView} refreshing={loading && loadedForView} stale={Boolean(error && loadedForView && rows.length)}
+        failureKind={failureKind} error={loadedForView ? error : null} onRetry={() => void loadRows()}
+        emptyTitle={activeFilters.length ? "No matching records" : `No ${config.title.toLowerCase()} yet`}
+        emptyDescription={readStateMessage(activeFilters.length ? "filtered" : "empty").description}
+        emptyAction={activeFilters.length ? <Button type="button" variant="secondary" onClick={clearFilters}>Clear all filters</Button> : canCreate && (config.fields || config.createHref) ? <Link href={config.createHref ?? `${config.basePath}/new`} className="inline-flex items-center justify-center rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white">{config.primaryAction}</Link> : null}
+      />
       <DataTablePagination page={page} pageSize={pageSize} totalCount={loadedForView ? totalCount : null} isLoading={loading || !loadedForView} onPrevious={() => setPage((current) => Math.max(1, current - 1))} onNext={() => setPage((current) => current + 1)} />
       <RecordPreview open={Boolean(previewOpen)} moduleKey={moduleKey} context={context} row={previewRow} returnTo={listHref} onClose={() => setPreviewSelection(null)} triggerRef={previewTriggerRef} loading={loading} error={error} rowScope={loadedRowsScope ?? ""} />
     </DataPageLayout>

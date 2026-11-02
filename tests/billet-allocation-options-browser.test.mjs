@@ -20,7 +20,7 @@ test("normalized alloy and temper accepted by the writer remain discoverable", a
   await sql.reset(); await sql.insertBillet({ temper: " t6 " });
   await sql.db.query("update foundry_billets set alloy=' 6063 ' where id=$1", [f.freeBillet]);
   await mountSqlAllocation(browser, sql); await expect(selection()).toBeVisible();
-  await selection().click(); await expect(browser.page.getByRole("button", { name: new RegExp(`^${(await sql.db.query('select order_number from orders where id=$1', [sql.orderId])).rows[0].order_number}`) })).toBeVisible();
+  await selection().click(); await expect(browser.page.getByRole("option", { name: new RegExp(`^${(await sql.db.query('select order_number from orders where id=$1', [sql.orderId])).rows[0].order_number}`) })).toBeVisible();
   await sql.allocate(); assert.equal((await sql.billet()).order_id, sql.orderId); assert.deepEqual(browser.errors, []);
 });
 
@@ -43,7 +43,7 @@ test("two matching requirements produce one distinct choice per order", async ()
   await sql.reset({ secondTemper: "T6" }); await sql.insertBillet({ temper: "T6" });
   await mountSqlAllocation(browser, sql); await selection().click();
   const order = (await sql.db.query("select order_number from orders where id=$1", [sql.orderId])).rows[0].order_number;
-  assert.equal(await browser.page.getByRole("button", { name: new RegExp(`^${order} -`) }).count(), 1); assert.deepEqual(browser.errors, []);
+  assert.equal(await browser.page.getByRole("option", { name: new RegExp(`^${order} -`) }).count(), 1); assert.deepEqual(browser.errors, []);
 });
 
 test("a small REST row cap cannot hide a later compatible order", async () => {
@@ -51,17 +51,17 @@ test("a small REST row cap cannot hide a later compatible order", async () => {
   await sql.db.query("update order_billet_requirements set created_at=case when order_id=$1 then timestamp '2000-01-01' else timestamp '2001-01-01' end", [sql.sourceOrderId]);
   await mountSqlAllocation(browser, sql, { cap: 1 }); await selection().click();
   const order = (await sql.db.query("select order_number from orders where id=$1", [sql.orderId])).rows[0].order_number;
-  await expect(browser.page.getByRole("button", { name: new RegExp(`^${order} -`) })).toBeVisible(); assert.deepEqual(browser.errors, []);
+  await expect(browser.page.getByRole("option", { name: new RegExp(`^${order} -`) })).toBeVisible(); assert.deepEqual(browser.errors, []);
 });
 
 test("ten-row pages reach later orders and clear the prior order selection", async () => {
   await sql.reset(); for (let index = 0; index < 11; index++) await sql.createOrder(); await sql.insertBillet({ temper: "T6" });
   await mountSqlAllocation(browser, sql); await selection().click();
-  await browser.page.getByRole("button", { name: /^O-.* -/ }).first().click();
+  await browser.page.getByRole("option", { name: /^O-.* -/ }).first().click();
   await browser.page.getByRole("button", { name: "Next orders", exact: true }).click(); await answerSqlAllocationReads(browser, sql, 3);
   assert.match(await browser.page.locator("body").innerText(), /Page 2 of 2 \/ 13 compatible orders/);
   await expect(selection()).toHaveValue(""); await expect(browser.page.getByRole("button", { name: "Allocate Billet", exact: true })).toBeDisabled();
-  await selection().click(); assert.equal(await browser.page.getByRole("button", { name: /^O-.* -/ }).count(), 3);
+  await selection().click(); assert.equal(await browser.page.getByRole("option", { name: /^O-.* -/ }).count(), 3);
   await browser.page.getByRole("button", { name: "Previous orders", exact: true }).click(); await answerSqlAllocationReads(browser, sql, 5);
   assert.match(await browser.page.locator("body").innerText(), /Page 1 of 2 \/ 13 compatible orders/); assert.deepEqual(browser.errors, []);
 });
@@ -73,7 +73,7 @@ test("global search reaches orders outside the first page and treats percent lit
   const number = (await sql.db.query("select order_number from orders where id=$1", [last])).rows[0].order_number;
   await mountSqlAllocation(browser, sql); await browser.page.getByLabel("Find compatible orders", { exact: true }).fill(number); await answerSqlAllocationReads(browser, sql, 3);
   await expect(browser.page.getByText("Page 1 of 1 / 1 compatible orders", { exact: true })).toBeVisible(); await selection().click();
-  await expect(browser.page.getByRole("button", { name: new RegExp(`^${number} -`) })).toBeVisible();
+  await expect(browser.page.getByRole("option", { name: new RegExp(`^${number} -`) })).toBeVisible();
   await browser.page.getByLabel("Find compatible orders", { exact: true }).fill("%"); await answerSqlAllocationReads(browser, sql, 5);
   assert.equal(await selection().count(), 0); await expect(browser.page.getByText(/No matching compatible order/)).toBeVisible();
   await browser.page.getByLabel("Find compatible orders", { exact: true }).fill(""); await answerSqlAllocationReads(browser, sql, 7);
@@ -89,7 +89,7 @@ for (const failure of [false, true]) test(`a stale search ${failure ? "failure" 
   await browser.read(3, await sql.browserRead(first)); await browser.page.waitForFunction(() => window.__allocation.reads[4]);
   const old = await browser.page.evaluate(() => { const { kind, name, args } = window.__allocation.reads[4]; return { kind, name, args }; });
   await browser.page.getByLabel("Find compatible orders", { exact: true }).fill(numbers[1]); await answerSqlAllocationReads(browser, sql, 5);
-  await selection().click(); await browser.page.getByRole("button", { name: new RegExp(`^${numbers[1]} -`) }).click();
+  await selection().click(); await browser.page.getByRole("option", { name: new RegExp(`^${numbers[1]} -`) }).click();
   await browser.read(4, failure ? "Obsolete allocation read failed" : await sql.browserRead(old), { reject: failure });
   await expect(selection()).toHaveValue(new RegExp(`^${numbers[1]}`));
   await expect(browser.page.getByRole("button", { name: "Allocate Billet", exact: true })).toBeEnabled(); assert.equal(await browser.page.getByRole("alert").count(), 0); assert.deepEqual(browser.errors, []);

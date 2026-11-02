@@ -33,6 +33,11 @@ body {
     @apply w-full rounded-2xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm font-medium text-neutral-900 shadow-sm outline-none transition placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-4 focus:ring-neutral-950/5 disabled:bg-neutral-100;
   }
 
+  .operational-record-form :is(input, textarea, select, button, summary) {
+    scroll-margin-top: 18rem;
+    scroll-margin-bottom: 14rem;
+  }
+
   .form-hint {
     @apply text-xs font-medium leading-5 text-neutral-500;
   }

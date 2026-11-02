@@ -2,6 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+require("tsx/cjs");
+const { getModuleConfig } = require("../components/modules/operations/module-config.ts");
 
 const repoRoot = process.cwd();
 const recordForm = readFileSync(join(repoRoot, "components/modules/operations/record-form-client.tsx"), "utf8");
@@ -24,7 +29,9 @@ test("shared lookups preserve saved values and apply profile-compatible die sear
   assert.match(recordForm, /toLookupOptions\(\[\.\.\.\(selectedResult\.data \?\? \[\]\), \.\.\.\(result\.data \?\? \[\]\)\]/);
   assert.match(recordForm, /lookup\.table === "dies"/);
   assert.match(recordForm, /request = request\.eq\("profile_id", profileId\)/);
-  assert.match(moduleConfig, /searchFields: \["customer_name", "company_name", "gst_number"\]/);
+  const customerLookup = getModuleConfig("orders").fields.find((field) => field.name === "customer_id").lookup;
+  for (const field of ["customer_name", "company_name", "gst_number", "city", "phone"]) assert.ok(customerLookup.searchFields.includes(field));
+  for (const field of ["city", "phone"]) assert.ok(customerLookup.select.split(",").map((value) => value.trim()).includes(field));
   assert.match(moduleConfig, /searchFields: \["profile_code", "profile_name", "alloy", "temper"\]/);
   assert.match(moduleConfig, /searchFields: \["die_number", "rack_location"\]/);
 });

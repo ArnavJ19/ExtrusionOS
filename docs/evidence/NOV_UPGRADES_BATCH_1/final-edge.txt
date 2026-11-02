@@ -1,0 +1,371 @@
+TAP version 13
+# Subtest: QC and packaging forms keep accepted finishing receipt identities and quantities
+    # Subtest: QC offers the original accepted receipt and corrective retry as distinct choices
+    ok 1 - QC offers the original accepted receipt and corrective retry as distinct choices
+      ---
+      duration_ms: 710.5315
+      type: 'test'
+      ...
+    # Subtest: changing the production job clears the previous receipt and uses only that job's output
+    ok 2 - changing the production job clears the previous receipt and uses only that job's output
+      ---
+      duration_ms: 915.6543
+      type: 'test'
+      ...
+    # Subtest: non-final, zero-output and unrelated receipts never appear in the selected job's choices
+    ok 3 - non-final, zero-output and unrelated receipts never appear in the selected job's choices
+      ---
+      duration_ms: 414.4012
+      type: 'test'
+      ...
+    # Subtest: receipt lookup failure displays a retryable form error without offering a false empty result
+    ok 4 - receipt lookup failure displays a retryable form error without offering a false empty result
+      ---
+      duration_ms: 91.0007
+      type: 'test'
+      ...
+    # Subtest: packaging order autofill starts at zero until an accepted receipt is chosen
+    ok 5 - packaging order autofill starts at zero until an accepted receipt is chosen
+      ---
+      duration_ms: 655.911
+      type: 'test'
+      ...
+    # Subtest: a queued packaging edit retains its receipt and locks its source identity
+    ok 6 - a queued packaging edit retains its receipt and locks its source identity
+      ---
+      duration_ms: 189.5437
+      type: 'test'
+      ...
+    # Subtest: a late order response cannot replace a more recent packaging selection
+    ok 7 - a late order response cannot replace a more recent packaging selection
+      ---
+      duration_ms: 310.165
+      type: 'test'
+      ...
+    # Subtest: a failed order lookup clears previous packaging quantities and shows the failure
+    ok 8 - a failed order lookup clears previous packaging quantities and shows the failure
+      ---
+      duration_ms: 601.4486
+      type: 'test'
+      ...
+    # Subtest: packaging production choices stay within the order and a source change clears receipt quantities
+    ok 9 - packaging production choices stay within the order and a source change clears receipt quantities
+      ---
+      duration_ms: 986.0227
+      type: 'test'
+      ...
+    # Subtest: explicit production selection invalidates an unfinished order autofill request
+    ok 10 - explicit production selection invalidates an unfinished order autofill request
+      ---
+      duration_ms: 260.3676
+      type: 'test'
+      ...
+    1..10
+ok 1 - QC and packaging forms keep accepted finishing receipt identities and quantities
+  ---
+  duration_ms: 5887.9894
+  type: 'test'
+  ...
+# Subtest: actual browser payloads preserve receipt identity through QC SQL and the packaging server action
+ok 2 - actual browser payloads preserve receipt identity through QC SQL and the packaging server action
+  ---
+  duration_ms: 5893.1304
+  type: 'test'
+  ...
+# Subtest: shared operation lookups use bounded tenant-scoped remote search
+ok 3 - shared operation lookups use bounded tenant-scoped remote search
+  ---
+  duration_ms: 0.9903
+  type: 'test'
+  ...
+# Subtest: shared lookups preserve saved values and apply profile-compatible die search
+ok 4 - shared lookups preserve saved values and apply profile-compatible die search
+  ---
+  duration_ms: 0.3879
+  type: 'test'
+  ...
+# Subtest: quotation customer, profile, and die libraries are searched instead of fully downloaded
+ok 5 - quotation customer, profile, and die libraries are searched instead of fully downloaded
+  ---
+  duration_ms: 0.3448
+  type: 'test'
+  ...
+# Subtest: dealer inventory profile entry cannot hide profiles beyond a fixed 500-row list
+ok 6 - dealer inventory profile entry cannot hide profiles beyond a fixed 500-row list
+  ---
+  duration_ms: 0.1765
+  type: 'test'
+  ...
+# Subtest: NOV-086/088/093: actual phone database shows ten selective cards with unambiguous zero, missing and blocked states
+ok 7 - NOV-086/088/093: actual phone database shows ten selective cards with unambiguous zero, missing and blocked states
+  ---
+  duration_ms: 3306.1709
+  type: 'test'
+  ...
+# Subtest: NOV-088: disclosure and nested controls do not open the record, with keyboard navigation on desktop
+ok 8 - NOV-088: disclosure and nested controls do not open the record, with keyboard navigation on desktop
+  ---
+  duration_ms: 500.0684
+  type: 'test'
+  ...
+# Subtest: NOV-091: filter removal resets page, keeps other filters, and Clear all recovers a matched empty view
+ok 9 - NOV-091: filter removal resets page, keeps other filters, and Clear all recovers a matched empty view
+  ---
+  duration_ms: 2332.7245
+  type: 'test'
+  ...
+# Subtest: NOV-091/099: stale responses cannot replace a newer search and a failed refresh retains successful rows
+ok 10 - NOV-091/099: stale responses cannot replace a newer search and a failed refresh retains successful rows
+  ---
+  duration_ms: 3127.3445
+  type: 'test'
+  ...
+# Subtest: NOV-099: denied reads remove cached rows and do not masquerade as an empty database
+ok 11 - NOV-099: denied reads remove cached rows and do not masquerade as an empty database
+  ---
+  duration_ms: 642.4647
+  type: 'test'
+  ...
+# Subtest: NOV-092: similar names expose identifying context and keyboard selection skips inactive choices
+ok 12 - NOV-092: similar names expose identifying context and keyboard selection skips inactive choices
+  ---
+  duration_ms: 416.8584
+  type: 'test'
+  ...
+# Subtest: NOV-092/099: failed lookup retains the selection, blocks choice and supports recovery
+ok 13 - NOV-092/099: failed lookup retains the selection, blocks choice and supports recovery
+  ---
+  duration_ms: 397.2412
+  type: 'test'
+  ...
+# Subtest: NOV-083/084/085: real edit form keeps identity and values, uses one save, and does not cover the final field
+ok 14 - NOV-083/084/085: real edit form keeps identity and values, uses one save, and does not cover the final field
+  ---
+  duration_ms: 871.6262
+  type: 'test'
+  ...
+# Subtest: NOV-084: switching records or company cannot retain the previous record identity or unsaved text
+ok 15 - NOV-084: switching records or company cannot retain the previous record identity or unsaved text
+  ---
+  duration_ms: 402.6787
+  type: 'test'
+  ...
+# Subtest: NOV-085: a lost save response prevents blind duplicate submission and retains entered values
+ok 16 - NOV-085: a lost save response prevents blind duplicate submission and retains entered values
+  ---
+  duration_ms: 1303.5118
+  type: 'test'
+  ...
+# Subtest: NOV-016: blockers name a responsible team, hide forbidden edits and disappear after authoritative refresh
+ok 17 - NOV-016: blockers name a responsible team, hide forbidden edits and disappear after authoritative refresh
+  ---
+  duration_ms: 459.839
+  type: 'test'
+  ...
+# Subtest: NOV-083: sales, stores, production and accounts use the shared composition at phone and enlarged desktop widths
+ok 18 - NOV-083: sales, stores, production and accounts use the shared composition at phone and enlarged desktop widths
+  ---
+  duration_ms: 1255.8425
+  type: 'test'
+  ...
+# Subtest: NOV-088/091: hidden table columns cannot hide workflow warnings, and saved-view reset differs from clearing filters
+ok 19 - NOV-088/091: hidden table columns cannot hide workflow warnings, and saved-view reset differs from clearing filters
+  ---
+  duration_ms: 977.8348
+  type: 'test'
+  ...
+# Subtest: NOV-099/084: failed connected reads keep the authorized record visible and never show a false zero
+ok 20 - NOV-099/084: failed connected reads keep the authorized record visible and never show a false zero
+  ---
+  duration_ms: 466.4456
+  type: 'test'
+  ...
+# Subtest: NOV-084/093: record context keeps a missing source quantity explicit rather than displaying zero
+ok 21 - NOV-084/093: record context keeps a missing source quantity explicit rather than displaying zero
+  ---
+  duration_ms: 402.6641
+  type: 'test'
+  ...
+# Subtest: NOV-088: the separate die database keeps status, profile and retrieval location in its compact phone card
+ok 22 - NOV-088: the separate die database keeps status, profile and retrieval location in its compact phone card
+  ---
+  duration_ms: 419.479
+  type: 'test'
+  ...
+# Subtest: NOV-099: a failed form read can be retried repeatedly and recovers to the same record
+ok 23 - NOV-099: a failed form read can be retried repeatedly and recovers to the same record
+  ---
+  duration_ms: 453.4034
+  type: 'test'
+  ...
+# Subtest: NOV-086: production, dispatch, quality and accounts share presentation while retaining their domain codes
+ok 24 - NOV-086: production, dispatch, quality and accounts share presentation while retaining their domain codes
+  ---
+  duration_ms: 1.3907
+  type: 'test'
+  ...
+# Subtest: NOV-086: unknown and blank statuses remain neutral and visible
+ok 25 - NOV-086: unknown and blank statuses remain neutral and visible
+  ---
+  duration_ms: 0.296
+  type: 'test'
+  ...
+# Subtest: NOV-093: absent, invalid and genuine zero quantities cannot collapse into the same display
+ok 26 - NOV-093: absent, invalid and genuine zero quantities cannot collapse into the same display
+  ---
+  duration_ms: 18.9456
+  type: 'test'
+  ...
+# Subtest: NOV-093: correction signs, Indian scale, dimensions and non-INR currency remain explicit
+ok 27 - NOV-093: correction signs, Indian scale, dimensions and non-INR currency remain explicit
+  ---
+  duration_ms: 0.8354
+  type: 'test'
+  ...
+# Subtest: NOV-093: configured record fields retain their piece, length, percentage and section-weight dimensions
+ok 28 - NOV-093: configured record fields retain their piece, length, percentage and section-weight dimensions
+  ---
+  duration_ms: 0.5306
+  type: 'test'
+  ...
+# Subtest: NOV-099: denied access, source failure and filtered emptiness have distinct recovery guidance
+ok 29 - NOV-099: denied access, source failure and filtered emptiness have distinct recovery guidance
+  ---
+  duration_ms: 0.3985
+  type: 'test'
+  ...
+# Subtest: NOV-091: shared URLs preserve combined supported filters, ordering and page
+ok 30 - NOV-091: shared URLs preserve combined supported filters, ordering and page
+  ---
+  duration_ms: 3.3493
+  type: 'test'
+  ...
+# Subtest: NOV-091: malformed or unsupported URL values cannot become query fields
+ok 31 - NOV-091: malformed or unsupported URL values cannot become query fields
+  ---
+  duration_ms: 0.2211
+  type: 'test'
+  ...
+# Subtest: NOV-091: reversed dates, disabled date filtering and long input are bounded
+ok 32 - NOV-091: reversed dates, disabled date filtering and long input are bounded
+  ---
+  duration_ms: 0.5143
+  type: 'test'
+  ...
+# Subtest: NOV-016: enforced blockers lead advisories, describe their source and leave ownership honest
+ok 33 - NOV-016: enforced blockers lead advisories, describe their source and leave ownership honest
+  ---
+  duration_ms: 0.9862
+  type: 'test'
+  ...
+# Subtest: NOV-016: unauthorized edit/issue links are withheld and unknown rules do not invent a resolution
+ok 34 - NOV-016: unauthorized edit/issue links are withheld and unknown rules do not invent a resolution
+  ---
+  duration_ms: 0.5486
+  type: 'test'
+  ...
+# Subtest: NOV-092: lookup context uses identifiers and units without financial or internal payloads
+ok 35 - NOV-092: lookup context uses identifiers and units without financial or internal payloads
+  ---
+  duration_ms: 0.5939
+  type: 'test'
+  ...
+# Subtest: mouse click reopens the list immediately after choosing while the input still owns focus
+ok 36 - mouse click reopens the list immediately after choosing while the input still owns focus
+  ---
+  duration_ms: 865.9667
+  type: 'test'
+  ...
+# Subtest: clicking an open input preserves the user's current filter without firing another remote search
+ok 37 - clicking an open input preserves the user's current filter without firing another remote search
+  ---
+  duration_ms: 119.2276
+  type: 'test'
+  ...
+# Subtest: ArrowDown reopens a closed focused input and Enter chooses once without submitting the enclosing form
+ok 38 - ArrowDown reopens a closed focused input and Enter chooses once without submitting the enclosing form
+  ---
+  duration_ms: 153.5873
+  type: 'test'
+  ...
+# Subtest: ArrowUp starts at the last available result and ArrowDown wraps to the first
+ok 39 - ArrowUp starts at the last available result and ArrowDown wraps to the first
+  ---
+  duration_ms: 121.9029
+  type: 'test'
+  ...
+# Subtest: an external source change clears a previously displayed selected label while the list is open
+ok 40 - an external source change clears a previously displayed selected label while the list is open
+  ---
+  duration_ms: 215.939
+  type: 'test'
+  ...
+# Subtest: Escape preserves selection and keyboard reopening does not send another search
+ok 41 - Escape preserves selection and keyboard reopening does not send another search
+  ---
+  duration_ms: 94.0463
+  type: 'test'
+  ...
+# Subtest: Tab leaves the combobox without choosing; arrow navigation keeps focus on the input
+ok 42 - Tab leaves the combobox without choosing; arrow navigation keeps focus on the input
+  ---
+  duration_ms: 366.1429
+  type: 'test'
+  ...
+# Subtest: leaving the control closes it; refocusing before its delayed close keeps the reopened list available
+ok 43 - leaving the control closes it; refocusing before its delayed close keeps the reopened list available
+  ---
+  duration_ms: 502.6684
+  type: 'test'
+  ...
+# Subtest: clearing does not submit, trigger a search or choose an option; the still-focused input reopens on click
+ok 44 - clearing does not submit, trigger a search or choose an option; the still-focused input reopens on click
+  ---
+  duration_ms: 260.513
+  type: 'test'
+  ...
+# Subtest: pending remote search cannot choose an old option by mouse or Enter
+ok 45 - pending remote search cannot choose an old option by mouse or Enter
+  ---
+  duration_ms: 143.3866
+  type: 'test'
+  ...
+# Subtest: empty results never select an option or submit while the list is open
+ok 46 - empty results never select an option or submit while the list is open
+  ---
+  duration_ms: 88.9894
+  type: 'test'
+  ...
+# Subtest: Enter used to compose text does not choose an option
+ok 47 - Enter used to compose text does not choose an option
+  ---
+  duration_ms: 117.102
+  type: 'test'
+  ...
+# Subtest: disabled controls cannot open or choose, including when disabled during an open list
+ok 48 - disabled controls cannot open or choose, including when disabled during an open list
+  ---
+  duration_ms: 143.0886
+  type: 'test'
+  ...
+# Subtest: touch selection reopens without an extra tap outside the control
+ok 49 - touch selection reopens without an extra tap outside the control
+  ---
+  duration_ms: 440.9586
+  type: 'test'
+  ...
+# Subtest: a delayed close is harmless when the control is removed
+ok 50 - a delayed close is harmless when the control is removed
+  ---
+  duration_ms: 307.3032
+  type: 'test'
+  ...
+1..50
+# tests 60
+# suites 0
+# pass 60
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 19348.5624

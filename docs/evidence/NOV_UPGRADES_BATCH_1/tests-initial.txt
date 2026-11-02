@@ -1,0 +1,518 @@
+
+> extrusionos-pro@0.1.0 test
+> node --no-warnings --test --experimental-strip-types --test-concurrency=2 tests/*.test.mjs
+
+TAP version 13
+# Subtest: invite creation does not expose raw token links outside email delivery
+ok 1 - invite creation does not expose raw token links outside email delivery
+  ---
+  duration_ms: 1.5816
+  type: 'test'
+  ...
+# Subtest: invite acceptance does not reset passwords for existing auth users
+ok 2 - invite acceptance does not reset passwords for existing auth users
+  ---
+  duration_ms: 0.3304
+  type: 'test'
+  ...
+# Subtest: invite acceptance is restricted to pending invites
+ok 3 - invite acceptance is restricted to pending invites
+  ---
+  duration_ms: 0.2952
+  type: 'test'
+  ...
+# Subtest: access projection integrity
+    # Subtest: replaces effective policies and enforces fixed projections under authenticated SQL role
+    ok 1 - replaces effective policies and enforces fixed projections under authenticated SQL role
+      ---
+      duration_ms: 3285.682
+      type: 'test'
+      ...
+    1..1
+ok 4 - access projection integrity
+  ---
+  duration_ms: 3287.3566
+  type: 'suite'
+  ...
+# Subtest: core data export isolates table failures and records a complete manifest
+ok 5 - core data export isolates table failures and records a complete manifest
+  ---
+  duration_ms: 2.7593
+  type: 'test'
+  ...
+# Subtest: data center does not advertise an unsupported standalone purchase order export
+ok 6 - data center does not advertise an unsupported standalone purchase order export
+  ---
+  duration_ms: 0.9753
+  type: 'test'
+  ...
+# Subtest: enterprise settings sends invitations to the canonical access workflow
+ok 7 - enterprise settings sends invitations to the canonical access workflow
+  ---
+  duration_ms: 1.1919
+  type: 'test'
+  ...
+# Subtest: business boundaries default to India and do not follow the UTC calendar date
+ok 8 - business boundaries default to India and do not follow the UTC calendar date
+  ---
+  duration_ms: 22.254
+  type: 'test'
+  ...
+# Subtest: tenant users cannot assign their own subscription entitlements
+ok 9 - tenant users cannot assign their own subscription entitlements
+  ---
+  duration_ms: 5.0509
+  type: 'test'
+  ...
+# Subtest: factory date defaults use the shared business calendar
+ok 10 - factory date defaults use the shared business calendar
+  ---
+  duration_ms: 3.9664
+  type: 'test'
+  ...
+# Subtest: recovery uses linked issued billet input and becomes not captured when any job lacks input
+ok 11 - recovery uses linked issued billet input and becomes not captured when any job lacks input
+  ---
+  duration_ms: 0.4501
+  type: 'test'
+  ...
+# Subtest: command center uses canonical collection events and linked billet input
+ok 12 - command center uses canonical collection events and linked billet input
+  ---
+  duration_ms: 0.8236
+  type: 'test'
+  ...
+# Subtest: management analytics are loaded through one complete database aggregate
+ok 13 - management analytics are loaded through one complete database aggregate
+  ---
+  duration_ms: 2.1661
+  type: 'test'
+  ...
+# Subtest: aggregate RPC derives tenant identity and grants no anonymous execution
+ok 14 - aggregate RPC derives tenant identity and grants no anonymous execution
+  ---
+  duration_ms: 0.2038
+  type: 'test'
+  ...
+# Subtest: aggregate totals remain independent from presentation queue limits
+ok 15 - aggregate totals remain independent from presentation queue limits
+  ---
+  duration_ms: 0.3345
+  type: 'test'
+  ...
+# Subtest: six-month trends exclude cancelled orders, draft invoices, and deleted expenses
+ok 16 - six-month trends exclude cancelled orders, draft invoices, and deleted expenses
+  ---
+  duration_ms: 0.2573
+  type: 'test'
+  ...
+# Subtest: toNumber safely normalizes null, undefined, and invalid numeric values
+ok 17 - toNumber safely normalizes null, undefined, and invalid numeric values
+  ---
+  duration_ms: 1.3044
+  type: 'test'
+  ...
+# Subtest: safePercent returns 0 when denominator is zero or invalid
+ok 18 - safePercent returns 0 when denominator is zero or invalid
+  ---
+  duration_ms: 0.2122
+  type: 'test'
+  ...
+# Subtest: advanced analytics snapshot handles empty datasets without throwing
+ok 19 - advanced analytics snapshot handles empty datasets without throwing
+  ---
+  duration_ms: 29.0581
+  type: 'test'
+  ...
+# Subtest: advanced analytics snapshot computes conversion, delay, receivable, and risk edge cases
+ok 20 - advanced analytics snapshot computes conversion, delay, receivable, and risk edge cases
+  ---
+  duration_ms: 23.0943
+  type: 'test'
+  ...
+# Subtest: production actuals follow completion time and inactive inventory is excluded
+ok 21 - production actuals follow completion time and inactive inventory is excluded
+  ---
+  duration_ms: 9.4802
+  type: 'test'
+  ...
+# Subtest: analytics migration owns completion timestamps and active-stock truth
+ok 22 - analytics migration owns completion timestamps and active-stock truth
+  ---
+  duration_ms: 0.4926
+  type: 'test'
+  ...
+# Subtest: dashboard queue limits do not undercount lifetime risk totals
+ok 23 - dashboard queue limits do not undercount lifetime risk totals
+  ---
+  duration_ms: 16.6442
+  type: 'test'
+  ...
+# Subtest: RPC snapshot parsing rejects incomplete payloads instead of crashing the dashboard
+ok 24 - RPC snapshot parsing rejects incomplete payloads instead of crashing the dashboard
+  ---
+  duration_ms: 9.5926
+  type: 'test'
+  ...
+# Subtest: the policy trigger put the seeded expenses where expected
+ok 25 - the policy trigger put the seeded expenses where expected
+  ---
+  duration_ms: 2797.3933
+  type: 'test'
+  ...
+# Subtest: owners see every pending quotation and expense, oldest first, with business context
+ok 26 - owners see every pending quotation and expense, oldest first, with business context
+  ---
+  duration_ms: 45.2488
+  type: 'test'
+  ...
+# Subtest: sales managers see only ordinary quotations; accounts see only expenses within their limit
+ok 27 - sales managers see only ordinary quotations; accounts see only expenses within their limit
+  ---
+  duration_ms: 42.5651
+  type: 'test'
+  ...
+# Subtest: a requester's own item is visible but marked as not theirs to decide
+ok 28 - a requester's own item is visible but marked as not theirs to decide
+  ---
+  duration_ms: 46.9123
+  type: 'test'
+  ...
+# Subtest: approving a quotation moves it to approved for sending, recording the approver
+ok 29 - approving a quotation moves it to approved for sending, recording the approver
+  ---
+  duration_ms: 53.3598
+  type: 'test'
+  ...
+# Subtest: a low-margin quotation can be decided only by an owner or admin
+ok 30 - a low-margin quotation can be decided only by an owner or admin
+  ---
+  duration_ms: 44.3079
+  type: 'test'
+  ...
+# Subtest: approval requires complete costing on every line, the same rule as the quote's own guard
+ok 31 - approval requires complete costing on every line, the same rule as the quote's own guard
+  ---
+  duration_ms: 31.8716
+  type: 'test'
+  ...
+# Subtest: rejecting returns the quotation to draft with the reason and clears approval
+ok 32 - rejecting returns the quotation to draft with the reason and clears approval
+  ---
+  duration_ms: 35.8899
+  type: 'test'
+  ...
+# Subtest: a request edited after it was opened cannot be decided on the old version
+ok 33 - a request edited after it was opened cannot be decided on the old version
+  ---
+  duration_ms: 91.6523
+  type: 'test'
+  ...
+# Subtest: a decided request cannot be approved again, by the same or another approver
+ok 34 - a decided request cannot be approved again, by the same or another approver
+  ---
+  duration_ms: 54.6231
+  type: 'test'
+  ...
+# Subtest: retrying the same decision returns the recorded result without deciding twice
+ok 35 - retrying the same decision returns the recorded result without deciding twice
+  ---
+  duration_ms: 59.2318
+  type: 'test'
+  ...
+# Subtest: requesting clarification keeps the request pending, records the question and notifies the requester
+ok 36 - requesting clarification keeps the request pending, records the question and notifies the requester
+  ---
+  duration_ms: 62.8758
+  type: 'test'
+  ...
+# Subtest: expenses are decided through the existing approval workflow and its Rs 25,000 limit
+ok 37 - expenses are decided through the existing approval workflow and its Rs 25,000 limit
+  ---
+  duration_ms: 55.7979
+  type: 'test'
+  ...
+# Subtest: an accounts user cannot decide an expense they raised; the owner can
+ok 38 - an accounts user cannot decide an expense they raised; the owner can
+  ---
+  duration_ms: 61.1976
+  type: 'test'
+  ...
+# Subtest: other roles, dealers, other companies and anonymous callers are refused
+ok 39 - other roles, dealers, other companies and anonymous callers are refused
+  ---
+  duration_ms: 53.8333
+  type: 'test'
+  ...
+# Subtest: decision history: owners see all, others see their own, 10 per page
+ok 40 - decision history: owners see all, others see their own, 10 per page
+  ---
+  duration_ms: 75.3374
+  type: 'test'
+  ...
+# Subtest: requests with no recorded requester can be decided and still parse (no unknown permission flag)
+ok 41 - requests with no recorded requester can be decided and still parse (no unknown permission flag)
+  ---
+  duration_ms: 36.6271
+  type: 'test'
+  ...
+# Subtest: only approvers use the inbox
+ok 42 - only approvers use the inbox
+  ---
+  duration_ms: 2466.5578
+  type: 'test'
+  ...
+# Subtest: decisions need a version; rejections and questions need a reason
+ok 43 - decisions need a version; rejections and questions need a reason
+  ---
+  duration_ms: 6.7978
+  type: 'test'
+  ...
+# Subtest: each decision's effect is stated before confirming, and links open the source
+ok 44 - each decision's effect is stated before confirming, and links open the source
+  ---
+  duration_ms: 0.4595
+  type: 'test'
+  ...
+# Subtest: every database error message the action passes through is one the database can raise
+ok 45 - every database error message the action passes through is one the database can raise
+  ---
+  duration_ms: 8.1925
+  type: 'test'
+  ...
+# Subtest: database inbox and history parse with the app's schemas for every approver role
+ok 46 - database inbox and history parse with the app's schemas for every approver role
+  ---
+  duration_ms: 92.262
+  type: 'test'
+  ...
+# Subtest: the page and action gate on approver roles and exclude dealer sessions
+ok 47 - the page and action gate on approver roles and exclude dealer sessions
+  ---
+  duration_ms: 0.9201
+  type: 'test'
+  ...
+# Subtest: configurator write controls follow database manager roles
+ok 48 - configurator write controls follow database manager roles
+  ---
+  duration_ms: 2.502
+  type: 'test'
+  ...
+# Subtest: mixed stock lengths govern placement and weighted waste totals
+ok 49 - mixed stock lengths govern placement and weighted waste totals
+  ---
+  duration_ms: 19.4358
+  type: 'test'
+  ...
+# Subtest: same profile with distinct stock lengths is not combined into incompatible bars
+ok 50 - same profile with distinct stock lengths is not combined into incompatible bars
+  ---
+  duration_ms: 0.7431
+  type: 'test'
+  ...
+# Subtest: default gasket and wool pile follow custom glass cuts, including quantity
+ok 51 - default gasket and wool pile follow custom glass cuts, including quantity
+  ---
+  duration_ms: 5.3534
+  type: 'test'
+  ...
+# Subtest: failed glass formulas do not generate default perimeter hardware
+ok 52 - failed glass formulas do not generate default perimeter hardware
+  ---
+  duration_ms: 0.9954
+  type: 'test'
+  ...
+# Subtest: multi-table business saves use atomic database functions
+ok 53 - multi-table business saves use atomic database functions
+  ---
+  duration_ms: 4.5713
+  type: 'test'
+  ...
+# Subtest: atomic implementations enforce auth, tenant permissions, and row locks
+ok 54 - atomic implementations enforce auth, tenant permissions, and row locks
+  ---
+  duration_ms: 0.7419
+  type: 'test'
+  ...
+# Subtest: business numbers are allocated under a company and year lock
+ok 55 - business numbers are allocated under a company and year lock
+  ---
+  duration_ms: 0.7291
+  type: 'test'
+  ...
+# Subtest: quote and dealer conversion retries are idempotent
+ok 56 - quote and dealer conversion retries are idempotent
+  ---
+  duration_ms: 0.8955
+  type: 'test'
+  ...
+# Subtest: die and profile updates are allowlisted, permission checked, and versioned atomically
+ok 57 - die and profile updates are allowlisted, permission checked, and versioned atomically
+  ---
+  duration_ms: 0.8358
+  type: 'test'
+  ...
+# Subtest: RPC JSON payloads are filtered through server-owned field allowlists
+ok 58 - RPC JSON payloads are filtered through server-owned field allowlists
+  ---
+  duration_ms: 0.242
+  type: 'test'
+  ...
+# Subtest: whole audit migrations coexist with authorized views, masks and RPC grants
+ok 59 - whole audit migrations coexist with authorized views, masks and RPC grants
+  ---
+  duration_ms: 3762.7723
+  type: 'test'
+  ...
+# Subtest: the lookup does not offer an order that the actual writer rejects for temper
+ok 60 - the lookup does not offer an order that the actual writer rejects for temper
+  ---
+  duration_ms: 4133.0953
+  type: 'test'
+  ...
+# Subtest: normalized alloy and temper accepted by the writer remain discoverable
+not ok 61 - normalized alloy and temper accepted by the writer remain discoverable
+  ---
+  duration_ms: 5196.6648
+  type: 'test'
+  location: 'C:\\Users\\arnav\\OneDrive\\Desktop\\ExtrusionOS\\.worktrees\\codex-v1\\tests\\billet-allocation-options-browser.test.mjs:19:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expect(locator).toBeVisible() failed
+
+    Locator: getByRole('button', { name: /^O-2026-0002/ })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "to.be.visible" with timeout 5000ms
+      - waiting for getByRole('button', { name: /^O-2026-0002/ })
+
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    captureRawStack (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\node_modules\playwright-core\lib\coreBundle.js:3172:17)
+    callMatcherAsStep (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\node_modules\playwright\lib\matchers\expect.js:12877:57)
+    Object.toBeVisible (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\node_modules\playwright\lib\matchers\expect.js:12867:23)
+    TestContext.<anonymous> (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\tests\billet-allocation-options-browser.test.mjs:23:210)
+  ...
+# Subtest: delivered and payment-pending orders do not appear as compatible open orders
+ok 62 - delivered and payment-pending orders do not appear as compatible open orders
+  ---
+  duration_ms: 340.9301
+  type: 'test'
+  ...
+# Subtest: fully covered dispatched profiles do not remain allocation choices
+ok 63 - fully covered dispatched profiles do not remain allocation choices
+  ---
+  duration_ms: 196.2331
+  type: 'test'
+  ...
+# Subtest: two matching requirements produce one distinct choice per order
+not ok 64 - two matching requirements produce one distinct choice per order
+  ---
+  duration_ms: 164.4854
+  type: 'test'
+  location: 'C:\\Users\\arnav\\OneDrive\\Desktop\\ExtrusionOS\\.worktrees\\codex-v1\\tests\\billet-allocation-options-browser.test.mjs:42:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+
+    0 !== 1
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///C:/Users/arnav/OneDrive/Desktop/ExtrusionOS/.worktrees/codex-v1/tests/billet-allocation-options-browser.test.mjs:46:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: a small REST row cap cannot hide a later compatible order
+not ok 65 - a small REST row cap cannot hide a later compatible order
+  ---
+  duration_ms: 5166.7072
+  type: 'test'
+  location: 'C:\\Users\\arnav\\OneDrive\\Desktop\\ExtrusionOS\\.worktrees\\codex-v1\\tests\\billet-allocation-options-browser.test.mjs:49:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expect(locator).toBeVisible() failed
+
+    Locator: getByRole('button', { name: /^O-2026-0002 -/ })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "to.be.visible" with timeout 5000ms
+      - waiting for getByRole('button', { name: /^O-2026-0002 -/ })
+
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    captureRawStack (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\node_modules\playwright-core\lib\coreBundle.js:3172:17)
+    callMatcherAsStep (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\node_modules\playwright\lib\matchers\expect.js:12877:57)
+    Object.toBeVisible (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\node_modules\playwright\lib\matchers\expect.js:12867:23)
+    TestContext.<anonymous> (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\tests\billet-allocation-options-browser.test.mjs:54:87)
+  ...
+# Subtest: ten-row pages reach later orders and clear the prior order selection
+not ok 66 - ten-row pages reach later orders and clear the prior order selection
+  ---
+  duration_ms: 31067.9409
+  type: 'test'
+  location: 'C:\\Users\\arnav\\OneDrive\\Desktop\\ExtrusionOS\\.worktrees\\codex-v1\\tests\\billet-allocation-options-browser.test.mjs:57:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: /^O-.* -/ }).first()[22m
+
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\tests\billet-allocation-options-browser.test.mjs:60:71)
+  ...
+# Subtest: global search reaches orders outside the first page and treats percent literally
+not ok 67 - global search reaches orders outside the first page and treats percent literally
+  ---
+  duration_ms: 6244.6933
+  type: 'test'
+  location: 'C:\\Users\\arnav\\OneDrive\\Desktop\\ExtrusionOS\\.worktrees\\codex-v1\\tests\\billet-allocation-options-browser.test.mjs:69:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    expect(locator).toBeVisible() failed
+
+    Locator: getByRole('button', { name: /^O-2026-0013 -/ })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "to.be.visible" with timeout 5000ms
+      - waiting for getByRole('button', { name: /^O-2026-0013 -/ })
+
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    captureRawStack (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\node_modules\playwright-core\lib\coreBundle.js:3172:17)
+    callMatcherAsStep (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\node_modules\playwright\lib\matchers\expect.js:12877:57)
+    Object.toBeVisible (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\node_modules\playwright\lib\matchers\expect.js:12867:23)
+    TestContext.<anonymous> (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\tests\billet-allocation-options-browser.test.mjs:76:88)
+  ...
+# Subtest: a stale search response cannot replace current options
+not ok 68 - a stale search response cannot replace current options
+  ---
+  duration_ms: 30250.3206
+  type: 'test'
+  location: 'C:\\Users\\arnav\\OneDrive\\Desktop\\ExtrusionOS\\.worktrees\\codex-v1\\tests\\billet-allocation-options-browser.test.mjs:83:38'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.click: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('button', { name: /^O-2026-0002 -/ })[22m
+
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\.worktrees\codex-v1\tests\billet-allocation-options-browser.test.mjs:92:111)
+  ...

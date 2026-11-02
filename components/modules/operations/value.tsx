@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { NumberTicker } from "@/components/ui/number-ticker";
 import { formatDate } from "@/lib/utils/format";
+import { formatNumeric, numericKindForField, type NumericKind } from "@/lib/utils/numeric-display";
 
 export function getPath(row: Record<string, any>, path: string): any {
   return path.split(".").reduce((value, key) => {
@@ -13,13 +13,12 @@ export function displayValue(row: Record<string, any>, path: string, type?: stri
   const value = getPath(row, path) ?? (path.endsWith("company_name") ? getPath(row, path.replace("company_name", "customer_name")) : null);
   if (type === "badge" && value) return <Badge value={String(value)} />;
   if (type === "date") return formatDate(value);
-  if (type === "currency") {
-    // Show paise and label the record's own currency; non-INR amounts are never shown as rupees (RPT-07).
+  if (["currency", "weight", "number", "pieces", "metres", "percent"].includes(type ?? "")) {
     const currency = typeof row.currency === "string" && row.currency ? row.currency : "INR";
-    return <NumberTicker value={Number(value ?? 0)} prefix={currency === "INR" ? "₹" : `${currency} `} decimals={2} />;
+    const kind = numericKindForField(path, type as NumericKind);
+    const formatted = formatNumeric(value, kind, currency);
+    return <span className="tabular-nums" title={value == null ? undefined : `${String(value)}${kind === "sectionWeight" ? " kg/m" : kind === "weight" ? " kg" : type === "currency" ? ` ${currency}` : ""}`}>{formatted}</span>;
   }
-  if (type === "weight") return <NumberTicker value={Number(value ?? 0)} suffix=" kg" decimals={3} />;
-  if (type === "number") return <NumberTicker value={Number(value ?? 0)} />;
   if (typeof value === "boolean") return value ? "Yes" : "No";
   return value == null || value === "" ? "-" : String(value);
 }

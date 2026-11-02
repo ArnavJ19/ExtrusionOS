@@ -97,16 +97,16 @@ export function DiesDatabaseClient({ context, canCreate, initialStatus = "" }: {
   useEffect(() => { setPage(1); }, [debouncedSearch, status, ownership, profileId, customerId]);
 
   const columns: DataTableColumn<DieRow>[] = [
-    { id: "die_number", header: "Die Number", sortable: true, accessor: (die) => <span className="font-black text-slate-950">{die.die_number}</span> },
-    { id: "profile", header: "Profile", accessor: (die) => profileLabel(die) },
-    { id: "customer", header: "Customer", accessor: (die) => customerName(die) },
-    { id: "die_status", header: "Status", sortable: true, accessor: (die) => <Badge value={die.die_status} /> },
-    { id: "ownership_type", header: "Ownership", sortable: true, accessor: (die) => <Badge value={die.ownership_type} /> },
-    { id: "billet_diameter_required_inch", header: "Billet Dia", sortable: true, accessor: (die) => die.billet_diameter_required_inch ? `${die.billet_diameter_required_inch} in` : "-" },
-    { id: "rack_location", header: "Rack", accessor: (die) => die.rack_location || "-" },
-    { id: "last_used_date", header: "Last Used", sortable: true, accessor: (die) => formatDate(die.last_used_date) },
-    { id: "total_production_kg", header: "Production", sortable: true, accessor: (die) => <span className="font-bold text-slate-950">{formatWeight(die.total_production_kg)}</span> },
-    { id: "created_at", header: "Created", sortable: true, accessor: (die) => formatDate(die.created_at) }
+    { id: "die_number", header: "Die Number", mobile: "identity", sortable: true, accessor: (die) => <span className="font-black text-slate-950">{die.die_number}</span> },
+    { id: "profile", header: "Profile", mobile: "primary", accessor: (die) => profileLabel(die) },
+    { id: "customer", header: "Customer", mobile: "secondary", accessor: (die) => customerName(die) },
+    { id: "die_status", header: "Status", mobile: "primary", sortable: true, accessor: (die) => <Badge value={die.die_status} /> },
+    { id: "ownership_type", header: "Ownership", mobile: "secondary", sortable: true, accessor: (die) => <Badge value={die.ownership_type} /> },
+    { id: "billet_diameter_required_inch", header: "Billet Dia", mobile: "secondary", numeric: true, sortable: true, accessor: (die) => die.billet_diameter_required_inch ? `${die.billet_diameter_required_inch} in` : "Not captured" },
+    { id: "rack_location", header: "Rack", mobile: "primary", accessor: (die) => die.rack_location || "Not captured" },
+    { id: "last_used_date", header: "Last Used", mobile: "secondary", sortable: true, accessor: (die) => formatDate(die.last_used_date) },
+    { id: "total_production_kg", header: "Production", mobile: "secondary", numeric: true, sortable: true, accessor: (die) => <span className="font-bold text-slate-950">{formatWeight(die.total_production_kg)}</span> },
+    { id: "created_at", header: "Created", mobile: "secondary", sortable: true, accessor: (die) => formatDate(die.created_at) }
   ];
 
   return (

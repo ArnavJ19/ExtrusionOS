@@ -6,6 +6,8 @@ Audience: Business owner, department heads, product designer, developers, QA, an
 Scope: Exactly the 100 numbered suggestions made in this chat, retained as five batches of 20
 Status: Proposed targets and extension plans; this document does not implement or deploy them
 
+Implementation records: [November batch 1](NOV_UPGRADE_BATCH_1.md) covers the first ten selected U1/N1 interface and workflow improvements (NOV-016, 083, 084, 085, 086, 088, 091, 092, 093, and 099). That record separates implemented scope, local verification, and outstanding hosted/employee acceptance. The original 100 targets and their ratings below remain the planning reference.
+
 ## Purpose and boundaries
 
 Employees should be able to identify their next useful task, find the right source record, enter new facts once, understand a decision, and pass complete work to the next team. Management should be able to see commitments, blockers, material movement, ownership, and outcomes without assembling a parallel spreadsheet.

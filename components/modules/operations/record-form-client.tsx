@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -30,6 +30,11 @@ import { getModuleConfig, type FieldConfig, type ModuleKey } from "./module-conf
 import { LocationGuidance } from "./operator-tools";
 import { canUseOperatorCommand } from "@/lib/operations/operator-workflows";
 import { BilletPlanNote } from "@/components/modules/billet-plan-note";
+import { PageHeader } from "@/components/layout/page-header";
+import { RecordIdentityStrip } from "@/components/forms/record-identity-strip";
+import { FormActionBar } from "@/components/forms/form-action-bar";
+import { lookupOptionContext } from "@/lib/ui/lookup-option";
+import { displayValue, getPath, titleValue } from "./value";
 
 type LookupOption = { value: string; label: string; profile_id?: string | null; die_status?: string | null;
   production_job_id?: string | null; status?: string | null; output_weight_kg?: number | string | null; received_date?: string | null; [key: string]: any };
@@ -69,7 +74,7 @@ function toLookupOptions(rows: Record<string, any>[], labelFields: string[]) {
   return rows.flatMap((row) => {
     if (!row.id || seen.has(row.id)) return [];
     seen.add(row.id);
-    return [{ ...row, value: row.id, label: labelFor(row, labelFields) }];
+    return [{ ...row, value: row.id, label: labelFor(row, labelFields), description: lookupOptionContext(row), disabled: row.is_active === false, disabledReason: row.is_active === false ? "Inactive record" : undefined }];
   });
 }
 
@@ -87,12 +92,18 @@ function initialFormValues(config: ReturnType<typeof getModuleConfig>) {
 }
 
 export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: ModuleKey; context: SessionContext; recordId?: string }) {
+  return <RecordFormWorkspace key={`${context.companyId}:${context.userId}:${context.role}:${moduleKey}:${recordId ?? "new"}`} moduleKey={moduleKey} context={context} recordId={recordId} />;
+}
+
+function RecordFormWorkspace({ moduleKey, context, recordId }: { moduleKey: ModuleKey; context: SessionContext; recordId?: string }) {
   const config = getModuleConfig(moduleKey);
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [form, setForm] = useState<Record<string, any>>(() => initialFormValues(config));
   const [lookups, setLookups] = useState<LookupMap>({});
   const [lookupSearching, setLookupSearching] = useState<Record<string, boolean>>({});
+  const [lookupErrors, setLookupErrors] = useState<Record<string, string | null>>({});
+  const [savedIdentity, setSavedIdentity] = useState<Record<string, any> | null>(null);
   const lookupSearchTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const lookupRequestIds = useRef<Record<string, number>>({});
   const [productionOrderItems, setProductionOrderItems] = useState<ProductionOrderItem[]>([]);
@@ -112,8 +123,10 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
   const [materialsLoadError, setMaterialsLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveOutcomeUncertain, setSaveOutcomeUncertain] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const editing = Boolean(recordId);
+  const submitInFlight = useRef(false);
 
   useEffect(() => () => { packagingAutofillRequest.current++; }, [context.companyId, moduleKey, recordId]);
 
@@ -160,6 +173,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     const requestId = (lookupRequestIds.current[fieldName] ?? 0) + 1;
     lookupRequestIds.current[fieldName] = requestId;
     setLookupSearching((current) => ({ ...current, [fieldName]: true }));
+    setLookupErrors((current) => ({ ...current, [fieldName]: null }));
     lookupSearchTimers.current[fieldName] = setTimeout(async () => {
       try {
         const options = await fetchLookupOptions(field, query, String(values[fieldName] ?? ""), values);
@@ -168,6 +182,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
         }
       } catch (lookupError) {
         if (lookupRequestIds.current[fieldName] === requestId) {
+          setLookupErrors((current) => ({ ...current, [fieldName]: "Lookup unavailable" }));
           toast.error(getErrorMessage(lookupError, `Could not search ${field.label.toLowerCase()}`));
         }
       } finally {
@@ -185,6 +200,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     if (recordId) {
       const { data, error: recordError } = await supabase.from(config.table as any).select("*").eq("id", recordId).eq("company_id", context.companyId).single();
       if (recordError) throw recordError;
+      setSavedIdentity(data);
       loadedForm = normalizeRow(data, config.defaultValues ?? {});
       if (moduleKey === "packaging") setPackagingSourceLocked(Boolean(data.finishing_job_id));
       setForm(loadedForm);
@@ -199,12 +215,16 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
 
   }
 
-  useEffect(() => {
-    loadForm().catch((err) => {
+  async function reloadForm() {
+    await loadForm().catch((err) => {
       const message = getErrorMessage(err, `Could not load ${config.title.toLowerCase()} form`);
       setError(message);
       toast.error(message);
     }).finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    void reloadForm();
   }, [moduleKey, recordId]);
 
   useEffect(() => () => {
@@ -865,6 +885,14 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     router.refresh();
   }
 
+  async function submitOnce() {
+    if (submitInFlight.current || saveOutcomeUncertain) return;
+    submitInFlight.current = true;
+    try { await submit(); }
+    catch { setSaveOutcomeUncertain(true); toast.error("The save outcome could not be confirmed. Check the record before submitting again."); }
+    finally { submitInFlight.current = false; setSaving(false); }
+  }
+
   function renderField(field: FieldConfig) {
     const value = form[field.name] ?? "";
     const options: LookupOption[] = field.lookup ? lookups[field.name] ?? [] : field.options ?? [];
@@ -887,7 +915,7 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
     return (
       <label key={field.name} className={field.type === "textarea" ? "block space-y-1.5 md:col-span-2" : "block space-y-1.5"}>
         <span className="form-label">{field.label}{field.required ? " *" : ""}</span>
-        {field.type === "textarea" ? <textarea className="form-input min-h-24" value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} /> : field.type === "select" ? <SearchableSelect value={String(value)} options={fieldOptions} placeholder="Select" onChange={(nextValue) => handleFieldChange(field, nextValue)} onSearchChange={field.lookup ? (query) => searchLookup(field, query) : undefined} searching={Boolean(field.lookup && lookupSearching[field.name])} disabled={field.readOnly || receiptReadOnly || (productionAutofillLoading && field.name === "order_id")} /> : field.type === "checkbox" ? <input className="form-input" type="checkbox" checked={Boolean(value)} disabled={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.checked)} /> : <input className="form-input" type={field.type ?? "text"} step={field.step} value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} />}
+        {field.type === "textarea" ? <textarea className="form-input min-h-24" value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} /> : field.type === "select" ? <SearchableSelect ariaLabel={field.label} value={String(value)} options={fieldOptions} placeholder="Select" onChange={(nextValue) => handleFieldChange(field, nextValue)} onSearchChange={field.lookup ? (query) => searchLookup(field, query) : undefined} searching={Boolean(field.lookup && lookupSearching[field.name])} error={lookupErrors[field.name]} onRetry={field.lookup ? () => searchLookup(field, "") : undefined} disabled={field.readOnly || receiptReadOnly || (productionAutofillLoading && field.name === "order_id")} /> : field.type === "checkbox" ? <input className="form-input" type="checkbox" checked={Boolean(value)} disabled={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.checked)} /> : <input className="form-input" type={field.type ?? "text"} step={field.step} value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} />}
         {receiptField ? <p className="text-xs font-semibold text-slate-500">Select accepted output from one final receipt. Its rejected remainder stays separate.</p> : null}
         {receiptField && receiptReadOnly && value ? <p className="break-words text-xs font-semibold text-slate-700">Recorded receipt: {fieldOptions.find((option) => option.value === value)?.label ?? "Receipt details unavailable. Refresh before completing packaging."}</p> : null}
       </label>
@@ -917,17 +945,15 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
   }
 
   if (loading) return <LoadingState title={`Loading ${config.title.toLowerCase()} form`} description="Preparing clean data-entry fields." />;
-  if (error) return <ErrorState description={error} onRetry={() => void loadForm()} />;
+  if (error) return <ErrorState description={error} onRetry={() => void reloadForm()} />;
 
   const chemistryRows = moduleKey === "foundry" ? compositionToEditableRows((form.alloy_composition_actual ?? {}) as AlloyComposition) : [];
+  const identityQuantity = config.card.meta.find((item) => item.type === "weight" || item.type === "number");
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link href={editing && recordId ? `${config.basePath}/${recordId}` : config.basePath} className="mb-3 inline-flex items-center gap-2 text-sm font-black text-slate-500 transition hover:text-orange"><ArrowLeft className="h-4 w-4" /> Back to {config.title}</Link>
-        <h1 className="text-3xl font-black tracking-tight text-slate-950">{editing ? `Edit ${config.title}` : config.primaryAction}</h1>
-        <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-slate-500">Use this focused form without a full database table competing for attention.</p>
-      </div>
+    <div className="operational-record-form space-y-6">
+      <PageHeader title={editing ? `Edit ${config.title}` : config.primaryAction} description="Enter the facts for this record, then review your entries before saving." backHref={editing && recordId ? `${config.basePath}/${recordId}` : config.basePath} backLabel={`Back to ${config.title}`} />
+      <RecordIdentityStrip kind={config.title} unsaved={!editing} number={savedIdentity ? titleValue(savedIdentity, config.card.titlePath) : undefined} context={savedIdentity && config.card.subtitlePath ? String(getPath(savedIdentity, config.card.subtitlePath) ?? "") : undefined} status={savedIdentity && config.card.badgePath ? String(getPath(savedIdentity, config.card.badgePath) ?? "") : undefined} quantity={savedIdentity && identityQuantity ? <span>Saved {identityQuantity.label}: {displayValue(savedIdentity, identityQuantity.path, identityQuantity.type)}</span> : undefined} />
       <Card>
         <CardHeader><h2 className="section-title">Record Details</h2></CardHeader>
         <CardContent>
@@ -1088,13 +1114,14 @@ export function RecordFormClient({ moduleKey, context, recordId }: { moduleKey: 
           {moduleKey === "packaging" && selectedPackagingMaterials.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">A queued job may have no materials. Add issued materials before changing packaging to completed.</div>
           ) : null}
-          <div className="mt-6 flex flex-col gap-2 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end">
-            <Button type="button" variant="secondary" onClick={() => router.back()}>Cancel</Button>
-            <Button type="button" disabled={saving} onClick={submit}>{saving ? "Saving..." : editing ? "Update" : "Save"}</Button>
-          </div>
           {moduleKey === "production" && form.die_id && canUseOperatorCommand(context.role, "locations.load", "die") ? <div className="mt-6"><LocationGuidance key={`${context.companyId}:${context.userId}:${context.role}:${form.die_id}`} context={context} entityType="die" entityId={String(form.die_id)} readOnly /></div> : null}
         </CardContent>
       </Card>
+      <FormActionBar pending={saving} explanation={saving ? "Saving this record. Please wait for the result." : saveOutcomeUncertain ? "Save outcome uncertain. Check the database for this record before starting another save." : "Review the selected status and entered quantities before saving. This uses the current record action."}>
+        {saveOutcomeUncertain ? <Link className="rounded-xl border border-neutral-300 px-3 py-2 text-sm font-semibold" href={`${config.basePath}/database`} target="_blank" rel="noreferrer" title="Opens a new tab so your current entries remain available">Check saved records</Link> : null}
+        <Button type="button" variant="secondary" disabled={saving} onClick={() => router.back()}>Cancel</Button>
+        <Button type="button" disabled={saving || saveOutcomeUncertain} onClick={() => void submitOnce()}>{saving ? "Saving..." : editing ? "Update record" : "Save record"}</Button>
+      </FormActionBar>
     </div>
   );
 }

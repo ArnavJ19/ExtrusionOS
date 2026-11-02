@@ -111,6 +111,7 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
           unavailableMessage={readinessMessage}
           links={{ jobId: id, orderId: job.order_id, dieId: job.die_id, machineId: job.machine_id, profileId: job.profile_id }}
           canWrite={canPlaceHolds(context.role)}
+          role={context.role}
           people={people}
         />
       ) : null}

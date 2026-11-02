@@ -24,14 +24,14 @@ test("the actual customer code form saves one mapping through the real action an
 test("actual quotation alias selection requires clarification and populates current canonical profile weight without saving", async () => {
   await f.seedQuoteAliases(); await page.goto(`${f.base}/quote`);
   await page.getByPlaceholder("Select customer", { exact: true }).click();
-  await page.getByRole("button", { name: /Mira Aluminium Window Systems/ }).click();
+  await page.getByRole("option", { name: /Mira Aluminium Window Systems/ }).click();
   const line = page.locator("[data-quote-line]").first();
   await line.getByText("Find a customer code", { exact: true }).click();
   await line.getByLabel("Exact customer profile code or alias", { exact: true }).fill("Customer 45");
   await line.getByRole("button", { name: "Check customer code", exact: true }).click();
   await expect(line.getByText("This code has multiple matches.", { exact: false })).toBeVisible();
   await line.getByRole("button", { name: "Customer 45 → AL-202 · Door section", exact: true }).click();
-  await expect(line.getByRole("textbox", { name: "Search aluminium profile by code or name", exact: true })).toHaveValue(/AL-202/);
+  await expect(line.getByRole("combobox", { name: "Search aluminium profile by code or name", exact: true })).toHaveValue(/AL-202/);
   await expect(line.getByLabel("Kg/m", { exact: true })).toHaveValue("1.2");
   assert.deepEqual(await page.evaluate(() => window.entryFixture.posts), []);
 });
@@ -129,7 +129,7 @@ test("a recovered creation confirmation clears the promise form and retains one 
 
 test("an obsolete alias response cannot replace the result of a later customer-code search", async () => {
   await f.seedQuoteAliases(); await page.goto(`${f.base}/quote`);
-  await page.getByPlaceholder("Select customer", { exact: true }).click(); await page.getByRole("button", { name: /Mira Aluminium Window Systems/ }).click();
+  await page.getByPlaceholder("Select customer", { exact: true }).click(); await page.getByRole("option", { name: /Mira Aluminium Window Systems/ }).click();
   await page.getByText("Find a customer code", { exact: true }).click();
   const field = page.getByLabel("Exact customer profile code or alias", { exact: true });
   f.controls.delayAlias = 150; await field.fill("Customer 45"); await page.getByRole("button", { name: "Check customer code", exact: true }).click();

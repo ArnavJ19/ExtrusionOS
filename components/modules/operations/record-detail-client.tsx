@@ -3,15 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Pencil } from "lucide-react";
-import { toast } from "sonner";
+import { Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading";
 import { createClient } from "@/lib/supabase/browser";
 import { getOperationalRisks } from "@/lib/calculations/operations";
-import { getErrorMessage } from "@/lib/utils/errors";
 import { canEditManualExpense } from "@/lib/financials/expenses";
 import type { SessionContext } from "@/types/app";
 import { displayValue, getPath, titleValue } from "./value";
@@ -22,8 +20,15 @@ import type { NextActionRecord } from "@/lib/workflow/record-next-action";
 import { RecordDiscussion } from "./collaboration-tools";
 import { canUseCollaboration, type DiscussionType } from "@/lib/operations/collaboration-workflows";
 import { getWorkspaceStorage, isSafeWorkspaceHref, readWorkspacePreferences, upsertWorkspaceLink, workspacePreferenceKey, writeWorkspacePreferences } from "@/lib/preferences/workspace-preferences";
+import { PageHeader } from "@/components/layout/page-header";
+import { RecordIdentityStrip } from "@/components/forms/record-identity-strip";
+import { classifyReadFailure, readStateMessage } from "@/lib/ui/read-state";
 
 export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { moduleKey: ModuleKey; context: SessionContext; recordId: string; canEdit: boolean }) {
+  return <RecordDetailWorkspace key={`${context.companyId}:${context.userId}:${context.role}:${moduleKey}:${recordId}`} moduleKey={moduleKey} context={context} recordId={recordId} canEdit={canEdit} />;
+}
+
+function RecordDetailWorkspace({ moduleKey, context, recordId, canEdit }: { moduleKey: ModuleKey; context: SessionContext; recordId: string; canEdit: boolean }) {
   const config = getModuleConfig(moduleKey);
   const discussionType = ({ orders: "order", production: "production_job", dispatches: "dispatch", quality: "quality_inspection" } as Partial<Record<ModuleKey, DiscussionType>>)[moduleKey];
   const searchParams = useSearchParams();
@@ -33,31 +38,34 @@ export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { 
   const [relatedCounts, setRelatedCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [relatedErrors, setRelatedErrors] = useState<string[]>([]);
 
   async function loadRecord() {
     setLoading(true);
     setError(null);
+    try {
     const { data, error: queryError } = await supabase.from(config.table as any).select(config.select).eq("id", recordId).eq("company_id", context.companyId).single();
     if (queryError) throw queryError;
     setRow(data);
     if (config.relatedRecords?.length) {
       const related = await Promise.all(config.relatedRecords.map(async (item) => {
+        try {
         const { count, error } = await supabase.from(item.table as any).select("id", { count: "exact", head: true }).eq("company_id", context.companyId).eq(item.field, recordId);
-        if (error) throw error;
-        return [item.label, count ?? 0] as const;
+        return { label: item.label, count: error ? null : count, failed: Boolean(error) };
+        } catch { return { label: item.label, count: null, failed: true }; }
       }));
-      setRelatedCounts(Object.fromEntries(related));
+      setRelatedCounts(Object.fromEntries(related.filter((item) => item.count !== null).map((item) => [item.label, item.count!])));
+      setRelatedErrors(related.filter((item) => item.failed || item.count === null).map((item) => item.label));
     } else {
       setRelatedCounts({});
+      setRelatedErrors([]);
     }
+    } catch (err) { setRow(null); setError(readStateMessage(classifyReadFailure(err)).description); }
+    finally { setLoading(false); }
   }
 
   useEffect(() => {
-    loadRecord().catch((err) => {
-      const message = getErrorMessage(err, "Could not load record");
-      setError(message);
-      toast.error(message);
-    }).finally(() => setLoading(false));
+    void loadRecord();
   }, [moduleKey, recordId]);
 
   useEffect(() => {
@@ -88,6 +96,7 @@ export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { 
   if (loading) return <LoadingState title={`Loading ${config.title.toLowerCase()} record`} description="Fetching the selected record." />;
   if (error || !row) return <ErrorState description={error ?? "Record not found."} onRetry={() => void loadRecord()} />;
   const risks = getOperationalRisks(moduleKey, row);
+  const identityQuantity = config.card.meta.find((item) => item.type === "weight" || item.type === "number");
   const sourceLink = moduleKey === "expenses"
     ? (() => {
       const sourceId = row.source_record_id ? String(row.source_record_id) : "";
@@ -105,18 +114,9 @@ export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { 
 
   return (
     <div className="space-y-6">
+      <RecordIdentityStrip kind={config.title} number={titleValue(row, config.card.titlePath)} context={config.card.subtitlePath ? String(getPath(row, config.card.subtitlePath) ?? "") : undefined} status={config.card.badgePath ? String(getPath(row, config.card.badgePath) ?? "") : undefined} quantity={identityQuantity ? <span>{identityQuantity.label}: {displayValue(row, identityQuantity.path, identityQuantity.type)}</span> : undefined} />
       {(["production", "dispatches", "invoices"] as string[]).includes(moduleKey) ? <RecordNextAction context={context} record={{ kind: ({ production: "production", dispatches: "dispatch", invoices: "invoice" } as Record<string, NextActionRecord["kind"]>)[moduleKey], id: recordId, status: String(row.status ?? row.delivery_status ?? "") }} /> : null}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <Link href={returnTo} className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 transition hover:text-neutral-950"><ArrowLeft className="h-4 w-4" /> Back to {config.title}</Link>
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-bold tracking-tight text-neutral-950">{titleValue(row, config.card.titlePath)}</h1>
-            {config.card.badgePath ? <Badge value={String(getPath(row, config.card.badgePath) || "active")} /> : null}
-          </div>
-          <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-neutral-500">{config.detailIntro ?? "Focused detail page for one record. Use the database only when you need to search across all records."}</p>
-        </div>
-        {canEdit && config.fields && !(moduleKey === "expenses" && !canEditManualExpense(row as any)) && moduleKey !== "expense_payments" ? <Link href={`${config.basePath}/${recordId}/edit`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"><Pencil className="h-4 w-4" /> Edit</Link> : null}
-      </div>
+      <PageHeader title={titleValue(row, config.card.titlePath)} description={config.detailIntro ?? "Review this record and its connected work."} backHref={returnTo} backLabel={`Back to ${config.title}`} status={config.card.badgePath ? <Badge value={String(getPath(row, config.card.badgePath) || "unknown")} /> : undefined} actions={canEdit && config.fields && !(moduleKey === "expenses" && !canEditManualExpense(row as any)) && moduleKey !== "expense_payments" ? <Link href={`${config.basePath}/${recordId}/edit`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"><Pencil className="h-4 w-4" /> Edit</Link> : undefined} />
 
       {moduleKey === "invoices" ? <a className="inline-flex rounded-xl border border-neutral-200 px-4 py-2 text-sm font-semibold" href={`/api/pdf/invoice/${recordId}`} target="_blank" rel="noreferrer">Open Invoice PDF</a> : null}
       {moduleKey === "inventory" ? <LocationGuidance key={`${context.companyId}:${context.userId}:${context.role}:${recordId}`} context={context} entityType="inventory_item" entityId={recordId} /> : null}
@@ -162,10 +162,11 @@ export function RecordDetailClient({ moduleKey, context, recordId, canEdit }: { 
       {config.relatedRecords?.length ? (
         <Card>
           <CardHeader><h2 className="section-title">Connected Records</h2></CardHeader>
+          {relatedErrors.length ? <div role="status" className="mx-5 mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">Some connected counts could not be loaded. The record above is available. <button type="button" className="min-h-10 rounded-lg px-2 font-semibold underline" onClick={() => void loadRecord()}>Retry connected reads</button></div> : null}
           <CardContent className="grid gap-3 md:grid-cols-3">
             {config.relatedRecords.map((item) => (
                 <Link key={item.label} href={`${item.href}?${item.field}=${recordId}`} className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-50">
-                <div className="flex items-center justify-between gap-3"><p className="font-bold text-neutral-950">{item.label}</p><span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-bold text-neutral-700">{relatedCounts[item.label] ?? 0}</span></div>
+                <div className="flex items-center justify-between gap-3"><p className="font-bold text-neutral-950">{item.label}</p><span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-bold text-neutral-700">{relatedCounts[item.label] ?? "Unavailable"}</span></div>
                 <p className="mt-2 text-xs font-semibold leading-5 text-neutral-500">{item.hint}</p>
               </Link>
             ))}

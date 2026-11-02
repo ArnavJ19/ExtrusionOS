@@ -43,8 +43,8 @@ test("actual quotation paste preserves an existing line and imports only after e
 test("actual profile selection distinguishes master quantity, a manual override and a missing weight", async () => {
   await page.goto(fixture.base);
   const line = page.locator("[data-quote-line]").first();
-  await line.getByRole("textbox", { name: "Search aluminium profile by code or name", exact: true }).click();
-  await page.getByRole("button", { name: /AL-101.*Window section/ }).click();
+  await line.getByRole("combobox", { name: "Search aluminium profile by code or name", exact: true }).click();
+  await page.getByRole("option", { name: /AL-101.*Window section/ }).click();
   await line.getByLabel("Qty pcs", { exact: true }).fill("100");
   await line.getByLabel("Length m", { exact: true }).fill("6");
   await expect(line).toContainText("600.00 m x 0.8 kg/m from the company profile master = 480.000 kg");
@@ -89,7 +89,7 @@ test("actual database refresh retains old observation evidence and never advance
   const successTime = await page.locator("time").getAttribute("datetime");
   await page.getByRole("button", { name: "Fail next page refresh", exact: true }).click();
   await page.getByRole("button", { name: "Refresh page", exact: true }).click();
-  await expect(page.getByText("Synthetic page refresh failure", { exact: true }).last()).toBeVisible();
+  await expect(page.getByText("Some information is unavailable", { exact: true })).toBeVisible();
   assert.equal(await page.locator("time").getAttribute("datetime"), successTime);
   await page.getByRole("button", { name: "Restore page responses", exact: true }).click();
   await page.getByRole("button", { name: "Refresh page", exact: true }).click();
@@ -116,7 +116,8 @@ test("actual foundry form keeps unit display separate from batch configuration a
 test("phone database keeps long identifiers and expanded source evidence within the page", async () => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto(`${fixture.base}/inventory/database?page=2&search=AL`);
-  const card = page.locator('[role="button"]').filter({ has: page.getByRole("button", { name: `Preview ${entryLongCode}`, exact: true }) });
+  const card = page.locator('article').filter({ hasText: entryLongCode });
+  await card.locator('summary').filter({ hasText: 'More details' }).click();
   await card.getByText("Data age", { exact: false }).click();
   const sizes = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, width: document.documentElement.scrollWidth }));
   assert.ok(sizes.width <= sizes.viewport, `Expanded evidence overflows phone: ${JSON.stringify(sizes)}`);

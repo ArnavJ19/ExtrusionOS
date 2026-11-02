@@ -67,9 +67,9 @@ export async function createDieReadinessBrowserFixture({styled=false}={}){
     return {page,errors,base,
       field:name=>page.getByText(name,{exact:true}).locator("..").locator("input"),
       async open(params=""){errors.length=0;await page.goto(`${base}/?${params}`);await page.waitForFunction(()=>window.__die);
-        if(!params.includes("mode=queue"))await page.getByRole("button",{name:params.includes("mode=legacy")?"Plan New Job":params.includes("mode=order-edit")?"Update":"Save",exact:true}).waitFor();},
+        if(!params.includes("mode=queue"))await page.getByRole("button",{name:params.includes("mode=legacy")?"Plan New Job":params.includes("mode=order-edit")?"Update record":"Save record",exact:true}).waitFor();},
       async selectOrder(){const input=page.getByText("Order *",{exact:true}).locator("..").locator("input");await input.click();
-        await page.getByRole("button",{name:"ORDER-R15",exact:true}).click();await page.waitForFunction(()=>window.__die.queries.some(query=>query.table==='order_items_authorized'));},
+        await page.getByRole("option",{name:"ORDER-R15",exact:true}).click();await page.waitForFunction(()=>window.__die.queries.some(query=>query.table==='order_items_authorized'));},
       async close(){await browser.close();server.closeAllConnections();await new Promise(done=>server.close(done));}
     };
   }catch(error){if(browser)await browser.close();server.closeAllConnections();await new Promise(done=>server.close(done));throw error;}
