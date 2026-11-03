@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileUp, Eye, CheckCircle, XCircle, Clock, MessageSquare, X, Download } from "lucide-react";
+import { FileUp, Eye, MessageSquare, X, Download } from "lucide-react";
 import { createClient } from "@/lib/supabase/browser";
 import { technicalDrawingUploadRules, validateUploadFile } from "@/lib/validations/uploads";
 
@@ -127,11 +128,6 @@ export default function DocumentIntelligencePage() {
     setDrawings([newDrawing, ...drawings]);
     setIsUploading(false);
     setNewTitle(""); setNewEntityId(""); setNewNotes(""); setNewFile(null);
-  };
-
-  const handleStatusChange = (id: string, newStatus: string) => {
-    setDrawings(drawings.map(d => d.id === id ? { ...d, approval_status: newStatus } : d));
-    setSelectedDrawing(prev => prev && prev.id === id ? { ...prev, approval_status: newStatus } : prev);
   };
 
   const stats = {
@@ -338,18 +334,11 @@ export default function DocumentIntelligencePage() {
 
               <FileViewer drawing={selectedDrawing} signedUrl={viewerUrl} />
 
-              {/* Approval Actions */}
+              {/* Approval is recorded per immutable revision with customer evidence (NOV-062). */}
               <div className="border-t border-slate-200 pt-4 space-y-2">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Change Status</p>
-                <div className="flex flex-wrap gap-2">
-                  {["under_review", "approved_internal", "sent_to_customer", "customer_approved", "rejected"].map(s => (
-                    <Button key={s} variant="secondary" className={`text-xs capitalize ${selectedDrawing.approval_status === s ? "ring-2 ring-orange" : ""}`}
-                      onClick={() => handleStatusChange(selectedDrawing.id, s)}>
-                      {s === "approved_internal" || s === "customer_approved" ? <CheckCircle className="w-3 h-3 mr-1" /> : s === "rejected" ? <XCircle className="w-3 h-3 mr-1" /> : <Clock className="w-3 h-3 mr-1" />}
-                      {s.replace(/_/g, " ")}
-                    </Button>
-                  ))}
-                </div>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Approval and release</p>
+                <p className="text-sm text-slate-600">Register each revision with its file checksum, record the customer&apos;s decision with evidence and release it for manufacture under Assurance.</p>
+                <Link href="/tasks/assurance/database?view=drawings" className="inline-flex min-h-11 items-center text-sm font-bold underline">Open drawing approval</Link>
               </div>
 
               {/* Related TQs */}

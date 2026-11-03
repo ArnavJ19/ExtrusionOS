@@ -14,6 +14,7 @@ Implementation records: [November batch 1](NOV_UPGRADE_BATCH_1.md) covers the fi
 
 [November batch 4](NOV_UPGRADE_BATCH_4.md) covers the next ten U1/N1 cross-module slices: NOV-005, 007, 013, 015, 022, 028, 031, 042, 051, and 057. Each is a bounded pilot of a C4 target; its record lists what each slice covers, its boundaries and the remaining hosted/employee acceptance.
 
+[November batch 5](NOV_UPGRADE_BATCH_5.md) covers the last four U1 entries and the first six U2/N1 entries: NOV-026, 030, 033, 034, 038, 055, 062, 069, 070, and 076, as bounded assurance pilots under /tasks/assurance.
 
 ## Purpose and boundaries
 
