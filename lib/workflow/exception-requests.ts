@@ -109,5 +109,8 @@ export const DYNAMIC_EXCEPTION_MESSAGES = [
   /^INR [0-9.]+ overdue is above the INR [0-9.]+ hard limit: collect payment before dispatching$/,
   /^Dispatch held: INR [0-9.]+ (is overdue for more than [0-9]+ days\. Collect payment or request an exception|overdue is above the INR [0-9.]+ hard limit\. Collect payment before dispatching)$/,
   /^More has fallen overdue since the exception was approved \(now INR [0-9.]+\)\. Request a new exception$/,
-  /^This dispatch \([0-9.]+ kg\) is more than the [0-9.]+ kg the exception approved$/
+  /^This dispatch \([0-9.]+ kg\) is more than the [0-9.]+ kg the exception approved$/,
+  // November NOV-042: role approval limits.
+  /^This exception is above your approval limit \([0-9.]+ against your limit of [0-9.]+ under authority revision [0-9]+\)\. An approver with a higher limit must decide it\.$/,
+  /^Your approval limit cannot be checked because this request has no recorded exposure\. Ask an approver without a limit to decide it\.$/
 ];

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { exceptionAction } from "@/lib/actions/exception-requests";
@@ -111,6 +112,7 @@ export function ExceptionDecisionRow({ row }: { row: ExceptionRequestRow }) {
         <Button type="button" variant="secondary" disabled={busy || note.trim().length < 3} onClick={() => void decide("reject")}>Reject</Button>
       </div>
       {message ? <p role="alert" className="text-xs font-semibold text-red-700">{message}</p> : null}
+      <Link href="/tasks/control/database?view=authority" className="inline-flex min-h-11 items-center text-xs font-semibold underline">Approval limits by role</Link>
     </li>
   );
 }

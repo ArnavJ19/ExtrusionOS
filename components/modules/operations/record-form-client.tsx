@@ -28,6 +28,8 @@ import { compositionToEditableRows, compositionsMatch, getStandardAlloyCompositi
 import type { SessionContext } from "@/types/app";
 import { getModuleConfig, type FieldConfig, type ModuleKey } from "./module-config";
 import { LocationGuidance } from "./operator-tools";
+import { FormDraftRecovery, useFormDraft } from "@/components/forms/form-draft-recovery";
+import { draftDefinition, isDraftModule, type DraftValue } from "@/lib/forms/form-draft";
 import { canUseOperatorCommand } from "@/lib/operations/operator-workflows";
 import { BilletPlanNote } from "@/components/modules/billet-plan-note";
 import { PageHeader } from "@/components/layout/page-header";
@@ -145,6 +147,9 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
   const [quantityBasis, setQuantityBasis] = useState<PlanningQuantityBasis | null>(null);
   const productionAutofillRequest = useRef(0);
   const billetsRequest = useRef(0);
+  // NOV-013: new records in selected operational forms keep a device draft of typed entries.
+  const formDraftDefinition = useMemo(() => !recordId && isDraftModule(moduleKey) ? draftDefinition(`record_${moduleKey}`, (config.fields ?? []).map((field) => field.name)) : null, [moduleKey, recordId, config.fields]);
+  const formDraft = useFormDraft(formDraftDefinition, { companyId: context.companyId, userId: context.userId }, loading || error ? null : form, restoreDraft);
 
   useEffect(() => () => { productionAutofillRequest.current++; billetsRequest.current++; }, []);
   useEffect(() => {
@@ -264,6 +269,16 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
     setLookups(Object.fromEntries(lookupEntries));
     // A next-action link carries the source order; autofill rereads it under the user's company scope.
     if (prefillOrderId) await loadProductionOrderAutofill(prefillOrderId);
+  }
+
+  function restoreDraft(payload: Record<string, DraftValue>) {
+    const restored = { ...initialFormValues(config), ...payload };
+    setFieldProvenance({}); setQuantityBasis(null); setForm(restored);
+    const lookupFields = (config.fields ?? []).filter((field) => field.lookup);
+    // Restored selections are re-read under the current company scope; the server rechecks on save.
+    void Promise.all(lookupFields.map(async (field) => [field.name, await fetchLookupOptions(field, "", String(restored[field.name] ?? ""), restored)] as const))
+      .then((entries) => setLookups(Object.fromEntries(entries)))
+      .catch(() => setOperationMessage("Some restored selections could not be rechecked. Reselect them before saving."));
   }
 
   async function reloadForm() {
@@ -895,6 +910,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
       } as any);
       setSaving(false);
       if (!result.success) return showSaveFailure(result.error);
+      await formDraft.confirmed();
       toast.success(editing ? `${config.title} updated` : `${config.title} saved`);
       router.push(`${config.basePath}/${result.jobId}`);
       router.refresh();
@@ -952,6 +968,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
       : await supabase.from(config.table as any).insert(payload).select("id").single();
     setSaving(false);
     if (result.error || !result.data) return showSaveFailure(getErrorMessage(result.error, "Could not save record"));
+    await formDraft.confirmed();
     toast.success(editing ? `${config.title} updated` : `${config.title} saved`);
     router.push(`${config.basePath}/${result.data.id}`);
     router.refresh();
@@ -1042,6 +1059,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
       <Card>
         <CardHeader><h2 className="section-title">Record Details</h2></CardHeader>
         <CardContent>
+          <FormDraftRecovery draft={formDraft} />
           <FormIssueSummary issues={issues} scope={fieldScope} container={formElement} />
           {operationMessage ? <p role="alert" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{operationMessage} Your entries are retained.</p> : null}
           {moduleKey === "production" ? <PlanningQuantityEntry key={`${form.profile_id ?? "none"}:${form.source_line_id ?? "direct"}`} weightSourceLabel={form.source_line_id ? "Order-line technical reference" : "Current profile section weight for a direct-order planning estimate"} sourceLengthM={selectedPlanningLine?.length_per_piece_m} sectionWeight={planningWeight === null || planningWeight === undefined || planningWeight === "" || !Number.isFinite(Number(planningWeight)) || Number(planningWeight) <= 0 ? null : Number(planningWeight)} onApply={(basis, quantity) => {

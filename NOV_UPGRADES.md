@@ -12,6 +12,9 @@ Implementation records: [November batch 1](NOV_UPGRADE_BATCH_1.md) covers the fi
 
 [November batch 3](NOV_UPGRADE_BATCH_3.md) covers the next ten U1/N1 coordination and responsibility slices: NOV-040, 041, 043, 046, 048, 049, 050, 056, 097, and 098. Its record distinguishes the implemented pilot, local verification, additive migration, and outstanding hosted/operator acceptance.
 
+[November batch 4](NOV_UPGRADE_BATCH_4.md) covers the next ten U1/N1 cross-module slices: NOV-005, 007, 013, 015, 022, 028, 031, 042, 051, and 057. Each is a bounded pilot of a C4 target; its record lists what each slice covers, its boundaries and the remaining hosted/employee acceptance.
+
+
 ## Purpose and boundaries
 
 Employees should be able to identify their next useful task, find the right source record, enter new facts once, understand a decision, and pass complete work to the next team. Management should be able to see commitments, blockers, material movement, ownership, and outcomes without assembling a parallel spreadsheet.
