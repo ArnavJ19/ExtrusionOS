@@ -97,7 +97,7 @@ export function DiesDatabaseClient({ context, canCreate, initialStatus = "" }: {
   useEffect(() => { setPage(1); }, [debouncedSearch, status, ownership, profileId, customerId]);
 
   const columns: DataTableColumn<DieRow>[] = [
-    { id: "die_number", header: "Die Number", mobile: "identity", sortable: true, accessor: (die) => <span className="font-black text-slate-950">{die.die_number}</span> },
+    { id: "die_number", header: "Die Number", mobile: "identity", sortable: true, sticky: true, accessor: (die) => <span className="font-black text-slate-950">{die.die_number}</span> },
     { id: "profile", header: "Profile", mobile: "primary", accessor: (die) => profileLabel(die) },
     { id: "customer", header: "Customer", mobile: "secondary", accessor: (die) => customerName(die) },
     { id: "die_status", header: "Status", mobile: "primary", sortable: true, accessor: (die) => <Badge value={die.die_status} /> },

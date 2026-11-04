@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell, Moon, Search } from "lucide-react";
+import { Bell, Moon } from "lucide-react";
+import { GlobalFind } from "@/components/search/global-find";
+import { SuggestImprovementLink } from "@/components/layout/suggest-improvement";
+import { canUseImprovementAction } from "@/lib/workflow/improvement";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getFeatureFlagsForCompany, isFeatureEnabled } from "@/lib/enterprise/features";
@@ -123,9 +126,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             <p className="truncate text-lg font-bold tracking-tight text-neutral-950">{context.companyName}</p>
           </div>
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:justify-end">
-            <Link href="/search" className="hidden min-w-0 max-w-xl flex-1 items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-400 shadow-sm transition hover:border-neutral-300 hover:text-neutral-700 md:flex">
-              <Search className="h-4 w-4 shrink-0" /> <span className="truncate">{searchPlaceholder}</span>
-            </Link>
+            <GlobalFind placeholder={searchPlaceholder} />
+            {!context.dealerId && canUseImprovementAction(context.role, "suggestion.submit") ? <SuggestImprovementLink /> : null}
             <Link href="/notifications" className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-neutral-200 bg-white text-neutral-600 shadow-sm transition hover:border-neutral-300 hover:text-neutral-950">
               <Bell className="h-4 w-4" />
               {notificationCount + taskCount > 0 ? <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#f43f5e] ring-2 ring-white" /> : null}

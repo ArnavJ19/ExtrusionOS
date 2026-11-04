@@ -170,8 +170,10 @@ test("mobile dispatch distinguishes query failure from an empty queue", () => {
 
 test("scanner labels telemetry as a scan event instead of a state transition", () => {
   const page = read("app/(dashboard)/scan/page.tsx");
-  assert.match(page, /Log Dispatch Scan/);
-  assert.match(page, /Log Stock Audit Scan/);
-  assert.match(page, /Log Die Check Scan/);
-  assert.doesNotMatch(page, /Load for Dispatch|Mark as Audited|Mark Die Checked/);
+  // NOV-017 replaced the three single-record buttons with bounded scan sessions; they still only log events.
+  const tasks = read("lib/qr/scan-task.ts");
+  assert.match(page, /Log these scans/);
+  assert.match(page, /it does not change stock, die or dispatch status/);
+  assert.match(tasks, /Dispatch loading check/); assert.match(tasks, /Stock check/); assert.match(tasks, /Die check/);
+  for (const source of [page, tasks]) assert.doesNotMatch(source, /Load for Dispatch|Mark as Audited|Mark Die Checked/);
 });

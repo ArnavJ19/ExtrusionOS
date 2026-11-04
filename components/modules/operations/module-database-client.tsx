@@ -27,6 +27,18 @@ import { classifyReadFailure, readStateMessage, type ReadFailure } from "@/lib/u
 const pageSize = 10;
 const relationFilterFields = ["customer_id", "profile_id", "order_id", "quote_id", "production_job_id", "inventory_item_id", "expense_ledger_id", "source_record_id", "material_id", "job_id"];
 
+// NOV-089: an exact, company-scoped re-read of the previewed record through the same authorized source.
+function createPreviewVerifier(supabase: ReturnType<typeof createClient>, moduleKey: ModuleKey, companyId: string) {
+  const config = getModuleConfig(moduleKey);
+  const source = config.readTable ?? (config.table === "production_jobs" ? "production_jobs_authorized" : config.table);
+  return async (id: string) => {
+    const { data, error } = await supabase.from(source as any).select("id, updated_at").eq("company_id", companyId).eq("id", id).maybeSingle();
+    if (error) throw error;
+    const fresh = data as { updated_at?: string | null } | null;
+    return { found: Boolean(fresh), updatedAt: fresh?.updated_at ?? null };
+  };
+}
+
 function cleanSearch(value: string) {
   return value.replace(/[%*_,()]/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -94,6 +106,8 @@ function ModuleDatabaseWorkspace({ moduleKey, context, canCreate, initialStatus 
   const previewRow = previewOpen && loadedForView ? rows.find((row) => row.id === previewSelection?.id) ?? null : null;
 
   useEffect(() => { setPreviewSelection(null); }, [dataQueryKey]);
+  const previewCompanyId = context.companyId;
+  const verifyPreviewRecord = useMemo(() => createPreviewVerifier(supabase, moduleKey, previewCompanyId), [supabase, moduleKey, previewCompanyId]);
 
   useEffect(() => {
     function restoreFromLocation() {
@@ -281,7 +295,7 @@ function ModuleDatabaseWorkspace({ moduleKey, context, canCreate, initialStatus 
         emptyAction={activeFilters.length ? <Button type="button" variant="secondary" onClick={clearFilters}>Clear all filters</Button> : canCreate && (config.fields || config.createHref) ? <Link href={config.createHref ?? `${config.basePath}/new`} className="inline-flex items-center justify-center rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white">{config.primaryAction}</Link> : null}
       />
       <DataTablePagination page={page} pageSize={pageSize} totalCount={loadedForView ? totalCount : null} isLoading={loading || !loadedForView} onPrevious={() => setPage((current) => Math.max(1, current - 1))} onNext={() => setPage((current) => current + 1)} />
-      <RecordPreview open={Boolean(previewOpen)} moduleKey={moduleKey} context={context} row={previewRow} returnTo={listHref} onClose={() => setPreviewSelection(null)} triggerRef={previewTriggerRef} loading={loading} error={error} rowScope={loadedRowsScope ?? ""} />
+      <RecordPreview open={Boolean(previewOpen)} moduleKey={moduleKey} context={context} row={previewRow} returnTo={listHref} onClose={() => setPreviewSelection(null)} triggerRef={previewTriggerRef} loading={loading} error={error} rowScope={loadedRowsScope ?? ""} verifyRecord={verifyPreviewRecord} onRefresh={() => void loadRows()} />
     </DataPageLayout>
   );
 }

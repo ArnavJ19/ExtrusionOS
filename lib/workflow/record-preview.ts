@@ -78,3 +78,69 @@ export function buildRecordDetailHref(basePath: string, returnTo: string, record
   params.set("returnTo", returnTo);
   return `${basePath.replace(/\/$/, "")}/${encodeURIComponent(recordId)}?${params.toString()}`;
 }
+
+// NOV-089: blockers that a preview must never hide, and contextual next steps permitted to the role.
+// Both are derived from the same list row; the target page rechecks authority before any change.
+export type PreviewAlert = { tone: "warning" | "critical"; text: string };
+export type PreviewLink = { label: string; href: string };
+/** The caller supplies the session permission check, so this module stays free of runtime imports. */
+export type PreviewPermission = (action: "create" | "read", resource: "dispatches" | "production" | "orders") => boolean;
+
+const numberAt = (row: Record<string, unknown>, key: string) => {
+  const value = row[key];
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() && Number.isFinite(Number(value))) return Number(value);
+  return null;
+};
+const textAt = (row: Record<string, unknown>, key: string) => (typeof row[key] === "string" ? String(row[key]) : "");
+const pathId = (value: unknown) => (typeof value === "string" && /^[0-9a-f-]{36}$/i.test(value) ? encodeURIComponent(value) : null);
+
+export function recordPreviewAlerts(moduleKey: ModuleKey, row: Record<string, unknown> | null | undefined): PreviewAlert[] {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return [];
+  const alerts: PreviewAlert[] = [];
+  if (moduleKey === "orders") {
+    const required = numberAt(row, "billets_required"), allocated = numberAt(row, "billets_allocated");
+    if (required !== null && required > 0 && (allocated ?? 0) < required) alerts.push({ tone: "warning", text: `Billets not fully allocated: ${allocated ?? 0} of ${required}.` });
+    if (textAt(row, "current_stage") === "on_hold") alerts.push({ tone: "critical", text: "Order is on hold." });
+  }
+  if (moduleKey === "production") {
+    if (textAt(row, "status") === "on_hold") alerts.push({ tone: "critical", text: "Job is on hold." });
+    if (!row.die_id && !["completed", "cancelled"].includes(textAt(row, "status"))) alerts.push({ tone: "warning", text: "No die is assigned." });
+  }
+  if (moduleKey === "dispatches" && ["delayed", "damaged", "returned"].includes(textAt(row, "delivery_status"))) alerts.push({ tone: "critical", text: `Delivery is ${textAt(row, "delivery_status")}.` });
+  if (moduleKey === "quality" && ["rejected", "rework"].includes(textAt(row, "status"))) alerts.push({ tone: "critical", text: textAt(row, "status") === "rejected" ? "Inspection rejected the material." : "Material needs rework." });
+  if (["inventory", "packaging_materials"].includes(moduleKey)) {
+    const stock = numberAt(row, "current_stock"), reorder = numberAt(row, "reorder_level");
+    if (stock !== null && reorder !== null && reorder > 0 && stock <= reorder) alerts.push({ tone: "warning", text: "Stock is at or below the reorder level." });
+  }
+  if (moduleKey === "invoices" && textAt(row, "status") === "overdue") alerts.push({ tone: "critical", text: "Invoice is overdue." });
+  if (moduleKey === "machines" && ["breakdown", "maintenance", "inactive"].includes(textAt(row, "status"))) alerts.push({ tone: "critical", text: `Machine is ${textAt(row, "status")}.` });
+  if (moduleKey === "expenses" && textAt(row, "approval_status") === "pending") alerts.push({ tone: "warning", text: "Awaiting approval." });
+  return alerts;
+}
+
+export function recordPreviewLinks(moduleKey: ModuleKey, row: Record<string, unknown> | null | undefined, can: PreviewPermission, readDies: boolean): PreviewLink[] {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return [];
+  const id = pathId(row.id), links: PreviewLink[] = [];
+  if (moduleKey === "orders" && id) {
+    const stage = textAt(row, "current_stage");
+    if (!["delivered", "cancelled", "closed"].includes(stage) && can("create", "dispatches")) links.push({ label: "Prepare a dispatch", href: `/dispatches/new?order_id=${id}` });
+    if (!["delivered", "cancelled", "closed", "dispatched"].includes(stage) && can("create", "production")) links.push({ label: "Plan production", href: `/production/new?order_id=${id}` });
+  }
+  if (["production", "dispatches"].includes(moduleKey) && pathId(row.order_id) && can("read", "orders")) links.push({ label: "Open the order", href: `/orders/${pathId(row.order_id)}` });
+  if (moduleKey === "production" && pathId(row.die_id) && readDies) links.push({ label: "Die operating history", href: `/tasks/improvement/dies/${pathId(row.die_id)}` });
+  if (moduleKey === "quality" && pathId(row.production_job_id) && can("read", "production")) links.push({ label: "Open the production job", href: `/production/${pathId(row.production_job_id)}` });
+  if (moduleKey === "customers" && id && can("read", "orders")) links.push({ label: "This customer's orders", href: `/orders/database?customer_id=${id}` });
+  return links;
+}
+
+export type RecordFreshness = "checking" | "current" | "changed" | "missing" | "unknown";
+/** Compares the list row with a fresh exact-id read. A missing record means deleted or no longer permitted. */
+export function recordFreshness(listRow: Record<string, unknown> | null | undefined, fresh: { found: boolean; updatedAt: string | null } | null): RecordFreshness {
+  if (!fresh) return "unknown";
+  if (!fresh.found) return "missing";
+  const listed = typeof listRow?.updated_at === "string" ? Date.parse(listRow.updated_at) : Number.NaN;
+  const current = fresh.updatedAt ? Date.parse(fresh.updatedAt) : Number.NaN;
+  if (Number.isNaN(listed) || Number.isNaN(current)) return "unknown";
+  return current > listed ? "changed" : "current";
+}

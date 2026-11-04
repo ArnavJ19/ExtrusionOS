@@ -55,7 +55,7 @@ export function labelize(value: string) {
 export type VendorType = "aluminum_ingot" | "aluminum_sows" | "aluminum_billets" | "aluminum_wire_rods" | "aluminum_t_ingots" | "aluminum_chips" | "die_maker" | "powder_coating" | "anodizing" | "hardware_supplier" | "transporter" | "packing_supplier" | "maintenance" | "other";
 export type InventoryCategory = "billets" | "extruded_profiles" | "hardware" | "powder_coating_material" | "packing_material" | "scrap" | "finished_goods";
 export type MovementType = "purchase_in" | "production_in" | "production_issue" | "dispatch_out" | "scrap_in" | "scrap_out" | "adjustment_in" | "adjustment_out" | "return_in";
-export type ProfileStockStatus = "available" | "reserved" | "dispatched" | "rejected" | "scrap";
+export type ProfileStockStatus = "available" | "reserved" | "dispatched" | "rejected" | "scrap" | "transformed";
 export type MachineType = "extrusion_press" | "aging_oven" | "powder_coating_line" | "anodizing_line" | "cutting_machine" | "packing_station" | "other";
 export type MachineStatus = "operational" | "maintenance" | "breakdown" | "idle";
 export type ProductionJobStatus = "planned" | "ready" | "in_progress" | "completed" | "on_hold" | "cancelled";
@@ -69,7 +69,7 @@ export type FinishingJobStatus = "not_required" | "planned" | "sent_to_vendor" |
 export const vendorTypes: VendorType[] = ["aluminum_ingot", "aluminum_sows", "aluminum_billets", "aluminum_wire_rods", "aluminum_t_ingots", "aluminum_chips", "die_maker", "powder_coating", "anodizing", "hardware_supplier", "transporter", "packing_supplier", "maintenance", "other"];
 export const inventoryCategories: InventoryCategory[] = ["billets", "extruded_profiles", "hardware", "powder_coating_material", "packing_material", "scrap", "finished_goods"];
 export const movementTypes: MovementType[] = ["purchase_in", "production_in", "production_issue", "dispatch_out", "scrap_in", "scrap_out", "adjustment_in", "adjustment_out", "return_in"];
-export const profileStockStatuses: ProfileStockStatus[] = ["available", "reserved", "dispatched", "rejected", "scrap"];
+export const profileStockStatuses: ProfileStockStatus[] = ["available", "reserved", "dispatched", "rejected", "scrap", "transformed"];
 export const machineTypes: MachineType[] = ["extrusion_press", "aging_oven", "powder_coating_line", "anodizing_line", "cutting_machine", "packing_station", "other"];
 export const machineStatuses: MachineStatus[] = ["operational", "maintenance", "breakdown", "idle"];
 export const productionJobStatuses: ProductionJobStatus[] = ["planned", "ready", "in_progress", "completed", "on_hold", "cancelled"];

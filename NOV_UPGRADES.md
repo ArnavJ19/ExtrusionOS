@@ -16,6 +16,10 @@ Implementation records: [November batch 1](NOV_UPGRADE_BATCH_1.md) covers the fi
 
 [November batch 5](NOV_UPGRADE_BATCH_5.md) covers the last four U1 entries and the first six U2/N1 entries: NOV-026, 030, 033, 034, 038, 055, 062, 069, 070, and 076, as bounded assurance pilots under /tasks/assurance.
 
+[November batch 6](NOV_UPGRADE_BATCH_6.md) covers delivery ranks 51 to 60: NOV-008, 021, 027, 058, 060, 063, 068, 079, 081, and 090, as order lifecycle pilots under /tasks/lifecycle plus shared form defaults, compact headers and visible table headings.
+
+[November batch 7](NOV_UPGRADE_BATCH_7.md) covers delivery ranks 61 to 70: NOV-003, 009, 010, 011, 017, 025, 053, 054, 059, and 089, as improvement workflows under /tasks/improvement plus shell search, record previews, repeat previous, in-task masters, bundle paste and task-led scanning.
+
 ## Purpose and boundaries
 
 Employees should be able to identify their next useful task, find the right source record, enter new facts once, understand a decision, and pass complete work to the next team. Management should be able to see commitments, blockers, material movement, ownership, and outcomes without assembling a parallel spreadsheet.

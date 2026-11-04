@@ -1,319 +1,128 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Camera, KeySquare, ShieldCheck } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { Camera, CameraOff, KeySquare, ShieldCheck, Trash2 } from "lucide-react";
 import { Html5QrcodeScanner } from "html5-qrcode";
-import { createClient } from "@/lib/supabase/browser";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { parseQrPayload } from "@/lib/qr/payload";
+import { recordScanSessionAction, resolveScanAction, type ScanResolution, type ScanSessionResult } from "@/lib/actions/scan";
+import { SCAN_TASKS, type ScanTask } from "@/lib/qr/scan-task";
 
-type QrEntity = {
-  qrId: string;
-  entityType: string;
-  entityId: string;
-  qrValue: string;
-  label: string | null;
-  status: string;
-  expiresAt: string | null;
-  details: Record<string, unknown> | null;
-};
+type Mode = "lookup" | ScanTask;
+type SessionItem = { code: string; result: Extract<ScanResolution, { ok: true }>; at: string };
 
-const ENTITY_TABLES: Record<string, { table: string; select: string }> = {
-  profile: { table: "aluminium_profiles", select: "id, profile_code, profile_name, section_weight_kg_per_m" },
-  die: { table: "dies", select: "id, die_number, die_status, rack_location" },
-  billet_batch: { table: "billet_batches", select: "id, batch_number, alloy, temper, status" },
-  inventory_batch: { table: "profile_stock_batches", select: "id, bundle_number, status, quantity_pieces, total_weight_kg" },
-  production_job: { table: "production_jobs", select: "id, job_number, status, machine_id" },
-  dispatch_package: { table: "packing_list_items", select: "id, bundle_number, number_of_pieces, gross_weight_kg, net_weight_kg" },
-  dispatch: { table: "dispatches", select: "id, dispatch_number, delivery_status, transporter_name, vehicle_number" },
-  inventory_item: { table: "inventory_items", select: "id, item_code, item_name, current_stock, unit, location" },
-  order: { table: "orders", select: "id, order_number, current_stage, expected_dispatch_date" },
-  quote: { table: "quotes", select: "id, quote_number, status, quote_date, grand_total" },
-  certificate: { table: "technical_documents", select: "id, file_name, document_type, approval_status, expiry_date" },
-  machine: { table: "machines", select: "id, machine_code, machine_name, status" },
-  maintenance: { table: "maintenance_schedules", select: "id, machine_id, machine_type, maintenance_type, status, next_due_date" },
-  document: { table: "technical_documents", select: "id, file_name, document_type, approval_status" }
-};
+const readable = (value: unknown) => value === null || value === undefined || value === "" ? "Not recorded" : String(value).replace(/_/g, " ");
+const time = () => new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
+// NOV-017: a scan identifies the record and leads into its permitted task. Every code is resolved on
+// the server under the signed-in company; typing the code is always available.
 export default function QRScannerPage() {
-  const supabase = createClient();
-  const [mode, setMode] = useState<"camera" | "manual" | null>(null);
+  const [mode, setMode] = useState<Mode>("lookup");
+  const [camera, setCamera] = useState(false);
   const [manualCode, setManualCode] = useState("");
-  const [error, setError] = useState("");
-  const [entity, setEntity] = useState<QrEntity | null>(null);
   const [processing, setProcessing] = useState(false);
-  const [actor, setActor] = useState<{ userId: string; companyId: string } | null>(null);
+  const [message, setMessage] = useState<{ tone: "error" | "info"; text: string } | null>(null);
+  const [result, setResult] = useState<Extract<ScanResolution, { ok: true }> | null>(null);
+  const [session, setSession] = useState<SessionItem[]>([]);
+  const [reviewing, setReviewing] = useState(false);
+  const [outcome, setOutcome] = useState<ScanSessionResult | null>(null);
+  const lastDecoded = useRef<{ code: string; at: number } | null>(null);
+  const handler = useRef<(code: string) => void>(() => undefined);
 
-  useEffect(() => {
-    const loadActor = async () => {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase.from("app_users").select("company_id").eq("id", user.id).single();
-      if (data?.company_id) {
-        setActor({ userId: user.id, companyId: data.company_id });
-      }
-    };
-    loadActor();
-  }, [supabase]);
-
-  async function resolveCode(rawCode: string) {
-    const code = rawCode.trim();
-    if (!code) return;
-    if (!actor) {
-      setEntity(null);
-      setError("User/company context is still loading. Please try again in a moment.");
-      return;
-    }
-    setProcessing(true);
-    setError("");
-    const parsedPayload = parseQrPayload(code);
-    if (parsedPayload?.companyId && parsedPayload.companyId !== actor.companyId) {
-      setEntity(null);
-      setError("This QR belongs to another company and cannot be opened.");
-      setProcessing(false);
-      return;
-    }
-
-    const qrQuery = await supabase
-      .from("qr_codes")
-      .select("id, entity_type, entity_id, qr_value, label, status, expires_at, company_id")
-      .eq("qr_value", code)
-      .eq("company_id", actor.companyId)
-      .maybeSingle();
-
-    let qr = qrQuery.data;
-    if (!qr && parsedPayload) {
-      const byParsedEntity = await supabase
-        .from("qr_codes")
-        .select("id, entity_type, entity_id, qr_value, label, status, expires_at, company_id")
-        .eq("entity_id", parsedPayload.entityId)
-        .eq("entity_type", parsedPayload.entityType)
-        .eq("company_id", actor.companyId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      qr = byParsedEntity.data;
-    }
-    if (!qr && isUuid(code)) {
-      const byEntity = await supabase
-        .from("qr_codes")
-        .select("id, entity_type, entity_id, qr_value, label, status, expires_at, company_id")
-        .eq("entity_id", code)
-        .eq("company_id", actor.companyId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      qr = byEntity.data;
-    }
-
-    if (!qr) {
-      setEntity(null);
-      setError("QR not found or not linked to an active ERP entity.");
-      setProcessing(false);
-      return;
-    }
-
-    if (qr.expires_at && new Date(qr.expires_at) < new Date()) {
-      setEntity(null);
-      setError("This QR code has expired and cannot be used for operations.");
-      setProcessing(false);
-      return;
-    }
-
-    const entityType = String(qr.entity_type);
-    const entityId = String(qr.entity_id);
-    const entityConfig = ENTITY_TABLES[entityType];
-    let details: Record<string, unknown> | null = null;
-
-    if (entityConfig) {
-      const detailsResult = await supabase
-        .from(entityConfig.table)
-        .select(entityConfig.select)
-        .eq("id", entityId)
-        .eq("company_id", actor.companyId)
-        .maybeSingle();
-      details = (detailsResult.data as Record<string, unknown> | null) ?? null;
-    }
-
-    setEntity({
-      qrId: String(qr.id),
-      entityType,
-      entityId,
-      qrValue: String(qr.qr_value),
-      label: (qr.label as string | null) ?? null,
-      status: String(qr.status),
-      expiresAt: (qr.expires_at as string | null) ?? null,
-      details
-    });
-    setMode(null);
-    setProcessing(false);
-
-    await supabase.from("scan_events").insert({
-      company_id: actor.companyId,
-      qr_code_id: qr.id,
-      entity_type: entityType,
-      entity_id: entityId,
-      scanned_by: actor.userId,
-      action_type: "viewed",
-      metadata_json: { source: mode === "camera" ? "camera" : "manual", scanned_value: code }
-    });
-    await supabase.from("qr_codes").update({ last_scanned_at: new Date().toISOString() }).eq("id", qr.id).eq("company_id", actor.companyId);
+  async function handle(raw: string) {
+    const code = raw.trim();
+    if (!code || processing) return;
+    setProcessing(true); setMessage(null);
+    try {
+      const resolved = await resolveScanAction(code);
+      if (!resolved.ok) { setMessage({ tone: "error", text: resolved.error }); return; }
+      if (mode === "lookup") { setResult(resolved); setCamera(false); return; }
+      if (!SCAN_TASKS[mode].accepts.includes(resolved.entityType)) { setMessage({ tone: "error", text: `${resolved.entityTypeLabel} ${resolved.label} is not part of a ${SCAN_TASKS[mode].label.toLowerCase()}.` }); return; }
+      const duplicate = session.find(item => item.result.entityType === resolved.entityType && item.result.entityId === resolved.entityId);
+      if (duplicate) { setMessage({ tone: "info", text: `${resolved.label} was already scanned at ${duplicate.at}. It is listed once.` }); return; }
+      setSession(current => [{ code, result: resolved, at: time() }, ...current].slice(0, 100));
+      setOutcome(null);
+      setMessage({ tone: "info", text: `${resolved.label} added${resolved.warnings.length ? ` with ${resolved.warnings.length} warning(s)` : ""}. Scan the next label.` });
+    } catch { setMessage({ tone: "error", text: "The scan could not be checked. Retry, or type the code." }); }
+    finally { setProcessing(false); setManualCode(""); }
   }
+  useEffect(() => {
+    handler.current = (code: string) => {
+      // The camera reports the same label many times a second; one read per label every 3 seconds.
+      const now = Date.now();
+      if (lastDecoded.current && lastDecoded.current.code === code && now - lastDecoded.current.at < 3000) return;
+      lastDecoded.current = { code, at: now };
+      void handle(code);
+    };
+  });
 
   useEffect(() => {
+    if (!camera) return;
     let scanner: Html5QrcodeScanner | null = null;
-    if (mode === "camera") {
-      scanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
-      scanner.render(
-        async (decodedText) => {
-          if (scanner) await scanner.clear();
-          await resolveCode(decodedText);
-        },
-        () => {}
-      );
-    }
-    return () => {
-      if (scanner) scanner.clear().catch(() => {});
-    };
-  }, [mode]);
+    try {
+      scanner = new Html5QrcodeScanner("qr-reader", { fps: 8, qrbox: { width: 240, height: 240 } }, false);
+      scanner.render(decoded => handler.current(decoded), () => undefined);
+    } catch { setCamera(false); setMessage({ tone: "error", text: "The camera could not start. Allow camera access, or type the code below." }); }
+    return () => { scanner?.clear().catch(() => undefined); };
+  }, [camera]);
 
-  const title = useMemo(() => {
-    if (!entity) return "";
-    return entity.label || entity.entityId;
-  }, [entity]);
-
-  async function recordAction(actionType: "loaded_for_dispatch" | "stock_checked" | "die_checked") {
-    if (!entity || !actor) return;
-    const { error: insertError } = await supabase.from("scan_events").insert({
-      company_id: actor.companyId,
-      qr_code_id: entity.qrId,
-      entity_type: entity.entityType,
-      entity_id: entity.entityId,
-      scanned_by: actor.userId,
-      action_type: actionType
-    });
-    if (insertError) {
-      setError(insertError.message);
-      return;
-    }
-    setEntity(null);
-    setManualCode("");
+  function changeMode(next: Mode) {
+    if (session.length && next !== mode && !window.confirm("Switching task clears the unrecorded scans in this session. Continue?")) return;
+    setMode(next); setSession([]); setResult(null); setOutcome(null); setMessage(null); setReviewing(false);
+  }
+  async function record() {
+    if (mode === "lookup" || !session.length || processing) return;
+    setProcessing(true);
+    try {
+      const response = await recordScanSessionAction({ task: mode, codes: session.map(item => item.code).reverse() });
+      setOutcome(response);
+      if (response.ok) { setSession([]); setReviewing(false); }
+    } catch { setOutcome({ ok: false, error: "The result of recording is unknown. Check the scan history before recording again." }); }
+    finally { setProcessing(false); }
   }
 
-  return (
-    <div className="mx-auto flex min-h-[80vh] max-w-md flex-col pt-4">
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-black text-slate-900">Shop Floor Scanner</h1>
-        <p className="mt-1 text-sm text-slate-500">Scan real QR records and log tracked actions</p>
+  return <div className="mx-auto max-w-xl space-y-4 pt-2">
+    <div className="text-center"><h1 className="text-2xl font-black text-slate-900">Shop Floor Scanner</h1><p className="mt-1 text-sm text-slate-500">Scan a label to open its task, or check a set of labels in one session.</p></div>
+    <label className="block space-y-1"><span className="form-label">What are you doing?</span>
+      <select className="form-input" value={mode} onChange={event => changeMode(event.target.value as Mode)}><option value="lookup">Look up one record</option>
+        {(Object.keys(SCAN_TASKS) as ScanTask[]).map(task => <option key={task} value={task}>{SCAN_TASKS[task].label} (several labels)</option>)}</select></label>
+    {message ? <p role={message.tone === "error" ? "alert" : "status"} className={`rounded-xl border px-3 py-2 text-sm font-semibold ${message.tone === "error" ? "border-red-200 bg-red-50 text-red-800" : "border-slate-200 bg-slate-50 text-slate-800"}`}>{message.text}</p> : null}
+
+    {!result ? <>
+      <div className="flex gap-2"><Button type="button" className="flex-1" variant={camera ? "secondary" : undefined} onClick={() => setCamera(value => !value)}>{camera ? <><CameraOff className="mr-2 h-4 w-4" />Stop camera</> : <><Camera className="mr-2 h-4 w-4" />Open camera</>}</Button></div>
+      {camera ? <div className="overflow-hidden rounded-3xl border-4 border-slate-900 bg-white p-3"><div id="qr-reader" className="w-full overflow-hidden rounded-xl" /><p className="mt-2 text-xs text-slate-600">Poor light or a damaged label? Type the code below instead.</p></div> : null}
+      <form onSubmit={event => { event.preventDefault(); void handle(manualCode); }} className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4">
+        <label className="block space-y-1"><span className="form-label flex items-center gap-2"><KeySquare className="h-4 w-4" />Type or paste the code</span>
+          <input className="form-input text-center font-mono font-bold uppercase tracking-wider" value={manualCode} maxLength={200} autoComplete="off" autoCapitalize="characters" placeholder="Label code or record ID" onChange={event => setManualCode(event.target.value)} /></label>
+        <Button type="submit" className="w-full" disabled={!manualCode.trim() || processing}>{processing ? "Checking..." : "Check code"}</Button>
+      </form>
+    </> : null}
+
+    {result ? <section aria-label="Scanned record" className="space-y-4 overflow-hidden rounded-3xl border-2 border-emerald-600 bg-white">
+      <div className="flex items-center gap-3 bg-emerald-600 p-4 text-white"><ShieldCheck className="h-6 w-6" /><div><p className="text-xs font-bold uppercase tracking-wider text-emerald-100">Verified {result.entityTypeLabel}</p><p className="text-lg font-black">{result.label}</p></div></div>
+      <div className="space-y-4 px-4 pb-4">
+        {result.warnings.length ? <ul aria-label="Warnings" className="space-y-2">{result.warnings.map(warning => <li key={warning.text} className={`rounded-xl border p-3 text-sm font-semibold ${warning.tone === "critical" ? "border-red-200 bg-red-50 text-red-900" : "border-amber-200 bg-amber-50 text-amber-950"}`}>{warning.text}</li>)}</ul> : null}
+        <dl className="grid grid-cols-2 gap-3 text-sm">{Object.entries(result.details).map(([key, value]) => <div key={key} className="min-w-0"><dt className="text-xs font-bold uppercase text-slate-500">{key.replace(/_/g, " ")}</dt><dd className="break-words text-slate-900">{readable(value)}</dd></div>)}</dl>
+        {result.actions.length ? <div className="space-y-2"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">Next steps</p>{result.actions.map(action => <Link key={action.href + action.label} href={action.href} className="flex min-h-12 items-center justify-between rounded-xl bg-slate-900 px-4 text-sm font-bold text-white">{action.label}<span aria-hidden="true">→</span></Link>)}</div>
+          : <p className="text-sm text-slate-600">No task for this record is available to your role. Search for it to see more.</p>}
+        <p className="text-xs text-slate-500">A label shows identity, not physical custody. Each task screen checks the current status again before any change.</p>
+        <Button type="button" variant="secondary" className="w-full" onClick={() => { setResult(null); setMessage(null); }}>Scan another label</Button>
       </div>
+    </section> : null}
 
-      {error ? <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">{error}</div> : null}
-
-      {!mode && !entity ? (
-        <div className="flex flex-1 flex-col justify-center gap-4">
-          <button onClick={() => setMode("camera")} className="flex flex-col items-center justify-center rounded-3xl bg-slate-900 p-10 text-white shadow-xl transition hover:bg-slate-800 active:scale-95">
-            <Camera className="mb-4 h-16 w-16 text-orange" />
-            <span className="text-xl font-bold">Open Camera</span>
-            <span className="mt-2 text-sm text-slate-400">{processing ? "Resolving..." : "Tap to scan QR Code"}</span>
-          </button>
-
-          <button onClick={() => setMode("manual")} className="mt-4 flex items-center justify-center gap-3 rounded-2xl border-2 border-slate-200 bg-white p-4 text-slate-700 shadow-sm transition hover:border-slate-300 active:scale-95">
-            <KeySquare className="h-5 w-5 text-slate-400" />
-            <span className="font-bold">Enter Code Manually</span>
-          </button>
-        </div>
-      ) : null}
-
-      {mode === "camera" ? (
-        <div className="animate-in fade-in zoom-in-95 flex flex-1 flex-col">
-          <div className="relative overflow-hidden rounded-3xl border-4 border-slate-900 bg-white p-4 shadow-2xl">
-            <div id="qr-reader" className="w-full overflow-hidden rounded-xl"></div>
-          </div>
-          <div className="mt-6 flex justify-between gap-4">
-            <Button variant="secondary" className="flex-1" onClick={() => setMode(null)}>Cancel Scan</Button>
-          </div>
-        </div>
-      ) : null}
-
-      {mode === "manual" ? (
-        <Card className="animate-in fade-in slide-in-from-bottom-4 mt-8 rounded-3xl border-2 border-slate-200 shadow-xl">
-          <CardContent className="pt-6">
-            <form onSubmit={(event) => { event.preventDefault(); resolveCode(manualCode); }} className="space-y-4">
-              <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">QR Code Value</label>
-                <input type="text" autoFocus className="w-full rounded-xl border-2 border-slate-200 p-4 text-center text-xl font-black uppercase tracking-widest transition focus:border-orange focus:ring-0" placeholder="Paste qr_value or entity UUID" value={manualCode} onChange={(event) => setManualCode(event.target.value)} />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <Button type="button" variant="ghost" className="flex-1" onClick={() => setMode(null)}>Cancel</Button>
-                <Button type="submit" disabled={!manualCode.trim() || processing} className="flex-1 bg-slate-900 text-white hover:bg-slate-800">{processing ? "Searching..." : "Search"}</Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {entity ? (
-        <div className="animate-in slide-in-from-bottom-8 mb-auto mt-auto">
-          <Card className="overflow-hidden rounded-3xl border-2 border-green-600 shadow-2xl">
-            <div className="flex items-center justify-between bg-green-600 p-4 text-white">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-green-700 p-2"><ShieldCheck className="h-6 w-6 text-white" /></div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-green-200">Verified {entity.entityType.replace(/_/g, " ")}</p>
-                  <p className="text-lg font-black">{title}</p>
-                </div>
-              </div>
-            </div>
-            <CardContent className="space-y-6 p-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                  <p className="mb-1 text-xs font-bold text-slate-500">QR Status</p>
-                  <p className="text-sm font-bold capitalize text-slate-900">{entity.status.replace(/_/g, " ")}</p>
-                </div>
-                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                  <p className="mb-1 text-xs font-bold text-slate-500">Expires</p>
-                  <p className="text-sm font-bold text-slate-900">{entity.expiresAt ? new Date(entity.expiresAt).toLocaleDateString() : "-"}</p>
-                </div>
-              </div>
-
-              {entity.details ? (
-                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Linked Entity Snapshot</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(entity.details).map(([key, value]) => (
-                      <div key={key}>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{key.replace(/_/g, " ")}</p>
-                        <p className="text-xs text-slate-800">{String(value ?? "-")}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="space-y-3 border-t border-slate-100 pt-4">
-                <p className="text-center text-xs font-bold uppercase tracking-wider text-slate-500">Record Scan Event</p>
-                <Button onClick={() => recordAction("loaded_for_dispatch")} className="flex h-12 w-full justify-between rounded-xl bg-slate-900 px-6 font-bold text-white hover:bg-slate-800">
-                  Log Dispatch Scan <ArrowRight className="h-5 w-5" />
-                </Button>
-                <Button onClick={() => recordAction("stock_checked")} variant="secondary" className="h-12 w-full rounded-xl border border-slate-200 font-bold">
-                  Log Stock Audit Scan
-                </Button>
-                <Button onClick={() => recordAction("die_checked")} variant="secondary" className="h-12 w-full rounded-xl border border-slate-200 font-bold">
-                  Log Die Check Scan
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          <button onClick={() => setEntity(null)} className="mt-6 w-full text-sm font-bold text-slate-500 hover:text-slate-900">Scan Another Item</button>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function isUuid(value: string) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+    {mode !== "lookup" ? <section aria-label={`${SCAN_TASKS[mode].label} session`} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+      <h2 className="font-bold">{SCAN_TASKS[mode].label}: {session.length} label(s) scanned</h2>
+      {session.length ? <ul className="space-y-2">{session.map(item => <li key={`${item.result.entityType}:${item.result.entityId}`} className="flex items-start justify-between gap-3 rounded-xl bg-slate-50 p-3 text-sm">
+        <div className="min-w-0"><p className="font-bold">{item.result.label} <span className="font-normal text-slate-500">· {item.result.entityTypeLabel} · {item.at}</span></p>
+          {item.result.warnings.map(warning => <p key={warning.text} className={warning.tone === "critical" ? "text-red-800" : "text-amber-900"}>{warning.text}</p>)}</div>
+        <button type="button" className="rounded-lg p-2 text-red-700 hover:bg-red-50" aria-label={`Remove ${item.result.label} from this session`} onClick={() => setSession(current => current.filter(entry => entry !== item))}><Trash2 className="h-4 w-4" /></button></li>)}</ul>
+        : <p className="text-sm text-slate-600">Scan labels one after another. Each is checked when scanned and again when you record the session.</p>}
+      {session.length && !reviewing ? <Button type="button" className="w-full" onClick={() => setReviewing(true)}>Review {session.length} scan(s)</Button> : null}
+      {reviewing ? <div className="space-y-2 rounded-xl border border-slate-300 p-3"><p className="text-sm">Log {session.length} {SCAN_TASKS[mode].label.toLowerCase()} scan event(s) by you now? Logging records the scans only; it does not change stock, die or dispatch status. {mode === "loaded_for_dispatch" ? "Held or consumed bundles are refused." : "Warnings are kept with each scan."}</p>
+        <div className="flex gap-2"><Button type="button" disabled={processing} onClick={() => void record()}>{processing ? "Logging..." : "Log these scans"}</Button><Button type="button" variant="secondary" disabled={processing} onClick={() => setReviewing(false)}>Back to scanning</Button></div></div> : null}
+      {outcome ? outcome.ok ? <div role="status" className="space-y-1 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-950"><p className="font-bold">{outcome.recorded.length} scan event(s) logged.</p>
+          {outcome.refused.map(item => <p key={item.code} className="text-red-800">Not logged: {item.reason}</p>)}</div>
+        : <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{outcome.error}</p> : null}
+    </section> : null}
+  </div>;
 }

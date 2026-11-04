@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { fetchQrEntityDetails, QR_ENTITY_LABELS, QR_ENTITY_TYPES } from "@/lib/qr/entities";
-import { buildQrPayload } from "@/lib/qr/payload";
+import { buildQrPayloadV2 } from "@/lib/qr/payload";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
 
@@ -34,7 +34,8 @@ export async function POST(request: Request) {
         company_id: context.companyId,
         entity_type: parsed.data.entity_type,
         entity_id: parsed.data.entity_id,
-        qr_value: buildQrPayload({ companyId: context.companyId, entityType: parsed.data.entity_type, entityId: parsed.data.entity_id, nonce: crypto.randomUUID() }),
+        // NOV-017: new labels use version 2 (no company identity on the label); version 1 labels still scan.
+        qr_value: buildQrPayloadV2(parsed.data.entity_type, parsed.data.entity_id, crypto.randomUUID()),
         status: "active",
         expires_at: expiresAt,
         label,

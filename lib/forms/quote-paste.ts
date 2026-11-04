@@ -33,11 +33,11 @@ const finishes = new Map([
   ["pvdf", "pvdf"], ["other", "other"],
 ]);
 
-function delimiterFor(header: string) {
+export function delimiterFor(header: string) {
   return header.includes("\t") ? "\t" : ",";
 }
 
-function splitDelimitedLine(line: string, delimiter: string): { cells: string[]; error: string | null } {
+export function splitDelimitedLine(line: string, delimiter: string): { cells: string[]; error: string | null } {
   const cells: string[] = [];
   let cell = "";
   let quoteStarted = false;

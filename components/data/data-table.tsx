@@ -115,12 +115,13 @@ export function DataTable<T>({ rows, columns, mobileColumns = columns, getRowId,
           );
         })}
       </div>
-      <div className="hidden overflow-x-auto md:block">
+      {/* NOV-090: headings stay visible inside a bounded scroll area, and the identifier column stays visible while scrolling sideways. */}
+      <div className="hidden max-h-[70vh] overflow-auto overscroll-contain md:block">
         <table className="industrial-table min-w-[920px]">
           <thead>
             <tr>
               {columns.map((column) => (
-                <th key={column.id} scope="col" className={cn(column.className, column.numeric && "text-right tabular-nums [&_button]:ml-auto", column.sticky && "sticky left-0 z-20 bg-white")} style={column.width ? { width: column.width, minWidth: column.width } : undefined}>
+                <th key={column.id} scope="col" className={cn(column.className, column.numeric && "text-right tabular-nums [&_button]:ml-auto", "sticky top-0 z-30 bg-neutral-50 shadow-[inset_0_-1px_0_rgb(229,229,229)]", column.sticky && "left-0 z-40 border-r border-neutral-200")} style={column.width ? { width: column.width, minWidth: column.width } : undefined}>
                   {column.sortable ? <SortableColumnHeader label={column.header} column={column.id} sortColumn={sortColumn} sortDirection={sortDirection} onSort={onSort} /> : column.header}
                 </th>
               ))}
@@ -131,7 +132,7 @@ export function DataTable<T>({ rows, columns, mobileColumns = columns, getRowId,
               const clickable = Boolean(onRowClick || getRowHref);
               return (
                  <tr key={getRowId(row)} role={clickable ? "link" : undefined} tabIndex={clickable ? 0 : undefined} aria-label={clickable ? `Open record ${rowLabel(row)}` : undefined} className={cn(clickable && "cursor-pointer transition hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange")} onClick={clickable ? (event) => { if (!isNestedControl(event.target, event.currentTarget)) openRow(row); } : undefined} onKeyDown={clickable ? (event) => { if (event.target === event.currentTarget && isRowActivationKey(event.key)) { event.preventDefault(); openRow(row); } } : undefined}>
-                  {columns.map((column) => <td key={column.id} className={cn(column.cellClassName, column.numeric && "text-right tabular-nums", column.sticky && "sticky left-0 z-10 bg-white")} style={column.width ? { width: column.width, minWidth: column.width } : undefined}>{column.accessor(row)}</td>)}
+                  {columns.map((column) => <td key={column.id} className={cn(column.cellClassName, column.numeric && "text-right tabular-nums", column.sticky && "sticky left-0 z-10 border-r border-neutral-200 bg-white")} style={column.width ? { width: column.width, minWidth: column.width } : undefined}>{column.accessor(row)}</td>)}
                 </tr>
               );
             })}

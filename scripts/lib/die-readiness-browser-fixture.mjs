@@ -48,6 +48,7 @@ export async function createDieReadinessBrowserFixture({styled=false}={}){
           if(call.sort)rows=[...rows].sort((a,b)=>String(a[call.sort]).localeCompare(String(b[call.sort])));if(call.limit)rows=rows.slice(0,call.limit);
           return {data:single?rows[0]||null:rows,error:null,count:rows.length}}
         return q}}}`:args.path==="actions"?`
+      export const improvementAction=async()=>({success:false,unavailable:true,error:'Improvement reads are outside this fixture'});export const inTaskVendorAction=async()=>({kind:'error',error:'Vendor creation is outside this fixture'});export const inTaskCustomerAction=async()=>({kind:'error',error:'Customer creation is outside this fixture'});
       const blocked=async input=>{window.__die.writes.push(input);throw new Error('Browser fixture does not execute production writes')};
       export const saveProductionJobAction=input=>new Promise((resolve,reject)=>window.__die.writes.push({input,resolve,reject}));
       export const updateProductionJobStatusAction=blocked,saveDispatchAction=blocked,saveFoundryBatchAction=blocked,savePackagingJobAction=blocked,saveOrderAction=blocked,saveManualExpenseAction=blocked;`

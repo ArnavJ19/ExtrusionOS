@@ -50,7 +50,9 @@ export function formSection(moduleKey: string, field: Field, values: Record<stri
 }
 
 export type FieldProvenance = {
-  kind: "source" | "calculated";
+  kind: "source" | "calculated" | "default";
+  /** NOV-008: which default tier suggested the value (lib/forms/visible-defaults). */
+  tier?: "source" | "customer" | "company" | "personal" | "system";
   sourceId: string;
   sourceLabel: string;
   revision?: string;

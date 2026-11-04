@@ -33,6 +33,11 @@ import { draftDefinition, isDraftModule, type DraftValue } from "@/lib/forms/for
 import { canUseOperatorCommand } from "@/lib/operations/operator-workflows";
 import { BilletPlanNote } from "@/components/modules/billet-plan-note";
 import { PageHeader } from "@/components/layout/page-header";
+import { RepeatPreviousPicker, type RepeatSource } from "@/components/forms/repeat-previous-picker";
+import { DieServiceNote } from "@/components/modules/improvement/die-service-note";
+import { InTaskVendor } from "@/components/modules/vendors/in-task-vendor";
+import { InTaskCustomer } from "@/components/modules/customers/in-task-customer";
+import { repeatFamilyFor, repeatLineageFields } from "@/lib/forms/repeat-previous";
 import { RecordIdentityStrip } from "@/components/forms/record-identity-strip";
 import { FormActionBar } from "@/components/forms/form-action-bar";
 import { lookupOptionContext } from "@/lib/ui/lookup-option";
@@ -41,6 +46,7 @@ import { FormIssueSummary } from "@/components/forms/form-issue-summary";
 import { PlanningQuantityEntry } from "@/components/forms/planning-quantity-entry";
 import { applyFieldSuggestions, focusFormField, formFieldId, formIssues, formSection, formValidationValues, markFieldOverride, stageRequirementIssues, type FieldProvenance, type FormIssue } from "@/lib/ui/form-workflow";
 import type { PlanningQuantityBasis } from "@/lib/calculations/planning-quantity";
+import { applyVisibleDefaults, defaultOriginText, personalDefaultKey, personalDefaultKeys, systemDateDefaults, tierOf } from "@/lib/forms/visible-defaults";
 
 type LookupOption = { value: string; label: string; profile_id?: string | null; die_status?: string | null;
   production_job_id?: string | null; status?: string | null; output_weight_kg?: number | string | null; received_date?: string | null; [key: string]: any };
@@ -142,9 +148,16 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
   const [issues, setIssues] = useState<FormIssue[]>([]);
   const validationAttempted = useRef(false);
   const [operationMessage, setOperationMessage] = useState("");
-  const [provenance, setProvenance] = useState<Record<string, FieldProvenance>>({});
+  // NOV-008: pre-filled dates are labelled suggestions, not silent values.
+  const [provenance, setProvenance] = useState<Record<string, FieldProvenance>>(() => recordId ? {} : applyVisibleDefaults({}, {}, "system",
+    systemDateDefaults(config.fields ?? [], config.defaultValues ?? {}, getBusinessDateBoundaries().today), { id: "system:date", label: "today's business date (IST)" }, new Date().toISOString()).provenance);
+  const [personalDefaults, setPersonalDefaults] = useState<Record<string, string>>({});
+  const [defaultMessage, setDefaultMessage] = useState<Record<string, string>>({});
   const provenanceRef = useRef(provenance);
   const [quantityBasis, setQuantityBasis] = useState<PlanningQuantityBasis | null>(null);
+  // NOV-009: the record this new one was started from, with the values copied from it.
+  const repeatFamily = !recordId && moduleKey !== "dispatches" ? repeatFamilyFor(moduleKey) : null;
+  const [repeatSource, setRepeatSource] = useState<RepeatSource | null>(null);
   const productionAutofillRequest = useRef(0);
   const billetsRequest = useRef(0);
   // NOV-013: new records in selected operational forms keep a device draft of typed entries.
@@ -173,6 +186,33 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
     setFieldProvenance(applyFieldSuggestions({}, previous, suggestions, source, refreshedAt).provenance);
     setForm((current) => applyFieldSuggestions(current, previous, suggestions, source, refreshedAt).values);
     setQuantityBasis(null);
+  }
+
+  function applyRepeat(source: RepeatSource) {
+    const suggestions = { ...source.draft.values, ...source.draft.refreshed };
+    applySuggestions(suggestions, { id: `repeat:${source.id}`, label: `${source.label} (previous ${source.family === "production_jobs" ? "job" : "receipt"})` });
+    setRepeatSource(source);
+    const next = { ...form, ...suggestions };
+    // Copied selections are re-read by exact id so their labels show even outside the first lookup page.
+    for (const field of (config.fields ?? []).filter((item) => item.lookup && item.name in source.draft.values)) searchLookup(field, "", next);
+  }
+
+  // The lineage link is a record of where values came from; a failure never undoes the saved record.
+  async function recordRepeatLineage(targetId: string, finalValues: Record<string, unknown>) {
+    if (!repeatSource) return;
+    const fields = repeatLineageFields(repeatSource.family, repeatSource.draft.copied, finalValues, repeatSource.draft.values);
+    if (!fields.length) return;
+    const { error: linkError } = await supabase.rpc("record_repeat_link" as any, { p_resource: repeatSource.family, p_source: repeatSource.id, p_target: targetId, p_fields: fields } as any);
+    if (linkError) toast.message("Saved. The link to the previous record could not be recorded.");
+  }
+
+  // NOV-010: a master created or matched in the dialog is added to this field's choices and selected;
+  // every other entry in the form stays as typed.
+  function selectCreatedMaster(field: FieldConfig, row: Record<string, any>) {
+    const option = toLookupOptions([row], field.lookup!.labelFields)[0];
+    if (!option) return;
+    setLookups((current) => ({ ...current, [field.name]: [option, ...(current[field.name] ?? []).filter((item) => item.value !== option.value)] }));
+    handleFieldChange(field, option.value);
   }
 
   function showSaveFailure(message: string) {
@@ -267,8 +307,46 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
       await fetchLookupOptions(field, "", String(loadedForm[field.name] ?? ""), loadedForm)
     ] as const));
     setLookups(Object.fromEntries(lookupEntries));
+    // Personal defaults are a convenience; an unavailable defaults read never blocks the form.
+    if (!recordId) await loadPersonalDefaults(loadedForm).catch(() => undefined);
     // A next-action link carries the source order; autofill rereads it under the user's company scope.
     if (prefillOrderId) await loadProductionOrderAutofill(prefillOrderId);
+  }
+
+  // NOV-008: personal defaults fill only empty fields and never displace a source value or an override.
+  async function loadPersonalDefaults(loadedForm: Record<string, any>) {
+    const keys = personalDefaultKeys(moduleKey).filter((key) => (config.fields ?? []).some((field) => personalDefaultKey(moduleKey, field.name) === key));
+    if (!keys.length) return;
+    const { data, error: defaultsError } = await supabase.rpc("form_defaults_command" as any, { p_command: "load", p_payload: { form_keys: keys } } as any);
+    if (defaultsError || !data || typeof data !== "object") return;
+    const saved = data as Record<string, string>;
+    const byField: Record<string, string> = Object.fromEntries((config.fields ?? []).flatMap((field) => { const key = personalDefaultKey(moduleKey, field.name); return key && saved[key] ? [[field.name, saved[key]]] : []; }));
+    setPersonalDefaults(byField);
+    let values: Record<string, any> = loadedForm; let next = provenanceRef.current;
+    const refreshedAt = new Date().toISOString();
+    for (const [name, value] of Object.entries(byField)) {
+      const applied = applyVisibleDefaults(values, next, "personal", { [name]: value }, { id: `personal:${name}`, label: name === "machine_id" ? "press" : name === "shift" ? "shift" : "transporter" }, refreshedAt);
+      values = applied.values; next = applied.provenance;
+    }
+    const changed = Object.keys(byField).filter((name) => next[name] !== provenanceRef.current[name]);
+    if (!changed.length) return;
+    setFieldProvenance(next);
+    setForm((current) => ({ ...current, ...Object.fromEntries(changed.map((name) => [name, values[name]])) }));
+    const machine = (config.fields ?? []).find((field) => field.name === "machine_id" && field.lookup);
+    if (machine && changed.includes("machine_id")) {
+      const options = await fetchLookupOptions(machine, "", String(values.machine_id), values);
+      setLookups((current) => ({ ...current, machine_id: options }));
+    }
+  }
+
+  async function rememberDefault(field: FieldConfig, value: unknown) {
+    const key = personalDefaultKey(moduleKey, field.name);
+    if (!key) return;
+    const text = String(value ?? "").trim();
+    const { error: saveError } = await supabase.rpc("form_defaults_command" as any, (text ? { p_command: "set", p_payload: { form_key: key, value: text } } : { p_command: "clear", p_payload: { form_key: key } }) as any);
+    if (saveError) { setDefaultMessage((current) => ({ ...current, [field.name]: saveError.message?.startsWith("NOV: ") ? saveError.message.slice(5) : "Your default could not be saved. Retry." })); return; }
+    setPersonalDefaults((current) => { const next = { ...current }; if (text) next[field.name] = text; else delete next[field.name]; return next; });
+    setDefaultMessage((current) => ({ ...current, [field.name]: text ? `Saved as your usual ${field.label.toLowerCase()} for new records.` : `Your usual ${field.label.toLowerCase()} is cleared.` }));
   }
 
   function restoreDraft(payload: Record<string, DraftValue>) {
@@ -882,6 +960,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
       } as any);
       setSaving(false);
       if (!result.success || !result.jobId) return showSaveFailure(result.success ? "Could not save production job" : result.error);
+      if (!editing) await recordRepeatLineage(result.jobId, sanitized);
       toast.success(editing ? `${config.title} updated` : `${config.title} saved`);
       router.push(`${config.basePath}/${result.jobId}`);
       router.refresh();
@@ -968,6 +1047,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
       : await supabase.from(config.table as any).insert(payload).select("id").single();
     setSaving(false);
     if (result.error || !result.data) return showSaveFailure(getErrorMessage(result.error, "Could not save record"));
+    if (!editing) await recordRepeatLineage(String(result.data.id), payload);
     await formDraft.confirmed();
     toast.success(editing ? `${config.title} updated` : `${config.title} saved`);
     router.push(`${config.basePath}/${result.data.id}`);
@@ -1012,10 +1092,20 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
         {field.type === "textarea" ? <textarea {...accessibility} className="form-input min-h-24" value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} /> : field.type === "select" ? <SearchableSelect inputId={id} ariaDescribedBy={describedBy} invalid={Boolean(issue)} ariaLabel={field.label} value={String(value)} options={fieldOptions} placeholder="Select" onChange={(nextValue) => handleFieldChange(field, nextValue)} onSearchChange={field.lookup ? (query) => searchLookup(field, query) : undefined} searching={Boolean(field.lookup && lookupSearching[field.name])} error={lookupErrors[field.name]} onRetry={field.lookup ? () => searchLookup(field, "") : undefined} disabled={field.readOnly || receiptReadOnly} /> : field.type === "checkbox" ? <input {...accessibility} className="h-6 w-6 accent-orange" type="checkbox" checked={Boolean(value)} disabled={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.checked)} /> : <input {...accessibility} className="form-input" inputMode={field.type === "number" ? (field.step === "1" ? "numeric" : "decimal") : undefined} type={field.type ?? "text"} step={field.step} value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} />}
         {issue ? <p id={`${id}-error`} className="text-sm font-semibold text-red-800">{issue.message}</p> : null}
         {source ? <div id={`${id}-source`} className="text-xs leading-5 text-neutral-600">
-          <p>{source.overridden ? "Manual override; source suggests" : source.kind === "calculated" ? "Calculated from" : "Copied from"} {source.sourceLabel}{source.revision ? ` (source revision ${source.revision})` : ""}{source.overridden ? `: ${String(source.suggested ?? "Not captured")}` : ""}.</p>
-          <p>Refreshed {new Date(source.refreshedAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" })}. Draft guidance; the server checks current eligibility when saved.</p>
-          {source.overridden ? <button type="button" className="min-h-11 rounded-lg px-2 font-semibold underline" onClick={() => { update(field.name, source.suggested as string); setFieldProvenance(markFieldOverride(provenanceRef.current, field.name, source.suggested)); setQuantityBasis(null); }}>Restore source value for {field.label}</button> : null}
+          {source.kind === "default"
+            ? <p>{source.overridden ? `Changed by you; the suggestion was ${String(source.suggested ?? "not set")} (${defaultOriginText(tierOf(source), source.sourceLabel)})` : defaultOriginText(tierOf(source), source.sourceLabel)}.</p>
+            : <p>{source.overridden ? "Manual override; source suggests" : source.kind === "calculated" ? "Calculated from" : "Copied from"} {source.sourceLabel}{source.revision ? ` (source revision ${source.revision})` : ""}{source.overridden ? `: ${String(source.suggested ?? "Not captured")}` : ""}.</p>}
+          {source.kind !== "default" ? <p>Refreshed {new Date(source.refreshedAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" })}. Draft guidance; the server checks current eligibility when saved.</p> : null}
+          {source.overridden ? <button type="button" className="min-h-11 rounded-lg px-2 font-semibold underline" onClick={() => { update(field.name, source.suggested as string); setFieldProvenance(markFieldOverride(provenanceRef.current, field.name, source.suggested)); setQuantityBasis(null); }}>{source.kind === "default" ? `Return to suggestion for ${field.label}` : `Restore source value for ${field.label}`}</button> : null}
         </div> : null}
+        {!editing && personalDefaultKey(moduleKey, field.name) ? <div className="flex flex-wrap items-center gap-2 text-xs">
+          {value && personalDefaults[field.name] !== String(value) ? <button type="button" className="min-h-11 rounded-lg px-2 font-semibold underline" onClick={() => void rememberDefault(field, value)}>Remember as my default</button> : null}
+          {personalDefaults[field.name] ? <button type="button" className="min-h-11 rounded-lg px-2 font-semibold text-neutral-600 underline" onClick={() => void rememberDefault(field, "")}>Forget my default</button> : null}
+          {defaultMessage[field.name] ? <span role="status" className="text-neutral-600">{defaultMessage[field.name]}</span> : null}
+        </div> : null}
+        {productionDieField && value ? <DieServiceNote dieId={String(value)} role={context.role} /> : null}
+        {field.lookup && !field.readOnly && field.lookup.table === "vendors" ? <InTaskVendor context={context} taskLabel={config.title.toLowerCase()} onSelected={(vendor) => selectCreatedMaster(field, vendor)} /> : null}
+        {field.lookup && !field.readOnly && field.lookup.table === "customers" ? <InTaskCustomer context={context} taskLabel={config.title.toLowerCase()} onSelected={(customer) => selectCreatedMaster(field, customer)} /> : null}
         {receiptField ? <p className="text-xs font-semibold text-slate-500">Select accepted output from one final receipt. Its rejected remainder stays separate.</p> : null}
         {receiptField && receiptReadOnly && value ? <p className="break-words text-xs font-semibold text-slate-700">Recorded receipt: {fieldOptions.find((option) => option.value === value)?.label ?? "Receipt details unavailable. Refresh before completing packaging."}</p> : null}
       </div>
@@ -1060,6 +1150,8 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
         <CardHeader><h2 className="section-title">Record Details</h2></CardHeader>
         <CardContent>
           <FormDraftRecovery draft={formDraft} />
+          {repeatFamily ? <div className="mb-4"><RepeatPreviousPicker family={repeatFamily} context={context} disabled={saving || loading} onApply={applyRepeat} /></div> : null}
+          {repeatSource?.draft.warnings.length ? <ul role="status" aria-label="Check before saving" className="mb-4 space-y-1 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">{repeatSource.draft.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> : null}
           <FormIssueSummary issues={issues} scope={fieldScope} container={formElement} />
           {operationMessage ? <p role="alert" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">{operationMessage} Your entries are retained.</p> : null}
           {moduleKey === "production" ? <PlanningQuantityEntry key={`${form.profile_id ?? "none"}:${form.source_line_id ?? "direct"}`} weightSourceLabel={form.source_line_id ? "Order-line technical reference" : "Current profile section weight for a direct-order planning estimate"} sourceLengthM={selectedPlanningLine?.length_per_piece_m} sectionWeight={planningWeight === null || planningWeight === undefined || planningWeight === "" || !Number.isFinite(Number(planningWeight)) || Number(planningWeight) <= 0 ? null : Number(planningWeight)} onApply={(basis, quantity) => {

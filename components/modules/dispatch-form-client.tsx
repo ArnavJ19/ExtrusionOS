@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import {z} from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, ScanLine, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, Plus, ScanLine, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -22,6 +22,10 @@ import type { SessionContext } from "@/types/app";
 import { DispatchDraftRecovery, useDispatchDraft } from "@/components/forms/dispatch-draft-recovery";
 import { OrderDeliveryContext } from "@/components/modules/dispatches/order-delivery-context";
 import { PreparedBundlePicker } from "@/components/modules/dispatches/physical-bundles";
+import { RepeatPreviousPicker, type RepeatSource } from "@/components/forms/repeat-previous-picker";
+import { repeatLineageFields } from "@/lib/forms/repeat-previous";
+import { BundlePaste } from "@/components/modules/dispatches/bundle-paste";
+import { duplicateBundleLine, type BundleLine } from "@/lib/forms/line-paste";
 
 type OrderOption = { value: string; label: string };
 type SourceState = {orderId:string;status:"loading"|"ready"|"error";rows:DispatchPreparationSource[];error:string|null};
@@ -74,6 +78,8 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
   const [reviewing, setReviewing] = useState(false);
   const reviewingRef = useRef(false);
   const [review, setReview] = useState<{ manifest: ReturnType<typeof buildDispatchReview>; fingerprint: string; orderBalance: DispatchOrderBalance } | null>(null);
+  // NOV-009: transport details repeated from a previous dispatch; bundles and documents are never copied.
+  const [repeatSource, setRepeatSource] = useState<RepeatSource | null>(null);
   const draft = useDispatchDraft(context, { orderId, dispatchDate, transporterName, vehicleNumber, driverName, driverPhone,
     ewayBillNumber, lrNumber, remarks, bundles }, (value) => {
     selectedOrderId.current = value.orderId; setOrderId(value.orderId); setInitialOption(null);
@@ -169,6 +175,19 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
     selectedOrderId.current=value;setOrderId(value);setSourceState(null);setBundles([newBundle()]);setSubmitError(null);
     if(!value)setOrderSearch("");
   }
+  function applyRepeat(source: RepeatSource) {
+    if (saving.current || locked) return;
+    const values = source.draft.values;
+    setTransporterName(values.transporter_name ?? ""); setVehicleNumber((values.vehicle_number ?? "").toUpperCase());
+    setDriverName(values.driver_name ?? ""); setDriverPhone(values.driver_phone ?? "");
+    if (source.draft.refreshed.dispatch_date) setDispatchDate(source.draft.refreshed.dispatch_date);
+    setEwayBillNumber(""); setLrNumber(""); setReview(null); setSubmitError(null);
+    if (values.order_id && values.order_id !== selectedOrderId.current) {
+      selectedOrderId.current = values.order_id; setOrderId(values.order_id);
+      setInitialOption({ value: values.order_id, label: source.labels.order_id ?? "Previous order" }); setSourceState(null); setBundles([newBundle()]);
+    }
+    setRepeatSource(source);
+  }
   function searchOrders(search:string){
     if(saving.current||locked)return;
     selectedOrderId.current="";setOrderId("");setInitialOption(null);setSourceState(null);setBundles([newBundle()]);setSubmitError(null);setOrderSearch(search);
@@ -194,6 +213,27 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
   function updateBundle(key: string, field: keyof Omit<BundleRow, "key">, value: string) {
     setBundles((current) => current.map((bundle) => bundle.key === key ? { ...bundle, [field]: value } : bundle));
   }
+  // NOV-011: appended rows replace the single blank starter row; existing entries are never overwritten.
+  function appendBundles(lines: BundleLine[]) {
+    setBundles((current) => [...current.filter((row) => row.bundle_number || row.source_line_id || row.number_of_pieces || row.gross_weight_kg), ...lines.map((line) => ({ key: crypto.randomUUID(), ...line }))]);
+    setReview(null); setSubmitError(null);
+  }
+  function duplicateBundle(key: string) {
+    setBundles((current) => { const index = current.findIndex((row) => row.key === key); if (index < 0) return current;
+      const copy = { key: crypto.randomUUID(), ...duplicateBundleLine(current[index]) }; return [...current.slice(0, index + 1), copy, ...current.slice(index + 1)]; });
+    setReview(null);
+  }
+  // Enter moves to the same field of the next bundle, adding a bundle after the last one.
+  function bundleKeyDown(event: ReactKeyboardEvent<HTMLInputElement>, index: number, field: string) {
+    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    const focusNext = () => document.querySelector<HTMLInputElement>(`[data-bundle-row="${index + 1}"][data-bundle-field="${field}"]`)?.focus();
+    if (index + 1 < bundles.length) { focusNext(); return; }
+    if (!sourceReady || !sources.length) return;
+    setBundles((current) => [...current, newBundle()]);
+    requestAnimationFrame(() => requestAnimationFrame(focusNext));
+  }
+  const nav = (index: number, field: string) => ({ "data-bundle-row": index, "data-bundle-field": field, onKeyDown: (event: ReactKeyboardEvent<HTMLInputElement>) => bundleKeyDown(event, index, field), enterKeyHint: "next" as const });
 
   async function prepareReview() {
     if (saving.current || reviewingRef.current || locked) return;
@@ -250,6 +290,11 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
         if(result?.success===false){setReview(null);setSubmitError(result.error||"Could not record dispatch.");return;}
         const confirmation=z.object({success:z.literal(true),dispatchId:z.string().uuid()}).parse(result);
         setSavedId(confirmation.dispatchId);
+        if (repeatSource) {
+          const fields = repeatLineageFields("dispatches", repeatSource.draft.copied, { order_id: orderId, transporter_name: transporterName, vehicle_number: vehicleNumber.toUpperCase(), driver_name: driverName, driver_phone: driverPhone }, { ...repeatSource.draft.values, vehicle_number: (repeatSource.draft.values.vehicle_number ?? "").toUpperCase() });
+          // The lineage is informational; a failure never undoes the recorded dispatch.
+          if (fields.length) await supabase.rpc("record_repeat_link" as any, { p_resource: "dispatches", p_source: repeatSource.id, p_target: confirmation.dispatchId, p_fields: fields } as any).then(() => undefined, () => undefined);
+        }
         draft.confirmed();
         setReview(null);
         toast.success("Dispatch recorded from operator-verified physical bundles");
@@ -274,6 +319,8 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
       {initializing ? <p role="status" className="text-sm">Checking the linked order...</p> : null}
 
       <fieldset disabled={locked} className="min-w-0 space-y-6">
+      <RepeatPreviousPicker family="dispatches" context={context} disabled={locked} onApply={applyRepeat} />
+      {repeatSource?.draft.warnings.length ? <ul role="status" aria-label="Check before loading" className="space-y-1 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">{repeatSource.draft.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> : null}
       {orderId ? <PreparedBundlePicker key={orderId} orderId={orderId} onPick={bundle => {
         if (bundles.some(row => row.bundle_number.trim().toUpperCase() === bundle.bundle_number.trim().toUpperCase())) {
           setSubmitError("That physical bundle is already on this load."); return;
@@ -303,17 +350,18 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
           {sourceError ? <div role="alert" className="space-y-2 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800"><p>{sourceError}</p><Button type="button" variant="secondary" onClick={retrySources}>Retry source check</Button></div> : null}
           {loadingSources ? <p className="text-sm font-semibold text-slate-500">Checking QC, finishing, packaging, reservations, and previously shipped quantities...</p> : null}
           {sourceReady&&!sources.length?<p className="text-sm text-slate-500">This order has no dispatch-ready material yet. Complete its stock or production handoffs, then refresh sources.</p>:null}
+          {sourceReady&&sources.length?<BundlePaste sources={sources} existingTags={bundles.map((row) => row.bundle_number)} disabled={locked} onAdd={appendBundles} />:null}
           {bundles.map((bundle, index) => {
             const selectedSource = sources.find((source) => source.id === bundle.source_line_id);
             const net = Math.max(Number(bundle.gross_weight_kg || 0) - Number(bundle.tare_weight_kg || 0), 0);
-            return <div key={bundle.key} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"><div className="mb-4 flex items-center justify-between"><p className="flex items-center gap-2 font-black text-slate-950"><ScanLine className="h-5 w-5 text-orange" /> Bundle {index + 1}</p>{bundles.length > 1 ? <button type="button" className="rounded-xl p-2 text-red-600 hover:bg-red-50" onClick={() => setBundles((current) => current.filter((row) => row.key !== bundle.key))} aria-label={`Remove bundle ${index + 1}`}><Trash2 className="h-4 w-4" /></button> : null}</div><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-              <label className="block space-y-1.5"><span className="form-label">Scan / Bundle ID *</span><input className="form-input font-mono font-bold uppercase" value={bundle.bundle_number} onChange={(event) => updateBundle(bundle.key, "bundle_number", event.target.value.toUpperCase())} /></label>
+            return <div key={bundle.key} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"><div className="mb-4 flex items-center justify-between"><p className="flex items-center gap-2 font-black text-slate-950"><ScanLine className="h-5 w-5 text-orange" /> Bundle {index + 1}</p><div className="flex gap-1"><button type="button" className="rounded-xl p-2 text-slate-700 hover:bg-slate-100" disabled={!sourceReady} onClick={() => duplicateBundle(bundle.key)} aria-label={`Duplicate bundle ${index + 1} (tag and gross weight are cleared)`}><Copy className="h-4 w-4" /></button>{bundles.length > 1 ? <button type="button" className="rounded-xl p-2 text-red-600 hover:bg-red-50" onClick={() => setBundles((current) => current.filter((row) => row.key !== bundle.key))} aria-label={`Remove bundle ${index + 1}`}><Trash2 className="h-4 w-4" /></button> : null}</div></div><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+              <label className="block space-y-1.5"><span className="form-label">Scan / Bundle ID *</span><input className="form-input font-mono font-bold uppercase" {...nav(index, "bundle_number")} value={bundle.bundle_number} onChange={(event) => updateBundle(bundle.key, "bundle_number", event.target.value.toUpperCase())} /></label>
               <label className="block space-y-1.5 md:col-span-2"><span className="form-label">Exact material source *</span><SearchableSelect value={bundle.source_line_id} options={sourceOptions} disabled={!sourceReady || !sources.length || locked} onChange={(value) => updateBundle(bundle.key, "source_line_id", value)} placeholder="Select production job or stock batch" /></label>
-              <label className="block space-y-1.5"><span className="form-label">Actual pieces *</span><input className="form-input" type="number" min="1" step="1" value={bundle.number_of_pieces} onChange={(event) => updateBundle(bundle.key, "number_of_pieces", event.target.value)} /></label>
-              <label className="block space-y-1.5"><span className="form-label">Actual metres *</span><input className="form-input" type="number" min="0.001" step="0.001" value={bundle.net_length_m} onChange={(event) => updateBundle(bundle.key, "net_length_m", event.target.value)} /></label>
+              <label className="block space-y-1.5"><span className="form-label">Actual pieces *</span><input className="form-input" type="number" min="1" step="1" {...nav(index, "number_of_pieces")} value={bundle.number_of_pieces} onChange={(event) => updateBundle(bundle.key, "number_of_pieces", event.target.value)} /></label>
+              <label className="block space-y-1.5"><span className="form-label">Actual metres *</span><input className="form-input" type="number" min="0.001" step="0.001" {...nav(index, "net_length_m")} value={bundle.net_length_m} onChange={(event) => updateBundle(bundle.key, "net_length_m", event.target.value)} /></label>
               <div className="rounded-xl border border-slate-200 bg-white px-3 py-2"><p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Stock batch</p><p className="mt-1 text-sm font-bold text-slate-800">{selectedSource?.stockBatchLabel ?? (selectedSource ? "Production output" : "Select source")}</p></div>
-              <label className="block space-y-1.5"><span className="form-label">Gross kg *</span><input className="form-input" type="number" min="0" step="0.001" value={bundle.gross_weight_kg} onChange={(event) => updateBundle(bundle.key, "gross_weight_kg", event.target.value)} /></label>
-              <label className="block space-y-1.5"><span className="form-label">Tare kg *</span><input className="form-input" type="number" min="0" step="0.001" value={bundle.tare_weight_kg} onChange={(event) => updateBundle(bundle.key, "tare_weight_kg", event.target.value)} /></label>
+              <label className="block space-y-1.5"><span className="form-label">Gross kg *</span><input className="form-input" type="number" min="0" step="0.001" {...nav(index, "gross_weight_kg")} value={bundle.gross_weight_kg} onChange={(event) => updateBundle(bundle.key, "gross_weight_kg", event.target.value)} /></label>
+              <label className="block space-y-1.5"><span className="form-label">Tare kg *</span><input className="form-input" type="number" min="0" step="0.001" {...nav(index, "tare_weight_kg")} value={bundle.tare_weight_kg} onChange={(event) => updateBundle(bundle.key, "tare_weight_kg", event.target.value)} /></label>
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2"><p className="text-[11px] font-black uppercase tracking-wider text-emerald-700">Measured net</p><p className="mt-1 text-lg font-black text-emerald-950">{formatWeight(net)}</p></div>
               <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 md:col-span-2"><p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Remaining recorded stock</p><p className="mt-1 text-sm font-bold text-slate-800">{selectedSource ? `${formatWeight(selectedSource.availableWeightKg)} | ${selectedSource.availablePieces} pcs | ${selectedSource.availableLengthM.toFixed(3)} m` : "Select source"}</p></div>
             </div></div>;

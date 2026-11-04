@@ -16,6 +16,7 @@ export async function createNov2BrowserFixture() {
     "@/components/modules/operations/operator-tools": "export const LocationGuidance=()=>null;"
   };
   const actionSource = `
+      export const improvementAction=async()=>({success:false,unavailable:true,error:'Improvement reads are outside this fixture'});export const inTaskVendorAction=async()=>({kind:'error',error:'Vendor creation is outside this fixture'});export const inTaskCustomerAction=async()=>({kind:'error',error:'Customer creation is outside this fixture'});
     export const saveProductionJobAction=async input=>{window.savedInputs.push(structuredClone(input));await window.delay(250);return {success:true,jobId:window.id(40)}};
     export const inspectionPlanAction=async input=>{
       window.actionCalls.push(structuredClone(input));await window.delay(120);
