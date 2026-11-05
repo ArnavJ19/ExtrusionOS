@@ -20,6 +20,8 @@ import { orderControls } from "@/lib/workflow/erp-control-panels";
 import { loadOrderBillingReconciliation } from "@/lib/orders/billing-reconciliation";
 import { RecordDiscussion } from "@/components/modules/operations/collaboration-tools";
 import { OrderProgressPanel } from "@/components/modules/orders/order-progress-panel";
+import { OrderProgressStrip } from "@/components/modules/execution/progress-strip";
+import { canReadExecution, canUseExecutionAction } from "@/lib/workflow/execution";
 import { buildDispatchProgress, buildOrderProgress } from "@/lib/orders/order-progress";
 import { loadDispatchPackingTotals } from "@/lib/dispatches/packing-history";
 import { OrderLineSchedulePanel } from "@/components/modules/orders/order-line-schedule";
@@ -187,6 +189,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <ErpControlPanel title="Delivery closure" actions={deliveryControls} />
       <OrderResponsibility orderId={order.id} context={context} />
       <OrderFulfilmentLedger orderId={order.id} context={context} />
+      {!context.dealerId && !context.role.startsWith("dealer") && canReadExecution(context.role) ? <OrderProgressStrip orderId={order.id} /> : null}
+      {!context.dealerId && !context.role.startsWith("dealer") && canReadExecution(context.role, "appointments") ? <nav aria-label="Execution planning for this order" className="flex flex-wrap gap-2">
+        {canUseExecutionAction(context.role, "appointment.request") ? <Link href={`/tasks/execution/new?action=appointment.request&order_id=${order.id}`} className="inline-flex min-h-11 items-center rounded-xl border bg-white px-4 py-2 text-sm font-bold">Request a delivery appointment</Link> : null}
+        {canUseExecutionAction(context.role, "message.prepare") ? <Link href={`/tasks/execution/new?action=message.prepare&template=order_confirmation&entity_id=${order.id}`} className="inline-flex min-h-11 items-center rounded-xl border bg-white px-4 py-2 text-sm font-bold">Prepare order confirmation</Link> : null}
+        {canUseExecutionAction(context.role, "route.bind") ? <Link href={`/tasks/execution/new?action=route.bind&order_id=${order.id}`} className="inline-flex min-h-11 items-center rounded-xl border bg-white px-4 py-2 text-sm font-bold">Bind a workflow route</Link> : null}
+      </nav> : null}
       {showProgress ? <OrderProgressPanel progress={orderProgress} dispatch={dispatchProgress} jobsUnavailable={jobsUnavailable} canOpenJobs={can(context.role, "read", "production")} /> : null}
       {!context.dealerId && !context.role.startsWith("dealer") ? <PartialOrderProgress key={`${context.companyId}:${context.userId}:${id}`} orderId={id}/> : null}
       {lineSchedule ? <OrderLineSchedulePanel orderId={order.id} initial={lineSchedule.data} unavailableMessage={lineSchedule.message} canWrite={canSetLineSchedule(context.role)} /> : null}

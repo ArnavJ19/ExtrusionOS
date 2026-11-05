@@ -26,6 +26,7 @@ export async function buildEntryAcceptanceBundle() {
     "@/lib/actions/in-task-customers": `export async function inTaskCustomerAction(){return {kind:"error",error:"Creation is outside this acceptance fixture"}}`,
     "@/lib/actions/in-task-vendors": `export async function inTaskVendorAction(){return {kind:"error",error:"Vendor creation is outside this acceptance fixture"}}`,
     "@/lib/actions/improvement": `export async function improvementAction(){return {success:false,unavailable:true,error:"Improvement reads are outside this acceptance fixture"}}`,
+    "@/lib/actions/execution": `export async function executionAction(){return {success:false,unavailable:true,error:"Execution reads are outside this acceptance fixture"}}export async function orderProgressAction(){return {success:false,error:"Progress is outside this acceptance fixture"}}`,
     "@/lib/actions/order-stage-age": `export async function orderStageAgeAction(){return {rows:[]}}`,
     "@/lib/actions/dispatches": mockAction("saveDispatchAction"),
     "@/lib/actions/expenses": mockAction("saveManualExpenseAction"),
