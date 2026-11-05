@@ -47,6 +47,11 @@ export async function createNov8Fixture() {
   for (const [id, vehicle, cap, status] of [[ids.load1, ids.vehicle1, 1000, "reviewed"], [ids.load2, ids.vehicle2, 400, "reviewed"], [ids.loadClosed, ids.vehicle1, 1000, "closed"]]) {
     await db.query("insert into factory_vehicle_loads(id,company_id,vehicle_id,load_date,status,capacity_kg,created_by) values($1,$2,$3,current_date+1,$4,$5,$6)", [id, ids.company, vehicle, status, cap, ids.owner]);
   }
+  // The load items reference prepared physical bundles, which carry the label shown on the loading screen.
+  for (const [id, label, order2, line] of [[ids.bundle1, "LB-1", ids.order, ids.line1], [ids.bundle2, "LB-2", ids.order, ids.line1], [ids.bundle3, "LB-3", ids.order, ids.line1], [ids.bundleX1, "LB-X1", ids.order2, ids.line2], [ids.bundleX2, "LB-X2", ids.order2, ids.line2]]) {
+    await db.query(`insert into prepared_physical_bundles(id,company_id,order_id,source_line_id,source_kind,profile_id,bundle_number,number_of_pieces,net_length_m,gross_weight_kg,tare_weight_kg,recorded_by,payload)
+      values($1,$2,$3,$4,'production',$5,$6,10,60,302,2,$7,'{}')`, [id, ids.company, order2, line, ids.profile, label, ids.owner]);
+  }
   const item = (id, load, bundle, order2, line, kg) => db.query(`insert into factory_vehicle_load_items(id,company_id,load_id,bundle_id,order_id,source_line_id,source_kind,profile_id,net_weight_kg,number_of_pieces,net_length_m,status,source_fingerprint,snapshot,created_by)
     values($1,$2,$3,$4,$5,$6,'production',$7,$8,10,60,'active',$10,'{}',$9)`, [id, ids.company, load, bundle, order2, line, ids.profile, kg, ids.owner, createHash("md5").update(String(id)).digest("hex")]);
   await item(ids.item1, ids.load1, ids.bundle1, ids.order, ids.line1, 300);

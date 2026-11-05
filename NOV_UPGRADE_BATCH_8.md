@@ -89,3 +89,13 @@ Pilot with real users: three delivery appointments from request to outcome; one 
 gate passes and returned; one multi-order load planned and confirmed; one protected-window change approved by
 a second person; one stage limit watched for a week; ten assignments with competency rules for one task type;
 one route family used for stock sales; five customer messages prepared; one queue update of ten tasks.
+
+## Review follow-up (NOV-036)
+
+Three review findings on the vehicle load plan were fixed in `20261103600000_november_execution.sql` (not yet applied to hosted):
+
+- Load detail no longer truncates at 60 bundles. Bundles are ordered, then paged 25 at a time (`items_page`), with previous/next links on the load record.
+- Bundle labels are read from `prepared_physical_bundles`, the table the load items reference, in both the loading list and the confirmation review. The fixture now seeds real prepared bundles, which is what exposed the wrong lookup.
+- A departure review reads as current only when the freshly computed findings (blockers, warnings, planned and loaded kg) still match the stored review, in addition to the existing confirmation and stop timestamps. A later production hold, order cancellation or change to the saved load now moves the load out of "ready".
+
+Regression tests: `tests/nov-batch8-load-review-fixes.test.mjs` (3).

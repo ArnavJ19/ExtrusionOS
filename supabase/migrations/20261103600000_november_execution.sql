@@ -516,7 +516,7 @@ grant execute on function public.order_progress(uuid) to authenticated;
 ------------------------------------------------------------------------------------------------
 -- Read models. Each row is {id,label,status,owner,due_date,summary,source_href,details}.
 ------------------------------------------------------------------------------------------------
-create function private.execution_rows(p_company uuid,p_actor uuid,p_role text,p_view text,p_state text,p_id uuid default null)
+create function private.execution_rows(p_company uuid,p_actor uuid,p_role text,p_view text,p_state text,p_id uuid default null,p_items_page integer default 1)
 returns table(row_data jsonb,sort_rank integer,sort_due date,sort_new timestamptz) language plpgsql stable security definer set search_path=public,private as $$
 declare v_today date:=private.ist_today(); v_contact boolean:=p_role in ('owner','admin','factory_manager','dispatch_manager','dispatch','sales_manager','sales');
 begin
@@ -566,7 +566,7 @@ begin
         'summary',concat(it.n,' bundle(s), ',trim_scale(it.kg),' of ',trim_scale(l.capacity_kg),' kg capacity · ',oc.n,' order(s) · ',cf.n,' of ',it.n,' confirmed loaded',case when sm.n>0 then ' · '||sm.n||' order(s) without a stop' else '' end),
         'source_href','/dispatches/loads',
         'details',jsonb_build_object('load_id',l.id,'vehicle',v.vehicle_label,'registration',v.registration_number,'capacity_kg',l.capacity_kg,'planned_kg',it.kg,'loaded_kg',cf.kg,'items_total',it.n,'items_confirmed',cf.n,'order_count',oc.n,
-          'load_status',l.status,'orders_without_stop',sm.n,'over_capacity',it.kg>l.capacity_kg,'review',lr.r,
+          'load_status',l.status,'orders_without_stop',sm.n,'over_capacity',it.kg>l.capacity_kg,'review',lr.r,'items_page',greatest(p_items_page,1),'items_page_size',25,
           'orders',case when p_id is null then '[]'::jsonb else (select coalesce(jsonb_agg(jsonb_build_object('order_id',o.id,'order_number',o.order_number,'customer',cu.customer_name,'stop_seq',s.stop_seq,'unload_note',s.unload_note,'bundles',x.n,'kg',x.kg,
               'site',coalesce(nullif(cu.city,''),nullif(left(cu.shipping_address,60),'')),'appointment',ap.status,'held',h.n>0,'stage',o.current_stage) order by s.stop_seq nulls last,o.order_number),'[]'::jsonb)
             from (select i.order_id,count(*) n,sum(i.net_weight_kg) kg from public.factory_vehicle_load_items i where i.company_id=p_company and i.load_id=l.id and i.status='active' group by 1) x
@@ -574,11 +574,12 @@ begin
             left join public.load_plan_stops s on s.company_id=p_company and s.load_id=l.id and s.order_id=o.id
             left join lateral (select a.status from public.delivery_appointments a where a.company_id=p_company and a.order_id=o.id and a.status in ('requested','confirmed') order by a.created_at desc limit 1) ap on true
             cross join lateral (select count(*) n from public.production_jobs j where j.company_id=p_company and j.order_id=o.id and j.status='on_hold') h) end,
-          'items',case when p_id is null then '[]'::jsonb else (select coalesce(jsonb_agg(jsonb_build_object('item_id',i.id,'bundle',pl.bundle_number,'order_number',o.order_number,'kg',i.net_weight_kg,'pieces',i.number_of_pieces,'stop_seq',s.stop_seq,
-              'confirmation',c.status,'method',c.method,'note',c.note) order by s.stop_seq desc nulls last,pl.bundle_number),'[]'::jsonb)
-            from (select * from public.factory_vehicle_load_items x where x.company_id=p_company and x.load_id=l.id and x.status='active' order by x.id limit 60) i
-            join public.orders o on o.id=i.order_id and o.company_id=p_company left join public.packing_list_items pl on pl.id=i.bundle_id and pl.company_id=p_company
-            left join public.load_plan_stops s on s.company_id=p_company and s.load_id=l.id and s.order_id=i.order_id left join public.load_item_confirmations c on c.item_id=i.id and c.company_id=p_company) end)),
+          'items',case when p_id is null then '[]'::jsonb else (select coalesce(jsonb_agg(q.item order by q.ord),'[]'::jsonb) from (select jsonb_build_object('item_id',i.id,'bundle',pb.bundle_number,'order_number',o.order_number,'kg',i.net_weight_kg,'pieces',i.number_of_pieces,'stop_seq',s.stop_seq,
+              'confirmation',c.status,'method',c.method,'note',c.note) item,row_number() over(order by s.stop_seq desc nulls last,pb.bundle_number,i.id) ord
+            from public.factory_vehicle_load_items i
+            join public.orders o on o.id=i.order_id and o.company_id=p_company left join public.prepared_physical_bundles pb on pb.id=i.bundle_id and pb.company_id=p_company
+            left join public.load_plan_stops s on s.company_id=p_company and s.load_id=l.id and s.order_id=i.order_id left join public.load_item_confirmations c on c.item_id=i.id and c.company_id=p_company
+            where i.company_id=p_company and i.load_id=l.id and i.status='active' order by ord limit 25 offset (greatest(p_items_page,1)-1)*25) q) end)),
       case st.s when 'not_ready' then 0 when 'loading' then 1 when 'planning' then 2 when 'ready' then 3 else 9 end,l.load_date,l.updated_at
     from public.factory_vehicle_loads l join public.factory_vehicles v on v.id=l.vehicle_id and v.company_id=l.company_id
     cross join lateral (select count(*) n,coalesce(sum(i.net_weight_kg),0) kg from public.factory_vehicle_load_items i where i.company_id=p_company and i.load_id=l.id and i.status='active') it
@@ -588,7 +589,10 @@ begin
     cross join lateral (select count(distinct i.order_id) n from public.factory_vehicle_load_items i where i.company_id=p_company and i.load_id=l.id and i.status='active'
       and not exists(select 1 from public.load_plan_stops s where s.company_id=p_company and s.load_id=l.id and s.order_id=i.order_id)) sm
     cross join lateral (select greatest((select max(c.confirmed_at) from public.load_item_confirmations c where c.company_id=p_company and c.load_id=l.id),(select max(s.set_at) from public.load_plan_stops s where s.company_id=p_company and s.load_id=l.id)) at) ch
-    left join lateral (select jsonb_build_object('outcome',r.outcome,'findings',r.findings,'reviewed_at',r.reviewed_at,'loaded_kg',r.loaded_kg,'current',ch.at is null or r.reviewed_at>=ch.at) r
+    cross join lateral (select private.load_findings(p_company,l.id) f) fr
+    left join lateral (select jsonb_build_object('outcome',r.outcome,'findings',r.findings,'reviewed_at',r.reviewed_at,'loaded_kg',r.loaded_kg,
+        'current',(ch.at is null or r.reviewed_at>=ch.at) and r.findings->'blockers' is not distinct from fr.f->'blockers' and r.findings->'warnings' is not distinct from fr.f->'warnings'
+          and (r.findings->>'planned_kg')::numeric is not distinct from (fr.f->>'planned_kg')::numeric and (r.findings->>'loaded_kg')::numeric is not distinct from (fr.f->>'loaded_kg')::numeric) r
       from public.load_plan_reviews r where r.company_id=p_company and r.load_id=l.id order by r.reviewed_at desc limit 1) lr on true
     cross join lateral (select case when l.status<>'reviewed' then l.status when lr.r is not null and (lr.r->>'current')::boolean then lr.r->>'outcome' when ch.at is not null then 'loading' else 'planning' end s) st
     where l.company_id=p_company and (p_id is null or l.id=p_id) and (p_id is not null or p_state='all' or l.status='reviewed');
@@ -700,7 +704,7 @@ begin
     where t.company_id=p_company and t.dealership_id is null and (p_id is null or t.id=p_id) and (p_id is not null or t.status in ('open','in_progress'));
   end if;
 end $$;
-revoke all on function private.execution_rows(uuid,uuid,text,text,text,uuid) from public,anon,authenticated;
+revoke all on function private.execution_rows(uuid,uuid,text,text,text,uuid,integer) from public,anon,authenticated;
 
 ------------------------------------------------------------------------------------------------
 -- Lookups, shape checks and the load review.
@@ -1027,7 +1031,7 @@ begin
     if v_status not in ('loaded','not_loaded','unloaded_exception') then raise exception 'NOV: Choose loaded, not loaded or unloading exception.'; end if;
     if p_m->>'method' not in ('scan','manual') then raise exception 'NOV: State whether the bundle was scanned or confirmed by hand.'; end if;
     if i.status<>'active' then raise exception 'NOV: This bundle was already removed from the load plan.'; end if;
-    select pl.bundle_number into v_bundle from public.packing_list_items pl where pl.id=i.bundle_id and pl.company_id=p_company;
+    select pb.bundle_number into v_bundle from public.prepared_physical_bundles pb where pb.id=i.bundle_id and pb.company_id=p_company;
     if cf.id is not null and cf.status=v_status then raise exception 'NOV: Bundle % is already recorded as %.',coalesce(v_bundle,'record'),replace(v_status,'_',' '); end if;
     if v_status='unloaded_exception' and cf.status is distinct from 'loaded' then raise exception 'NOV: Only a loaded bundle can have an unloading exception.'; end if;
     if v_status='loaded' then
@@ -1629,13 +1633,13 @@ revoke all on function private.execution_apply(uuid,uuid,uuid,jsonb,jsonb) from 
 
 create function public.execution_command(p_command text,p_payload jsonb) returns jsonb language plpgsql security definer set search_path=public,private as $$
 declare v_actor uuid:=auth.uid();v_company uuid:=private.get_current_user_company_id();v_role text:=private.get_current_user_role();
-  v_view text;v_page integer;v_search text;v_state text;v_sort text;v_status text;v_id uuid;v_total bigint;v_rows jsonb;v_row jsonb;v_events jsonb;
+  v_view text;v_page integer;v_search text;v_state text;v_sort text;v_status text;v_items_page integer;v_id uuid;v_total bigint;v_rows jsonb;v_row jsonb;v_events jsonb;
   r public.execution_requests%rowtype;v_context jsonb;v_fingerprint text;v_result jsonb;v_message text;v_keys text[];
 begin
   if v_actor is null or v_company is null or not exists(select 1 from public.app_users where id=v_actor and company_id=v_company and is_active and dealer_id is null)
     or not private.execution_read_allowed(v_role,null) then raise exception 'Not permitted' using errcode='42501'; end if;
   perform 1 from public.app_users where id=v_actor and company_id=v_company for share;
-  v_keys:=case p_command when 'list' then array['view','page','search','state','sort','status'] when 'detail' then array['view','id','page']
+  v_keys:=case p_command when 'list' then array['view','page','search','state','sort','status'] when 'detail' then array['view','id','page','items_page']
     when 'lookup' then array['kind','search','selected_id','parent_id'] when 'preview' then array['request_id','mutation'] when 'commit' then array['request_id','fingerprint']
     when 'outcome' then array['request_id'] when 'abandon' then array['request_id'] end;
   if jsonb_typeof(p_payload) is distinct from 'object' or v_keys is null or exists(select 1 from jsonb_object_keys(p_payload) k where not(k=any(v_keys))) then raise exception 'NOV: Invalid execution request.'; end if;
@@ -1645,8 +1649,9 @@ begin
     if v_view is null or v_view not in ('appointments','gate_passes','loads','windows','wip','assignments','rules','routes','messages','queue') or not private.execution_read_allowed(v_role,v_view) then raise exception 'Not permitted' using errcode='42501'; end if;
     if v_page not between 1 and 100000 or length(v_search)>80 or v_state not in ('active','all') or v_sort not in ('priority','newest','due') or coalesce(v_status,'x') !~ '^[a-z_]{1,40}$' then raise exception 'NOV: Invalid execution filters.'; end if;
     if p_command='detail' then
-      v_id:=private.execution_uuid(p_payload,'id');
-      select row_data into v_row from private.execution_rows(v_company,v_actor,v_role,v_view,'all',v_id) limit 1;
+      v_id:=private.execution_uuid(p_payload,'id'); v_items_page:=coalesce((p_payload->>'items_page')::integer,1);
+      if v_items_page not between 1 and 100000 then raise exception 'NOV: Invalid execution filters.'; end if;
+      select row_data into v_row from private.execution_rows(v_company,v_actor,v_role,v_view,'all',v_id,v_items_page) limit 1;
       if v_row is null then raise exception 'NOV: This record is unavailable.'; end if;
       select count(*) into v_total from public.execution_events where company_id=v_company and view_name=v_view and entity_id=v_id;
       select coalesce(jsonb_agg(to_jsonb(x) order by recorded_at desc,id),'[]'::jsonb) into v_events from (

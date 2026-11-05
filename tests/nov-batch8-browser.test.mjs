@@ -97,7 +97,7 @@ test("NOV-036: a bundle is confirmed on a load by hand and the plan review repor
   const f = fixture.f;
   await as("dispatch_manager", i.dispatchManager); await open("loads", i.load1);
   await expect(page.getByText("Orders without a stop", { exact: true })).toBeVisible();
-  const loading = page.locator("details", { hasText: "Record loading of B1" });
+  const loading = page.locator("details", { hasText: "Record loading of LB-1" });
   await loading.locator("summary").click();
   await loading.getByLabel("Result").selectOption("loaded");
   await loading.getByLabel("How it was confirmed").selectOption("manual");

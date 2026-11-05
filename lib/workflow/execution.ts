@@ -176,7 +176,7 @@ const page = z.number().int().min(1).max(100000).default(1);
 export const executionCommandSchema = z.discriminatedUnion("command", [
   z.object({ command: z.literal("list"), view: z.enum(viewKeys), page, search: z.string().trim().max(80).default(""), state: z.enum(["active", "all"]).default("active"),
     status: z.string().regex(/^[a-z_]{1,40}$/).optional(), sort: z.enum(["priority", "newest", "due"]).default("priority") }).strict(),
-  z.object({ command: z.literal("detail"), view: z.enum(viewKeys), id: uuid, page }).strict(),
+  z.object({ command: z.literal("detail"), view: z.enum(viewKeys), id: uuid, page, items_page: z.number().int().min(1).max(100000).default(1) }).strict(),
   z.object({ command: z.literal("lookup"), kind: z.enum(EXECUTION_LOOKUPS), search: z.string().trim().max(80).default(""), selected_id: uuid.optional(), parent_id: uuid.optional() }).strict(),
   z.object({ command: z.literal("preview"), request_id: uuid, mutation: executionMutationSchema }).strict(),
   z.object({ command: z.literal("commit"), request_id: uuid, fingerprint: z.string().regex(/^[0-9a-f]{32}$/) }).strict(),
