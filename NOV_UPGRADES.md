@@ -20,6 +20,8 @@ Implementation records: [November batch 1](NOV_UPGRADE_BATCH_1.md) covers the fi
 
 [November batch 7](NOV_UPGRADE_BATCH_7.md) covers delivery ranks 61 to 70: NOV-003, 009, 010, 011, 017, 025, 053, 054, 059, and 089, as improvement workflows under /tasks/improvement plus shell search, record previews, repeat previous, in-task masters, bundle paste and task-led scanning.
 
+[November batch 8](NOV_UPGRADE_BATCH_8.md) covers delivery ranks 71 to 80: NOV-075, 077, 087, 014, 019, 036, 044, 045, 047, and 052, as execution planning workflows under /tasks/execution plus an order progress strip and die custody beside die selection.
+
 ## Purpose and boundaries
 
 Employees should be able to identify their next useful task, find the right source record, enter new facts once, understand a decision, and pass complete work to the next team. Management should be able to see commitments, blockers, material movement, ownership, and outcomes without assembling a parallel spreadsheet.

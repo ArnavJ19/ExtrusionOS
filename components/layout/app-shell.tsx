@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Bell, Moon } from "lucide-react";
 import { GlobalFind } from "@/components/search/global-find";
+import { DensityControl } from "./density-control";
 import { SuggestImprovementLink } from "@/components/layout/suggest-improvement";
 import { canUseImprovementAction } from "@/lib/workflow/improvement";
 import { getSessionContext } from "@/lib/auth";
@@ -127,6 +128,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:justify-end">
             <GlobalFind placeholder={searchPlaceholder} />
+            <DensityControl scope={{ companyId: context.companyId, userId: context.userId }} />
             {!context.dealerId && canUseImprovementAction(context.role, "suggestion.submit") ? <SuggestImprovementLink /> : null}
             <Link href="/notifications" className="relative inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-neutral-200 bg-white text-neutral-600 shadow-sm transition hover:border-neutral-300 hover:text-neutral-950">
               <Bell className="h-4 w-4" />

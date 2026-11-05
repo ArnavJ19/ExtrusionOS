@@ -23,7 +23,7 @@ export async function createNovBrowserFixture() {
   };
   const actionExports = ["saveDispatchAction", "saveManualExpenseAction", "saveFoundryBatchAction", "savePackagingJobAction", "saveProductionJobAction", "saveOrderAction", "productionHoldAction"];
   const actions = actionExports.map((name) => `export const ${name}=async input=>window.action(input);`).join("\n")
-    + "\nexport const improvementAction=async()=>({success:false,unavailable:true,error:'Improvement reads are outside this fixture'});export const inTaskVendorAction=async()=>({kind:'error',error:'Vendor creation is outside this fixture'});export const inTaskCustomerAction=async()=>({kind:'error',error:'Customer creation is outside this fixture'});";
+    + "\nexport const improvementAction=async()=>({success:false,unavailable:true,error:'Improvement reads are outside this fixture'});export const executionAction=async()=>({success:false,unavailable:true,error:'Execution reads are outside this fixture'});export const orderProgressAction=async()=>({success:false,error:'Progress is outside this fixture'});export const inTaskVendorAction=async()=>({kind:'error',error:'Vendor creation is outside this fixture'});export const inTaskCustomerAction=async()=>({kind:'error',error:'Customer creation is outside this fixture'});";
   const entry = `
     import React,{useState} from 'react';import {createRoot} from 'react-dom/client';
     import {ModuleDatabaseClient} from './components/modules/operations/module-database-client';

@@ -67,7 +67,7 @@ export async function createFinishingReceiptsBrowserFixture({tables={},styled=fa
             return {data:single?rows[0]||null:rows,error:null}};
           if(state.deferAutofill&&table==='production_jobs'&&call.limit===1)return new Promise(resolve=>state.pending.push({call,release:()=>resolve(read())}));return read();}
         return q}}}`:args.path==="actions"?`
-      export const improvementAction=async()=>({success:false,unavailable:true,error:'Improvement reads are outside this fixture'});export const inTaskVendorAction=async()=>({kind:'error',error:'Vendor creation is outside this fixture'});export const inTaskCustomerAction=async()=>({kind:'error',error:'Customer creation is outside this fixture'});
+      export const improvementAction=async()=>({success:false,unavailable:true,error:'Improvement reads are outside this fixture'});export const executionAction=async()=>({success:false,unavailable:true,error:'Execution reads are outside this fixture'});export const orderProgressAction=async()=>({success:false,error:'Progress is outside this fixture'});export const inTaskVendorAction=async()=>({kind:'error',error:'Vendor creation is outside this fixture'});export const inTaskCustomerAction=async()=>({kind:'error',error:'Customer creation is outside this fixture'});
       const capture=async input=>{window.__receipts.writes.push({kind:'packaging-action',input});return {success:true,jobId:input.editing_id||'00000000-0000-4000-8000-000000000802'}};
       export const savePackagingJobAction=capture;
       const blocked=async()=>{throw new Error('Unrelated action is outside this browser fixture')};

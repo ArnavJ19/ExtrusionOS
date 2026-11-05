@@ -15,7 +15,7 @@ export default async function AutomationPage() {
 
   const [rulesResult, runsResult] = await Promise.all([
     supabase.from("automation_rules").select("id, rule_name, trigger_type, conditions_json, actions_json, is_active, created_at").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(40),
-    supabase.from("automation_runs").select("id, rule_id, trigger_entity_type, status, error_message, created_at").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(60)
+    supabase.from("automation_runs").select("id, rule_id, trigger_entity_type, status, error_message, created_at, result_json").eq("company_id", context.companyId).order("created_at", { ascending: false }).limit(60)
   ]);
 
   return <AutomationClient companyId={context.companyId} initialRules={(rulesResult.data ?? []) as any[]} initialRuns={(runsResult.data ?? []) as any[]} />;
