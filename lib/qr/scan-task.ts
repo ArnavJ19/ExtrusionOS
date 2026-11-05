@@ -17,6 +17,7 @@ export function scanWarnings(entityType: string, row: Record<string, unknown>): 
     const status = text(row, "status");
     if (["dispatched", "transformed", "scrap", "rejected"].includes(status)) warnings.push({ tone: "critical", text: `This bundle is ${words(status)} and is no longer available stock.` });
     if (status === "reserved") warnings.push({ tone: "warning", text: "This bundle is reserved for an order." });
+    if (status === "in_transit") warnings.push({ tone: "critical", text: "This bundle is in transit on a warehouse transfer. Receive it on the transfer before using it." });
     if (text(row, "qc_status") === "on_hold") warnings.push({ tone: "critical", text: "This bundle is on QC hold. Do not load or use it until quality releases it." });
     if (text(row, "qc_status") === "rejected") warnings.push({ tone: "critical", text: "Quality rejected this bundle." });
   }
