@@ -20,7 +20,7 @@ const mobileTasks = readFileSync(new URL("../app/(dashboard)/mobile/tasks/page.t
 const tasksPage = readFileSync(new URL("../app/(dashboard)/tasks/page.tsx", import.meta.url), "utf8");
 const notificationsPage = readFileSync(new URL("../app/(dashboard)/notifications/page.tsx", import.meta.url), "utf8");
 const enterpriseClient = readFileSync(new URL("../components/modules/enterprise-foundation-client.tsx", import.meta.url), "utf8");
-const shell = readFileSync(new URL("../components/layout/app-shell.tsx", import.meta.url), "utf8");
+const shell = readFileSync(new URL("../components/layout/app-shell.tsx", import.meta.url), "utf8") + readFileSync(new URL("../lib/navigation/app-destinations.ts", import.meta.url), "utf8");
 
 test("inactive users have a stable suspended destination and remain blocked from protected pages", () => {
   assert.match(proxy, /appUser && !appUser\.is_active[\s\S]*url\.pathname = "\/access-suspended"/);

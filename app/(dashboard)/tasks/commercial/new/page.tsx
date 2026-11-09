@@ -1,3 +1,4 @@
+import { homeForHubNew } from "@/lib/navigation/home-work";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
@@ -12,6 +13,9 @@ export default async function NewCommercialAction({ searchParams }: { searchPara
   const context = await getSessionContext(); const params = await searchParams;
   const action = standalone.find(value => value === params.action);
   if (!action || !canUseCommercialAction(context.role, action)) redirect("/tasks/commercial");
+  // AP-041: work that belongs to a record or module now starts there; only configuration stays in this hub.
+  const home = homeForHubNew("commercial", action, params as Record<string, string | undefined>);
+  if (home) redirect(home);
   // Only identities and known template names are carried from the originating screen; they pre-select, they do not decide.
   const initial: Record<string, string> = {};
   for (const key of ["quote_id", "customer_id", "purchase_order_id", "profile_id"]) if (params[key] && UUID.test(params[key] as string)) initial[key] = params[key] as string;

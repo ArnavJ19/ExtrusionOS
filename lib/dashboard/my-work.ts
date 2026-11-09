@@ -147,6 +147,46 @@ function unavailableTaskLink(item: WorkItem) {
   item.blocker = "Linked record unavailable. Review the task before continuing.";
 }
 
+const PROPOSAL_HOMES: Record<string, string> = { "navigation.role_layout": "/settings/navigation", "period.close_month": "/invoices/periods", "series.adopt": "/invoices/numbering" };
+const unavailableCodes = new Set(["PGRST202", "42883", "42P01"]);
+
+/** Proposals this person may decide (AP-002) and active pilot work on records they can read (AP-041). */
+async function loadAutopilotQueues(supabase: SupabaseClient): Promise<WorkQueue[]> {
+  if (typeof supabase.rpc !== "function") return [];
+  let proposals: { data: any; error: { code?: string } | null }, attention: { data: any; error: { code?: string } | null };
+  try {
+    [proposals, attention] = await Promise.all([
+      supabase.rpc("ap_proposals", { p_command: "list", p_payload: { status: "open" } }),
+      supabase.rpc("ap_home_work", { p_command: "attention", p_payload: { limit: MY_WORK_LIMIT } })
+    ]);
+  } catch { return []; }
+  const queues: WorkQueue[] = [];
+  if (!unavailableCodes.has(proposals.error?.code ?? "")) {
+    const target = queue("proposals", "Waiting for your confirmation", "Prepared by the system from existing records. Nothing changes until you accept; stale proposals cannot be accepted.", "/dashboard");
+    if (proposals.error) target.error = "Could not load proposals. Refresh to retry.";
+    else if (Array.isArray(proposals.data?.rows)) {
+      const rows = (proposals.data.rows as Row[]).filter(row => row.can_decide && !row.stale_now);
+      target.items = rows.slice(0, MY_WORK_LIMIT).map(row => ({ id: row.id, title: row.title, status: "Waiting for you", date: String(row.expires_at ?? "").slice(0, 10) || null,
+        dateLabel: "Decide by", priority: null, href: `${PROPOSAL_HOMES[row.proposal_type] ?? "/dashboard"}#proposal-${row.id}`, actionLabel: "Review proposal", blocker: null }));
+      target.hasMore = Number(proposals.data.total_count ?? 0) > target.items.length;
+    }
+    if (target.items.length || target.error) queues.push(target);
+  }
+  if (!unavailableCodes.has(attention.error?.code ?? "")) {
+    const target = queue("linked_work", "Work on your records", "Open reviews, promises, controls and follow-ups attached to orders, jobs, dies, dispatches and invoices.", "/tasks");
+    if (attention.error) target.error = "Could not load linked work. Refresh to retry.";
+    else if (Array.isArray(attention.data?.items)) {
+      const items = attention.data.items as Row[];
+      target.items = items.slice(0, MY_WORK_LIMIT).map(row => ({ id: `${row.hub}:${row.view}:${row.id}`, title: row.label ?? "Record", status: row.status ?? "open",
+        date: /^\d{4}-\d{2}-\d{2}/.test(String(row.due_date ?? "")) ? String(row.due_date).slice(0, 10) : null, dateLabel: "Due", priority: null,
+        href: row.href, actionLabel: "Open", blocker: null, ownership: row.summary ?? undefined }));
+      target.hasMore = items.length > MY_WORK_LIMIT;
+    }
+    if (target.items.length || target.error) queues.push(target);
+  }
+  return queues;
+}
+
 /** Session identity is supplied by the server; every query still runs through the user's RLS client. */
 export async function loadMyWork(supabase: SupabaseClient, context: SessionContext, flags: Partial<FeatureFlagState>, now = new Date()): Promise<MyWork> {
   const { today } = getBusinessDateBoundaries(now);
@@ -198,7 +238,10 @@ export async function loadMyWork(supabase: SupabaseClient, context: SessionConte
       ownership: "Shared team work; check the record's owner before continuing",
     })));
   }
+  const autopilot = loadAutopilotQueues(supabase);
   await Promise.all(reads);
+  // AP-002 / AP-041: proposals waiting for this person and pilot work on records come first.
+  work.departments.unshift(...(await autopilot));
   await resolveTaskLinks(supabase, context, permitted, [assigned, unassigned]);
   const kinds: Record<string, NextActionRecord["kind"]> = { production_jobs: "production", dispatches: "dispatch", invoices: "invoice", quotes: "quote", quality_inspections: "quality" };
   for (const department of work.departments) for (const item of department.items) {

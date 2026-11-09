@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { customerSchema } from "../validations/schemas";
+import { requireGstChoice } from "../validations/common";
 
 export const inTaskCustomerSchema = customerSchema.pick({
   customer_name: true, company_name: true, customer_type: true, phone: true,
-  email: true, gst_number: true, billing_address: true, shipping_address: true,
+  email: true, gst_number: true, gst_registration: true, billing_address: true, shipping_address: true,
   city: true, state: true, pincode: true,
 }).strict().superRefine((value, context) => {
   for (const [field, text] of Object.entries(value)) {
@@ -11,6 +12,7 @@ export const inTaskCustomerSchema = customerSchema.pick({
       context.addIssue({ code: z.ZodIssueCode.custom, path: [field], message: `${field.replaceAll("_", " ")} is too long for quick customer entry.` });
     }
   }
+  requireGstChoice(value, context);
 });
 
 export type InTaskCustomerInput = z.input<typeof inTaskCustomerSchema>;
@@ -36,7 +38,7 @@ export type InTaskCustomerRequest = z.input<typeof inTaskCustomerRequestSchema>;
 
 export const inTaskCustomerDefaults: InTaskCustomerInput = {
   customer_name: "", company_name: "", customer_type: "fabricator", phone: "", email: "",
-  gst_number: "", billing_address: "", shipping_address: "", city: "", state: "", pincode: "",
+  gst_number: "", gst_registration: "", billing_address: "", shipping_address: "", city: "", state: "", pincode: "",
 };
 
 export function customerNamePattern(value: string) {

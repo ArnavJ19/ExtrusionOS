@@ -19,7 +19,7 @@ export async function createInTaskCustomerActionFixture() {
     create function private.get_current_user_dealer_id() returns uuid language sql stable as $$select null::uuid$$;
     create table customers (
       id uuid primary key, company_id uuid not null, created_by uuid not null, customer_name text not null,
-      company_name text, customer_type text not null, phone text, email text, gst_number text,
+      company_name text, customer_type text not null, phone text, email text, gst_number text, gst_registration text,
       billing_address text, shipping_address text, city text, state text, pincode text,
       is_active boolean not null default true, deleted_at timestamptz,
       created_at timestamptz not null default now(), updated_at timestamptz not null default now()
@@ -41,7 +41,7 @@ export async function createInTaskCustomerActionFixture() {
     if (state.insertError && call.insert) return { data: null, error: { code: state.insertError, message: "Synthetic insert rejection" } };
     assert.equal(call.table, "customers");
     const columns = call.columns.split(",").map(value => value.trim());
-    const identifiers = new Set(["id","company_id","created_by","customer_name","company_name","customer_type","phone","email","gst_number","billing_address","shipping_address","city","state","pincode","is_active","deleted_at"]);
+    const identifiers = new Set(["id","company_id","created_by","customer_name","company_name","customer_type","phone","email","gst_number","gst_registration","billing_address","shipping_address","city","state","pincode","is_active","deleted_at"]);
     for (const column of columns) assert.ok(identifiers.has(column), `Unexpected projected field ${column}`);
     let result;
     try {

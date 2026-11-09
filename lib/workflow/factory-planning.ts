@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { addLeadDays, basisLabel, isWorkingDay, nonWorkingReason, type FactoryCalendar } from "../calendar/working-time.ts";
 
 const uuid = z.string().uuid().transform(value => value.toLowerCase());
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
@@ -183,9 +184,10 @@ function plusDays(day: string, count: number) {
   return parsed.toISOString().slice(0, 10);
 }
 
-export function buildFactoryDeliveryProposal(data: FactoryDeliveryData): DeliveryProposal {
+export function buildFactoryDeliveryProposal(data: FactoryDeliveryData, calendar?: FactoryCalendar): DeliveryProposal {
   const missing: string[] = [];
   const assumptions: string[] = ["This is an operational forecast, not an approved customer commitment."];
+  const skippedDays = new Set<string>();
   const knownLines = data.lines.filter(line => line.ordered_kg !== null && line.ordered_kg > 0);
   if (knownLines.length !== data.lines.length) missing.push("One or more order lines have no physical kg quantity.");
   if (!data.lines.length) missing.push("No order-line quantity is available for this order.");
@@ -230,6 +232,11 @@ export function buildFactoryDeliveryProposal(data: FactoryDeliveryData): Deliver
       let left = job.requiredKg;
       for (let dayOffset = 0; dayOffset <= 90 && left > 0.001; dayOffset += 1) {
         const day = plusDays(data.today, dayOffset);
+        // AP-004: no press capacity on factory holidays, shutdowns or maintenance days.
+        if (calendar && !isWorkingDay(calendar, day)) {
+          if (!nonWorkingReason(calendar, day)?.startsWith("Weekly off")) skippedDays.add(day);
+          continue;
+        }
         for (const capacity of data.shift_capacities) {
           if (capacity.weekday !== weekday(day) || (job.machine_id && capacity.machine_id !== job.machine_id)) continue;
           const window = shiftWindow(day, capacity.starts_local, capacity.ends_local);
@@ -254,7 +261,7 @@ export function buildFactoryDeliveryProposal(data: FactoryDeliveryData): Deliver
     if (finishDay) {
       const lead = data.finishing_lead_times.find(item => item.finishing_type.toLowerCase() === job.finishing_type.toLowerCase());
       if (!lead) missing.push(`No finishing lead time is configured for ${job.finishing_type}.`);
-      else productionDates.push(plusDays(finishDay, lead.lead_days));
+      else productionDates.push(calendar ? addLeadDays(calendar, finishDay, lead.lead_days) : plusDays(finishDay, lead.lead_days));
     }
   }
   const loadDates = Array.from(new Set(data.active_load_dates.map(loadDate => loadDate < data.today ? data.today : loadDate)));
@@ -263,6 +270,10 @@ export function buildFactoryDeliveryProposal(data: FactoryDeliveryData): Deliver
   assumptions.push(`${data.eligible_bundle_count} measured eligible bundles account for ${data.eligible_stock_kg.toFixed(3)} kg of unshipped stock.`);
   if (packedAwaitingDispatch > 0.001) assumptions.push(`${packedAwaitingDispatch.toFixed(3)} kg is already packed and awaiting confirmed departure.`);
   assumptions.push("Capacity is counted by configured machine-shift kg limits after existing scheduled slots and maintenance blocks.");
+  if (calendar) {
+    assumptions.push(`Finishing lead times are counted in ${basisLabel(calendar)}.`);
+    if (skippedDays.size) assumptions.push(`${skippedDays.size} factory holiday, shutdown or maintenance day(s) are excluded from press capacity.`);
+  }
   if (requiredByJob.some(job => job.machine_id === null)) assumptions.push("Jobs without a selected press are forecast against any active extrusion press with configured capacity.");
 
   let proposalDate: string | null = null;

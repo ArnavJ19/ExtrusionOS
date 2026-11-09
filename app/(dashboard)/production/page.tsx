@@ -1,3 +1,4 @@
+import { ModuleWorkflows } from "@/components/modules/home-work/module-workflows";
 import { ModuleOverviewClient } from "@/components/modules/operations/module-overview-client";
 import { ProductionDashboard } from "@/components/modules/dashboards/production-dashboard";
 import { ProductionReadinessQueue } from "@/components/modules/production-planning/production-readiness-queue";
@@ -120,6 +121,7 @@ export default async function ProductionPage() {
           <Link href="/production/consolidation" className="inline-flex items-center justify-center rounded-xl bg-cyan-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-cyan-800">Open Consolidation Queue</Link>
         </div>
       </div>
+      {!context.dealerId ? <ModuleWorkflows module="production" role={context.role} /> : null}
     </div>
   );
 }

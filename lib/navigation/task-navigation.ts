@@ -57,6 +57,8 @@ export function buildTaskNavigation(options: {
   hasRouteAccess: (href: string, role: UserRole) => boolean;
   isFeatureEnabled: (flags: Partial<Record<EnterpriseModuleName, boolean>>, module: EnterpriseModuleName) => boolean;
   primaryLimit?: number;
+  /** AP-042: the role navigation an admin approved (at most nine). Items the role cannot open are still dropped. */
+  approvedItems?: string[] | null;
 }): TaskNavigationModel {
   const unique = new Map<string, TaskNavigationItem>();
   for (const item of options.items) {
@@ -67,7 +69,8 @@ export function buildTaskNavigation(options: {
   }
 
   const allowed = [...unique.values()];
-  const priority = rolePriorities[options.role] ?? ["/dashboard", "/tasks", "/orders"];
+  const approved = options.approvedItems?.length ? options.approvedItems.slice(0, 9) : null;
+  const priority = approved ?? rolePriorities[options.role] ?? ["/dashboard", "/tasks", "/orders"];
   const prioritized = allowed
     .map((item, index) => ({ item, index, priority: priority.indexOf(item.href) }))
     .sort((a, b) => {
@@ -76,7 +79,9 @@ export function buildTaskNavigation(options: {
       return left - right || a.index - b.index;
     })
     .map(({ item }) => item);
-  const primary = prioritized.slice(0, options.primaryLimit ?? 5);
+  const primary = approved
+    ? prioritized.filter(item => approved.includes(item.href))
+    : prioritized.slice(0, Math.min(options.primaryLimit ?? 5, 9));
   const primaryHrefs = new Set(primary.map((item) => item.href));
   const sections = new Map<string, TaskNavigationItem[]>();
 

@@ -24,6 +24,7 @@ import { QuoteRevisionComparison } from "@/components/modules/quotes/quote-revis
 import { QuoteRateCheckPanel } from "@/components/modules/quotes/quote-rate-check";
 import { RecordNextAction } from "@/components/modules/shared/record-next-action";
 import { canReadRates, quoteRateCheckSchema } from "@/lib/workflow/costing-rates";
+import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
 
 const quoteStatusErrorMessages = {
   invalid_status: "Choose a valid quote status.",
@@ -408,6 +409,7 @@ export default async function QuoteDetailPage({
           )}
         </div>
       </div>
+      {!context.dealerId ? <RelatedWorkPanel kind="quote" id={id} role={context.role} /> : null}
     </div>
   );
 }

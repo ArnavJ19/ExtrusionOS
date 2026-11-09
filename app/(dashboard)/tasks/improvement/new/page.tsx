@@ -1,3 +1,4 @@
+import { homeForHubNew } from "@/lib/navigation/home-work";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
@@ -10,6 +11,9 @@ export default async function NewImprovementAction({ searchParams }: { searchPar
   const context = await getSessionContext(); const params = await searchParams;
   const action = standalone.find(value => value === params.action);
   if (!action || !canUseImprovementAction(context.role, action)) redirect("/tasks/improvement");
+  // AP-041: work that belongs to a record or module now starts there; only configuration stays in this hub.
+  const home = homeForHubNew("improvement", action, params as Record<string, string | undefined>);
+  if (home) redirect(home);
   // NOV-059: only the page path of the originating screen is kept; its query string may hold draft values.
   const source = suggestionSourcePath(typeof params.from === "string" ? params.from : "/tasks/improvement");
   const fixed = action === "suggestion.submit" ? { source_path: source } : {};

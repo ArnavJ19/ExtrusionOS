@@ -10,6 +10,7 @@ import { can } from "@/lib/auth/permissions";
 import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 import { CustomerAliasManager, CustomerCommitments } from "@/components/modules/operations/operator-tools";
 import { canManageCustomerRequirements } from "@/lib/workflow/customer-step-requirements";
+import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
 
 function addQuoteWeight(weights: Map<string, number>, item: { quote_id?: string | null; billing_weight_kg?: number | string | null; total_weight_kg?: number | string | null }) {
   if (!item.quote_id) return;
@@ -197,6 +198,7 @@ export default async function CustomerDetailPage({ params, searchParams }: { par
       </div>
       <CustomerAliasManager key={`aliases:${context.companyId}:${context.userId}:${context.role}:${id}`} context={context} customerId={id} />
       <div id="customer-commitments"><CustomerCommitments key={`commitments:${context.companyId}:${context.userId}:${context.role}:${id}:${selectedCommitment ?? ""}`} context={context} customerId={id} commitmentId={selectedCommitment} /></div>
+      {!context.dealerId ? <RelatedWorkPanel kind="customer" id={id} role={context.role} /> : null}
     </div>
   );
 }

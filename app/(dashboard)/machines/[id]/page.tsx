@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ErpControlPanel } from "@/components/modules/erp-control-panel";
 import { machineControls } from "@/lib/workflow/erp-control-panels";
+import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
 
 export default async function MachineDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -15,5 +16,6 @@ export default async function MachineDetailPage(props: { params: Promise<{ id: s
   return <div className="space-y-6">
     <RecordDetailClient moduleKey="machines" recordId={params.id} context={context} canEdit={can(context.role, "update", "machine_maintenance")} />
     <ErpControlPanel title="Return to service" actions={controls} />
+    {!context.dealerId ? <RelatedWorkPanel kind="machine" id={params.id} role={context.role} /> : null}
   </div>;
 }

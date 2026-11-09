@@ -1,3 +1,4 @@
+import { ModuleWorkflows } from "@/components/modules/home-work/module-workflows";
 import Link from "next/link";
 import { ModuleOverviewClient } from "@/components/modules/operations/module-overview-client";
 import { ModuleDisabled } from "@/components/ui/module-disabled";
@@ -25,6 +26,7 @@ export default async function QualityPage() {
           </div>
         </div>
       ) : null}
+      {!context.dealerId ? <ModuleWorkflows module="quality" role={context.role} /> : null}
     </div>
   );
 }

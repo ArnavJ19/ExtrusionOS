@@ -14,6 +14,7 @@ import { ProductionPerformancePanel } from "@/components/modules/production-perf
 import { buildProductionJobEvidence } from "@/lib/calculations/production-performance";
 import { ProductionReadinessPanel } from "@/components/modules/production/production-readiness-panel";
 import { canPlaceHolds, canReadHolds, readinessResponseSchema, type ReadinessResponse } from "@/lib/workflow/production-readiness";
+import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
 
 const SCRAP_RECORD_LIMIT = 200;
 
@@ -118,6 +119,7 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
       <div id="production-controls"><ErpControlPanel title="Production controls" description="Billet issue, input evidence, surplus to stock and scrap corrections." actions={controls} /></div>
       <ProductionExceptions key={`${context.companyId}:${context.userId}:${context.role}:${id}`} context={context} jobId={id} />
       <RecordDetailClient moduleKey="production" context={context} recordId={id} canEdit={canUpdate} />
+      {!context.dealerId ? <RelatedWorkPanel kind="job" id={id} role={context.role} /> : null}
     </div>
   );
 }

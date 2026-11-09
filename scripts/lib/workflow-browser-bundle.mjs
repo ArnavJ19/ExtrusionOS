@@ -31,6 +31,7 @@ export async function buildWorkflowBrowserBundle() {
     "@/lib/reports/pcda/templates": `export function getReportTemplate(){return {roles:[]}}`,
     "@/components/modules/shared/pcda-line-report-controls": `export function PcdaLineReportControls(){return null}`,
     "next/navigation": `export function useRouter(){return {push(url){window.fixture.navigations.push(url)},refresh(){}}}export function redirect(url){throw new Error("Unexpected fixture redirect: "+url)}`,
+    "@/components/modules/home-work/related-work-panel": `export function RelatedWorkPanel(){return null}`,
     "next/link": `import React from "react";export default function Link({children,...props}){return <a {...props}>{children}</a>}`,
     "sonner": `export const toast={error(text){window.fixture.errors.push(text);document.getElementById("fixture-message").textContent=text},success(text){document.getElementById("fixture-message").textContent=text},warning(){}};`,
   };
@@ -42,7 +43,7 @@ export async function buildWorkflowBrowserBundle() {
     const query=new URLSearchParams(window.location.search);const screen=window.location.pathname.startsWith("/dispatches/new")?"dispatch":window.location.pathname.startsWith("/quotes/new")?"repeat":query.get("screen")||"search";window.renderWorkflow(screen);
     document.querySelectorAll("[data-workflow-screen]").forEach(button=>button.addEventListener("click",()=>window.renderWorkflow(button.dataset.workflowScreen)));
   ` }, bundle: true, write: false, platform: "browser", format: "iife", jsx: "automatic", plugins: [{ name: "workflow-fixture-boundaries", setup(api) {
-    api.onResolve({ filter: /^(?:@\/lib\/(?:auth|supabase\/(?:browser|server)|reports\/pcda\/(?:readiness|templates)|actions\/(?:quotes-orders|costing-rates|profile-technical-options|transaction-evidence|subscriptions|exception-requests|repeat-quote|in-task-customers|instant-search|order-stage-age|dispatches|dispatch-order-balance|downstream-context|physical-bundles))|@\/components\/modules\/shared\/pcda-line-report-controls|next\/(?:navigation|link)|sonner)$/ }, ({ path }) => ({ path, namespace: "fixture" }));
+    api.onResolve({ filter: /^(?:@\/lib\/(?:auth|supabase\/(?:browser|server)|reports\/pcda\/(?:readiness|templates)|actions\/(?:quotes-orders|costing-rates|profile-technical-options|transaction-evidence|subscriptions|exception-requests|repeat-quote|in-task-customers|instant-search|order-stage-age|dispatches|dispatch-order-balance|downstream-context|physical-bundles))|@\/components\/modules\/shared\/pcda-line-report-controls|@\/components\/modules\/home-work\/related-work-panel|next\/(?:navigation|link)|sonner)$/ }, ({ path }) => ({ path, namespace: "fixture" }));
     api.onLoad({ filter: /.*/, namespace: "fixture" }, ({ path }) => ({ contents: aliases[path], loader: "tsx", resolveDir: process.cwd() }));
   } }] });
   return bundle.outputFiles[0].text;

@@ -1,14 +1,16 @@
 import { z } from "zod";
 import { vendorSchema } from "../validations/schemas";
+import { requireGstChoice } from "../validations/common";
 import { customerNamePattern, customerPhonePattern, normalizedCustomerPhone } from "./in-task-customer";
 
 // NOV-010: the minimal vendor record a purchasing or transport task needs; the rest is completed
 // later in Vendors. Tenant and author are always taken from the session on the server.
-export const inTaskVendorSchema = vendorSchema.pick({ vendor_name: true, vendor_type: true, contact_person: true, phone: true, gst_number: true, city: true }).strict()
+export const inTaskVendorSchema = vendorSchema.pick({ vendor_name: true, vendor_type: true, contact_person: true, phone: true, gst_number: true, gst_registration: true, city: true }).strict()
   .superRefine((value, context) => {
     for (const [field, text] of Object.entries(value)) {
       if (typeof text === "string" && text.length > 160) context.addIssue({ code: z.ZodIssueCode.custom, path: [field], message: `${field.replaceAll("_", " ")} is too long for quick vendor entry.` });
     }
+    requireGstChoice(value, context);
   });
 export type InTaskVendorInput = z.input<typeof inTaskVendorSchema>;
 export type InTaskVendorData = z.output<typeof inTaskVendorSchema>;
@@ -26,7 +28,7 @@ export const inTaskVendorRequestSchema = z.discriminatedUnion("intent", [
 ]);
 export type InTaskVendorRequest = z.input<typeof inTaskVendorRequestSchema>;
 
-export const inTaskVendorDefaults: InTaskVendorInput = { vendor_name: "", vendor_type: "other", contact_person: "", phone: "", gst_number: "", city: "" };
+export const inTaskVendorDefaults: InTaskVendorInput = { vendor_name: "", vendor_type: "other", contact_person: "", phone: "", gst_number: "", gst_registration: "", city: "" };
 export const vendorNamePattern = customerNamePattern;
 export const vendorPhonePattern = customerPhonePattern;
 export const normalizedVendorPhone = normalizedCustomerPhone;

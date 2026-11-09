@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { gstNumber, indianPhone, optionalEmail, optionalText } from "./common";
+import { gstNumber, gstRegistration, indianPhone, optionalEmail, optionalText, requireGstChoice } from "./common";
 
 export const customerSchema = z.object({
   customer_name: z.string().trim().min(1, "Customer name is required"),
@@ -9,6 +9,7 @@ export const customerSchema = z.object({
   whatsapp_number: indianPhone,
   email: optionalEmail,
   gst_number: gstNumber,
+  gst_registration: gstRegistration,
   billing_address: optionalText,
   shipping_address: optionalText,
   city: optionalText,
@@ -19,6 +20,9 @@ export const customerSchema = z.object({
   notes: optionalText,
   is_active: z.coerce.boolean().default(true)
 });
+
+/** AP-038: create and edit forms for parties require a valid GSTIN or the explicit unregistered choice. */
+export const customerFormSchema = customerSchema.superRefine(requireGstChoice);
 
 export const profileSchema = z.object({
   hsn_code: z.string().trim().regex(/^(\d{4}|\d{6}|\d{8})?$/, "Enter a 4, 6 or 8 digit HSN").optional().nullable(),
@@ -394,6 +398,7 @@ export const vendorSchema = z.object({
   phone: indianPhone,
   email: optionalEmail,
   gst_number: gstNumber,
+  gst_registration: gstRegistration,
   address: optionalText,
   city: optionalText,
   state: optionalText,
@@ -401,6 +406,7 @@ export const vendorSchema = z.object({
   notes: optionalText,
   is_active: z.coerce.boolean().default(true)
 });
+export const vendorFormSchema = vendorSchema.superRefine(requireGstChoice);
 
 export const inventoryItemSchema = z.object({
   item_code: z.string().trim().min(1, "Item code is required"),

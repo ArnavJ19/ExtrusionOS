@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createInTaskCustomerActionFixture, customerFixtureIds as ids } from "../scripts/lib/in-task-customer-action-fixture.mjs";
 
 let f;
-const customer={customer_name:"Arun Windows",company_name:"Arun Aluminium",customer_type:"fabricator",phone:"+91 98765 43210",gst_number:"27ABCDE1234F1Z5",billing_address:"Fixture billing address",shipping_address:"Fixture site"};
+const customer={customer_name:"Arun Windows",company_name:"Arun Aluminium",customer_type:"fabricator",phone:"+91 98765 43210",gst_number:"27ABCDE1234F1Z0",billing_address:"Fixture billing address",shipping_address:"Fixture site"};
 const create=(extra={})=>({intent:"create",customer,request_id:ids.request,acknowledge_similar:false,...extra});
 test.before(async()=>{f=await createInTaskCustomerActionFixture()});
 test.beforeEach(async()=>{await f.db.exec("truncate customers");Object.assign(f.state,{role:"owner",companyId:ids.company,userId:ids.user,authenticated:true,calls:[],paths:[],inserts:0,throwAfterWrite:false,readError:false,insertError:null});});
@@ -37,7 +37,7 @@ test("read failures are unavailable rather than evidence of no duplicates",async
 });
 test("legacy phone formatting and escaped name wildcards stay reviewable and bounded",async()=>{
   await f.seed({customer_name:"Different contact",phone:"+91 98765 43210"});
-  const checked=await f.action({intent:"check",customer:{...customer,customer_name:"Literal % _ buyer",gst_number:""}});
+  const checked=await f.action({intent:"check",customer:{...customer,customer_name:"Literal % _ buyer",gst_number:"",gst_registration:"unregistered"}});
   assert.equal(checked.kind,"checked");assert.equal(checked.matches.length,1);assert.deepEqual(checked.matches[0].matched_on,["phone"]);
   assert.ok(f.state.calls.every(call=>call.limit===11));
 });

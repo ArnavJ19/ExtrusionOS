@@ -1,0 +1,57 @@
+// The app's navigation destinations (moved from components/layout/app-shell.tsx so settings pages can list them).
+// Each item is still filtered by role, route access and feature flag before it is shown (lib/navigation/task-navigation.ts).
+import type { NavIconName } from "@/components/layout/nav-link";
+import type { EnterpriseModuleName, UserRole } from "@/types/app";
+
+export const APP_DESTINATIONS = [
+  { href: "/dashboard", label: "Dashboard", icon: "BarChart3", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer", "dealer_admin", "dealer_staff"] },
+  { href: "/command-center", label: "Command Center", icon: "Activity", roles: ["owner", "admin"] },
+  { href: "/customers", label: "Customers", icon: "Users", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "factory_manager", "dispatch_manager", "accounts", "viewer"] },
+  { href: "/crm", label: "CRM", icon: "Target", roles: ["owner", "admin", "sales_manager", "sales"], module: "crm" },
+  { href: "/profiles", label: "Profiles", icon: "Shapes", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "inventory_manager", "quality", "viewer"] },
+  { href: "/dies", label: "Dies", icon: "Wrench", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "quality", "viewer"] },
+  { href: "/die-intelligence", label: "Die Intel", icon: "Activity", roles: ["owner", "admin", "production_manager", "quality"] },
+  { href: "/quotes", label: "Quotes", icon: "FileText", roles: ["owner", "admin", "sales_manager", "sales", "accounts", "viewer"] },
+  { href: "/ai/quotation-assistant", label: "AI Quotes", icon: "Bot", roles: ["owner", "admin", "sales_manager", "sales"], module: "ai_assistant" },
+  { href: "/systems-configurator", label: "Configurator", icon: "PackageCheck", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "viewer"] },
+  { href: "/communications/whatsapp", label: "WhatsApp", icon: "FileText", roles: ["owner", "admin", "sales_manager", "sales"] },
+  { href: "/barcode", label: "QR Gen", icon: "QrCode", roles: ["owner", "admin", "production_manager", "dispatch_manager"] },
+  { href: "/scan", label: "Scanner", icon: "Search", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "quality"] },
+  { href: "/mobile", label: "Mobile", icon: "Smartphone", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "quality"], module: "mobile_floor_app" },
+  { href: "/documents", label: "Documents", icon: "FolderSearch", roles: ["owner", "admin", "sales_manager", "production_manager", "quality"] },
+  { href: "/energy", label: "Energy", icon: "Zap", roles: ["owner", "admin", "production_manager"], module: "energy_monitoring" },
+  { href: "/maintenance", label: "Maintenance", icon: "Wrench", roles: ["owner", "admin", "production_manager"], module: "machine_maintenance" },
+  { href: "/machines", label: "Machines", icon: "Wrench", roles: ["owner", "admin", "production_manager", "production", "viewer"] },
+  { href: "/tasks", label: "Tasks", icon: "CheckSquare", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer", "dealer_admin", "dealer_staff"] },
+  { href: "/orders", label: "Orders", icon: "Factory", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer"] },
+  { href: "/production", label: "Production", icon: "CalendarRange", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "viewer"], module: "production_planning" },
+  { href: "/foundry", label: "Foundry", icon: "Factory", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "viewer"] },
+  { href: "/packaging", label: "Packaging", icon: "PackageCheck", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "viewer"] },
+  { href: "/quality", label: "Quality", icon: "ClipboardCheck", roles: ["owner", "admin", "production_manager", "quality", "viewer"], module: "quality_compliance" },
+  { href: "/inventory", label: "Inventory", icon: "Boxes", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "inventory_manager", "viewer", "dealer_admin", "dealer_staff"], module: "advanced_inventory" },
+  { href: "/dealer-inventory", label: "Dealer Ledger", icon: "Boxes", roles: ["owner", "admin", "sales_manager", "factory_manager", "inventory_manager", "viewer", "dealer_admin", "dealer_staff"], module: "dealer_portal" },
+  { href: "/vendors", label: "Vendors", icon: "Building2", roles: ["owner", "admin", "sales_manager", "production_manager", "accounts", "viewer"] },
+  { href: "/dispatches", label: "Dispatches", icon: "Truck", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "viewer"], aliases: ["/shipments"] },
+  { href: "/dealer-orders", label: "Dealer Orders", icon: "Truck", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "inventory_manager", "dealer_admin", "dealer_staff"] },
+  { href: "/discrepancies", label: "Discrepancies", icon: "ShieldCheck", roles: ["owner", "admin", "factory_manager", "inventory_manager", "dealer_admin", "dealer_staff"] },
+  { href: "/tenders", label: "Tenders", icon: "Building2", roles: ["owner", "admin", "sales_manager"], module: "tender_management" },
+  { href: "/exports", label: "Exports", icon: "Factory", roles: ["owner", "admin", "sales_manager", "dispatch_manager"], module: "export_docs" },
+  { href: "/compliance", label: "Compliance", icon: "ShieldCheck", roles: ["owner", "admin", "quality"], module: "bis_compliance" },
+  { href: "/profitability", label: "Profitability", icon: "TrendingUp", roles: ["owner", "admin", "accounts"], module: "profitability_intelligence" },
+  { href: "/reports", label: "Reports", icon: "BarChart3", roles: ["owner", "admin", "sales_manager", "accounts"], module: "report_builder", aliases: ["/report-builder"] },
+  { href: "/analytics", label: "Analytics", icon: "BarChart3", roles: ["owner", "admin", "sales_manager", "accounts"] },
+  { href: "/automation", label: "Automation", icon: "WandSparkles", roles: ["owner", "admin"], module: "automation" },
+  { href: "/expenses", label: "Expenses", icon: "IndianRupee", roles: ["owner", "admin", "accounts", "viewer"] },
+  { href: "/invoices", label: "Invoices", icon: "FileText", roles: ["owner", "admin", "accounts", "viewer"] },
+  { href: "/payments", label: "Payments", icon: "IndianRupee", roles: ["owner", "admin", "accounts", "viewer"] },
+  { href: "/settings/integrations", label: "Integrations", icon: "PlugZap", roles: ["owner", "admin"], module: "accounting_integrations" },
+  { href: "/settings/branding", label: "Branding", icon: "Palette", roles: ["owner", "admin"] },
+  { href: "/settings/data", label: "Data Center", icon: "FileArchive", roles: ["owner", "admin"] },
+  { href: "/settings/enterprise", label: "Enterprise", icon: "ShieldCheck", roles: ["owner", "admin"] },
+  { href: "/settings/security", label: "Security", icon: "ShieldCheck", roles: ["owner", "admin"] },
+  { href: "/settings/access", label: "Users & Roles", icon: "Users", roles: ["owner"] },
+  { href: "/audit-logs", label: "Audit Logs", icon: "Activity", roles: ["owner", "admin", "viewer"] },
+  { href: "/settings", label: "Settings", icon: "Settings", roles: ["owner", "admin"] }
+] satisfies { href: string; label: string; icon: NavIconName; roles: UserRole[]; module?: EnterpriseModuleName; aliases?: string[] }[];
+
+export type AppDestination = (typeof APP_DESTINATIONS)[number];

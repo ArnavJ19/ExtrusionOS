@@ -1,3 +1,4 @@
+import { ModuleWorkflows } from "@/components/modules/home-work/module-workflows";
 import { ModuleOverviewClient } from "@/components/modules/operations/module-overview-client";
 import { DispatchesDashboard } from "@/components/modules/dashboards/dispatches-dashboard";
 import { getSessionContext } from "@/lib/auth";
@@ -69,6 +70,7 @@ export default async function DispatchesPage() {
         />
       </ModuleOverviewClient>
       {lineQueue ? <LineDeliveryQueue scope="dispatch" initial={lineQueue.data} unavailableMessage={lineQueue.message} /> : null}
+      {!context.dealerId ? <ModuleWorkflows module="dispatches" role={context.role} /> : null}
     </div>
   );
 }

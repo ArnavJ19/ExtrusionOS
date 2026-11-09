@@ -35,7 +35,16 @@ const platform = `
   create function storage.extension(name text) returns text language sql immutable as $$ select reverse(split_part(reverse(name), '.', 1)) $$;
 `;
 
-export async function replayMigrationChain({ stopOnFailure = true } = {}) {
+// The production chain allows one company (Omalco; 20261109000000_single_tenant_omalco.sql). Isolation tests still
+// need a second, synthetic company to prove RLS and company scoping, so by default the replayed copy suspends that
+// one guard after the chain is applied. Pass { syntheticCompanies: false } to test the guard itself.
+const suspendSingleCompanyGuard = `do $$ begin
+  if exists (select 1 from pg_trigger where tgname = 'trg_enforce_single_company' and tgrelid = 'public.companies'::regclass) then
+    alter table public.companies disable trigger trg_enforce_single_company;
+  end if;
+end $$;`;
+
+export async function replayMigrationChain({ stopOnFailure = true, syntheticCompanies = true } = {}) {
   const db = new PGlite({ extensions: { pgcrypto, uuid_ossp } });
   await db.exec(platform);
   const files = [...baselineFiles, ...migrationFiles().map(name => `migrations/${name}`)];
@@ -51,5 +60,6 @@ export async function replayMigrationChain({ stopOnFailure = true } = {}) {
       if (stopOnFailure) break;
     }
   }
+  if (syntheticCompanies && !failures.length) await db.exec(suspendSingleCompanyGuard);
   return { db, files, applied, failures };
 }
