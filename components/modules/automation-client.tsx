@@ -29,6 +29,7 @@ type RunRow = {
   status: string;
   error_message: string | null;
   created_at: string;
+  result_json?: { simulated?: boolean } | null;
 };
 
 const triggers = ["quote_created", "quote_sent", "quote_expiring", "quote_approved", "order_created", "order_delayed", "dispatch_created", "invoice_overdue", "inventory_low", "quality_failed", "die_high_rejection", "complaint_created"];
@@ -106,11 +107,11 @@ export function AutomationClient({ companyId, initialRules, initialRuns }: Props
         actions_executed: rule.actions_json.map((item) => item.type),
         note: "Safe simulation run from automation builder"
       }
-    }).select("id, rule_id, trigger_entity_type, status, error_message, created_at").single();
+    }).select("id, rule_id, trigger_entity_type, status, error_message, created_at, result_json").single();
 
-    if (runResult.error) return toast.error(runResult.error.message || "Could not run automation");
+    if (runResult.error) return toast.error(runResult.error.message || "Could not record the simulation");
     setRuns((current) => [runResult.data as RunRow, ...current]);
-    toast.success("Automation run logged");
+    toast.success("Simulation recorded. Nothing was executed.");
   }
 
   async function toggleRule(rule: RuleRow) {
@@ -126,7 +127,9 @@ export function AutomationClient({ companyId, initialRules, initialRuns }: Props
     toast.success(`Rule ${result.data?.is_active ? "activated" : "paused"}`);
   }
 
-  const completedRuns = runs.filter((item) => item.status === "completed").length;
+  // A simulation is recorded with status "completed" by this builder; it is never presented as executed work.
+  const simulatedRuns = runs.filter((item) => item.result_json?.simulated).length;
+  const completedRuns = runs.filter((item) => item.status === "completed" && !item.result_json?.simulated).length;
   const failedRuns = runs.filter((item) => item.status === "failed").length;
 
   return (
@@ -178,7 +181,7 @@ export function AutomationClient({ companyId, initialRules, initialRuns }: Props
 
             <div className="rounded-2xl border border-orange/20 bg-orange/5 p-4 text-sm font-medium leading-6 text-slate-700">
               <p className="font-black text-slate-900">Safety mode</p>
-              <p className="mt-1">This release stores rules and logs deterministic runs. Direct WhatsApp or email sending is intentionally unavailable until a provider is configured and audited.</p>
+              <p className="mt-1">This builder stores rules and records simulations only; nothing is executed from here. Approved rules that create internal tasks run from the <Link href="/tasks/specialist/database?view=automation" className="font-black underline">controlled automation workbench</Link>. Direct WhatsApp or email sending is intentionally unavailable until a provider is configured and audited.</p>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium leading-6 text-slate-700">
@@ -198,7 +201,7 @@ export function AutomationClient({ companyId, initialRules, initialRuns }: Props
               <div key={rule.id} className="rounded-2xl border border-slate-200 bg-white p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3"><p className="font-black text-slate-950">{rule.rule_name}</p><div className="flex gap-2"><Badge value={rule.trigger_type} /><Badge value={rule.is_active ? "active" : "paused"} /></div></div>
                 <p className="mt-2 text-sm font-medium text-slate-600">If {rule.conditions_json?.field || "field"} {rule.conditions_json?.operator || "equals"} {String(rule.conditions_json?.value || "value")}, then {rule.actions_json?.[0]?.type || "action"}.</p>
-                <div className="mt-3 flex flex-wrap gap-2"><Button variant="secondary" onClick={() => runRuleNow(rule)}><Sparkles className="h-4 w-4" /> Run now</Button><Button variant="ghost" onClick={() => toggleRule(rule)}>{rule.is_active ? "Pause" : "Activate"}</Button><span className="text-xs font-bold text-slate-500">Created {formatDate(rule.created_at)}</span></div>
+                <div className="mt-3 flex flex-wrap gap-2"><Button variant="secondary" onClick={() => runRuleNow(rule)}><Sparkles className="h-4 w-4" /> Simulate (nothing is executed)</Button><Button variant="ghost" onClick={() => toggleRule(rule)}>{rule.is_active ? "Pause" : "Activate"}</Button><span className="text-xs font-bold text-slate-500">Created {formatDate(rule.created_at)}</span></div>
               </div>
             )) : <div className="empty-mini">No rules yet.</div>}
           </CardContent>
@@ -208,10 +211,10 @@ export function AutomationClient({ companyId, initialRules, initialRuns }: Props
       <Card>
         <CardHeader><h2 className="section-title">Automation Runs</h2></CardHeader>
         <CardContent className="space-y-3">
-          <div className="rounded-2xl border border-slate-200 bg-aluminium/40 p-3 text-xs font-bold uppercase tracking-[0.12em] text-slate-600">{completedRuns} completed · {failedRuns} failed</div>
+          <div className="rounded-2xl border border-slate-200 bg-aluminium/40 p-3 text-xs font-bold uppercase tracking-[0.12em] text-slate-600">{simulatedRuns} simulated (nothing executed) · {completedRuns} executed · {failedRuns} failed</div>
           {runs.length ? runs.map((run) => (
             <div key={run.id} className="rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3"><p className="font-black text-slate-950">{run.trigger_entity_type || "automation"}</p><Badge value={run.status} /></div>
+              <div className="flex flex-wrap items-center justify-between gap-3"><p className="font-black text-slate-950">{run.trigger_entity_type || "automation"}</p>{run.result_json?.simulated ? <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">Simulated · nothing executed</span> : <Badge value={run.status} />}</div>
               <p className="mt-1 text-sm font-medium text-slate-500">{formatDate(run.created_at)}</p>
               {run.error_message ? <p className="mt-2 rounded-xl bg-red-50 p-2 text-xs font-bold text-red-700">{run.error_message}</p> : null}
             </div>

@@ -35,6 +35,7 @@ import { BilletPlanNote } from "@/components/modules/billet-plan-note";
 import { PageHeader } from "@/components/layout/page-header";
 import { RepeatPreviousPicker, type RepeatSource } from "@/components/forms/repeat-previous-picker";
 import { DieServiceNote } from "@/components/modules/improvement/die-service-note";
+import { DieCustodyNote } from "@/components/modules/execution/die-custody-note";
 import { InTaskVendor } from "@/components/modules/vendors/in-task-vendor";
 import { InTaskCustomer } from "@/components/modules/customers/in-task-customer";
 import { repeatFamilyFor, repeatLineageFields } from "@/lib/forms/repeat-previous";
@@ -1104,6 +1105,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
           {defaultMessage[field.name] ? <span role="status" className="text-neutral-600">{defaultMessage[field.name]}</span> : null}
         </div> : null}
         {productionDieField && value ? <DieServiceNote dieId={String(value)} role={context.role} /> : null}
+        {productionDieField && value ? <DieCustodyNote dieId={String(value)} role={context.role} /> : null}
         {field.lookup && !field.readOnly && field.lookup.table === "vendors" ? <InTaskVendor context={context} taskLabel={config.title.toLowerCase()} onSelected={(vendor) => selectCreatedMaster(field, vendor)} /> : null}
         {field.lookup && !field.readOnly && field.lookup.table === "customers" ? <InTaskCustomer context={context} taskLabel={config.title.toLowerCase()} onSelected={(customer) => selectCreatedMaster(field, customer)} /> : null}
         {receiptField ? <p className="text-xs font-semibold text-slate-500">Select accepted output from one final receipt. Its rejected remainder stays separate.</p> : null}

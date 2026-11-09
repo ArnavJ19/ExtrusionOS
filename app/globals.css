@@ -9,6 +9,18 @@
   --aluminium: #f3f3f4;
   --aluminium-deep: #e5e7eb;
   --orange: #8b5cf6;
+  /* NOV-082 density tokens. Compact only applies where a precise pointer exists; touch screens keep comfortable controls. */
+  --density-control-y: 0.625rem;
+  --density-row-y: 1rem;
+  --density-gap: 1rem;
+}
+
+@media (pointer: fine) {
+  html[data-density="compact"] {
+    --density-control-y: 0.375rem;
+    --density-row-y: 0.5rem;
+    --density-gap: 0.625rem;
+  }
 }
 
 body {
@@ -38,6 +50,16 @@ body {
     scroll-margin-bottom: 14rem;
   }
 
+  .form-input:not([type="checkbox"]) {
+    padding-top: var(--density-control-y);
+    padding-bottom: var(--density-control-y);
+  }
+
+  .density-row {
+    padding-top: var(--density-row-y);
+    padding-bottom: var(--density-row-y);
+  }
+
   .form-hint {
     @apply text-xs font-medium leading-5 text-neutral-500;
   }
@@ -63,11 +85,15 @@ body {
   }
 
   .industrial-table th {
-    @apply px-4 py-3;
+    @apply px-4;
+    padding-top: calc(var(--density-row-y) - 0.25rem);
+    padding-bottom: calc(var(--density-row-y) - 0.25rem);
   }
 
   .industrial-table td {
-    @apply px-4 py-3 text-neutral-700;
+    @apply px-4 text-neutral-700;
+    padding-top: calc(var(--density-row-y) - 0.25rem);
+    padding-bottom: calc(var(--density-row-y) - 0.25rem);
   }
 
   .industrial-table tbody {
