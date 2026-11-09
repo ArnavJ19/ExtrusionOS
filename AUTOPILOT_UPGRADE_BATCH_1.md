@@ -41,6 +41,21 @@ detail pages, My Work); no new `/tasks/*` hub was created.
 | AP-042 | Main navigation ≤ 9 for every role | 1 SQL + unit + 2 browser | None beyond planned |
 | AP-059 | No posting in a closed month without an approved, open window | 1 SQL + 2 browser | Reason validated before the role check (wrong message to unauthorised roles); reordered |
 
+## "Done when" re-check (each entry re-read in full on 10 November)
+
+| ID | Done when | Met? | What is missing, exactly |
+| --- | --- | --- | --- |
+| AP-001 | Overlapping invocations produce one run; a failing job is visible within one window; no browser-reachable key | Yes | Truly parallel invocations are not testable in PGlite; one run per window is enforced by the unique key, which makes the second insert wait and then skip |
+| AP-002 | Every proposal-producing entry uses the component; stale proposals cannot be accepted | Yes for this batch | Later entries that produce proposals must use `ProposalCards` and `public.ap_proposals` |
+| AP-004 | A promise before the Diwali shutdown moves by its length; calendar-day reports unchanged unless switched | Yes | The entry also asks that turnaround and reminder timing take working time from the calendar; only delivery proposals and press capacity do so far. Turnaround targets (minutes against shifts, in SQL) still ignore holidays |
+| AP-005 | Concurrent invoice posting gives unique sequential numbers; 1 April rollover tested | Rollover yes; concurrency by design | Concurrency relies on the counter's row lock and was not run in parallel. The catalogue's example format (18 characters) is refused under GST's 16-character limit |
+| AP-006 | 500 customers and 1,000 profiles in under two minutes with an exact rejected-row report | Yes | ~4.5 s locally; to be timed on hosted with Omalco's real sheets |
+| AP-007 | Day-one stock and receivable totals equal the signed Excel totals | Yes | Opening receivables keep their original invoice date (needed for ageing) instead of the cut-over date. They are marked "opening" in the ledger (`OB-` number, `opening_cutover_id`, notes; stock origin `opening_balance`; payables source `opening_balance`), but no "Opening" badge was added to list or report screens |
+| AP-038 | Invalid GSTINs cannot be saved without an explicit "unregistered" choice | Yes | — |
+| AP-041 | No daily task needs a `/tasks/*` hub; hub pages are read-only reports | Partly | Starting work moved to records and modules. Follow-up actions on hub records that already exist (approve, record, close) still happen on the hub detail page, reached from the record's Related work panel, so hub detail pages are not read-only yet |
+| AP-042 | Each role's main navigation has nine items or fewer | Yes | — |
+| AP-059 | No posting in a closed period without an approved reopen | Yes, for the financial tables | Covers invoices, receipts, credit notes, expenses, expense payments, supplier credits, supplier bills and purchase receipts. Stock movements and dispatches are not period-locked |
+
 ## Scope and operating boundaries
 
 - Jobs only create proposals and notifications. Proposals change data only when a person accepts, and the domain action re-runs its checks.
