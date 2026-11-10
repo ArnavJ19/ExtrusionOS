@@ -2,9 +2,16 @@ import Link from "next/link";
 import { canUseHubAction } from "@/lib/navigation/hub-permissions";
 import { MODULE_STARTS, moduleWorkHref, type ModuleKey } from "@/lib/navigation/home-work";
 
-// Autopilot pages that belong to a module (AP-004 calendar, AP-005 numbering, AP-059 month close).
+// Autopilot pages that belong to a module (AP-004 calendar, AP-005 numbering, AP-059 month close; batch 2 press floor,
+// scrap standards and in-process samples).
+const FLOOR = ["owner", "admin", "production_manager", "production", "factory_manager"];
 const MODULE_LINKS: Partial<Record<ModuleKey, Array<{ href: string; label: string; roles: string[] }>>> = {
-  production: [{ href: "/production/calendar", label: "Factory calendar", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "viewer"] }],
+  production: [
+    { href: "/production/floor", label: "Press floor", roles: FLOOR },
+    { href: "/production/workstation", label: "Press workstation", roles: FLOOR },
+    { href: "/production/scrap-standards", label: "Scrap standards", roles: FLOOR },
+    { href: "/production/calendar", label: "Factory calendar", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "viewer"] }],
+  quality: [{ href: "/quality/samples", label: "In-process samples", roles: ["owner", "admin", "quality", "factory_manager", "production_manager"] }],
   invoices: [{ href: "/invoices/periods", label: "Month close", roles: ["owner", "admin", "accounts", "viewer"] }, { href: "/invoices/numbering", label: "Document numbering", roles: ["owner", "admin", "accounts", "viewer"] }]
 };
 

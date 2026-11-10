@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { DieServiceHint } from "@/components/modules/press/die-service-hint";
 import { BilletWeightEstimate } from "@/components/modules/foundry/billet-weight-estimate";
 import { saveDispatchAction } from "@/lib/actions/dispatches";
 import { saveManualExpenseAction } from "@/lib/actions/expenses";
@@ -1092,6 +1093,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
         <label htmlFor={id} className="form-label">{field.label}{field.required ? <span aria-hidden="true"> *</span> : null}</label>
         {field.type === "textarea" ? <textarea {...accessibility} className="form-input min-h-24" value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} /> : field.type === "select" ? <SearchableSelect inputId={id} ariaDescribedBy={describedBy} invalid={Boolean(issue)} ariaLabel={field.label} value={String(value)} options={fieldOptions} placeholder="Select" onChange={(nextValue) => handleFieldChange(field, nextValue)} onSearchChange={field.lookup ? (query) => searchLookup(field, query) : undefined} searching={Boolean(field.lookup && lookupSearching[field.name])} error={lookupErrors[field.name]} onRetry={field.lookup ? () => searchLookup(field, "") : undefined} disabled={field.readOnly || receiptReadOnly} /> : field.type === "checkbox" ? <input {...accessibility} className="h-6 w-6 accent-orange" type="checkbox" checked={Boolean(value)} disabled={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.checked)} /> : <input {...accessibility} className="form-input" inputMode={field.type === "number" ? (field.step === "1" ? "numeric" : "decimal") : undefined} type={field.type ?? "text"} step={field.step} value={value} placeholder={field.placeholder} readOnly={field.readOnly} onChange={(event) => handleFieldChange(field, event.target.value)} />}
         {issue ? <p id={`${id}-error`} className="text-sm font-semibold text-red-800">{issue.message}</p> : null}
+        {moduleKey === "production" && field.name === "die_id" && value ? <DieServiceHint dieId={String(value)} /> : null}
         {source ? <div id={`${id}-source`} className="text-xs leading-5 text-neutral-600">
           {source.kind === "default"
             ? <p>{source.overridden ? `Changed by you; the suggestion was ${String(source.suggested ?? "not set")} (${defaultOriginText(tierOf(source), source.sourceLabel)})` : defaultOriginText(tierOf(source), source.sourceLabel)}.</p>

@@ -1,6 +1,6 @@
 "use server";
 
-// Autopilot batch 1 gateway. Every command is allow-listed and validated here, then re-checked by the database
+// Autopilot gateway (batches 1 and 2). Every command is allow-listed and validated here, then re-checked by the database
 // function, which takes the company and the actor from the session. Only messages the database marks with "AP: "
 // (and the accounting-lock and GSTIN messages, which name the rule) are shown to people.
 import { revalidatePath } from "next/cache";
@@ -15,6 +15,7 @@ import { NAV_ROLES, navigationSaveSchema } from "@/lib/navigation/role-navigatio
 import { seriesConfirmSchema } from "@/lib/numbering/financial-year";
 import { periodCommandSchemas } from "@/lib/periods/periods";
 import { PROPOSAL_TYPE_KEYS, decideBatchInputSchema, decideInputSchema } from "@/lib/proposals/proposals";
+import { dieCommands, pmCommands, pressCommands, samplingCommands, scrapCommands } from "@/lib/press/press-floor";
 
 export type ApResult<T = unknown> = { success: true; data: T } | { success: false; error: string; unavailable?: boolean };
 
@@ -31,7 +32,8 @@ const COMMANDS: Record<string, Record<string, z.ZodTypeAny>> = {
   },
   ap_series: { list: z.object({}).strict(), confirm: seriesConfirmSchema },
   ap_proposals: {
-    list: z.object({ status: z.enum(["open", "decided", "all"]).optional(), type: z.enum(PROPOSAL_TYPE_KEYS).optional(), page }).strict(),
+    list: z.object({ status: z.enum(["open", "decided", "all"]).optional(), type: z.enum(PROPOSAL_TYPE_KEYS).optional(), page,
+      target: z.string().min(1).max(80).optional(), target_prefix: z.string().regex(/^[0-9a-f-]{36}:?$/).optional() }).strict(),
     decide: decideInputSchema, decide_batch: decideBatchInputSchema, pending_count: z.object({}).strict()
   },
   ap_jobs: {
@@ -53,21 +55,26 @@ const COMMANDS: Record<string, Record<string, z.ZodTypeAny>> = {
   ap_home_work: {
     record: z.object({ kind: z.enum(HOME_KIND_KEYS), id: z.string().uuid() }).strict(),
     attention: z.object({ limit: z.number().int().min(1).max(20).optional() }).strict()
-  }
+  },
+  // Batch 2: press floor capture.
+  ap_press: pressCommands, ap_scrap: scrapCommands, ap_dies: dieCommands, ap_pm: pmCommands, ap_sampling: samplingCommands
 };
-const READS = new Set(["read", "add_working_days", "list", "get", "overview", "runs", "layout", "usage", "pending_count", "flags", "record", "attention", "visit"]);
+const READS = new Set(["read", "add_working_days", "list", "get", "overview", "runs", "layout", "usage", "pending_count", "flags", "record", "attention", "visit",
+  "station", "push", "undo", "job", "expected", "cycle_times", "floor", "downtime", "die_changes", "settings", "reconcile", "service", "options", "plans", "compliance",
+  "triggers", "samples", "sample", "queue"]);
 const REVALIDATE: Record<string, string[]> = {
-  ap_calendar: ["/production/calendar"], ap_series: ["/settings/numbering"], ap_proposals: ["/dashboard", "/settings/navigation", "/settings/numbering", "/invoices/periods"],
+  ap_calendar: ["/production/calendar"], ap_series: ["/settings/numbering"], ap_proposals: ["/dashboard", "/settings/navigation", "/settings/numbering", "/invoices/periods", "/production", "/production/floor", "/dies", "/maintenance"],
   ap_jobs: ["/automation"], ap_navigation: ["/settings/navigation"], ap_period: ["/invoices/periods"], ap_import: ["/settings/data/import"],
-  ap_cutover: ["/settings/data/cutover"], ap_home_work: []
+  ap_cutover: ["/settings/data/cutover"], ap_home_work: [],
+  ap_press: ["/production/floor"], ap_scrap: ["/production/scrap-standards"], ap_dies: ["/dies"], ap_pm: ["/maintenance"], ap_sampling: ["/quality/samples"]
 };
 
 function friendly(error: { code?: string; message?: string } | null | undefined): ApResult<never> {
   const code = error?.code ?? "", message = error?.message ?? "";
-  if (["PGRST202", "42883", "42P01"].includes(code)) return { success: false, unavailable: true, error: "This needs the Autopilot batch 1 database upgrade. Existing workflows remain available." };
+  if (["PGRST202", "42883", "42P01"].includes(code)) return { success: false, unavailable: true, error: "This needs the Autopilot database upgrade. Existing workflows remain available." };
   if (code === "42501") return { success: false, error: "This record or action is not available to your current session." };
   if (code === "P0001" && message.startsWith("AP: ")) return { success: false, error: message.slice(4) };
-  if (code === "23514" && /^(Books are closed|GSTIN|Enter the GSTIN|A party marked|AP: )/.test(message)) return { success: false, error: message.replace(/^AP: /, "") };
+  if (code === "23514" && /^(Books are closed|GSTIN|Enter the GSTIN|A party marked|AP: |Billet mass balance)/.test(message)) return { success: false, error: message.replace(/^AP: /, "") };
   if (["23505", "23514", "23503", "22P02", "22007", "22008", "22003"].includes(code)) return { success: false, error: "The details conflict with current records. Reload and review again." };
   return { success: false, error: "The request could not be completed. Check your connection and retry." };
 }

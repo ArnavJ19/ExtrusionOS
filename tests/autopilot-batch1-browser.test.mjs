@@ -31,8 +31,10 @@ for (const width of [375, 1280]) {
     const { page, done } = await open(width, "proposals", i.accounts, { type: "series.adopt" });
     await expect(page.getByText("5 of 5 selected", { exact: false })).toBeVisible();
     await page.getByLabel("Include Quotation numbers by financial year (for example Q/26-27/0001) in the batch").uncheck();
-    await page.getByText("Why this was proposed").first().click();
-    await expect(page.getByText("GST allows at most 16 characters", { exact: false }).first()).toBeVisible();
+    // Cards prepared in one run share a timestamp, so open the invoice card itself rather than whichever sorts first.
+    const invoiceCard = page.getByRole("listitem").filter({ hasText: "Tax invoice numbers" });
+    await invoiceCard.getByText("Why this was proposed").click();
+    await expect(invoiceCard.getByText("GST allows at most 16 characters", { exact: false })).toBeVisible();
     await noOverflow(page);
     await page.screenshot({ path: `${evidence}/proposals-${width}.png`, fullPage: true });
     await page.getByRole("button", { name: "Accept selected (4)" }).click();

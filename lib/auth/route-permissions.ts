@@ -63,6 +63,10 @@ const roleRules: RoleRule[] = [
   { prefix: "/customers/portal-responses", roles: ["owner", "admin", "sales_manager", "sales"] },
   { prefix: "/production/usage", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "accounts"] },
   { prefix: "/production/cutting/rules", roles: ["owner", "admin", "production_manager", "quality"] },
+  // AP-013: the scrap yard (stores) records monthly weighings against derived scrap.
+  { prefix: "/production/scrap-standards", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "inventory_manager"] },
+  // AP-016: QC records in-process samples; supervisors see sampling compliance on their jobs.
+  { prefix: "/quality/samples", roles: ["owner", "admin", "quality", "factory_manager", "production_manager", "production"] },
   { prefix: "/vendors/comparisons", roles: ["owner", "admin", "accounts"] },
   { prefix: "/settings/access", roles: ["owner"] },
   // AP-007: stores, accounts and the plant head load and sign off their own opening sections.

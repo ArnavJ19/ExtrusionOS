@@ -1,3 +1,4 @@
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import Link from "next/link";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -16,6 +17,7 @@ import { ReportDownloadList } from "@/components/modules/shared/report-download-
 import { RevisionHistory } from "@/components/modules/shared/revision-history";
 import { LocationGuidance } from "@/components/modules/operations/operator-tools";
 import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
+import { DieServicePanel } from "@/components/modules/press/die-service";
 function DetailItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
@@ -227,6 +229,7 @@ export default async function DieDetailPage({ params }: { params: Promise<{ id: 
           </CardContent>
         </Card>
       )}
+      {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "sales_manager"].includes(context.role) ? <DieServicePanel dieId={id} today={getBusinessDateBoundaries().today} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="die" id={id} role={context.role} /> : null}
     </div>
   );
