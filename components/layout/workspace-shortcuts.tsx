@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Bookmark, Clock3, Star, X } from "lucide-react";
+import { Bookmark, ChevronDown, Clock3, Star, X } from "lucide-react";
 import { getModuleConfig, moduleConfigs, type ModuleKey } from "@/components/modules/operations/module-config";
 import { moveWorkspaceLink, roleWorkspaceLinks } from "@/lib/preferences/role-workspace";
 import { createClient } from "@/lib/supabase/browser";
@@ -95,11 +95,11 @@ export function WorkspaceShortcuts({ context, allowedRoutes, placement = "full" 
   }
 
   const compact = placement === "compact";
-  const content = <div className="space-y-4">
-        <section aria-label="Role workspace">
+  const content = <div className="space-y-6">
+        <section aria-label="Role workspace" className="space-y-2">
           <h3 className="text-xs font-bold uppercase tracking-wide text-neutral-600">Your role workspace</h3>
-          <a href="/dashboard" className="inline-flex min-h-11 items-center rounded-lg text-sm font-semibold underline">Back to My Work Today</a>
-          <ul>{destinations.map((link) => <li key={link.href} className="flex min-w-0 items-center gap-2">
+          <a href="/dashboard" className="inline-flex min-h-11 items-center rounded-lg text-sm font-semibold text-neutral-700 hover:text-neutral-950">← Back to My Work Today</a>
+          <ul className="space-y-1">{destinations.map((link) => <li key={link.href} className="flex min-w-0 items-center gap-2">
             <a href={link.href} className="flex min-h-11 min-w-0 flex-1 items-center break-words rounded-lg px-2 text-sm font-semibold">{link.label}</a>
             <button type="button" className="min-h-11 rounded-lg px-2 text-xs font-bold" aria-label={`${preferences.pinned.some((item) => item.href === link.href) ? "Unpin" : "Pin"} ${link.label}`} onClick={() => pinDestination(link, Date.now())}>{preferences.pinned.some((item) => item.href === link.href) ? "Unpin" : "Pin"}</button>
           </li>)}</ul>
@@ -113,16 +113,19 @@ export function WorkspaceShortcuts({ context, allowedRoutes, placement = "full" 
     <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"><Bookmark className="h-4 w-4" /> Workspace</summary>
     <div className="mt-2 w-full rounded-xl border border-neutral-200 bg-white p-3">{content}</div>
   </details>;
-  return <section className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-    <div className="mb-3 flex items-center gap-2 text-sm font-bold text-neutral-800"><Bookmark className="h-4 w-4" /> Pinned and recent work</div>
-    {content}
-  </section>;
+  return <details className="group mt-4 rounded-3xl border border-neutral-200 bg-white shadow-sm">
+    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-3xl px-5 py-4 text-sm font-bold text-neutral-800 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
+      <span className="flex items-center gap-3"><Bookmark className="h-4 w-4" /> Pinned and recent work</span>
+      <ChevronDown className="h-4 w-4 text-neutral-400 transition-transform group-open:rotate-180" />
+    </summary>
+    <div className="border-t border-neutral-100 px-5 pb-5 pt-4">{content}</div>
+  </details>;
 }
 
 function ShortcutGroup({ title, icon, links, onRemove, onMove }: { title: string; icon: ReactNode; links: WorkspaceLink[]; onRemove: (href: string) => void; onMove?: (href: string, direction: -1 | 1) => void }) {
   return (
     <section aria-label={title}>
-      <h3 className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-neutral-500">{icon}{title}</h3>
+      <h3 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-neutral-500">{icon}{title}</h3>
       {links.length ? <ul className="space-y-1">
         {links.map((link, index) => <li key={link.href} className="flex flex-wrap items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-neutral-50">
           <a className="flex min-h-11 min-w-0 flex-1 items-center break-words text-sm font-semibold text-neutral-800" href={link.href}>{link.label}</a>

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { getDispatchSourcesAction, saveDispatchAction } from "@/lib/actions/dispatches";
+import { hasDuplicates, warnDuplicates } from "@/components/modules/order-to-cash/duplicate-warning";
 import { dispatchOrderBalanceAction } from "@/lib/actions/dispatch-order-balance";
 import { createClient } from "@/lib/supabase/browser";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
@@ -252,7 +253,7 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
     finally { reviewingRef.current = false; if (mounted.current) setReviewing(false); }
   }
 
-  function submit() {
+  function submit(confirmDuplicate = false) {
     if(saving.current||locked)return;
     if (!review || review.fingerprint !== fingerprint) { setReview(null); setSubmitError("The load changed. Review this dispatch again before confirming."); return; }
     if(!sourceReady||selectedOrderId.current!==orderId)return setSubmitError("Select an order and wait for its current source check.");
@@ -284,9 +285,11 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
         proof_of_delivery_url: "",
         packing_list_url: "",
         remarks,
-        bundles: verifiedBundles
+        bundles: verifiedBundles,
+        ...(confirmDuplicate ? { confirm_duplicate: { confirmed: true } } : {})
       });
         if(!mounted.current)return;
+        if(hasDuplicates(result)){setSubmitError(result.error);warnDuplicates(result.duplicates,()=>submit(true),href=>router.push(href));return;}
         if(result?.success===false){setReview(null);setSubmitError(result.error||"Could not record dispatch.");return;}
         const confirmation=z.object({success:z.literal(true),dispatchId:z.string().uuid()}).parse(result);
         setSavedId(confirmation.dispatchId);
@@ -400,7 +403,7 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
             {review.manifest.balances.map((balance) => <p key={balance.id} className="mt-2 break-words">{balance.label}: {formatWeight(balance.kg)} / {balance.pieces} pcs / {balance.metres.toFixed(3)} m</p>)}
           </section>
           {submitError ? <p role="alert" className="rounded-xl bg-red-50 p-3 text-red-800">{submitError}</p> : null}
-          <Button type="button" disabled={pending} onClick={submit}>{pending ? "Verifying and posting stock..." : "Confirm dispatch and consume stock"}</Button>
+          <Button type="button" disabled={pending} onClick={() => submit()}>{pending ? "Verifying and posting stock..." : "Confirm dispatch and consume stock"}</Button>
         </div>
       </ReviewDialog> : null}
     </div>

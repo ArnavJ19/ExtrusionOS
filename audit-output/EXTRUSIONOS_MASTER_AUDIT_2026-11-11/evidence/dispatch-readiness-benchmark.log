@@ -1,0 +1,26 @@
+{
+  "context": "Local synthetic dispatch-readiness computation; excludes network and hosted query latency",
+  "jobs": 1000,
+  "inspections": 10000,
+  "packaging": 5000,
+  "materials": 10000,
+  "baseline_ms": [
+    264.241,
+    397.547,
+    296.896,
+    257.271,
+    237.319
+  ],
+  "candidate_ms": [
+    1.46,
+    1.772,
+    3.663,
+    0.89,
+    1.059
+  ],
+  "equivalent": true
+}
+(node:9384) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/arnav/.codex/visualizations/2026/11/10/01a1c747-4e6e-7321-a6fa-495982203424/extrusionos-audit-a82f10f/lib/dispatches/readiness-index.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)

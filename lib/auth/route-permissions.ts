@@ -68,6 +68,14 @@ const roleRules: RoleRule[] = [
   // AP-016: QC records in-process samples; supervisors see sampling compliance on their jobs.
   { prefix: "/quality/samples", roles: ["owner", "admin", "quality", "factory_manager", "production_manager", "production"] },
   { prefix: "/vendors/comparisons", roles: ["owner", "admin", "accounts"] },
+  // Autopilot batch 3 (order-to-cash): credit holds, draft jobs, invoice drafts, GST rules, bank matching, reminders.
+  { prefix: "/orders/credit", roles: ["owner", "admin", "accounts", "sales_manager", "sales"] },
+  { prefix: "/production/drafts", roles: ["owner", "admin", "production_manager", "factory_manager", "sales_manager"] },
+  { prefix: "/invoices/drafts", roles: ["owner", "admin", "accounts"] },
+  { prefix: "/invoices/tax-rules", roles: ["owner", "admin", "accounts"] },
+  { prefix: "/payments/bank", roles: ["owner", "admin", "accounts"] },
+  { prefix: "/payments/reminders", roles: ["owner", "admin", "accounts"] },
+  { prefix: "/settings/data/duplicates", roles: ["owner", "admin", "accounts", "sales_manager"] },
   { prefix: "/settings/access", roles: ["owner"] },
   // AP-007: stores, accounts and the plant head load and sign off their own opening sections.
   { prefix: "/settings/data/cutover", roles: ["owner", "admin", "accounts", "inventory_manager", "factory_manager", "production_manager", "sales_manager"] },

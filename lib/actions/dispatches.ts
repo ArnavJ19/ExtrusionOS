@@ -12,14 +12,16 @@ import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { dispatchSchema } from "@/lib/validations/schemas";
 import { indexDispatchReadiness } from "@/lib/dispatches/readiness-index";
+import { duplicateGate, duplicateMessage, type DuplicateConfirmation, type DuplicateMatch } from "@/lib/order-to-cash/duplicates";
 
 const deliveryStatusSchema = dispatchSchema.shape.delivery_status;
 
 type SaveDispatchInput = Omit<z.input<typeof dispatchSchema>, "number_of_bundles" | "total_weight_kg" | "bundle_tare_weights_kg"> & {
   editing_id?: string | null;
   bundles?: VerifiedDispatchBundleInput[];
+  confirm_duplicate?: DuplicateConfirmation;
 };
-type DispatchActionResult = { success: true; dispatchId?: string } | { success: false; error: string };
+type DispatchActionResult = { success: true; dispatchId?: string } | { success: false; error: string; duplicates?: DuplicateMatch[] };
 
 function revalidateDispatchPaths(dispatchId?: string, orderId?: string) {
   revalidatePath("/dispatches");
@@ -279,6 +281,11 @@ export async function saveDispatchAction(input: SaveDispatchInput): Promise<Disp
     if (editingId && !currentDispatchResult.data) return { success: false, error: "Dispatch not found for this company." };
 
     const currentDispatch = currentDispatchResult.data;
+    if (!editingId) {
+      // AP-097: the same load recorded twice for one order.
+      const gate = await duplicateGate(supabase, "dispatch", { order_id: parsed.data.order_id, total_weight_kg: parsed.data.total_weight_kg }, input.confirm_duplicate);
+      if (gate.blocked) return { success: false, error: duplicateMessage(gate.matches), duplicates: gate.matches };
+    }
     const totalTareWeightKg = Number(measured.tare.toFixed(3));
     const payload = {
       ...parsed.data,

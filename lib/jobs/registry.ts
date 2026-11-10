@@ -11,6 +11,9 @@ export const JOB_SCHEDULES = {
 export type JobSchedule = keyof typeof JOB_SCHEDULES;
 
 export const JOBS = [
+  { job_key: "alerts.reevaluate", schedule: "hourly", label: "Close cleared alerts" },
+  { job_key: "bank.rematch", schedule: "hourly", label: "Rematch bank lines" },
+  { job_key: "billing.prepare_drafts", schedule: "hourly", label: "Prepare invoice drafts" },
   { job_key: "calendar.check", schedule: "nightly", label: "Check the factory calendar" },
   { job_key: "dies.predict_service", schedule: "hourly", label: "Propose die service" },
   { job_key: "maintenance.propose_pm", schedule: "hourly", label: "Propose preventive maintenance" },
@@ -19,6 +22,8 @@ export const JOBS = [
   { job_key: "press.idle_reconcile", schedule: "nightly", label: "Find unexplained press idle time" },
   { job_key: "proposals.refresh", schedule: "hourly", label: "Refresh open proposals" },
   { job_key: "quality.sample_windows", schedule: "hourly", label: "Mark missed samples" },
+  { job_key: "quotes.expire", schedule: "nightly", label: "Expire stale quotations" },
+  { job_key: "receivables.reminders", schedule: "morning", label: "Prepare payment reminders" },
   { job_key: "series.propose", schedule: "nightly", label: "Propose financial-year numbering" }
 ] as const satisfies ReadonlyArray<{ job_key: string; schedule: JobSchedule; label: string }>;
 export type JobKey = (typeof JOBS)[number]["job_key"];

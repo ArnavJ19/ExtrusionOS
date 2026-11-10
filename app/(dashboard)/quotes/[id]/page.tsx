@@ -25,6 +25,8 @@ import { QuoteRateCheckPanel } from "@/components/modules/quotes/quote-rate-chec
 import { RecordNextAction } from "@/components/modules/shared/record-next-action";
 import { canReadRates, quoteRateCheckSchema } from "@/lib/workflow/costing-rates";
 import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
+import { QuoteValidityPanel } from "@/components/modules/order-to-cash/quotes-alerts";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 
 const quoteStatusErrorMessages = {
   invalid_status: "Choose a valid quote status.",
@@ -409,6 +411,7 @@ export default async function QuoteDetailPage({
           )}
         </div>
       </div>
+      {!context.dealerId && ["owner", "admin", "sales_manager", "sales"].includes(context.role) ? <QuoteValidityPanel quoteId={id} today={getBusinessDateBoundaries().today} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="quote" id={id} role={context.role} /> : null}
     </div>
   );

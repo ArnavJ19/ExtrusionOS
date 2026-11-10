@@ -1,0 +1,16 @@
+TAP version 13
+# Subtest: AP-087 the workstation keypad has large keys and builds the number without the phone keyboard
+ok 1 - AP-087 the workstation keypad has large keys and builds the number without the phone keyboard
+  ---
+  duration_ms: 33534.8149
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 36309.5933

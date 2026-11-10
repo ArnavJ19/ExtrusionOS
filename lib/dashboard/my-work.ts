@@ -199,6 +199,20 @@ async function loadAutopilotQueues(supabase: SupabaseClient, role: UserRole): Pr
     }
     if (target.items.length || target.error) queues.push(target);
   }
+  // Autopilot batch 3: order-to-cash work prepared by the system for this role (credit holds, invoice drafts, bank
+  // credits, reminders, draft jobs, quotation validity). Counts only; each item opens its module page.
+  try {
+    const o2c = await supabase.rpc("ap_dupes", { p_command: "attention", p_payload: {} });
+    if (!o2c.error && Array.isArray(o2c.data?.items)) {
+      const items = (o2c.data.items as Row[]).filter(row => Number(row.count) > 0 && typeof row.href === "string" && typeof row.label === "string");
+      if (items.length) {
+        const target = queue("order_to_cash", "Prepared for you to finish", "Drafts, matches, holds and reminders the system prepared. Nothing posts or reaches a customer until you act.", "/dashboard");
+        target.items = items.slice(0, MY_WORK_LIMIT).map(row => ({ id: `o2c:${row.key}`, title: `${row.label}: ${Number(row.count)}`, status: "Waiting for you", date: null, dateLabel: "",
+          priority: null, href: row.href, actionLabel: "Open", blocker: null }));
+        queues.push(target);
+      }
+    }
+  } catch { /* the rest of My Work stands */ }
   return queues;
 }
 

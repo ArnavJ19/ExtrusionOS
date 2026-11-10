@@ -9,7 +9,8 @@ export const PROPOSAL_TYPES = {
   "series.adopt": { label: "Financial-year numbering", home: "/settings/numbering", noun: "number series" },
   "production.expected_output": { label: "Expected output", home: "/production", noun: "job close" },
   "die.service_due": { label: "Die service", home: "/dies", noun: "die service" },
-  "maintenance.pm_due": { label: "Preventive maintenance", home: "/production/floor", noun: "maintenance window" }
+  "maintenance.pm_due": { label: "Preventive maintenance", home: "/production/floor", noun: "maintenance window" },
+  "bank.receipt_match": { label: "Bank receipt", home: "/payments/bank", noun: "receipt" }
 } as const;
 export type ProposalType = keyof typeof PROPOSAL_TYPES;
 export const PROPOSAL_TYPE_KEYS = Object.keys(PROPOSAL_TYPES) as [ProposalType, ...ProposalType[]];
@@ -49,6 +50,7 @@ export function proposalHref(row: Pick<ProposalRow, "proposal_type" | "target_ke
   return `${PROPOSAL_TYPES[row.proposal_type]?.home ?? "/dashboard"}#proposal-${row.id}`;
 }
 
+const inr = (value: unknown) => (value === null || value === undefined || value === "" ? "—" : `₹${Number(value).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 const kg = (value: unknown) => (value === null || value === undefined || value === "" ? "—" : `${Number(value).toLocaleString("en-IN", { maximumFractionDigits: 3 })} kg`);
 const when = (value: unknown) => (typeof value === "string" && value ? new Date(value).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—");
 
@@ -79,11 +81,18 @@ export function proposalWhy(row: ProposalRow): string[] {
     lines.push(`${counter.value ?? "—"} ${evidence.basis === "pushes" ? "pushes" : "running hours"} since the last completion, against an interval of ${evidence.interval ?? "—"} (${counter.percent ?? "—"}%).`);
     lines.push(evidence.window_source === "planned_block" ? "Uses the next planned maintenance window on this press." : "No planned window in the next seven days; the start of the next working day's first shift is proposed.");
     if (evidence.safety_critical) lines.push("Safety-critical: only a supervisor can dismiss it.");
+  } else if (row.proposal_type === "bank.receipt_match") {
+    lines.push(`Bank narration: ${String(evidence.narration ?? "—")}`);
+    lines.push(`Match ${String(evidence.class ?? "")}: ${((evidence.signals as string[]) ?? []).map(signal => signal.replaceAll("_", " ")).join(", ") || "no signal"}. Open invoices total ${inr(evidence.open_total)}.`);
+    for (const a of (row.payload.allocations as { invoice_number?: string; amount?: number; basis?: string }[]) ?? []) lines.push(`${a.invoice_number ?? "Invoice"}: ${inr(a.amount)} (${a.basis === "named" ? "named in the narration" : "oldest first"})`);
+    if (Number(row.payload.on_account ?? 0) > 0) lines.push(`${inr(row.payload.on_account)} stays on account for the next invoice.`);
   }
   lines.push(`Rule ${row.rule_key}, prepared ${new Date(row.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}${row.job_run_id ? " by a scheduled job" : ""}.`);
   if (row.confidence !== null) lines.push(row.proposal_type === "production.expected_output"
     ? `Confidence ${Math.round(row.confidence * 100)}% (share of pushes with a weighed or linked billet).`
-    : `Confidence ${Math.round(row.confidence * 100)}% (share of visits these destinations cover).`);
+    : row.proposal_type === "bank.receipt_match"
+      ? `Confidence ${Math.round(row.confidence * 100)}% (${row.confidence >= 0.9 ? "exact: confirmed remitter, named invoice or a person's assignment" : "likely: confirm the customer before accepting"}).`
+      : `Confidence ${Math.round(row.confidence * 100)}% (share of visits these destinations cover).`);
   return lines;
 }
 
@@ -96,6 +105,7 @@ export function proposalSummary(row: ProposalRow): string {
   }
   if (row.proposal_type === "die.service_due") return `Book ${row.payload.service_event} on ${row.payload.scheduled_for as string}.`;
   if (row.proposal_type === "maintenance.pm_due") return `Maintenance window ${when(row.payload.window_start)} to ${when(row.payload.window_end)}; press capacity is blocked for it.`;
+  if (row.proposal_type === "bank.receipt_match") return `Record ${inr(row.payload.amount)} from ${String(row.payload.customer ?? "the customer")} (ref ${String(row.payload.reference ?? "—")}) against ${((row.payload.allocations as unknown[]) ?? []).length} invoice(s)${Number(row.payload.on_account ?? 0) > 0 ? ` and ${inr(row.payload.on_account)} on account` : ""}.`;
   const doc = row.target_key as DocumentSeriesKey;
   return `${DOCUMENT_SERIES[doc]?.label ?? row.target_key}: ${row.payload.prefix_template as string} with ${row.payload.pad_width as number}-digit running number`;
 }

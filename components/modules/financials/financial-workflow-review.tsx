@@ -24,6 +24,7 @@ import {
   type ReceiptCsvPreview
 } from "@/lib/workflow/financial-workflow-review";
 import { formatCurrency, formatWeight, todayIso } from "@/lib/utils/format";
+import { hasDuplicates, warnDuplicates } from "@/components/modules/order-to-cash/duplicate-warning";
 
 type Mode = "receipts" | "eligibility";
 type Props = { mode: Mode };
@@ -344,7 +345,7 @@ function ReceiptsReview() {
     setReceiptKey("");
   }
 
-  function submitReceipt() {
+  function submitReceipt(confirmDuplicate = false) {
     const idempotencyKey = receiptKey || crypto.randomUUID();
     setReceiptKey(idempotencyKey);
     startTransition(async () => {
@@ -355,8 +356,10 @@ function ReceiptsReview() {
         reference_number: reference || null,
         notes: notes || null,
         idempotency_key: idempotencyKey,
-        allocations: selectedInvoices.map((invoiceId) => ({ invoice_id: invoiceId, amount: Number(allocationAmounts[invoiceId]) }))
+        allocations: selectedInvoices.map((invoiceId) => ({ invoice_id: invoiceId, amount: Number(allocationAmounts[invoiceId]) })),
+        ...(confirmDuplicate ? { confirm_duplicate: { confirmed: true } } : {})
       });
+      if (hasDuplicates(result)) { warnDuplicates(result.duplicates, () => submitReceipt(true), href => router.push(href)); return; }
       if (!result.success) { toast.error(result.error); return; }
       setReceiptResult(`${result.data.receipt_id} · ${result.data.allocations.length} allocation${result.data.allocations.length === 1 ? "" : "s"} · ${result.data.idempotent_replay ? "retry confirmed" : "posted"}`);
       setSelectedInvoices([]);
@@ -467,7 +470,7 @@ function ReceiptsReview() {
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-neutral-50 p-4">
             <p className={`text-sm font-semibold ${hasValidAllocation ? "text-emerald-800" : "text-neutral-600"}`}>Allocated {formatCurrency(allocationTotal)} of {formatCurrency(receiptAmount || 0)}{hasValidAllocation ? " · balanced" : " · allocation must balance exactly"}</p>
-            <Button type="button" onClick={submitReceipt} disabled={isPending || !hasValidAllocation || (["bank_transfer", "upi", "cheque"].includes(method) && !reference.trim()) || (method === "credit_note" && notes.trim().length < 5)}>{isPending ? "Posting receipt..." : method === "credit_note" ? "Post credit adjustment" : "Post receipt"}</Button>
+            <Button type="button" onClick={() => submitReceipt()} disabled={isPending || !hasValidAllocation || (["bank_transfer", "upi", "cheque"].includes(method) && !reference.trim()) || (method === "credit_note" && notes.trim().length < 5)}>{isPending ? "Posting receipt..." : method === "credit_note" ? "Post credit adjustment" : "Post receipt"}</Button>
           </div>
           {receiptResult ? <p role="status" className="break-all rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">Recorded: {receiptResult}</p> : null}
         </CardContent>

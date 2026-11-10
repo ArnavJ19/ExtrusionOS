@@ -18,6 +18,7 @@ import { saveFoundryBatchAction } from "@/lib/actions/foundry";
 import { savePackagingJobAction } from "@/lib/actions/packaging";
 import { saveProductionJobAction } from "@/lib/actions/production";
 import { saveOrderAction } from "@/lib/actions/quotes-orders";
+import { hasDuplicates, warnDuplicates } from "@/components/modules/order-to-cash/duplicate-warning";
 import { createClient } from "@/lib/supabase/browser";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
@@ -860,7 +861,7 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
     update(field.name, value);
   }
 
-  async function submit() {
+  async function submit(confirmDuplicate = false) {
     if (!config.schema) return;
     setOperationMessage("");
     validationAttempted.current = true;
@@ -971,9 +972,11 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
     if (moduleKey === "dispatches") {
       const result = await saveDispatchAction({
         ...sanitized,
-        editing_id: editing ? recordId : null
+        editing_id: editing ? recordId : null,
+        ...(confirmDuplicate ? { confirm_duplicate: { confirmed: true } } : {})
       } as any);
       setSaving(false);
+      if (hasDuplicates(result)) return warnDuplicates(result.duplicates, () => void submit(true), href => router.push(href));
       if (!result.success || !result.dispatchId) return showSaveFailure(result.success ? "Could not save dispatch" : result.error);
       toast.success(editing ? `${config.title} updated` : `${config.title} saved`);
       router.push(`${config.basePath}/${result.dispatchId}`);
@@ -998,8 +1001,9 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
       return;
     }
     if (moduleKey === "orders") {
-      const result = await saveOrderAction({ ...payload, editing_id: editing ? recordId : null } as any);
+      const result = await saveOrderAction({ ...payload, editing_id: editing ? recordId : null, ...(confirmDuplicate ? { confirm_duplicate: { confirmed: true } } : {}) } as any);
       setSaving(false);
+      if (hasDuplicates(result)) return warnDuplicates(result.duplicates, () => void submit(true), href => router.push(href));
       if (!result.success) return showSaveFailure(result.error);
       toast.success(editing ? "Order updated" : "Order saved");
       router.push(`/orders/${result.orderId}`);

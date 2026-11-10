@@ -14,6 +14,7 @@ import { canTransitionQuoteStatus } from "@/lib/workflow/quote-status";
 import { quoteConfirmationStages, quotePreparationIssues } from "@/lib/workflow/quote-preparation";
 import { quoteEditToken, quoteEditTokenSchema, sameQuoteEditToken, type QuoteEditConflict, type QuoteEditToken } from "@/lib/workflow/quote-edit-conflicts";
 import type { QuoteStatus } from "@/types/app";
+import { duplicateGate, duplicateMessage, type DuplicateConfirmation, type DuplicateMatch } from "@/lib/order-to-cash/duplicates";
 
 const quoteStatusSchema = z.enum(["draft", "internal_review", "approved_for_sending", "sent", "customer_approved", "customer_rejected", "expired", "converted_to_order"]);
 const revisionLockedStatuses = ["approved_for_sending", "sent", "customer_approved", "customer_rejected", "expired", "converted_to_order"];
@@ -21,9 +22,9 @@ const lowMarginApprovalRoles = ["owner", "admin"];
 const profileSelect = "id, profile_code, profile_name, section_weight_kg_per_m, section_perimeter_mm, hsn_code, section_number, section_code, section_name, drawing_document_id, drawing_revision, drawing_approval_status, alloy_standard_id, alloy_id, temper_id, min_weight, max_weight, weight_tolerance, actual_weight_kg_per_m, standard_length, bundle_quantity, pieces_per_bundle, meter_per_bundle, kg_per_bundle";
 const unusableDieStatuses = ["inactive", "dead", "blocked", "retired", "scrapped", "under_maintenance"];
 
-type SaveQuoteInput = z.input<typeof quoteSchema> & { editing_id?: string | null; edit_token?: QuoteEditToken | null };
-type SaveOrderInput = z.input<typeof orderSchema> & { editing_id?: string | null };
-type ActionResult = { success: true; quoteId?: string; orderId?: string } | { success: false; error: string; conflict?: QuoteEditConflict };
+type SaveQuoteInput = z.input<typeof quoteSchema> & { editing_id?: string | null; edit_token?: QuoteEditToken | null; confirm_duplicate?: DuplicateConfirmation };
+type SaveOrderInput = z.input<typeof orderSchema> & { editing_id?: string | null; confirm_duplicate?: DuplicateConfirmation };
+type ActionResult = { success: true; quoteId?: string; orderId?: string } | { success: false; error: string; conflict?: QuoteEditConflict; duplicates?: DuplicateMatch[] };
 
 function isLowMarginApprover(role: string) {
   return lowMarginApprovalRoles.includes(role);
@@ -133,6 +134,11 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
         hsn_code: profile.hsn_code || null
       };
     });
+    if (!editingId) {
+      // AP-097: the same customer and profiles quoted a moment ago.
+      const gate = await duplicateGate(supabase, "quote", { customer_id: parsed.data.customer_id, profile_ids: profileIds }, input.confirm_duplicate);
+      if (gate.blocked) return { success: false, error: duplicateMessage(gate.matches), duplicates: gate.matches };
+    }
     const quoteResult = await supabase.rpc("save_quote_atomic", {
       p_quote_id: editingId,
       p_quote: quotePayload,
@@ -367,6 +373,13 @@ export async function saveOrderAction(input: SaveOrderInput): Promise<ActionResu
       ...(editingId ? { order_number: currentOrder?.order_number } : {})
     };
 
+    if (!editingId) {
+      // AP-097: the same order entered twice by different people.
+      const gate = await duplicateGate(supabase, "order", { customer_id: parsed.data.customer_id, quote_id: parsed.data.quote_id || null,
+        order_value: parsed.data.order_value ?? null, production_profile_id: parsed.data.production_profile_id || null,
+        production_quantity_kg: parsed.data.production_quantity_kg ?? null }, input.confirm_duplicate);
+      if (gate.blocked) return { success: false, error: duplicateMessage(gate.matches), duplicates: gate.matches };
+    }
     const result = await supabase.rpc("save_order_atomic", {
       p_order_id: editingId,
       p_order: payload

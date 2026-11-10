@@ -6,6 +6,18 @@ Use this file before making any change to the repository. These rules apply to C
 
 ---
 
+## 0. Single-Company Deployment (overrides multi-tenant wording below)
+
+**ExtrusionOS is built exclusively for Omalco Extrusion's own factory.** It is not a SaaS for multiple companies.
+
+- Everything built from now on is for Omalco Extrusion only. Do not add multi-company onboarding, company switching, per-company plans/billing, or sign-up flows for other businesses.
+- Public sign-up is closed; staff join by invitation only.
+- Only one `companies` row may exist (guard trigger in `20261109000000_single_tenant_omalco.sql`).
+- The existing `company_id` columns and RLS stay as the schema's safety layer. Do not drop them; still derive `company_id` from the authenticated user, never from the frontend.
+- Sections below that say "multi-tenant SaaS" describe the schema's legacy shape, not a product goal.
+
+---
+
 ## 1. Project Identity
 
 **Project name:** ExtrusionOS  

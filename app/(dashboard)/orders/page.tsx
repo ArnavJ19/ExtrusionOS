@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 import { redirect } from "next/navigation";
+import { OrderToCashLinks } from "@/components/modules/home-work/module-workflows";
 
 export default async function OrdersPage() {
   const context = await getSessionContext();
@@ -66,6 +67,7 @@ export default async function OrdersPage() {
     <div className="space-y-2">
       <ModuleOverviewClient moduleKey="orders" context={context} canCreate={can(context.role, "create", "orders")} canUpdate={can(context.role, "update", "orders")} hideMetricsAndCharts={true}>
         <QueryErrorNotice messages={queryErrors} />
+        {!context.dealerId ? <OrderToCashLinks area="orders" role={context.role} /> : null}
         <OrdersDashboard
           showOrderValues={["owner", "admin", "sales_manager", "sales", "accounts", "dealer_admin", "dealer_staff"].includes(context.role)}
           totalOrderValue={totalOrderValue}

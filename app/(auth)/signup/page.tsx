@@ -1,5 +1,7 @@
-import { AuthForm } from "@/components/modules/auth-forms";
+import { redirect } from "next/navigation";
 
+// Public sign-up is closed: ExtrusionOS is dedicated to Omalco Extrusion.
+// New staff are added through invitations by the owner/admin.
 export default function SignupPage() {
-  return <AuthForm mode="signup" />;
+  redirect("/login");
 }

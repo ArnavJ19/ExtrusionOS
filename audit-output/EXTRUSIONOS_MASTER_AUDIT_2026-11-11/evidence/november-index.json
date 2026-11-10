@@ -1,0 +1,939 @@
+[
+  {
+    "id": "NOV-001",
+    "title": "Make My Work Today the main working screen",
+    "specification": "NOV_UPGRADES.md:816",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_2.md:17"
+    ]
+  },
+  {
+    "id": "NOV-002",
+    "title": "Give each employee a small relevant workspace",
+    "specification": "NOV_UPGRADES.md:500",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_1.md:11",
+      "NOV_UPGRADE_BATCH_2.md:18"
+    ]
+  },
+  {
+    "id": "NOV-003",
+    "title": "Make search usable directly from every screen",
+    "specification": "NOV_UPGRADES.md:1237",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_7.md:17",
+      "NOV_UPGRADE_BATCH_7.md:32"
+    ]
+  },
+  {
+    "id": "NOV-004",
+    "title": "Put one clear next action on each record",
+    "specification": "NOV_UPGRADES.md:838",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_2.md:19"
+    ]
+  },
+  {
+    "id": "NOV-005",
+    "title": "Finish the connected order workspace",
+    "specification": "NOV_UPGRADES.md:1598",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_4.md:18",
+      "NOV_UPGRADE_BATCH_4.md:37",
+      "NOV_UPGRADE_BATCH_4.md:55",
+      "NOV_UPGRADE_BATCH_4.md:59"
+    ]
+  },
+  {
+    "id": "NOV-006",
+    "title": "Show only fields needed at the current stage",
+    "specification": "NOV_UPGRADES.md:522",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_1.md:11",
+      "NOV_UPGRADE_BATCH_2.md:20"
+    ]
+  },
+  {
+    "id": "NOV-007",
+    "title": "Carry known information through the entire process",
+    "specification": "NOV_UPGRADES.md:1621",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_4.md:19",
+      "NOV_UPGRADE_BATCH_4.md:38",
+      "NOV_UPGRADE_BATCH_4.md:62"
+    ]
+  },
+  {
+    "id": "NOV-008",
+    "title": "Use sensible visible defaults",
+    "specification": "NOV_UPGRADES.md:722",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_6.md:24",
+      "NOV_UPGRADE_BATCH_6.md:39",
+      "NOV_UPGRADE_BATCH_6.md:57"
+    ]
+  },
+  {
+    "id": "NOV-009",
+    "title": "Extend Repeat Previous beyond quotations",
+    "specification": "NOV_UPGRADES.md:1260",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_7.md:18",
+      "NOV_UPGRADE_BATCH_7.md:33",
+      "NOV_UPGRADE_BATCH_7.md:46"
+    ]
+  },
+  {
+    "id": "NOV-010",
+    "title": "Create missing master records without leaving the task",
+    "specification": "NOV_UPGRADES.md:1282",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_7.md:19",
+      "NOV_UPGRADE_BATCH_7.md:34",
+      "NOV_UPGRADE_BATCH_7.md:47"
+    ]
+  },
+  {
+    "id": "NOV-011",
+    "title": "Make repeated line entry work like a spreadsheet",
+    "specification": "NOV_UPGRADES.md:1304",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_7.md:20",
+      "NOV_UPGRADE_BATCH_7.md:35",
+      "NOV_UPGRADE_BATCH_7.md:48"
+    ]
+  },
+  {
+    "id": "NOV-012",
+    "title": "Ask employees for the quantity they actually know",
+    "specification": "NOV_UPGRADES.md:860",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_2.md:21"
+    ]
+  },
+  {
+    "id": "NOV-013",
+    "title": "Extend dependable drafts to every lengthy form",
+    "specification": "NOV_UPGRADES.md:1644",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_4.md:20",
+      "NOV_UPGRADE_BATCH_4.md:39",
+      "NOV_UPGRADE_BATCH_4.md:64"
+    ]
+  },
+  {
+    "id": "NOV-014",
+    "title": "Allow small updates directly from work queues",
+    "specification": "NOV_UPGRADES.md:2062",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_8.md:19",
+      "NOV_UPGRADE_BATCH_8.md:34",
+      "NOV_UPGRADE_BATCH_8.md:49"
+    ]
+  },
+  {
+    "id": "NOV-015",
+    "title": "Make department handoffs part of completing work",
+    "specification": "NOV_UPGRADES.md:1667",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_4.md:21",
+      "NOV_UPGRADE_BATCH_4.md:40",
+      "NOV_UPGRADE_BATCH_4.md:67"
+    ]
+  },
+  {
+    "id": "NOV-016",
+    "title": "Turn blockers into actionable instructions",
+    "specification": "NOV_UPGRADES.md:544",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_1.md:20"
+    ]
+  },
+  {
+    "id": "NOV-017",
+    "title": "Make QR scanning lead directly into the relevant task",
+    "specification": "NOV_UPGRADES.md:1326",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_7.md:21",
+      "NOV_UPGRADE_BATCH_7.md:36",
+      "NOV_UPGRADE_BATCH_7.md:49"
+    ]
+  },
+  {
+    "id": "NOV-018",
+    "title": "Expand focused phone workflows for factory work",
+    "specification": "NOV_UPGRADES.md:882",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_2.md:22"
+    ]
+  },
+  {
+    "id": "NOV-019",
+    "title": "Keep documents and communication beside the transaction",
+    "specification": "NOV_UPGRADES.md:2085",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_8.md:20",
+      "NOV_UPGRADE_BATCH_8.md:35",
+      "NOV_UPGRADE_BATCH_8.md:50"
+    ]
+  },
+  {
+    "id": "NOV-020",
+    "title": "Remove double entry between operations accounts and equipment",
+    "specification": "NOV_UPGRADES.md:2512",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_9.md:24",
+      "NOV_UPGRADE_BATCH_9.md:39",
+      "NOV_UPGRADE_BATCH_9.md:51"
+    ]
+  },
+  {
+    "id": "NOV-021",
+    "title": "Check delivery feasibility before promising a date",
+    "specification": "NOV_UPGRADES.md:2416",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_6.md:19",
+      "NOV_UPGRADE_BATCH_6.md:34",
+      "NOV_UPGRADE_BATCH_6.md:51"
+    ]
+  },
+  {
+    "id": "NOV-022",
+    "title": "Turn material shortages into a purchasing plan",
+    "specification": "NOV_UPGRADES.md:1690",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_4.md:22",
+      "NOV_UPGRADE_BATCH_4.md:41",
+      "NOV_UPGRADE_BATCH_4.md:71"
+    ]
+  },
+  {
+    "id": "NOV-023",
+    "title": "Suggest compatible production runs and their sequence",
+    "specification": "NOV_UPGRADES.md:2536",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_9.md:25",
+      "NOV_UPGRADE_BATCH_9.md:40",
+      "NOV_UPGRADE_BATCH_9.md:52"
+    ]
+  },
+  {
+    "id": "NOV-024",
+    "title": "Add a what happens if planning tool",
+    "specification": "NOV_UPGRADES.md:2560",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_9.md:26",
+      "NOV_UPGRADE_BATCH_9.md:41"
+    ]
+  },
+  {
+    "id": "NOV-025",
+    "title": "Give every die a useful operating history",
+    "specification": "NOV_UPGRADES.md:1348",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_7.md:22",
+      "NOV_UPGRADE_BATCH_7.md:37",
+      "NOV_UPGRADE_BATCH_7.md:50"
+    ]
+  },
+  {
+    "id": "NOV-026",
+    "title": "Connect maintenance directly to production capacity",
+    "specification": "NOV_UPGRADES.md:1899",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_5.md:24",
+      "NOV_UPGRADE_BATCH_5.md:39"
+    ]
+  },
+  {
+    "id": "NOV-027",
+    "title": "Trace material from source to customer",
+    "specification": "NOV_UPGRADES.md:2440",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_6.md:20",
+      "NOV_UPGRADE_BATCH_6.md:35",
+      "NOV_UPGRADE_BATCH_6.md:53"
+    ]
+  },
+  {
+    "id": "NOV-028",
+    "title": "Track work in progress by physical location and age",
+    "specification": "NOV_UPGRADES.md:1714",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_4.md:23",
+      "NOV_UPGRADE_BATCH_4.md:42",
+      "NOV_UPGRADE_BATCH_4.md:74"
+    ]
+  },
+  {
+    "id": "NOV-029",
+    "title": "Manage reusable remnants and excess production",
+    "specification": "NOV_UPGRADES.md:2270",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_9.md:23",
+      "NOV_UPGRADE_BATCH_9.md:38",
+      "NOV_UPGRADE_BATCH_9.md:50"
+    ]
+  },
+  {
+    "id": "NOV-030",
+    "title": "Introduce a cycle-counting workflow",
+    "specification": "NOV_UPGRADES.md:1922",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_5.md:25",
+      "NOV_UPGRADE_BATCH_5.md:40",
+      "NOV_UPGRADE_BATCH_5.md:62"
+    ]
+  },
+  {
+    "id": "NOV-031",
+    "title": "Maintain a material account for each finishing vendor",
+    "specification": "NOV_UPGRADES.md:1737",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_4.md:24",
+      "NOV_UPGRADE_BATCH_4.md:43",
+      "NOV_UPGRADE_BATCH_4.md:76"
+    ]
+  },
+  {
+    "id": "NOV-032",
+    "title": "Support customer-owned metal and job-work settlement",
+    "specification": "NOV_UPGRADES.md:2633",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_10.md:25",
+      "NOV_UPGRADE_BATCH_10.md:40"
+    ]
+  },
+  {
+    "id": "NOV-033",
+    "title": "Generate a complete quality document pack",
+    "specification": "NOV_UPGRADES.md:1946",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_5.md:26",
+      "NOV_UPGRADE_BATCH_5.md:41",
+      "NOV_UPGRADE_BATCH_5.md:64"
+    ]
+  },
+  {
+    "id": "NOV-034",
+    "title": "Show consequences of an order revision",
+    "specification": "NOV_UPGRADES.md:2392",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_5.md:21",
+      "NOV_UPGRADE_BATCH_5.md:36",
+      "NOV_UPGRADE_BATCH_5.md:59"
+    ]
+  },
+  {
+    "id": "NOV-035",
+    "title": "Compare estimated and actual job profitability",
+    "specification": "NOV_UPGRADES.md:2489",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_9.md:13",
+      "NOV_UPGRADE_BATCH_9.md:19",
+      "NOV_UPGRADE_BATCH_9.md:34",
+      "NOV_UPGRADE_BATCH_9.md:49"
+    ]
+  },
+  {
+    "id": "NOV-036",
+    "title": "Plan a vehicle load across multiple orders",
+    "specification": "NOV_UPGRADES.md:2108",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_8.md:21",
+      "NOV_UPGRADE_BATCH_8.md:36",
+      "NOV_UPGRADE_BATCH_8.md:51",
+      "NOV_UPGRADE_BATCH_8.md:93"
+    ]
+  },
+  {
+    "id": "NOV-037",
+    "title": "Support blanket orders with scheduled releases",
+    "specification": "NOV_UPGRADES.md:2294",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_10.md:21",
+      "NOV_UPGRADE_BATCH_10.md:36"
+    ]
+  },
+  {
+    "id": "NOV-038",
+    "title": "Manage a return through final resolution",
+    "specification": "NOV_UPGRADES.md:1969",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_5.md:27",
+      "NOV_UPGRADE_BATCH_5.md:42",
+      "NOV_UPGRADE_BATCH_5.md:57"
+    ]
+  },
+  {
+    "id": "NOV-039",
+    "title": "Measure supplier and finishing-vendor reliability",
+    "specification": "NOV_UPGRADES.md:1504",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_9.md:21",
+      "NOV_UPGRADE_BATCH_9.md:36"
+    ]
+  },
+  {
+    "id": "NOV-040",
+    "title": "Give accounts a collection workflow with payment commitments",
+    "specification": "NOV_UPGRADES.md:904",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_3.md:22"
+    ]
+  },
+  {
+    "id": "NOV-041",
+    "title": "Give every order one accountable coordinator",
+    "specification": "NOV_UPGRADES.md:927",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_3.md:23"
+    ]
+  },
+  {
+    "id": "NOV-042",
+    "title": "Define what each role can decide independently",
+    "specification": "NOV_UPGRADES.md:1760",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_4.md:25",
+      "NOV_UPGRADE_BATCH_4.md:44",
+      "NOV_UPGRADE_BATCH_4.md:78"
+    ]
+  },
+  {
+    "id": "NOV-043",
+    "title": "Create one shared priority policy",
+    "specification": "NOV_UPGRADES.md:949",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_3.md:24"
+    ]
+  },
+  {
+    "id": "NOV-044",
+    "title": "Protect an agreed execution window",
+    "specification": "NOV_UPGRADES.md:2131",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_8.md:22",
+      "NOV_UPGRADE_BATCH_8.md:37",
+      "NOV_UPGRADE_BATCH_8.md:53"
+    ]
+  },
+  {
+    "id": "NOV-045",
+    "title": "Control how much work enters each stage",
+    "specification": "NOV_UPGRADES.md:2154",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_8.md:23",
+      "NOV_UPGRADE_BATCH_8.md:38",
+      "NOV_UPGRADE_BATCH_8.md:55"
+    ]
+  },
+  {
+    "id": "NOV-046",
+    "title": "Agree service expectations between departments",
+    "specification": "NOV_UPGRADES.md:971",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_3.md:25"
+    ]
+  },
+  {
+    "id": "NOV-047",
+    "title": "Assign work using capacity and eligibility together",
+    "specification": "NOV_UPGRADES.md:2178",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_8.md:24",
+      "NOV_UPGRADE_BATCH_8.md:39",
+      "NOV_UPGRADE_BATCH_8.md:56"
+    ]
+  },
+  {
+    "id": "NOV-048",
+    "title": "Identify backup owners before somebody is absent",
+    "specification": "NOV_UPGRADES.md:993",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_3.md:26"
+    ]
+  },
+  {
+    "id": "NOV-049",
+    "title": "Run daily coordination from live records",
+    "specification": "NOV_UPGRADES.md:1015",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_3.md:27"
+    ]
+  },
+  {
+    "id": "NOV-050",
+    "title": "Make requests between teams trackable",
+    "specification": "NOV_UPGRADES.md:1038",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_3.md:28"
+    ]
+  },
+  {
+    "id": "NOV-051",
+    "title": "Agree what done means for every important step",
+    "specification": "NOV_UPGRADES.md:1783",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_4.md:26",
+      "NOV_UPGRADE_BATCH_4.md:45",
+      "NOV_UPGRADE_BATCH_4.md:80"
+    ]
+  },
+  {
+    "id": "NOV-052",
+    "title": "Use approved workflow paths for different order types",
+    "specification": "NOV_UPGRADES.md:2201",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_8.md:25",
+      "NOV_UPGRADE_BATCH_8.md:40",
+      "NOV_UPGRADE_BATCH_8.md:57"
+    ]
+  },
+  {
+    "id": "NOV-053",
+    "title": "Give recurring problems a permanent improvement owner",
+    "specification": "NOV_UPGRADES.md:1371",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_7.md:23",
+      "NOV_UPGRADE_BATCH_7.md:38",
+      "NOV_UPGRADE_BATCH_7.md:51"
+    ]
+  },
+  {
+    "id": "NOV-054",
+    "title": "Measure team outcomes with useful context",
+    "specification": "NOV_UPGRADES.md:1393",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_7.md:24",
+      "NOV_UPGRADE_BATCH_7.md:39",
+      "NOV_UPGRADE_BATCH_7.md:53"
+    ]
+  },
+  {
+    "id": "NOV-055",
+    "title": "Connect training to demonstrated work",
+    "specification": "NOV_UPGRADES.md:1193",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_5.md:12",
+      "NOV_UPGRADE_BATCH_5.md:22",
+      "NOV_UPGRADE_BATCH_5.md:37",
+      "NOV_UPGRADE_BATCH_5.md:60"
+    ]
+  },
+  {
+    "id": "NOV-056",
+    "title": "Assign ownership of important master data",
+    "specification": "NOV_UPGRADES.md:1060",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_3.md:29"
+    ]
+  },
+  {
+    "id": "NOV-057",
+    "title": "Make process changes reach the people doing work",
+    "specification": "NOV_UPGRADES.md:1806",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_4.md:27",
+      "NOV_UPGRADE_BATCH_4.md:46",
+      "NOV_UPGRADE_BATCH_4.md:81"
+    ]
+  },
+  {
+    "id": "NOV-058",
+    "title": "Close orders through a coordinated final review",
+    "specification": "NOV_UPGRADES.md:1992",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_6.md:16",
+      "NOV_UPGRADE_BATCH_6.md:31",
+      "NOV_UPGRADE_BATCH_6.md:46"
+    ]
+  },
+  {
+    "id": "NOV-059",
+    "title": "Give employees a practical improvement channel",
+    "specification": "NOV_UPGRADES.md:1415",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_7.md:25",
+      "NOV_UPGRADE_BATCH_7.md:40",
+      "NOV_UPGRADE_BATCH_7.md:54"
+    ]
+  },
+  {
+    "id": "NOV-060",
+    "title": "Review the whole journey with the people involved",
+    "specification": "NOV_UPGRADES.md:744",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_6.md:25",
+      "NOV_UPGRADE_BATCH_6.md:40",
+      "NOV_UPGRADE_BATCH_6.md:56"
+    ]
+  },
+  {
+    "id": "NOV-061",
+    "title": "Turn customer purchase orders into reviewable drafts",
+    "specification": "NOV_UPGRADES.md:2585",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_10.md:11",
+      "NOV_UPGRADE_BATCH_10.md:17",
+      "NOV_UPGRADE_BATCH_10.md:32"
+    ]
+  },
+  {
+    "id": "NOV-062",
+    "title": "Manage drawing approval as a complete workflow",
+    "specification": "NOV_UPGRADES.md:1830",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_5.md:11",
+      "NOV_UPGRADE_BATCH_5.md:18",
+      "NOV_UPGRADE_BATCH_5.md:33",
+      "NOV_UPGRADE_BATCH_5.md:53"
+    ]
+  },
+  {
+    "id": "NOV-063",
+    "title": "Track samples and first-piece approvals",
+    "specification": "NOV_UPGRADES.md:2015",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_6.md:17",
+      "NOV_UPGRADE_BATCH_6.md:32",
+      "NOV_UPGRADE_BATCH_6.md:48"
+    ]
+  },
+  {
+    "id": "NOV-064",
+    "title": "Apply quantity-based pricing and minimum charges",
+    "specification": "NOV_UPGRADES.md:2224",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_9.md:11",
+      "NOV_UPGRADE_BATCH_9.md:17",
+      "NOV_UPGRADE_BATCH_9.md:32",
+      "NOV_UPGRADE_BATCH_9.md:47"
+    ]
+  },
+  {
+    "id": "NOV-065",
+    "title": "Maintain a die and tooling commercial account",
+    "specification": "NOV_UPGRADES.md:2317",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_10.md:22",
+      "NOV_UPGRADE_BATCH_10.md:37"
+    ]
+  },
+  {
+    "id": "NOV-066",
+    "title": "Understand why quotations are won or lost",
+    "specification": "NOV_UPGRADES.md:1526",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_9.md:22",
+      "NOV_UPGRADE_BATCH_9.md:37"
+    ]
+  },
+  {
+    "id": "NOV-067",
+    "title": "Handle stock transfers between warehouses properly",
+    "specification": "NOV_UPGRADES.md:2340",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_10.md:23",
+      "NOV_UPGRADE_BATCH_10.md:38",
+      "NOV_UPGRADE_BATCH_10.md:49"
+    ]
+  },
+  {
+    "id": "NOV-068",
+    "title": "Split and combine physical bundles with traceability",
+    "specification": "NOV_UPGRADES.md:2464",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_6.md:21",
+      "NOV_UPGRADE_BATCH_6.md:36",
+      "NOV_UPGRADE_BATCH_6.md:50",
+      "NOV_UPGRADE_BATCH_6.md:55"
+    ]
+  },
+  {
+    "id": "NOV-069",
+    "title": "Give incoming material an acceptance workflow",
+    "specification": "NOV_UPGRADES.md:1853",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_5.md:19",
+      "NOV_UPGRADE_BATCH_5.md:34",
+      "NOV_UPGRADE_BATCH_5.md:55"
+    ]
+  },
+  {
+    "id": "NOV-070",
+    "title": "Link inspection results to measuring equipment",
+    "specification": "NOV_UPGRADES.md:1215",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_5.md:23",
+      "NOV_UPGRADE_BATCH_5.md:38",
+      "NOV_UPGRADE_BATCH_5.md:61"
+    ]
+  },
+  {
+    "id": "NOV-071",
+    "title": "Track external laboratory testing",
+    "specification": "NOV_UPGRADES.md:1548",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_10.md:19",
+      "NOV_UPGRADE_BATCH_10.md:34"
+    ]
+  },
+  {
+    "id": "NOV-072",
+    "title": "Manage ageing or heat-treatment batches",
+    "specification": "NOV_UPGRADES.md:2363",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_10.md:24",
+      "NOV_UPGRADE_BATCH_10.md:39"
+    ]
+  },
+  {
+    "id": "NOV-073",
+    "title": "Control finish and shade references across repeat orders",
+    "specification": "NOV_UPGRADES.md:1570",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_10.md:20",
+      "NOV_UPGRADE_BATCH_10.md:35"
+    ]
+  },
+  {
+    "id": "NOV-074",
+    "title": "Add a complete weighbridge transaction workflow",
+    "specification": "NOV_UPGRADES.md:2657",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_10.md:26",
+      "NOV_UPGRADE_BATCH_10.md:41"
+    ]
+  },
+  {
+    "id": "NOV-075",
+    "title": "Manage delivery appointments and site readiness",
+    "specification": "NOV_UPGRADES.md:1437",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_8.md:16",
+      "NOV_UPGRADE_BATCH_8.md:31",
+      "NOV_UPGRADE_BATCH_8.md:46"
+    ]
+  },
+  {
+    "id": "NOV-076",
+    "title": "Record partial acceptance and delivery exceptions",
+    "specification": "NOV_UPGRADES.md:1876",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_5.md:20",
+      "NOV_UPGRADE_BATCH_5.md:35",
+      "NOV_UPGRADE_BATCH_5.md:57"
+    ]
+  },
+  {
+    "id": "NOV-077",
+    "title": "Track returnable gate passes and custody",
+    "specification": "NOV_UPGRADES.md:1459",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_8.md:17",
+      "NOV_UPGRADE_BATCH_8.md:32",
+      "NOV_UPGRADE_BATCH_8.md:47"
+    ]
+  },
+  {
+    "id": "NOV-078",
+    "title": "Manage supplier claims through to recovery",
+    "specification": "NOV_UPGRADES.md:2247",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_9.md:18",
+      "NOV_UPGRADE_BATCH_9.md:33",
+      "NOV_UPGRADE_BATCH_9.md:48"
+    ]
+  },
+  {
+    "id": "NOV-079",
+    "title": "Generate customer-specific packing instructions and labels",
+    "specification": "NOV_UPGRADES.md:2038",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_6.md:18",
+      "NOV_UPGRADE_BATCH_6.md:33",
+      "NOV_UPGRADE_BATCH_6.md:49"
+    ]
+  },
+  {
+    "id": "NOV-080",
+    "title": "Provide a controlled automation workbench",
+    "specification": "NOV_UPGRADES.md:2609",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_10.md:18",
+      "NOV_UPGRADE_BATCH_10.md:33",
+      "NOV_UPGRADE_BATCH_10.md:51"
+    ]
+  },
+  {
+    "id": "NOV-081",
+    "title": "Make page headers more compact",
+    "specification": "NOV_UPGRADES.md:450",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_6.md:22",
+      "NOV_UPGRADE_BATCH_6.md:37",
+      "NOV_UPGRADE_BATCH_6.md:59"
+    ]
+  },
+  {
+    "id": "NOV-082",
+    "title": "Offer comfortable and compact display options",
+    "specification": "NOV_UPGRADES.md:788",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_9.md:12",
+      "NOV_UPGRADE_BATCH_9.md:20",
+      "NOV_UPGRADE_BATCH_9.md:35",
+      "NOV_UPGRADE_BATCH_9.md:53"
+    ]
+  },
+  {
+    "id": "NOV-083",
+    "title": "Use the same page structure across modules",
+    "specification": "NOV_UPGRADES.md:566",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_1.md:21"
+    ]
+  },
+  {
+    "id": "NOV-084",
+    "title": "Keep the current record identity visible",
+    "specification": "NOV_UPGRADES.md:588",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_1.md:22"
+    ]
+  },
+  {
+    "id": "NOV-085",
+    "title": "Keep important form actions within reach",
+    "specification": "NOV_UPGRADES.md:611",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_1.md:23"
+    ]
+  },
+  {
+    "id": "NOV-086",
+    "title": "Give status colours one consistent meaning",
+    "specification": "NOV_UPGRADES.md:385",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_1.md:17"
+    ]
+  },
+  {
+    "id": "NOV-087",
+    "title": "Show workflow progress visually",
+    "specification": "NOV_UPGRADES.md:1482",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_8.md:18",
+      "NOV_UPGRADE_BATCH_8.md:33",
+      "NOV_UPGRADE_BATCH_8.md:48"
+    ]
+  },
+  {
+    "id": "NOV-088",
+    "title": "Make phone cards shorter and more selective",
+    "specification": "NOV_UPGRADES.md:633",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_1.md:24"
+    ]
+  },
+  {
+    "id": "NOV-089",
+    "title": "Standardise quick record previews",
+    "specification": "NOV_UPGRADES.md:766",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_7.md:16",
+      "NOV_UPGRADE_BATCH_7.md:31"
+    ]
+  },
+  {
+    "id": "NOV-090",
+    "title": "Keep table headings and identifiers visible",
+    "specification": "NOV_UPGRADES.md:472",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_6.md:23",
+      "NOV_UPGRADE_BATCH_6.md:38",
+      "NOV_UPGRADE_BATCH_6.md:59"
+    ]
+  },
+  {
+    "id": "NOV-091",
+    "title": "Make active filters obvious",
+    "specification": "NOV_UPGRADES.md:655",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_1.md:25"
+    ]
+  },
+  {
+    "id": "NOV-092",
+    "title": "Make selection menus easier to distinguish",
+    "specification": "NOV_UPGRADES.md:677",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_1.md:26"
+    ]
+  },
+  {
+    "id": "NOV-093",
+    "title": "Make quantities and amounts easier to compare",
+    "specification": "NOV_UPGRADES.md:406",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_1.md:18"
+    ]
+  },
+  {
+    "id": "NOV-094",
+    "title": "Explain where each field value came from",
+    "specification": "NOV_UPGRADES.md:1082",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_2.md:23"
+    ]
+  },
+  {
+    "id": "NOV-095",
+    "title": "Place reference information beside task inputs",
+    "specification": "NOV_UPGRADES.md:699",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_2.md:24"
+    ]
+  },
+  {
+    "id": "NOV-096",
+    "title": "Make validation specific and easy to resolve",
+    "specification": "NOV_UPGRADES.md:1104",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_2.md:25"
+    ]
+  },
+  {
+    "id": "NOV-097",
+    "title": "Show the consequence of a final action clearly",
+    "specification": "NOV_UPGRADES.md:1126",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_3.md:30"
+    ]
+  },
+  {
+    "id": "NOV-098",
+    "title": "Keep meaningful action results visible",
+    "specification": "NOV_UPGRADES.md:1149",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_3.md:31"
+    ]
+  },
+  {
+    "id": "NOV-099",
+    "title": "Give empty and unavailable screens useful explanations",
+    "specification": "NOV_UPGRADES.md:428",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_1.md:19"
+    ]
+  },
+  {
+    "id": "NOV-100",
+    "title": "Make accessibility practical for everyday factory use",
+    "specification": "NOV_UPGRADES.md:1171",
+    "batchReferences": [
+      "NOV_UPGRADE_BATCH_2.md:26"
+    ]
+  }
+]

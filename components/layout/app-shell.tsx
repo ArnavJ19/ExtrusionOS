@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Bell, Moon } from "lucide-react";
@@ -51,18 +52,13 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#f7f7f8] text-neutral-950 lg:grid lg:grid-cols-[280px_1fr]">
       <aside className="fixed bottom-0 left-0 right-0 z-30 border-t border-neutral-200 bg-[#f3f3f4]/95 px-2 py-2 backdrop-blur-xl lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:border-r lg:border-t-0 lg:px-3 lg:py-4">
-        <div className="hidden items-center gap-3 rounded-3xl border border-black/[0.04] bg-white/70 p-3 shadow-sm lg:flex">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-neutral-950 font-black tracking-tight text-white shadow-sm">EO</div>
-          <div className="min-w-0">
-            <p className="truncate font-bold tracking-tight text-neutral-950">ExtrusionOS</p>
-            <p className="truncate text-xs font-medium text-neutral-500">Aluminium SaaS OS</p>
-          </div>
-        </div>
-        <div className="hidden shrink-0 px-3 py-5 lg:block">
+        <Link href="/dashboard" aria-label="Omalco Extrusion home" className="hidden items-center justify-center rounded-3xl border border-black/[0.04] bg-white/70 px-5 py-5 shadow-sm lg:flex">
+          <Image src="/brand/omalco-logo.png" alt="Omalco" width={1000} height={226} priority className="h-auto w-full max-w-[190px]" />
+        </Link>
+        <div className="hidden shrink-0 px-4 pb-3 pt-7 lg:block">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-400">Workspace</p>
-          <p className="mt-1 text-sm font-semibold text-neutral-700">Sales, dies, production and dispatch</p>
         </div>
-        <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto lg:min-h-0 lg:flex-col lg:gap-5 lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain lg:pb-5">
+        <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto px-1 lg:min-h-0 lg:flex-col lg:gap-6 lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain lg:pb-6">
           <TaskNavigation
             model={navigation}
             desktopShortcuts={<WorkspaceShortcuts context={context} placement="full" allowedRoutes={visibleDestinations.flatMap(({ href, aliases }) => [href, ...(aliases ?? [])])} />}
@@ -75,10 +71,6 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
       <main className="min-w-0 pb-24 lg:pb-0">
         <header className="sticky top-0 z-20 flex flex-col gap-3 border-b border-neutral-200/70 bg-[#fafafa]/85 px-4 py-3 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between lg:px-8">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">Dashboard Overview</p>
-            <p className="truncate text-lg font-bold tracking-tight text-neutral-950">{context.companyName}</p>
-          </div>
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:justify-end">
             <GlobalFind placeholder={searchPlaceholder} />
             <DensityControl scope={{ companyId: context.companyId, userId: context.userId }} />

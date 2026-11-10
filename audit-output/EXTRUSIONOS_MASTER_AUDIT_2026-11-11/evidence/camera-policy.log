@@ -1,0 +1,1 @@
+{"id":"MFA-009","policy":"camera=(), microphone=(), geolocation=()","control":{"allowed":true,"tracks":1},"fromConfig":{"allowed":false,"reason":"NotAllowedError"},"reproduced":true}

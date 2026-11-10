@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingState } from "@/components/ui/loading";
 import { PageHeader } from "@/components/layout/page-header";
 import { saveDispatchAction, updateDeliveryStatusAction } from "@/lib/actions/dispatches";
+import { hasDuplicates, warnDuplicates } from "@/components/modules/order-to-cash/duplicate-warning";
 import { dispatchSchema } from "@/lib/validations/schemas";
 import { createClient } from "@/lib/supabase/browser";
 import { formatDate, formatWeight, todayIso } from "@/lib/utils/format";
@@ -48,13 +49,14 @@ export function DispatchesClient({ context }: { context: SessionContext }) {
 
   useEffect(() => { void loadAll(); }, []);
 
-  async function saveDispatch() {
+  async function saveDispatch(confirmDuplicate = false) {
     const parsed = dispatchSchema.safeParse(form);
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Please check dispatch details");
     if (!orders.some((order) => order.id === parsed.data.order_id)) return toast.error("Selected order is not available for this company.");
     setSaving(true);
-    const result = await saveDispatchAction(parsed.data);
+    const result = await saveDispatchAction({ ...parsed.data, ...(confirmDuplicate ? { confirm_duplicate: { confirmed: true } } : {}) });
     setSaving(false);
+    if (hasDuplicates(result)) return warnDuplicates(result.duplicates, () => void saveDispatch(true));
     if (!result.success) return toast.error(result.error);
     toast.success("Dispatch recorded");
     setForm({ order_id: "", dispatch_date: todayIso(), number_of_bundles: 1, total_weight_kg: 0, bundle_tare_weights_kg: "0", transporter_name: "", vehicle_number: "", driver_name: "", driver_phone: "", eway_bill_number: "", lr_number: "", delivery_status: "dispatched", proof_of_delivery_url: "", packing_list_url: "", remarks: "" });
@@ -90,7 +92,7 @@ export function DispatchesClient({ context }: { context: SessionContext }) {
           <label className="block space-y-1.5"><span className="form-label">Proof of delivery URL</span><input className="form-input" value={form.proof_of_delivery_url} onChange={(event) => setForm({ ...form, proof_of_delivery_url: event.target.value })} /></label>
           <label className="block space-y-1.5"><span className="form-label">Packing list URL</span><input className="form-input" value={form.packing_list_url} onChange={(event) => setForm({ ...form, packing_list_url: event.target.value })} /></label>
           <label className="block space-y-1.5"><span className="form-label">Remarks</span><textarea className="form-input min-h-20" value={form.remarks} onChange={(event) => setForm({ ...form, remarks: event.target.value })} /></label>
-          <Button disabled={saving || loading} onClick={saveDispatch}>{saving ? "Saving..." : "Record dispatch"}</Button>
+          <Button disabled={saving || loading} onClick={() => void saveDispatch()}>{saving ? "Saving..." : "Record dispatch"}</Button>
         </div></CardContent></Card>
         <Card><CardContent><div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><input className="form-input max-w-md" placeholder="Search dispatch, order, customer, transporter, vehicle, e-way bill..." value={search} onChange={(event) => setSearch(event.target.value)} /><p className="rounded-full bg-aluminium px-3 py-1.5 text-xs font-black uppercase tracking-[0.1em] text-slate-600">{filtered.length} dispatches</p></div>{loading ? <LoadingState title="Loading dispatches" description="Fetching dispatch history and available orders." /> : filtered.length ? <div className="overflow-x-auto"><table className="industrial-table min-w-[900px]"><thead><tr><th>Dispatch</th><th>Order</th><th>Customer</th><th>Date</th><th>Bundles</th><th>Weight</th><th>Transporter</th><th>Vehicle</th><th>Status</th></tr></thead><tbody>{filtered.map((dispatch) => <tr key={dispatch.id}><td className="font-black text-slate-950">{dispatch.dispatch_number}</td><td>{dispatch.orders?.order_number}</td><td>{dispatch.orders?.customers?.company_name || dispatch.orders?.customers?.customer_name}</td><td>{formatDate(dispatch.dispatch_date)}</td><td>{dispatch.number_of_bundles}</td><td>{formatWeight(dispatch.total_weight_kg)}</td><td>{dispatch.transporter_name}</td><td>{dispatch.vehicle_number}</td><td><select className="form-input" value={dispatch.delivery_status} onChange={(event) => updateDelivery(dispatch, event.target.value)}>{deliveryStatuses.map((value) => <option key={value} value={value}>{labelize(value)}</option>)}</select></td></tr>)}</tbody></table></div> : <EmptyState title="No dispatches yet" description="Record dispatches with transporter, vehicle, e-way bill, LR, bundles, and delivery status." />}</CardContent></Card>
       </div>

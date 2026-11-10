@@ -16,6 +16,7 @@ import { seriesConfirmSchema } from "@/lib/numbering/financial-year";
 import { periodCommandSchemas } from "@/lib/periods/periods";
 import { PROPOSAL_TYPE_KEYS, decideBatchInputSchema, decideInputSchema } from "@/lib/proposals/proposals";
 import { dieCommands, pmCommands, pressCommands, samplingCommands, scrapCommands } from "@/lib/press/press-floor";
+import { CASH_READS, billingCommands, cashCommands, creditCommands, dupeCommands, jobDraftCommands, quoteCommands } from "@/lib/order-to-cash/commands";
 
 export type ApResult<T = unknown> = { success: true; data: T } | { success: false; error: string; unavailable?: boolean };
 
@@ -57,16 +58,20 @@ const COMMANDS: Record<string, Record<string, z.ZodTypeAny>> = {
     attention: z.object({ limit: z.number().int().min(1).max(20).optional() }).strict()
   },
   // Batch 2: press floor capture.
-  ap_press: pressCommands, ap_scrap: scrapCommands, ap_dies: dieCommands, ap_pm: pmCommands, ap_sampling: samplingCommands
+  ap_press: pressCommands, ap_scrap: scrapCommands, ap_dies: dieCommands, ap_pm: pmCommands, ap_sampling: samplingCommands,
+  // Batch 3: order-to-cash.
+  ap_credit: creditCommands, ap_jobdrafts: jobDraftCommands, ap_billing: billingCommands, ap_cash: cashCommands, ap_quotes: quoteCommands, ap_dupes: dupeCommands
 };
 const READS = new Set(["read", "add_working_days", "list", "get", "overview", "runs", "layout", "usage", "pending_count", "flags", "record", "attention", "visit",
   "station", "push", "undo", "job", "expected", "cycle_times", "floor", "downtime", "die_changes", "settings", "reconcile", "service", "options", "plans", "compliance",
-  "triggers", "samples", "sample", "queue"]);
+  "triggers", "samples", "sample", "queue", ...CASH_READS]);
 const REVALIDATE: Record<string, string[]> = {
   ap_calendar: ["/production/calendar"], ap_series: ["/settings/numbering"], ap_proposals: ["/dashboard", "/settings/navigation", "/settings/numbering", "/invoices/periods", "/production", "/production/floor", "/dies", "/maintenance"],
   ap_jobs: ["/automation"], ap_navigation: ["/settings/navigation"], ap_period: ["/invoices/periods"], ap_import: ["/settings/data/import"],
   ap_cutover: ["/settings/data/cutover"], ap_home_work: [],
-  ap_press: ["/production/floor"], ap_scrap: ["/production/scrap-standards"], ap_dies: ["/dies"], ap_pm: ["/maintenance"], ap_sampling: ["/quality/samples"]
+  ap_press: ["/production/floor"], ap_scrap: ["/production/scrap-standards"], ap_dies: ["/dies"], ap_pm: ["/maintenance"], ap_sampling: ["/quality/samples"],
+  ap_credit: ["/orders/credit", "/orders"], ap_jobdrafts: ["/production/drafts", "/production"], ap_billing: ["/invoices/drafts", "/invoices/tax-rules", "/invoices"],
+  ap_cash: ["/payments/bank", "/payments/reminders", "/payments/receipts", "/payments"], ap_quotes: ["/quotes"], ap_dupes: []
 };
 
 function friendly(error: { code?: string; message?: string } | null | undefined): ApResult<never> {
