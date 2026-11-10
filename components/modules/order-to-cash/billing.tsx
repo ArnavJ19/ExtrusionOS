@@ -41,8 +41,8 @@ function DraftsTab() {
         <div className="min-w-0 flex-1">
           <p className="font-bold"><Link className="underline" href={`/dispatches/${d.dispatch_id}`}>{d.dispatch_number}</Link> · <Link className="underline" href={`/orders/${d.order_id}`}>{d.order_number}</Link> · {d.customer}</p>
           <p className="text-neutral-700">Goods {inr(d.goods_value)} + GST {inr(d.tax_value)}{Number(d.charges_value ?? 0) > 0 ? ` + charges ${inr(d.charges_value)}` : ""} = <b>{inr(d.total_value)}</b> · {d.line_count ?? 0} packed line(s)</p>
-          <p className="text-neutral-600">Gate-out {fmtWhen(d.gate_out_at)} · invoice date {fmtDay(d.invoice_date)} · due {d.due_date ? fmtDay(d.due_date) : "no credit days set"} · place of supply {stateName(d.place_of_supply_state_code)}
-            {d.supply_basis?.tax_type ? ` (${d.supply_basis.tax_type === "igst" ? "IGST" : "CGST + SGST"}, from ${String(d.supply_basis.basis ?? "").replaceAll("_", " ")})` : ""}</p>
+          <p className="text-neutral-600">Gate-out {fmtWhen(d.gate_out_at)} · invoice date {fmtDay(d.invoice_date)} · {d.due_date ? `due ${fmtDay(d.due_date)}` : "no due date (set credit days on the customer)"} · place of supply {stateName(d.place_of_supply_state_code)}
+            {d.supply_basis?.tax_type ? ` (${d.supply_basis.tax_type === "igst" ? "IGST" : "CGST + SGST"}, from the ${d.supply_basis.basis === "billing_gstin" ? "billing GSTIN" : "customer's state"})` : ""}</p>
           {d.blocker ? <p className="font-semibold text-rose-800">{d.blocker}</p> : null}
           {d.invoice_id ? <p><Link className="underline" href={`/invoices/${d.invoice_id}`}>{d.invoice_number ?? "Invoice"}</Link> posted</p> : null}
         </div>

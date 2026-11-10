@@ -28,26 +28,25 @@ export function ExposureTable({ e }: { e: Exposure }) {
   </dl>;
 }
 
-function DecideHold({ hold, onDone }: { hold: Hold; onDone: () => void }) {
+function DecideHold({ hold, onDone, setMessage }: { hold: Hold; onDone: (text: string) => void; setMessage: (m: { tone: "ok" | "error"; text: string } | null) => void }) {
   const [note, setNote] = useState("");
-  const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   async function decide(decision: "approve" | "reject") {
     setBusy(true);
-    const done = await apWrite("ap_credit", "decide", { hold_id: hold.id, decision, ...(note.trim() ? { note: note.trim() } : {}) }, setMessage,
-      decision === "approve" ? "Credit approved. Draft jobs can be released and the order dispatched within the approved exposure." : "Credit refused; sales is told.");
+    const text = decision === "approve" ? `Credit approved for ${hold.order_number ?? "the order"}. Draft jobs can be released and the order dispatched within the approved exposure.` : `Credit refused for ${hold.order_number ?? "the order"}; sales is told.`;
+    const done = await apWrite("ap_credit", "decide", { hold_id: hold.id, decision, ...(note.trim() ? { note: note.trim() } : {}) }, setMessage, text);
     setBusy(false);
-    if (done) onDone();
+    if (done) onDone(text);
   }
   return <div className="space-y-2 rounded-xl bg-neutral-50 p-3">
     <label className="block text-sm font-semibold">Decision note<textarea value={note} onChange={e => setNote(e.target.value)} rows={2} className={`${inputClass} mt-1 py-2`} placeholder="Required when refusing (for example: wait for the cheque to clear)" /></label>
     <div className="flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={() => decide("approve")} className={buttonClass}>Approve credit</button>
       <button type="button" disabled={busy} onClick={() => decide("reject")} className={secondaryClass}>Refuse</button></div>
-    <Message value={message} />
   </div>;
 }
 
-function HoldCard({ hold, onChanged }: { hold: Hold; onChanged: () => void }) {
+function HoldCard({ hold, onChanged }: { hold: Hold; onChanged: (text?: string) => void }) {
+  const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   return <article className="space-y-2 rounded-xl border border-neutral-200 p-3">
     <div className="flex flex-wrap items-center justify-between gap-2"><Link href={`/orders/${hold.order_id}#credit`} className="font-bold underline">{hold.order_number ?? "Order"}</Link><Pill value={hold.status} /></div>
     <p className="text-sm">{hold.customer} · order {inr(hold.order_value)} · exposure {inr(hold.exposure)} against {hold.credit_limit === null ? "no limit" : inr(hold.credit_limit)}</p>
@@ -56,7 +55,8 @@ function HoldCard({ hold, onChanged }: { hold: Hold; onChanged: () => void }) {
       {hold.expires_at && hold.status === "approved" ? ` · approval valid until ${fmtWhen(hold.expires_at)} for exposure up to ${inr(hold.approved_exposure)}` : ""}</p>
     {hold.decision_note ? <p className="text-sm">Note: {hold.decision_note}</p> : null}
     {hold.cleared_note ? <p className="text-sm text-neutral-600">{hold.cleared_note}</p> : null}
-    {hold.can_decide ? <DecideHold hold={hold} onDone={onChanged} /> : hold.status === "held" ? <p className="text-xs text-neutral-500">Waiting for an approver other than the person who entered the order.</p> : null}
+    {hold.can_decide ? <DecideHold hold={hold} onDone={onChanged} setMessage={setMessage} /> : hold.status === "held" ? <p className="text-xs text-neutral-500">Waiting for an approver other than the person who entered the order.</p> : null}
+    <Message value={message} />
   </article>;
 }
 
@@ -123,7 +123,7 @@ function CreditSettings() {
   if (!data) return <Loading what="settings" />;
   const d = draft ?? { approvers: data.credit_approver_roles.join(","), hours: String(data.credit_approval_hours), extApproval: String(data.quote_extension_needs_approval),
     extRoles: data.quote_extension_roles.join(","), steps: data.reminder_steps.join(", "), repeat: String(data.reminder_repeat_days), window: String(data.duplicate_window_days) };
-  const toggle = (key: "approvers" | "extRoles", role: string) => { const set = new Set(d[key].split(",").filter(Boolean)); set.has(role) ? set.delete(role) : set.add(role); setDraft({ ...d, [key]: [...set].join(",") }); };
+  const toggle = (key: "approvers" | "extRoles", role: string) => { const set = new Set(d[key].split(",").filter(Boolean)); if (set.has(role)) set.delete(role); else set.add(role); setDraft({ ...d, [key]: [...set].join(",") }); };
   async function save() {
     const steps = d.steps.split(/[,\s]+/).filter(Boolean).map(Number);
     if (steps.some(s => !Number.isInteger(s))) return setMessage({ tone: "error", text: "Reminder steps are whole days, for example -3, 0, 7, 15, 30." });
@@ -153,11 +153,13 @@ export function CreditHoldsClient() {
   const [status, setStatus] = useState<"held" | "approved" | "rejected" | "cleared" | "all">("held");
   const [page, setPage] = useState(1);
   const { data, error, loading, reload } = useApRead<{ total_count: number; rows: Hold[] }>("ap_credit", "holds", { status, page });
+  const [decided, setDecided] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   return <div className="space-y-4">
+    <Message value={decided} />
     <Section title="Orders on credit hold" actions={<select aria-label="Hold status" value={status} onChange={e => { setStatus(e.target.value as typeof status); setPage(1); }} className={`${inputClass} w-40`}>
       <option value="held">Waiting</option><option value="approved">Approved</option><option value="rejected">Refused</option><option value="cleared">Cleared</option><option value="all">All</option></select>}>
       {loading && !data ? <Loading what="holds" /> : error ? <Failure text={error} /> : !data?.rows.length ? <Empty>No orders in this list.</Empty>
-        : <div className="space-y-2">{data.rows.map(h => <HoldCard key={h.id} hold={h} onChanged={() => void reload()} />)}</div>}
+        : <div className="space-y-2">{data.rows.map(h => <HoldCard key={h.id} hold={h} onChanged={text => { if (text) setDecided({ tone: "ok", text }); void reload(); }} />)}</div>}
       {data ? <Pager page={page} total={data.total_count} onPage={setPage} /> : null}
     </Section>
     <CreditSettings />

@@ -12,7 +12,7 @@ import { Empty, Failure, Loading, Message, Pager, Pill, Section, apWrite, button
 type Reminder = { id: string; customer_id: string; customer: string; reminder_date: string; invoices: Array<{ invoice_id: string; invoice_number: string; due_date: string; balance: number; days: number }>;
   total_due: number; worst_days: number; message: string; phone: string | null; status: string; copied_at: string | null; sent_via: string | null; sent_at: string | null; sent_by: string | null; skip_reason: string | null };
 
-function ReminderCard({ r, onChanged }: { r: Reminder; onChanged: () => void }) {
+function ReminderCard({ r, onChanged }: { r: Reminder; onChanged: (done?: string) => void }) {
   const [channel, setChannel] = useState<ReminderChannel>("whatsapp");
   const [skip, setSkip] = useState<string | null>(null);
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
@@ -26,11 +26,11 @@ function ReminderCard({ r, onChanged }: { r: Reminder; onChanged: () => void }) 
       <button type="button" className={secondaryClass} onClick={copied}>Copy message</button>
       {link ? <a className={secondaryClass + " inline-flex items-center"} href={link} target="_blank" rel="noreferrer" onClick={() => void apWrite("ap_cash", "reminder_copied", { id: r.id }, setMessage)}>Open in WhatsApp</a> : null}
       <select aria-label="Sent by" value={channel} onChange={e => setChannel(e.target.value as ReminderChannel)} className={`${inputClass} w-36`}>{Object.entries(REMINDER_CHANNELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-      <button type="button" className={buttonClass} onClick={async () => { if (await apWrite("ap_cash", "reminder_sent", { id: r.id, channel }, setMessage, "Marked sent.")) onChanged(); }}>Mark sent</button>
+      <button type="button" className={buttonClass} onClick={async () => { if (await apWrite("ap_cash", "reminder_sent", { id: r.id, channel }, setMessage)) onChanged(`Reminder to ${r.customer} marked sent.`); }}>Mark sent</button>
       <button type="button" className="underline" onClick={() => setSkip(skip === null ? "" : null)}>Skip</button>
     </div> : <p className="text-neutral-600">{r.status === "sent" ? `Sent by ${r.sent_by ?? "—"} via ${REMINDER_CHANNELS[r.sent_via as ReminderChannel] ?? r.sent_via} ${fmtWhen(r.sent_at)}` : r.skip_reason ? `Skipped: ${r.skip_reason}` : ""}{r.copied_at && r.status === "prepared" ? ` · copied ${fmtWhen(r.copied_at)}` : ""}</p>}
     {skip !== null ? <div className="flex flex-wrap gap-2"><input aria-label="Why skip" value={skip} onChange={e => setSkip(e.target.value)} className={`${inputClass} flex-1`} placeholder="For example: customer promised payment on call" />
-      <button type="button" className={buttonClass} onClick={async () => { if (await apWrite("ap_cash", "reminder_skip", { id: r.id, reason: skip.trim() }, setMessage, "Skipped with reason.")) onChanged(); }}>Skip</button></div> : null}
+      <button type="button" className={buttonClass} onClick={async () => { if (await apWrite("ap_cash", "reminder_skip", { id: r.id, reason: skip.trim() }, setMessage)) onChanged(`Reminder to ${r.customer} skipped.`); }}>Skip</button></div> : null}
     <Message value={message} />
   </article>;
 }
@@ -48,7 +48,7 @@ export function RemindersClient({ canPrepare }: { canPrepare: boolean }) {
         <option value="prepared">To send</option><option value="sent">Sent</option><option value="skipped">Skipped</option><option value="all">All</option></select>
         {canPrepare ? <button type="button" className={secondaryClass} onClick={async () => { const out = await apWrite<{ prepared: number }>("ap_cash", "prepare_reminders", {}, setMessage); if (out) { setMessage({ tone: "ok", text: `${out.prepared} reminder(s) prepared for today.` }); setKey(k => k + 1); } }}>Prepare now</button> : null}</div>}>
       {queue.loading && !queue.data ? <Loading what="reminders" /> : queue.error ? <Failure text={queue.error} /> : !queue.data?.rows.length ? <Empty>No reminders in this list.</Empty>
-        : <div className="space-y-2">{queue.data.rows.map(r => <ReminderCard key={r.id} r={r} onChanged={() => setKey(k => k + 1)} />)}</div>}
+        : <div className="space-y-2">{queue.data.rows.map(r => <ReminderCard key={r.id} r={r} onChanged={done => { if (done) setMessage({ tone: "ok", text: done }); setKey(k => k + 1); }} />)}</div>}
       {queue.data ? <Pager page={page} total={queue.data.total_count} onPage={setPage} /> : null}
       <Message value={message} />
     </Section>
@@ -66,8 +66,8 @@ type Proposal = { allocations: Array<{ invoice_id: string; invoice_number: strin
 function CustomerSelect({ value, onChange }: { value: string; onChange: (id: string, name: string) => void }) {
   const [search, setSearch] = useState("");
   const { data } = useApRead<{ id: string; name: string; city: string | null }[]>("ap_cash", "customers", search.trim().length >= 2 ? { search: search.trim() } : {}, [search]);
-  return <label className="text-sm font-semibold">Customer<input aria-label="Find customer" value={search} onChange={e => setSearch(e.target.value)} placeholder="Type to search" className={`${inputClass} mt-1`} />
-    <select aria-label="Customer" value={value} onChange={e => onChange(e.target.value, e.target.selectedOptions[0]?.text ?? "")} className={`${inputClass} mt-1`}><option value="">Choose</option>{(data ?? []).map(c => <option key={c.id} value={c.id}>{c.name}{c.city ? ` · ${c.city}` : ""}</option>)}</select></label>;
+  return <div className="text-sm font-semibold"><span>Customer</span><input aria-label="Find customer" value={search} onChange={e => setSearch(e.target.value)} placeholder="Type to search" className={`${inputClass} mt-1`} />
+    <select aria-label="Customer" value={value} onChange={e => onChange(e.target.value, e.target.selectedOptions[0]?.text ?? "")} className={`${inputClass} mt-1`}><option value="">Choose</option>{(data ?? []).map(c => <option key={c.id} value={c.id}>{c.name}{c.city ? ` · ${c.city}` : ""}</option>)}</select></div>;
 }
 
 export function ReceiptAllocationPanel({ today }: { today: string }) {
@@ -118,13 +118,13 @@ export function ReceiptAllocationPanel({ today }: { today: string }) {
       <button type="button" disabled={busy || onAccount < 0} onClick={post} className={buttonClass}>{busy ? "Recording…" : "Record receipt"}</button>
     </div> : null}
     <Message value={message} />
-    <OnAccountList />
+    <OnAccountList reloadKey={key} />
   </Section>;
 }
 
-function OnAccountList() {
+function OnAccountList({ reloadKey }: { reloadKey: string }) {
   const [page, setPage] = useState(1); const [k, setK] = useState(0);
-  const { data } = useApRead<{ total_count: number; rows: Array<{ id: string; customer: string; customer_id: string; available: number; amount: number; reference: string | null; received_on: string; open_invoices: number }> }>("ap_cash", "on_account", { page }, [k]);
+  const { data } = useApRead<{ total_count: number; rows: Array<{ id: string; customer: string; customer_id: string; available: number; amount: number; reference: string | null; received_on: string; open_invoices: number }> }>("ap_cash", "on_account", { page }, [k, reloadKey]);
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   if (!data?.rows.length) return null;
   return <div id="on-account" className="space-y-2 border-t border-neutral-100 pt-3"><h3 className="text-sm font-bold">On-account money waiting</h3>

@@ -281,11 +281,6 @@ export async function saveDispatchAction(input: SaveDispatchInput): Promise<Disp
     if (editingId && !currentDispatchResult.data) return { success: false, error: "Dispatch not found for this company." };
 
     const currentDispatch = currentDispatchResult.data;
-    if (!editingId) {
-      // AP-097: the same load recorded twice for one order.
-      const gate = await duplicateGate(supabase, "dispatch", { order_id: parsed.data.order_id, total_weight_kg: parsed.data.total_weight_kg }, input.confirm_duplicate);
-      if (gate.blocked) return { success: false, error: duplicateMessage(gate.matches), duplicates: gate.matches };
-    }
     const totalTareWeightKg = Number(measured.tare.toFixed(3));
     const payload = {
       ...parsed.data,
@@ -311,6 +306,11 @@ export async function saveDispatchAction(input: SaveDispatchInput): Promise<Disp
     const verifiedManifest = buildVerifiedPackingListItems(sourceLines, context.companyId, input.bundles);
     if (Math.abs(verifiedManifest.totalNetWeightKg - parsed.data.total_weight_kg) > 0.001) {
       return { success: false, error: "Bundle gross and tare measurements do not match the dispatch net weight." };
+    }
+    if (!editingId) {
+      // AP-097: the same load recorded twice for one order (checked only once the load itself is valid).
+      const gate = await duplicateGate(supabase, "dispatch", { order_id: parsed.data.order_id, total_weight_kg: parsed.data.total_weight_kg }, input.confirm_duplicate);
+      if (gate.blocked) return { success: false, error: duplicateMessage(gate.matches), duplicates: gate.matches };
     }
     const result = await supabase.rpc("save_ready_dispatch_atomic", {
       p_dispatch_id: editingId,

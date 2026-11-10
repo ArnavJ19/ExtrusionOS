@@ -1254,7 +1254,12 @@ begin
   if q.id is null then raise exception 'AP: Quotation not found.'; end if;
   if q.status not in ('sent', 'expired', 'customer_approved', 'approved_for_sending') then raise exception 'AP: Only a sent, approved or expired quotation can be extended.'; end if;
   perform set_config('ap.quote_extension', q.id::text, true);
-  update public.quotes set valid_until = p_until, status = case when status = 'expired' then 'sent' else status end, updated_at = now() where id = q.id;
+  begin
+    update public.quotes set valid_until = p_until, status = case when status = 'expired' then 'sent' else status end, updated_at = now() where id = q.id;
+  exception when others then
+    perform set_config('ap.quote_extension', '', true);
+    raise exception 'AP: The validity cannot be extended: %', regexp_replace(sqlerrm, '^AP: ', '');
+  end;
   perform set_config('ap.quote_extension', '', true);
   insert into public.quote_validity_events(company_id, quote_id, event, old_valid_until, new_valid_until, revision_number, reason, actor_id)
     values (p_company, q.id, 'extended', q.valid_until, p_until, q.revision_number, p_reason, p_actor);
@@ -1854,6 +1859,11 @@ begin
       values (p_company, 'notification', n.id, coalesce(n.condition_key, n.entity_reference, n.notification_type), 'closed', 'Resolved by system: condition cleared', p_source) on conflict do nothing;
     v_notes := v_notes + 1;
   end loop;
+  -- A prepared reminder whose invoices are all settled is no longer sent.
+  update public.payment_reminders r set status = 'superseded'
+    where r.company_id = p_company and r.status = 'prepared' and (p_entity is null or r.customer_id = p_entity)
+      and not exists (select 1 from jsonb_array_elements(r.invoices) x join public.invoices i on i.id = (x ->> 'invoice_id')::uuid
+        where i.balance_due > 0 and i.deleted_at is null and i.status = any(private.ap3_open_invoice_statuses()));
   -- Undecided holds are rechecked (a payment may have brought the customer within limit); approvals are rechecked at dispatch.
   for h in select x.order_id from public.order_credit_holds x where x.company_id = p_company and x.status = 'held'
       and (p_entity is null or x.order_id = p_entity or x.customer_id = p_entity) loop
@@ -2752,6 +2762,12 @@ begin
   if p_command = 'check' then
     v_kind := p_payload ->> 'kind';
     if v_kind not in ('quote', 'order', 'receipt', 'dispatch') then raise exception 'AP: Unknown record type.'; end if;
+    -- Only people who create this kind of record see what already exists; for anyone else the check finds nothing.
+    if not (c.role = any(case v_kind when 'receipt' then private.ap3_accounts_roles()
+        when 'dispatch' then array['owner', 'admin', 'factory_manager', 'dispatch_manager', 'dispatch', 'production_manager', 'sales_manager']
+        else private.ap3_sales_roles() || array['accounts'] end)) then
+      return jsonb_build_object('matches', '[]'::jsonb);
+    end if;
     return jsonb_build_object('matches', private.ap3_duplicates(c.company_id, v_kind, p_payload - 'kind'));
   elsif p_command = 'acknowledge' then
     perform private.ap_keys(p_payload, array['kind', 'matches', 'decision', 'note']);

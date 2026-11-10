@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createCashFixture, cIds as i, nid, istDay, GSTIN } from "../scripts/lib/autopilot-batch3-fixture.mjs";
+import { createCashFixture, cIds as i, nid, istDay } from "../scripts/lib/autopilot-batch3-fixture.mjs";
 
 let f;
 test.before(async () => { f = await createCashFixture(); });
@@ -350,6 +350,11 @@ test("AP-084 the morning queue prepares one reminder per customer; commitments s
   const coverage = await cash("reminder_coverage");
   assert.equal(coverage.summary.covered_by_commitment, 1);
   assert.equal(coverage.summary.covered_by_reminder, 1);
+  await f.asUser("select public.post_financial_receipt_atomic($1,$2,$3)", [{ amount: 1000, payment_date: istDay(0), payment_method: "cash" }, [{ invoice_id: i.inv1, amount: 1000 }], nid(3801)], i.accounts);
+  await f.seed("insert into payment_reminders(company_id,customer_id,reminder_date,invoices,total_due,worst_days,message,status) values($1,$2,$3,$4,1000,5,'Dear customer, please pay the invoice listed.','prepared')",
+    [i.company, i.customer2, istDay(-1), JSON.stringify([{ invoice_id: i.inv3 }])]);
+  await f.asUser("select public.post_financial_receipt_atomic($1,$2,$3)", [{ amount: 5000, payment_date: istDay(0), payment_method: "cash" }, [{ invoice_id: i.inv3, amount: 5000 }], nid(3802)], i.accounts);
+  assert.equal((await f.one("select status from payment_reminders where reminder_date=$1", [istDay(-1)])).status, "superseded", "a prepared reminder for invoices since paid is withdrawn");
 });
 
 async function seedQuote(id, { status = "sent", validUntil = istDay(-1), quoteDate = istDay(-16), creator = i.sales } = {}) {
@@ -407,11 +412,12 @@ test("AP-097 possible duplicates are reported before saving and the person's dec
   assert.equal(order.matches.length, 1);
   assert.match(order.matches[0].why, /Same customer and value/);
   assert.equal((await dupes("check", { kind: "order", customer_id: i.customer2, order_value: "55000" })).matches.length, 0);
+  assert.equal((await dupes("check", { kind: "order", customer_id: i.customer2, order_value: "50100" }, i.production)).matches.length, 0, "only people who create orders see existing ones");
   await f.asUser("select public.post_financial_receipt_atomic($1,$2,$3)", [{ amount: 1000, payment_date: istDay(0), payment_method: "bank_transfer", reference_number: "UTR-DUP-9" },
     [{ invoice_id: i.inv1, amount: 1000 }], nid(4001)], i.accounts);
   assert.equal((await dupes("check", { kind: "receipt", reference_number: "utr-dup-9" }, i.accounts)).matches.length, 1);
   await f.packDispatch({ id: nid(4002), order: nid(4000), lines: [{ id: nid(4003), kg: 100 }] });
-  assert.equal((await dupes("check", { kind: "dispatch", order_id: nid(4000), total_weight_kg: "100.2" })).matches.length, 1);
+  assert.equal((await dupes("check", { kind: "dispatch", order_id: nid(4000), total_weight_kg: "100.2" }, nid(22))).matches.length, 1);
   await seedQuote(nid(4010), { validUntil: istDay(10), quoteDate: istDay(0) });
   assert.equal((await dupes("check", { kind: "quote", customer_id: i.customer2, profile_ids: [i.profile2] })).matches.length, 1);
   await dupes("acknowledge", { kind: "order", matches: order.matches.map(m => m.id), decision: "saved_anyway", note: "Second truckload order" });

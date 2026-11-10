@@ -103,8 +103,9 @@ No customer-facing view changed; no cost, margin or supplier rate is shown.
 
 ## Hosted migration state
 
-Not applied. Apply after `20261109000000_single_tenant_omalco.sql` and `20261109100000_autopilot_batch_1.sql`
-(it depends on batch 1). The four new jobs run from the existing cron route (two hourly, one nightly).
+Applied to the hosted project (completed 11 November 2026; see AUTOPILOT_UPGRADE_BATCH_3.md). It was applied after
+`20261109000000_single_tenant_omalco.sql` and `20261109100000_autopilot_batch_1.sql`. The four new jobs run from the existing
+cron route (two hourly, one nightly).
 
 ## Remaining acceptance
 

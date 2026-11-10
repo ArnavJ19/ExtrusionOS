@@ -52,7 +52,7 @@ test("AP-038 GSTIN check digit, state fill and the explicit unregistered choice 
 
 test("AP-001 scheduled jobs run once per window, manual runs are labelled, and three failed windows raise one alert", async () => {
   const first = await f.cron("nightly");
-  assert.equal(first.runs.length, 8, "four nightly jobs (three from batch 1, press.idle_reconcile from batch 2) for each of the two companies");
+  assert.equal(first.runs.length, 10, "five nightly jobs (three from batch 1, press.idle_reconcile from batch 2, quotes.expire from batch 3) for each of the two companies");
   assert.ok(first.runs.every(run => run.state === "succeeded"), JSON.stringify(first.runs));
   const again = await f.cron("nightly");
   assert.ok(again.runs.every(run => run.state === "already_ran"), "a retried cron call in the same window does nothing");
@@ -433,7 +433,8 @@ test("every new table has RLS and company scoping, and only the intended functio
   const callable = (await f.db.query(`select p.proname from pg_proc p where p.pronamespace in ('public'::regnamespace,'private'::regnamespace) and (p.proname like 'ap\\_%' or p.proname in ('factory_is_working_day', 'factory_add_working_days', 'factory_working_days_between'))
     and has_function_privilege('authenticated', p.oid, 'EXECUTE') order by 1`)).rows.map(r => r.proname);
   // Batch 2 (press floor capture) adds ap_dies, ap_pm, ap_press, ap_sampling and ap_scrap; tests/autopilot-batch2-sql.test.mjs covers them.
-  assert.deepEqual(callable, ["ap_calendar", "ap_cutover", "ap_dies", "ap_home_work", "ap_import", "ap_jobs", "ap_navigation", "ap_period", "ap_pm", "ap_press", "ap_proposals", "ap_sampling", "ap_scrap", "ap_series"]);
+  // Batch 3 (order-to-cash) adds ap_billing, ap_cash, ap_credit, ap_dupes, ap_jobdrafts and ap_quotes; tests/autopilot-batch3-sql.test.mjs covers them.
+  assert.deepEqual(callable, ["ap_billing", "ap_calendar", "ap_cash", "ap_credit", "ap_cutover", "ap_dies", "ap_dupes", "ap_home_work", "ap_import", "ap_jobdrafts", "ap_jobs", "ap_navigation", "ap_period", "ap_pm", "ap_press", "ap_proposals", "ap_quotes", "ap_sampling", "ap_scrap", "ap_series"]);
   const definers = (await f.db.query(`select p.proname, p.proconfig from pg_proc p where p.pronamespace in ('public'::regnamespace,'private'::regnamespace) and p.proname like 'ap\\_%' and p.prosecdef`)).rows;
   for (const fn of definers) assert.ok(fn.proconfig?.some(c => c.startsWith("search_path=")), `${fn.proname} pins its search path`);
   // Rows of another company are invisible through direct reads.

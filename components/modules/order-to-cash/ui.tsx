@@ -11,14 +11,14 @@ export function useApRead<T>(rpc: string, command: string, payload: Record<strin
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const key = JSON.stringify(payload);
+  const depKey = JSON.stringify(deps);
   const reload = useCallback(async () => {
     setLoading(true);
     const result = await autopilotAction(rpc, command, JSON.parse(key));
     setLoading(false);
     if (!result.success) { setError(result.error); return; }
     setError(null); setData(result.data as T);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rpc, command, key, ...deps]);
+  }, [rpc, command, key, depKey]);
   useEffect(() => { void reload(); }, [reload]);
   return { data, error, loading, reload };
 }
