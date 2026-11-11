@@ -458,3 +458,25 @@ test("the single-company guard still refuses a second company when it is active"
   await f.db.exec("alter table public.companies enable trigger trg_enforce_single_company");
   await assert.rejects(() => f.db.query("insert into companies(name) values('Third company')"), /dedicated to Omalco/);
 });
+
+test("AP-001 pg_cron runs the schedules through the private runner; Vercel keeps no sub-daily cron", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { JOB_SCHEDULES } = await import("../lib/jobs/registry.ts");
+  // pg_cron calls private.ap_jobs_run as the database owner, without a JWT.
+  const run = (await f.db.query("select private.ap_jobs_run('nightly') data")).rows[0].data;
+  assert.equal(run.runs.length, 10);
+  assert.ok(run.runs.every(r => r.state === "succeeded"), JSON.stringify(run.runs));
+  const viaRoute = await f.cron("nightly");
+  assert.ok(viaRoute.runs.every(r => r.state === "already_ran"), "the manual route in the same window does nothing after pg_cron ran");
+  await f.db.exec("savepoint weekly");
+  await assert.rejects(() => f.db.query("select private.ap_jobs_run('weekly')"), /Unknown schedule/);
+  await f.db.exec("rollback to savepoint weekly");
+  await assert.rejects(() => f.asService("select private.ap_jobs_run('nightly')"), /permission denied/);
+  await assert.rejects(() => f.asUser("select private.ap_jobs_run('nightly')", [], i.owner), /permission denied/);
+  const sql = readFileSync(new URL("../supabase/migrations/20261111120000_autopilot_pg_cron.sql", import.meta.url), "utf8");
+  for (const [schedule, { cron }] of Object.entries(JOB_SCHEDULES)) {
+    assert.ok(sql.includes(`cron.schedule('autopilot-${schedule}', '${cron}', $cmd$select private.ap_jobs_run('${schedule}')$cmd$)`), `${schedule} is scheduled at ${cron}`);
+  }
+  const vercel = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
+  assert.ok((vercel.crons ?? []).every(c => !/^\S+ (\*|\*\/\d+|\d+,\d+)/.test(c.schedule)), "no Vercel cron runs more than once a day (Hobby plan)");
+});

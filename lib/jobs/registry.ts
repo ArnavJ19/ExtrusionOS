@@ -1,6 +1,7 @@
 // AP-001: registered scheduled jobs. Mirrors private.ap_job_registry(); a test compares the two.
-// Jobs only prepare proposals and alerts. Vercel Cron calls /api/cron/<schedule> (vercel.json), which verifies
-// CRON_SECRET and calls public.ap_jobs_cron with the server-only service role. Times below are IST.
+// Jobs only prepare proposals and alerts. Supabase pg_cron runs them (migration 20261111120000_autopilot_pg_cron.sql,
+// jobs autopilot-hourly/-nightly/-morning calling private.ap_jobs_run). /api/cron/<schedule> stays as a manual trigger: it
+// verifies CRON_SECRET and calls public.ap_jobs_cron with the server-only service role. Labels are IST; cron strings are UTC.
 import { z } from "zod";
 
 export const JOB_SCHEDULES = {

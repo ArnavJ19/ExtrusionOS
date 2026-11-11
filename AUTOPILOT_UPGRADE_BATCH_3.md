@@ -115,11 +115,17 @@ parts 01, 02 and 04–07 (part 03's objects exist without a ledger row); on 11 N
 `autopilot_batch_2_part08` (completion samples, QC release guard, reject guard, proposal list filters). All 55 function
 bodies were compared with the file and match; the security advisor shows no new finding.
 
-Batch 3: not applied. Apply `20261111100000_autopilot_batch_3.sql` after batches 1 and 2, then
-`20261111110000_stock_snapshot_open_reservations.sql`. Its five jobs run from the existing cron route (three hourly, one
-nightly, one at 08:00). The Vercel project is on the Hobby plan, which refuses the hourly cron in `vercel.json`
-(`5 * * * *`), so preview and production deployments fail until the hourly schedule is moved off Vercel Cron or the plan
-is upgraded.
+Batch 3: not applied. Apply in order: `20261111100000_autopilot_batch_3.sql` (after batches 1 and 2),
+`20261111110000_stock_snapshot_open_reservations.sql`, `20261111120000_autopilot_pg_cron.sql`. Batch 3's five jobs
+(three hourly, one nightly, one at 08:00) run with the other Autopilot jobs.
+
+Scheduling: the Vercel project is on the Hobby plan, which accepts only daily crons and refused `5 * * * *`, so every
+deployment failed. `20261111120000_autopilot_pg_cron.sql` enables Supabase pg_cron and schedules `autopilot-hourly`
+(`5 * * * *`), `autopilot-nightly` (`0 19 * * *`, 00:30 IST) and `autopilot-morning` (`30 2 * * *`, 08:00 IST), each
+calling `private.ap_jobs_run(schedule)`. That private runner has the body of `public.ap_jobs_cron` without the
+service-role check, and no client or the service role can execute it. `vercel.json` now has no crons. `/api/cron/<schedule>`
+stays as a manual trigger with `CRON_SECRET`; a second trigger in the same window records nothing new. On the PGlite
+replay, pg_cron is not available, so the migration creates the functions and skips scheduling.
 
 ## Remaining acceptance
 
