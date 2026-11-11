@@ -243,7 +243,8 @@ test("NOV-010: an in-task vendor is checked for duplicates, created once per req
   const f = createNov7ActionsFixture("../../lib/actions/in-task-vendors.ts");
   f.state.tables.vendors = [{ id: n7(90), company_id: ids.company, vendor_name: "Shree Transport Co", vendor_type: "transporter", phone: "9876543210", gst_number: null, is_active: true },
     { id: n7(91), company_id: ids.otherCompany, vendor_name: "Shree Transport Co", vendor_type: "transporter", phone: "9876543210", is_active: true }];
-  const vendor = { vendor_name: "Shree  Transport", vendor_type: "transporter", contact_person: "", phone: "+91 98765 43210", gst_number: "", city: "Pune" };
+  // AP-038: a vendor without a GSTIN is saved only with the explicit unregistered choice.
+  const vendor = { vendor_name: "Shree  Transport", vendor_type: "transporter", contact_person: "", phone: "+91 98765 43210", gst_number: "", gst_registration: "unregistered", city: "Pune" };
   const checked = await f.actions.inTaskVendorAction({ intent: "check", vendor });
   assert.equal(checked.kind, "checked"); assert.deepEqual(checked.matches.map(match => match.id), [n7(90)], "only this company's vendors are matched");
   assert.deepEqual(checked.matches[0].matched_on.sort(), ["phone", "vendor name"]);

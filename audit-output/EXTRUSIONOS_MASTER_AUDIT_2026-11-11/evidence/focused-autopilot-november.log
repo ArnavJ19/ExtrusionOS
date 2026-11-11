@@ -1,0 +1,226 @@
+TAP version 13
+# Subtest: AP-037 place of supply comes from the billing GSTIN, or the recorded state when unregistered; unknown stays blank
+ok 1 - AP-037 place of supply comes from the billing GSTIN, or the recorded state when unregistered; unknown stays blank
+  ---
+  duration_ms: 28847.5402
+  type: 'test'
+  ...
+# Subtest: AP-037 an invoice without a place of supply takes the derived state; a different state needs a recorded override once the rule is confirmed
+ok 2 - AP-037 an invoice without a place of supply takes the derived state; a different state needs a recorded override once the rule is confirmed
+  ---
+  duration_ms: 393.4531
+  type: 'test'
+  ...
+# Subtest: AP-037 HSN defaults by item type: new profiles take the confirmed code and accounts can fill the blanks
+ok 3 - AP-037 HSN defaults by item type: new profiles take the confirmed code and accounts can fill the blanks
+  ---
+  duration_ms: 91.4773
+  type: 'test'
+  ...
+# Subtest: AP-032 credit limits are set by accounts with a reason and versioned; exposure adds open balances, unbilled dispatches and the order, less on-account money
+ok 4 - AP-032 credit limits are set by accounts with a reason and versioned; exposure adds open balances, unbilled dispatches and the order, less on-account money
+  ---
+  duration_ms: 126.8734
+  type: 'test'
+  ...
+# Subtest: AP-032 an over-limit order confirms into credit hold with an approval request; within-limit and no-limit customers pass
+ok 5 - AP-032 an over-limit order confirms into credit hold with an approval request; within-limit and no-limit customers pass
+  ---
+  duration_ms: 837.8726
+  type: 'test'
+  ...
+# Subtest: AP-032 holds are decided by an approver other than the order's creator; dispatch needs an unexpired approval that covers the exposure
+ok 6 - AP-032 holds are decided by an approver other than the order's creator; dispatch needs an unexpired approval that covers the exposure
+  ---
+  duration_ms: 633.8703
+  type: 'test'
+  ...
+# Subtest: AP-032 / AP-098 a payment that brings the customer within limit clears the hold by itself and records why
+ok 7 - AP-032 / AP-098 a payment that brings the customer within limit clears the hold by itself and records why
+  ---
+  duration_ms: 402.0661
+  type: 'test'
+  ...
+# Subtest: AP-045 confirmed orders become draft jobs grouped by die, alloy and temper; drafts reserve nothing
+ok 8 - AP-045 confirmed orders become draft jobs grouped by die, alloy and temper; drafts reserve nothing
+  ---
+  duration_ms: 356.2491
+  type: 'test'
+  ...
+# Subtest: AP-045 releasing a draft creates planned jobs per order line through the job save; held, covered and released lines are not re-released
+ok 9 - AP-045 releasing a draft creates planned jobs per order line through the job save; held, covered and released lines are not re-released
+  ---
+  duration_ms: 427.6893
+  type: 'test'
+  ...
+# Subtest: AP-046 gate-out prepares an invoice draft with totals and no number; an unpriced packing list stays blocked with its reason
+ok 10 - AP-046 gate-out prepares an invoice draft with totals and no number; an unpriced packing list stays blocked with its reason
+  ---
+  duration_ms: 758.6809
+  type: 'test'
+  ...
+# Subtest: AP-046 an invoice for the dispatch closes its draft and cancelling it reopens the draft; unbilled dispatches age in working days and need an explanation
+ok 11 - AP-046 an invoice for the dispatch closes its draft and cancelling it reopens the draft; unbilled dispatches age in working days and need an explanation
+  ---
+  duration_ms: 737.9369
+  type: 'test'
+  ...
+# Subtest: AP-058 allocation takes invoices named in the narration first, then the oldest; anything above the open invoices stays on account
+ok 12 - AP-058 allocation takes invoices named in the narration first, then the oldest; anything above the open invoices stays on account
+  ---
+  duration_ms: 93.7825
+  type: 'test'
+  ...
+# Subtest: AP-058 a reviewed receipt posts the allocated part and keeps the rest on account; retries are idempotent; on-account money is applied later oldest first
+ok 13 - AP-058 a reviewed receipt posts the allocated part and keeps the rest on account; retries are idempotent; on-account money is applied later oldest first
+  ---
+  duration_ms: 569.7879
+  type: 'test'
+  ...
+# Subtest: AP-024 importing a statement dedupes lines, ignores debits, reports unreadable rows and refuses the same file twice
+ok 14 - AP-024 importing a statement dedupes lines, ignores debits, reports unreadable rows and refuses the same file twice
+  ---
+  duration_ms: 180.0305
+  type: 'test'
+  ...
+# Subtest: AP-024 accepting a match posts one receipt; an unknown remitter is assigned once and learned; reversal needs a reason and frees the line
+ok 15 - AP-024 accepting a match posts one receipt; an unknown remitter is assigned once and learned; reversal needs a reason and frees the line
+  ---
+  duration_ms: 242.4177
+  type: 'test'
+  ...
+# Subtest: AP-024 a match goes stale when the customer's open invoices change before it is accepted
+ok 16 - AP-024 a match goes stale when the customer's open invoices change before it is accepted
+  ---
+  duration_ms: 104.1255
+  type: 'test'
+  ...
+# Subtest: AP-084 the morning queue prepares one reminder per customer; commitments skip invoices; nothing is sent automatically
+ok 17 - AP-084 the morning queue prepares one reminder per customer; commitments skip invoices; nothing is sent automatically
+  ---
+  duration_ms: 171.8824
+  type: 'test'
+  ...
+# Subtest: AP-031 the nightly job expires sent quotations with history; an order cannot be created from a lapsed quotation
+ok 18 - AP-031 the nightly job expires sent quotations with history; an order cannot be created from a lapsed quotation
+  ---
+  duration_ms: 178.1406
+  type: 'test'
+  ...
+# Subtest: AP-031 extending validity needs an approver other than the requester; approval brings an expired quotation back to sent
+ok 19 - AP-031 extending validity needs an approver other than the requester; approval brings an expired quotation back to sent
+  ---
+  duration_ms: 286.2063
+  type: 'test'
+  ...
+# Subtest: AP-031 requote copies the lines into a new revision at today's approved rates and returns the quotation to draft
+ok 20 - AP-031 requote copies the lines into a new revision at today's approved rates and returns the quotation to draft
+  ---
+  duration_ms: 339.6631
+  type: 'test'
+  ...
+# Subtest: AP-097 possible duplicates are reported before saving and the person's decision is logged
+ok 21 - AP-097 possible duplicates are reported before saving and the person's decision is logged
+  ---
+  duration_ms: 614.2253
+  type: 'test'
+  ...
+# Subtest: AP-098 a trigger task closes itself when its invoice is paid, and a failing-job alert resolves after the job succeeds
+ok 22 - AP-098 a trigger task closes itself when its invoice is paid, and a failing-job alert resolves after the job succeeds
+  ---
+  duration_ms: 249.9394
+  type: 'test'
+  ...
+# Subtest: Batch 3 tables have RLS, a company-scoped read policy, a company-leading index and no client grants; only the six new entry points are callable
+ok 23 - Batch 3 tables have RLS, a company-scoped read policy, a company-leading index and no client grants; only the six new entry points are callable
+  ---
+  duration_ms: 441.729
+  type: 'test'
+  ...
+# Subtest: Batch 3 jobs are registered and run from the cron entry
+ok 24 - Batch 3 jobs are registered and run from the cron entry
+  ---
+  duration_ms: 120.8959
+  type: 'test'
+  ...
+# Subtest: NOV-086: production, dispatch, quality and accounts share presentation while retaining their domain codes
+ok 25 - NOV-086: production, dispatch, quality and accounts share presentation while retaining their domain codes
+  ---
+  duration_ms: 1.713
+  type: 'test'
+  ...
+# Subtest: NOV-086: unknown and blank statuses remain neutral and visible
+ok 26 - NOV-086: unknown and blank statuses remain neutral and visible
+  ---
+  duration_ms: 0.3501
+  type: 'test'
+  ...
+# Subtest: NOV-093: absent, invalid and genuine zero quantities cannot collapse into the same display
+ok 27 - NOV-093: absent, invalid and genuine zero quantities cannot collapse into the same display
+  ---
+  duration_ms: 23.3737
+  type: 'test'
+  ...
+# Subtest: NOV-093: correction signs, Indian scale, dimensions and non-INR currency remain explicit
+ok 28 - NOV-093: correction signs, Indian scale, dimensions and non-INR currency remain explicit
+  ---
+  duration_ms: 1.0573
+  type: 'test'
+  ...
+# Subtest: NOV-093: configured record fields retain their piece, length, percentage and section-weight dimensions
+ok 29 - NOV-093: configured record fields retain their piece, length, percentage and section-weight dimensions
+  ---
+  duration_ms: 0.5778
+  type: 'test'
+  ...
+# Subtest: NOV-099: denied access, source failure and filtered emptiness have distinct recovery guidance
+ok 30 - NOV-099: denied access, source failure and filtered emptiness have distinct recovery guidance
+  ---
+  duration_ms: 0.4647
+  type: 'test'
+  ...
+# Subtest: NOV-091: shared URLs preserve combined supported filters, ordering and page
+ok 31 - NOV-091: shared URLs preserve combined supported filters, ordering and page
+  ---
+  duration_ms: 4.809
+  type: 'test'
+  ...
+# Subtest: NOV-091: malformed or unsupported URL values cannot become query fields
+ok 32 - NOV-091: malformed or unsupported URL values cannot become query fields
+  ---
+  duration_ms: 0.2901
+  type: 'test'
+  ...
+# Subtest: NOV-091: reversed dates, disabled date filtering and long input are bounded
+ok 33 - NOV-091: reversed dates, disabled date filtering and long input are bounded
+  ---
+  duration_ms: 0.6067
+  type: 'test'
+  ...
+# Subtest: NOV-016: enforced blockers lead advisories, describe their source and leave ownership honest
+ok 34 - NOV-016: enforced blockers lead advisories, describe their source and leave ownership honest
+  ---
+  duration_ms: 1.0664
+  type: 'test'
+  ...
+# Subtest: NOV-016: unauthorized edit/issue links are withheld and unknown rules do not invent a resolution
+ok 35 - NOV-016: unauthorized edit/issue links are withheld and unknown rules do not invent a resolution
+  ---
+  duration_ms: 0.5799
+  type: 'test'
+  ...
+# Subtest: NOV-092: lookup context uses identifiers and units without financial or internal payloads
+ok 36 - NOV-092: lookup context uses identifiers and units without financial or internal payloads
+  ---
+  duration_ms: 0.5743
+  type: 'test'
+  ...
+1..36
+# tests 36
+# suites 0
+# pass 36
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 38410.6612

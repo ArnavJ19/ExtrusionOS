@@ -1,3 +1,4 @@
+import { ModuleWorkflows } from "@/components/modules/home-work/module-workflows";
 import { ModuleOverviewClient } from "@/components/modules/operations/module-overview-client";
 import { InventoryDashboard } from "@/components/modules/dashboards/inventory-dashboard";
 import { ModuleDisabled } from "@/components/ui/module-disabled";
@@ -85,6 +86,7 @@ export default async function InventoryPage() {
           <Link href="/inventory/reservations" className="inline-flex items-center justify-center rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90">Open Reservations</Link>
         </div>
       </div> : null}
+      {!context.dealerId ? <ModuleWorkflows module="inventory" role={context.role} /> : null}
     </div>
   );
 }

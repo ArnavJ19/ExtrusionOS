@@ -18,6 +18,7 @@ import { getReservationLedgerOptions, loadDispatchReservationLedgerPage, type Di
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { OrderDeliveryContext } from "@/components/modules/dispatches/order-delivery-context";
+import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
 
 export default async function DispatchDetailPage({ params, searchParams }: {
   params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -40,6 +41,7 @@ export default async function DispatchDetailPage({ params, searchParams }: {
     <DispatchReservationPanel dispatchId={id} page={reservationPage} />
     <DispatchControlsPanel dispatchId={id} />
     <DispatchCreditNotePanel dispatchId={id} />
+    {!context.dealerId ? <RelatedWorkPanel kind="dispatch" id={id} role={context.role} /> : null}
   </div>;
 }
 

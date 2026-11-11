@@ -1,0 +1,8 @@
+{"id":"MFA-006","expectedFirstCredit":"2500.00","actualFirst":{"line_no":1,"txn_date":"2026-11-10","narration":"Fixture customer deposit","reference":null,"credit":null,"debit":"2500.00"},"reproduced":true}
+{"id":"MFA-010","expected":"unavailable for incomplete/malformed payload","actual":{"billetKg":0,"billetBatchCount":0,"billetByAlloy":[],"finishedKg":0,"finishedPieces":0,"reservedKg":0,"holdKg":0,"finishedByFinish":[],"consumableItemCount":0,"lowItemCount":0,"outOfStockCount":0},"reproduced":true}
+{"id":"quote-calculation-control","status":"fixture error","error":"Expected values to be strictly deep-equal:\n+ actual - expected\n\n  [\n    20,\n    30,\n    40,\n    8000,\n+   8888.89\n-   8800\n  ]\n","code":"ERR_ASSERTION"}
+{"id":"MFA-002","reproduced":true,"tooMuchGood":{"charged_kg":"65.670","measured_good_weight_kg":"74.864","dross_kg":"5.000","melt_loss_kg":"-9.194"},"drossUnaccounted":{"charged_kg":"65.670","measured_good_weight_kg":"62.000","dross_kg":"4.000","melt_loss_kg":"3.670"},"expectedCombinedResidualKg":[-14.194,-0.33]}
+{"id":"MFA-003","expected":"reject impossible composition","actual":{"result":"pass","composition":{"Al":60,"Si":60},"approved":true},"reproduced":true}
+{"id":"MFA-005","expectedReservedKg":20,"actualReservedKg":100,"canonical":{"onHand":100,"reserved":20,"available":80},"reproduced":true}
+{"id":"MFA-007","expected":{"lines":2,"total":"5000.00","review":"ambiguous identity without transaction reference"},"reported":{"inserted":1,"duplicates":1},"actual":{"lines":1,"total":"2500.00"},"reproduced":true}
+{"id":"MFA-006-persistence","expected":"credit awaiting matching","actual":{"direction":"debit","state":"ignored","amount":"2500.00"},"newLines":1,"reproduced":true}

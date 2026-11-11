@@ -4,7 +4,7 @@ import { createCommercialFixture,cid } from '../scripts/lib/commercial-upgrade-f
 let f;const source=cid(4000),target=cid(4001),proposal=cid(4002);
 test.before(async()=>{
   f=await createCommercialFixture();
-  for(const [id,name,company] of [[source,'Window customer duplicate',f.ids.company],[target,'Window customer canonical',f.ids.company],[cid(4003),'Foreign customer',f.ids.foreign]])await f.db.query("insert into customers(id,company_id,customer_name,customer_type,gst_number) values($1,$2,$3,'fabricator','07AAACX1234A1Z1')",[id,company,name]);
+  for(const [id,name,company] of [[source,'Window customer duplicate',f.ids.company],[target,'Window customer canonical',f.ids.company],[cid(4003),'Foreign customer',f.ids.foreign]])await f.db.query("insert into customers(id,company_id,customer_name,customer_type,gst_number) values($1,$2,$3,'fabricator','07AAACX1234A1ZZ')",[id,company,name]);
 });
 test.after(async()=>f?.close());
 const call=(command,payload)=>f.command('master_cleanup_command',command,payload);

@@ -6,6 +6,7 @@ import { hasRouteAccess } from "../auth/route-permissions.ts";
 import { isFeatureEnabled } from "../enterprise/features.ts";
 import { getBusinessDateBoundaries } from "../utils/business-date.ts";
 import { nextRecordAction, type NextActionRecord } from "../workflow/record-next-action.ts";
+import { proposalHref, type ProposalRow } from "../proposals/proposals.ts";
 
 export const MY_WORK_LIMIT = 10;
 
@@ -147,6 +148,74 @@ function unavailableTaskLink(item: WorkItem) {
   item.blocker = "Linked record unavailable. Review the task before continuing.";
 }
 
+const unavailableCodes = new Set(["PGRST202", "42883", "42P01"]);
+
+const SAMPLE_ROLES: UserRole[] = ["owner", "admin", "quality", "factory_manager"];
+
+/** Proposals this person may decide (AP-002), active pilot work on records they can read (AP-041) and quality samples due (AP-016). */
+async function loadAutopilotQueues(supabase: SupabaseClient, role: UserRole): Promise<WorkQueue[]> {
+  if (typeof supabase.rpc !== "function") return [];
+  let proposals: { data: any; error: { code?: string } | null }, attention: { data: any; error: { code?: string } | null };
+  let samples: { data: any; error: { code?: string } | null } | null = null;
+  try {
+    [proposals, attention, samples] = await Promise.all([
+      supabase.rpc("ap_proposals", { p_command: "list", p_payload: { status: "open" } }),
+      supabase.rpc("ap_home_work", { p_command: "attention", p_payload: { limit: MY_WORK_LIMIT } }),
+      SAMPLE_ROLES.includes(role) ? supabase.rpc("ap_sampling", { p_command: "queue", p_payload: { limit: MY_WORK_LIMIT } }) : Promise.resolve(null)
+    ]);
+  } catch { return []; }
+  const queues: WorkQueue[] = [];
+  if (!unavailableCodes.has(proposals.error?.code ?? "")) {
+    const target = queue("proposals", "Waiting for your confirmation", "Prepared by the system from existing records. Nothing changes until you accept; stale proposals cannot be accepted.", "/dashboard");
+    if (proposals.error) target.error = "Could not load proposals. Refresh to retry.";
+    else if (Array.isArray(proposals.data?.rows)) {
+      const rows = (proposals.data.rows as Row[]).filter(row => row.can_decide && !row.stale_now);
+      target.items = rows.slice(0, MY_WORK_LIMIT).map(row => ({ id: row.id, title: row.title, status: "Waiting for you", date: String(row.expires_at ?? "").slice(0, 10) || null,
+        dateLabel: "Decide by", priority: null, href: row.proposal_type === "series.adopt" ? `/invoices/numbering#proposal-${row.id}` : proposalHref(row as ProposalRow), actionLabel: "Review proposal", blocker: null }));
+      target.hasMore = Number(proposals.data.total_count ?? 0) > target.items.length;
+    }
+    if (target.items.length || target.error) queues.push(target);
+  }
+  if (!unavailableCodes.has(attention.error?.code ?? "")) {
+    const target = queue("linked_work", "Work on your records", "Open reviews, promises, controls and follow-ups attached to orders, jobs, dies, dispatches and invoices.", "/tasks");
+    if (attention.error) target.error = "Could not load linked work. Refresh to retry.";
+    else if (Array.isArray(attention.data?.items)) {
+      const items = attention.data.items as Row[];
+      target.items = items.slice(0, MY_WORK_LIMIT).map(row => ({ id: `${row.hub}:${row.view}:${row.id}`, title: row.label ?? "Record", status: row.status ?? "open",
+        date: /^\d{4}-\d{2}-\d{2}/.test(String(row.due_date ?? "")) ? String(row.due_date).slice(0, 10) : null, dateLabel: "Due", priority: null,
+        href: row.href, actionLabel: "Open", blocker: null, ownership: row.summary ?? undefined }));
+      target.hasMore = items.length > MY_WORK_LIMIT;
+    }
+    if (target.items.length || target.error) queues.push(target);
+  }
+  if (samples && !unavailableCodes.has(samples.error?.code ?? "")) {
+    const target = queue("qc_samples", "Quality samples due", "Created from press output by the inspection plan's triggers. Samples that block QC release come first.", "/quality/samples");
+    if (samples.error) target.error = "Could not load samples. Refresh to retry.";
+    else if (Array.isArray(samples.data?.rows)) {
+      target.items = (samples.data.rows as Row[]).slice(0, MY_WORK_LIMIT).map(row => ({ id: row.id, title: `${row.job_number ?? "Job"} · ${row.machine ?? "Press"}`,
+        status: row.status === "missed" ? "Missed window" : "Due", date: String(row.due_at ?? "").slice(0, 10) || null, dateLabel: "Due", priority: row.blocks_release ? "high" : null,
+        href: `/quality/samples/${row.id}`, actionLabel: "Record sample", blocker: row.blocks_release ? "QC release waits for this sample." : null }));
+      target.hasMore = Number(samples.data.total_count ?? 0) > target.items.length;
+    }
+    if (target.items.length || target.error) queues.push(target);
+  }
+  // Autopilot batch 3: order-to-cash work prepared by the system for this role (credit holds, invoice drafts, bank
+  // credits, reminders, draft jobs, quotation validity). Counts only; each item opens its module page.
+  try {
+    const o2c = await supabase.rpc("ap_dupes", { p_command: "attention", p_payload: {} });
+    if (!o2c.error && Array.isArray(o2c.data?.items)) {
+      const items = (o2c.data.items as Row[]).filter(row => Number(row.count) > 0 && typeof row.href === "string" && typeof row.label === "string");
+      if (items.length) {
+        const target = queue("order_to_cash", "Prepared for you to finish", "Drafts, matches, holds and reminders the system prepared. Nothing posts or reaches a customer until you act.", "/dashboard");
+        target.items = items.slice(0, MY_WORK_LIMIT).map(row => ({ id: `o2c:${row.key}`, title: `${row.label}: ${Number(row.count)}`, status: "Waiting for you", date: null, dateLabel: "",
+          priority: null, href: row.href, actionLabel: "Open", blocker: null }));
+        queues.push(target);
+      }
+    }
+  } catch { /* the rest of My Work stands */ }
+  return queues;
+}
+
 /** Session identity is supplied by the server; every query still runs through the user's RLS client. */
 export async function loadMyWork(supabase: SupabaseClient, context: SessionContext, flags: Partial<FeatureFlagState>, now = new Date()): Promise<MyWork> {
   const { today } = getBusinessDateBoundaries(now);
@@ -198,7 +267,10 @@ export async function loadMyWork(supabase: SupabaseClient, context: SessionConte
       ownership: "Shared team work; check the record's owner before continuing",
     })));
   }
+  const autopilot = loadAutopilotQueues(supabase, context.role);
   await Promise.all(reads);
+  // AP-002 / AP-041: proposals waiting for this person and pilot work on records come first.
+  work.departments.unshift(...(await autopilot));
   await resolveTaskLinks(supabase, context, permitted, [assigned, unassigned]);
   const kinds: Record<string, NextActionRecord["kind"]> = { production_jobs: "production", dispatches: "dispatch", invoices: "invoice", quotes: "quote", quality_inspections: "quality" };
   for (const department of work.departments) for (const item of department.items) {

@@ -1,0 +1,459 @@
+
+> extrusionos-pro@0.1.0 typecheck
+> tsc --noEmit
+
+app/(auth)/onboarding/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(auth)/signup/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/analytics/page.tsx(10,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/audit-logs/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/automation/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/command-center/page.tsx(9,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/customers/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/customers/[id]/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/customers/[id]/requirements/new/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/customers/[id]/requirements/new/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/customers/[id]/requirements/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/customers/[id]/requirements/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/customers/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/customers/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/customers/page.tsx(7,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/customers/portal-responses/page.tsx(1,54): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/customers/projects/[id]/edit/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/customers/projects/[id]/edit/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/customers/projects/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/customers/projects/[id]/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/customers/projects/new/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/customers/projects/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dashboard/page.tsx(9,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dealer-inventory/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dealer-orders/[id]/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/dealer-orders/[id]/page.tsx(1,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dealer-orders/database/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dealer-orders/new/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dealer-orders/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dealer-orders/quote-orders/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/dealer-orders/quote-orders/[id]/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dies/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dies/[id]/page.tsx(7,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dies/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dies/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dies/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/discrepancies/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dispatches/[id]/edit/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dispatches/[id]/page.tsx(18,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dispatches/[id]/returns/page.tsx(1,54): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dispatches/bundles/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dispatches/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dispatches/loads/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dispatches/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/dispatches/page.tsx(7,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/documents/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/expenses/[id]/edit/page.tsx(8,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/expenses/[id]/edit/page.tsx(19,29): error TS2345: Argument of type '{ id: any; expense_number: any; approval_status: any; source_table: any; deleted_at: any; } | null' is not assignable to parameter of type 'Pick<ExpenseActionContext, "approval_status" | "source_table" | "deleted_at">'.
+  Type 'null' is not assignable to type 'Pick<ExpenseActionContext, "approval_status" | "source_table" | "deleted_at">'.
+app/(dashboard)/expenses/[id]/edit/page.tsx(20,20): error TS18047: 'expense' is possibly 'null'.
+app/(dashboard)/expenses/[id]/edit/page.tsx(22,35): error TS18047: 'expense' is possibly 'null'.
+app/(dashboard)/expenses/[id]/edit/page.tsx(26,63): error TS18047: 'expense' is possibly 'null'.
+app/(dashboard)/expenses/[id]/page.tsx(8,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/expenses/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/expenses/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/expenses/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/expenses/payments/[id]/edit/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/expenses/payments/[id]/page.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/expenses/payments/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/expenses/payments/new/page.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/expenses/payments/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/expenses/pending-approvals/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/[id]/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/billets/[id]/edit/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/billets/[id]/page.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/billets/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/billets/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/external-sources/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/external-sources/[id]/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/external-sources/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/external-sources/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/external-sources/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/outsourced-billets/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/outsourced-billets/[id]/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/outsourced-billets/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/outsourced-billets/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/page.tsx(7,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/scrap/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/scrap/[id]/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/scrap/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/scrap/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/foundry/scrap/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/inventory/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/inventory/[id]/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/inventory/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/inventory/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/inventory/page.tsx(10,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/inventory/reservations/page.tsx(15,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/inventory/stock-balances/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/inventory/stock-balances/[id]/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/inventory/stock-balances/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/invoices/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/invoices/[id]/page.tsx(14,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/invoices/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/invoices/eligibility/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/invoices/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/invoices/page.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/machines/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/machines/[id]/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/machines/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/machines/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/machines/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/mobile/dispatch/bundles/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/mobile/dispatch/page.tsx(9,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/mobile/jobs/page.tsx(9,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/mobile/quality/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/mobile/quality/[id]/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/mobile/quality/[id]/page.tsx(28,221): error TS18047: 'record.data' is possibly 'null'.
+app/(dashboard)/mobile/quality/[id]/page.tsx(28,296): error TS18047: 'record.data' is possibly 'null'.
+app/(dashboard)/mobile/quality/page.tsx(9,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/mobile/scan/page.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/mobile/tasks/page.tsx(9,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/notifications/following/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/notifications/requests/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/orders/[id]/cutting/page.tsx(1,54): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/orders/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/orders/[id]/page.tsx(7,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/orders/[id]/requirements/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/orders/[id]/requirements/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/orders/[id]/stock-plan/page.tsx(1,9): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/orders/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/orders/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/orders/page.tsx(8,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/[id]/edit/page.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/[id]/page.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/materials/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/materials/[id]/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/materials/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/materials/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/materials/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/page.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/purchases/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/purchases/[id]/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/purchases/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/purchases/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/packaging/purchases/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/payments/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/payments/[id]/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/payments/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/payments/new/page.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/payments/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/payments/receipts/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/[id]/edit/page.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/[id]/page.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/production/[id]/page.tsx(5,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/[id]/page.tsx(63,13): error TS18047: 'job' is possibly 'null'.
+app/(dashboard)/production/[id]/page.tsx(64,22): error TS18047: 'job' is possibly 'null'.
+app/(dashboard)/production/[id]/page.tsx(65,21): error TS18047: 'job' is possibly 'null'.
+app/(dashboard)/production/[id]/page.tsx(107,33): error TS2322: Type '{ linked_billet_count: number; linked_billet_input_kg: number; existing_scrap_kg: number | null; id?: any; job_number?: any; status?: any; planned_quantity_kg?: any; pieces?: any; length_per_piece_m?: any; ... 7 more ...; profile_id?: any; }' is not assignable to type 'ProductionFloorJob'.
+  Property 'id' is optional in type '{ linked_billet_count: number; linked_billet_input_kg: number; existing_scrap_kg: number | null; id?: any; job_number?: any; status?: any; planned_quantity_kg?: any; pieces?: any; length_per_piece_m?: any; ... 7 more ...; profile_id?: any; }' but required in type 'ProductionFloorJob'.
+app/(dashboard)/production/[id]/page.tsx(108,129): error TS18047: 'job' is possibly 'null'.
+app/(dashboard)/production/[id]/page.tsx(117,40): error TS18047: 'job' is possibly 'null'.
+app/(dashboard)/production/[id]/page.tsx(117,61): error TS18047: 'job' is possibly 'null'.
+app/(dashboard)/production/[id]/page.tsx(117,84): error TS18047: 'job' is possibly 'null'.
+app/(dashboard)/production/[id]/page.tsx(117,111): error TS18047: 'job' is possibly 'null'.
+app/(dashboard)/production/bulk/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/capacity/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/consolidation/page.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/cutting/rules/page.tsx(1,54): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/finishing/[id]/page.tsx(2,9): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/finishing/database/page.tsx(2,9): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/finishing/page.tsx(13,9): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/floor/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/handover/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/production/handover/[id]/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/handover/new/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/handover/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/page.tsx(12,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/schedule/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/scrap-standards/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/usage/page.tsx(1,54): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/production/workstation/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/profiles/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/profiles/[id]/page.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/profiles/[id]/specifications/page.tsx(2,9): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/profiles/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/profiles/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/profiles/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quality/[id]/edit/page.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quality/[id]/page.tsx(8,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quality/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quality/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quality/page.tsx(10,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quality/plans/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/quality/plans/[id]/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quality/plans/new/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quality/plans/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quality/samples/[id]/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/quality/samples/[id]/page.tsx(1,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quality/samples/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quality/samples/triggers/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quotes/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quotes/[id]/page.tsx(7,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quotes/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quotes/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quotes/page.tsx(9,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quotes/rates/new/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/quotes/rates/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/report-builder/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/reports/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/settings/access/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/settings/branding/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/settings/data/cutover/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/settings/data/import/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/settings/data/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/settings/enterprise/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/settings/integrations/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/settings/master-cleanup/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/settings/navigation/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/settings/security/page.tsx(7,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/shipments/[id]/receipt/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/shipments/[id]/receipt/page.tsx(1,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/systems-configurator/setup/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/systems-configurator/templates/[id]/formula/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/[id]/assurance/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/tasks/[id]/assurance/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/[id]/execute/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/tasks/[id]/execute/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/[id]/page.tsx(13,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/approvals/exceptions/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/approvals/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/assurance/[view]/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/assurance/database/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/assurance/layout.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/assurance/new/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/assurance/new/page.tsx(15,43): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/(dashboard)/tasks/assurance/new/page.tsx(18,114): error TS2322: Type '"drawing.register" | "drawing.customer" | "drawing.release" | "drawing.deviation" | "drawing.withdraw" | "incoming.dispose" | "incoming.return" | "incoming.release" | "incoming.reverse" | ... 29 more ... | undefined' is not assignable to type '"drawing.register" | "drawing.customer" | "drawing.release" | "drawing.deviation" | "drawing.withdraw" | "incoming.dispose" | "incoming.return" | "incoming.release" | "incoming.reverse" | ... 28 more ... | "return.reject"'.
+  Type 'undefined' is not assignable to type '"drawing.register" | "drawing.customer" | "drawing.release" | "drawing.deviation" | "drawing.withdraw" | "incoming.dispose" | "incoming.return" | "incoming.release" | "incoming.reverse" | ... 28 more ... | "return.reject"'.
+app/(dashboard)/tasks/blueprints/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/tasks/blueprints/[id]/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/blueprints/new/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/blueprints/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/bulk/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/changes/page.tsx(1,54): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/commercial/[view]/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/commercial/database/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/commercial/layout.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/commercial/new/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/commercial/new/page.tsx(17,44): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/(dashboard)/tasks/commercial/new/page.tsx(22,116): error TS2538: Type 'undefined' cannot be used as an index type.
+app/(dashboard)/tasks/commercial/new/page.tsx(24,115): error TS2322: Type '"claim.submit" | "pricing.define" | "outcome.record" | "pricing.price" | "remnant.record" | "scenario.create" | "commitment.set" | "transfer.prepare" | "mapping.define" | ... 26 more ... | undefined' is not assignable to type '"claim.submit" | "pricing.define" | "outcome.record" | "pricing.price" | "remnant.record" | "scenario.create" | "commitment.set" | "transfer.prepare" | "mapping.define" | ... 25 more ... | "scenario.accept"'.
+  Type 'undefined' is not assignable to type '"claim.submit" | "pricing.define" | "outcome.record" | "pricing.price" | "remnant.record" | "scenario.create" | "commitment.set" | "transfer.prepare" | "mapping.define" | ... 25 more ... | "scenario.accept"'.
+app/(dashboard)/tasks/commitments/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/competencies/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/control/[view]/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/control/database/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/control/layout.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/control/new/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/control/new/page.tsx(15,41): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/(dashboard)/tasks/control/new/page.tsx(18,112): error TS2322: Type '"plan.generate" | "contract.publish" | "policy.set" | "supply.link" | "authority.publish" | "facts.refresh" | "facts.keep" | "handoff.resolve" | "plan.review" | "wip.observe" | ... 4 more ... | undefined' is not assignable to type '"plan.generate" | "contract.publish" | "policy.set" | "supply.link" | "authority.publish" | "facts.refresh" | "facts.keep" | "handoff.resolve" | "plan.review" | "wip.observe" | "custody.explain" | "custody.reverse" | "rollout.classify" | "rollout.acknowledge"'.
+  Type 'undefined' is not assignable to type '"plan.generate" | "contract.publish" | "policy.set" | "supply.link" | "authority.publish" | "facts.refresh" | "facts.keep" | "handoff.resolve" | "plan.review" | "wip.observe" | "custody.explain" | "custody.reverse" | "rollout.classify" | "rollout.acknowledge"'.
+app/(dashboard)/tasks/coordination/[view]/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/coordination/database/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/coordination/layout.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/coordination/new/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/coordination/new/page.tsx(15,46): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/(dashboard)/tasks/coordination/new/page.tsx(17,468): error TS2322: Type '"coordinator.propose" | "priority.set" | "request.create" | "collection.create" | "correction.report" | "contract.publish" | "coverage.propose" | "coverage.reconcile" | ... 10 more ... | undefined' is not assignable to type '"coordinator.propose" | "priority.set" | "request.create" | "collection.create" | "correction.report" | "contract.publish" | "coverage.propose" | "coverage.reconcile" | ... 9 more ... | "correction.review"'.
+  Type 'undefined' is not assignable to type '"coordinator.propose" | "priority.set" | "request.create" | "collection.create" | "correction.report" | "contract.publish" | "coverage.propose" | "coverage.reconcile" | ... 9 more ... | "correction.review"'.
+app/(dashboard)/tasks/criteria/[id]/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/criteria/[id]/page.tsx(20,35): error TS18048: 'template' is possibly 'undefined'.
+app/(dashboard)/tasks/criteria/[id]/page.tsx(21,41): error TS18048: 'template' is possibly 'undefined'.
+app/(dashboard)/tasks/criteria/new/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/criteria/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/database/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/delegations/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/tasks/delegations/[id]/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/delegations/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/execution/[view]/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/execution/database/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/execution/layout.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/execution/new/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/execution/new/page.tsx(17,43): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/(dashboard)/tasks/execution/new/page.tsx(23,115): error TS2538: Type 'undefined' cannot be used as an index type.
+app/(dashboard)/tasks/execution/new/page.tsx(25,114): error TS2322: Type '"appointment.request" | "route.bind" | "window.request" | "gatepass.issue" | "window.set" | "wip.set_limit" | "availability.record" | "route.define" | "rule.set" | "message.prepare" | ... 29 more ... | undefined' is not assignable to type '"appointment.request" | "route.bind" | "window.request" | "gatepass.issue" | "window.set" | "wip.set_limit" | "availability.record" | "route.define" | "rule.set" | "message.prepare" | ... 28 more ... | "queue.update"'.
+  Type 'undefined' is not assignable to type '"appointment.request" | "route.bind" | "window.request" | "gatepass.issue" | "window.set" | "wip.set_limit" | "availability.record" | "route.define" | "rule.set" | "message.prepare" | ... 28 more ... | "queue.update"'.
+app/(dashboard)/tasks/handoffs/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/improvement/[view]/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/improvement/database/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/improvement/layout.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/improvement/new/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/improvement/new/page.tsx(15,45): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/(dashboard)/tasks/improvement/new/page.tsx(24,116): error TS2322: Type '"problem.open" | "suggestion.submit" | "route.set" | "threshold.propose" | "problem.link" | "problem.unlink" | "problem.investigate" | "problem.plan" | "problem.trial" | ... 11 more ... | undefined' is not assignable to type '"problem.open" | "suggestion.submit" | "route.set" | "threshold.propose" | "problem.link" | "problem.unlink" | "problem.investigate" | "problem.plan" | "problem.trial" | ... 10 more ... | "threshold.retire"'.
+  Type 'undefined' is not assignable to type '"problem.open" | "suggestion.submit" | "route.set" | "threshold.propose" | "problem.link" | "problem.unlink" | "problem.investigate" | "problem.plan" | "problem.trial" | ... 10 more ... | "threshold.retire"'.
+app/(dashboard)/tasks/lifecycle/[view]/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/lifecycle/database/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/lifecycle/layout.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/lifecycle/new/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/lifecycle/new/page.tsx(15,43): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/(dashboard)/tasks/lifecycle/new/page.tsx(18,114): error TS2322: Type '"promise.propose" | "sample.require" | "template.create" | "journey.open" | "trace.open" | "trace.link" | "bundle.split" | "bundle.merge" | "closure.carry" | "closure.close" | ... 18 more ... | undefined' is not assignable to type '"promise.propose" | "sample.require" | "template.create" | "journey.open" | "trace.open" | "trace.link" | "bundle.split" | "bundle.merge" | "closure.carry" | "closure.close" | ... 17 more ... | "journey.close"'.
+  Type 'undefined' is not assignable to type '"promise.propose" | "sample.require" | "template.create" | "journey.open" | "trace.open" | "trace.link" | "bundle.split" | "bundle.merge" | "closure.carry" | "closure.close" | ... 17 more ... | "journey.close"'.
+app/(dashboard)/tasks/new/page.tsx(7,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/page.tsx(8,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/procedures/[id]/effectiveness/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/tasks/procedures/[id]/effectiveness/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/procedures/[id]/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/tasks/procedures/[id]/page.tsx(1,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/procedures/[id]/versions/[versionId]/execution/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/tasks/procedures/[id]/versions/[versionId]/execution/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/procedures/[id]/versions/[versionId]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/tasks/procedures/[id]/versions/[versionId]/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/procedures/[id]/versions/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/tasks/procedures/[id]/versions/page.tsx(2,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/procedures/new/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/procedures/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/routines/[id]/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'notFound'.
+app/(dashboard)/tasks/routines/[id]/page.tsx(1,20): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/routines/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/specialist/[view]/[id]/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/specialist/database/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/specialist/layout.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/specialist/new/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/specialist/new/page.tsx(17,44): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/(dashboard)/tasks/specialist/new/page.tsx(22,116): error TS2538: Type 'undefined' cannot be used as an index type.
+app/(dashboard)/tasks/specialist/new/page.tsx(24,115): error TS2322: Type '"shade.bind" | "lab.request" | "tooling.define" | "weigh.open" | "intake.submit" | "agreement.define" | "shade.define" | "toll.define" | "toll.receive" | "treat.create" | ... 53 more ... | undefined' is not assignable to type '"shade.bind" | "lab.request" | "tooling.define" | "weigh.open" | "intake.submit" | "agreement.define" | "shade.define" | "toll.define" | "toll.receive" | "treat.create" | ... 52 more ... | "weigh.cancel"'.
+  Type 'undefined' is not assignable to type '"shade.bind" | "lab.request" | "tooling.define" | "weigh.open" | "intake.submit" | "agreement.define" | "shade.define" | "toll.define" | "toll.receive" | "treat.create" | ... 52 more ... | "weigh.cancel"'.
+app/(dashboard)/tasks/triggers/[id]/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/triggers/[id]/page.tsx(24,40): error TS18048: 'rule' is possibly 'undefined'.
+app/(dashboard)/tasks/triggers/[id]/page.tsx(25,32): error TS18048: 'rule' is possibly 'undefined'.
+app/(dashboard)/tasks/triggers/new/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/triggers/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/turnaround/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tasks/verification/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/tenders/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/vendors/[id]/edit/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/vendors/[id]/page.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/vendors/comparisons/new/page.tsx(1,54): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/vendors/database/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/vendors/new/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/vendors/page.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/vendors/purchasing/database/page.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/(dashboard)/vendors/purchasing/page.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/portal/dashboard/page.tsx(2,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/portal/orders/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/portal/quotes/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/portal/self-service/page.tsx(1,60): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+app/portal/support/page.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+components/layout/app-shell.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+components/layout/logout-button.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/layout/module-navigator.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'usePathname'.
+components/layout/nav-link.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'usePathname'.
+components/layout/nav-visit-beacon.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'usePathname'.
+components/layout/suggest-improvement.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'usePathname'.
+components/layout/task-navigation.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'usePathname'.
+components/modules/accept-invite-form.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/access-control-client.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/approvals/exception-requests.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/assurance/action-center.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/auth-forms.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/autopilot/calendar-client.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/autopilot/cutover-client.tsx(7,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/autopilot/import-client.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/autopilot/jobs-panel.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/autopilot/navigation-client.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/autopilot/numbering-client.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/autopilot/periods-client.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/autopilot/proposal-cards.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/commercial/action-center.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/company-controls-form.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/control/action-center.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/coordination/action-center.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/customers/customer-projects.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/dealer-inventory-entry-client.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/dealer-order-collaboration-client.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/dies/die-form-client.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/dies/dies-database-client.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useSearchParams'.
+components/modules/dispatch-credit-note-client.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/dispatch-delivery-workflow.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/dispatch-form-client.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/erp-control-panel.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/execution/action-center.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/factory-load-consolidation-client.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/financials/customer-refund-form.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/financials/expense-control-panel.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/financials/expense-payment-form-client.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/financials/expense-payment-reversal-client.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/financials/financial-workflow-review.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/financials/invoice-form-client.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/financials/payment-detail-client.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/financials/payment-form-client.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/finishing-workflow-board.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/home-work/home-work-action.tsx(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+components/modules/home-work/home-work-action.tsx(61,43): error TS18048: 'start' is possibly 'undefined'.
+components/modules/home-work/home-work-action.tsx(65,49): error TS18047: 'parsed' is possibly 'null'.
+components/modules/home-work/home-work-action.tsx(65,61): error TS18047: 'parsed' is possibly 'null'.
+components/modules/home-work/home-work-action.tsx(65,86): error TS18048: 'start' is possibly 'undefined'.
+components/modules/home-work/home-work-action.tsx(68,92): error TS18047: 'parsed' is possibly 'null'.
+components/modules/home-work/home-work-action.tsx(68,112): error TS18047: 'parsed' is possibly 'null'.
+components/modules/improvement/action-center.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/lifecycle/action-center.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/notifications-client.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/notifications/record-follow.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/operations/bulk-queue.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/operations/collaboration-tools.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/operations/collaboration-tools.tsx(5,21): error TS2305: Module '"next/navigation"' has no exported member 'useSearchParams'.
+components/modules/operations/module-database-client.tsx(7,10): error TS2305: Module '"next/navigation"' has no exported member 'useSearchParams'.
+components/modules/operations/operator-tools.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/operations/record-detail-client.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useSearchParams'.
+components/modules/operations/record-form-client.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/orders/customer-requirements.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/orders/direct-order-form-client.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/orders/order-line-schedule.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/orders/quote-order-form-client.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/orders/quote-order-form-client.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'useSearchParams'.
+components/modules/press/sampling-client.tsx(7,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/production-output-workflow.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/production-planning/press-schedule-grid.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/production/production-readiness-panel.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/production/shift-handover.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/production/workstation.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/profiles/profile-form-client.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/quality/inspection-plans.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/quality/inspection-results.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/quotes/commercial-review.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/quotes/costing-rates.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/shared/pcda-line-report-controls.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/shipment-receipt-form.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/specialist/action-center.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/systems-configurator/configuration-release.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/task-create-form.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tasks-dashboard-client.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tasks/approval-inbox.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tasks/competencies.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tasks/completion-criteria.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tasks/department-handoffs.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tasks/guided-sop.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tasks/procedure-effectiveness.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tasks/procedure-versions.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tasks/sop-assurance.tsx(3,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tasks/task-blueprints.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tasks/task-delegation.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tasks/task-triggers.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tasks/turnaround.tsx(4,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/tenders-client.tsx(5,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/modules/vendors/supplier-comparisons.tsx(3,9): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+components/search/global-find.tsx(6,10): error TS2305: Module '"next/navigation"' has no exported member 'useRouter'.
+lib/auth.ts(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+lib/supabase/server.ts(2,10): error TS2305: Module '"next/headers"' has no exported member 'cookies'.
+lib/systems-configurator/access.ts(1,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.
+lib/systems-configurator/actions.ts(8,10): error TS2305: Module '"next/navigation"' has no exported member 'redirect'.

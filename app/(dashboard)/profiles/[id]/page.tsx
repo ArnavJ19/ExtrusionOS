@@ -15,6 +15,7 @@ import { TechnicalDocumentUpload } from "@/components/modules/shared/technical-d
 import { GenerateReportButton } from "@/components/modules/shared/generate-report-button";
 import { ReportDownloadList } from "@/components/modules/shared/report-download-list";
 import { RevisionHistory } from "@/components/modules/shared/revision-history";
+import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
 
 function DetailItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -258,6 +259,7 @@ export default async function ProfileDetailPage({ params }: { params: Promise<{ 
       <ReportDownloadList context={context} entityType="profile" entityId={id} />
 
       <RevisionHistory context={context} entityType="profile" entityId={id} />
+      {!context.dealerId ? <RelatedWorkPanel kind="profile" id={id} role={context.role} /> : null}
     </div>
   );
 }

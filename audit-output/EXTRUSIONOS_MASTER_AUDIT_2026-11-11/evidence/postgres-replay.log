@@ -1,0 +1,16 @@
+file:///C:/Users/arnav/OneDrive/Desktop/ExtrusionOS/audit-output/EXTRUSIONOS_MASTER_AUDIT_2026-11-11/evidence/native-postgres.mjs:11
+  if (result.error || result.status !== 0) throw new Error(String(result.error ?? result.stderr).slice(-7000));
+                                                 ^
+
+Error: psql: error: connection to server at "127.0.0.1", port 59471 failed: Connection refused (0x0000274D/10061)
+
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+    at execute (file:///C:/Users/arnav/OneDrive/Desktop/ExtrusionOS/audit-output/EXTRUSIONOS_MASTER_AUDIT_2026-11-11/evidence/native-postgres.mjs:11:50)
+    at file:///C:/Users/arnav/OneDrive/Desktop/ExtrusionOS/audit-output/EXTRUSIONOS_MASTER_AUDIT_2026-11-11/evidence/native-postgres.mjs:14:16
+    at ModuleJob.run (node:internal/modules/esm/module_job:345:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.20.0

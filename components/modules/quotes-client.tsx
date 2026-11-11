@@ -31,6 +31,7 @@ import { rowMatchesSearch } from "@/lib/utils/search";
 import { canSaveQuoteDraft, duplicateQuoteDraftLine, getQuoteFormShortcut, runWithInFlightGuard } from "@/lib/forms/keyboard-entry";
 import { buildQuotePasteLine, getPieceCalculationState, getQuotePasteFinishOptions, getQuotePasteLengthUnit, parseQuotePaste, validateQuotePasteRows, type QuotePasteRow } from "@/lib/forms/quote-paste";
 import { saveQuoteAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
+import { hasDuplicates, warnDuplicates } from "@/components/modules/order-to-cash/duplicate-warning";
 import { quoteEditToken, type QuoteEditConflict, type QuoteEditToken } from "@/lib/workflow/quote-edit-conflicts";
 import { ProfileTechnicalChoice } from "@/components/modules/profiles/technical-options";
 import { MaterialSuggestionsPanel } from "@/components/modules/shared/transaction-evidence";
@@ -464,7 +465,7 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
     setQuotePasteError(null);
   }
 
-  async function saveQuote() {
+  async function saveQuote(confirmDuplicate = false) {
     return runWithInFlightGuard(saveGuard.current, async () => {
       try {
         if (repeatActive && reviewedCopy !== copyFingerprint) return toast.error("Review the copied rates, specifications, and commercial terms before saving this new quotation.");
@@ -480,7 +481,8 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
           return toast.error("This quote is below the company minimum margin and needs owner/admin approval.");
         }
         setSaving(true);
-        const result = await saveQuoteAction({ ...parsed.data, editing_id: editingId, edit_token: editToken });
+        const result = await saveQuoteAction({ ...parsed.data, editing_id: editingId, edit_token: editToken, ...(confirmDuplicate ? { confirm_duplicate: { confirmed: true } } : {}) });
+        if (hasDuplicates(result)) { setSaving(false); warnDuplicates(result.duplicates, () => void saveQuote(true)); return; }
         if (!result.success) {
           if (result.conflict) setEditConflict(result.conflict);
           return toast.error(result.error);
@@ -776,7 +778,7 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
             <a className="block underline" href={`/quotes/${editingId}`} target="_blank" rel="noreferrer">Compare all latest lines in a new tab</a>
             <Button variant="secondary" onClick={() => { setEditToken(editConflict.token); setEditConflict(null); }}>I reviewed the latest lines and reconciled my entries</Button>
           </div> : null}
-          <div className="mt-5 flex gap-2"><Button disabled={saving || loading || Boolean(editConflict)} onClick={saveQuote}>{saving ? "Saving..." : editingId ? "Update quote" : "Save quote"}</Button>{editingId ? <Button variant="secondary" onClick={() => { setEditingId(null); setEditToken(null); setEditConflict(null); }}>Cancel edit</Button> : null}</div>
+          <div className="mt-5 flex gap-2"><Button disabled={saving || loading || Boolean(editConflict)} onClick={() => void saveQuote()}>{saving ? "Saving..." : editingId ? "Update quote" : "Save quote"}</Button>{editingId ? <Button variant="secondary" onClick={() => { setEditingId(null); setEditToken(null); setEditConflict(null); }}>Cancel edit</Button> : null}</div>
         </CardContent></Card>
         <Card className="h-fit 2xl:sticky 2xl:top-24"><CardContent><p className="text-xs font-black uppercase tracking-[0.16em] text-orange">Commercial summary</p><h2 className="section-title mt-1">Quote Summary</h2><div className="mt-4 space-y-3 text-sm font-medium"><div className="flex justify-between"><span className="text-slate-500">Physical weight</span><b>{formatWeight(summary.total_weight_kg)}</b></div><div className="flex justify-between"><span className="text-slate-500">Billing weight</span><b>{formatWeight(summary.total_billing_weight_kg)}</b></div><div className="flex justify-between"><span className="text-slate-500">Total meters</span><b>{formatMeters(summary.total_meters)}</b></div><div className="flex justify-between"><span className="text-slate-500">Subtotal</span><b>{formatCurrency(summary.subtotal)}</b></div><div className="flex justify-between"><span className="text-slate-500">Est. profit</span><b className={summary.estimated_profit_amount < 0 ? "text-red-700" : "text-slate-950"}>{formatCurrency(summary.estimated_profit_amount)} ({summary.estimated_profit_percent.toFixed(2)}%)</b></div><div className="flex justify-between"><span className="text-slate-500">GST</span><b>{formatCurrency(summary.gst_amount)}</b></div><div className="rounded-2xl bg-charcoal p-4 text-white shadow-premium"><div className="flex justify-between text-xl"><span>Grand total</span><b>{formatCurrency(summary.grand_total)}</b></div></div><div className="flex justify-between"><span className="text-slate-500">Avg price/kg</span><b>{formatCurrency(summary.average_price_per_kg)}</b></div><div className="flex justify-between"><span className="text-slate-500">Avg price/m</span><b>{formatCurrency(summary.average_price_per_meter)}</b></div>{summary.low_margin_approval_required ? <div className="rounded-2xl border border-orange-200 bg-orange-50 p-3 text-xs font-bold text-orange-800">Approval required below minimum margin</div> : null}</div></CardContent></Card>
       </div> : <Card><CardContent><h2 className="section-title">Pricing access</h2><p className="mt-2 text-sm font-medium text-slate-600">Only owners and admins can create or reprice quotations because quote line inputs include confidential material, conversion, finishing, and margin data. You can review existing quotes and use the approved workflow actions below.</p></CardContent></Card>}

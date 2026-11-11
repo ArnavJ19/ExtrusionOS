@@ -17,6 +17,7 @@ import {
   factoryVehicleSchema,
   scheduleMoveInputSchema
 } from "@/lib/workflow/factory-planning";
+import { calendarFromRead, calendarReadSchema, plusDays } from "@/lib/calendar/working-time";
 
 const orderIdSchema = z.string().uuid().transform(value => value.toLowerCase());
 const vehicleListInputSchema = z.object({
@@ -161,7 +162,12 @@ export async function getFactoryDeliveryProposalAction(orderId: unknown) {
     if (result.error) return resultError("Capacity and eligible-stock inputs could not be verified for this order.");
     const parsed = factoryDeliveryDataSchema.safeParse(result.data);
     if (!parsed.success || parsed.data.company_id !== context.companyId.toLowerCase()) return resultError("The delivery proposal inputs returned an unexpected or cross-company result.");
-    const proposal = deliveryProposalSchema.safeParse(buildFactoryDeliveryProposal(parsed.data));
+    // AP-004: the factory calendar removes holidays and shutdowns from capacity. A calendar that cannot be read leaves
+    // the forecast on the previous basis rather than blocking it.
+    const calendarResult = await supabase.rpc("ap_calendar", { p_command: "read", p_payload: { from: parsed.data.today, to: plusDays(parsed.data.today, 120) } });
+    const calendarRead = calendarResult.error ? null : calendarReadSchema.safeParse(calendarResult.data);
+    const calendar = calendarRead?.success ? calendarFromRead(calendarRead.data) : undefined;
+    const proposal = deliveryProposalSchema.safeParse(buildFactoryDeliveryProposal(parsed.data, calendar));
     return proposal.success ? { success: true as const, data: proposal.data } : resultError("The delivery proposal could not be validated.");
   } catch {
     return resultError("The delivery proposal could not be loaded. Check your session and retry.");

@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Boxes, Check, ChevronDown, CircleDollarSign, Factory, FileText, Truck, Wrench } from "lucide-react";
+import { ArrowRight, Boxes, Check, ChevronDown, Factory, FileText, Truck, Users, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { NumberTicker, CompactTicker } from "@/components/ui/number-ticker";
-import { formatCompactCurrency, formatCurrency, formatDate } from "@/lib/utils/format";
+import { NumberTicker } from "@/components/ui/number-ticker";
+import { formatDate } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import type { DashboardView } from "@/lib/auth/role-experience";
+import { formatStockWeight, type StockSnapshot } from "@/lib/dashboard/stock-snapshot";
 
 export function DashboardTabs({
   allowedViews,
@@ -17,8 +18,6 @@ export function DashboardTabs({
   operationsHref,
   quoteRows,
   orderRows,
-  monthlyQuoteValue,
-  monthlyOrderValue,
   productionCount,
   pendingDispatchCount,
   activeCustomerCount,
@@ -32,7 +31,8 @@ export function DashboardTabs({
   orderStageDistribution = [],
   qualityHoldCount = 0,
   todayJobCount = 0,
-  pendingQuoteCount = 0
+  pendingQuoteCount = 0,
+  stock = null
 }: any) {
   const [activeTab, setActiveTab] = useState<DashboardView>(initialView);
   const attentionTotal = [delayedOrderCount, lowInventoryCount, qualityHoldCount, pendingQuoteCount, dieCorrectionCount]
@@ -80,8 +80,8 @@ export function DashboardTabs({
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard icon={CircleDollarSign} label="Booked Revenue" rawValue={monthlyOrderValue} isCurrency change={monthlyOrderCount ? `${monthlyOrderCount} orders` : "No orders"} comparison={`${activeCustomerCount} active buying customers`} tone="green" />
-          <StatCard icon={FileText} label="Open Pipeline Value" rawValue={monthlyQuoteValue} isCurrency change={`${pendingQuoteCount} open quotes`} comparison="Sent or approved quotes, including prior months; excludes expired validity" tone="purple" />
+          <StatCard icon={Users} label="Active Customers" rawValue={activeCustomerCount} change={monthlyOrderCount ? `${monthlyOrderCount} orders MTD` : "No orders MTD"} comparison="Customers with confirmed orders" tone="green" />
+          <StatCard icon={FileText} label="Open Quotes" rawValue={pendingQuoteCount} change={pendingQuoteCount ? "Follow up" : "None open"} comparison="Sent or approved quotes, excludes expired validity" tone="purple" />
           <StatCard icon={Factory} label={activeTab === "sales" ? "Orders Converted" : "Floor Load"} rawValue={activeTab === "sales" ? monthlyOrderCount : productionCount} change={activeTab === "sales" ? "This month" : "Live"} comparison={activeTab === "sales" ? "Confirmed customer orders" : "Jobs in production"} tone="blue" />
           <StatCard icon={activeTab === "sales" ? FileText : Truck} label={activeTab === "sales" ? "Quotes Pending" : "Open Order Backlog"} rawValue={activeTab === "sales" ? pendingQuoteCount : pendingDispatchCount} change={activeTab === "sales" ? "Follow up" : `${dispatchCount} shipped MTD`} comparison={activeTab === "sales" ? "Open commercial follow-ups" : "Undelivered orders; readiness requires dispatch checks"} tone="yellow" />
         </div>
@@ -98,7 +98,7 @@ export function DashboardTabs({
                     <p className="text-5xl font-bold tracking-tight text-neutral-950"><NumberTicker value={monthlyQuoteCount + monthlyOrderCount + dispatchCount} duration={1000} /></p>
                     <p className="mt-3 text-sm font-medium text-neutral-500">Quote, order and shipment events through today; one order can have several events</p>
                   </div>
-                  <div className="grid flex-1 gap-5 md:grid-cols-3">
+                  <div className="grid w-full gap-5 sm:grid-cols-3 lg:w-[26rem] lg:shrink-0">
                     <ActivityGrid title="Quotes" active={monthlyQuoteCount} />
                     <ActivityGrid title="Orders" active={monthlyOrderCount} />
                     <ActivityGrid title="Dispatch" active={dispatchCount} />
@@ -120,6 +120,8 @@ export function DashboardTabs({
               </CardContent>
             </Card>
           </div>
+
+          <StockPosition stock={stock} />
 
           <div className="grid gap-6 xl:grid-cols-[0.8fr_1.25fr_1fr]">
             <Card>
@@ -146,7 +148,6 @@ export function DashboardTabs({
                       </div>
                       <div className="shrink-0 text-right">
                         <Badge value={order.current_stage} />
-                        <p className="mt-2 text-sm font-bold text-neutral-950">{formatCurrency(order.order_value)}</p>
                       </div>
                     </Link>
                   )) : <div className="empty-mini">No recent orders yet.</div>}
@@ -177,8 +178,8 @@ export function DashboardTabs({
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <MiniMetric label="Quotes generated" value={monthlyQuoteCount} />
                 <MiniMetric label="Orders converted" value={monthlyOrderCount} />
-                <MiniMetric label="Open pipeline value" value={formatCompactCurrency(monthlyQuoteValue)} />
-                <MiniMetric label="Booked value" value={formatCompactCurrency(monthlyOrderValue)} />
+                <MiniMetric label="Open quotes" value={pendingQuoteCount} />
+                <MiniMetric label="Active customers" value={activeCustomerCount} />
               </div>
             </CardContent>
           </Card>
@@ -194,7 +195,6 @@ export function DashboardTabs({
                     </div>
                     <div className="shrink-0 text-right">
                       <Badge value={quote.status} />
-                      <p className="mt-2 text-sm font-bold text-neutral-950">{formatCurrency(quote.grand_total)}</p>
                     </div>
                   </Link>
                 )) : <div className="empty-mini">No quotations yet. Create a quote to start building sales pipeline.</div>}
@@ -245,7 +245,70 @@ export function DashboardTabs({
   );
 }
 
-function StatCard({ icon: Icon, label, rawValue, isCurrency, change, comparison, tone }: { icon: any; label: string; rawValue: number; isCurrency?: boolean; change: string; comparison: string; tone: "green" | "purple" | "blue" | "yellow" }) {
+function StockPosition({ stock }: { stock: StockSnapshot | null }) {
+  if (!stock) {
+    return (
+      <Card>
+        <CardContent>
+          <SectionHeading title="Stock Position" href="/inventory" />
+          <div className="empty-mini mt-5">Stock data is unavailable. Refresh to retry; no stock totals can be stated.</div>
+        </CardContent>
+      </Card>
+    );
+  }
+  const tiles = [
+    { label: "Billets in stock", value: formatStockWeight(stock.billetKg), meta: `${stock.billetBatchCount} available batches`, href: "/foundry", tone: "" },
+    { label: "Finished profiles", value: formatStockWeight(stock.finishedKg), meta: `${stock.finishedPieces.toLocaleString("en-IN")} pieces, QC released`, href: "/inventory", tone: "" },
+    { label: "Reserved for orders", value: formatStockWeight(stock.reservedKg), meta: "Held against confirmed orders", href: "/inventory", tone: "" },
+    { label: "On QC hold", value: formatStockWeight(stock.holdKg), meta: "Not dispatchable until released", href: "/quality", tone: stock.holdKg > 0 ? "warn" : "" },
+    { label: "Low stock items", value: String(stock.lowItemCount), meta: `${stock.outOfStockCount} out of stock, ${stock.consumableItemCount} tracked`, href: "/inventory", tone: stock.lowItemCount > 0 ? "warn" : "" }
+  ];
+  return (
+    <Card>
+      <CardContent>
+        <SectionHeading title="Stock Position" href="/inventory" />
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          {tiles.map((tile) => (
+            <Link key={tile.label} href={tile.href} className={cn("rounded-2xl border p-4 transition hover:bg-neutral-50", tile.tone === "warn" ? "border-amber-200 bg-amber-50/60" : "border-neutral-100 bg-white")}>
+              <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{tile.label}</p>
+              <p className="mt-2 text-2xl font-bold tracking-tight text-neutral-950">{tile.value}</p>
+              <p className="mt-1 text-xs font-medium text-neutral-500">{tile.meta}</p>
+            </Link>
+          ))}
+        </div>
+        {stock.billetByAlloy.length || stock.finishedByFinish.length ? (
+          <div className="mt-5 grid gap-5 md:grid-cols-2">
+            <StockBreakdown title="Billets by alloy" rows={stock.billetByAlloy.map((r) => ({ label: r.alloy, kg: r.kg }))} total={stock.billetKg} />
+            <StockBreakdown title="Profiles by finish" rows={stock.finishedByFinish.map((r) => ({ label: r.finish, kg: r.kg }))} total={stock.finishedByFinish.reduce((sum, r) => sum + r.kg, 0)} />
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function StockBreakdown({ title, rows, total }: { title: string; rows: { label: string; kg: number }[]; total: number }) {
+  return (
+    <div>
+      <p className="text-sm font-semibold text-neutral-950">{title}</p>
+      <div className="mt-3 space-y-3">
+        {rows.length ? rows.slice(0, 6).map((row) => (
+          <div key={row.label}>
+            <div className="flex items-center justify-between text-xs font-medium text-neutral-600">
+              <span className="truncate">{row.label}</span>
+              <span>{formatStockWeight(row.kg)}</span>
+            </div>
+            <div className="mt-1 h-1.5 rounded-full bg-neutral-100">
+              <div className="h-1.5 rounded-full bg-neutral-950" style={{ width: `${total > 0 ? Math.max(2, Math.round((row.kg / total) * 100)) : 0}%` }} />
+            </div>
+          </div>
+        )) : <p className="text-xs text-neutral-500">No stock recorded.</p>}
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ icon: Icon, label, rawValue, change, comparison, tone }: { icon: any; label: string; rawValue: number; change: string; comparison: string; tone: "green" | "purple" | "blue" | "yellow" }) {
   const toneClass = {
     green: "bg-emerald-50 text-emerald-600",
     purple: "bg-violet-50 text-violet-600",
@@ -263,7 +326,7 @@ function StatCard({ icon: Icon, label, rawValue, isCurrency, change, comparison,
         <ChevronDown className="h-4 w-4 text-neutral-300" />
       </div>
       <div className="mt-8 flex items-end gap-3">
-        <p className="text-4xl font-bold tracking-tight text-neutral-950">{isCurrency ? <CompactTicker value={rawValue} duration={1000} /> : <NumberTicker value={rawValue} duration={1000} />}</p>
+        <p className="text-4xl font-bold tracking-tight text-neutral-950"><NumberTicker value={rawValue} duration={1000} /></p>
         <span className={cn("mb-1 rounded-full px-2 py-1 text-[11px] font-bold", toneClass)}>{change}</span>
       </div>
       <p className="mt-3 text-sm font-medium text-neutral-500">{comparison}</p>
@@ -283,9 +346,9 @@ function SectionHeading({ title, action, href }: { title: string; action?: strin
 
 function ActivityGrid({ title, active }: { title: string; active: number }) {
   return (
-    <div>
-      <p className="mb-3 text-sm font-semibold text-neutral-700">{title}</p>
-      <div className="grid grid-cols-7 gap-2">
+    <div className="min-w-0">
+      <p className="mb-3 truncate text-sm font-semibold text-neutral-700">{title}</p>
+      <div className="grid grid-cols-7 gap-1.5">
         {Array.from({ length: 28 }).map((_, index) => (
           <span key={index} className={cn("h-4 rounded-md bg-neutral-100", index < Math.min(active, 28) && (index % 5 === 0 ? "bg-[#60a5fa]" : "bg-[#8b5cf6]"))} />
         ))}

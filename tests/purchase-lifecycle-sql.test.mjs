@@ -10,7 +10,7 @@ test('58/59/95/98: draft correction changes PO atomically, mixed-case duplicate 
   const vendor=cid(5800),canonical=cid(5801);
   const call=(command,payload)=>f.command('purchase_lifecycle_command',command,payload);
   try{
-    for(const [id,name] of [[vendor,'Recorded supplier'],[canonical,'Canonical supplier']])await f.db.query("insert into vendors(id,company_id,vendor_name,vendor_type,gst_number) values($1,$2,$3,'aluminum_billets','27AAACX1234A1Z1')",[id,ids.company,name]);
+    for(const [id,name] of [[vendor,'Recorded supplier'],[canonical,'Canonical supplier']])await f.db.query("insert into vendors(id,company_id,vendor_name,vendor_type,gst_number) values($1,$2,$3,'aluminum_billets','27AAACX1234A1ZX')",[id,ids.company,name]);
     const createOrder=async key=>{
       const po=await call('order.create',{idempotency_key:cid(key),vendor_id:vendor,order_date:'2026-10-29',expected_freight_amount:0,expected_discount_amount:0,
         lines:[{description:'6063 billet',specification:'6063 T6 seven inch',unit:'kg',quantity:100,rate:10,gst_percent:18}]});

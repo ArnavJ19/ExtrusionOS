@@ -9,6 +9,7 @@ import { buildInvoiceItems } from "@/lib/pcda/invoice";
 import { applyInvoiceSourceTaxBasis, loadInvoiceSourceOptions } from "@/lib/financials/invoice-sources";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
+import { duplicateGate, duplicateMessage } from "@/lib/order-to-cash/duplicates";
 import {
   buildInvoiceFingerprintPayload,
   correctionApplyInputSchema,
@@ -39,7 +40,8 @@ const postReceiptSchema = z.object({
   reference_number: z.string().trim().max(120).optional().nullable(),
   notes: z.string().trim().max(2000).optional().nullable(),
   idempotency_key: uuid,
-  allocations: z.array(receiptAllocationInputSchema).min(1).max(100)
+  allocations: z.array(receiptAllocationInputSchema).min(1).max(100),
+  confirm_duplicate: z.object({ confirmed: z.boolean().optional(), note: z.string().max(300).nullable().optional() }).strict().nullable().optional()
 }).strict();
 const csvImportSchema = z.object({
   csv_text: z.string().min(1).max(512_000),
@@ -264,6 +266,15 @@ export async function postFinancialReceiptAction(input: z.input<typeof postRecei
       return { success: false as const, error: "Use one allocation per invoice and make allocations equal the received amount exactly." };
     }
     const client = await createClient();
+    // AP-097: the same reference, or the same amount from the same customer within a few days.
+    let receiptCustomer: string | null = null;
+    try {
+      const firstInvoice = await client.from("invoices").select("customer_id").eq("company_id", context.companyId).eq("id", parsed.data.allocations[0].invoice_id).maybeSingle();
+      receiptCustomer = firstInvoice.data?.customer_id ?? null;
+    } catch { /* the reference check still runs */ }
+    const gate = await duplicateGate(client, "receipt", { amount: parsed.data.amount, payment_date: parsed.data.payment_date, reference_number: parsed.data.reference_number || null,
+      customer_id: receiptCustomer }, parsed.data.confirm_duplicate);
+    if (gate.blocked) return { success: false as const, error: duplicateMessage(gate.matches), duplicates: gate.matches };
     const result = await client.rpc("post_financial_receipt_atomic", {
       p_receipt: {
         amount: parsed.data.amount,

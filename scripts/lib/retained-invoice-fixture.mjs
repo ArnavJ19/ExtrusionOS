@@ -23,7 +23,7 @@ export async function createRetainedInvoiceFixture({candidate=existsSync(candida
     await createHistoricalTables(db,["company_settings","payments"],retainedInvoiceCandidate);
     await db.exec(`alter table order_stage_history alter column changed_at set default now();
       alter table invoices alter column amount_paid set default 0,alter column credited_amount set default 0;
-      update companies set gst_state_code='24',gst_number='24ABCDE1234F1Z5',name='Synthetic supplier' where id='${f.company}';
+      update companies set gst_state_code='24',gst_number='24ABCDE1234F1Z6',name='Synthetic supplier' where id='${f.company}';
       insert into company_settings(company_id,invoice_prefix,default_gst_percent) values('${f.company}','INV',18);
       update orders set order_date=current_date-1 where id='${f.order}';
       update dispatches set dispatch_number='D-RETAINED-001',dispatch_date=current_date-1,

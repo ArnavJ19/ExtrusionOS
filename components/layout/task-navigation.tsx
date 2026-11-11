@@ -90,7 +90,7 @@ export function TaskNavigation({ model, desktopShortcuts, mobileShortcuts }: { m
 
   return (
     <div className="relative flex min-w-0 flex-1 flex-col lg:flex-none" ref={rootRef}>
-      <nav aria-label="Primary task navigation" className="flex min-w-0 gap-1.5 overflow-x-auto lg:block lg:overflow-visible">
+      <nav aria-label="Primary task navigation" className="flex min-w-0 gap-1.5 overflow-x-auto lg:block lg:space-y-2 lg:overflow-visible">
         {model.primary.map((item) => <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon as NavIconName} aliases={item.aliases} compact />)}
         {model.more.length ? (
           <button
@@ -99,7 +99,7 @@ export function TaskNavigation({ model, desktopShortcuts, mobileShortcuts }: { m
             aria-expanded={open}
             aria-controls={panelId}
             onClick={() => setOpen((value) => !value)}
-            className="inline-flex min-h-12 shrink-0 items-center gap-2 rounded-2xl border border-neutral-200 bg-white/80 px-3 py-2.5 text-sm font-semibold text-neutral-600 shadow-sm transition hover:border-neutral-300 hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange lg:mt-3 lg:min-h-10 lg:w-full lg:justify-between"
+            className="inline-flex min-h-12 shrink-0 items-center gap-2 rounded-2xl border border-neutral-200 bg-white/80 px-3 py-2.5 text-sm font-semibold text-neutral-600 shadow-sm transition hover:border-neutral-300 hover:text-neutral-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange lg:mt-5 lg:min-h-12 lg:w-full lg:justify-between lg:px-4"
           >
             <span className="flex items-center gap-2"><Ellipsis className="h-4 w-4" /><span>More</span></span>
             <ChevronDown className={`hidden h-4 w-4 transition-transform lg:block ${open ? "rotate-180" : ""}`} />

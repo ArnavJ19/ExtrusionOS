@@ -36,6 +36,9 @@ import { orderStockCoverageSchema } from "@/lib/orders/stock-coverage";
 import { PartialOrderProgress } from "@/components/modules/orders/partial-progress";
 import { OrderResponsibility } from "@/components/modules/coordination/order-responsibility";
 import { OrderFulfilmentLedger } from "@/components/modules/orders/fulfilment-ledger";
+import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
+import { OrderCreditPanel } from "@/components/modules/order-to-cash/credit";
+import { OrderDraftJobsPanel } from "@/components/modules/order-to-cash/draft-jobs";
 
 const ORDER_JOB_LIMIT = 200;
 
@@ -524,6 +527,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         </div>
       </div>
       {!context.dealerId ? <RecordDiscussion key={`${context.companyId}:${context.userId}:${context.role}:${id}`} context={context} entityType="order" entityId={id} /> : null}
+      {!context.dealerId && ["owner", "admin", "accounts", "sales_manager", "sales"].includes(context.role) ? <OrderCreditPanel orderId={id} /> : null}
+      {!context.dealerId && ["owner", "admin", "production_manager", "factory_manager", "sales_manager"].includes(context.role) ? <OrderDraftJobsPanel orderId={id} /> : null}
+      {!context.dealerId ? <RelatedWorkPanel kind="order" id={id} role={context.role} /> : null}
     </div>
   );
 }

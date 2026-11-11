@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingState } from "@/components/ui/loading";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { SupplyOverride } from "@/components/modules/order-to-cash/supply-override";
 
 type InvoiceRecord = {
   place_of_supply_state_code: string | null;
@@ -279,7 +280,9 @@ export function InvoiceFormClient({
             <label className="block space-y-1.5">
               <span className="form-label">Place of supply: GST state code *</span>
               <select className="form-input" value={form.place_of_supply_state_code} onChange={(event) => setForm((current) => ({ ...current, place_of_supply_state_code: event.target.value }))}><option value="">Select supply state</option>{Object.entries(gstStates).map(([code, name]) => <option key={code} value={code}>{name} ({code})</option>)}</select>
-              <span className="text-xs text-slate-500">Confirm the supply destination; billing and delivery states can differ. Domestic supplies only.</span>
+              <span className="text-xs text-slate-500">Derived from the customer&apos;s GSTIN (AP-037). A different state needs a recorded reason once accounts confirms the rule. Domestic supplies only.</span>
+              <SupplyOverride orderId={form.order_id || null} dispatchId={form.dispatch_id || null} chosen={form.place_of_supply_state_code}
+                onDerived={(state) => setForm((current) => ({ ...current, place_of_supply_state_code: state }))} />
             </label>
             <label className="block space-y-1.5">
               <span className="form-label">Workflow status *</span>

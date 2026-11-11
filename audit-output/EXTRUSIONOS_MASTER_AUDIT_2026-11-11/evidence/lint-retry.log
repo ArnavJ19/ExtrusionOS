@@ -1,0 +1,15 @@
+
+> extrusionos-pro@0.1.0 lint
+> eslint .
+
+
+C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\autopilot-batch3-sql.test.mjs
+  3:53  warning  'GSTIN' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\nov-batch8-sql.test.mjs
+    5:31  warning  'executionDetailSchema' is defined but never used  @typescript-eslint/no-unused-vars
+  199:19  warning  '_omitted' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  436:7   warning  'assign' is assigned a value but never used        @typescript-eslint/no-unused-vars
+
+✖ 4 problems (0 errors, 4 warnings)
+

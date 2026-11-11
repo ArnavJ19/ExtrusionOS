@@ -1,0 +1,3 @@
+{"phase":"native replay + representative pre-November upgrade","applied":296,"priorCompanyRetained":true,"ms":69221}
+{"server": "PostgreSQL 18.3 on x86_64-windows, compiled by msvc-19.44.35223, 64-bit", "policyCount": 824, "publicTables": 516, "publicAndPrivateDefiners": 855, "singleCompanyGuardEnabled": true, "onboardingAuthenticatedGrant": true, "publicCompanyTablesWithoutRls": [], "definersWithNoExplicitSearchPath": 0}
+{"phase":"independent concurrent financial-year allocator and rollback","concurrent":[["40084","A/26-27/0002"],["42780","A/26-27/0001"]],"aborted":"A/26-27/0003","committed":"A/26-27/0003"}

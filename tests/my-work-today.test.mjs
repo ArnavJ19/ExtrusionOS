@@ -38,8 +38,9 @@ test("every role gets only its permitted department queues", async () => {
     const fixture = client();
     const result = await loadMyWork(fixture.supabase, context(role), {}, now);
     assert.deepEqual(result.departments.map((queue) => queue.key), tables, role);
-    assert.deepEqual(fixture.requests.filter((request) => request.table !== "tasks").map((request) => request.table), tables, role);
-    for (const { params } of fixture.requests) {
+    // The Autopilot queues (AP-002 proposals, AP-041 linked work) are read through two RPCs for every role.
+    assert.deepEqual(fixture.requests.filter((request) => request.table !== "tasks" && !request.table.startsWith("ap_")).map((request) => request.table), tables, role);
+    for (const { params } of fixture.requests.filter((request) => !request.table.startsWith("ap_"))) {
       assert.equal(params.get("company_id"), `eq.${companyId}`);
       assert.equal(params.get("limit"), String(MY_WORK_LIMIT + 1));
       assert.doesNotMatch(params.get("select"), /\*|grand_total|balance_due|order_value|margin|cost|amount_paid/);
@@ -79,7 +80,7 @@ test("disabled modules prevent queue queries and exclude related tasks", async (
   const fixture = client();
   const result = await loadMyWork(fixture.supabase, context(), { production_planning: false, advanced_inventory: false }, now);
   assert.deepEqual(result.departments, []);
-  assert.ok(fixture.requests.every(({ table }) => table === "tasks"));
+  assert.ok(fixture.requests.every(({ table }) => table === "tasks" || table.startsWith("ap_")));
   for (const { params } of fixture.requests) assert.doesNotMatch(params.get("or") ?? "", /production|inventory/);
 });
 
@@ -123,7 +124,7 @@ test("malformed source identifiers never become navigation paths or source queri
 
 test("queue errors and null results remain unknown while other queues still load", async () => {
   for (const failure of [new Response(JSON.stringify({ message: "permission denied" }), { status: 403 }), null]) {
-    const fixture = client(({ table, params }) => table === "production_jobs" ? failure : params.get("assigned_to").startsWith("eq.") ? [task(1)] : []);
+    const fixture = client(({ table, params }) => table.startsWith("ap_") ? [] : table === "production_jobs" ? failure : params.get("assigned_to").startsWith("eq.") ? [task(1)] : []);
     const result = await loadMyWork(fixture.supabase, context(), {}, now);
     assert.equal(result.assigned.items.length, 1);
     assert.match(result.departments[0].error, /workload is unknown/);

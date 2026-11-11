@@ -1,0 +1,1 @@
+{"id":"MFA-004","expectedInputKg":60,"submitted":{"goodKg":57,"scrapKg":3},"input":{"issued_kg":"60.000","only_allocated_kg":"180.000"},"response":{"code":"23514","message":"Billet mass balance failed: linked input 240.000 kg, accounted output and scrap 60.000 kg, tolerance 2.400 kg"},"job":{"status":"in_progress"},"reproduced":true}

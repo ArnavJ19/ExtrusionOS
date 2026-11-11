@@ -13,6 +13,7 @@ import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { redirect } from "next/navigation";
 import { TransactionCommunication } from "@/components/modules/financials/transaction-communication";
+import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -24,6 +25,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       {!context.dealerId && ["owner","admin","accounts"].includes(context.role) ? <TransactionCommunication invoiceId={id} /> : null}
       {!context.dealerId && canFollow(context.role, "invoice") ? <RecordFollow entityType="invoice" entityId={id} /> : null}
       <InvoiceSettlementPanel invoiceId={id} canManage={can(context.role, "create", "financials")} />
+      {!context.dealerId ? <RelatedWorkPanel kind="invoice" id={id} role={context.role} /> : null}
     </div>
   );
 }

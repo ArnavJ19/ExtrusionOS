@@ -84,6 +84,7 @@ export function InTaskVendor({ context, onSelected, taskLabel, defaultType = "ot
           <label className="space-y-1"><span className="form-label">Vendor name *</span><input ref={nameRef} className="form-input" value={vendor.vendor_name} maxLength={160} required onChange={event => update("vendor_name", event.target.value)} /></label>
           <label className="space-y-1"><span className="form-label">Vendor type</span><select className="form-input" value={vendor.vendor_type} onChange={event => update("vendor_type", event.target.value)}>{vendorTypes.map(type => <option key={type} value={type}>{labelize(type)}</option>)}</select></label>
           {text("contact_person", "Contact person")}{text("phone", "Phone", { type: "tel", autoComplete: "tel", maxLength: 25 })}{text("gst_number", "GST number", { className: "form-input uppercase", maxLength: 15 })}{text("city", "City")}
+          <label className="flex min-h-11 items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={vendor.gst_registration === "unregistered"} onChange={(event) => update("gst_registration", event.target.checked ? "unregistered" : "")} />Unregistered under GST (no GSTIN)</label>
         </fieldset>
         {error ? <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p> : null}
         {uncertain ? <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">Details are held unchanged so a retry recovers the same vendor without creating a second record.</p> : null}

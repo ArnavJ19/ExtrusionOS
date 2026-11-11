@@ -1,0 +1,27 @@
+TAP version 13
+# Subtest: AP-087 the workstation keypad has large keys and builds the number without the phone keyboard
+not ok 1 - AP-087 the workstation keypad has large keys and builds the number without the phone keyboard
+  ---
+  duration_ms: 46077.1163
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\autopilot-batch2-browser.test.mjs:212:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    page.goto: net::ERR_NETWORK_ACCESS_DENIED at http://127.0.0.1:64025/
+    Call log:
+    [2m  - navigating to "http://127.0.0.1:64025/", waiting until "load"[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    open (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\autopilot-batch2-browser.test.mjs:30:14)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\autopilot-batch2-browser.test.mjs:213:26)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 49702.9333

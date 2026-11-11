@@ -14,6 +14,7 @@ import { formatCurrency, formatDate, todayIso } from "@/lib/utils/format";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { rowMatchesSearch } from "@/lib/utils/search";
 import { saveOrderAction } from "@/lib/actions/quotes-orders";
+import { hasDuplicates, warnDuplicates } from "@/components/modules/order-to-cash/duplicate-warning";
 import { labelize, orderPriorities, orderStages, type SessionContext } from "@/types/app";
 
 export function OrdersClient({ context }: { context: SessionContext }) {
@@ -50,14 +51,15 @@ export function OrdersClient({ context }: { context: SessionContext }) {
     setForm((current) => ({ ...current, quote_id: quoteId, customer_id: quote?.customer_id ?? current.customer_id, order_value: quote?.grand_total ?? current.order_value }));
   }
 
-  async function saveOrder() {
+  async function saveOrder(confirmDuplicate = false) {
     const parsed = orderSchema.safeParse(form);
     if (!parsed.success) return toast.error(parsed.error.issues[0]?.message ?? "Please check order details");
     if (!customers.some((customer) => customer.id === parsed.data.customer_id)) return toast.error("Selected customer is not available for this company.");
     if (parsed.data.quote_id && !quotes.some((quote) => quote.id === parsed.data.quote_id && quote.customer_id === parsed.data.customer_id)) return toast.error("Selected quote does not match this company/customer.");
     setSaving(true);
-    const result = await saveOrderAction({ ...parsed.data, editing_id: editingId });
+    const result = await saveOrderAction({ ...parsed.data, editing_id: editingId, ...(confirmDuplicate ? { confirm_duplicate: { confirmed: true } } : {}) });
     setSaving(false);
+    if (hasDuplicates(result)) return warnDuplicates(result.duplicates, () => void saveOrder(true));
     if (!result.success) return toast.error(result.error);
     toast.success("Order saved");
     setEditingId(null);
@@ -82,7 +84,7 @@ export function OrdersClient({ context }: { context: SessionContext }) {
           <div className="space-y-1.5"><span className="form-label">Stage</span><div className="flex min-h-12 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4"><Badge value={editingId ? form.current_stage : "order_confirmed"} /><span className="text-xs font-semibold text-slate-600">Production and dispatch events advance this stage.</span></div></div>
           <label className="block space-y-1.5"><span className="form-label">Order value</span><input className="form-input" type="number" inputMode="decimal" min="0" value={form.order_value} onChange={(event) => setForm({ ...form, order_value: Number(event.target.value) })} /></label>
           <label className="block space-y-1.5"><span className="form-label">Notes</span><textarea className="form-input min-h-24" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} /></label>
-          <div className="flex gap-2"><Button disabled={saving || loading} onClick={saveOrder}>{saving ? "Saving..." : "Save order"}</Button>{editingId ? <Button variant="secondary" onClick={() => setEditingId(null)}>Cancel</Button> : null}</div>
+          <div className="flex gap-2"><Button disabled={saving || loading} onClick={() => void saveOrder()}>{saving ? "Saving..." : "Save order"}</Button>{editingId ? <Button variant="secondary" onClick={() => setEditingId(null)}>Cancel</Button> : null}</div>
         </div></CardContent></Card>
         <Card><CardContent><div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><input className="form-input max-w-md" placeholder="Search order, customer, stage, priority..." value={search} onChange={(event) => setSearch(event.target.value)} /><p className="rounded-full bg-aluminium px-3 py-1.5 text-xs font-black uppercase tracking-[0.1em] text-slate-600">{filtered.length} orders</p></div>{loading ? <LoadingState title="Loading orders" description="Fetching order book, approved quotes, and customers." /> : filtered.length ? <div className="overflow-x-auto"><table className="industrial-table min-w-[900px]"><thead><tr><th>Order</th><th>Customer</th><th>Order date</th><th>Expected</th><th>Stage</th><th>Priority</th><th>Value</th><th>Actions</th></tr></thead><tbody>{filtered.map((order) => { const delayed = order.expected_dispatch_date && order.expected_dispatch_date < today && !["dispatched", "delivered", "closed", "cancelled"].includes(order.current_stage); return <tr key={order.id}><td className="font-black text-slate-950">{order.order_number}</td><td>{order.customers?.company_name || order.customers?.customer_name}</td><td>{formatDate(order.order_date)}</td><td>{formatDate(order.expected_dispatch_date)} {delayed ? <Badge value="delayed" /> : null}</td><td><Badge value={order.current_stage} /></td><td><Badge value={order.priority} /></td><td className="font-black text-slate-950">{formatCurrency(order.order_value)}</td><td><Button variant="ghost" onClick={() => { setEditingId(order.id); setForm({ customer_id: order.customer_id, quote_id: order.quote_id ?? "", order_date: order.order_date, expected_dispatch_date: order.expected_dispatch_date ?? "", priority: order.priority, current_stage: order.current_stage, order_value: order.order_value, notes: order.notes ?? "" }); }}>Edit</Button></td></tr>; })}</tbody></table></div> : <EmptyState title="No orders yet" description="Create an order manually or convert an approved quotation." />}</CardContent></Card>
       </div>

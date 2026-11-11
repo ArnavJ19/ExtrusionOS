@@ -3,7 +3,7 @@ import {buildInvoiceItems} from '../../lib/pcda/invoice.ts';
 export {cid};
 export async function createBatch6CoreFixture(){
   const f=await createFactoryUpgradeFixture();
-  await f.db.query("update companies set gst_number='27ABCDE1234F1Z5',gst_state_code='27' where id=$1",[f.ids.company]);
+  await f.db.query("update companies set gst_number='27ABCDE1234F1Z0',gst_state_code='27' where id=$1",[f.ids.company]);
   const post=async({pieces=60,tag='PARTIAL-60',reservation=f.ids.reservation,batch=f.ids.batch}={})=>{
     const kg=pieces*4.8;
     return (await f.db.query('select save_ready_dispatch_atomic(null,$1,$2) id',[

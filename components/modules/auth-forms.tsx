@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/browser";
@@ -37,9 +36,9 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       <Card className="w-full max-w-md border-white/10">
         <CardContent className="p-8">
           <div className="mb-8">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange">ExtrusionOS Pro</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange">Omalco Extrusion</p>
             <h1 className="mt-2 text-3xl font-bold text-slate-950">{mode === "login" ? "Login" : "Create account"}</h1>
-            <p className="mt-2 text-sm text-slate-600">Quotation accuracy, die tracking, production visibility, and dispatch control for aluminium extrusion MSMEs.</p>
+            <p className="mt-2 text-sm text-slate-600">Quotation accuracy, die tracking, production visibility, and dispatch control for Omalco Extrusion.</p>
           </div>
           <form onSubmit={submit} className="space-y-4">
             <label className="block space-y-1.5">
@@ -53,7 +52,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             <Button disabled={loading} className="w-full" type="submit">{loading ? "Please wait..." : mode === "login" ? "Login" : "Sign up"}</Button>
           </form>
           <p className="mt-5 text-center text-sm text-slate-600">
-            {mode === "login" ? "New to ExtrusionOS?" : "Already have an account?"} <Link className="font-semibold text-orange" href={mode === "login" ? "/signup" : "/login"}>{mode === "login" ? "Sign up" : "Login"}</Link>
+            Access is by invitation only. Contact your Omalco Extrusion administrator for an account.
           </p>
         </CardContent>
       </Card>
@@ -109,15 +108,15 @@ export function OnboardingForm() {
     <div className="min-h-screen bg-[#F5F6F8] p-4">
       <div className="mx-auto max-w-3xl py-10">
         <div className="mb-6">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange">Company onboarding</p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-950">Create your extrusion company workspace</h1>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange">Omalco Extrusion setup</p>
+          <h1 className="mt-2 text-3xl font-bold text-slate-950">Set up the Omalco Extrusion workspace</h1>
         </div>
         <Card>
           <CardContent>
             <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
               <label className="block space-y-1.5"><span className="form-label">Your name</span><input className="form-input" name="full_name" required /></label>
               <label className="block space-y-1.5"><span className="form-label">Phone</span><input className="form-input" name="phone" /></label>
-              <label className="block space-y-1.5 sm:col-span-2"><span className="form-label">Company name</span><input className="form-input" name="name" required /></label>
+              <label className="block space-y-1.5 sm:col-span-2"><span className="form-label">Company name</span><input className="form-input" name="name" defaultValue="Omalco Extrusion" readOnly required /></label>
               <label className="block space-y-1.5 sm:col-span-2"><span className="form-label">Legal name</span><input className="form-input" name="legal_name" /></label>
               <label className="block space-y-1.5"><span className="form-label">GST number</span><input className="form-input" name="gst_number" /></label>
               <label className="block space-y-1.5"><span className="form-label">City</span><input className="form-input" name="city" /></label>

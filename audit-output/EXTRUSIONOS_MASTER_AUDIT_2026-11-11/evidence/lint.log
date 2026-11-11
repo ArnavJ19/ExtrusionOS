@@ -1,0 +1,27 @@
+
+> extrusionos-pro@0.1.0 lint
+> eslint .
+
+
+Oops! Something went wrong! :(
+
+ESLint: 9.39.4
+
+Error: Cannot find module './utils/lazy-loading-rule-map'
+Require stack:
+- C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\node_modules\eslint\lib\rules\index.js
+- C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\node_modules\eslint\lib\config\default-config.js
+- C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\node_modules\eslint\lib\eslint\eslint.js
+- C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\node_modules\eslint\lib\eslint\index.js
+- C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\node_modules\eslint\lib\cli.js
+- C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\node_modules\eslint\bin\eslint.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Module.require (node:internal/modules/cjs/loader:1463:12)
+    at require (node:internal/modules/helpers:147:16)
+    at Object.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\node_modules\eslint\lib\rules\index.js:11:32)
+    at Module._compile (node:internal/modules/cjs/loader:1706:14)

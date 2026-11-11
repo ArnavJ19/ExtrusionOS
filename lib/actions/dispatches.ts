@@ -12,14 +12,16 @@ import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { dispatchSchema } from "@/lib/validations/schemas";
 import { indexDispatchReadiness } from "@/lib/dispatches/readiness-index";
+import { duplicateGate, duplicateMessage, type DuplicateConfirmation, type DuplicateMatch } from "@/lib/order-to-cash/duplicates";
 
 const deliveryStatusSchema = dispatchSchema.shape.delivery_status;
 
 type SaveDispatchInput = Omit<z.input<typeof dispatchSchema>, "number_of_bundles" | "total_weight_kg" | "bundle_tare_weights_kg"> & {
   editing_id?: string | null;
   bundles?: VerifiedDispatchBundleInput[];
+  confirm_duplicate?: DuplicateConfirmation;
 };
-type DispatchActionResult = { success: true; dispatchId?: string } | { success: false; error: string };
+type DispatchActionResult = { success: true; dispatchId?: string } | { success: false; error: string; duplicates?: DuplicateMatch[] };
 
 function revalidateDispatchPaths(dispatchId?: string, orderId?: string) {
   revalidatePath("/dispatches");
@@ -304,6 +306,11 @@ export async function saveDispatchAction(input: SaveDispatchInput): Promise<Disp
     const verifiedManifest = buildVerifiedPackingListItems(sourceLines, context.companyId, input.bundles);
     if (Math.abs(verifiedManifest.totalNetWeightKg - parsed.data.total_weight_kg) > 0.001) {
       return { success: false, error: "Bundle gross and tare measurements do not match the dispatch net weight." };
+    }
+    if (!editingId) {
+      // AP-097: the same load recorded twice for one order (checked only once the load itself is valid).
+      const gate = await duplicateGate(supabase, "dispatch", { order_id: parsed.data.order_id, total_weight_kg: parsed.data.total_weight_kg }, input.confirm_duplicate);
+      if (gate.blocked) return { success: false, error: duplicateMessage(gate.matches), duplicates: gate.matches };
     }
     const result = await supabase.rpc("save_ready_dispatch_atomic", {
       p_dispatch_id: editingId,

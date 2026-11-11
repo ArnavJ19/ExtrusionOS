@@ -60,7 +60,7 @@ export function NavLink({ href, label, icon, compact = false, aliases = [] }: Na
       aria-label={label}
       title={label}
       className={cn(
-        "group flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl px-2 py-2.5 text-sm font-semibold text-neutral-500 transition-all duration-200 hover:bg-white hover:text-neutral-950 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:justify-start sm:px-3 lg:h-auto lg:w-full",
+        "group flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl px-2 py-2.5 text-sm font-semibold text-neutral-500 transition-all duration-200 hover:bg-white hover:text-neutral-950 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:justify-start sm:px-3 lg:h-auto lg:w-full lg:gap-3 lg:px-3 lg:py-3",
         isActive && "bg-white text-neutral-950 shadow-sm ring-1 ring-black/[0.04]"
       )}
     >

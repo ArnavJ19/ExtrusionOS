@@ -36,6 +36,8 @@ function client() {
     async rpc(name, args) {
       state.calls.push({ name, args });
       if (name === "save_ready_dispatch_atomic" && state.allowDispatchWrite) return { data: id(9), error: null };
+      // AP-097: the duplicate check runs once the load is valid, just before the write.
+      if (name === "ap_dupes") return { data: { matches: [] }, error: null };
       assert.equal(name, "get_profile_stock_consumption_totals", "Source reads must never mutate stock or dispatches");
       if (state.rpcResult) return state.rpcResult(state.calls.length, args.p_reservation_ids);
       return {
@@ -191,8 +193,8 @@ test("a valid remaining dispatch reaches the atomic save with exact source ident
       gross_weight_kg: 500, tare_weight_kg: 1, net_length_m: 249.5 }]
   });
   assert.deepEqual(result, { success: true, dispatchId: id(9) });
-  assert.deepEqual(state.calls.map(call => call.name), ["get_profile_stock_consumption_totals", "save_ready_dispatch_atomic"]);
-  const { p_items: items, p_dispatch: dispatch } = state.calls[1].args;
+  assert.deepEqual(state.calls.map(call => call.name), ["get_profile_stock_consumption_totals", "ap_dupes", "save_ready_dispatch_atomic"]);
+  const { p_items: items, p_dispatch: dispatch } = state.calls.find(call => call.name === "save_ready_dispatch_atomic").args;
   assert.equal(items.length, 1);
   for (const [key, value] of Object.entries({ company_id: company, reservation_id: reservation,
     source_line_id: reservation, profile_stock_batch_id: batch, profile_id: profile,

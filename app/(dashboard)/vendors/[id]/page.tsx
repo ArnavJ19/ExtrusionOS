@@ -1,3 +1,4 @@
+import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
 import { RecordDetailClient } from "@/components/modules/operations/record-detail-client";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
@@ -7,5 +8,8 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
   const { id } = await params;
   const context = await getSessionContext();
   if (!can(context.role, "read", "vendors")) redirect("/dashboard");
-  return <RecordDetailClient moduleKey="vendors" context={context} recordId={id} canEdit={can(context.role, "update", "vendors")} />;
+  return <div className="space-y-6">
+    <RecordDetailClient moduleKey="vendors" context={context} recordId={id} canEdit={can(context.role, "update", "vendors")} />
+    {!context.dealerId ? <RelatedWorkPanel kind="vendor" id={id} role={context.role} /> : null}
+  </div>;
 }

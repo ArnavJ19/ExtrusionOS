@@ -1,3 +1,4 @@
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { RecordFollow } from "@/components/modules/notifications/record-follow";
 import { canFollow } from "@/lib/workflow/subscriptions";
 import { WorkRequirementsPanel } from "@/components/modules/orders/work-requirements-panel";
@@ -14,6 +15,8 @@ import { ProductionPerformancePanel } from "@/components/modules/production-perf
 import { buildProductionJobEvidence } from "@/lib/calculations/production-performance";
 import { ProductionReadinessPanel } from "@/components/modules/production/production-readiness-panel";
 import { canPlaceHolds, canReadHolds, readinessResponseSchema, type ReadinessResponse } from "@/lib/workflow/production-readiness";
+import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
+import { PressJobPanel } from "@/components/modules/press/press-job-panel";
 
 const SCRAP_RECORD_LIMIT = 200;
 
@@ -99,6 +102,8 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
   }
   return (
     <div id="production-readiness" className="space-y-6">
+      {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "inventory_manager"].includes(context.role)
+        ? <PressJobPanel jobId={id} role={context.role} today={getBusinessDateBoundaries().today} /> : null}
       <ProductionOutputWorkflow job={floorJob} canUpdate={canUpdate} canCorrect={canCorrect} />
       {!context.dealerId ? <WorkRequirementsPanel companyId={context.companyId} role={context.role} stage="production" orderId={job.order_id} /> : null}
       {!context.dealerId && canFollow(context.role, "production_job") ? <RecordFollow entityType="production_job" entityId={id} /> : null}
@@ -118,6 +123,7 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
       <div id="production-controls"><ErpControlPanel title="Production controls" description="Billet issue, input evidence, surplus to stock and scrap corrections." actions={controls} /></div>
       <ProductionExceptions key={`${context.companyId}:${context.userId}:${context.role}:${id}`} context={context} jobId={id} />
       <RecordDetailClient moduleKey="production" context={context} recordId={id} canEdit={canUpdate} />
+      {!context.dealerId ? <RelatedWorkPanel kind="job" id={id} role={context.role} /> : null}
     </div>
   );
 }
