@@ -68,7 +68,7 @@ and production drafts), `/orders/credit`, `/production/drafts`, `/invoices/draft
 
 ## Data and security audit
 
-Migration `supabase/migrations/20261111100000_autopilot_batch_3.sql` (additive, ~2,900 lines). 22 new tables, each with
+Migration `supabase/migrations/20261111100000_autopilot_batch_3.sql` (additive, ~3,100 lines; applied to hosted 11 November). 22 new tables, each with
 `company_id`, RLS, a role-scoped company read policy, a company-leading index and **no client grants**. Changes to existing
 objects: superset check list on `proposals.proposal_type`; nullable columns `notifications.condition_key/resolved_at/resolution`
 and `tasks.resolved_by_system_at/system_resolution`; triggers on `orders` (deferred confirmation hook, expired-quote guard,
@@ -115,9 +115,17 @@ parts 01, 02 and 04–07 (part 03's objects exist without a ledger row); on 11 N
 `autopilot_batch_2_part08` (completion samples, QC release guard, reject guard, proposal list filters). All 55 function
 bodies were compared with the file and match; the security advisor shows no new finding.
 
-Batch 3: not applied. Apply in order: `20261111100000_autopilot_batch_3.sql` (after batches 1 and 2),
-`20261111110000_stock_snapshot_open_reservations.sql`, `20261111120000_autopilot_pg_cron.sql`. Batch 3's five jobs
-(three hourly, one nightly, one at 08:00) run with the other Autopilot jobs.
+Batch 3: applied to the hosted project on 11 November 2026 (17:00–17:40 IST), in order:
+`20261111100000_autopilot_batch_3.sql` as `autopilot_batch_3_part01`–`part07` (split at top-level statement boundaries,
+the joined parts identical to the file), then `stock_snapshot_open_reservations`, then `autopilot_pg_cron`. Before part 07
+redefined `private.post_financial_receipt_atomic` and `private.enforce_financial_payment_reference`, their hosted bodies
+were compared with the `20261029130000` versions: identical apart from whitespace and one comment line. After the apply,
+all 80 function bodies created by the three files were compared with the files (ignoring whitespace and comment lines):
+80 match. 22 new tables with RLS; the six client entry points are executable by `authenticated` only; `private.ap_jobs_run`
+by neither clients nor the service role. Security advisor: no new finding beyond the six intended client entry points
+(same category as batches 1 and 2). pg_cron 1.6.4 is installed; `autopilot-hourly`, `autopilot-nightly` and
+`autopilot-morning` are active, owned by `postgres`. No job had run on hosted before this (the Vercel crons never deployed);
+the first scheduled run is 13:05 UTC (18:35 IST) on 11 November. Batch 3's five jobs run with the other Autopilot jobs.
 
 Scheduling: the Vercel project is on the Hobby plan, which accepts only daily crons and refused `5 * * * *`, so every
 deployment failed. `20261111120000_autopilot_pg_cron.sql` enables Supabase pg_cron and schedules `autopilot-hourly`
