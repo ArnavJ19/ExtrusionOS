@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { autoMapBank, buildStatementRows, findHeaderRow, parseBankAmount, parseBankDate, remitterFromNarration, bankMappingSchema } from "../lib/financials/bank-statement.ts";
+import { autoMapBank, buildStatementRows, findHeaderRow, markerSide, parseBankAmount, parseBankDate, remitterFromNarration, bankMappingSchema } from "../lib/financials/bank-statement.ts";
+import { parseCsv, parseSpreadsheetGrid } from "../lib/master-data/import/spreadsheet.ts";
 import { billingCommands, cashCommands, creditCommands, dupeCommands, inr, jobDraftCommands, quoteCommands, whatsappLink } from "../lib/order-to-cash/commands.ts";
 import { duplicateGate, duplicateMessage } from "../lib/order-to-cash/duplicates.ts";
 import { proposalHref, proposalSummary, proposalWhy, PROPOSAL_TYPE_KEYS } from "../lib/proposals/proposals.ts";
@@ -105,4 +106,36 @@ test("Batch 3 jobs and entry points are registered on the client side", () => {
   for (const rpc of ["ap_credit", "ap_jobdrafts", "ap_billing", "ap_cash", "ap_quotes", "ap_dupes"]) assert.match(gateway, new RegExp(`${rpc}: `), rpc);
   const routes = readFileSync(new URL("../lib/auth/route-permissions.ts", import.meta.url), "utf8");
   for (const route of ["/orders/credit", "/production/drafts", "/invoices/drafts", "/invoices/tax-rules", "/payments/bank", "/payments/reminders", "/settings/data/duplicates"]) assert.ok(routes.includes(`"${route}"`), route);
+});
+
+test("AP-024 a Dr/Cr column is read by its words: Deposit is a credit, Withdrawal and Dr are debits, anything else is reported", () => {
+  assert.equal(markerSide("Deposit"), "credit");
+  assert.equal(markerSide("CR"), "credit");
+  assert.equal(markerSide("Cr."), "credit");
+  assert.equal(markerSide("Dr."), "debit");
+  assert.equal(markerSide("D"), "debit");
+  assert.equal(markerSide("Withdrawal"), "debit");
+  assert.equal(markerSide("DEBIT"), "debit");
+  assert.equal(markerSide(""), null);
+  assert.equal(markerSide("Transfer"), "unknown");
+  const grid = [["Date", "Narration", "Amount", "Type"], ["03/11/2026", "CASH DEPOSIT BRANCH", "2,500.00", "Deposit"], ["03/11/2026", "ATM", "500.00", "Withdrawal"],
+    ["03/11/2026", "SOMETHING", "10.00", "Transfer"], ["03/11/2026", "NO TYPE", "-40.00", ""]];
+  const mapping = autoMapBank(grid[0]);
+  assert.deepEqual([mapping.amount, mapping.drcr], [2, 3]);
+  const { rows, errors } = buildStatementRows(grid, 0, mapping, "DD/MM/YYYY");
+  assert.deepEqual(rows.map(r => [r.narration, r.credit, r.debit]), [["CASH DEPOSIT BRANCH", "2500.00", null], ["ATM", null, "500.00"], ["NO TYPE", null, "40.00"]]);
+  assert.deepEqual(errors, [{ line_no: 3, error: 'Type "Transfer" is neither credit nor debit' }]);
+});
+
+test("AP-024 a statement whose first row is a one-cell bank name keeps every heading column", () => {
+  const csv = "HDFC BANK LTD\nAccount No : 50200012345678\n\nDate,Narration,Chq./Ref.No.,Value Dt,Withdrawal Amt.,Deposit Amt.,Closing Balance\n03/11/26,NEFT CR SHARMA FABRICATORS,SBIN1,03/11/26,,\"10,000.00\",\"1,10,000.00\"\n";
+  assert.equal(parseCsv(csv).headers.length, 1, "the master-data reader still takes the first row as its headings");
+  const grid = parseSpreadsheetGrid("hdfc.csv", Buffer.from(csv));
+  const header = findHeaderRow(grid);
+  assert.equal(header, 2);
+  assert.equal(grid[header].length, 7);
+  const mapping = autoMapBank(grid[header]);
+  assert.deepEqual(mapping, { date: 0, narration: 1, reference: 2, credit: 5, debit: 4, amount: null, drcr: null });
+  const { rows } = buildStatementRows(grid, header, mapping, "DD/MM/YY");
+  assert.deepEqual(rows.map(r => [r.txn_date, r.credit, r.reference]), [["2026-11-03", "10000.00", "SBIN1"]]);
 });

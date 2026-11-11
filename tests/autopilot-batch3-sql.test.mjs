@@ -484,3 +484,48 @@ test("AP-024 the remitter rule is the same in SQL and TypeScript", async () => {
     assert.equal(sql, remitterFromNarration(narration), narration);
   }
 });
+
+test("AP-024 equal lines without a bank reference are separate transactions; a re-imported or overlapping file still adds nothing twice", async () => {
+  const deposit = no => ({ line_no: no, txn_date: istDay(-2), narration: "CASH DEPOSIT", credit: "2500" });
+  const first = await statement(fp("1"), [deposit(1), deposit(2), { line_no: 3, txn_date: istDay(-2), narration: "BY CLG", reference: "CHQ-445", credit: "900" },
+    { line_no: 4, txn_date: istDay(-2), narration: "BY CLG", reference: "CHQ-445", credit: "900" }]);
+  assert.equal(first.new_lines, 3, "both ₹2,500 cash deposits are kept; a repeated cheque reference is one transaction");
+  assert.equal(first.duplicates, 1);
+  assert.equal(first.repeated_in_file, 1);
+  assert.equal(await count("select count(*) c from bank_statement_lines where narration='CASH DEPOSIT'"), 2);
+  const again = await statement(fp("2"), [deposit(1), deposit(2), deposit(3)]);
+  assert.deepEqual([again.new_lines, again.duplicates], [1, 2], "an overlapping file adds only the third deposit");
+  assert.equal(await count("select count(*) c from bank_statement_lines where narration='CASH DEPOSIT'"), 3);
+});
+
+test("AP-024 a reversed bank line can be receipted again under its own reference; a live receipt still blocks the reference", async () => {
+  await statement(fp("3"), [{ line_no: 1, txn_date: istDay(-1), narration: "NEFT CR-SBIN0001234-SHARMA FABRICATORS-OMX/26-27/0101", reference: "SBIN-REPOST", credit: "10000" }]);
+  const line = await f.one("select * from bank_statement_lines where reference='SBIN-REPOST'");
+  const first = await f.one("select * from proposals where proposal_type='bank.receipt_match' and target_key=$1 and status='open'", [line.id]);
+  assert.equal((await decide(first.id, "accept")).state, "accepted");
+  const firstReceipt = (await f.one("select receipt_event_id from bank_statement_lines where id=$1", [line.id])).receipt_event_id;
+  await cash("bank_reverse", { line_id: line.id, reason: "Matched to the wrong customer at first" });
+  assert.equal((await f.one("select status from financial_receipt_events where id=$1", [firstReceipt])).status, "reversed");
+  await cash("bank_assign", { line_id: line.id, customer_id: i.customer2 });
+  const second = await f.one("select * from proposals where proposal_type='bank.receipt_match' and target_key=$1 and status='open'", [line.id]);
+  assert.ok(second, "the freed line has a new match");
+  assert.equal((await decide(second.id, "accept")).state, "accepted", "the corrected match posts with the original UTR and date");
+  const done = await f.one("select state, reversal_count from bank_statement_lines where id=$1", [line.id]);
+  assert.deepEqual([done.state, done.reversal_count], ["receipted", 1]);
+  assert.equal(n((await f.one("select balance_due from invoices where id=$1", [i.inv1])).balance_due), 0);
+  await assert.rejects(() => f.asUser("select public.post_financial_receipt_atomic($1,$2,$3)", [{ amount: 100, payment_date: istDay(-1), payment_method: "bank_transfer",
+    reference_number: "sbin-repost" }, [{ invoice_id: i.inv2, amount: 100 }], nid(3710)], i.accounts), /already recorded/);
+});
+
+test("Dashboard stock snapshot counts open reservation quantities, not whole batches", async () => {
+  const batch = nid(3720), full = nid(3721), r1 = nid(3722), r2 = nid(3723);
+  await f.seed(`insert into profile_stock_batches(id,company_id,profile_id,finish,piece_length_m,length_m,quantity_pieces,total_weight_kg,location,status,origin_type,qc_status)
+    values($1,$3,$4,'Mill finish',6,600,100,100,'Rack A','available','opening_balance','released'),($2,$3,$4,'Mill finish',6,300,50,50,'Rack B','reserved','opening_balance','released')`,
+    [batch, full, i.company, i.profile2]);
+  await f.seed(`insert into profile_stock_reservations(id,company_id,profile_stock_batch_id,profile_id,order_id,reserved_weight_kg,initial_reserved_weight_kg,status)
+    values($1,$3,$4,$6,$7,20,20,'active'),($2,$3,$5,$6,$7,50,50,'active')`, [r1, r2, i.company, batch, full, i.profile2, i.order]);
+  await f.seed(`insert into profile_stock_consumptions(company_id,reservation_id,profile_stock_batch_id,profile_id,order_id,dispatch_id,consumed_weight_kg)
+    values($1,$2,$3,$4,$5,$6,15)`, [i.company, r2, full, i.profile2, i.order, i.dispatch]);
+  const snap = (await f.asUser("select public.get_stock_snapshot() data", [], i.owner))[0].data;
+  assert.equal(n(snap.reservedKg), 55, "20 kg held on the 100 kg batch plus the 35 kg still open on the reserved batch");
+});

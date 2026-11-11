@@ -1443,7 +1443,7 @@ begin
   if v_oa > 0 and v_ref is not null and (exists (select 1 from public.customer_on_account_credits c where c.company_id = p_company and c.status <> 'reversed'
       and c.payment_method = v_method and c.received_on = v_date and lower(btrim(coalesce(c.reference, ''))) = lower(v_ref))
     or (v_total = 0 and exists (select 1 from public.financial_receipt_events e where e.company_id = p_company and e.payment_method = v_method and e.payment_date = v_date
-      and lower(btrim(coalesce(e.reference_number, ''))) = lower(v_ref)))) then
+      and e.status <> 'reversed' and lower(btrim(coalesce(e.reference_number, ''))) = lower(v_ref)))) then
     raise exception 'AP: This reference is already recorded for this date and method.';
   end if;
   if v_total > 0 then
@@ -1692,6 +1692,7 @@ declare
   v_stmt uuid; v_fp text := p ->> 'file_fingerprint'; v_profile uuid; r jsonb; v_date date; v_credit numeric; v_debit numeric; v_dir text; v_amount numeric; v_line uuid;
   v_new integer := 0; v_dup integer := 0; v_credits integer := 0; v_errors jsonb := '[]'::jsonb; v_no integer; v_narr text; v_ref text; v_class text;
   v_exact integer := 0; v_likely integer := 0; v_unknown integer := 0; v_min date; v_max date; v_existing uuid;
+  v_base text; v_occ integer; v_seen jsonb := '{}'::jsonb; v_repeated integer := 0;
 begin
   if coalesce(v_fp, '') !~ '^[0-9a-f]{32,64}$' then raise exception 'AP: The file fingerprint is missing.'; end if;
   if jsonb_typeof(p -> 'rows') <> 'array' or jsonb_array_length(p -> 'rows') not between 1 and 3000 then raise exception 'AP: A statement must have 1 to 3,000 rows.'; end if;
@@ -1723,9 +1724,20 @@ begin
     v_amount := round(case when v_dir = 'credit' then v_credit else v_debit end, 2);
     if v_amount > 999999999999.99 then v_errors := v_errors || jsonb_build_object('line_no', v_no, 'error', 'Amount is too large'); continue; end if;
     v_line := null;
+    -- Two real transactions without a bank reference can share date, direction, amount and narration (two equal cash
+    -- deposits on one day), so the n-th such occurrence within this file gets its own key. A re-imported or overlapping file
+    -- repeats the same occurrences and still imports nothing twice. A bank reference (UTR, cheque number) identifies one
+    -- transaction, so a repeated reference stays a duplicate.
+    v_base := md5(v_date::text || '|' || v_dir || '|' || v_amount::text || '|' || lower(coalesce(v_ref, private.ap3_norm(v_narr))));
+    v_occ := 1;
+    if v_ref is null then
+      v_occ := coalesce((v_seen ->> v_base)::integer, 0) + 1;
+      v_seen := jsonb_set(v_seen, array[v_base], to_jsonb(v_occ));
+    end if;
+    if v_occ > 1 then v_repeated := v_repeated + 1; end if;
     insert into public.bank_statement_lines(company_id, statement_id, line_no, txn_date, narration, reference, direction, amount, dedupe_key, remitter, state, ignored_reason)
       values (p_company, v_stmt, greatest(v_no, 1), v_date, v_narr, v_ref, v_dir, v_amount,
-        md5(v_date::text || '|' || v_dir || '|' || v_amount::text || '|' || lower(coalesce(v_ref, private.ap3_norm(v_narr)))), private.ap3_remitter(v_narr),
+        case when v_occ = 1 then v_base else md5(v_base || '#' || v_occ) end, private.ap3_remitter(v_narr),
         case when v_dir = 'debit' then 'ignored' else 'unmatched' end, case when v_dir = 'debit' then 'Debit: money paid out, not a customer receipt' end)
       on conflict (company_id, dedupe_key) do nothing returning id into v_line;
     if v_line is null then v_dup := v_dup + 1; continue; end if;
@@ -1740,7 +1752,7 @@ begin
   update public.bank_statements set line_count = jsonb_array_length(p -> 'rows'), new_lines = v_new, duplicate_lines = v_dup, credit_lines = v_credits,
     period_from = v_min, period_to = v_max where id = v_stmt;
   return jsonb_build_object('statement_id', v_stmt, 'already_imported', false, 'rows', jsonb_array_length(p -> 'rows'), 'new_lines', v_new, 'duplicates', v_dup,
-    'credits', v_credits, 'exact', v_exact, 'likely', v_likely, 'unknown', v_unknown, 'errors', v_errors);
+    'credits', v_credits, 'exact', v_exact, 'likely', v_likely, 'unknown', v_unknown, 'repeated_in_file', v_repeated, 'errors', v_errors);
 end;
 $$;
 revoke all on function private.ap3_bank_import(uuid, uuid, jsonb) from public, anon, authenticated;
@@ -2861,5 +2873,238 @@ end;
 $$;
 revoke all on function public.ap_dupes(text, jsonb) from public, anon;
 grant execute on function public.ap_dupes(text, jsonb) to authenticated;
+
+-- ---------------------------------------------------------------------------------------------------------------
+-- AP-024 review fix: a fully reversed receipt no longer blocks its reference. Reversing a wrongly matched bank line and
+-- accepting the corrected match reposts the same UTR and date; live (posted or partly reversed) receipts keep the
+-- duplicate-reference protection. Both bodies are the 20261029130000 versions with only the status filter added.
+-- ---------------------------------------------------------------------------------------------------------------
+create or replace function private.post_financial_receipt_atomic(
+  p_receipt jsonb,
+  p_allocations jsonb,
+  p_idempotency_key uuid
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, private
+as $$
+declare
+  v_company_id uuid := private.get_current_user_company_id();
+  v_event_id uuid;
+  v_existing public.financial_receipt_events%rowtype;
+  v_amount numeric(14,2);
+  v_exact_amount numeric;
+  v_payment_date date;
+  v_payment_method text;
+  v_reference_number text := nullif(trim(p_receipt ->> 'reference_number'), '');
+  v_notes text := nullif(trim(p_receipt ->> 'notes'), '');
+  v_source_type text := coalesce(nullif(p_receipt ->> 'source_type', ''), 'manual');
+  v_source_batch_id uuid := nullif(p_receipt ->> 'source_import_batch_id', '')::uuid;
+  v_source_row_number integer := nullif(p_receipt ->> 'source_row_number', '')::integer;
+  v_total numeric(14,2) := 0;
+  v_count integer := 0;
+  v_allocations jsonb;
+  v_fingerprint text;
+  v_item jsonb;
+  v_invoice_id uuid;
+  v_allocation_amount numeric(14,2);
+  v_allocation_key uuid;
+  v_payment jsonb;
+  v_payment_id uuid;
+  v_payment_result jsonb;
+  v_result_allocations jsonb;
+begin
+  if v_company_id is null or auth.uid() is null then raise exception 'Authentication required' using errcode = '42501'; end if;
+  if private.get_current_user_role() not in ('owner', 'admin', 'accounts') then raise exception 'Permission denied for financial receipts' using errcode = '42501'; end if;
+  if p_idempotency_key is null then raise exception 'Receipt idempotency key is required'; end if;
+  if jsonb_typeof(p_receipt) <> 'object' or jsonb_typeof(coalesce(p_allocations, 'null'::jsonb)) <> 'array'
+    or jsonb_array_length(p_allocations) < 1 or jsonb_array_length(p_allocations) > 100 then
+    raise exception 'Provide a receipt and between one and one hundred reviewed invoice allocations';
+  end if;
+
+  v_exact_amount := nullif(p_receipt ->> 'amount', '')::numeric;
+  if v_exact_amount is null or v_exact_amount <= 0 or v_exact_amount > 999999999999.99 or v_exact_amount <> round(v_exact_amount, 2) then
+    raise exception 'Receipt amount must be a positive finite INR amount with at most two decimal places';
+  end if;
+  v_amount := v_exact_amount;
+  v_payment_date := nullif(p_receipt ->> 'payment_date', '')::date;
+  v_payment_method := nullif(p_receipt ->> 'payment_method', '');
+  if v_payment_date is null or v_payment_date > current_date then raise exception 'Receipt date must be valid and cannot be in the future'; end if;
+  if v_payment_method is null or v_payment_method not in ('bank_transfer', 'upi', 'cheque', 'cash', 'credit_note', 'other') then raise exception 'Select a valid receipt or credit adjustment method'; end if;
+  if v_payment_method in ('bank_transfer', 'upi', 'cheque') and v_reference_number is null then raise exception 'Reference number is required for bank, UPI, and cheque receipts'; end if;
+  if v_source_type not in ('manual', 'csv') then raise exception 'Unsupported receipt source'; end if;
+  if (v_source_type = 'csv') <> (v_source_batch_id is not null and v_source_row_number is not null) then raise exception 'Receipt import lineage is incomplete'; end if;
+  if v_notes is not null and length(v_notes) > 2000 then raise exception 'Receipt notes are too long'; end if;
+
+  for v_item in select value from jsonb_array_elements(p_allocations)
+  loop
+    if jsonb_typeof(v_item) <> 'object' then raise exception 'Each invoice allocation must be an object'; end if;
+    v_invoice_id := nullif(v_item ->> 'invoice_id', '')::uuid;
+    v_exact_amount := nullif(v_item ->> 'amount', '')::numeric;
+    if v_invoice_id is null or v_exact_amount is null or v_exact_amount <= 0 or v_exact_amount > 999999999999.99
+      or v_exact_amount <> round(v_exact_amount, 2) then
+      raise exception 'Each invoice allocation requires a positive finite amount with at most two decimal places';
+    end if;
+    v_total := v_total + v_exact_amount;
+    v_count := v_count + 1;
+  end loop;
+  if (select count(distinct (value ->> 'invoice_id')::uuid) from jsonb_array_elements(p_allocations)) <> v_count then
+    raise exception 'Combine duplicate allocations for the same invoice before review';
+  end if;
+  if v_total <> v_amount then raise exception 'Reviewed invoice allocations must equal the actual receipt amount exactly'; end if;
+
+  select jsonb_agg(jsonb_build_object('invoice_id', (value ->> 'invoice_id')::uuid, 'amount', (value ->> 'amount')::numeric) order by (value ->> 'invoice_id')::uuid)
+  into v_allocations from jsonb_array_elements(p_allocations);
+  v_fingerprint := md5(jsonb_build_object(
+    'receipt', jsonb_build_object('amount', v_amount, 'payment_date', v_payment_date, 'payment_method', v_payment_method,
+      'reference_number', v_reference_number, 'notes', v_notes, 'source_type', v_source_type,
+      'source_import_batch_id', v_source_batch_id, 'source_row_number', v_source_row_number),
+    'allocations', v_allocations
+  )::text);
+
+  perform pg_advisory_xact_lock(hashtextextended(v_company_id::text || ':financial-receipt:' || p_idempotency_key::text, 0));
+  select * into v_existing from public.financial_receipt_events
+  where company_id = v_company_id and idempotency_key = p_idempotency_key for update;
+  if found then
+    if v_existing.request_fingerprint <> v_fingerprint then raise exception 'Receipt retry identity was already used with different receipt or allocations'; end if;
+    select coalesce(jsonb_agg(jsonb_build_object(
+      'invoice_id', allocation.invoice_id, 'payment_id', allocation.payment_id, 'amount', allocation.amount,
+      'payment_status', payment.payment_status, 'balance_due', invoice.balance_due, 'invoice_status', invoice.status
+    ) order by allocation.invoice_id), '[]'::jsonb)
+    into v_result_allocations
+    from public.financial_receipt_allocations allocation
+    join public.payments payment on payment.id = allocation.payment_id and payment.company_id = allocation.company_id
+    join public.invoices invoice on invoice.id = allocation.invoice_id and invoice.company_id = allocation.company_id
+    where allocation.receipt_event_id = v_existing.id and allocation.company_id = v_company_id;
+    return jsonb_build_object('receipt_id', v_existing.id, 'received_amount', v_existing.received_amount,
+      'payment_method', v_existing.payment_method, 'status', v_existing.status, 'allocations', v_result_allocations,
+      'idempotent_replay', true);
+  end if;
+
+  if v_reference_number is not null then
+    perform pg_advisory_xact_lock(hashtextextended(v_company_id::text || ':receipt-reference:' || v_payment_method || ':' || v_payment_date::text || ':' || lower(v_reference_number), 0));
+    if exists (select 1 from public.financial_receipt_events event
+      where event.company_id = v_company_id and event.payment_method = v_payment_method
+        and event.payment_date = v_payment_date and lower(trim(event.reference_number)) = lower(v_reference_number)
+        and event.status <> 'reversed')
+      or exists (select 1 from public.payments payment
+        where payment.company_id = v_company_id and payment.payment_method = v_payment_method
+          and payment.payment_date = v_payment_date and lower(trim(payment.reference_number)) = lower(v_reference_number)
+          and payment.payment_status = 'PAID') then
+      raise exception 'This receipt reference is already recorded for this company, method, and date';
+    end if;
+  end if;
+
+  -- Lock invoice rows in stable order before the canonical payment writer locks them again.
+  for v_item in select value from jsonb_array_elements(v_allocations) order by (value ->> 'invoice_id')::uuid
+  loop
+    v_invoice_id := (v_item ->> 'invoice_id')::uuid;
+    perform private.recalculate_invoice_collection_state(v_invoice_id, v_company_id);
+    if not exists (select 1 from public.invoices invoice where invoice.id = v_invoice_id and invoice.company_id = v_company_id
+      and invoice.status in ('generated', 'sent', 'partially_paid', 'overdue') and invoice.balance_due >= (v_item ->> 'amount')::numeric) then
+      raise exception 'An allocated invoice is unavailable or its open balance changed; review allocations again';
+    end if;
+  end loop;
+
+  insert into public.financial_receipt_events(company_id, idempotency_key, request_fingerprint, source_type,
+    source_import_batch_id, source_row_number, received_amount, payment_date, payment_method, reference_number, notes, created_by)
+  values (v_company_id, p_idempotency_key, v_fingerprint, v_source_type, v_source_batch_id, v_source_row_number,
+    v_amount, v_payment_date, v_payment_method, v_reference_number, v_notes, auth.uid())
+  returning id into v_event_id;
+  for v_item in select value from jsonb_array_elements(v_allocations) order by (value ->> 'invoice_id')::uuid
+  loop
+    v_invoice_id := (v_item ->> 'invoice_id')::uuid;
+    v_allocation_amount := (v_item ->> 'amount')::numeric;
+    v_allocation_key := (substr(md5(v_event_id::text || ':' || v_invoice_id::text), 1, 8) || '-' ||
+      substr(md5(v_event_id::text || ':' || v_invoice_id::text), 9, 4) || '-4' ||
+      substr(md5(v_event_id::text || ':' || v_invoice_id::text), 14, 3) || '-8' ||
+      substr(md5(v_event_id::text || ':' || v_invoice_id::text), 18, 3) || '-' ||
+      substr(md5(v_event_id::text || ':' || v_invoice_id::text), 21, 12))::uuid;
+    v_payment := jsonb_build_object('payment_date', v_payment_date, 'amount', v_allocation_amount,
+      'payment_method', v_payment_method, 'reference_number', v_reference_number, 'notes', v_notes,
+      'idempotency_key', v_allocation_key);
+    insert into private.financial_receipt_authorizations(transaction_id,receipt_event_id,company_id,invoice_id,amount,idempotency_key)
+    values(txid_current(),v_event_id,v_company_id,v_invoice_id,v_allocation_amount,v_allocation_key);
+    v_payment_result := private.record_payment_atomic(v_invoice_id, v_payment);
+    delete from private.financial_receipt_authorizations
+    where transaction_id=txid_current() and receipt_event_id=v_event_id and invoice_id=v_invoice_id;
+    v_payment_id := (v_payment_result ->> 'payment_id')::uuid;
+    update public.payments set receipt_event_id = v_event_id
+    where id = v_payment_id and company_id = v_company_id;
+    insert into public.financial_receipt_allocations(company_id, receipt_event_id, invoice_id, payment_id, amount)
+    values (v_company_id, v_event_id, v_invoice_id, v_payment_id, v_allocation_amount);
+  end loop;
+
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'invoice_id', allocation.invoice_id, 'payment_id', allocation.payment_id, 'amount', allocation.amount,
+    'payment_status', payment.payment_status, 'balance_due', invoice.balance_due, 'invoice_status', invoice.status
+  ) order by allocation.invoice_id), '[]'::jsonb)
+  into v_result_allocations
+  from public.financial_receipt_allocations allocation
+  join public.payments payment on payment.id = allocation.payment_id and payment.company_id = allocation.company_id
+  join public.invoices invoice on invoice.id = allocation.invoice_id and invoice.company_id = allocation.company_id
+  where allocation.receipt_event_id = v_event_id and allocation.company_id = v_company_id;
+  return jsonb_build_object('receipt_id', v_event_id, 'received_amount', v_amount, 'payment_method', v_payment_method,
+    'status', 'posted', 'allocations', v_result_allocations, 'idempotent_replay', false);
+end;
+$$;
+
+create or replace function private.enforce_financial_payment_reference()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, private
+as $$
+declare
+  v_receipt_event_id uuid;
+  v_receipt_event public.financial_receipt_events%rowtype;
+begin
+  if tg_op = 'UPDATE' and old.receipt_event_id is not null then
+    if row(new.company_id,new.invoice_id,new.amount,new.payment_date,new.payment_method,new.reference_number,new.idempotency_key,new.receipt_event_id)
+      is distinct from row(old.company_id,old.invoice_id,old.amount,old.payment_date,old.payment_method,old.reference_number,old.idempotency_key,old.receipt_event_id) then
+      raise exception 'Grouped receipt allocation facts are immutable; reverse the payment instead';
+    end if;
+    v_receipt_event_id := old.receipt_event_id;
+  else
+    select event.* into v_receipt_event
+    from private.financial_receipt_authorizations permit
+    join public.financial_receipt_events event on event.id=permit.receipt_event_id
+      and event.company_id=permit.company_id
+    where permit.transaction_id=txid_current() and permit.company_id=new.company_id
+      and permit.invoice_id=new.invoice_id and permit.amount=new.amount
+      and permit.idempotency_key=new.idempotency_key and event.created_by=auth.uid()
+      and event.payment_method=new.payment_method and event.payment_date=new.payment_date
+      and event.reference_number is not distinct from new.reference_number;
+    if found then v_receipt_event_id := v_receipt_event.id; end if;
+    if new.receipt_event_id is not null and new.receipt_event_id is distinct from v_receipt_event_id then
+      raise exception 'Receipt allocation authorization is unavailable' using errcode='42501';
+    end if;
+    new.receipt_event_id := v_receipt_event_id;
+  end if;
+
+  if new.payment_status <> 'PAID' or new.payment_method not in ('bank_transfer', 'upi', 'cheque')
+    or nullif(trim(new.reference_number), '') is null then
+    return new;
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended(new.company_id::text || ':receipt-reference:' || new.payment_method || ':' || new.payment_date::text || ':' || lower(trim(new.reference_number)), 0));
+
+  if exists (select 1 from public.financial_receipt_events event
+      where event.company_id = new.company_id and event.payment_method = new.payment_method
+        and event.payment_date = new.payment_date and lower(trim(event.reference_number)) = lower(trim(new.reference_number))
+        and event.id is distinct from v_receipt_event_id
+        and event.status <> 'reversed')
+    or exists (select 1 from public.payments payment
+      where payment.company_id = new.company_id and payment.payment_method = new.payment_method
+        and payment.payment_date = new.payment_date and lower(trim(payment.reference_number)) = lower(trim(new.reference_number))
+        and payment.payment_status = 'PAID' and payment.id is distinct from new.id
+        and (v_receipt_event_id is null or payment.receipt_event_id is distinct from v_receipt_event_id)) then
+    raise exception 'This payment reference is already recorded for this company, method, and date';
+  end if;
+
+  if v_receipt_event_id is not null then new.receipt_event_id := v_receipt_event_id; end if;
+  return new;
+end;
+$$;
 
 commit;

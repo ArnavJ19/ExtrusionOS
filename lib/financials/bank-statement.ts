@@ -87,6 +87,18 @@ export function parseBankAmount(value: string | undefined): number | null {
 
 const money = (value: number) => value.toFixed(2);
 
+/**
+ * The side named in a single-amount file's Dr/Cr (type) column: explicit words only, so "Deposit" is a credit and never
+ * read as a debit by its first letter. Blank → null (the amount's sign or Dr suffix decides); anything else → "unknown".
+ */
+export function markerSide(value: string): "credit" | "debit" | "unknown" | null {
+  const text = value.trim().toLowerCase().replace(/[^a-z ]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!text) return null;
+  if (/^(dr|d|debit|debited|withdrawal|withdrawals|withdraw|payment|paid out)( entry| txn| transaction)?$/.test(text)) return "debit";
+  if (/^(cr|c|credit|credited|deposit|deposits|deposited|receipt|received)( entry| txn| transaction)?$/.test(text)) return "credit";
+  return "unknown";
+}
+
 export function buildStatementRows(grid: string[][], headerIndex: number, mapping: BankMapping, format: BankDateFormat): { rows: StatementRow[]; errors: StatementRowError[] } {
   const rows: StatementRow[] = [], errors: StatementRowError[] = [];
   for (let index = headerIndex + 1; index < grid.length; index++) {
@@ -103,8 +115,9 @@ export function buildStatementRows(grid: string[][], headerIndex: number, mappin
     if (mapping.credit !== null || mapping.debit !== null) {
       credit = parseBankAmount(cell(mapping.credit)); debit = parseBankAmount(cell(mapping.debit));
     } else {
-      const amount = parseBankAmount(cell(mapping.amount)), marker = cell(mapping.drcr).toLowerCase();
-      const isDebit = /^d|withdraw/.test(marker) || /dr\.?$/i.test(cell(mapping.amount)) || (amount !== null && amount < 0);
+      const amount = parseBankAmount(cell(mapping.amount)), marker = markerSide(cell(mapping.drcr));
+      if (marker === "unknown") { errors.push({ line_no: line, error: `Type "${cell(mapping.drcr)}" is neither credit nor debit` }); continue; }
+      const isDebit = marker === "debit" || (marker === null && (/dr\.?$/i.test(cell(mapping.amount)) || (amount !== null && amount < 0)));
       credit = isDebit ? null : amount; debit = isDebit && amount !== null ? Math.abs(amount) : null;
     }
     if (Number.isNaN(credit) || Number.isNaN(debit)) { errors.push({ line_no: line, error: "Amount cannot be read" }); continue; }

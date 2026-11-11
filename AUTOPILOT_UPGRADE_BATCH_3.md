@@ -86,8 +86,9 @@ dispatch. No customer-facing view changed.
 | Check | Result |
 | --- | --- |
 | Migration chain replay (PGlite) | Full chain (296 files including this migration), 0 failures |
-| tests/autopilot-batch3-sql.test.mjs | 25 passed (including the SQL/TS remitter parity and the RLS/grant audit) |
-| tests/autopilot-batch3.test.mjs | 8 passed |
+| tests/autopilot-batch3-sql.test.mjs | 28 passed (including the SQL/TS remitter parity, the RLS/grant audit and the three review-fix scenarios) |
+| tests/autopilot-batch3.test.mjs | 10 passed |
+| npm test after the review fixes (11 November) | 3,374 tests: 3,357 passed, 17 failed. 2 are the NOV-002 workspace pins (`tests/nov-batch2-browser.test.mjs`, the earlier `workspace-shortcuts.tsx` change). 15 were caused by batch 3 and are fixed and re-run: the batch 9 migration-order pin did not allow `20261111*` files (1), and the commercial workflow browser bundle (`scripts/lib/workflow-browser-bundle.mjs`) did not stub the Autopilot action now used by the quotation detail page's validity panel (14; now 13/13 passing). The batch 3 browser suite passes 12/12 alone; one 1280 px credit-hold check saw two status messages once when run alongside other suites |
 | tests/autopilot-batch3-browser.test.mjs | 12 passed at 375 px and 1280 px; screenshots in docs/evidence/AUTOPILOT_BATCH_3 |
 | tests/autopilot-batch1-sql.test.mjs | Callable-function list updated for the six new entry points |
 | npm run lint | 0 errors from this batch. 1 error remains in `audit-output/EXTRUSIONOS_MASTER_AUDIT_2026-11-11/evidence/capture-inventory.mjs` (a folder being written outside this batch) plus 4 earlier warnings in batch 8 tests |
@@ -97,6 +98,16 @@ dispatch. No customer-facing view changed.
 | In-app browser (screens) | Fixture server with the real screens and the real gateway action on the replayed local database: every screen above at 375 px and 1280 px, no console errors and no sideways scroll |
 | In-app browser (real app) | `next dev`: `/login` 200; all seven new routes compile and send an unsigned request to the sign-in check (307). The signed-in pane reaches "Account details are temporarily unavailable" because the hosted database has no company profile for that login since the 9 November wipe, so the screens cannot be shown on the real app yet |
 
+## Pull request review fixes (Codex review of 3bd03b4 on PR #7)
+
+| Finding | Fix | Test |
+| --- | --- | --- |
+| P1: two equal lines without a bank reference (two ₹2,500 cash deposits with the same narration) got one dedupe key, so the second was dropped | Lines without a reference count occurrences of the same content within the file; the n-th occurrence gets its own key. Re-imported and overlapping files still repeat the same occurrences and import nothing twice. A repeated bank reference (UTR, cheque number) stays one transaction. The import result reports `repeated_in_file` | SQL: two deposits kept, a repeated cheque reference deduped, an overlapping file adds only the third deposit |
+| P1: a single-amount file with a `Type` of "Deposit" was read as a debit (`/^d/`) and ignored | `markerSide()` reads explicit words only (Cr/Credit/Deposit/Receipt vs Dr/D/Debit/Withdrawal/Payment); any other word is reported on the row instead of guessed; a blank type falls back to the amount's sign or Dr suffix | Unit: marker words, Deposit → credit, unknown type reported |
+| P2: rows were cut to the first row's width before the bank's heading row was found, so a one-cell "HDFC BANK LTD" line reduced the headings to `Date` | `parseSpreadsheetGrid()` returns the untruncated grid; the statement reader finds the heading row on it. The master-data import reader is unchanged | Unit: CSV with a bank-name line keeps all seven heading columns |
+| P2: after reversing a wrongly matched bank line, the corrected match could not post because the canonical receipt writer refused the reference of a fully reversed receipt | `private.post_financial_receipt_atomic` and the payment reference trigger ignore receipt events whose status is `reversed` (same bodies otherwise); live and partly reversed receipts still block the reference. The on-account-only check does the same | SQL: reverse, reassign, accept again → receipted with the original UTR; a live receipt with that UTR is still refused |
+| P2: the dashboard "Reserved for orders" figure summed whole batches in status `reserved` | New migration `20261111110000_stock_snapshot_open_reservations.sql` (the original snapshot is already applied to hosted): open reservation quantity = initial reserved − consumed, never negative, the basis of `private.profile_stock_balance` | SQL: 20 kg held on a 100 kg batch plus 35 kg open of a 50 kg reservation → 55 kg |
+
 ## Hosted migration state
 
 Batch 2: `20261110100000_autopilot_batch_2.sql` is now fully applied to the hosted project. An earlier session had applied
@@ -104,8 +115,11 @@ parts 01, 02 and 04–07 (part 03's objects exist without a ledger row); on 11 N
 `autopilot_batch_2_part08` (completion samples, QC release guard, reject guard, proposal list filters). All 55 function
 bodies were compared with the file and match; the security advisor shows no new finding.
 
-Batch 3: not applied. Apply `20261111100000_autopilot_batch_3.sql` after batches 1 and 2. Its five jobs run from the
-existing cron route (three hourly, one nightly, one at 08:00).
+Batch 3: not applied. Apply `20261111100000_autopilot_batch_3.sql` after batches 1 and 2, then
+`20261111110000_stock_snapshot_open_reservations.sql`. Its five jobs run from the existing cron route (three hourly, one
+nightly, one at 08:00). The Vercel project is on the Hobby plan, which refuses the hourly cron in `vercel.json`
+(`5 * * * *`), so preview and production deployments fail until the hourly schedule is moved off Vercel Cron or the plan
+is upgraded.
 
 ## Remaining acceptance
 

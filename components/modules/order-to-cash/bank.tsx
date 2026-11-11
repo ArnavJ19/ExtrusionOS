@@ -65,7 +65,7 @@ function Upload({ onImported }: { onImported: () => void }) {
       <div className="flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={run} className={buttonClass}>Import and match</button><button type="button" onClick={() => file && check(file)} className={secondaryClass}>Re-read with these columns</button></div>
     </div> : null}
     {result ? <p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900">{result.already_imported ? "This file was imported before; nothing changed."
-      : `${result.new_lines} new line(s), ${result.duplicates} already imported. Credits: ${result.exact} exact, ${result.likely} likely, ${result.unknown} to assign.${(result.errors?.length ?? 0) + result.file_errors.length ? ` ${(result.errors?.length ?? 0) + result.file_errors.length} row(s) could not be read.` : ""}`}</p> : null}
+      : `${result.new_lines} new line(s), ${result.duplicates} already imported.${result.repeated_in_file ? ` ${result.repeated_in_file} line(s) repeat another line in this file with no bank reference and were kept as separate transactions; check them on the statement.` : ""} Credits: ${result.exact} exact, ${result.likely} likely, ${result.unknown} to assign.${(result.errors?.length ?? 0) + result.file_errors.length ? ` ${(result.errors?.length ?? 0) + result.file_errors.length} row(s) could not be read.` : ""}`}</p> : null}
     <Message value={message} />
   </Section>;
 }

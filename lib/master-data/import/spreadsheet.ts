@@ -59,7 +59,14 @@ function textOf(fragment: string) {
   return decodeXml([...fragment.matchAll(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g)].map(match => match[1]).join(""));
 }
 
+type Table = Array<{ row: number; cells: string[] }>;
+
 export function parseXlsx(buffer: Buffer): Sheet {
+  const { table, sheetName } = xlsxTable(buffer);
+  return toSheet(table, sheetName);
+}
+
+function xlsxTable(buffer: Buffer): { table: Table; sheetName: string | null } {
   const read = readZip(buffer);
   const workbook = read("xl/workbook.xml");
   if (!workbook) throw new SheetError("This file has no workbook. Save it as .xlsx or .csv and try again.");
@@ -99,10 +106,14 @@ export function parseXlsx(buffer: Buffer): Sheet {
     table.push({ row: rowNumber, cells: Array.from(cells, value => value ?? "") });
     if (table.length > MAX_SHEET_ROWS + 1) throw new SheetError(`A sheet may hold up to ${MAX_SHEET_ROWS.toLocaleString("en-IN")} rows.`);
   }
-  return toSheet(table, sheetName);
+  return { table, sheetName };
 }
 
 export function parseCsv(text: string): Sheet {
+  return toSheet(csvTable(text), null);
+}
+
+function csvTable(text: string): Table {
   const source = text.replace(/^﻿/, "");
   const firstLine = source.split(/\r?\n/, 1)[0] ?? "";
   const delimiter = [",", ";", "\t"].map(candidate => ({ candidate, count: firstLine.split(candidate).length })).sort((a, b) => b.count - a.count)[0].candidate;
@@ -122,7 +133,7 @@ export function parseCsv(text: string): Sheet {
     if (table.length > MAX_SHEET_ROWS + 1) throw new SheetError(`A sheet may hold up to ${MAX_SHEET_ROWS.toLocaleString("en-IN")} rows.`);
   }
   if (field !== "" || cells.length) pushRow();
-  return toSheet(table, null);
+  return table;
 }
 
 function toSheet(table: Array<{ row: number; cells: string[] }>, sheetName: string | null): Sheet {
@@ -134,11 +145,26 @@ function toSheet(table: Array<{ row: number; cells: string[] }>, sheetName: stri
   return { headers, rows: rows.map(entry => ({ row: entry.row, cells: headers.map((_, index) => (entry.cells[index] ?? "").trim()) })), sheetName };
 }
 
-export function parseSpreadsheet(fileName: string, buffer: Buffer): Sheet {
+function readTable(fileName: string, buffer: Buffer): { table: Table; sheetName: string | null } {
   if (buffer.length > MAX_SHEET_BYTES) throw new SheetError("Keep the file under 4 MB (about 20,000 rows of an ordinary master sheet).");
   const lower = fileName.toLowerCase();
-  if (lower.endsWith(".xlsx") || lower.endsWith(".xlsm")) return parseXlsx(buffer);
-  if (lower.endsWith(".csv") || lower.endsWith(".txt")) return parseCsv(buffer.toString("utf8"));
+  if (lower.endsWith(".xlsx") || lower.endsWith(".xlsm")) return xlsxTable(buffer);
+  if (lower.endsWith(".csv") || lower.endsWith(".txt")) return { table: csvTable(buffer.toString("utf8")), sheetName: null };
   if (lower.endsWith(".xls")) throw new SheetError("Old .xls workbooks cannot be read. In Excel use Save As → Excel Workbook (.xlsx).");
   throw new SheetError("Upload an .xlsx or .csv file.");
+}
+
+export function parseSpreadsheet(fileName: string, buffer: Buffer): Sheet {
+  const { table, sheetName } = readTable(fileName, buffer);
+  return toSheet(table, sheetName);
+}
+
+/**
+ * Every non-empty row as read, trimmed but not cut to the first row's width. For files whose heading row is not the
+ * first row (bank statements put account details above it), so the caller can find the heading row itself.
+ */
+export function parseSpreadsheetGrid(fileName: string, buffer: Buffer): string[][] {
+  const grid = readTable(fileName, buffer).table.map(entry => entry.cells.map(cell => (cell ?? "").trim())).filter(cells => cells.some(Boolean));
+  if (!grid.length) throw new SheetError("The sheet is empty.");
+  return grid;
 }

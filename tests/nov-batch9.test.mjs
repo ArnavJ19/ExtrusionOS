@@ -252,7 +252,7 @@ test("migration audit: every new table has company scoping, RLS and no client gr
   const migrations = readdirSync(new URL("../supabase/migrations/", import.meta.url)).filter(name => name.endsWith(".sql")).sort();
   // Later batches may follow; the batch 9 migration must be present and none may be inserted before it out of order.
   assert.ok(migrations.includes("20261103700000_november_commercial.sql"), "the batch 9 migration is present");
-  assert.ok(migrations.filter(name => name > "20261103700000_november_commercial.sql").every(name => name.startsWith("202611038") || name.startsWith("20261109") || name.startsWith("20261110")), "only later batches follow batch 9");
+  assert.ok(migrations.filter(name => name > "20261103700000_november_commercial.sql").every(name => name.startsWith("202611038") || name.startsWith("20261109") || name.startsWith("20261110") || name.startsWith("20261111")), "only later batches follow batch 9");
 });
 
 test("source audit: the hub is server-guarded, client files never touch privileged keys, and the actions parse every response", () => {

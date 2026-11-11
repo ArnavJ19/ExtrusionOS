@@ -9,7 +9,7 @@ import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { saveInvoiceAction } from "@/lib/actions/invoices";
-import { parseSpreadsheet, SheetError, MAX_SHEET_BYTES } from "@/lib/master-data/import/spreadsheet";
+import { parseSpreadsheetGrid, SheetError, MAX_SHEET_BYTES } from "@/lib/master-data/import/spreadsheet";
 import { BANK_DATE_FORMATS, autoMapBank, bankMappingSchema, buildStatementRows, findHeaderRow, headerSignatureSource, parseBankDate,
   type BankDateFormat, type BankMapping, type StatementRow, type StatementRowError } from "@/lib/financials/bank-statement";
 
@@ -25,8 +25,8 @@ async function readGrid(file: File) {
   if (!(file instanceof File) || file.size === 0) throw new SheetError("Choose the statement file.");
   if (file.size > MAX_SHEET_BYTES) throw new SheetError("The file is larger than 4 MB. Export a shorter period.");
   const buffer = Buffer.from(await file.arrayBuffer());
-  const sheet = parseSpreadsheet(file.name, buffer);
-  const grid = [sheet.headers, ...sheet.rows.map(r => r.cells)];
+  // The raw grid: the first row is often account details, so rows are not cut to its width before the heading row is found.
+  const grid = parseSpreadsheetGrid(file.name, buffer);
   const headerIndex = findHeaderRow(grid);
   if (headerIndex < 0) throw new SheetError("No heading row with a date and a narration column was found in the first 40 rows.");
   return { grid, headerIndex, headers: grid[headerIndex].map(String), fingerprint: createHash("sha256").update(buffer).digest("hex") };
@@ -72,7 +72,7 @@ const importSchema = z.object({
   mapping: bankMappingSchema, dateFormat: z.enum(BANK_DATE_FORMATS), profileName: z.string().trim().min(3).max(80).optional(), accountLabel: z.string().trim().max(80).optional()
 });
 
-export type BankImportResult = { statement_id: string; already_imported: boolean; rows?: number; new_lines?: number; duplicates?: number; credits?: number; exact?: number;
+export type BankImportResult = { statement_id: string; already_imported: boolean; rows?: number; new_lines?: number; duplicates?: number; repeated_in_file?: number; credits?: number; exact?: number;
   likely?: number; unknown?: number; errors?: StatementRowError[]; file_errors: StatementRowError[] };
 
 export async function importBankStatementAction(form: FormData): Promise<Result<BankImportResult>> {
