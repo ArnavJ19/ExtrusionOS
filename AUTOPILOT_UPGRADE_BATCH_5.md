@@ -71,6 +71,13 @@ client grants; `ap_usual`, `ap_finishing` and `ap_quote_sales` run for `authenti
 `quotes.followups`, which pg_cron's morning run picks up; every hosted function body matches the file when whitespace and
 comment lines are ignored. Rolled-back smoke calls: the follow-up job, floor and follow-up-settings saves all returned.
 
+Review fixes (PR #8): `20261113100000_autopilot_batch_5_review_fixes.sql` schedules follow-ups per sending
+(`quote_followup_steps.cycle_sent_at`, unique per sending), so a revised quotation sent again gets a fresh sequence and a
+validity extension restarts its stopped steps that are still ahead; approving a floor request whose lines changed now
+returns a `superseded` result so the supersession is kept and sales can request again. The label station no longer
+treats a closed print dialog as a printed label: the operator confirms each label unless the station is marked as
+printing silently. Not yet applied to hosted.
+
 Because the file is now applied, the remaining six features of the batch (AP-080, 047, 062, 085, 063, 078) go in a new
 migration file instead of extending `20261112200000_autopilot_batch_5.sql`.
 

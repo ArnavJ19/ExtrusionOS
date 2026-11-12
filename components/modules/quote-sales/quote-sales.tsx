@@ -118,7 +118,9 @@ export function QuoteFloorPanel({ quoteId, canRequest }: { quoteId: string; canR
   if (data.loading && !d) return <Section id="floor" title="Floor price check"><Loading what="the floor check" /></Section>;
   if (data.error) return <Section id="floor" title="Floor price check"><Failure text={data.error} /></Section>;
   if (!d || !d.lines.some(l => l.floor_per_kg !== null)) return null;
-  const open = d.requests.find(r => r.status === "requested");
+  // A waiting request for lines that have since changed cannot be approved, so it does not block a new request
+  // (the new request supersedes it).
+  const open = d.requests.find(r => r.status === "requested" && r.current);
   return <Section id="floor" title="Floor price check" description="Conversion charge per kg against the floor for the alloy, finish and quantity. Internal only."
     actions={d.below.length ? d.approved ? <Pill value="approved" label="Approved below floor" /> : <Pill value="held" label={`${d.below.length} line(s) below floor`} /> : <Pill value="approved" label="At or above floor" />}>
     <div className="overflow-x-auto"><table className="w-full min-w-[520px] text-sm"><thead><tr className="text-left text-neutral-500"><th className="py-1">Line</th><th>Quantity</th><th>Conversion</th><th>Floor</th></tr></thead>
@@ -127,9 +129,10 @@ export function QuoteFloorPanel({ quoteId, canRequest }: { quoteId: string; canR
     {d.below.length && !d.approved && canRequest && !open ? <div className="flex flex-wrap gap-2"><input aria-label="Why below the floor" className={`${inputClass} min-w-[14rem] flex-1`} value={reason} onChange={e => setReason(e.target.value)} placeholder="Why this price (for example: repeat project, competitor quoted 37/kg)" />
       <button type="button" className={buttonClass} onClick={async () => { if (await apWrite("ap_quote_sales", "floor_request", { quote_id: quoteId, reason: reason.trim() }, setMessage, "Approval requested from the owner.")) { setReason(""); setKey(k => k + 1); } }}>Request approval</button></div> : null}
     {d.requests.length ? <ul className="space-y-2 text-sm">{d.requests.map(r => <li key={r.id} className="rounded-xl border border-neutral-200 p-2">
-      <p><Pill value={r.status === "approved" ? "approved" : r.status === "requested" ? "held" : r.status === "rejected" ? "rejected" : "cancelled"} label={r.status} /> {r.reason} · {r.requested_by} {fmtWhen(r.requested_at)}{r.decided_by ? ` · ${r.status} by ${r.decided_by}${r.decision_note ? `: ${r.decision_note}` : ""}` : ""}{!r.current && r.status === "approved" ? " · lines changed since" : ""}</p>
+      <p><Pill value={r.status === "approved" ? "approved" : r.status === "requested" ? "held" : r.status === "rejected" ? "rejected" : "cancelled"} label={r.status} /> {r.reason} · {r.requested_by} {fmtWhen(r.requested_at)}{r.decided_by ? ` · ${r.status} by ${r.decided_by}${r.decision_note ? `: ${r.decision_note}` : ""}` : ""}{!r.current && (r.status === "approved" || r.status === "requested") ? " · lines changed since" : ""}</p>
       {r.can_decide ? decide?.id === r.id ? <div className="mt-1 flex flex-wrap gap-2"><input aria-label="Decision note" className={`${inputClass} flex-1`} value={decide.note} onChange={e => setDecide({ id: r.id, note: e.target.value })} placeholder="Note (needed to refuse)" />
-        <button type="button" className={buttonClass} onClick={async () => { if (await apWrite("ap_quote_sales", "floor_decide", { request_id: r.id, decision: "approve", ...(decide.note.trim() ? { note: decide.note.trim() } : {}) }, setMessage, "Approved for these lines.")) { setDecide(null); setKey(k => k + 1); } }}>Approve</button>
+        <button type="button" className={buttonClass} onClick={async () => { const out = await apWrite<{ status: string; message?: string }>("ap_quote_sales", "floor_decide", { request_id: r.id, decision: "approve", ...(decide.note.trim() ? { note: decide.note.trim() } : {}) }, setMessage);
+          if (out) { setMessage(out.status === "superseded" ? { tone: "error", text: out.message ?? "The lines changed after the request; sales must request again." } : { tone: "ok", text: "Approved for these lines." }); setDecide(null); setKey(k => k + 1); } }}>Approve</button>
         <button type="button" className={secondaryClass} onClick={async () => { if (await apWrite("ap_quote_sales", "floor_decide", { request_id: r.id, decision: "reject", ...(decide.note.trim() ? { note: decide.note.trim() } : {}) }, setMessage, "Refused.")) { setDecide(null); setKey(k => k + 1); } }}>Refuse</button></div>
         : <button type="button" className="mt-1 underline" onClick={() => setDecide({ id: r.id, note: "" })}>Decide</button> : null}
     </li>)}</ul> : null}

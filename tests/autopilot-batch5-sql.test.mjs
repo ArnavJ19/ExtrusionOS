@@ -154,6 +154,35 @@ test("AP-071 a customer decision stops the follow-ups and closes their tasks as 
   assert.equal(coverage.open, 0);
 });
 
+test("AP-071 a revised quotation sent again gets a fresh follow-up sequence; a validity extension restarts stopped steps", async () => {
+  const q = await quote({ sentDaysAgo: 3, validDays: 10 });
+  await f.one("select private.ap5_followups_job($1) v", [i.company]);
+  const first = (await f.db.query("select id, cycle_sent_at from quote_followup_steps where quote_id=$1 and step_kind<>'agreed'", [q])).rows;
+  assert.ok(first.length >= 3);
+  await f.seed("update quote_items set costing_complete=true where quote_id=$1", [q]);
+  // Revision: back to draft (steps stop), then through review and sent again.
+  for (const status of ["draft", "internal_review", "approved_for_sending", "sent"]) await f.asOwnerFor("update quotes set status=$2 where id=$1", [q, status], i.salesManager);
+  const steps = (await f.db.query("select step_kind, offset_days, status, cycle_sent_at, due_date from quote_followup_steps where quote_id=$1 order by cycle_sent_at, step_kind, offset_days", [q])).rows;
+  const sentAt = (await f.one("select sent_at from quotes where id=$1", [q])).sent_at;
+  const current = steps.filter(s => +s.cycle_sent_at === +sentAt);
+  assert.ok(steps.filter(s => +s.cycle_sent_at !== +sentAt).every(s => s.status === "stopped"), "the earlier sending's steps stay stopped as history");
+  assert.deepEqual(current.filter(s => s.step_kind === "after_send").map(s => [s.offset_days, s.status]), [[2, "pending"], [7, "pending"]], "the new sending is scheduled again");
+  assert.ok(current.some(s => s.step_kind === "before_expiry" && s.status === "pending"));
+  assert.equal((await f.one("select bool_and(due_date > private.ist_today()) v from quote_followup_steps where quote_id=$1 and cycle_sent_at=$2", [q, sentAt])).v, true, "counted from the new sending");
+  const view = await sales("followups", { quote_id: q });
+  assert.ok(view.next_due, "the quotation has a next follow-up");
+  const rerun = await f.one("select private.ap5_followups_job($1) v", [i.company]);
+  assert.equal(rerun.v.details.scheduled, 0, "the morning job does not schedule the same sending twice");
+  // Expiry stops the steps; an approved validity extension of the same sending restarts those still ahead.
+  await f.asOwnerFor("update quotes set status='expired' where id=$1", [q], i.salesManager);
+  assert.ok((await f.db.query("select status from quote_followup_steps where quote_id=$1 and cycle_sent_at=$2", [q, sentAt])).rows.every(s => s.status === "stopped"));
+  await f.one("select set_config('ap.quote_extension',$1,true) v", [q]);
+  await f.asOwnerFor("update quotes set status='sent', valid_until=current_date+20 where id=$1", [q], i.salesManager);
+  const revived = (await f.db.query("select step_kind, offset_days, status from quote_followup_steps where quote_id=$1 and cycle_sent_at=$2 order by step_kind, offset_days", [q, sentAt])).rows;
+  assert.ok(revived.filter(s => s.step_kind === "after_send").every(s => s.status === "pending"), "steps still ahead restart");
+  assert.ok(revived.some(s => s.step_kind === "before_expiry" && s.status === "pending"), "the before-expiry step follows the new validity");
+});
+
 test("AP-072 a line below its floor blocks sending until another approver approves those exact lines", async () => {
   await assert.rejects(() => sales("save_floor", { alloy: "6063", floor_per_kg: 40, reason: "Board floor for 6063" }), err => err.code === "42501", "sales cannot set floors");
   await sales("save_floor", { floor_per_kg: 32, reason: "General floor" }, i.owner);
@@ -170,9 +199,15 @@ test("AP-072 a line below its floor blocks sending until another approver approv
   const req = await sales("floor_request", { quote_id: q, reason: "Repeat project; competitor quoted 37" });
   await assert.rejects(() => sales("floor_decide", { request_id: req.id, decision: "approve" }, i.salesManager), err => err.code === "42501", "only the owner or an admin approves");
   await assert.rejects(() => sales("floor_decide", { request_id: req.id, decision: "reject" }, i.owner), /Note is required/);
-  // Lines changed after the request: the approval is refused and the request superseded.
+  // Lines changed after the request: the approval is refused and the supersession is kept (not rolled back).
   await f.seed("update quote_items set conversion_charge_per_kg=37 where quote_id=$1", [q]);
-  await assert.rejects(() => sales("floor_decide", { request_id: req.id, decision: "approve" }, i.owner), /lines changed/);
+  const stale = await sales("floor_decide", { request_id: req.id, decision: "approve" }, i.owner);
+  assert.equal(stale.status, "superseded");
+  assert.match(stale.message, /lines changed/);
+  assert.equal((await f.one("select status from quote_floor_exceptions where id=$1", [req.id])).status, "superseded", "the stale request no longer waits");
+  const staleCheck = await sales("floor_check", { quote_id: q });
+  assert.equal(staleCheck.approved, false);
+  assert.ok(!staleCheck.requests.some(r => r.status === "requested"), "nothing blocks a new request");
   const req2 = await sales("floor_request", { quote_id: q, reason: "Repeat project; competitor quoted 37 per kg" });
   await sales("floor_decide", { request_id: req2.id, decision: "approve", note: "Accepted for this project only" }, i.owner);
   const after = await sales("floor_check", { quote_id: q });
@@ -188,7 +223,7 @@ test("AP-072 a line below its floor blocks sending until another approver approv
 
 test("Batch 5 adds the morning job without changing earlier jobs; new tables have RLS and no grants", async () => {
   const jobs = (await f.db.query("select job_key, schedule from private.ap_job_registry() order by job_key")).rows;
-  assert.equal(jobs.length, 15);
+  assert.equal(jobs.length, 18);
   assert.ok(jobs.some(j => j.job_key === "quotes.followups" && j.schedule === "morning"));
   for (const t of ["quote_followup_settings", "quote_followup_steps", "price_floors", "quote_floor_exceptions"]) {
     const r = await f.one("select c.relrowsecurity rls, has_table_privilege('authenticated', c.oid, 'select') sel from pg_class c where c.relname=$1 and c.relnamespace='public'::regnamespace", [t]);

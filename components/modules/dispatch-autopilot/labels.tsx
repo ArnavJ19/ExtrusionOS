@@ -1,9 +1,9 @@
 "use client";
 
 // AP-017: the packing station's label queue. Recording a bundle queues its label from the approved packing template
-// (only that template's fields). With auto-print on, this page prints the next label as it arrives and confirms it
-// after the print dialog closes; silent printing needs the station browser in kiosk-printing mode. Reprints need a
-// reason and are logged. The audit lists bundles of the week without a printed label.
+// (only that template's fields). With auto-print on, this page prints the next label as it arrives. A closed print
+// dialog is not proof of printing, so the operator confirms each label unless the station is marked as printing
+// silently (kiosk-printing mode). Reprints need a reason and are logged. The audit lists bundles of the week without a printed label.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Printer } from "lucide-react";
@@ -55,6 +55,13 @@ export function LabelStationClient({ supervisor }: { supervisor: boolean }) {
   const audit = useApRead<{ rows: Array<{ bundle_id: string; bundle_number: string; order_number: string; recorded_at: string; job_status: string | null; blocked_reason: string | null }>; total_count: number;
     stats: { bundles: number; labelled: number; median_seconds: number | null; p90_seconds: number | null; reprints: number } }>("ap_dispatch", "label_audit", { days: 7, page: aPage }, [key]);
   const busy = useRef(false);
+  // A closed print dialog is not proof of a printed label (Cancel also fires afterprint). Only a browser the operator
+  // marked as printing silently (kiosk-printing mode) confirms on its own; otherwise the operator confirms each label.
+  const [silent, setSilent] = useState(false);
+  useEffect(() => { try { setSilent(window.localStorage.getItem("ap4-label-silent-print") === "1"); } catch { /* no storage: ask every time */ } }, []);
+  const silentRef = useRef(false);
+  useEffect(() => { silentRef.current = silent; }, [silent]);
+  const [awaiting, setAwaiting] = useState<LabelJob | null>(null);
 
   const loadQueue = useCallback(async () => {
     const r = await autopilotAction("ap_dispatch", "label_queue", { status: "queued", ...(station ? { station_id: station.id } : {}) });
@@ -65,20 +72,27 @@ export function LabelStationClient({ supervisor }: { supervisor: boolean }) {
 
   const confirmPrinted = useCallback(async (job: LabelJob) => {
     const r = await autopilotAction("ap_dispatch", "label_printed", { job_id: job.id });
-    busy.current = false; setPrinting(null);
+    busy.current = false; setPrinting(null); setAwaiting(null);
     if (!r.success) { setMessage({ tone: "error", text: r.error }); return; }
     setMessage({ tone: "ok", text: `Label ${job.bundle_number} printed.` }); setKey(k => k + 1); void loadQueue();
   }, [loadQueue]);
 
   const print = useCallback((job: LabelJob) => {
     if (busy.current) return; busy.current = true; setPrinting(job);
-    // Render first, then open the print dialog; the label is confirmed once the dialog closes.
+    // Render first, then open the print dialog. When it closes, a silent-printing station confirms the label; any other
+    // station asks the operator whether it came out (the queue waits until they answer).
     setTimeout(() => {
-      const after = () => { window.removeEventListener("afterprint", after); void confirmPrinted(job); };
+      const after = () => { window.removeEventListener("afterprint", after); if (silentRef.current) void confirmPrinted(job); else setAwaiting(job); };
       window.addEventListener("afterprint", after);
       try { window.print(); } catch { window.removeEventListener("afterprint", after); busy.current = false; setPrinting(null); }
     }, 150);
   }, [confirmPrinted]);
+
+  /** The operator says the label did not come out: the job stays queued and auto-print pauses so the dialog does not reopen at once. */
+  const notPrinted = useCallback((job: LabelJob) => {
+    busy.current = false; setPrinting(null); setAwaiting(null); setAuto(false);
+    setMessage({ tone: "error", text: `Label ${job.bundle_number} is still waiting to print. Auto-print is paused; print it again when the printer is ready.` });
+  }, []);
 
   useEffect(() => { if (autoOn && queue?.rows.length && !busy.current) print(queue.rows[0]); }, [autoOn, queue, print]);
 
@@ -91,10 +105,16 @@ export function LabelStationClient({ supervisor }: { supervisor: boolean }) {
         {stations.data?.length ? <label className="text-sm font-semibold">Station<select className={`${inputClass} mt-1 w-56`} value={station?.id ?? ""} onChange={e => { setStationId(e.target.value); setAuto(null); }}>
           {stations.data.map(s => <option key={s.id} value={s.id}>{s.name}{s.is_default ? " (default)" : ""}</option>)}</select></label> : <p className="text-sm text-neutral-600">No station yet; labels wait in the queue for all stations.</p>}
         <label className="flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={autoOn} onChange={e => setAuto(e.target.checked)} />Auto-print on this screen</label>
+        <label className="flex min-h-11 items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={silent} onChange={e => { setSilent(e.target.checked); try { window.localStorage.setItem("ap4-label-silent-print", e.target.checked ? "1" : "0"); } catch { /* not remembered */ } }} />This browser prints without a dialog (kiosk printing)</label>
         {supervisor ? <span className="flex gap-2"><input aria-label="New station name" className={`${inputClass} w-48`} value={newStation} onChange={e => setNewStation(e.target.value)} placeholder="New station name" />
           <button type="button" className={secondaryClass} onClick={async () => { if (await apWrite("ap_dispatch", "save_station", { name: newStation.trim(), auto_print: true, is_default: !(stations.data ?? []).length }, setMessage, "Station added.")) { setNewStation(""); setKey(k => k + 1); } }}>Add station</button></span> : null}
       </div>}
-      <p className="text-xs text-neutral-600">For printing without a dialog, run the station browser in kiosk-printing mode with the label printer as default (Chrome: --kiosk --kiosk-printing).</p>
+      <p className="text-xs text-neutral-600">For printing without a dialog, run the station browser in kiosk-printing mode with the label printer as default (Chrome: --kiosk --kiosk-printing) and tick the box above. Otherwise you confirm each label after the print dialog closes.</p>
+      {awaiting ? <div role="alert" className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm">
+        <span className="font-semibold">Did label <b className="font-mono">{awaiting.bundle_number}</b> come out of the printer?</span>
+        <button type="button" className={buttonClass} onClick={() => { void confirmPrinted(awaiting); }}>Yes, it printed</button>
+        <button type="button" className={secondaryClass} onClick={() => notPrinted(awaiting)}>No, not printed</button>
+      </div> : null}
       <Message value={message} />
     </Section>
     <Section title={`To print${queue ? ` (${queue.total_count})` : ""}`}>

@@ -115,6 +115,13 @@ for (const width of [375, 1280]) {
     await expect(l.page.getByText("Sharma Fabricators").first()).toBeVisible();
     await shot(l.page, "label-station", width);
     await l.page.getByRole("button", { name: "Print" }).first().click();
+    // A closed print dialog is not proof of printing: nothing is recorded until the operator confirms.
+    await expect(l.page.getByRole("alert").filter({ hasText: "Did label L-1 come out of the printer?" })).toBeVisible();
+    assert.equal((await q("select count(*)::int c from packing_label_prints p join prepared_physical_bundles b on b.id=p.bundle_id where b.bundle_number='L-1'")).rows[0].c, 0);
+    await l.page.getByRole("button", { name: "No, not printed" }).click();
+    await expect(l.page.getByText("Label L-1 is still waiting to print", { exact: false })).toBeVisible();
+    await l.page.getByRole("button", { name: "Print" }).first().click();
+    await l.page.getByRole("button", { name: "Yes, it printed" }).click();
     await expect(l.page.getByRole("status").filter({ hasText: "Label L-1 printed" })).toBeVisible();
     assert.equal((await q("select count(*)::int c from packing_label_prints p join prepared_physical_bundles b on b.id=p.bundle_id where b.bundle_number='L-1'")).rows[0].c, 1);
     await expect(l.page.getByText("1 of 1 bundles recorded in 7 days have a label", { exact: false })).toBeVisible();
