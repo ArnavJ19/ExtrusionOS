@@ -8,7 +8,8 @@ Scope: 100 new numbered targets, AP-001 to AP-100
 Status: Proposed. Nothing in this document is implemented, migrated, or deployed.
 Batch records: [Batch 1](AUTOPILOT_UPGRADE_BATCH_1.md) (AP-001, 002, 004, 005, 006, 007, 038, 041, 042, 059; built and verified locally, hosted migration not applied).
 [Batch 2](AUTOPILOT_UPGRADE_BATCH_2.md) (AP-011, 012, 013, 014, 015, 016, 028, 054, 066, 087, press floor capture; built and verified locally, hosted migration applied 11 November 2026).
-[Batch 3](AUTOPILOT_UPGRADE_BATCH_3.md) (AP-045, 046, 032, 058, 024, 084, 031, 037, 097, 098, order-to-cash; built and verified locally, hosted migration not applied).
+[Batch 3](AUTOPILOT_UPGRADE_BATCH_3.md) (AP-045, 046, 032, 058, 024, 084, 031, 037, 097, 098, order-to-cash; built and verified locally, hosted migration applied 11 November 2026).
+[Batch 4](AUTOPILOT_UPGRADE_BATCH_4.md) (AP-018, 019, 051, 081, 083, 017, 035, 036, 089, 060, dispatch and compliance; built and verified locally, hosted migration not applied).
 
 ## Why this catalogue exists
 

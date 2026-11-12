@@ -12,6 +12,7 @@ import { CustomerAliasManager, CustomerCommitments } from "@/components/modules/
 import { canManageCustomerRequirements } from "@/lib/workflow/customer-step-requirements";
 import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
 import { CustomerCreditPanel } from "@/components/modules/order-to-cash/credit";
+import { PackingSpecPanel } from "@/components/modules/dispatch-autopilot/packing";
 
 function addQuoteWeight(weights: Map<string, number>, item: { quote_id?: string | null; billing_weight_kg?: number | string | null; total_weight_kg?: number | string | null }) {
   if (!item.quote_id) return;
@@ -200,6 +201,7 @@ export default async function CustomerDetailPage({ params, searchParams }: { par
       <CustomerAliasManager key={`aliases:${context.companyId}:${context.userId}:${context.role}:${id}`} context={context} customerId={id} />
       <div id="customer-commitments"><CustomerCommitments key={`commitments:${context.companyId}:${context.userId}:${context.role}:${id}:${selectedCommitment ?? ""}`} context={context} customerId={id} commitmentId={selectedCommitment} /></div>
       {!context.dealerId && ["owner", "admin", "accounts", "sales_manager", "sales"].includes(context.role) ? <CustomerCreditPanel customerId={id} /> : null}
+      {!context.dealerId && ["owner", "admin", "sales_manager", "dispatch_manager", "factory_manager", "quality", "production_manager"].includes(context.role) ? <PackingSpecPanel customerId={id} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="customer" id={id} role={context.role} /> : null}
     </div>
   );

@@ -39,6 +39,10 @@ import { OrderFulfilmentLedger } from "@/components/modules/orders/fulfilment-le
 import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
 import { OrderCreditPanel } from "@/components/modules/order-to-cash/credit";
 import { OrderDraftJobsPanel } from "@/components/modules/order-to-cash/draft-jobs";
+import { CopySummaryButton, OrderStatusLinkPanel } from "@/components/modules/dispatch-autopilot/share";
+import { OrderLoadingPanel } from "@/components/modules/dispatch-autopilot/loading";
+import { PackingPlanPanel } from "@/components/modules/dispatch-autopilot/packing";
+import { DISPATCH_FLOOR_ROLES, SHARE_ROLES, canInternalSummary, canSummarise } from "@/lib/dispatch-autopilot/commands";
 
 const ORDER_JOB_LIMIT = 200;
 
@@ -529,6 +533,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       {!context.dealerId ? <RecordDiscussion key={`${context.companyId}:${context.userId}:${context.role}:${id}`} context={context} entityType="order" entityId={id} /> : null}
       {!context.dealerId && ["owner", "admin", "accounts", "sales_manager", "sales"].includes(context.role) ? <OrderCreditPanel orderId={id} /> : null}
       {!context.dealerId && ["owner", "admin", "production_manager", "factory_manager", "sales_manager"].includes(context.role) ? <OrderDraftJobsPanel orderId={id} /> : null}
+      {canSummarise("order", context.role, Boolean(context.dealerId)) ? <CopySummaryButton kind="order" id={id} canInternal={canInternalSummary("order", context.role, Boolean(context.dealerId))} /> : null}
+      {!context.dealerId && (DISPATCH_FLOOR_ROLES as readonly string[]).includes(context.role) ? <OrderLoadingPanel orderId={id} /> : null}
+      {!context.dealerId && ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "sales_manager", "quality", "production_manager", "production"].includes(context.role) ? <PackingPlanPanel orderId={id} /> : null}
+      {!context.dealerId && (SHARE_ROLES as readonly string[]).includes(context.role) ? <OrderStatusLinkPanel orderId={id} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="order" id={id} role={context.role} /> : null}
     </div>
   );

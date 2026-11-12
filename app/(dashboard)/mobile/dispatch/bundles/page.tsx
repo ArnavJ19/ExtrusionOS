@@ -5,10 +5,11 @@ import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canRecordMobileBundle,mobileBundleQueueSchema } from "@/lib/workflow/mobile-bundle-task";
 import { PhysicalBundleCapture } from "@/components/modules/dispatches/physical-bundles";
+import { PackingPlanPanel } from "@/components/modules/dispatch-autopilot/packing";
 export default async function MobileBundleTaskPage({searchParams}:{searchParams:Promise<{order_id?:string;page?:string;search?:string}>}){
   const context=await getSessionContext();if(!canRecordMobileBundle(context.role,context.dealerId))redirect("/mobile");
   const query=await searchParams;
-  if(query.order_id){const id=z.string().uuid().safeParse(query.order_id);return id.success?<PhysicalBundleCapture key={`${context.companyId}:${context.userId}:${id.data}`} orderId={id.data}/>:<p role="alert">That order reference is invalid. <Link href="/mobile/dispatch/bundles" className="underline">Choose an order</Link></p>;}
+  if(query.order_id){const id=z.string().uuid().safeParse(query.order_id);return id.success?<div className="space-y-4"><PackingPlanPanel orderId={id.data} compact /><PhysicalBundleCapture key={`${context.companyId}:${context.userId}:${id.data}`} orderId={id.data}/></div>:<p role="alert">That order reference is invalid. <Link href="/mobile/dispatch/bundles" className="underline">Choose an order</Link></p>;}
   const parsed=mobileBundleQueueSchema.safeParse({page:query.page??1,search:query.search??""});
   if(!parsed.success)return <p role="alert">Check the order search or page number.</p>;
   const {page,search}=parsed.data,client=await createClient();

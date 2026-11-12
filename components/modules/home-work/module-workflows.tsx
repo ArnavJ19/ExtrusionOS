@@ -14,7 +14,17 @@ const MODULE_LINKS: Partial<Record<ModuleKey, Array<{ href: string; label: strin
     { href: "/production/drafts", label: "Draft jobs from orders", roles: ["owner", "admin", "production_manager", "factory_manager", "sales_manager"] }],
   quality: [{ href: "/quality/samples", label: "In-process samples", roles: ["owner", "admin", "quality", "factory_manager", "production_manager"] }],
   invoices: [{ href: "/invoices/drafts", label: "Drafts to post", roles: ["owner", "admin", "accounts"] }, { href: "/invoices/tax-rules", label: "GST place of supply", roles: ["owner", "admin", "accounts"] },
-    { href: "/invoices/periods", label: "Month close", roles: ["owner", "admin", "accounts", "viewer"] }, { href: "/invoices/numbering", label: "Document numbering", roles: ["owner", "admin", "accounts", "viewer"] }]
+    { href: "/invoices/periods", label: "Month close", roles: ["owner", "admin", "accounts", "viewer"] }, { href: "/invoices/numbering", label: "Document numbering", roles: ["owner", "admin", "accounts", "viewer"] },
+    { href: "/invoices/tally", label: "Tally export", roles: ["owner", "admin", "accounts"] }],
+  // Autopilot batch 4: dispatch and compliance.
+  dispatches: [
+    { href: "/dispatches/ready", label: "Ready to ship", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "sales_manager", "sales", "accounts"] },
+    { href: "/dispatches/loading", label: "Load a vehicle", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager"] },
+    { href: "/dispatches/gate", label: "Gate", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "accounts", "inventory_manager"] },
+    { href: "/dispatches/labels", label: "Bundle labels", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager"] },
+    { href: "/dispatches/packing", label: "Packing standard", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "sales_manager", "quality"] },
+    { href: "/dispatches/eway", label: "E-way bills", roles: ["owner", "admin", "accounts", "dispatch_manager", "dispatch"] },
+    { href: "/dispatches/freight", label: "Freight rate cards", roles: ["owner", "admin", "dispatch_manager", "dispatch", "factory_manager", "sales_manager", "sales", "accounts"] }]
 };
 
 // Autopilot batch 3 pages on modules that have no workflow strip of their own (orders, payments, quotations).

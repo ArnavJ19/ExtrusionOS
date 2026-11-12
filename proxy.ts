@@ -12,6 +12,8 @@ const rateLimitedPaths: { prefix: string; limit: number; windowSeconds: number }
   { prefix: "/api/ai/quotation-assistant", limit: 10, windowSeconds: 60 },
   { prefix: "/api/email/send", limit: 10, windowSeconds: 60 },
   { prefix: "/api/enterprise/data-exchange", limit: 5, windowSeconds: 60 },
+  // AP-060: public order-status links (token guessing is already infeasible; this bounds scraping).
+  { prefix: "/status/", limit: 30, windowSeconds: 60 },
 ];
 
 function getClientIp(request: NextRequest): string {

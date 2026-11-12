@@ -26,6 +26,9 @@ import { RecordNextAction } from "@/components/modules/shared/record-next-action
 import { canReadRates, quoteRateCheckSchema } from "@/lib/workflow/costing-rates";
 import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
 import { QuoteValidityPanel } from "@/components/modules/order-to-cash/quotes-alerts";
+import { CopySummaryButton } from "@/components/modules/dispatch-autopilot/share";
+import { FreightPanel } from "@/components/modules/dispatch-autopilot/freight";
+import { FREIGHT_ROLES, canInternalSummary, canSummarise } from "@/lib/dispatch-autopilot/commands";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 
 const quoteStatusErrorMessages = {
@@ -412,6 +415,8 @@ export default async function QuoteDetailPage({
         </div>
       </div>
       {!context.dealerId && ["owner", "admin", "sales_manager", "sales"].includes(context.role) ? <QuoteValidityPanel quoteId={id} today={getBusinessDateBoundaries().today} /> : null}
+      {canSummarise("quote", context.role, Boolean(context.dealerId)) ? <CopySummaryButton kind="quote" id={id} canInternal={canInternalSummary("quote", context.role, Boolean(context.dealerId))} /> : null}
+      {!context.dealerId && (FREIGHT_ROLES as readonly string[]).includes(context.role) ? <FreightPanel kind="quote" id={id} today={getBusinessDateBoundaries().today} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="quote" id={id} role={context.role} /> : null}
     </div>
   );

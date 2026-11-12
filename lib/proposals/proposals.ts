@@ -10,7 +10,8 @@ export const PROPOSAL_TYPES = {
   "production.expected_output": { label: "Expected output", home: "/production", noun: "job close" },
   "die.service_due": { label: "Die service", home: "/dies", noun: "die service" },
   "maintenance.pm_due": { label: "Preventive maintenance", home: "/production/floor", noun: "maintenance window" },
-  "bank.receipt_match": { label: "Bank receipt", home: "/payments/bank", noun: "receipt" }
+  "bank.receipt_match": { label: "Bank receipt", home: "/payments/bank", noun: "receipt" },
+  "freight.estimate": { label: "Freight estimate", home: "/dispatches/freight", noun: "freight" }
 } as const;
 export type ProposalType = keyof typeof PROPOSAL_TYPES;
 export const PROPOSAL_TYPE_KEYS = Object.keys(PROPOSAL_TYPES) as [ProposalType, ...ProposalType[]];
@@ -47,6 +48,12 @@ export function proposalHref(row: Pick<ProposalRow, "proposal_type" | "target_ke
   const uuid = /^[0-9a-f-]{36}/.exec(row.target_key)?.[0];
   if (row.proposal_type === "production.expected_output" && uuid) return `/production/${uuid}#proposal-${row.id}`;
   if (row.proposal_type === "die.service_due" && uuid) return `/dies/${uuid}#proposal-${row.id}`;
+  if (row.proposal_type === "freight.estimate") {
+    const [kind, id] = row.target_key.split(":");
+    if (kind === "quote") return `/quotes/${id}#freight`;
+    if (kind === "loading") return `/dispatches/loading/${id}#freight`;
+    if (kind === "dispatch") return `/dispatches/${id}#freight`;
+  }
   return `${PROPOSAL_TYPES[row.proposal_type]?.home ?? "/dashboard"}#proposal-${row.id}`;
 }
 
@@ -86,10 +93,18 @@ export function proposalWhy(row: ProposalRow): string[] {
     lines.push(`Match ${String(evidence.class ?? "")}: ${((evidence.signals as string[]) ?? []).map(signal => signal.replaceAll("_", " ")).join(", ") || "no signal"}. Open invoices total ${inr(evidence.open_total)}.`);
     for (const a of (row.payload.allocations as { invoice_number?: string; amount?: number; basis?: string }[]) ?? []) lines.push(`${a.invoice_number ?? "Invoice"}: ${inr(a.amount)} (${a.basis === "named" ? "named in the narration" : "oldest first"})`);
     if (Number(row.payload.on_account ?? 0) > 0) lines.push(`${inr(row.payload.on_account)} stays on account for the next invoice.`);
+  } else if (row.proposal_type === "freight.estimate") {
+    lines.push(`${kg(evidence.weight_kg)} to ${[evidence.city, evidence.state_label].filter(Boolean).join(", ") || "the customer"}; ${evidence.option_count ?? 0} active rate-card option(s).`);
+    for (const o of ((row.payload.options as Array<{ transporter: string; basis: string; vehicles: number; vehicle_type: string | null; amount: number; city_card: boolean }>) ?? []).slice(0, 4)) {
+      lines.push(`${o.transporter}: ${o.basis === "per_kg" ? "per kg" : `${o.vehicles} × ${o.vehicle_type}`}${o.city_card ? " (city rate)" : ""} — ${inr(o.amount)}`);
+    }
+    lines.push("Supplier freight rates are internal and never appear on customer documents.");
   }
   lines.push(`Rule ${row.rule_key}, prepared ${new Date(row.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}${row.job_run_id ? " by a scheduled job" : ""}.`);
   if (row.confidence !== null) lines.push(row.proposal_type === "production.expected_output"
     ? `Confidence ${Math.round(row.confidence * 100)}% (share of pushes with a weighed or linked billet).`
+    : row.proposal_type === "freight.estimate"
+      ? `Confidence ${Math.round(row.confidence * 100)}% (${row.confidence >= 0.9 ? "a city rate card covers this destination" : "state-level rate card; confirm with the transporter"}).`
     : row.proposal_type === "bank.receipt_match"
       ? `Confidence ${Math.round(row.confidence * 100)}% (${row.confidence >= 0.9 ? "exact: confirmed remitter, named invoice or a person's assignment" : "likely: confirm the customer before accepting"}).`
       : `Confidence ${Math.round(row.confidence * 100)}% (share of visits these destinations cover).`);
@@ -106,6 +121,7 @@ export function proposalSummary(row: ProposalRow): string {
   if (row.proposal_type === "die.service_due") return `Book ${row.payload.service_event} on ${row.payload.scheduled_for as string}.`;
   if (row.proposal_type === "maintenance.pm_due") return `Maintenance window ${when(row.payload.window_start)} to ${when(row.payload.window_end)}; press capacity is blocked for it.`;
   if (row.proposal_type === "bank.receipt_match") return `Record ${inr(row.payload.amount)} from ${String(row.payload.customer ?? "the customer")} (ref ${String(row.payload.reference ?? "—")}) against ${((row.payload.allocations as unknown[]) ?? []).length} invoice(s)${Number(row.payload.on_account ?? 0) > 0 ? ` and ${inr(row.payload.on_account)} on account` : ""}.`;
+  if (row.proposal_type === "freight.estimate") return `Freight ${inr(row.payload.amount)} with ${String(row.payload.transporter ?? "the transporter")} (${row.payload.basis === "per_kg" ? "per kg" : `${row.payload.vehicles} × ${row.payload.vehicle_type}`}).`;
   const doc = row.target_key as DocumentSeriesKey;
   return `${DOCUMENT_SERIES[doc]?.label ?? row.target_key}: ${row.payload.prefix_template as string} with ${row.payload.pad_width as number}-digit running number`;
 }

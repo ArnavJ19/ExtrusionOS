@@ -76,6 +76,15 @@ const roleRules: RoleRule[] = [
   { prefix: "/payments/bank", roles: ["owner", "admin", "accounts"] },
   { prefix: "/payments/reminders", roles: ["owner", "admin", "accounts"] },
   { prefix: "/settings/data/duplicates", roles: ["owner", "admin", "accounts", "sales_manager"] },
+  // Autopilot batch 4 (dispatch and compliance): loading by scan, gate, labels, ready list, packing, e-way bills, freight, Tally.
+  { prefix: "/dispatches/loading", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager"] },
+  { prefix: "/dispatches/gate", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "accounts", "inventory_manager"] },
+  { prefix: "/dispatches/labels", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager"] },
+  { prefix: "/dispatches/ready", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "sales_manager", "sales", "accounts", "production_manager"] },
+  { prefix: "/dispatches/packing", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "sales_manager", "quality", "production_manager"] },
+  { prefix: "/dispatches/eway", roles: ["owner", "admin", "accounts", "dispatch_manager", "dispatch"] },
+  { prefix: "/dispatches/freight", roles: ["owner", "admin", "dispatch_manager", "dispatch", "factory_manager", "sales_manager", "sales", "accounts"] },
+  { prefix: "/invoices/tally", roles: ["owner", "admin", "accounts"] },
   { prefix: "/settings/access", roles: ["owner"] },
   // AP-007: stores, accounts and the plant head load and sign off their own opening sections.
   { prefix: "/settings/data/cutover", roles: ["owner", "admin", "accounts", "inventory_manager", "factory_manager", "production_manager", "sales_manager"] },
