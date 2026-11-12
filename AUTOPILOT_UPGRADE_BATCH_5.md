@@ -64,7 +64,15 @@ no cost, margin or supplier rate; floors are shown only on internal quotation sc
 
 ## Hosted migration state
 
-Not applied. Apply after `20261112100000_autopilot_batch_4.sql`.
+The migration as it stands (AP-026, 056, 071, 072) was applied to the hosted project on 13 November 2026 as
+`autopilot_batch_5_part01`–`part03`, right after batch 4. All 6 tables exist with RLS, one company read policy and no
+client grants; `ap_usual`, `ap_finishing` and `ap_quote_sales` run for `authenticated` only; triggers
+`zz_ap5_quote_followups` and `b_ap5_guard_price_floor` are enabled; the job registry lists 15 jobs including
+`quotes.followups`, which pg_cron's morning run picks up; every hosted function body matches the file when whitespace and
+comment lines are ignored. Rolled-back smoke calls: the follow-up job, floor and follow-up-settings saves all returned.
+
+Because the file is now applied, the remaining six features of the batch (AP-080, 047, 062, 085, 063, 078) go in a new
+migration file instead of extending `20261112200000_autopilot_batch_5.sql`.
 
 ## Remaining acceptance
 

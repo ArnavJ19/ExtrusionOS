@@ -98,8 +98,17 @@ accepts only a 64-hex token, compares SHA-256 hashes, and returns a fixed projec
 
 ## Hosted migration state
 
-Not applied. Apply `20261112100000_autopilot_batch_4.sql` after batches 1–3 (all applied on 11 November). It needs no
-new extension (`extensions.digest` from pgcrypto is already used by earlier migrations). No scheduled job was added.
+Applied to the hosted project on 13 November 2026 as `autopilot_batch_4_part01`–`part07` (the file split at top-level
+statements, `begin;`/`commit;` dropped, each part with the same lock and statement timeouts). It needs no new extension
+(`extensions.digest` from pgcrypto is already used by earlier migrations). No scheduled job was added.
+
+Before the apply, the three hosted-only migrations of 11 November (`audit_integrity_repairs`,
+`audit_stock_reservation_snapshot`, `audit_packaging_consumption_projection`) were checked: none of their objects is
+redefined by batch 4 or 5. After the apply: all 18 tables exist with RLS, one company read policy and no client grants;
+`ap_dispatch`, `ap_freight`, `ap_eway`, `ap_tally` and `ap_share` run for `authenticated` only, `ap_order_status` for
+`anon`; trigger `zz_ap4_bundle_recorded` is enabled; every hosted function body matches the file when whitespace and
+comment lines are ignored. Rolled-back smoke calls as the owner returned for every read command, and station, settings,
+packing-spec and Tally-mapping saves worked; `anon` is refused `ap_dispatch`.
 
 ## Remaining acceptance
 
