@@ -12,6 +12,13 @@ const plan = (command, payload = {}, actor = i.productionManager) => f.call("ap_
 const accounts = (command, payload = {}, actor = i.accounts) => f.call("ap_accounts", command, payload, actor);
 const digest = (command, payload = {}, actor = i.owner) => f.call("ap_digest", command, payload, actor);
 
+async function countAction(mutation, actor) {
+  const request_id = f.next();
+  const preview = await f.call("assurance_command", "preview", { request_id, mutation }, actor);
+  const outcome = await f.call("assurance_command", "commit", { request_id, fingerprint: preview.fingerprint }, actor);
+  assert.equal(outcome.state, "confirmed", JSON.stringify(outcome));
+}
+
 test("AP-047 direct quantity edits fail; opening and authorized movement deltas rebuild the balance", async () => {
   const id = await f.item();
   await assert.rejects(() => f.asUser("update inventory_items set current_stock=200 where id=$1", [id], i.owner), e => e.code === "42501");
@@ -96,6 +103,39 @@ test("AP-062 late, undated and draft purchase supply does not cover an earlier s
   group = (await plan("billet_forecast", { show: "all" })).rows[0];
   assert.equal(Number(group.days[3].shortfall_kg), 0);
 });
+
+test("AP-062 an incomplete draft cannot hide a known firm requirement or suppress its proposal", async () => {
+  await f.plannedJob({ kg: 800, days: 3 });
+  const draft = await f.plannedJob({ kg: 400, days: 3, firm: false });
+  await f.seed("delete from order_billet_requirements where order_id=$1", [draft.order]);
+  const group = (await plan("billet_forecast", { show: "all" })).rows[0];
+  const day = group.days[3];
+  assert.equal(Number(day.firm_kg), 1000);
+  assert.equal(Number(day.firm_count), 10);
+  assert.equal(Number(day.shortfall_kg), 1000);
+  assert.equal(Number(group.peak_shortfall_kg), 1000);
+  assert.equal(day.draft_kg, null);
+  assert.equal(day.with_drafts_shortfall_kg, null);
+  assert.equal(day.firm_unknown, 0);
+  assert.equal(day.draft_unknown, 1);
+  assert.equal((await plan("prepare_billet")).created, 1);
+});
+
+test("AP-062 missing firm input stays unknown without erasing known draft and later daily demand", async () => {
+  const firm = await f.plannedJob({ kg: 800, days: 2 });
+  await f.plannedJob({ kg: 400, days: 2, firm: false });
+  await f.plannedJob({ kg: 800, days: 4 });
+  await f.seed("update production_jobs set planned_quantity_kg=0 where id=$1", [firm.job]);
+  const group = (await plan("billet_forecast", { show: "all" })).rows[0];
+  assert.equal(group.days[2].firm_kg, null);
+  assert.equal(Number(group.days[2].draft_kg), 500);
+  assert.equal(group.days[2].firm_unknown, 1);
+  assert.equal(group.days[2].draft_unknown, 0);
+  assert.equal(Number(group.days[4].firm_kg), 1000, "a daily known quantity is still visible");
+  assert.equal(group.days[4].shortfall_kg, null, "the cumulative firm shortage is still unknown");
+  assert.equal(group.peak_shortfall_kg, null);
+  assert.equal((await plan("prepare_billet")).created, 0);
+});
 test("AP-062 billets already linked to a job are not procured again", async () => {
   const j = await f.plannedJob({});
   await f.seed("insert into foundry_billets(id,company_id,foundry_batch_id,billet_code,billet_number,billet_diameter_inch,billet_diameter_mm,billet_length_mm,alloy,temper,weight_kg,production_job_id,order_id,status) values($1,$2,$3,'LINKED-F-1',1,7,177.8,5800,'6063','T5',400,$4,$5,'allocated')", [f.next(),i.company,f.next(),j.job,j.order]);
@@ -147,6 +187,34 @@ test("AP-063 line-level due dates override the order date, basis is visible and 
   await assert.rejects(() => plan("predict", {}, i.sales), e => e.code === "42501");
   assert.equal((await plan("red_list", {}, i.foreign)).rows.length, 0);
 });
+
+for (const status of ["planned", "sent_to_vendor", "in_process"]) {
+  test(`AP-063 missing finishing lead stays unknown for ${status} material`, async () => {
+    const job = await f.plannedJob({ days: 2 });
+    await f.seed("update order_items set finishing_type='anodizing' where id=$1", [job.line]);
+    await f.seed("delete from factory_finishing_lead_times where company_id=$1", [i.company]);
+    await f.seed("insert into finishing_jobs(id,company_id,order_id,production_job_id,finishing_type,sent_date,input_weight_kg,status) values($1,$2,$3,$4,'anodizing',case when $5='planned' then null else current_date-1 end,100,$5)", [f.next(), i.company, job.order, job.job, status]);
+    await plan("predict");
+    const prediction = (await plan("red_list", { show: "all" })).rows[0];
+    assert.equal(prediction.estimated_date, null);
+    assert.equal(prediction.blocker, "finishing lead time missing");
+    assert.equal(prediction.basis.finishing_lead_days, null);
+    assert.equal(prediction.is_red, true);
+    assert.equal((await plan("red_list")).rows.length, 1);
+  });
+}
+
+test("AP-063 recorded finishing lead still yields a dated vendor estimate", async () => {
+  const job = await f.plannedJob({ days: 2 });
+  await f.seed("update order_items set finishing_type='anodizing' where id=$1", [job.line]);
+  await f.seed("insert into factory_finishing_lead_times(company_id,finishing_type,lead_days,updated_by) values($1,'anodizing',3,$2) on conflict(company_id,finishing_type) do update set lead_days=3", [i.company, i.owner]);
+  await f.seed("insert into finishing_jobs(id,company_id,order_id,production_job_id,finishing_type,sent_date,input_weight_kg,status) values($1,$2,$3,$4,'anodizing',current_date-1,100,'sent_to_vendor')", [f.next(), i.company, job.order, job.job]);
+  await plan("predict");
+  const prediction = (await plan("red_list", { show: "all" })).rows[0];
+  assert.ok(prediction.estimated_date);
+  assert.equal(prediction.blocker, "finishing at vendor");
+  assert.equal(prediction.basis.finishing_lead_days, 3);
+});
 test("AP-085 blockers prevent both direct and proposal month close; second-person exceptions bind exact items", async () => {
   const check = await accounts("close_checklist", { month: "2026-10" });
   assert.ok(check.blocking_count > 0);
@@ -167,6 +235,32 @@ test("AP-085 stale exception requests fail and only the nominated head closes", 
   await accounts("nominate_close_head", { actor_id: i.accounts }, i.owner);
   await assert.rejects(() => f.call("ap_period", "close_month", { month: "2026-10", reason: "Owner attempts the accounts head close" }, i.owner), e => e.code === "42501");
 });
+
+for (const approveBeforeRecount of [false, true]) {
+test(`AP-085 an independent recount invalidates ${approveBeforeRecount ? "approved" : "pending"} close exceptions even when the line status returns to difference`, async () => {
+  const batch = f.next(), count = f.next(), line = f.next();
+  await f.seed("insert into profile_stock_batches(id,company_id,profile_id,finish,length_m,quantity_pieces,total_weight_kg,location,status,updated_at) values($1,$2,$3,'mill_finish',600,100,100,'Audit rack','available','2026-10-01')", [batch, i.company, i.profile2]);
+  await f.seed("insert into cycle_counts(id,company_id,location,blind,cutoff_at,opened_by) values($1,$2,'Audit rack',false,'2026-10-20',$3)", [count, i.company, i.inventory]);
+  await f.seed("insert into cycle_count_lines(id,company_id,count_id,profile_stock_batch_id,expected_pieces,expected_kg,batch_snapshot) values($1,$2,$3,$4,100,100,'{}')", [line, i.company, count, batch]);
+  await countAction({ action: "count.record", count_id: count, line_id: line, counted_pieces: 90, counted_kg: 90, note: "First physical count found ninety pieces" }, i.inventory);
+  const before = await accounts("close_checklist", { month: "2026-10" });
+  const approved = await accounts("request_close_exception", { month: "2026-10", fingerprint: before.fingerprint, reason: "Stock variance at ninety kg reviewed" });
+  if (approveBeforeRecount) await accounts("decide_close_exception", { id: approved.id, decision: "approve", reason: "Independent approval of current observations" }, i.admin);
+  await countAction({ action: "count.review", line_id: line, decision: "recount", note: "Request another employee to recount" }, i.owner);
+  await countAction({ action: "count.record", count_id: count, line_id: line, counted_pieces: 10, counted_kg: 10, note: "Independent recount found only ten pieces" }, i.dispatchManager);
+  assert.equal((await f.one("select status from cycle_count_lines where id=$1", [line])).status, "difference");
+  const after = await accounts("close_checklist", { month: "2026-10" });
+  assert.notEqual(after.fingerprint, before.fingerprint);
+  if (!approveBeforeRecount) await assert.rejects(() => accounts("decide_close_exception", { id: approved.id, decision: "approve", reason: "Attempt approval of superseded observations" }, i.admin), /items changed/);
+  await assert.rejects(() => f.call("ap_period", "close_month", { month: "2026-10", reason: "Attempt to use approval from the first count" }, i.owner), /blockers/);
+  await assert.rejects(() => f.asUser("select public.set_books_locked_through('2026-10-31','Attempt to reuse the first count approval')", [], i.owner), /blockers/);
+  const fresh = await accounts("request_close_exception", { month: "2026-10", fingerprint: after.fingerprint, reason: "Review the new ten kg observation" });
+  await accounts("decide_close_exception", { id: fresh.id, decision: "approve", reason: "Independent review of the new evidence" }, i.admin);
+  const closed = await f.call("ap_period", "close_month", { month: "2026-10", reason: "Close using the new independently reviewed evidence" }, i.owner);
+  assert.equal(closed.locked_through, "2026-10-31");
+  assert.equal((await f.one("select status from month_close_exceptions where id=$1", [fresh.id])).status, "used");
+});
+}
 test("AP-078 deadlines require acceptance evidence, cap written terms, keep notes separate, and clear when paid", async () => {
   const b = await f.supplierBill();
   await accounts("save_msme_vendor", { vendor_id: i.vendor, category: "micro", udyam: "UDYAM-DL-01-0000001", agreed_days: 90, reason: "Certificate and written agreement checked" });

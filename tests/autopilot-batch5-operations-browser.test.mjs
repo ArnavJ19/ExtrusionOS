@@ -39,12 +39,53 @@ for (const width of [375,1280]) {
     await v.page.getByText("Calculation and source evidence",{exact:true}).click(); await expect(v.page.getByText(/stage-plan-v1/)).toBeVisible();
     await v.done("red-list");
   });
+  test(`AP-062 incomplete drafts stay unknown while the firm shortage can be confirmed at ${width}px`, async () => {
+    await setup(async f => { await f.plannedJob({}); const draft = await f.plannedJob({ kg: 400, firm: false }); await f.seed("delete from order_billet_requirements where order_id=$1", [draft.order]); });
+    const v = await open(width, "billet-forecast", i.productionManager);
+    await expect(v.page.getByText(/firm shortfall 1,000 kg/)).toBeVisible();
+    await expect(v.page.getByRole("cell", { name: "Unknown (1 draft input(s) missing)", exact: true })).toBeVisible();
+    await v.page.getByRole("button", { name: "Prepare shortage proposals" }).click();
+    await expect(v.page.getByText(/1,000 kg of 6063/)).toBeVisible();
+    await v.page.getByRole("button", { name: "Accept", exact: true }).click();
+    await expect.poll(async () => (await fixture.run(() => fixture.f.one("select count(*)::int n from proposals where proposal_type='billet.shortage' and status='accepted'"))).n).toBe(1);
+    await v.done("firm-shortage-with-incomplete-draft");
+  });
+  test(`AP-063 a vendor job without finishing lead stays on the red list with an unknown estimate at ${width}px`, async () => {
+    await setup(async f => {
+      const j = await f.plannedJob({});
+      await f.seed("update order_items set finishing_type='anodizing' where id=$1", [j.line]);
+      await f.seed("delete from factory_finishing_lead_times where company_id=$1", [i.company]);
+      await f.seed("insert into finishing_jobs(id,company_id,order_id,production_job_id,finishing_type,sent_date,input_weight_kg,status) values($1,$2,$3,$4,'anodizing',current_date-1,100,'sent_to_vendor')", [f.next(), i.company, j.order, j.job]);
+      await f.call("ap_planning", "predict", {}, i.productionManager);
+    });
+    const v = await open(width, "red-list", i.productionManager);
+    await expect(v.page.getByText("finishing lead time missing", { exact: true })).toBeVisible();
+    await expect(v.page.getByText(/Estimated Unknown; resolve missing input/)).toBeVisible();
+    await v.done("missing-finishing-lead");
+  });
   test(`AP-085 close is blocked, then an exception can be requested at ${width}px`, async () => {
     const v = await open(width,"close-checklist",i.owner); await expect(v.page.getByText(/blocking item\(s\)/)).toBeVisible();
     await v.page.getByLabel("Reason or approval note").fill("Tally export is pending a reviewed reconciliation");
     await v.page.getByRole("button",{name:"Close checked month"}).click(); await expect(v.page.getByRole("alert")).toContainText("blockers");
     await v.page.getByRole("button",{name:"Request close exception"}).click(); await expect(v.page.getByRole("status").filter({hasText:"Exception requested"})).toBeVisible();
     await v.done("close-checklist");
+  });
+  test(`AP-085 the close screen refuses an old exception after an independent recount at ${width}px`, async () => {
+    const count = await setup(async f => {
+      const stock = await f.countedStock();
+      const check = await f.call("ap_accounts", "close_checklist", { month: "2026-10" }, i.accounts);
+      const exception = await f.call("ap_accounts", "request_close_exception", { month: "2026-10", fingerprint: check.fingerprint, reason: "Stock variance at ninety kg reviewed" }, i.accounts);
+      await f.call("ap_accounts", "decide_close_exception", { id: exception.id, decision: "approve", reason: "Independent approval of current observations" }, i.admin);
+      return stock;
+    });
+    const v = await open(width, "close-checklist", i.owner);
+    await expect(v.page.getByText("Items have changed since this request.", { exact: true })).toHaveCount(0);
+    await setup(f => f.recountStock(count));
+    await v.page.getByLabel("Reason or approval note").fill("Attempt close using the earlier count approval");
+    await v.page.getByRole("button", { name: "Close checked month" }).click();
+    await expect(v.page.getByRole("alert")).toContainText("blockers");
+    await expect(v.page.getByText("Items have changed since this request.", { exact: true })).toBeVisible();
+    await v.done("recount-invalidates-close");
   });
   test(`AP-078 missing acceptance stays unknown and accounts can record it at ${width}px`, async () => {
     await setup(async f => { await f.supplierBill(); await f.call("ap_accounts","save_msme_vendor",{vendor_id:i.vendor,category:"micro",udyam:"UDYAM-DL-01-0000001",reason:"Certificate and written terms verified"},i.accounts); });

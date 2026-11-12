@@ -147,7 +147,10 @@ an intentional exception to the original one-file plan because the initial file 
 The concurrently authored review-fix migration, label/quotation UI changes, audit reports, existing screenshot edits
 and added quotation review tests remain separate work. They are not absorbed into the completion commit.
 
-## Final verification
+## Completion checkpoint verification (474e3ce)
+
+These are the original completion checkpoint results. The correctness follow-up below supersedes its known
+defects and outstanding check failures.
 
 | Check | Observed result |
 | --- | --- |
@@ -189,3 +192,39 @@ the plant head and compare with dispatches; use the digest for two weeks and mea
 
 MSME configuration reference checked on 13 November: [DC-MSME delayed-payment FAQ](https://dcmsme.gov.in/old/faq/FAQs%20-%20Delayed%20Payments%20-%2027.12.2012.pdf).
 Accounts confirms actual applicability, classification and acceptance/dispute evidence.
+
+## Correctness follow-up (13 November 2026)
+
+A subsequent review reproduced three gaps in the original passing tests. They are fixed by
+`supabase/migrations/20261113120000_autopilot_batch_5_correctness.sql`; the earlier migration files are unchanged.
+
+| Finding | Implemented correction | Regression evidence |
+| --- | --- | --- |
+| AP-085 close approval survived a changed count | The close fingerprint includes the full ordered observation history, measured pieces/kg, observer, time, notes, count-line snapshot and review evidence. A status returning to `difference` cannot restore the old fingerprint | Real count preview/commit: 90 kg first count, independent recount at 10 kg; pending approval is refused, approved exception cannot close through either AP-059 or the legacy lock RPC; a fresh independent approval can close and is consumed |
+| AP-062 incomplete drafts hid firm shortages | Separate firm/draft missing-input counters and cumulative completeness. Known daily quantities remain visible; only the affected cumulative calculation stays unknown. The UI labels missing draft input in its own column | 1,000 kg firm requirement plus an incomplete draft still produces the 1,000 kg shortage proposal. Missing firm input remains unknown while known drafts and later daily demand remain visible |
+| AP-063 vendor jobs received an unjustified date | Missing finishing lead is checked before any vendor-date calculation. No zero-day fallback is used | Planned, sent-to-vendor and in-process cases retain a null estimate and appear on the red list; configured lead still yields a dated estimate |
+| Two NOV-002 browser failures | Tests expand the existing workspace disclosure before operating its controls | Blocked storage still reports failure; keyboard reorder and company/navigation isolation pass |
+| Broad lint error and four warnings | Rename the audit script's local `module` variable without changing its output key; remove unused bindings/import/helper | `npm run lint` passes with zero errors and zero warnings. Other uncommitted audit-script changes are preserved and excluded from this fix commit |
+
+| Follow-up check | Result |
+| --- | --- |
+| Full local migration replay | 303/303 applied, zero failures |
+| Completion SQL and command/calculation units | 25 SQL/RLS checks and 3 command/calculation checks passed, including all new edge cases |
+| Completion browser | 20 passing checks, including six phone/desktop reproductions; six new screenshots in `docs/evidence/AUTOPILOT_BATCH_5_COMPLETION` |
+| Workspace browser | 20/20 passed, including both formerly failing scenarios |
+| Typecheck / production build / lint | All passed; lint has zero errors and zero warnings |
+| Full repository `npm test` | 3,481/3,481 passed across 76 suites; zero failures, zero skipped, zero cancelled. Completed in 16 minutes 51 seconds |
+| Visual check | Six phone/desktop regression screenshots inspected. In-app browser was unavailable; native Computer Use stopped because it could not establish the current browser URL. No manual signed-in browser acceptance is claimed |
+
+Created: one additive correctness migration. Modified: operations UI, SQL/browser regression suites, operations fixture
+and preview, the two older browser interactions, unused NOV batch 8 test bindings and the audit script's three lint-only
+edits, this report and project continuation notes. No new dependency, table, grant or RLS-policy change; the three
+replaced private functions keep pinned search paths and revoked client execution. No job gains stock, payment or
+message-posting authority.
+
+The completion and correctness migrations remain local. A read-only hosted ledger check found no completion
+migration. Apply `20261113110000_autopilot_batch_5_completion.sql` followed by
+`20261113120000_autopilot_batch_5_correctness.sql` only after separate rollout authorization. This follow-up did not
+push, merge, deploy or apply hosted migrations. Real signed-in role acceptance, independent-session PostgreSQL
+concurrency, physical stock reconciliation and operating targets remain the employee/staging gates listed above;
+Docker's local PostgreSQL engine was not running, so serialized PGlite checks do not substitute for that concurrency trial.

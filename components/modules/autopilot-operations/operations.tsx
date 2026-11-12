@@ -60,7 +60,7 @@ export function OwnerDigest() {
   </Section>;
 }
 
-type ForecastDay = { date: string; firm_kg: number | null; draft_kg: number | null; firm_count: number | null; incoming_kg: number; unknown: number; shortfall_kg: number | null; with_drafts_shortfall_kg: number | null; demand: unknown };
+type ForecastDay = { date: string; firm_kg: number | null; draft_kg: number | null; firm_count: number | null; incoming_kg: number; unknown: number; firm_unknown?: number; draft_unknown?: number; shortfall_kg: number | null; with_drafts_shortfall_kg: number | null; demand: unknown };
 type ForecastGroup = { alloy: string | null; diameter: number | null; free_kg: number; peak_shortfall_kg: number | null; days: ForecastDay[]; need_by: string | null; supply_sources: unknown };
 export function BilletForecast() {
   const [filters, setFilters] = useState(initialFilters); const [revision, setRevision] = useState(0); const [note, setNote] = useState<Note>(null);
@@ -74,7 +74,7 @@ export function BilletForecast() {
       {!read.data.rows.length ? <Empty>No matching billet requirements.</Empty> : read.data.rows.map(g => <article key={`${g.alloy}:${g.diameter}`} className="min-w-0 rounded-xl border p-3">
         <h3 className="font-bold">{g.alloy ?? "Alloy missing"} / {g.diameter ?? "Diameter missing"} inch</h3><p className="text-sm">Free stock {kg(g.free_kg)}; firm shortfall {kg(g.peak_shortfall_kg)}{g.need_by ? ` by ${fmtDay(g.need_by)}` : ""}.</p>
         <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[640px] text-left text-sm"><thead><tr className="border-b text-xs text-neutral-500"><th>Date</th><th>Firm input</th><th>Billets</th><th>Uncertain drafts</th><th>Incoming</th><th>Firm shortage</th><th>With drafts</th></tr></thead><tbody>
-          {g.days.map(d => <tr key={d.date} className="border-b"><td className="py-3">{fmtDay(d.date)}</td><td>{kg(d.firm_kg)}{d.unknown ? ` (${d.unknown} missing inputs)` : ""}</td><td>{d.firm_count ?? "Unknown"}</td><td>{kg(d.draft_kg)}</td><td>{kg(d.incoming_kg)}</td><td className={Number(d.shortfall_kg) > 0 ? "font-bold text-rose-700" : ""}>{kg(d.shortfall_kg)}</td><td>{kg(d.with_drafts_shortfall_kg)}</td></tr>)}
+          {g.days.map(d => <tr key={d.date} className="border-b"><td className="py-3">{fmtDay(d.date)}</td><td>{kg(d.firm_kg)}{(d.firm_unknown ?? d.unknown) > 0 ? ` (${d.firm_unknown ?? d.unknown} firm input(s) missing)` : ""}</td><td>{d.firm_count ?? "Unknown"}</td><td>{kg(d.draft_kg)}{(d.draft_unknown ?? 0) > 0 ? ` (${d.draft_unknown} draft input(s) missing)` : ""}</td><td>{kg(d.incoming_kg)}</td><td className={Number(d.shortfall_kg) > 0 ? "font-bold text-rose-700" : ""}>{kg(d.shortfall_kg)}</td><td>{kg(d.with_drafts_shortfall_kg)}</td></tr>)}
         </tbody></table></div><Why value={{ demand: g.days.map(d => ({ date: d.date, sources: d.demand })), supply: g.supply_sources }} />
       </article>)}<Pager page={filters.page} total={read.data.total_count} onPage={page => setFilters({ ...filters, page })} />
     </> : null}

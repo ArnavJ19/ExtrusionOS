@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createNov8Fixture, nids as i, day } from "../scripts/lib/nov-batch8-fixture.mjs";
 import { migrationFiles } from "../scripts/lib/migration-chain-replay.mjs";
-import { executionListSchema, executionDetailSchema, executionOutcomeSchema, executionLookupSchema, executionMutationSchema, orderProgressSchema, canReadExecution, canUseExecutionAction,
+import { executionListSchema, executionOutcomeSchema, executionLookupSchema, executionMutationSchema, orderProgressSchema, canReadExecution, canUseExecutionAction,
   EXECUTION_ROLES, EXECUTION_VIEWS } from "../lib/workflow/execution.ts";
 
 let f;
@@ -196,7 +196,8 @@ test("NOV-077: a die or serialised asset has one open pass, planning sees the cu
   const lookupRows = executionLookupSchema.parse(await lookup("dies", { search: "NOV8-C" }, i.productionManager));
   assert.match(lookupRows[0].context, /on pass RGP-/);
   assert.equal((await row("gate_passes", id)).source_href, `/dies/${i.dieC}`);
-  const { die_id: _omitted, ...withoutDie } = body;
+  const withoutDie = { ...body };
+  delete withoutDie.die_id;
   await assert.rejects(() => f.prepare(withoutDie, i.productionManager), /Choose the die/);
   await assert.rejects(() => f.prepare({ ...body, quantity: 2, die_id: i.dieB }, i.productionManager), /one serialised item/);
   await assert.rejects(() => f.prepare({ ...body, die_id: f.nextId() }, i.productionManager), /unavailable/);
@@ -433,7 +434,6 @@ test("NOV-045: unknown quantities are not treated as zero, jobs and kg are never
 
 // NOV-047 ---------------------------------------------------------------------------------------
 const setRule = (patch = {}, actor = i.productionManager) => f.apply({ action: "rule.set", task_type: "inspection", allowed_roles: ["quality", "production_manager"], competency_id: i.competency, estimate_minutes: 30, note: "Only trained inspectors take inspections", ...patch }, actor);
-const assign = (task, assignee, patch = {}, actor = i.productionManager) => f.apply({ action: "assignment.assign", id: task, assignee_id: assignee, note: "Fits the shift plan", ...patch }, actor);
 const candidates = async task => (await detail("assignments", task)).row.details.candidates;
 
 test("NOV-047: hard eligibility (role, current competency) is separate from availability and workload, with an override reason", async () => {

@@ -38,5 +38,24 @@ export function addOperationsHelpers(f) {
     if (days !== null) await f.seed("insert into supplier_commitments(company_id,purchase_order_id,original_date,current_date_promised,recorded_by) values($1,$2,current_date+$3::int,current_date+$3::int,$4)", [i.company,po,days,i.owner]);
     return { po, line };
   }
-  return { ...f, item, plannedJob, supplierBill, incomingPo };
+  async function countAction(mutation, actor) {
+    const request_id = f.next();
+    const preview = await f.call("assurance_command", "preview", { request_id, mutation }, actor);
+    const outcome = await f.call("assurance_command", "commit", { request_id, fingerprint: preview.fingerprint }, actor);
+    if (outcome.state !== "confirmed") throw new Error(JSON.stringify(outcome));
+    return outcome;
+  }
+  async function countedStock() {
+    const batch = f.next(), count = f.next(), line = f.next();
+    await f.seed("insert into profile_stock_batches(id,company_id,profile_id,finish,length_m,quantity_pieces,total_weight_kg,location,status,updated_at) values($1,$2,$3,'mill_finish',600,100,100,'Audit rack','available','2026-10-01')", [batch, i.company, i.profile2]);
+    await f.seed("insert into cycle_counts(id,company_id,location,blind,cutoff_at,opened_by) values($1,$2,'Audit rack',false,'2026-10-20',$3)", [count, i.company, i.inventory]);
+    await f.seed("insert into cycle_count_lines(id,company_id,count_id,profile_stock_batch_id,expected_pieces,expected_kg,batch_snapshot) values($1,$2,$3,$4,100,100,'{}')", [line, i.company, count, batch]);
+    await countAction({ action: "count.record", count_id: count, line_id: line, counted_pieces: 90, counted_kg: 90, note: "First physical count found ninety pieces" }, i.inventory);
+    return { batch, count, line };
+  }
+  async function recountStock({ count, line }) {
+    await countAction({ action: "count.review", line_id: line, decision: "recount", note: "Request another employee to recount" }, i.owner);
+    await countAction({ action: "count.record", count_id: count, line_id: line, counted_pieces: 10, counted_kg: 10, note: "Independent recount found only ten pieces" }, i.dispatchManager);
+  }
+  return { ...f, item, plannedJob, supplierBill, incomingPo, countedStock, recountStock };
 }
