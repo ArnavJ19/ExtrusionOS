@@ -40,6 +40,7 @@ const mocks = {
       then(resolve,reject){window.databaseReads.push(q);let data=[];if(table==="aluminium_profiles")data=[profile];else if(table==="company_settings_authorized")data={default_conversion_charge_per_kg:30,default_packing_charge:20,default_transport_charge:10,default_margin_percent:10,minimum_margin_percent:8,default_gst_percent:18};return Promise.resolve({data,error:null}).then(resolve,reject);}
     };return chain;}};}
   `,
+  "@/lib/actions/autopilot": `export async function autopilotAction(){return {success:false,unavailable:true,error:"Autopilot suggestions are covered by their own fixture"}}`,
   "@/lib/actions/quotes-orders": `export async function saveQuoteAction(data){window.quoteWrites.push(data);return {success:true};} export async function updateQuoteStatusAction(){throw new Error("Unexpected workflow write");}`,
   "@/lib/actions/in-task-customers": `export async function inTaskCustomerAction(request){window.customerActions.push(request);if(window.customerAction)return window.customerAction(request);return {kind:"checked",matches:[],hasMore:false};}`,
   "@/lib/actions/costing-rates": `export async function costingRateAction(){throw new Error("Unexpected costing rate request");}`,
@@ -71,7 +72,7 @@ test.before(async () => {
     plugins: [{
       name: "in-task-customer-browser-fixture",
       setup(buildApi) {
-        buildApi.onResolve({ filter: /^@\/lib\/(?:supabase\/browser|actions\/(?:quotes-orders|in-task-customers|repeat-quote|costing-rates|profile-technical-options|transaction-evidence))$/ }, (args) => ({ path: args.path, namespace: "fixture" }));
+        buildApi.onResolve({ filter: /^@\/lib\/(?:supabase\/browser|actions\/(?:autopilot|quotes-orders|in-task-customers|repeat-quote|costing-rates|profile-technical-options|transaction-evidence))$/ }, (args) => ({ path: args.path, namespace: "fixture" }));
         buildApi.onLoad({ filter: /.*/, namespace: "fixture" }, (args) => ({ contents: mocks[args.path], loader: "tsx", resolveDir: process.cwd() }));
         buildApi.onResolve({ filter: /^@\// }, (args) => ({ path: resolveAliasFile(args.path) }));
         buildApi.onResolve({ filter: /^sonner$/ }, (args) => ({ path: args.path, namespace: "fixture" }));

@@ -678,7 +678,7 @@ export const moduleConfigs: Record<ModuleKey, ModuleConfig> = {
       { name: "material_name", label: "Material name", required: true },
       { name: "material_type", label: "Material type", type: "select", options: options([...packagingMaterialTypes]) },
       { name: "unit", label: "Unit", required: true },
-      { name: "current_stock", label: "Current stock", type: "number", step: "0.001" },
+      { name: "current_stock", label: "Current stock (from movements)", type: "number", step: "0.001", readOnly: true },
       { name: "reorder_level", label: "Reorder level", type: "number", step: "0.001" },
       { name: "calculation_method", label: "Calculation method", type: "select", options: options([...packagingCalculationMethods]) },
       { name: "consumption_rate", label: "Consumption rate", type: "number", step: "0.001" },

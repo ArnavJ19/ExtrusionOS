@@ -11,7 +11,8 @@ export const PROPOSAL_TYPES = {
   "die.service_due": { label: "Die service", home: "/dies", noun: "die service" },
   "maintenance.pm_due": { label: "Preventive maintenance", home: "/production/floor", noun: "maintenance window" },
   "bank.receipt_match": { label: "Bank receipt", home: "/payments/bank", noun: "receipt" },
-  "freight.estimate": { label: "Freight estimate", home: "/dispatches/freight", noun: "freight" }
+  "freight.estimate": { label: "Freight estimate", home: "/dispatches/freight", noun: "freight" },
+  "billet.shortage": { label: "Billet shortage", home: "/production/billet-forecast", noun: "billet requirement" }
 } as const;
 export type ProposalType = keyof typeof PROPOSAL_TYPES;
 export const PROPOSAL_TYPE_KEYS = Object.keys(PROPOSAL_TYPES) as [ProposalType, ...ProposalType[]];
@@ -65,6 +66,10 @@ const when = (value: unknown) => (typeof value === "string" && value ? new Date(
 export function proposalWhy(row: ProposalRow): string[] {
   const evidence = (row.evidence ?? {}) as Record<string, unknown>;
   const lines = [row.reason];
+  if (row.proposal_type === "billet.shortage") {
+    lines.push(`Free stock ${kg(evidence.free_kg)}. Need by ${String(row.payload.need_by ?? "unknown")}. Draft demand is uncertain and is not used to reduce the firm shortage.`);
+    lines.push("Acceptance creates an assigned preparation task. Purchase orders and casts use their existing reviewed workflows.");
+  }
   if (row.proposal_type === "navigation.role_layout") {
     lines.push(`${evidence.total_visits ?? 0} page visits by this role over ${evidence.window_days ?? 28} days (${evidence.days_observed ?? 0} days with visits).`);
   } else if (row.proposal_type === "period.close_month") {
@@ -112,6 +117,7 @@ export function proposalWhy(row: ProposalRow): string[] {
 }
 
 export function proposalSummary(row: ProposalRow): string {
+  if (row.proposal_type === "billet.shortage") return `${kg(row.payload.quantity_kg)} of ${row.payload.alloy} / ${row.payload.diameter} inch billet, needed ${row.payload.need_by}. Prepare ${row.payload.route}.`;
   if (row.proposal_type === "navigation.role_layout") return `Main navigation for ${row.target_key.replaceAll("_", " ")}: ${((row.payload.items as string[]) ?? []).join(", ")}`;
   if (row.proposal_type === "period.close_month") return `Close ${row.payload.month as string} so entries dated in it need an approved reopen.`;
   if (row.proposal_type === "production.expected_output") {

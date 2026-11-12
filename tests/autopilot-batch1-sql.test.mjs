@@ -52,7 +52,7 @@ test("AP-038 GSTIN check digit, state fill and the explicit unregistered choice 
 
 test("AP-001 scheduled jobs run once per window, manual runs are labelled, and three failed windows raise one alert", async () => {
   const first = await f.cron("nightly");
-  assert.equal(first.runs.length, 10, "five nightly jobs (three from batch 1, press.idle_reconcile from batch 2, quotes.expire from batch 3) for each of the two companies");
+  assert.equal(first.runs.length, 14, "seven nightly jobs for each of the two companies, including billet forecasts and late-line predictions");
   assert.ok(first.runs.every(run => run.state === "succeeded"), JSON.stringify(first.runs));
   const again = await f.cron("nightly");
   assert.ok(again.runs.every(run => run.state === "already_ran"), "a retried cron call in the same window does nothing");
@@ -229,6 +229,12 @@ test("AP-059 a month closes by proposal, a closed month needs an approved reopen
   const proposal = (await f.call("ap_proposals", "list", { type: "period.close_month" }, i.accounts)).rows[0];
   assert.equal(proposal.payload.month, lastMonth);
   assert.equal(n(proposal.evidence.invoices), 1);
+  await f.call("ap_accounts", "nominate_close_head", { actor_id: i.accounts }, i.owner);
+  const checklist = await f.call("ap_accounts", "close_checklist", { month: lastMonth }, i.accounts);
+  if (checklist.blocking_count) {
+    const exception = await f.call("ap_accounts", "request_close_exception", { month: lastMonth, fingerprint: checklist.fingerprint, reason: "Test invoice export reviewed for later completion" }, i.accounts);
+    await f.call("ap_accounts", "decide_close_exception", { id: exception.id, decision: "approve", reason: "Independent review of the outstanding export" }, i.owner);
+  }
   await assert.rejects(() => f.call("ap_proposals", "decide", { id: proposal.id, decision: "edit", payload: { month: "2020-01" } }, i.accounts), /Only nothing/);
   assert.equal((await f.call("ap_proposals", "decide", { id: proposal.id, decision: "accept" }, i.accounts)).state, "accepted");
   const overview = await f.call("ap_period", "overview", {}, i.accounts);
@@ -436,7 +442,7 @@ test("every new table has RLS and company scoping, and only the intended functio
   // Batch 3 (order-to-cash) adds ap_billing, ap_cash, ap_credit, ap_dupes, ap_jobdrafts and ap_quotes; tests/autopilot-batch3-sql.test.mjs covers them.
   // Batch 5 adds ap_finishing, ap_quote_sales and ap_usual; tests/autopilot-batch5-sql.test.mjs covers them.
   // Batch 4 (dispatch and compliance) adds ap_dispatch, ap_eway, ap_freight, ap_order_status (also anonymous), ap_share and ap_tally; tests/autopilot-batch4-sql.test.mjs covers them.
-  assert.deepEqual(callable, ["ap_billing", "ap_calendar", "ap_cash", "ap_credit", "ap_cutover", "ap_dies", "ap_dispatch", "ap_dupes", "ap_eway", "ap_finishing", "ap_freight", "ap_home_work", "ap_import", "ap_jobdrafts", "ap_jobs", "ap_navigation", "ap_order_status", "ap_period", "ap_pm", "ap_press", "ap_proposals", "ap_quote_sales", "ap_quotes", "ap_sampling", "ap_scrap", "ap_series", "ap_share", "ap_tally", "ap_usual"]);
+  assert.deepEqual(callable, ["ap_accounts", "ap_billing", "ap_calendar", "ap_cash", "ap_credit", "ap_cutover", "ap_dies", "ap_digest", "ap_dispatch", "ap_dupes", "ap_eway", "ap_finishing", "ap_freight", "ap_home_work", "ap_import", "ap_jobdrafts", "ap_jobs", "ap_navigation", "ap_order_status", "ap_period", "ap_planning", "ap_pm", "ap_press", "ap_proposals", "ap_quote_sales", "ap_quotes", "ap_sampling", "ap_scrap", "ap_series", "ap_share", "ap_stock", "ap_tally", "ap_usual"]);
   const definers = (await f.db.query(`select p.proname, p.proconfig from pg_proc p where p.pronamespace in ('public'::regnamespace,'private'::regnamespace) and p.proname like 'ap\\_%' and p.prosecdef`)).rows;
   for (const fn of definers) assert.ok(fn.proconfig?.some(c => c.startsWith("search_path=")), `${fn.proname} pins its search path`);
   // Rows of another company are invisible through direct reads.
@@ -466,7 +472,7 @@ test("AP-001 pg_cron runs the schedules through the private runner; Vercel keeps
   const { JOB_SCHEDULES } = await import("../lib/jobs/registry.ts");
   // pg_cron calls private.ap_jobs_run as the database owner, without a JWT.
   const run = (await f.db.query("select private.ap_jobs_run('nightly') data")).rows[0].data;
-  assert.equal(run.runs.length, 10);
+  assert.equal(run.runs.length, 14);
   assert.ok(run.runs.every(r => r.state === "succeeded"), JSON.stringify(run.runs));
   const viaRoute = await f.cron("nightly");
   assert.ok(viaRoute.runs.every(r => r.state === "already_ran"), "the manual route in the same window does nothing after pg_cron ran");

@@ -63,7 +63,7 @@ export function PeriodsClient({ initial, userId }: { initial: PeriodOverview; us
               <button type="button" disabled={busy || decision.note.trim().length < 5} className="min-h-10 rounded-lg border px-3 disabled:opacity-50" onClick={async () => { if (await run("reject_reopen", { id: decision.id, note: decision.note.trim() }, "Reopen rejected.")) setDecision(null); }}>Reject</button></div></div> : null}
         </div> : null}
         <div className="mt-2 flex flex-wrap gap-2">
-          {month.state === "open_ended" && data.can_close ? <button type="button" className="min-h-10 rounded-lg border px-3 font-semibold" onClick={() => setForm({ kind: "close", month: month.month, reason: `Month close for ${month.label}` })}>Close month</button> : null}
+          {month.state === "open_ended" && (data.can_close_month ?? data.can_close) ? <button type="button" className="min-h-10 rounded-lg border px-3 font-semibold" onClick={() => setForm({ kind: "close", month: month.month, reason: `Month close for ${month.label}` })}>Close month</button> : null}
           {month.state === "closed" && !(month.reopen && ["requested", "approved"].includes(month.reopen.status)) ? <button type="button" className="min-h-10 rounded-lg border px-3 font-semibold" onClick={() => setForm({ kind: "reopen", month: month.month, reason: "" })}>Request a reopen</button> : null}
         </div>
         {form?.month === month.month ? <div className="mt-2 space-y-2"><label className="block text-xs font-semibold">{form.kind === "close" ? "Reason for closing" : "Why must an entry be dated in this month?"}

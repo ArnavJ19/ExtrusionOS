@@ -41,6 +41,7 @@ export async function createCommercialBrowserFixture(){
   };
   const mockAction=(name,kind)=>`export async function ${name}(payload){const response=await fetch('/command?role='+window.sessionRole,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kind:'${kind}',payload})});return response.json()}`;
   const aliases={
+    '@/lib/actions/autopilot':`export async function autopilotAction(){return {success:false,unavailable:true,error:'Autopilot suggestions are covered by their own fixture'}}`,
     'next/navigation':`export function useRouter(){return {push(url){window.navigations.push(url)},refresh(){}}}export function useSearchParams(){return new URLSearchParams(location.search)}`,
     'next/link':`import React from 'react';export default function Link({children,...props}){return <a {...props}>{children}</a>}`,
     'sonner':`export const toast={error(text){document.getElementById('messages').textContent=text},success(text){document.getElementById('messages').textContent=text},warning(){}}`,

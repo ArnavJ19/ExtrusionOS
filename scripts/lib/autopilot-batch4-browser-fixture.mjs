@@ -44,6 +44,7 @@ export async function createDispatchBrowserFixture() {
     import {UsualChoicesHint} from './components/modules/autopilot-usual/usual-choices';
     import {VendorChaseClient} from './components/modules/finishing/vendor-chase';
     import {FollowupQueueClient,QuoteFollowupPanel,QuoteFloorPanel,FloorsClient} from './components/modules/quote-sales/quote-sales';
+    import {OwnerDigest,BilletForecast,LateLines,CloseChecklist,MsmePayments,VendorMsmeTerms,InventoryMovements,InventoryLedger} from './components/modules/autopilot-operations/operations';
     // Batch 5 harness: the usual-choices hint above two plain fields, as the quotation form uses it.
     function UsualHarness(props){const [v,setV]=React.useState({payment_terms:'',finish:'mill_finish'});return <div className='space-y-2'>
       <UsualChoicesHint customerId={props.customerId} surface='quote' fields={['payment_terms','delivery_timeline','finish']} current={v} onUse={(f,value)=>setV(c=>({...c,[f]:value}))}/>
@@ -73,6 +74,14 @@ export async function createDispatchBrowserFixture() {
       else if(screen==='followups')node=<FollowupQueueClient canSettings={true}/>;
       else if(screen==='quote-sales')node=<><QuoteFloorPanel quoteId={o.quoteId} canRequest={true}/><QuoteFollowupPanel quoteId={o.quoteId} canRecord={true}/></>;
       else if(screen==='floors')node=<FloorsClient canDecide={Boolean(o.canDecide)}/>;
+      else if(screen==='digest')node=<OwnerDigest/>;
+      else if(screen==='billet-forecast')node=<BilletForecast/>;
+      else if(screen==='red-list')node=<LateLines canPredict={true}/>;
+      else if(screen==='close-checklist')node=<CloseChecklist initialMonth={o.month||'2026-10'} canNominate={userId===window.ids.owner||userId===window.ids.admin}/>;
+      else if(screen==='msme')node=<MsmePayments/>;
+      else if(screen==='msme-vendor')node=<VendorMsmeTerms vendorId={o.vendorId}/>;
+      else if(screen==='stock-movements')node=<InventoryMovements itemId={o.itemId} canAdjust={true}/>;
+      else if(screen==='stock-ledger')node=<InventoryLedger canSetPolicy={userId===window.ids.owner||userId===window.ids.admin}/>;
       root.render(<main key={Date.now()} className='mx-auto min-w-0 max-w-5xl space-y-5 p-4'><h1 className='text-2xl font-bold'>Dispatch fixture: {screen}</h1>{node}</main>);
     };
     // Preview: /?screen=gate&user=<id>&sessionId=... mounts a screen directly (used for the in-app browser check).

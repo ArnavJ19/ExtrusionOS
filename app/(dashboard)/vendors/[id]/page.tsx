@@ -3,6 +3,7 @@ import { RecordDetailClient } from "@/components/modules/operations/record-detai
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
+import { VendorMsmeTerms } from "@/components/modules/autopilot-operations/operations";
 
 export default async function VendorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -11,5 +12,6 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
   return <div className="space-y-6">
     <RecordDetailClient moduleKey="vendors" context={context} recordId={id} canEdit={can(context.role, "update", "vendors")} />
     {!context.dealerId ? <RelatedWorkPanel kind="vendor" id={id} role={context.role} /> : null}
+    {!context.dealerId && ["owner", "admin", "accounts"].includes(context.role) ? <VendorMsmeTerms vendorId={id} /> : null}
   </div>;
 }

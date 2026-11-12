@@ -19,6 +19,7 @@ import { dieCommands, pmCommands, pressCommands, samplingCommands, scrapCommands
 import { CASH_READS, billingCommands, cashCommands, creditCommands, dupeCommands, jobDraftCommands, quoteCommands } from "@/lib/order-to-cash/commands";
 import { DISPATCH_READS, dispatchCommands, ewayCommands, freightCommands, shareCommands, tallyCommands } from "@/lib/dispatch-autopilot/commands";
 import { BATCH5_READS, finishingCommands, quoteSalesCommands, usualCommands } from "@/lib/autopilot-batch5/commands";
+import { OPERATIONS_READS, accountsCommands, digestCommands, planningCommands, stockCommands } from "@/lib/autopilot-batch5/operations";
 
 export type ApResult<T = unknown> = { success: true; data: T } | { success: false; error: string; unavailable?: boolean };
 
@@ -66,11 +67,12 @@ const COMMANDS: Record<string, Record<string, z.ZodTypeAny>> = {
   // Batch 4: dispatch and compliance (file exports go through lib/actions/dispatch-autopilot, which builds the file first).
   ap_dispatch: dispatchCommands, ap_freight: freightCommands, ap_eway: ewayCommands, ap_tally: tallyCommands, ap_share: shareCommands,
   // Batch 5: usual choices, finishing vendor chase, quotation follow-ups and floor prices.
-  ap_usual: usualCommands, ap_finishing: finishingCommands, ap_quote_sales: quoteSalesCommands
+  ap_usual: usualCommands, ap_finishing: finishingCommands, ap_quote_sales: quoteSalesCommands,
+  ap_stock: stockCommands, ap_planning: planningCommands, ap_accounts: accountsCommands, ap_digest: digestCommands
 };
 const READS = new Set(["read", "add_working_days", "list", "get", "overview", "runs", "layout", "usage", "pending_count", "flags", "record", "attention", "visit",
   "station", "push", "undo", "job", "expected", "cycle_times", "floor", "downtime", "die_changes", "settings", "reconcile", "service", "options", "plans", "compliance",
-  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS, ...BATCH5_READS]);
+  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS, ...BATCH5_READS, ...OPERATIONS_READS]);
 const REVALIDATE: Record<string, string[]> = {
   ap_calendar: ["/production/calendar"], ap_series: ["/settings/numbering"], ap_proposals: ["/dashboard", "/settings/navigation", "/settings/numbering", "/invoices/periods", "/production", "/production/floor", "/dies", "/maintenance"],
   ap_jobs: ["/automation"], ap_navigation: ["/settings/navigation"], ap_period: ["/invoices/periods"], ap_import: ["/settings/data/import"],
@@ -80,7 +82,9 @@ const REVALIDATE: Record<string, string[]> = {
   ap_cash: ["/payments/bank", "/payments/reminders", "/payments/receipts", "/payments"], ap_quotes: ["/quotes"], ap_dupes: [],
   ap_dispatch: ["/dispatches", "/dispatches/loading", "/dispatches/gate", "/dispatches/labels", "/dispatches/ready", "/dispatches/packing"], ap_freight: ["/dispatches/freight"],
   ap_eway: ["/dispatches/eway"], ap_tally: ["/invoices/tally"], ap_share: [],
-  ap_usual: [], ap_finishing: ["/production/finishing/chase"], ap_quote_sales: ["/quotes", "/quotes/followups", "/quotes/floors"]
+  ap_usual: [], ap_finishing: ["/production/finishing/chase"], ap_quote_sales: ["/quotes", "/quotes/followups", "/quotes/floors"],
+  ap_stock: ["/inventory", "/inventory/movements"], ap_planning: ["/production/billet-forecast", "/orders/at-risk", "/dashboard"],
+  ap_accounts: ["/invoices/periods", "/payments/msme"], ap_digest: ["/dashboard"]
 };
 
 function friendly(error: { code?: string; message?: string } | null | undefined): ApResult<never> {

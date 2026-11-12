@@ -1,0 +1,15 @@
+# Autopilot batch 5 completion memory
+
+Updated: 13 November 2026 (Asia/Kolkata).
+
+- Existing branch `feat/autopilot-batch-5` resumed. Initial AP-026/056/071/072 were already delivered. This continuation adds AP-080/047/062/085/063/078, completing the ten-entry selection.
+- Authoritative record: `AUTOPILOT_UPGRADE_BATCH_5.md`. New migration: `supabase/migrations/20261113110000_autopilot_batch_5_completion.sql`, local only. Do not extend the original `20261112200000` file: concurrent commit `47b21e8` records it hosted, and a read-only hosted ledger check confirmed the part rows.
+- RPCs: `ap_digest`, `ap_stock`, `ap_planning`, `ap_accounts`; session-derived company/actor, Zod gateway schemas, SQL authorization. Jobs: `billets.forecast`/`orders.predict_late` nightly, `owner.digest` morning. AP-002 `billet.shortage` assigns preparation work; it does not create a PO/cast or post stock.
+- Owner/admin nominate an active accounts head in Month close. Default zero stock threshold requires another person for every correction. Source versions are rechecked at approval/close. The canonical stock writer and ledger are retained.
+- Billet forecast subtracts already-linked inputs, uses stock once, dates PO/cast supply, labels drafts uncertain, keeps missing input unknown and sums billet counts per job. Planned cast billet rows must not hide their parent's incoming supply.
+- First daily line prediction is retained for warning measurement. Calibrate labelled defaults with Omalco; the 80% target is not proven. Digest uses AP-014 valid pushes/configured thresholds; snapshots are immutable and copied is not sent.
+- MSME queue covers posted bills linked to open payables for recorded micro/small terms. Accounts confirms acceptance; missing dates stay unknown. Payment uses normal payables. Applicability/dispute evidence needs accounts review.
+- Migration chain: 302 files, 0 failures in this shared checkout, including the separately authored review-fix migration committed in `9517d62`. Completion SQL: 17 passing checks; completion browser: 14/14 at phone/desktop widths, including owner configuration. Final build/lint and full-suite results are in the batch record.
+- First full suite: 3,459 tests, 45 failures; 43 corrected/retested, two existing workspace-pin tests still fail. Broad lint retains the unrelated audit-script error. Preserve unrelated audit reports, evidence screenshots, label/quotation review edits, review-fix migration and added review tests; they are not part of this completion commit.
+- Actual Next login returned 200; protected routes redirected to `/account-unavailable`. Six real feature screens were checked in-app at desktop/phone widths against replayed local SQL. Hosted signed-in, physical stock, true concurrent PostgreSQL sessions and employee acceptance remain open.
+- This continuation did not push, merge, deploy or apply hosted migrations. Next: separately review/apply the completion migration, nominate/configure owners and terms, run employee trials, then measure operating outcomes.

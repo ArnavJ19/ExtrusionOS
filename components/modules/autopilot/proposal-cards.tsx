@@ -106,10 +106,20 @@ function FreightFields({ row, onSubmit, onCancel }: { row: ProposalRow; onSubmit
 }
 
 function EditFields({ row, onSubmit, onCancel, today }: { row: ProposalRow; onSubmit: (payload: Record<string, unknown>) => void; onCancel: () => void; today: string }) {
+  if (row.proposal_type === "billet.shortage") return <BilletRouteFields onSubmit={onSubmit} onCancel={onCancel} />;
   if (row.proposal_type === "production.expected_output") return <ExpectedOutputFields row={row} onSubmit={onSubmit} onCancel={onCancel} />;
   if (row.proposal_type === "freight.estimate") return <FreightFields row={row} onSubmit={onSubmit} onCancel={onCancel} />;
   if (row.proposal_type === "die.service_due" || row.proposal_type === "maintenance.pm_due") return <ScheduleFields row={row} onSubmit={onSubmit} onCancel={onCancel} today={today} />;
   return <TextFields row={row} onSubmit={onSubmit} onCancel={onCancel} today={today} />;
+}
+
+function BilletRouteFields({ onSubmit, onCancel }: { onSubmit: (payload: Record<string, unknown>) => void; onCancel: () => void }) {
+  const [route, setRoute] = useState("purchase");
+  return <div className="mt-3 space-y-3 rounded-xl border bg-neutral-50 p-3">
+    <label className="block text-sm font-semibold">Prepare through<select className="mt-1 min-h-11 w-full rounded-xl border bg-white px-3" value={route} onChange={e => setRoute(e.target.value)}><option value="purchase">Purchase</option><option value="foundry">Foundry</option></select></label>
+    <div className="flex flex-wrap gap-2"><button type="button" className="min-h-11 rounded-xl bg-neutral-950 px-4 text-sm font-bold text-white" onClick={() => onSubmit({ route })}>Accept with this route</button>
+      <button type="button" className="min-h-11 rounded-xl border px-4 text-sm" onClick={onCancel}>Cancel</button></div>
+  </div>;
 }
 
 function TextFields({ row, onSubmit, onCancel, today }: { row: ProposalRow; onSubmit: (payload: Record<string, unknown>) => void; onCancel: () => void; today: string }) {

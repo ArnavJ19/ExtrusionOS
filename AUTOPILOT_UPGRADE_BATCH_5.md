@@ -1,10 +1,11 @@
-# Autopilot Upgrade Batch 5 (in progress: 4 of 10)
+# Autopilot Upgrade Batch 5
 
-Date: 12 November 2026 (Asia/Kolkata)
+Date: 12-13 November 2026 (Asia/Kolkata)
 Catalogue: [AUTOPILOT_UPGRADES.md](AUTOPILOT_UPGRADES.md)
 Prompt: [AUTOPILOT_BUILD_PROMPT.md](AUTOPILOT_BUILD_PROMPT.md). The Delivery plan's row "5 onward" takes the remaining entries by delivery rank; the owner asked for these in pairs while batch 4's checks ran
 Base: `feat/autopilot-batch-4` at d064229; branch `feat/autopilot-batch-5`
-Delivery state: four slices implemented and verified locally against the full replayed migration chain. Six more entries complete the batch.
+Delivery state: ten local slices. The initial four were applied to hosted Supabase separately; the six-feature completion is local only. Employee acceptance remains separate from implementation and local verification.
+Continuation memory: [Completion handover](docs/memory/AUTOPILOT_BATCH_5_COMPLETION.md).
 
 ## Selection
 
@@ -12,7 +13,9 @@ Next undelivered entries by delivery rank after batches 1–4: AP-026 (rank 6), 
 None was delivered by an earlier batch. Work lives in its module: the quotation form and record, the direct order form, the
 loading screen (batch 4), the quotations overview (`/quotes/followups`, `/quotes/floors`), and production finishing
 (`/production/finishing/chase`). No `/tasks/*` hub was created. The remaining six entries in rank order are AP-080, AP-047,
-AP-062, AP-085, AP-063 and AP-078.
+AP-062, AP-085, AP-063 and AP-078. These were completed on 13 November in the existing batch branch. No delivered entry
+was selected again and no new branch or worktree was needed. Their selection, implementation and acceptance record is
+in the completion sections below.
 
 | ID | Feature | Foundation found | Gap closed in this slice | Edge evidence |
 | --- | --- | --- | --- | --- |
@@ -57,10 +60,10 @@ no cost, margin or supplier rate; floors are shown only on internal quotation sc
 | tests/autopilot-batch5-sql.test.mjs | 8 passed |
 | tests/autopilot-batch5-browser.test.mjs | 8 passed at 375 px and 1280 px; screenshots in docs/evidence/AUTOPILOT_BATCH_5 |
 | tests/autopilot-batch4-sql.test.mjs | 16 passed with this migration applied |
-| Earlier suites touched | FOCUSED_RESULT |
+| Earlier suites touched | See the final completion verification below for the full-suite failures and affected-suite reruns |
 | npm run typecheck / lint | Passed / 0 errors in the changed files |
 | In-app browser | Preview `autopilot-batch4-screens` (demo data now includes a late anodizing job, a sent quotation with a due follow-up and a below-floor line): vendor chase and the quotation floor and follow-up panels at 375 px, no console errors |
-| npm run build, full npm test | Not run for this partial batch; run when the batch is complete |
+| npm run build, full npm test | This table records the initial four-feature checkpoint; completion results follow below |
 
 ## Hosted migration state
 
@@ -86,3 +89,101 @@ migration file instead of extending `20261112200000_autopilot_batch_5.sql`.
 Sales manager sets the follow-up schedule; the owner sets floor conversion charges by alloy and finish; production sets a lead
 time for every finish in factory planning; sales uses the usual-choice hints for two weeks and the use rate is reviewed;
 measure fields typed per repeat order and follow-up coverage before and after.
+
+## Completion selection (13 November 2026)
+
+The current prompt was read first, followed by the catalogue, CLAUDE.md, all five prior batch records and the project
+memory. The existing partial batch was resumed. No new hub was created: work is on the dashboard/My Work, order
+red list, production billet forecast, stock item/ledger, vendor record, Payments and Month close.
+
+| ID | Foundation reused | System prepares and person confirms | Guardrails and tests |
+| --- | --- | --- | --- |
+| AP-080 | Command-center sources, canonical payments, AP-001 and AP-014 | Immutable factory-day digest at 08:00 IST: yesterday's production/recovery, dispatch kg, invoicing, collections, overdue, credit holds, current open red lines, idle presses and floor/close/stock approval queues. In-app read and copy events retain generation time | Management roles only; missing input keeps recovery unknown; copied is not sent; daily retry retains original snapshot; idle detection uses AP-014 valid pushes and configured thresholds |
+| AP-047 | Canonical inventory ledger/adjustment writer, stock explanations, NOV-030 | Read-only balances, ten-row movements and reconciliation. Explicit correction with reason, expected balance and idempotency key. Default threshold zero requires another person; small corrections may post on explicit confirmation after owner/admin configure a threshold. Approval calls the original atomic writer once. Baseline/delta journal covers inventory items, profile stock, billet batches, packing materials and foundry sources | Direct quantity update/delete refused; idempotent retries, changed retry, self-approval, stale balance, overdraw, wrong role/company, and exact signed rebuild tested. Packing stock input made read-only |
+| AP-062 | EOS-89 input/recovery calculation, AP-045 drafts, foundry and procurement links, NOV-039 supplier promises | Seven days by alloy/diameter: firm input less billets already linked to the job, uncertain draft demand, free stock used once, open PO supply on its promise and planned/melting casts on their production date. Shared AP-002 shortage proposals assign purchase/foundry preparation work; person uses the normal PO/cast workflow | Missing inputs stay unknown. Late/undated/draft supply cannot cover an earlier shortage. Planned billet rows do not erase their parent cast. Counts sum each job's billet weight basis. Changed source stales proposals; acceptance/retry creates one task |
+| AP-085 | AP-059, billing/on-account/bank workflows, purchase lifecycle, cycle counts and Tally | Computed checklist links unbilled dispatches, invoice drafts, unallocated receipts, GRNs without fully posted bills, unreconciled bank credits, stock corrections/variances, ledger differences and unexported vouchers to fixes. Nominated active accounts head closes; owner/admin act until nominated. Another owner/admin can approve an exact-source exception | Direct close, proposal close and legacy books-lock entry enforce blockers. Requester cannot self-approve; changed values invalidate approval; closure rechecks and consumes the exception. Finance review/reopen access is preserved separately |
+| AP-063 | Existing line requirement/progress read model and line promises, press slots, finishing lead times, AP-004 | Daily first prediction per open line, due/estimated date, blocking stage and visible basis. Uses planned completion and historical stage medians in factory working days (minimum three samples); otherwise labelled production/packing allowances. Red list and My Work/dashboard section; two-day warning coverage on late dispatched lines | Line promise overrides order promise; partial plan does not imply full remaining coverage; missing quantity/finishing lead stays unknown; role/company isolation; repeat job preserves daily evidence; shipped/closed lines leave the live queue |
+| AP-078 | Vendors, posted supplier bills and payable balances | Append-only classification/Udyam/terms revisions; accounts-configured periods capped at 45 days for written terms and 15 without a period. Separately confirmed acceptance date with evidence. Due/upcoming/overdue/missing-date queue, reason notes and normal payables link | Neither invoice date nor receipt date is assumed to be acceptance. Missing dates remain unknown. Period caps, no agreement, leap/month boundaries, changed policy, note without deferral, paid-bill removal and unauthorized role tested |
+
+## Completion recheck, tests and audit
+
+| Feature | Recheck | Audit finding and fix |
+| --- | --- | --- |
+| AP-080 | Generator, snapshot, job and management UI built; SQL and desktop/phone checks | Job counters initially used names the scheduler did not consume. Fixed and tested through the real run ledger. Recovery remains unknown if input evidence is missing |
+| AP-047 | Movement-only corrections for the listed families; SQL/RLS and desktop/phone checks | Request and decision lock order serialized; changed balance refuses approval; retry identity retained. Historical balances are labelled migration baselines, not invented original receipts |
+| AP-062 | Read model and AP-002 proposals; canonical calculation units, SQL and desktop/phone checks | Fixed re-procurement of linked billets, counting all demand using the shortest billet, and planned casts hidden by their generated planned-billet rows; regression tests added |
+| AP-085 | Checklist, head nomination and source-bound exceptions; SQL plus AP-059 and browser regressions | Older books-lock control was a bypass; it now checks the same blockers. Legacy UI distinguishes close authority from finance review permissions. Nomination confirmation now survives the checklist refresh |
+| AP-063 | Daily prediction, basis, red list and coverage; SQL and browser checks | Partial slot coverage adds remaining production allowance. Stage medians now use factory working days |
+| AP-078 | Classification, confirmed acceptance, configurable periods and accounts queue; SQL/date units/browser checks | Reasons do not defer the deadline or post money. Actual acceptance is explicit; missing evidence stays unknown |
+
+## Completion scope and Done when recheck
+
+| ID | Catalogue acceptance target | Current evidence and remaining gate |
+| --- | --- | --- |
+| AP-080 | Owner uses digest instead of morning calls | Snapshot/read/copy measurement built; requires a management pilot. Approval count covers the named floor, close and stock queues |
+| AP-047 | Any balance rebuilt exactly from movements | Canonical inventory rebuild and supplementary baseline/delta reconstruction built for the listed stock families. Historical supplementary quantities begin at the migration boundary; maintenance spare-part and specialist ledgers retain their existing workflows |
+| AP-062 | Shortages visible at least three days ahead | Seven-day view and nightly proposals built. Requires timely jobs and reliable supply dates. Acceptance assigns preparation; it does not create a PO/cast. Grouping is by alloy/diameter; temper/length purchasing choices stay in the normal workflow |
+| AP-085 | Months close without blocking items | Enforced unless a second-person exact-source exception records the unresolved items. Needs head nomination and a real close trial |
+| AP-063 | At least 80% of late lines warned two days before due | Coverage calculation built; target is not claimed achieved. Needs operating history, calibrated allowances and line-linked dispatch evidence |
+| AP-078 | No MSME bill passes unnoticed | Queue covers posted linked supplier bills for recorded micro/small terms. Accounts must verify supplier status and acceptance. Missing dates are surfaced; this is a tracking aid, not legal advice |
+
+No system job posts stock, money, quality approval or a customer message. Shortage acceptance creates assigned
+preparation work. Stock posts only on a person's permitted confirmation/approval through the canonical writer.
+Customer-facing views are unchanged. No new infrastructure or dependency was added.
+
+## Completion data and security audit
+
+`supabase/migrations/20261113110000_autopilot_batch_5_completion.sql` adds 11 company tables with RLS, company-leading
+indexes and no direct client grants. Four gateway functions (`ap_stock`, `ap_planning`, `ap_accounts`, `ap_digest`)
+derive company/actor from the session; Zod validates the server-action boundary and SQL rechecks roles, keys, quantities
+and source state. Private helpers are not client-executable; definer functions pin search paths. The original stock
+writer and period logic remain behind guarded private wrappers. AP-002 versions/decisions extend to `billet.shortage`.
+The registry adds `billets.forecast`/`orders.predict_late` nightly and `owner.digest` morning, using existing pg_cron.
+
+Applied history is preserved: the initial `20261112200000` file is unchanged in Git. The completion's separate file is
+an intentional exception to the original one-file plan because the initial file was applied while work continued.
+The concurrently authored review-fix migration, label/quotation UI changes, audit reports, existing screenshot edits
+and added quotation review tests remain separate work. They are not absorbed into the completion commit.
+
+## Final verification
+
+| Check | Observed result |
+| --- | --- |
+| Full migration replay | 302/302 files, 0 failures, including the concurrent review-fix file in this shared checkout |
+| Affected final regression | 86/86 checks passed across scheduler/period, batch 5 SQL, completion calculation/SQL/browser, commercial browser and task-blueprint suites |
+| Quotation fixture regression | 28/28 passed; AP-026's server-action boundary is explicitly stubbed outside its own real gateway fixture |
+| Completion SQL | 17 passed, including RLS/grants, duplicates/retries, approval, stale sources, supply timing, cast/weight/count edge cases and all three jobs through the scheduler ledger |
+| Completion calculation/command units | 3 passed: canonical input parity, acceptance-date calendar boundaries and strict command validation |
+| Completion browser | 14/14 passed at 375 px and 1280 px, including owner stock-threshold configuration and named accounts-head nomination; 16 screenshots in `docs/evidence/AUTOPILOT_BATCH_5_COMPLETION`. The initial four-feature browser suite also passed 8/8 after the concurrent review fixes |
+| Typecheck / final production build | Both passed; production build rerun after the final nomination-confirmation fix |
+| Broad lint | One pre-existing error at `audit-output/EXTRUSIONOS_MASTER_AUDIT_2026-11-11/evidence/capture-inventory.mjs:85` (`no-assign-module-variable`) and four earlier warnings. Unrelated audit code was preserved |
+| Changed-file lint | Passed with zero errors/warnings; the final nomination UI and browser test were checked again after the confirmation fix |
+| Full npm test | 3,459 tests: 3,414 passed, 45 failed. The 43 relevant failures were corrected and their affected suites rerun successfully; two pre-existing workspace-pin failures remain. Explicit recheck of `nov-batch2-browser`: 18/20 passed with the same two failures |
+| In-app browser | Six real feature screens/gateway on replayed local SQL with synthetic records, at 1280 px and 375 px: no console errors/warnings or horizontal page overflow; wide table scroll stays in its card |
+| Actual Next.js runtime | `/login` 200; new protected routes 307 to `/account-unavailable`. Signed-in hosted acceptance is not claimed; no hosted business rows written |
+| Own review | `git diff --check` clean; preserved the applied migration. Independent-session PostgreSQL concurrency remains a staging/hosted check because PGlite serializes sessions |
+
+## Completion file inventory
+
+| Area | Created | Modified |
+| --- | --- | --- |
+| Product | Four module routes: `production/billet-forecast`, `orders/at-risk`, `payments/msme`, `inventory/movements`; `components/modules/autopilot-operations/operations.tsx`; `lib/autopilot-batch5/operations.ts` | Six existing record/dashboard pages; module navigation, proposal editor, month-close permissions and read-only packing stock field; Autopilot actions, job registry, period and proposal schemas |
+| Database | `supabase/migrations/20261113110000_autopilot_batch_5_completion.sql` | None; applied batch history is unchanged |
+| Verification | Operations SQL, unit and browser suites; operations fixture and preview script; 16 completion screenshots | Shared browser fixture; AP-059/scheduler assertions; four quotation-fixture action boundaries; task-error boundary behavior assertion |
+| Records | `docs/memory/AUTOPILOT_BATCH_5_COMPLETION.md` | This batch report and the catalogue batch links |
+
+## Completion hosted migration state and acceptance
+
+The completion migration is **not applied**. A read-only hosted ledger check on 13 November confirmed batch 4 parts
+01-07 and the initial batch 5 parts 01-03. This continuation did not apply migrations, push, merge or deploy. The new
+file depends on the initial batch 5 migration and is independent of the separately authored quotation review fix.
+The existing scheduler discovers its three jobs after a separately authorized apply.
+
+After review/authorization, apply `20261113110000_autopilot_batch_5_completion.sql`. Nominate the accounts head; confirm
+the stock threshold (zero by default), supplier classification/written terms and acceptance dates; enter reliable job,
+supplier and cast dates. Trial a correction with two independent employees, reconcile stock baselines physically,
+review a three-day-ahead shortage and the resulting PO/cast, and close a real month. Calibrate prediction defaults with
+the plant head and compare with dispatches; use the digest for two weeks and measure calls, reads and fields typed.
+
+MSME configuration reference checked on 13 November: [DC-MSME delayed-payment FAQ](https://dcmsme.gov.in/old/faq/FAQs%20-%20Delayed%20Payments%20-%2027.12.2012.pdf).
+Accounts confirms actual applicability, classification and acceptance/dispute evidence.

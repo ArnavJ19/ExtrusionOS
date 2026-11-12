@@ -11,6 +11,8 @@ import { LiveMyWork } from "@/components/modules/live-my-work";
 import { loadMyWork } from "@/lib/dashboard/my-work";
 import { parseStockSnapshot } from "@/lib/dashboard/stock-snapshot";
 import { getFeatureFlagsForCompany } from "@/lib/enterprise/features";
+import { OwnerDigest, LateLines } from "@/components/modules/autopilot-operations/operations";
+import { MANAGEMENT, COORDINATORS } from "@/lib/autopilot-batch5/operations";
 
 export default async function DashboardPage() {
   const context = await getSessionContext();
@@ -36,6 +38,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {MANAGEMENT.includes(context.role) ? <OwnerDigest /> : null}
+      {COORDINATORS.includes(context.role) ? <LateLines compact /> : null}
       {snapshotFirst ? null : myWork}
       <details open={snapshotFirst} className="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
         <summary className="cursor-pointer text-base font-bold text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">Business snapshot</summary>
