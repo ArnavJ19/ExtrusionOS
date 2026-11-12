@@ -85,6 +85,8 @@ const roleRules: RoleRule[] = [
   { prefix: "/dispatches/eway", roles: ["owner", "admin", "accounts", "dispatch_manager", "dispatch"] },
   { prefix: "/dispatches/freight", roles: ["owner", "admin", "dispatch_manager", "dispatch", "factory_manager", "sales_manager", "sales", "accounts"] },
   { prefix: "/invoices/tally", roles: ["owner", "admin", "accounts"] },
+  // Autopilot batch 5: floor prices are internal to sales and the owner.
+  { prefix: "/quotes/floors", roles: ["owner", "admin", "sales_manager", "sales"] },
   { prefix: "/settings/access", roles: ["owner"] },
   // AP-007: stores, accounts and the plant head load and sign off their own opening sections.
   { prefix: "/settings/data/cutover", roles: ["owner", "admin", "accounts", "inventory_manager", "factory_manager", "production_manager", "sales_manager"] },

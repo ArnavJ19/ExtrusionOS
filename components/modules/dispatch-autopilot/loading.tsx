@@ -15,13 +15,14 @@ import { SCAN_WARNING_LABELS } from "@/lib/dispatch-autopilot/commands";
 import { fmtDay, fmtWhen } from "@/lib/order-to-cash/commands";
 import { Empty, Failure, Loading, Message, Pager, Pill, Section, apWrite, buttonClass, inputClass, secondaryClass, useApRead } from "../order-to-cash/ui";
 import { FreightPanel } from "./freight";
+import { UsualChoicesHint } from "../autopilot-usual/usual-choices";
 
 type Note = { tone: "ok" | "error"; text: string } | null;
 type PlanLine = { line_id: string | null; profile: string; finish: string; ordered_pieces: number | null; ordered_kg: number | null; shipped_pieces: number; shipped_kg: number;
   loaded_bundles: number; loaded_pieces: number; loaded_kg: number; open_pieces: number | null; open_kg: number | null };
 type Scan = { id: string; tag: string; outcome: "loaded" | "refused"; warnings: string[]; message: string; confirm_note: string | null; net_kg: number | null; pieces: number | null; scanned_at: string;
   scanned_by: string; removed_at: string | null; remove_reason: string | null };
-export type Session = { id: string; order_id: string; order_number: string; customer: string; destination: string | null; status: string; vehicle_number: string | null; transporter_name: string | null;
+export type Session = { id: string; order_id: string; order_number: string; customer: string; customer_id?: string; destination: string | null; status: string; vehicle_number: string | null; transporter_name: string | null;
   driver_name: string | null; driver_phone: string | null; lr_number: string | null; started_at: string; started_by: string; completed_at: string | null; dispatch_id: string | null; dispatch_number: string | null;
   cancel_reason: string | null; credit: string; expected_dispatch_date: string | null;
   plan?: { lines: PlanLine[]; unplanned: { bundles: number; pieces: number; kg: number } | null; totals: { bundles: number; pieces: number; kg: number; gross_kg: number } }; scans?: Scan[]; ready_here?: number };
@@ -154,6 +155,9 @@ export function LoadingStation({ sessionId, today }: { sessionId: string; today:
         }}>Save</button><button type="button" className={secondaryClass} onClick={() => setEdit(false)}>Cancel</button></div>
       </div> : <p className="text-sm">Vehicle <b>{session.vehicle_number ?? "not recorded"}</b>{session.transporter_name ? ` · ${session.transporter_name}` : ""}{session.driver_name ? ` · ${session.driver_name}` : ""}{session.driver_phone ? ` (${session.driver_phone})` : ""}{session.lr_number ? ` · LR ${session.lr_number}` : ""}
         {open ? <button type="button" className="ml-2 underline" onClick={() => setEdit(true)}>Change</button> : null}</p>}
+      {open && !session.transporter_name && session.customer_id ? <UsualChoicesHint customerId={session.customer_id} surface="loading" fields={["transporter"]} current={{ transporter: session.transporter_name }}
+        onUse={async (_field, value) => { const s = await apWrite<Session>("ap_dispatch", "update", { id: sessionId, ...Object.fromEntries(Object.entries({ ...header, transporter_name: value }).filter(([, v]) => v.trim())) }, setMessage, "Transporter set.");
+          if (s) setSession(s); }} /> : null}
       {session.dispatch_id ? <p className="text-sm">Dispatch <Link className="font-bold underline" href={`/dispatches/${session.dispatch_id}`}>{session.dispatch_number}</Link> · <Link className="underline" href="/dispatches/gate">Gate</Link></p> : null}
       {session.cancel_reason ? <p className="text-sm text-neutral-600">Cancelled: {session.cancel_reason}</p> : null}
     </Section>

@@ -8,6 +8,7 @@ const FLOOR = ["owner", "admin", "production_manager", "production", "factory_ma
 const MODULE_LINKS: Partial<Record<ModuleKey, Array<{ href: string; label: string; roles: string[] }>>> = {
   production: [
     { href: "/production/floor", label: "Press floor", roles: FLOOR },
+    { href: "/production/finishing/chase", label: "Chase finishing vendors", roles: FLOOR },
     { href: "/production/workstation", label: "Press workstation", roles: FLOOR },
     { href: "/production/scrap-standards", label: "Scrap standards", roles: FLOOR },
     { href: "/production/calendar", label: "Factory calendar", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "viewer"] },
@@ -32,7 +33,9 @@ const AREA_LINKS: Record<"orders" | "payments" | "quotes", Array<{ href: string;
   orders: [{ href: "/orders/credit", label: "Credit holds", roles: ["owner", "admin", "accounts", "sales_manager", "sales"] }],
   payments: [{ href: "/payments/bank", label: "Bank statement", roles: ["owner", "admin", "accounts"] }, { href: "/payments/reminders", label: "Payment reminders", roles: ["owner", "admin", "accounts"] },
     { href: "/payments/receipts#allocate", label: "Receive money", roles: ["owner", "admin", "accounts"] }],
-  quotes: []
+  // Autopilot batch 5: quotation follow-ups (AP-071) and floor prices (AP-072).
+  quotes: [{ href: "/quotes/followups", label: "Follow-ups", roles: ["owner", "admin", "sales_manager", "sales", "accounts"] },
+    { href: "/quotes/floors", label: "Floor prices", roles: ["owner", "admin", "sales_manager", "sales"] }]
 };
 export function OrderToCashLinks({ area, role }: { area: keyof typeof AREA_LINKS; role: string }) {
   const links = AREA_LINKS[area].filter(link => link.roles.includes(role));

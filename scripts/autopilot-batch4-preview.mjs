@@ -26,12 +26,26 @@ const ids = await fixture.run(async () => {
   await f.ap("ap_dispatch", "complete", { id: s2.id, dispatch_id: dispatchId });
   const s = await f.ap("ap_dispatch", "start", { order_id: o.order, vehicle_number: "MH14CD5678", transporter_name: "VRL Logistics" });
   await f.ap("ap_dispatch", "scan", { session_id: s.id, tag: "PV-1" });
-  return { order: o.order, session: s.id, dispatchId };
+  // Batch 5 demo: a late anodizing job at a vendor, a sent quotation with a due follow-up and a line below its floor.
+  const vendor = nid(8100);
+  await f.seed("insert into vendors(id,company_id,vendor_name,vendor_type,phone,is_active) values($1,$2,'Shine Anodisers','anodizing','9876543210',true)", [vendor, i.company]);
+  await f.seed("insert into factory_finishing_lead_times(company_id,finishing_type,lead_days,updated_by) values($1,'anodizing',3,$2)", [i.company, i.owner]);
+  await f.seed(`insert into finishing_jobs(company_id,order_id,production_job_id,finishing_type,shade_name,vendor_id,sent_date,input_weight_kg,status) values($1,$2,$3,'anodizing','Silver',$4,current_date-12,500,'sent_to_vendor')`,
+    [i.company, o.order, job, vendor]);
+  await f.call("ap_quote_sales", "save_floor", { alloy: "6063", finishing_type: "mill_finish", floor_per_kg: 40, reason: "6063 mill finish floor" }, i.owner);
+  const quoteId = f.next();
+  await f.seed(`insert into quotes(id,company_id,quote_number,customer_id,quote_date,valid_until,status,sent_at,grand_total,created_by,revision_number) values($1,$2,'Q-PV-1',$3,current_date-3,current_date+10,'sent',now()-interval '3 days',59000,$4,1)`,
+    [quoteId, i.company, i.customer2, i.sales]);
+  await f.seed(`insert into quote_items(company_id,quote_id,profile_id,quantity_pieces,length_per_piece_m,section_weight_kg_per_m,total_weight_kg,effective_weight_kg,billing_weight_kg,conversion_charge_per_kg,finishing_type)
+    values($1,$2,$3,100,6,0.95,500,500,500,38,'mill_finish')`, [i.company, quoteId, i.profile2]);
+  await f.one("select private.ap5_followups_job($1) v", [i.company]);
+  return { order: o.order, session: s.id, dispatchId, quoteId };
 });
 const u = (screen, user, extra = "") => `${fixture.base}/?screen=${screen}&user=${user}${extra}`;
 console.log(JSON.stringify({
   station: u("station", i.dispatchUser, `&sessionId=${ids.session}`), gate: u("gate", i.dispatchUser), ready: u("ready", i.sales), labels: u("labels", i.dispatchUser),
   order: u("order", i.sales, `&orderId=${ids.order}`), dispatch: u("dispatch", i.dispatchManager, `&dispatchId=${ids.dispatchId}`), eway: u("eway", i.accounts), tally: u("tally", i.accounts),
-  freight: u("freight", i.dispatchManager), packing: u("packing", i.dispatchManager)
+  freight: u("freight", i.dispatchManager), packing: u("packing", i.dispatchManager),
+  chase: u("chase", i.productionManager), followups: u("followups", i.sales), quoteSales: u("quote-sales", i.sales, `&quoteId=${ids.quoteId}`), usual: u("usual", i.sales, `&customerId=${i.customer2}`)
 }, null, 2));
 process.on("SIGINT", async () => { await fixture.close(); process.exit(0); });

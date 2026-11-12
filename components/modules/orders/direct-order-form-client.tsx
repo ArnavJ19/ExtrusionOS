@@ -10,6 +10,7 @@ import { createDirectOrderAction, searchDirectOrderOptionsAction } from "@/lib/a
 import { calculateDirectOrderLine, calculateDirectOrderSummary, directOrderSchema, type DirectOrderCustomer, type DirectOrderLine, type DirectOrderProfile } from "@/lib/orders/direct-order";
 import { formatCurrency, formatWeight } from "@/lib/utils/format";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
+import { UsualChoicesHint } from "@/components/modules/autopilot-usual/usual-choices";
 
 const emptyLine = (): DirectOrderLine => ({ profile_id: "", die_id: null, quantity_pieces: 1, length_per_piece_m: 0,
   expected_section_weight_kg_per_m: 0, net_rate: 0, gst_percent: 18, hsn_code: "", finishing_type: "mill_finish" });
@@ -153,6 +154,14 @@ export function DirectOrderFormClient() {
         <label className="min-w-0"><span className="form-label">Expected dispatch date</span><input className="form-input w-full" type="date" min={orderDate} value={expectedDate} onChange={event => setExpectedDate(event.target.value)} /></label>
         <label className="min-w-0"><span className="form-label">Priority</span><select className="form-input w-full" aria-label="Priority" value={priority} onChange={event => setPriority(event.target.value as typeof priority)}>{["low", "normal", "high", "urgent"].map(value => <option key={value} value={value}>{value}</option>)}</select></label>
         <label className="min-w-0 sm:col-span-2"><span className="form-label">Order notes</span><textarea className="form-input w-full" rows={3} maxLength={2000} value={notes} onChange={event => setNotes(event.target.value)} /></label>
+        <div className="min-w-0 sm:col-span-2"><UsualChoicesHint customerId={customer?.id} surface="order" fields={["finish", "priority"]}
+          current={{ priority, finish: entries.every(entry => entry.line.finishing_type === entries[0]?.line.finishing_type) ? entries[0]?.line.finishing_type : "" }}
+          onUse={(field, value) => {
+            if (field === "priority" && ["low", "normal", "high", "urgent"].includes(value)) setPriority(value as typeof priority);
+            // AP-026: the usual finish fills lines still at the default mill finish; a finish chosen on a line is kept.
+            else if (field === "finish" && (finishes as readonly string[]).includes(value)) setEntries(previous => previous.map(entry => entry.line.finishing_type === "mill_finish"
+              ? { ...entry, line: { ...entry.line, finishing_type: value as DirectOrderLine["finishing_type"] } } : entry));
+          }} /></div>
       </CardContent></Card>
       {entries.map((entry, index) => <DirectOrderLineEditor key={entry.key} entry={entry} index={index} removable={entries.length > 1}
         onChange={next => setEntries(previous => previous.map(row => row.key === entry.key ? next : row))}

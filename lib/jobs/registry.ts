@@ -24,6 +24,7 @@ export const JOBS = [
   { job_key: "proposals.refresh", schedule: "hourly", label: "Refresh open proposals" },
   { job_key: "quality.sample_windows", schedule: "hourly", label: "Mark missed samples" },
   { job_key: "quotes.expire", schedule: "nightly", label: "Expire stale quotations" },
+  { job_key: "quotes.followups", schedule: "morning", label: "Prepare quotation follow-ups" },
   { job_key: "receivables.reminders", schedule: "morning", label: "Prepare payment reminders" },
   { job_key: "series.propose", schedule: "nightly", label: "Propose financial-year numbering" }
 ] as const satisfies ReadonlyArray<{ job_key: string; schedule: JobSchedule; label: string }>;

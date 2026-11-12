@@ -18,6 +18,7 @@ import { PROPOSAL_TYPE_KEYS, decideBatchInputSchema, decideInputSchema } from "@
 import { dieCommands, pmCommands, pressCommands, samplingCommands, scrapCommands } from "@/lib/press/press-floor";
 import { CASH_READS, billingCommands, cashCommands, creditCommands, dupeCommands, jobDraftCommands, quoteCommands } from "@/lib/order-to-cash/commands";
 import { DISPATCH_READS, dispatchCommands, ewayCommands, freightCommands, shareCommands, tallyCommands } from "@/lib/dispatch-autopilot/commands";
+import { BATCH5_READS, finishingCommands, quoteSalesCommands, usualCommands } from "@/lib/autopilot-batch5/commands";
 
 export type ApResult<T = unknown> = { success: true; data: T } | { success: false; error: string; unavailable?: boolean };
 
@@ -63,11 +64,13 @@ const COMMANDS: Record<string, Record<string, z.ZodTypeAny>> = {
   // Batch 3: order-to-cash.
   ap_credit: creditCommands, ap_jobdrafts: jobDraftCommands, ap_billing: billingCommands, ap_cash: cashCommands, ap_quotes: quoteCommands, ap_dupes: dupeCommands,
   // Batch 4: dispatch and compliance (file exports go through lib/actions/dispatch-autopilot, which builds the file first).
-  ap_dispatch: dispatchCommands, ap_freight: freightCommands, ap_eway: ewayCommands, ap_tally: tallyCommands, ap_share: shareCommands
+  ap_dispatch: dispatchCommands, ap_freight: freightCommands, ap_eway: ewayCommands, ap_tally: tallyCommands, ap_share: shareCommands,
+  // Batch 5: usual choices, finishing vendor chase, quotation follow-ups and floor prices.
+  ap_usual: usualCommands, ap_finishing: finishingCommands, ap_quote_sales: quoteSalesCommands
 };
 const READS = new Set(["read", "add_working_days", "list", "get", "overview", "runs", "layout", "usage", "pending_count", "flags", "record", "attention", "visit",
   "station", "push", "undo", "job", "expected", "cycle_times", "floor", "downtime", "die_changes", "settings", "reconcile", "service", "options", "plans", "compliance",
-  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS]);
+  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS, ...BATCH5_READS]);
 const REVALIDATE: Record<string, string[]> = {
   ap_calendar: ["/production/calendar"], ap_series: ["/settings/numbering"], ap_proposals: ["/dashboard", "/settings/navigation", "/settings/numbering", "/invoices/periods", "/production", "/production/floor", "/dies", "/maintenance"],
   ap_jobs: ["/automation"], ap_navigation: ["/settings/navigation"], ap_period: ["/invoices/periods"], ap_import: ["/settings/data/import"],
@@ -76,7 +79,8 @@ const REVALIDATE: Record<string, string[]> = {
   ap_credit: ["/orders/credit", "/orders"], ap_jobdrafts: ["/production/drafts", "/production"], ap_billing: ["/invoices/drafts", "/invoices/tax-rules", "/invoices"],
   ap_cash: ["/payments/bank", "/payments/reminders", "/payments/receipts", "/payments"], ap_quotes: ["/quotes"], ap_dupes: [],
   ap_dispatch: ["/dispatches", "/dispatches/loading", "/dispatches/gate", "/dispatches/labels", "/dispatches/ready", "/dispatches/packing"], ap_freight: ["/dispatches/freight"],
-  ap_eway: ["/dispatches/eway"], ap_tally: ["/invoices/tally"], ap_share: []
+  ap_eway: ["/dispatches/eway"], ap_tally: ["/invoices/tally"], ap_share: [],
+  ap_usual: [], ap_finishing: ["/production/finishing/chase"], ap_quote_sales: ["/quotes", "/quotes/followups", "/quotes/floors"]
 };
 
 function friendly(error: { code?: string; message?: string } | null | undefined): ApResult<never> {

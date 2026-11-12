@@ -15,5 +15,7 @@ export function getErrorMessage(error: unknown, fallback = "Something went wrong
   if (/invalid input syntax for type uuid/i.test(message)) return "Please select a valid record before saving.";
   if (/jwt|invalid api key|supabase|postgres|postgrest|relation .* does not exist|column .* does not exist|syntax error|stack trace| at \w+\(/i.test(message)) return fallback;
 
-  return message.length <= 240 ? message : fallback;
+  // Autopilot guards mark messages meant for people with "AP: " (for example the AP-072 floor-price check on sending).
+  const plain = message.startsWith("AP: ") ? message.slice(4) : message;
+  return plain.length <= 240 ? plain : fallback;
 }

@@ -1,6 +1,7 @@
 import { ModuleOverviewClient } from "@/components/modules/operations/module-overview-client";
 import Link from "next/link";
 import { QuoteValidityQueue } from "@/components/modules/order-to-cash/quotes-alerts";
+import { OrderToCashLinks } from "@/components/modules/home-work/module-workflows";
 import { canReadRates } from "@/lib/workflow/costing-rates";
 import { QuotesDashboard } from "@/components/modules/dashboards/quotes-dashboard";
 import { getSessionContext } from "@/lib/auth";
@@ -65,6 +66,7 @@ export default async function QuotesPage() {
     <div className="space-y-2">
       <ModuleOverviewClient moduleKey="quotes" context={context} canCreate={can(context.role, "create", "quotes")} canUpdate={can(context.role, "update", "quotes")} hideHeaderActions={true} hideMetricsAndCharts={true}>
         <QueryErrorNotice messages={queryErrors} />
+        {!context.dealerId ? <OrderToCashLinks area="quotes" role={context.role} /> : null}
         {!context.dealerId && ["owner", "admin", "sales_manager", "sales"].includes(context.role) ? <QuoteValidityQueue /> : null}
         {!context.dealerId && canReadRates(context.role) ? (
           <div className="flex justify-end"><Link href="/quotes/rates" className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold">Costing rates</Link></div>

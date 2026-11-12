@@ -434,8 +434,9 @@ test("every new table has RLS and company scoping, and only the intended functio
     and has_function_privilege('authenticated', p.oid, 'EXECUTE') order by 1`)).rows.map(r => r.proname);
   // Batch 2 (press floor capture) adds ap_dies, ap_pm, ap_press, ap_sampling and ap_scrap; tests/autopilot-batch2-sql.test.mjs covers them.
   // Batch 3 (order-to-cash) adds ap_billing, ap_cash, ap_credit, ap_dupes, ap_jobdrafts and ap_quotes; tests/autopilot-batch3-sql.test.mjs covers them.
+  // Batch 5 adds ap_finishing, ap_quote_sales and ap_usual; tests/autopilot-batch5-sql.test.mjs covers them.
   // Batch 4 (dispatch and compliance) adds ap_dispatch, ap_eway, ap_freight, ap_order_status (also anonymous), ap_share and ap_tally; tests/autopilot-batch4-sql.test.mjs covers them.
-  assert.deepEqual(callable, ["ap_billing", "ap_calendar", "ap_cash", "ap_credit", "ap_cutover", "ap_dies", "ap_dispatch", "ap_dupes", "ap_eway", "ap_freight", "ap_home_work", "ap_import", "ap_jobdrafts", "ap_jobs", "ap_navigation", "ap_order_status", "ap_period", "ap_pm", "ap_press", "ap_proposals", "ap_quotes", "ap_sampling", "ap_scrap", "ap_series", "ap_share", "ap_tally"]);
+  assert.deepEqual(callable, ["ap_billing", "ap_calendar", "ap_cash", "ap_credit", "ap_cutover", "ap_dies", "ap_dispatch", "ap_dupes", "ap_eway", "ap_finishing", "ap_freight", "ap_home_work", "ap_import", "ap_jobdrafts", "ap_jobs", "ap_navigation", "ap_order_status", "ap_period", "ap_pm", "ap_press", "ap_proposals", "ap_quote_sales", "ap_quotes", "ap_sampling", "ap_scrap", "ap_series", "ap_share", "ap_tally", "ap_usual"]);
   const definers = (await f.db.query(`select p.proname, p.proconfig from pg_proc p where p.pronamespace in ('public'::regnamespace,'private'::regnamespace) and p.proname like 'ap\\_%' and p.prosecdef`)).rows;
   for (const fn of definers) assert.ok(fn.proconfig?.some(c => c.startsWith("search_path=")), `${fn.proname} pins its search path`);
   // Rows of another company are invisible through direct reads.

@@ -41,6 +41,13 @@ export async function createDispatchBrowserFixture() {
     import {EwayClient} from './components/modules/dispatch-autopilot/eway';
     import {TallyClient} from './components/modules/dispatch-autopilot/tally';
     import {CopySummaryButton,OrderStatusLinkPanel} from './components/modules/dispatch-autopilot/share';
+    import {UsualChoicesHint} from './components/modules/autopilot-usual/usual-choices';
+    import {VendorChaseClient} from './components/modules/finishing/vendor-chase';
+    import {FollowupQueueClient,QuoteFollowupPanel,QuoteFloorPanel,FloorsClient} from './components/modules/quote-sales/quote-sales';
+    // Batch 5 harness: the usual-choices hint above two plain fields, as the quotation form uses it.
+    function UsualHarness(props){const [v,setV]=React.useState({payment_terms:'',finish:'mill_finish'});return <div className='space-y-2'>
+      <UsualChoicesHint customerId={props.customerId} surface='quote' fields={['payment_terms','delivery_timeline','finish']} current={v} onUse={(f,value)=>setV(c=>({...c,[f]:value}))}/>
+      <p data-testid='form-state'>Payment terms: {v.payment_terms||'blank'} · Finish: {v.finish}</p></div>}
     window.ids=${JSON.stringify(dIds)};Object.assign(window,{calls:[],refreshes:0,navigations:[],downloads:[],prints:0});
     window.print=()=>{window.prints++;setTimeout(()=>window.dispatchEvent(new Event('afterprint')),50)};
     const realCreate=URL.createObjectURL.bind(URL);URL.createObjectURL=blob=>{blob.text().then(t=>window.downloads.push(t));return realCreate(blob)};
@@ -61,6 +68,11 @@ export async function createDispatchBrowserFixture() {
       else if(screen==='quote')node=<FreightPanel kind='quote' id={o.quoteId} today={o.today}/>;
       else if(screen==='eway')node=<EwayClient/>;
       else if(screen==='tally')node=<TallyClient/>;
+      else if(screen==='usual')node=<UsualHarness customerId={o.customerId}/>;
+      else if(screen==='chase')node=<VendorChaseClient canRecord={o.canRecord!==false}/>;
+      else if(screen==='followups')node=<FollowupQueueClient canSettings={true}/>;
+      else if(screen==='quote-sales')node=<><QuoteFloorPanel quoteId={o.quoteId} canRequest={true}/><QuoteFollowupPanel quoteId={o.quoteId} canRecord={true}/></>;
+      else if(screen==='floors')node=<FloorsClient canDecide={Boolean(o.canDecide)}/>;
       root.render(<main key={Date.now()} className='mx-auto min-w-0 max-w-5xl space-y-5 p-4'><h1 className='text-2xl font-bold'>Dispatch fixture: {screen}</h1>{node}</main>);
     };
     // Preview: /?screen=gate&user=<id>&sessionId=... mounts a screen directly (used for the in-app browser check).
