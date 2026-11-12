@@ -79,7 +79,9 @@ Review fixes (PR #8): `20261113100000_autopilot_batch_5_review_fixes.sql` schedu
 validity extension restarts its stopped steps that are still ahead; approving a floor request whose lines changed now
 returns a `superseded` result so the supersession is kept and sales can request again. The label station no longer
 treats a closed print dialog as a printed label: the operator confirms each label unless the station is marked as
-printing silently. Not yet applied to hosted.
+printing silently. Applied to the hosted project on 13 November 2026 as `autopilot_batch_5_review_fixes` (ledger 283):
+the new column, check and `quote_followup_steps_once_per_send` index replace `quote_followup_steps_once`; the three
+redefined function bodies match the file; rolled-back owner calls (morning job, follow-up queue, floor requests) returned.
 
 Because the file is now applied, the remaining six features of the batch (AP-080, 047, 062, 085, 063, 078) go in a new
 migration file instead of extending `20261112200000_autopilot_batch_5.sql`.
