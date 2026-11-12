@@ -4,7 +4,7 @@ Date: 12-13 November 2026 (Asia/Kolkata)
 Catalogue: [AUTOPILOT_UPGRADES.md](AUTOPILOT_UPGRADES.md)
 Prompt: [AUTOPILOT_BUILD_PROMPT.md](AUTOPILOT_BUILD_PROMPT.md). The Delivery plan's row "5 onward" takes the remaining entries by delivery rank; the owner asked for these in pairs while batch 4's checks ran
 Base: `feat/autopilot-batch-4` at d064229; branch `feat/autopilot-batch-5`
-Delivery state: ten local slices. The initial four were applied to hosted Supabase separately; the six-feature completion is local only. Employee acceptance remains separate from implementation and local verification.
+Delivery state: ten implemented slices. The initial four, six-feature completion and correctness follow-up are applied to hosted Supabase. Employee acceptance remains separate from implementation and migration verification.
 Continuation memory: [Completion handover](docs/memory/AUTOPILOT_BATCH_5_COMPLETION.md).
 
 ## Selection
@@ -179,12 +179,14 @@ defects and outstanding check failures.
 
 ## Completion hosted migration state and acceptance
 
-The completion migration is **not applied**. A read-only hosted ledger check on 13 November confirmed batch 4 parts
-01-07 and the initial batch 5 parts 01-03. This continuation did not apply migrations, push, merge or deploy. The new
-file depends on the initial batch 5 migration and is independent of the separately authored quotation review fix.
-The existing scheduler discovers its three jobs after a separately authorized apply.
+The user authorized the hosted apply on 13 November 2026. Both pending files were applied through Supabase MCP to
+`AlExMS` (`pkawmdxtmsdgigsehcmb`) in order. The hosted ledger records `autopilot_batch_5_completion` at
+`20261112223035` and `autopilot_batch_5_correctness` at `20261112223047` (12 November UTC, 13 November IST).
+These MCP-generated ledger versions correspond to the local files `20261113110000` and `20261113120000`;
+do not rerun them based on the differing filename timestamps. Earlier batch parts and the quotation review fix were
+already installed and were not reapplied. The scheduler now discovers the three completion jobs.
 
-After review/authorization, apply `20261113110000_autopilot_batch_5_completion.sql`. Nominate the accounts head; confirm
+Nominate the accounts head; confirm
 the stock threshold (zero by default), supplier classification/written terms and acceptance dates; enter reliable job,
 supplier and cast dates. Trial a correction with two independent employees, reconcile stock baselines physically,
 review a three-day-ahead shortage and the resulting PO/cast, and close a real month. Calibrate prediction defaults with
@@ -222,9 +224,31 @@ edits, this report and project continuation notes. No new dependency, table, gra
 replaced private functions keep pinned search paths and revoked client execution. No job gains stock, payment or
 message-posting authority.
 
-The completion and correctness migrations remain local. A read-only hosted ledger check found no completion
-migration. Apply `20261113110000_autopilot_batch_5_completion.sql` followed by
-`20261113120000_autopilot_batch_5_correctness.sql` only after separate rollout authorization. This follow-up did not
-push, merge, deploy or apply hosted migrations. Real signed-in role acceptance, independent-session PostgreSQL
-concurrency, physical stock reconciliation and operating targets remain the employee/staging gates listed above;
-Docker's local PostgreSQL engine was not running, so serialized PGlite checks do not substitute for that concurrency trial.
+The completion and correctness migrations were subsequently applied after the user's explicit authorization, as
+recorded above. Application code was not pushed, merged or deployed by this apply. Real signed-in role acceptance,
+independent-session PostgreSQL concurrency, physical stock reconciliation and operating targets remain the
+employee/staging gates listed above. Docker's local PostgreSQL engine was not running, so serialized PGlite checks
+do not substitute for that concurrency trial.
+
+## Hosted apply verification (13 November 2026)
+
+Evidence: [Hosted migration verification](docs/evidence/AUTOPILOT_BATCH_5_COMPLETION/hosted-migration-verification.json).
+
+| Check | Observed result |
+| --- | --- |
+| Preflight | Project active/healthy; both entries absent; all renamed prerequisite functions present; 15 existing job definitions |
+| Applies | `autopilot_batch_5_completion` and then `autopilot_batch_5_correctness` both returned success and have ledger rows |
+| Installed function bodies | All 23 final bodies match the local files exactly, including the three correctness overrides; every function pins its search path |
+| Table protection | All 11 new tables have RLS, a read policy and a company-leading index; no direct `anon` or `authenticated` table grants |
+| RPC protection | All 23 functions deny anonymous execute; private helpers deny authenticated execute; only the intended public gateways permit authenticated execute |
+| Owner-role SQL reads | Stock balances/requests/policy, billet forecast, red list, close checklist, head options, MSME queue, digest read and period overview passed in a rolled-back transaction. This is SQL role-context verification, not a real JWT/UI acceptance test |
+| Stock baseline and triggers | All six source stock families were empty: zero source fields, zero baselines required, zero missing histories/differences. All 12 quantity guard/journal triggers enabled. Physical reconstruction remains an operating trial |
+| Scheduled jobs | 18 definitions, including nightly `billets.forecast`/`orders.predict_late` and morning `owner.digest`; all three existing pg_cron schedules active |
+| Security advisors | No new ERROR findings. The four new authenticated security-definer RPC notices match the intentional session-authorized gateways; their bodies and grants were verified. Prior advisor findings remain unchanged |
+| Performance advisors | 18 additional informational foreign-key covering-index suggestions; newly created unused-index notices are informational. Existing warning counts unchanged |
+
+No stock, payment, quality approval, customer message or scheduler job was manually posted during verification.
+The only persistent writes were the authorized migrations and their ledger entries. The remaining advisor suggestions
+are recorded rather than expanded into an unrelated index/security remediation in this migration-apply task.
+References: [authenticated RPC advisor](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable),
+[foreign-key index advisor](https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys).
