@@ -85,7 +85,7 @@ Server-side validation: Zod schemas in `lib/autopilot-batch6/commands.ts` and `l
 | npm run typecheck | Passed |
 | npm run lint | Passed, 0 errors, 0 warnings |
 | npm run build | Passed; all 11 new routes compiled |
-| Full npm test | 3,528 / 3,529 (see "Full suite") |
+| Full npm test | Last run 3,527 / 3,529: two failures from a OneDrive file lock and a load timeout, both passing when re-run alone (see "Full suite") |
 | In-app browser | Preview `autopilot-batch6-screens` (real screens and gateways on replayed local SQL, synthetic records): section weight, die trend, repricing, health, reorder, NCR record and TDS at 1280 px and 375 px; no console errors; no page-level horizontal scroll (wide tables scroll inside their cards) |
 
 ### Full suite
@@ -95,6 +95,7 @@ Server-side validation: Zod schemas in `lib/autopilot-batch6/commands.ts` and `l
 | First full run | 3,529 tests, 3,415 passed, 114 failed. Causes: the shared offline hook pulled a server module into ten older browser-test bundles; four registry/grant/migration-order invariants needed batch 6; one OneDrive file lock on an older screenshot. All fixed; every failing suite rerun green |
 | Final full run | 3,529 tests across 76 suites: **3,528 passed, 1 failed**, 0 skipped, 0 cancelled (16 min). `npm run build` passed again afterwards |
 | The one failure | `nov-batch5-sql` NOV-069 "vendor rates are not projected" checked that the serialized row had no "210" anywhere (the fixture's vendor rate). That also matched random disposition ids and microsecond timestamps (for example `…56.210482…`), so it failed at random. The check now matches 210 only as a JSON value and also refuses `unit_rate`/`supplier_rate` keys; the file passes 23/23. Batch 6 does not change that view |
+| Run after the NOV-069 fix | 3,529 tests: 3,527 passed, 2 failed, neither in batch 6 code. `nov-batch2-browser` failed while writing a screenshot to the OneDrive folder (file lock, `UNKNOWN: open …validation-phone.png`). `nov-batch4-browser` NOV-042 hit a 5-second UI timeout in a 19-minute run. Both files were re-run alone: 28/28 passed. NOV-069 passed in this run |
 
 ### Changes to earlier tests
 
