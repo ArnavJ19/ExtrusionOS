@@ -18,6 +18,7 @@ import { RevisionHistory } from "@/components/modules/shared/revision-history";
 import { LocationGuidance } from "@/components/modules/operations/operator-tools";
 import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
 import { DieServicePanel } from "@/components/modules/press/die-service";
+import { DieWeightPanel } from "@/components/modules/autopilot-batch6/weight";
 function DetailItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
@@ -230,6 +231,7 @@ export default async function DieDetailPage({ params }: { params: Promise<{ id: 
         </Card>
       )}
       {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "sales_manager"].includes(context.role) ? <DieServicePanel dieId={id} today={getBusinessDateBoundaries().today} /> : null}
+      {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "sales_manager"].includes(context.role) ? <DieWeightPanel dieId={id} today={getBusinessDateBoundaries().today} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="die" id={id} role={context.role} /> : null}
     </div>
   );

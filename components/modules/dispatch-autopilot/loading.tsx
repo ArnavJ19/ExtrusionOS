@@ -16,6 +16,7 @@ import { fmtDay, fmtWhen } from "@/lib/order-to-cash/commands";
 import { Empty, Failure, Loading, Message, Pager, Pill, Section, apWrite, buttonClass, inputClass, secondaryClass, useApRead } from "../order-to-cash/ui";
 import { FreightPanel } from "./freight";
 import { UsualChoicesHint } from "../autopilot-usual/usual-choices";
+import { OfflineQueuePanel, useOfflineQueue } from "../offline/offline-queue";
 
 type Note = { tone: "ok" | "error"; text: string } | null;
 type PlanLine = { line_id: string | null; profile: string; finish: string; ordered_pieces: number | null; ordered_kg: number | null; shipped_pieces: number; shipped_kg: number;
@@ -90,8 +91,10 @@ function CameraScan({ onScan, onClose }: { onScan: (text: string) => void; onClo
 
 type ScanResult = { state: "loaded" | "refused" | "confirm" | "already_loaded"; warnings?: string[]; message: string; tag?: string; session?: Session };
 
-export function LoadingStation({ sessionId, today }: { sessionId: string; today: string }) {
+export function LoadingStation({ sessionId, today, companyId = "local", userId = "local" }: { sessionId: string; today: string; companyId?: string; userId?: string }) {
   const router = useRouter();
+  // AP-094: scans go through the offline queue, so a scan made with no signal is kept on the phone and sent once.
+  const queue = useOfflineQueue(companyId, userId, () => { void reload(); });
   const [session, setSession] = useState<Session | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tag, setTag] = useState("");
@@ -117,10 +120,11 @@ export function LoadingStation({ sessionId, today }: { sessionId: string; today:
   async function scan(raw: string, confirm = false) {
     const value = raw.trim(); if (!value || busy) return;
     setBusy(true); setMessage(null);
-    const result = await autopilotAction("ap_dispatch", "scan", { session_id: sessionId, tag: value, ...(confirm ? { confirm: true, note: confirmNote.trim() } : {}) });
+    const outcome = await queue.submit({ rpc: "ap_dispatch", command: "scan", payload: { session_id: sessionId, tag: value, ...(confirm ? { confirm: true, note: confirmNote.trim() } : {}) }, label: `Loading scan ${value}` });
     setBusy(false);
-    if (!result.success) { setLast({ state: "refused", message: result.error }); return; }
-    const r = result.data as ScanResult;
+    if (outcome.kind === "retry") { setLast({ state: "refused", message: `No connection. Scan ${value} is saved on this phone and will be sent.` }); setTag(""); input.current?.focus(); return; }
+    if (outcome.kind === "conflict") { setLast({ state: "refused", message: outcome.message }); return; }
+    const r = outcome.data as ScanResult;
     setLast({ ...r, tag: r.tag ?? value });
     if (r.session) setSession(r.session);
     if (r.state !== "confirm") { setTag(""); setConfirmNote(""); }
@@ -142,7 +146,7 @@ export function LoadingStation({ sessionId, today }: { sessionId: string; today:
   const plan = session.plan;
   const active = (session.scans ?? []).filter(s => s.outcome === "loaded" && !s.removed_at);
   const tone = last?.state === "loaded" ? "bg-emerald-600 text-white" : last?.state === "confirm" ? "bg-amber-400 text-neutral-950" : last?.state === "already_loaded" ? "bg-sky-600 text-white" : "bg-rose-600 text-white";
-  return <div className="space-y-4">
+  return <div className="space-y-4"><OfflineQueuePanel queue={queue} what="scan(s)" />
     <Section title={`${session.order_number} · ${session.customer}`} description={`${session.destination ?? "Destination not recorded"} · due ${fmtDay(session.expected_dispatch_date)} · started by ${session.started_by} ${fmtWhen(session.started_at)}`}
       actions={<Pill value={open ? "open" : session.status === "completed" ? "posted" : "cancelled"} label={session.status} />}>
       {session.credit === "held" || session.credit === "rejected" || session.credit === "expired" ? <p role="alert" className="rounded-xl bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">Credit {session.credit}: the dispatch will be refused until accounts approves credit for this order.</p> : null}

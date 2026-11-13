@@ -20,6 +20,7 @@ import { CASH_READS, billingCommands, cashCommands, creditCommands, dupeCommands
 import { DISPATCH_READS, dispatchCommands, ewayCommands, freightCommands, shareCommands, tallyCommands } from "@/lib/dispatch-autopilot/commands";
 import { BATCH5_READS, finishingCommands, quoteSalesCommands, usualCommands } from "@/lib/autopilot-batch5/commands";
 import { OPERATIONS_READS, accountsCommands, digestCommands, planningCommands, stockCommands } from "@/lib/autopilot-batch5/operations";
+import { BATCH6_READS, billetLengthCommands, einvoiceCommands, healthCommands, ncrCommands, offlineCommands, pressPlanCommands, reorderCommands, repriceCommands, tdsCommands, weightCommands } from "@/lib/autopilot-batch6/commands";
 
 export type ApResult<T = unknown> = { success: true; data: T } | { success: false; error: string; unavailable?: boolean };
 
@@ -68,11 +69,15 @@ const COMMANDS: Record<string, Record<string, z.ZodTypeAny>> = {
   ap_dispatch: dispatchCommands, ap_freight: freightCommands, ap_eway: ewayCommands, ap_tally: tallyCommands, ap_share: shareCommands,
   // Batch 5: usual choices, finishing vendor chase, quotation follow-ups and floor prices.
   ap_usual: usualCommands, ap_finishing: finishingCommands, ap_quote_sales: quoteSalesCommands,
-  ap_stock: stockCommands, ap_planning: planningCommands, ap_accounts: accountsCommands, ap_digest: digestCommands
+  ap_stock: stockCommands, ap_planning: planningCommands, ap_accounts: accountsCommands, ap_digest: digestCommands,
+  // Batch 6: weight drift, repricing, system health, reorder points, NCRs, TDS, e-invoice, billet length, offline queue and press plan drafts.
+  // E-invoice export/import, TDS statement import and the billet length choice go through lib/actions/autopilot-batch6, which builds or computes first.
+  ap_weight: weightCommands, ap_reprice: repriceCommands, ap_health: healthCommands, ap_reorder: reorderCommands, ap_ncr: ncrCommands, ap_tds: tdsCommands,
+  ap_einvoice: einvoiceCommands, ap_billet_length: billetLengthCommands, ap_offline: offlineCommands, ap_press_plan: pressPlanCommands
 };
 const READS = new Set(["read", "add_working_days", "list", "get", "overview", "runs", "layout", "usage", "pending_count", "flags", "record", "attention", "visit",
   "station", "push", "undo", "job", "expected", "cycle_times", "floor", "downtime", "die_changes", "settings", "reconcile", "service", "options", "plans", "compliance",
-  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS, ...BATCH5_READS, ...OPERATIONS_READS]);
+  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS, ...BATCH5_READS, ...OPERATIONS_READS, ...BATCH6_READS]);
 const REVALIDATE: Record<string, string[]> = {
   ap_calendar: ["/production/calendar"], ap_series: ["/settings/numbering"], ap_proposals: ["/dashboard", "/settings/navigation", "/settings/numbering", "/invoices/periods", "/production", "/production/floor", "/dies", "/maintenance"],
   ap_jobs: ["/automation"], ap_navigation: ["/settings/navigation"], ap_period: ["/invoices/periods"], ap_import: ["/settings/data/import"],
@@ -84,7 +89,10 @@ const REVALIDATE: Record<string, string[]> = {
   ap_eway: ["/dispatches/eway"], ap_tally: ["/invoices/tally"], ap_share: [],
   ap_usual: [], ap_finishing: ["/production/finishing/chase"], ap_quote_sales: ["/quotes", "/quotes/followups", "/quotes/floors"],
   ap_stock: ["/inventory", "/inventory/movements"], ap_planning: ["/production/billet-forecast", "/orders/at-risk", "/dashboard"],
-  ap_accounts: ["/invoices/periods", "/payments/msme"], ap_digest: ["/dashboard"]
+  ap_accounts: ["/invoices/periods", "/payments/msme"], ap_digest: ["/dashboard"],
+  ap_weight: ["/dies", "/dies/weight-drift"], ap_reprice: ["/quotes", "/quotes/reprice"], ap_health: [], ap_reorder: ["/inventory/reorder", "/inventory"],
+  ap_ncr: ["/quality", "/quality/ncrs"], ap_tds: ["/payments/tds", "/payments", "/invoices"], ap_einvoice: ["/invoices/einvoice"], ap_billet_length: ["/production"],
+  ap_offline: ["/mobile", "/production/floor"], ap_press_plan: ["/production/schedule", "/production/schedule/draft"]
 };
 
 function friendly(error: { code?: string; message?: string } | null | undefined): ApResult<never> {
@@ -103,6 +111,13 @@ export async function autopilotAction(rpc: string, command: string, payload: unk
     if (!schema) return { success: false, error: "Unknown request." };
     const parsed = schema.safeParse(payload ?? {});
     if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Review the details." };
+    if (rpc === "ap_offline" && command === "submit") {
+      // AP-094: the queued entry is validated as the command it carries; the database then runs that command once.
+      const entry = parsed.data as { rpc: string; command: string; payload: unknown };
+      const inner = COMMANDS[entry.rpc]?.[entry.command]?.safeParse(entry.payload);
+      if (!inner?.success) return { success: false, error: inner?.error.issues[0]?.message ?? "This entry cannot be sent." };
+      (parsed.data as { payload: unknown }).payload = inner.data;
+    }
     const context = await getSessionContext();
     if (context.dealerId || ["dealer_admin", "dealer_staff"].includes(context.role)) return { success: false, error: "This action is not permitted for your current session." };
     const supabase = await createClient();

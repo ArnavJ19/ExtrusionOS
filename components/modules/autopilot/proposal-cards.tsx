@@ -107,10 +107,34 @@ function FreightFields({ row, onSubmit, onCancel }: { row: ProposalRow; onSubmit
 
 function EditFields({ row, onSubmit, onCancel, today }: { row: ProposalRow; onSubmit: (payload: Record<string, unknown>) => void; onCancel: () => void; today: string }) {
   if (row.proposal_type === "billet.shortage") return <BilletRouteFields onSubmit={onSubmit} onCancel={onCancel} />;
+  if (row.proposal_type === "die.weight_drift") return <WeightRouteFields onSubmit={onSubmit} onCancel={onCancel} />;
+  if (row.proposal_type === "stock.reorder") return <ReorderQuantityFields row={row} onSubmit={onSubmit} onCancel={onCancel} />;
   if (row.proposal_type === "production.expected_output") return <ExpectedOutputFields row={row} onSubmit={onSubmit} onCancel={onCancel} />;
   if (row.proposal_type === "freight.estimate") return <FreightFields row={row} onSubmit={onSubmit} onCancel={onCancel} />;
   if (row.proposal_type === "die.service_due" || row.proposal_type === "maintenance.pm_due") return <ScheduleFields row={row} onSubmit={onSubmit} onCancel={onCancel} today={today} />;
   return <TextFields row={row} onSubmit={onSubmit} onCancel={onCancel} today={today} />;
+}
+
+// AP-027: inspect the die (die shop task) or review the profile master (task to the person deciding).
+function WeightRouteFields({ onSubmit, onCancel }: { onSubmit: (payload: Record<string, unknown>) => void; onCancel: () => void }) {
+  const [route, setRoute] = useState("update_master");
+  return <div className="mt-3 space-y-3 rounded-xl border bg-neutral-50 p-3">
+    <label className="block text-sm font-semibold">Decision<select className="mt-1 min-h-11 w-full rounded-xl border bg-white px-3" value={route} onChange={e => setRoute(e.target.value)}><option value="inspect_die">Inspect the die</option><option value="update_master">Review the master and selling weight</option></select></label>
+    <div className="flex flex-wrap gap-2"><button type="button" className="min-h-11 rounded-xl bg-neutral-950 px-4 text-sm font-bold text-white" onClick={() => onSubmit({ route })}>Accept with this decision</button>
+      <button type="button" className="min-h-11 rounded-xl border px-4 text-sm" onClick={onCancel}>Cancel</button></div>
+  </div>;
+}
+
+// AP-033: purchase may change the requisition quantity before accepting.
+function ReorderQuantityFields({ row, onSubmit, onCancel }: { row: ProposalRow; onSubmit: (payload: Record<string, unknown>) => void; onCancel: () => void }) {
+  const [quantity, setQuantity] = useState(String(row.payload.quantity ?? ""));
+  const [error, setError] = useState<string | null>(null);
+  return <div className="mt-3 space-y-3 rounded-xl border bg-neutral-50 p-3">
+    <label className="block max-w-xs text-sm font-semibold">Quantity ({String(row.payload.unit ?? "units")})<input inputMode="decimal" className="mt-1 h-11 w-full rounded-xl border bg-white px-3 text-sm" value={quantity} onChange={e => setQuantity(e.target.value)} /></label>
+    {error ? <p role="alert" className="text-sm font-semibold text-rose-700">{error}</p> : null}
+    <div className="flex flex-wrap gap-2"><button type="button" className="min-h-11 rounded-xl bg-neutral-950 px-4 text-sm font-bold text-white" onClick={() => { const v = Number(quantity); if (!Number.isFinite(v) || v <= 0) { setError("Enter a quantity above zero."); return; } onSubmit({ quantity: v }); }}>Accept with this quantity</button>
+      <button type="button" className="min-h-11 rounded-xl border px-4 text-sm" onClick={onCancel}>Cancel</button></div>
+  </div>;
 }
 
 function BilletRouteFields({ onSubmit, onCancel }: { onSubmit: (payload: Record<string, unknown>) => void; onCancel: () => void }) {
