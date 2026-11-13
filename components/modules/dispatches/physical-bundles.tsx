@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getDispatchSourcesAction } from "@/lib/actions/dispatches";
 import { listPhysicalBundlesAction,recordPhysicalBundleAction } from "@/lib/actions/physical-bundles";
+import { OfflineQueuePanel, bundleTransport, useOfflineQueueCore } from "@/components/modules/offline/offline-core";
+const bundles=bundleTransport(recordPhysicalBundleAction);
 import { readDispatchPreparationSources,type DispatchPreparationSource } from "@/lib/dispatches/preparation";
 import { physicalBundleTag,type PhysicalBundle } from "@/lib/workflow/physical-bundles";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
@@ -30,7 +32,9 @@ export function PreparedBundlePicker({orderId,onPick}:{orderId:string;onPick:(bu
   </section>;
 }
 
-export function PhysicalBundleCapture({orderId}:{orderId:string}){
+export function PhysicalBundleCapture({orderId,companyId="local",userId="local"}:{orderId:string;companyId?:string;userId?:string}){
+  // AP-094: a bundle recorded while the signal drops stays on this phone and is sent once, under the same bundle identity.
+  const queue=useOfflineQueueCore(companyId,userId,bundles);
   const [sources,setSources]=useState<DispatchPreparationSource[]|null>(null),[sourceId,setSourceId]=useState("");
   const [identity,setIdentity]=useState(()=>crypto.randomUUID()),[tag,setTag]=useState("");
   const [pieces,setPieces]=useState(""),[length,setLength]=useState(""),[gross,setGross]=useState(""),[tare,setTare]=useState("");
@@ -42,11 +46,13 @@ export function PhysicalBundleCapture({orderId}:{orderId:string}){
   }).catch(()=>{if(current)setMessage("Material sources are unavailable.");});return()=>{current=false;};},[orderId,retry]);
   const source=sources?.find(row=>row.id===sourceId),net=Number(gross)-Number(tare);
   async function save(){if(saving.current)return;saving.current=true;setPending(true);setMessage("");
-    try{const result=await recordPhysicalBundleAction({id:identity,order_id:orderId,source_line_id:sourceId,bundle_number:tag,
-      number_of_pieces:parseBundleObservationText(pieces,true),net_length_m:parseBundleObservationText(length),gross_weight_kg:parseBundleObservationText(gross),tare_weight_kg:parseBundleObservationText(tare)});
-      if(result.success){setRecorded(true);setMessage("Bundle observations recorded. No stock has been consumed.");}else setMessage(result.error);
+    try{const outcome=await queue.submit({kind:"bundle",rpc:"physical_bundle_command",command:"bundle.record",label:`Bundle ${tag}`,requestId:identity,payload:{id:identity,order_id:orderId,source_line_id:sourceId,bundle_number:tag,
+      number_of_pieces:parseBundleObservationText(pieces,true),net_length_m:parseBundleObservationText(length),gross_weight_kg:parseBundleObservationText(gross),tare_weight_kg:parseBundleObservationText(tare)}});
+      if(outcome.kind==="applied"){setRecorded(true);setMessage("Bundle observations recorded. No stock has been consumed.");}
+      else if(outcome.kind==="retry"){setRecorded(true);setMessage("No connection. This bundle is saved on this phone and will be sent with the same identity.");}
+      else setMessage(outcome.message);
     }catch{setMessage("Confirmation is unavailable. Retry with the same bundle identity.");}finally{saving.current=false;setPending(false);}}
-  return <div className="mx-auto max-w-2xl space-y-5"><h1 className="text-2xl font-black">Record a physical bundle</h1>
+  return <div className="mx-auto max-w-2xl space-y-5"><h1 className="text-2xl font-black">Record a physical bundle</h1><OfflineQueuePanel queue={queue} what="bundle(s)" />
     <p className="text-sm text-slate-600">Select its released material, then enter the measurements observed on this bundle. Review net weight before recording.</p>
     <fieldset disabled={pending||recorded} className="min-w-0 space-y-4">
       <label className="block space-y-1">Material source<select aria-label="Material source" className="form-input min-h-12" value={sourceId} onChange={e=>setSourceId(e.target.value)}><option value="">{sources?"Choose released material":"Checking current sources..."}</option>{sources?.map(row=><option key={row.id} value={row.id}>{row.profileLabel} / {row.sourceLabel}</option>)}</select></label>

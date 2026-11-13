@@ -7,6 +7,8 @@ import { MODULE_STARTS, moduleWorkHref, type ModuleKey } from "@/lib/navigation/
 const FLOOR = ["owner", "admin", "production_manager", "production", "factory_manager"];
 const MODULE_LINKS: Partial<Record<ModuleKey, Array<{ href: string; label: string; roles: string[] }>>> = {
   production: [
+    { href: "/production/schedule/draft", label: "Draft press plan", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "viewer"] },
+    { href: "/production/billet-length", label: "Billet length limits", roles: ["owner", "admin", "factory_manager", "production_manager"] },
     { href: "/production/billet-forecast", label: "Billet forecast", roles: ["owner", "admin", "factory_manager", "production_manager", "inventory_manager"] },
     { href: "/production/floor", label: "Press floor", roles: FLOOR },
     { href: "/production/finishing/chase", label: "Chase finishing vendors", roles: FLOOR },
@@ -14,11 +16,13 @@ const MODULE_LINKS: Partial<Record<ModuleKey, Array<{ href: string; label: strin
     { href: "/production/scrap-standards", label: "Scrap standards", roles: FLOOR },
     { href: "/production/calendar", label: "Factory calendar", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "viewer"] },
     { href: "/production/drafts", label: "Draft jobs from orders", roles: ["owner", "admin", "production_manager", "factory_manager", "sales_manager"] }],
-  inventory: [{ href: "/inventory/movements", label: "Stock ledger", roles: ["owner", "admin", "factory_manager", "production_manager", "inventory_manager", "accounts"] }],
-  quality: [{ href: "/quality/samples", label: "In-process samples", roles: ["owner", "admin", "quality", "factory_manager", "production_manager"] }],
+  inventory: [{ href: "/inventory/movements", label: "Stock ledger", roles: ["owner", "admin", "factory_manager", "production_manager", "inventory_manager", "accounts"] },
+    { href: "/inventory/reorder", label: "Reorder points", roles: ["owner", "admin", "inventory_manager", "factory_manager", "production_manager", "accounts"] }],
+  quality: [{ href: "/quality/samples", label: "In-process samples", roles: ["owner", "admin", "quality", "factory_manager", "production_manager"] },
+    { href: "/quality/ncrs", label: "NCRs", roles: ["owner", "admin", "quality", "factory_manager", "production_manager"] }],
   invoices: [{ href: "/invoices/drafts", label: "Drafts to post", roles: ["owner", "admin", "accounts"] }, { href: "/invoices/tax-rules", label: "GST place of supply", roles: ["owner", "admin", "accounts"] },
     { href: "/invoices/periods", label: "Month close", roles: ["owner", "admin", "accounts", "viewer"] }, { href: "/invoices/numbering", label: "Document numbering", roles: ["owner", "admin", "accounts", "viewer"] },
-    { href: "/invoices/tally", label: "Tally export", roles: ["owner", "admin", "accounts"] }],
+    { href: "/invoices/tally", label: "Tally export", roles: ["owner", "admin", "accounts"] }, { href: "/invoices/einvoice", label: "E-invoices", roles: ["owner", "admin", "accounts"] }],
   // Autopilot batch 4: dispatch and compliance.
   dispatches: [
     { href: "/dispatches/ready", label: "Ready to ship", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "sales_manager", "sales", "accounts"] },
@@ -36,10 +40,12 @@ const AREA_LINKS: Record<"orders" | "payments" | "quotes", Array<{ href: string;
     { href: "/orders/credit", label: "Credit holds", roles: ["owner", "admin", "accounts", "sales_manager", "sales"] }],
   payments: [{ href: "/payments/bank", label: "Bank statement", roles: ["owner", "admin", "accounts"] }, { href: "/payments/reminders", label: "Payment reminders", roles: ["owner", "admin", "accounts"] },
     { href: "/payments/msme", label: "MSME supplier deadlines", roles: ["owner", "admin", "accounts"] },
+    { href: "/payments/tds", label: "Customer TDS", roles: ["owner", "admin", "accounts"] },
     { href: "/payments/receipts#allocate", label: "Receive money", roles: ["owner", "admin", "accounts"] }],
   // Autopilot batch 5: quotation follow-ups (AP-071) and floor prices (AP-072).
   quotes: [{ href: "/quotes/followups", label: "Follow-ups", roles: ["owner", "admin", "sales_manager", "sales", "accounts"] },
-    { href: "/quotes/floors", label: "Floor prices", roles: ["owner", "admin", "sales_manager", "sales"] }]
+    { href: "/quotes/floors", label: "Floor prices", roles: ["owner", "admin", "sales_manager", "sales"] },
+    { href: "/quotes/reprice", label: "Reprice drafts", roles: ["owner", "admin", "sales_manager", "sales", "accounts"] }]
 };
 export function OrderToCashLinks({ area, role }: { area: keyof typeof AREA_LINKS; role: string }) {
   const links = AREA_LINKS[area].filter(link => link.roles.includes(role));
