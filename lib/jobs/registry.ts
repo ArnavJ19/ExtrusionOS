@@ -33,6 +33,7 @@ export const JOBS = [
   { job_key: "quotes.followups", schedule: "morning", label: "Prepare quotation follow-ups" },
   { job_key: "quotes.reprice_check", schedule: "nightly", label: "Check draft quotation rates" },
   { job_key: "receivables.reminders", schedule: "morning", label: "Prepare payment reminders" },
+  { job_key: "receivables.statements", schedule: "morning", label: "Prepare monthly customer statements" },
   { job_key: "series.propose", schedule: "nightly", label: "Propose financial-year numbering" },
   { job_key: "stock.reorder", schedule: "nightly", label: "Propose purchase requisitions" }
 ] as const satisfies ReadonlyArray<{ job_key: string; schedule: JobSchedule; label: string }>;

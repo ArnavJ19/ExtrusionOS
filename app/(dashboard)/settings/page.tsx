@@ -11,7 +11,7 @@ import Link from "next/link";
 const AUTOPILOT_LINKS = [
   { href: "/settings/data/import", label: "Import masters from Excel" }, { href: "/settings/data/cutover", label: "Opening balances and cut-over" },
   { href: "/settings/navigation", label: "Navigation by role" }, { href: "/invoices/numbering", label: "Document numbering" }, { href: "/invoices/periods", label: "Month close" },
-  { href: "/production/calendar", label: "Factory calendar" }, { href: "/automation", label: "Scheduled jobs" }
+  { href: "/production/calendar", label: "Factory calendar" }, { href: "/automation", label: "Scheduled jobs" }, { href: "/settings/automation-quality", label: "Automation quality" }
 ];
 
 export default async function SettingsPage() {

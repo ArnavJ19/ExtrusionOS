@@ -31,16 +31,20 @@ const MODULE_LINKS: Partial<Record<ModuleKey, Array<{ href: string; label: strin
     { href: "/dispatches/labels", label: "Bundle labels", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager"] },
     { href: "/dispatches/packing", label: "Packing standard", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "sales_manager", "quality"] },
     { href: "/dispatches/eway", label: "E-way bills", roles: ["owner", "admin", "accounts", "dispatch_manager", "dispatch"] },
-    { href: "/dispatches/freight", label: "Freight rate cards", roles: ["owner", "admin", "dispatch_manager", "dispatch", "factory_manager", "sales_manager", "sales", "accounts"] }]
+    { href: "/dispatches/freight", label: "Freight rate cards", roles: ["owner", "admin", "dispatch_manager", "dispatch", "factory_manager", "sales_manager", "sales", "accounts"] }],
+  // Autopilot batch 7: AP-057 purchase price checks.
+  vendors: [{ href: "/vendors/purchasing/prices", label: "Purchase price checks", roles: ["owner", "admin", "accounts", "inventory_manager", "factory_manager"] }]
 };
 
 // Autopilot batch 3 pages on modules that have no workflow strip of their own (orders, payments, quotations).
 const AREA_LINKS: Record<"orders" | "payments" | "quotes", Array<{ href: string; label: string; roles: string[] }>> = {
   orders: [{ href: "/orders/at-risk", label: "Order red list", roles: ["owner", "admin", "factory_manager", "production_manager", "inventory_manager", "sales_manager", "sales", "dispatch_manager"] },
-    { href: "/orders/credit", label: "Credit holds", roles: ["owner", "admin", "accounts", "sales_manager", "sales"] }],
+    { href: "/orders/credit", label: "Credit holds", roles: ["owner", "admin", "accounts", "sales_manager", "sales"] },
+    { href: "/orders/delay-notices", label: "Delay notices", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "dispatch_manager"] }],
   payments: [{ href: "/payments/bank", label: "Bank statement", roles: ["owner", "admin", "accounts"] }, { href: "/payments/reminders", label: "Payment reminders", roles: ["owner", "admin", "accounts"] },
     { href: "/payments/msme", label: "MSME supplier deadlines", roles: ["owner", "admin", "accounts"] },
     { href: "/payments/tds", label: "Customer TDS", roles: ["owner", "admin", "accounts"] },
+    { href: "/payments/statements", label: "Monthly statements", roles: ["owner", "admin", "accounts"] },
     { href: "/payments/receipts#allocate", label: "Receive money", roles: ["owner", "admin", "accounts"] }],
   // Autopilot batch 5: quotation follow-ups (AP-071) and floor prices (AP-072).
   quotes: [{ href: "/quotes/followups", label: "Follow-ups", roles: ["owner", "admin", "sales_manager", "sales", "accounts"] },

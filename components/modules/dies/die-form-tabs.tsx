@@ -45,7 +45,7 @@ export function DieFormTabs({ form, update, profiles, customers, canEditUsage = 
               <Field label="Customer reference" value={form.customer_die_reference} onChange={(v) => update("customer_die_reference", v)} />
               <div className="block space-y-1.5 xl:col-span-2">
                 <span className="form-label">Linked profile *</span>
-                <SearchableSelect value={form.profile_id} placeholder="Select profile" options={profiles.map((p) => ({ value: p.id, label: p.label }))} onChange={(v) => update("profile_id", v)} />
+                <SearchableSelect scanAccept={["profile"]} value={form.profile_id} placeholder="Select profile" options={profiles.map((p) => ({ value: p.id, label: p.label }))} onChange={(v) => update("profile_id", v)} />
               </div>
               <SelectField label="Ownership" value={form.ownership_type} onChange={(v) => update("ownership_type", v)} options={[
                 { value: "company_owned", label: "Company Owned" },

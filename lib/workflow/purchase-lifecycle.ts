@@ -116,7 +116,9 @@ const commandSchemas = [
     idempotency_key: uuid, vendor_id: uuid, order_date: date,
     expected_freight_amount: amount.default(0), expected_discount_amount: amount.default(0),
     freight_tolerance: moneyBase.max(1000).refine(atPrecision(2)).default(0.01), discount_tolerance: moneyBase.max(1000).refine(atPrecision(2)).default(0.01),
-    total_tolerance: moneyBase.max(1000).refine(atPrecision(2)).default(0.01), lines: z.array(purchaseOrderLineInputSchema).min(1).max(100)
+    total_tolerance: moneyBase.max(1000).refine(atPrecision(2)).default(0.01), lines: z.array(purchaseOrderLineInputSchema).min(1).max(100),
+    // AP-057: reasons for lines priced above the last purchase price (the database records them on the line price checks).
+    price_reasons: z.array(z.object({ line_number: z.number().int().min(1).max(100), reason: z.string().trim().min(10).max(300) }).strict()).max(100).optional()
   }).strict() }).strict(),
   z.object({ command: z.literal("order.issue"), payload: z.object({ purchase_order_id: uuid }).strict() }).strict(),
   z.object({ command: z.literal("receipt.record"), payload: z.object({

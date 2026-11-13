@@ -278,7 +278,7 @@ function ModuleDatabaseWorkspace({ moduleKey, context, canCreate, initialStatus 
           <>
             {config.groupField && config.groups ? <StatusFilter label={labelize(config.groupField)} value={status} onChange={(value) => { setStatus(value); setPage(1); }} options={config.groups.map((value) => ({ value, label: labelize(value) }))} /> : null}
             {config.secondaryFilter ? <StatusFilter label={config.secondaryFilter.label} value={secondary} onChange={(value) => { setSecondary(value); setPage(1); }} options={config.secondaryFilter.options} /> : null}
-            {config.dateFilterField ? <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={(value) => { setDateFrom(value); setPage(1); }} onToChange={(value) => { setDateTo(value); setPage(1); }} /> : null}
+            {config.dateFilterField ? <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={(value) => { setDateFrom(value); setPage(1); }} onToChange={(value) => { setDateTo(value); setPage(1); }} onRangeChange={(nextFrom, nextTo) => { setDateFrom(nextFrom); setDateTo(nextTo); setPage(1); }} /> : null}
           </>
         )}
       />

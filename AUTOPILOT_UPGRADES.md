@@ -12,6 +12,7 @@ Batch records: [Batch 1](AUTOPILOT_UPGRADE_BATCH_1.md) (AP-001, 002, 004, 005, 0
 [Batch 4](AUTOPILOT_UPGRADE_BATCH_4.md) (AP-018, 019, 051, 081, 083, 017, 035, 036, 089, 060, dispatch and compliance; hosted migration recorded applied 13 November 2026).
 [Batch 5](AUTOPILOT_UPGRADE_BATCH_5.md) (AP-026, 056, 071, 072, 080, 047, 062, 085, 063, 078; all ten implemented; completion and correctness migrations applied to hosted Supabase 13 November 2026; operating acceptance remains).
 [Batch 6](AUTOPILOT_UPGRADE_BATCH_6.md) (AP-027, 030, 100, 033, 053, 077, 082, 029, 094, 061; built and verified locally 14 November 2026; hosted migration not applied).
+[Batch 7](AUTOPILOT_UPGRADE_BATCH_7.md) (AP-086, 090, 099, 003, 025, 039, 040, 057, 064, 079; built and verified locally 14 November 2026; hosted migration not applied).
 
 ## Why this catalogue exists
 

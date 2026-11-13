@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getErrorMessage } from "@/lib/utils/errors";
+import { PRICE_READERS, priceCommands } from "@/lib/autopilot-batch7/commands";
 import {
   parseSupplierInvoiceText,
   purchaseLifecycleInputSchema,
@@ -61,12 +62,35 @@ async function runPurchaseLifecycleCommand(input: PurchaseLifecycleInput): Promi
   } catch (error) {
     const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
     const confirmedRejection = /^(22|23|40|42)/.test(code) || code === "P0001";
-    return { success: false, error: getErrorMessage(error, "Could not complete the purchasing action"), uncertain: mutationSubmitted && !confirmedRejection };
+    return { success: false, error: getErrorMessage(error, "Could not complete the purchasing action").replace(/^AP: /, ""), uncertain: mutationSubmitted && !confirmedRejection };
   }
 }
 
 export async function purchaseLifecycleAction(input: PurchaseLifecycleInput): Promise<ActionResult<PurchaseLifecycleResult>> {
   return runPurchaseLifecycleCommand(input);
+}
+
+const PRICE_COMMANDS = ["history", "order_checks", "justify"] as const;
+/** AP-057: earlier prices for a draft line, the price checks of a purchase order, and a reason for a flagged price. */
+export async function purchasePriceAction(command: (typeof PRICE_COMMANDS)[number], payload: unknown): Promise<ActionResult<unknown>> {
+  try {
+    if (!PRICE_COMMANDS.includes(command)) return { success: false, error: "Unknown request." };
+    const parsed = priceCommands[command].safeParse(payload ?? {});
+    if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Check the details." };
+    const context = await getSessionContext();
+    if (!context.companyId || context.dealerId || !(PRICE_READERS as readonly string[]).includes(context.role)) return { success: false, error: "Price history is visible to purchase and management roles only." };
+    const supabase = await createClient();
+    const result = await supabase.rpc("ap_price", { p_command: command, p_payload: parsed.data });
+    if (result.error) {
+      const message = result.error.message ?? "";
+      if (["PGRST202", "42883", "42P01"].includes(result.error.code ?? "")) return { success: false, error: "Price checks need the Autopilot database upgrade." };
+      return { success: false, error: message.startsWith("AP: ") ? message.slice(4) : "The price check could not be read." };
+    }
+    if (command === "justify") revalidatePath("/vendors/purchasing");
+    return { success: true, data: result.data };
+  } catch {
+    return { success: false, error: "The price check could not be read. Check your session and retry." };
+  }
 }
 
 export async function extractSupplierDocumentAction(input: { fileName: string; text: string }): Promise<ActionResult<{

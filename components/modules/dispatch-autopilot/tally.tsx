@@ -3,6 +3,7 @@
 // AP-083: export vouchers to Tally. Map the ledgers once; each day download the import XML for the posted vouchers not
 // yet exported. A voucher is exported once; sending it again needs an explicit re-export with a reason.
 import { useState } from "react";
+import { DateRangeFilter } from "@/components/data/data-table-toolbar";
 import { Download } from "lucide-react";
 import { exportTallyAction, type TallyExportResult } from "@/lib/actions/dispatch-autopilot";
 import { TALLY_LEDGER_KINDS, TALLY_VOUCHER_LABELS, type TallyLedgerKind, type TallyVoucherKind } from "@/lib/integrations/tally-xml";
@@ -44,8 +45,7 @@ export function TallyClient() {
   return <div className="space-y-4">
     <Section title="Export a day's vouchers" description="Posted sales invoices, receipts, on-account money, purchase bills and credit notes not yet exported. Opening (cut-over) invoices are never exported.">
       <div className="flex flex-wrap items-end gap-2">
-        <label className="text-sm font-semibold">From<input type="date" className={`${inputClass} mt-1 w-40`} value={from} onChange={e => { setFrom(e.target.value); setPage(1); }} /></label>
-        <label className="text-sm font-semibold">To<input type="date" className={`${inputClass} mt-1 w-40`} value={to} onChange={e => { setTo(e.target.value); setPage(1); }} /></label>
+        <DateRangeFilter clearable={false} fromLabel="From" toLabel="To" from={from} to={to} onFromChange={v => { setFrom(v); setPage(1); }} onToChange={v => { setTo(v); setPage(1); }} onRangeChange={(f, t) => { setFrom(f); setTo(t); setPage(1); }} />
         <button type="button" disabled={busy} className={`${buttonClass} inline-flex items-center gap-2`} onClick={exportNow}><Download className="h-4 w-4" aria-hidden="true" />Download Tally XML</button>
       </div>
       <p className="text-sm">{Object.keys(counts).length ? Object.entries(counts).map(([k, n]) => `${n} ${TALLY_VOUCHER_LABELS[k as TallyVoucherKind]}`).join(" · ") + " pending" : "Nothing pending for these dates."}</p>

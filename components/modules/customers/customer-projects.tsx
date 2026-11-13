@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { PincodeInput } from "@/components/ui/pincode-input";
 import { customerProjectAction } from "@/lib/actions/customer-projects";
 import { formatDate } from "@/lib/utils/format";
 import {
@@ -67,11 +68,14 @@ export function ProjectForm({ customers, project }: { customers?: Option[]; proj
         {fieldKeys.map((key) => (
           <label key={key} className={`space-y-1 ${key === "site_address" || key === "notes" ? "md:col-span-2" : ""}`}>
             <span className="form-label">{fieldLabels[key]}{key === "name" ? "" : " (optional)"}</span>
-            {key === "site_address" || key === "notes" ? (
+            {key === "pincode" ? (
+              <PincodeInput value={fields.pincode} disabled={locked} label={fieldLabels.pincode} onChange={(next) => setFields(current => ({ ...current, pincode: next }))}
+                state={fields.state} onState={(next) => setFields(current => ({ ...current, state: next }))} city={fields.city} onCity={(next) => setFields(current => ({ ...current, city: next }))} />
+            ) : key === "site_address" || key === "notes" ? (
               <textarea className="form-input" rows={2} maxLength={key === "notes" ? 2000 : 500} value={fields[key]} disabled={locked} onChange={(event) => setFields({ ...fields, [key]: event.target.value })} />
             ) : (
-              <input className="form-input" required={key === "name"} inputMode={key === "pincode" || key === "contact_phone" ? "numeric" : undefined}
-                maxLength={key === "pincode" ? 6 : key === "contact_phone" ? 16 : 120} value={fields[key]} disabled={locked}
+              <input className="form-input" required={key === "name"} inputMode={key === "contact_phone" ? "numeric" : undefined}
+                maxLength={key === "contact_phone" ? 16 : 120} value={fields[key]} disabled={locked}
                 placeholder={key === "contact_phone" ? "+91 98200 12345" : undefined} onChange={(event) => setFields({ ...fields, [key]: event.target.value })} />
             )}
           </label>

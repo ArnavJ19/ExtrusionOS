@@ -130,6 +130,7 @@ export async function saveQuoteAction(input: SaveQuoteInput): Promise<ActionResu
         technical_option_id: item.technical_option_id || null,
         die_id: item.die_id || null,
         item_description: item.item_description || null,
+        length_input_text: item.length_input_text ?? null,
         finishing_type: item.finishing_type,
         hsn_code: profile.hsn_code || null
       };

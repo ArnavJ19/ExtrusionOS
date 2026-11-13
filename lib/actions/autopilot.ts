@@ -21,6 +21,7 @@ import { DISPATCH_READS, dispatchCommands, ewayCommands, freightCommands, shareC
 import { BATCH5_READS, finishingCommands, quoteSalesCommands, usualCommands } from "@/lib/autopilot-batch5/commands";
 import { OPERATIONS_READS, accountsCommands, digestCommands, planningCommands, stockCommands } from "@/lib/autopilot-batch5/operations";
 import { BATCH6_READS, billetLengthCommands, einvoiceCommands, healthCommands, ncrCommands, offlineCommands, pressPlanCommands, reorderCommands, repriceCommands, tdsCommands, weightCommands } from "@/lib/autopilot-batch6/commands";
+import { BATCH7_READS, delayCommands, priceCommands, qualityCommands, statementCommands } from "@/lib/autopilot-batch7/commands";
 
 export type ApResult<T = unknown> = { success: true; data: T } | { success: false; error: string; unavailable?: boolean };
 
@@ -73,11 +74,14 @@ const COMMANDS: Record<string, Record<string, z.ZodTypeAny>> = {
   // Batch 6: weight drift, repricing, system health, reorder points, NCRs, TDS, e-invoice, billet length, offline queue and press plan drafts.
   // E-invoice export/import, TDS statement import and the billet length choice go through lib/actions/autopilot-batch6, which builds or computes first.
   ap_weight: weightCommands, ap_reprice: repriceCommands, ap_health: healthCommands, ap_reorder: reorderCommands, ap_ncr: ncrCommands, ap_tds: tdsCommands,
-  ap_einvoice: einvoiceCommands, ap_billet_length: billetLengthCommands, ap_offline: offlineCommands, ap_press_plan: pressPlanCommands
+  ap_einvoice: einvoiceCommands, ap_billet_length: billetLengthCommands, ap_offline: offlineCommands, ap_press_plan: pressPlanCommands,
+  // Batch 7: automation quality, purchase price checks, customer delay notices and monthly statements
+  // (a statement emailed through the provider goes through lib/actions/autopilot-batch7).
+  ap_quality: qualityCommands, ap_price: priceCommands, ap_delay: delayCommands, ap_statement: statementCommands
 };
 const READS = new Set(["read", "add_working_days", "list", "get", "overview", "runs", "layout", "usage", "pending_count", "flags", "record", "attention", "visit",
   "station", "push", "undo", "job", "expected", "cycle_times", "floor", "downtime", "die_changes", "settings", "reconcile", "service", "options", "plans", "compliance",
-  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS, ...BATCH5_READS, ...OPERATIONS_READS, ...BATCH6_READS]);
+  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS, ...BATCH5_READS, ...OPERATIONS_READS, ...BATCH6_READS, ...BATCH7_READS]);
 const REVALIDATE: Record<string, string[]> = {
   ap_calendar: ["/production/calendar"], ap_series: ["/settings/numbering"], ap_proposals: ["/dashboard", "/settings/navigation", "/settings/numbering", "/invoices/periods", "/production", "/production/floor", "/dies", "/maintenance"],
   ap_jobs: ["/automation"], ap_navigation: ["/settings/navigation"], ap_period: ["/invoices/periods"], ap_import: ["/settings/data/import"],
@@ -92,7 +96,9 @@ const REVALIDATE: Record<string, string[]> = {
   ap_accounts: ["/invoices/periods", "/payments/msme"], ap_digest: ["/dashboard"],
   ap_weight: ["/dies", "/dies/weight-drift"], ap_reprice: ["/quotes", "/quotes/reprice"], ap_health: [], ap_reorder: ["/inventory/reorder", "/inventory"],
   ap_ncr: ["/quality", "/quality/ncrs"], ap_tds: ["/payments/tds", "/payments", "/invoices"], ap_einvoice: ["/invoices/einvoice"], ap_billet_length: ["/production"],
-  ap_offline: ["/mobile", "/production/floor"], ap_press_plan: ["/production/schedule", "/production/schedule/draft"]
+  ap_offline: ["/mobile", "/production/floor"], ap_press_plan: ["/production/schedule", "/production/schedule/draft"],
+  ap_quality: ["/settings/automation-quality"], ap_price: ["/vendors/purchasing", "/vendors/purchasing/prices"], ap_delay: ["/orders/delay-notices", "/orders"],
+  ap_statement: ["/payments/statements"]
 };
 
 function friendly(error: { code?: string; message?: string } | null | undefined): ApResult<never> {

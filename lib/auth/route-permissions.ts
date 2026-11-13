@@ -58,6 +58,11 @@ type RoleRule = {
 
 const roleRules: RoleRule[] = [
   { prefix: "/dispatches/loads", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "production_manager", "production", "sales_manager", "sales"] },
+  // Autopilot batch 7: AP-057 price checks, AP-064 delay notices, AP-079 statements, AP-003 automation quality.
+  { prefix: "/vendors/purchasing/prices", roles: ["owner", "admin", "accounts", "inventory_manager", "factory_manager"] },
+  { prefix: "/orders/delay-notices", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "dispatch_manager"] },
+  { prefix: "/payments/statements", roles: ["owner", "admin", "accounts"] },
+  { prefix: "/settings/automation-quality", roles: ["owner", "admin", "factory_manager"] },
   { prefix: "/vendors/purchasing", roles: ["owner", "admin", "accounts", "inventory_manager"] },
   { prefix: "/tasks/changes", roles: ["owner", "admin", "sales_manager", "production_manager", "factory_manager", "inventory_manager", "dispatch_manager", "quality", "accounts"] },
   { prefix: "/customers/portal-responses", roles: ["owner", "admin", "sales_manager", "sales"] },
