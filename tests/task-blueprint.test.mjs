@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { getErrorMessage } from "../lib/utils/errors.ts";
 import { readFileSync } from "node:fs";
 import {
   BLUEPRINT_ROLES, PREREQUISITE_STATES, blueprintLoadSchema, blueprintSections, blueprintsListSchema, canManageBlueprints, describeKind, exceptionsListSchema,
@@ -67,5 +68,7 @@ test("business messages passed through are raised by the migration; start refusa
   assert.doesNotMatch(action, /^export const/m);
   assert.match(migration, /left\('This task cannot start yet: '/);
   assert.match(readFileSync("lib/actions/department-handoffs.ts", "utf8"), /message\.startsWith\("This task cannot start yet:"\)/);
-  assert.match(readFileSync("lib/utils/errors.ts", "utf8"), /message\.length <= 240/, "the tasks API passes refusals of up to 240 characters");
+  assert.equal(getErrorMessage({ message: "x".repeat(240) }), "x".repeat(240), "the tasks API passes refusals of up to 240 characters");
+  assert.equal(getErrorMessage({ message: "x".repeat(241) }, "Hidden"), "Hidden");
+  assert.equal(getErrorMessage({ message: "AP: " + "x".repeat(240) }), "x".repeat(240), "the human-facing AP prefix is stripped before the length check");
 });

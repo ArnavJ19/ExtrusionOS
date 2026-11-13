@@ -19,7 +19,7 @@ export const periodCommandSchemas = {
 } as const;
 
 export const periodOverviewSchema = z.object({
-  locked_through: z.string().nullable(), today: z.string(), can_close: z.boolean(),
+  locked_through: z.string().nullable(), today: z.string(), can_close: z.boolean(), can_close_month: z.boolean().optional(),
   policy: z.object({ backdate_flag_days: z.number(), close_proposal_day: z.number(), reopen_window_hours: z.number() }),
   months: z.array(z.object({
     month: month, label: z.string(), state: z.enum(["closed", "reopened", "open_ended", "current"]),

@@ -84,6 +84,7 @@ for (const width of [375, 1280]) {
   });
 
   test(`AP-059 month close and an approved reopen by a second person, at ${width}px`, async () => {
+    await fixture.f.call("ap_accounts", "nominate_close_head", { actor_id: i.accounts }, i.owner);
     const { page, done } = await open(width, "periods", i.accounts);
     const card = page.getByRole("listitem").filter({ hasText: "Ended, not closed" }).first();
     await card.getByRole("button", { name: "Close month" }).click();

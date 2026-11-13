@@ -19,6 +19,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { OrderDeliveryContext } from "@/components/modules/dispatches/order-delivery-context";
 import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
+import { CopySummaryButton } from "@/components/modules/dispatch-autopilot/share";
+import { FreightPanel } from "@/components/modules/dispatch-autopilot/freight";
+import { FREIGHT_ROLES, canInternalSummary, canSummarise } from "@/lib/dispatch-autopilot/commands";
 
 export default async function DispatchDetailPage({ params, searchParams }: {
   params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -41,6 +44,8 @@ export default async function DispatchDetailPage({ params, searchParams }: {
     <DispatchReservationPanel dispatchId={id} page={reservationPage} />
     <DispatchControlsPanel dispatchId={id} />
     <DispatchCreditNotePanel dispatchId={id} />
+    {canSummarise("dispatch", context.role, Boolean(context.dealerId)) ? <CopySummaryButton kind="dispatch" id={id} canInternal={canInternalSummary("dispatch", context.role, Boolean(context.dealerId))} /> : null}
+    {!context.dealerId && (FREIGHT_ROLES as readonly string[]).includes(context.role) ? <FreightPanel kind="dispatch" id={id} today={getBusinessDateBoundaries().today} /> : null}
     {!context.dealerId ? <RelatedWorkPanel kind="dispatch" id={id} role={context.role} /> : null}
   </div>;
 }

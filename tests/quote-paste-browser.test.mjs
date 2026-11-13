@@ -5,6 +5,7 @@ import { build } from "esbuild";
 import { chromium, expect } from "@playwright/test";
 
 const mocks = {
+  "@/lib/actions/autopilot": `export async function autopilotAction(){return {success:false,unavailable:true,error:"Autopilot suggestions are covered by their own fixture"}}`,
   "next/link": `export default function Link({href,children,...props}){return <a href={href} {...props}>{children}</a>;}`,
   "@/lib/supabase/browser": `
     const profiles=[{id:"profile-a",profile_code:"AL-101",profile_name:"Approved window",section_weight_kg_per_m:0.8,drawing_approval_status:"approved",standard_length:6}];
@@ -36,7 +37,7 @@ test.before(async () => {
       window.writes=[];window.reads=[];window.errors=[];window.customerActions=[];
       const root=createRoot(document.getElementById("app"));root.render(<QuotesClient context={{companyId:"company-a",userId:"user-a",role:"owner"}} mode="form"/>);
     `},bundle:true,write:false,platform:"browser",format:"iife",jsx:"automatic",
-    plugins:[{name:"quote-fixture",setup(b){b.onResolve({filter:/^(?:next\/link|sonner|@\/lib\/supabase\/browser|@\/lib\/actions\/(?:quotes-orders|in-task-customers|repeat-quote|costing-rates|profile-technical-options|transaction-evidence)|@\/components\/ui\/profile-selector|@\/components\/ui\/searchable-select)$/},args=>({path:args.path,namespace:"fixture"}));b.onLoad({filter:/.*/,namespace:"fixture"},args=>({contents:mocks[args.path],loader:"tsx",resolveDir:process.cwd()}));}}]
+    plugins:[{name:"quote-fixture",setup(b){b.onResolve({filter:/^(?:next\/link|sonner|@\/lib\/supabase\/browser|@\/lib\/actions\/(?:autopilot|quotes-orders|in-task-customers|repeat-quote|costing-rates|profile-technical-options|transaction-evidence)|@\/components\/ui\/profile-selector|@\/components\/ui\/searchable-select)$/},args=>({path:args.path,namespace:"fixture"}));b.onLoad({filter:/.*/,namespace:"fixture"},args=>({contents:mocks[args.path],loader:"tsx",resolveDir:process.cwd()}));}}]
   });script=bundle.outputFiles[0].text;
   const path=process.env.CHROME_PATH??["C:/Program Files/Google/Chrome/Application/chrome.exe","C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"].find(existsSync);
   browser=await chromium.launch({headless:true,...(path?{executablePath:path}:{})});

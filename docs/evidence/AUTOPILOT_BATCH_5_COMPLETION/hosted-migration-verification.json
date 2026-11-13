@@ -1,0 +1,544 @@
+{
+  "project_id": "pkawmdxtmsdgigsehcmb",
+  "project_name": "AlExMS",
+  "verified_on": "2026-11-13 (Asia/Kolkata)",
+  "code_commit": "9cfb7a9",
+  "migrations": [
+    {
+      "name": "autopilot_batch_5_completion",
+      "version": "20261112223035"
+    },
+    {
+      "name": "autopilot_batch_5_correctness",
+      "version": "20261112223047"
+    }
+  ],
+  "functions": [
+    {
+      "name": "private.ap_close_month",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap_job_execute",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap_job_registry",
+      "definer": false,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap_proposal_apply",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap_proposal_editable",
+      "definer": false,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap_proposal_versions",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap5_billet_forecast",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap5_billet_job",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap5_billet_sources",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap5_close_checklist",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap5_digest",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap5_guard_quantity",
+      "definer": false,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap5_journal_quantity",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap5_keep_events",
+      "definer": false,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap5_msme_bills",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.ap5_predict_lines",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.post_inventory_adjustment",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "private.set_books_locked_through",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": false
+    },
+    {
+      "name": "public.ap_accounts",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": true
+    },
+    {
+      "name": "public.ap_digest",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": true
+    },
+    {
+      "name": "public.ap_period",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": true
+    },
+    {
+      "name": "public.ap_planning",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": true
+    },
+    {
+      "name": "public.ap_stock",
+      "definer": true,
+      "anon_execute": false,
+      "body_matches": true,
+      "search_path_pinned": true,
+      "authenticated_execute": true
+    }
+  ],
+  "tables": [
+    {
+      "rls": true,
+      "table": "month_close_exceptions",
+      "policies": 1,
+      "client_table_grants": false,
+      "company_leading_index": true
+    },
+    {
+      "rls": true,
+      "table": "month_close_heads",
+      "policies": 1,
+      "client_table_grants": false,
+      "company_leading_index": true
+    },
+    {
+      "rls": true,
+      "table": "msme_bill_events",
+      "policies": 1,
+      "client_table_grants": false,
+      "company_leading_index": true
+    },
+    {
+      "rls": true,
+      "table": "msme_payment_policies",
+      "policies": 1,
+      "client_table_grants": false,
+      "company_leading_index": true
+    },
+    {
+      "rls": true,
+      "table": "order_line_predictions",
+      "policies": 1,
+      "client_table_grants": false,
+      "company_leading_index": true
+    },
+    {
+      "rls": true,
+      "table": "owner_daily_digests",
+      "policies": 1,
+      "client_table_grants": false,
+      "company_leading_index": true
+    },
+    {
+      "rls": true,
+      "table": "owner_digest_events",
+      "policies": 1,
+      "client_table_grants": false,
+      "company_leading_index": true
+    },
+    {
+      "rls": true,
+      "table": "stock_adjustment_policies",
+      "policies": 1,
+      "client_table_grants": false,
+      "company_leading_index": true
+    },
+    {
+      "rls": true,
+      "table": "stock_adjustment_requests",
+      "policies": 1,
+      "client_table_grants": false,
+      "company_leading_index": true
+    },
+    {
+      "rls": true,
+      "table": "stock_quantity_events",
+      "policies": 1,
+      "client_table_grants": false,
+      "company_leading_index": true
+    },
+    {
+      "rls": true,
+      "table": "vendor_msme_terms",
+      "policies": 1,
+      "client_table_grants": false,
+      "company_leading_index": true
+    }
+  ],
+  "jobs": [
+    {
+      "key": "alerts.reevaluate",
+      "schedule": "hourly"
+    },
+    {
+      "key": "bank.rematch",
+      "schedule": "hourly"
+    },
+    {
+      "key": "billets.forecast",
+      "schedule": "nightly"
+    },
+    {
+      "key": "billing.prepare_drafts",
+      "schedule": "hourly"
+    },
+    {
+      "key": "calendar.check",
+      "schedule": "nightly"
+    },
+    {
+      "key": "dies.predict_service",
+      "schedule": "hourly"
+    },
+    {
+      "key": "maintenance.propose_pm",
+      "schedule": "hourly"
+    },
+    {
+      "key": "navigation.propose",
+      "schedule": "nightly"
+    },
+    {
+      "key": "orders.predict_late",
+      "schedule": "nightly"
+    },
+    {
+      "key": "owner.digest",
+      "schedule": "morning"
+    },
+    {
+      "key": "periods.propose_close",
+      "schedule": "morning"
+    },
+    {
+      "key": "press.idle_reconcile",
+      "schedule": "nightly"
+    },
+    {
+      "key": "proposals.refresh",
+      "schedule": "hourly"
+    },
+    {
+      "key": "quality.sample_windows",
+      "schedule": "hourly"
+    },
+    {
+      "key": "quotes.expire",
+      "schedule": "nightly"
+    },
+    {
+      "key": "quotes.followups",
+      "schedule": "morning"
+    },
+    {
+      "key": "receivables.reminders",
+      "schedule": "morning"
+    },
+    {
+      "key": "series.propose",
+      "schedule": "nightly"
+    }
+  ],
+  "cron": [
+    {
+      "name": "autopilot-hourly",
+      "active": true,
+      "schedule": "5 * * * *"
+    },
+    {
+      "name": "autopilot-nightly",
+      "active": true,
+      "schedule": "0 19 * * *"
+    },
+    {
+      "name": "autopilot-morning",
+      "active": true,
+      "schedule": "30 2 * * *"
+    }
+  ],
+  "owner_role_sql_reads": {
+    "red_list": true,
+    "msme_queue": true,
+    "digest_read": true,
+    "month_close": "0",
+    "stock_policy": {
+      "threshold": 0
+    },
+    "stock_balances": true,
+    "stock_requests": true,
+    "billet_forecast": true,
+    "period_overview": true,
+    "accounts_head_options": true,
+    "transaction": "rolled back",
+    "real_jwt_or_ui_acceptance": false
+  },
+  "stock_history": {
+    "baseline_events": 0,
+    "missing_histories": 0,
+    "quantity_triggers": [
+      {
+        "table": "inventory_items",
+        "enabled": "O",
+        "trigger": "zz_ap5_guard_quantity"
+      },
+      {
+        "table": "inventory_items",
+        "enabled": "O",
+        "trigger": "zz_ap5_journal_quantity"
+      },
+      {
+        "table": "billet_batches",
+        "enabled": "O",
+        "trigger": "zz_ap5_guard_quantity"
+      },
+      {
+        "table": "billet_batches",
+        "enabled": "O",
+        "trigger": "zz_ap5_journal_quantity"
+      },
+      {
+        "table": "profile_stock_batches",
+        "enabled": "O",
+        "trigger": "zz_ap5_guard_quantity"
+      },
+      {
+        "table": "profile_stock_batches",
+        "enabled": "O",
+        "trigger": "zz_ap5_journal_quantity"
+      },
+      {
+        "table": "foundry_external_aluminium_sources",
+        "enabled": "O",
+        "trigger": "zz_ap5_guard_quantity"
+      },
+      {
+        "table": "foundry_external_aluminium_sources",
+        "enabled": "O",
+        "trigger": "zz_ap5_journal_quantity"
+      },
+      {
+        "table": "foundry_aluminium_scrap",
+        "enabled": "O",
+        "trigger": "zz_ap5_guard_quantity"
+      },
+      {
+        "table": "foundry_aluminium_scrap",
+        "enabled": "O",
+        "trigger": "zz_ap5_journal_quantity"
+      },
+      {
+        "table": "packaging_materials",
+        "enabled": "O",
+        "trigger": "zz_ap5_guard_quantity"
+      },
+      {
+        "table": "packaging_materials",
+        "enabled": "O",
+        "trigger": "zz_ap5_journal_quantity"
+      }
+    ],
+    "rebuild_differences": 0,
+    "source_fields_checked": 0
+  },
+  "advisors": [
+    {
+      "type": "security",
+      "checks": [
+        {
+          "name": "rls_enabled_no_policy",
+          "level": "INFO",
+          "before_count": 116,
+          "after_count": 116,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+        },
+        {
+          "name": "security_definer_view",
+          "level": "ERROR",
+          "before_count": 23,
+          "after_count": 23,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0010_security_definer_view"
+        },
+        {
+          "name": "anon_security_definer_function_executable",
+          "level": "WARN",
+          "before_count": 1,
+          "after_count": 1,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable"
+        },
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "level": "WARN",
+          "before_count": 184,
+          "after_count": 188,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+        },
+        {
+          "name": "auth_leaked_password_protection",
+          "level": "WARN",
+          "before_count": 1,
+          "after_count": 1,
+          "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+        }
+      ]
+    },
+    {
+      "type": "performance",
+      "checks": [
+        {
+          "name": "unindexed_foreign_keys",
+          "level": "INFO",
+          "before_count": 440,
+          "after_count": 458,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys"
+        },
+        {
+          "name": "auth_rls_initplan",
+          "level": "WARN",
+          "before_count": 16,
+          "after_count": 16,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0003_auth_rls_initplan"
+        },
+        {
+          "name": "unused_index",
+          "level": "INFO",
+          "before_count": 871,
+          "after_count": 868,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+        },
+        {
+          "name": "multiple_permissive_policies",
+          "level": "WARN",
+          "before_count": 270,
+          "after_count": 270,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0006_multiple_permissive_policies"
+        },
+        {
+          "name": "duplicate_index",
+          "level": "WARN",
+          "before_count": 15,
+          "after_count": 15,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0009_duplicate_index"
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "The six source stock families were empty at apply; no baseline rows were needed.",
+    "Four additional authenticated SECURITY DEFINER RPC notices cover the intentional, session-authorized gateway functions; anonymous execute is denied.",
+    "There were 18 additional informational foreign-key index suggestions; pre-existing error/warning counts were otherwise unchanged.",
+    "No business stock, payments, quality approvals or messages were posted during verification."
+  ]
+}

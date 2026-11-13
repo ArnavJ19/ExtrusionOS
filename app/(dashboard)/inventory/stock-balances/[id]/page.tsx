@@ -5,6 +5,7 @@ import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatWeight } from "@/lib/utils/format";
 import { balanceExplanationSchema, canExplainStock, exclusionText, withdrawalText } from "@/lib/inventory/stock-balance";
+import { QuantityTrace } from "@/components/modules/autopilot-operations/operations";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const metres = (value: number) => `${value.toFixed(3)} m`;
@@ -32,6 +33,7 @@ export default async function StockBalanceDetailPage({ params }: { params: Promi
 
   return (
     <div className="space-y-5">
+      {["owner", "admin", "inventory_manager", "factory_manager", "production_manager", "accounts"].includes(context.role) ? <QuantityTrace table="profile_stock_batches" id={id} /> : null}
       <PageHeader
         title={`Bundle ${data.batch.bundle_number ?? "unnumbered"}`}
         description={`${data.batch.profile_code ?? "Profile"} ${data.batch.profile_name ?? ""} · ${data.batch.finish ?? "finish not set"} · ${data.batch.location ?? "no location"} · QC ${data.batch.qc_status.replace(/_/g, " ")}`}

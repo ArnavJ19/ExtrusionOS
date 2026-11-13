@@ -16,6 +16,8 @@ import { buildProductionJobEvidence } from "@/lib/calculations/production-perfor
 import { ProductionReadinessPanel } from "@/components/modules/production/production-readiness-panel";
 import { canPlaceHolds, canReadHolds, readinessResponseSchema, type ReadinessResponse } from "@/lib/workflow/production-readiness";
 import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
+import { CopySummaryButton } from "@/components/modules/dispatch-autopilot/share";
+import { canInternalSummary, canSummarise } from "@/lib/dispatch-autopilot/commands";
 import { PressJobPanel } from "@/components/modules/press/press-job-panel";
 
 const SCRAP_RECORD_LIMIT = 200;
@@ -123,6 +125,7 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
       <div id="production-controls"><ErpControlPanel title="Production controls" description="Billet issue, input evidence, surplus to stock and scrap corrections." actions={controls} /></div>
       <ProductionExceptions key={`${context.companyId}:${context.userId}:${context.role}:${id}`} context={context} jobId={id} />
       <RecordDetailClient moduleKey="production" context={context} recordId={id} canEdit={canUpdate} />
+      {canSummarise("job", context.role, Boolean(context.dealerId)) ? <CopySummaryButton kind="job" id={id} canInternal={canInternalSummary("job", context.role, Boolean(context.dealerId))} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="job" id={id} role={context.role} /> : null}
     </div>
   );

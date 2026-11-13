@@ -81,7 +81,7 @@ const routes = files.filter((file) => /^app\/(?:.*\/)?(?:page|route)\.[jt]sx?$/.
   const routeParts = parts.filter((part) => !part.startsWith('(') && !part.startsWith('@'));
   const route = `/${routeParts.join('/')}`;
   const surface = routeParts[0] === 'api' ? 'api' : parts[0] === '(auth)' ? 'auth' : routeParts[0] === 'portal' ? 'portal' : 'app';
-  const module = surface === 'api' ? `api/${routeParts[1] ?? 'root'}` : surface === 'auth' ? 'auth' : routeParts[0] ?? 'home';
+  const moduleName = surface === 'api' ? `api/${routeParts[1] ?? 'root'}` : surface === 'auth' ? 'auth' : routeParts[0] ?? 'home';
   const reachable = new Set();
   const expand = (path, depth) => {
     if (reachable.has(path) || depth > 3) return;
@@ -91,7 +91,7 @@ const routes = files.filter((file) => /^app\/(?:.*\/)?(?:page|route)\.[jt]sx?$/.
   expand(file, 0);
   const body = readFileSync(join(root, file), 'utf8');
   return {
-    route, file, surface, module,
+    route, file, surface, module: moduleName,
     methods: surface === 'api' ? sorted([...body.matchAll(/export\s+(?:async\s+)?function\s+(GET|POST|PATCH|PUT|DELETE|HEAD|OPTIONS)\b/g)].map((match) => match[1])) : [],
     components: sorted([...reachable].filter((path) => path.startsWith('components/'))),
     services: sorted([...reachable].filter((path) => path.startsWith('lib/'))),
@@ -133,7 +133,7 @@ const modules = sorted(routes.map(({ module }) => module)).map((name) => {
 const nov = readFileSync(join(root, 'NOV_UPGRADES.md'), 'utf8');
 const batches = files.filter((file) => /^NOV_UPGRADE_BATCH_\d+\.md$/.test(file)).map((file) => ({ file, lines: readFileSync(join(root, file), 'utf8').split(/\r?\n/) }));
 const featureIndex = [...nov.matchAll(/^### (NOV-\d{3}) - (.+)$/gm)].map((match) => {
-  const [_, id, title] = match;
+  const [, id, title] = match;
   return {
     id, title: title.trim(), specification: `NOV_UPGRADES.md:${nov.slice(0, match.index).split('\n').length}`,
     batchReferences: batches.flatMap(({ file, lines }) => lines.flatMap((line, index) => line.includes(id) ? [`${file}:${index + 1}`] : [])),

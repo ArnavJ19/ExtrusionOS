@@ -32,6 +32,7 @@ import { canSaveQuoteDraft, duplicateQuoteDraftLine, getQuoteFormShortcut, runWi
 import { buildQuotePasteLine, getPieceCalculationState, getQuotePasteFinishOptions, getQuotePasteLengthUnit, parseQuotePaste, validateQuotePasteRows, type QuotePasteRow } from "@/lib/forms/quote-paste";
 import { saveQuoteAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
 import { hasDuplicates, warnDuplicates } from "@/components/modules/order-to-cash/duplicate-warning";
+import { UsualChoicesHint } from "@/components/modules/autopilot-usual/usual-choices";
 import { quoteEditToken, type QuoteEditConflict, type QuoteEditToken } from "@/lib/workflow/quote-edit-conflicts";
 import { ProfileTechnicalChoice } from "@/components/modules/profiles/technical-options";
 import { MaterialSuggestionsPanel } from "@/components/modules/shared/transaction-evidence";
@@ -671,6 +672,13 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
             <label className="block space-y-1.5"><span className="form-label">Quote date</span><input className="form-input" type="date" value={form.quote_date} onChange={(event) => setForm({ ...form, quote_date: event.target.value })} /></label>
             <label className="block space-y-1.5"><span className="form-label">Valid until</span><input className="form-input" type="date" value={form.valid_until} onChange={(event) => setForm({ ...form, valid_until: event.target.value })} /></label>
           </div>
+          {!context.dealerId && !editingId ? <div className="mt-4"><UsualChoicesHint customerId={form.customer_id} surface="quote" fields={["payment_terms", "delivery_timeline", "finish"]}
+            current={{ payment_terms: form.payment_terms, delivery_timeline: form.delivery_timeline, finish: items.every(item => item.finishing_type === items[0]?.finishing_type) ? items[0]?.finishing_type : "" }}
+            onUse={(field, value) => {
+              if (field === "payment_terms" || field === "delivery_timeline") setForm(current => ({ ...current, [field]: value }));
+              // AP-026: the usual finish fills lines still at the default mill finish; a finish chosen on a line is kept.
+              else if (field === "finish") setItems(current => current.map(item => item.finishing_type === "mill_finish" ? { ...item, finishing_type: value as FinishingType } : item));
+            }} /></div> : null}
           <details className="mt-4 rounded-2xl border border-slate-200 p-3"><summary className="cursor-pointer text-sm font-bold">Delivery and payment details</summary><p className="mt-2 text-xs text-slate-500">Optional draft details. Collapsing a section preserves every entered value.</p><div className="mt-3 grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1.5"><span className="form-label">Delivery timeline</span><input className="form-input" placeholder="Example: 10-12 working days after approval" value={form.delivery_timeline} onChange={(event) => setForm({ ...form, delivery_timeline: event.target.value })} /></label>
             <label className="block space-y-1.5"><span className="form-label">Payment terms</span><input className="form-input" placeholder="Example: 50% advance, balance before dispatch" value={form.payment_terms} onChange={(event) => setForm({ ...form, payment_terms: event.target.value })} /></label>

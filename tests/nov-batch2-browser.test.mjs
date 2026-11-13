@@ -166,12 +166,12 @@ test("NOV-001: transport failure marks retained queues and disables their stale 
 
 test("NOV-002: unavailable preference storage does not claim a pin was saved", async () => {
   await page.addInitScript(() => Object.defineProperty(window, 'localStorage', { configurable: true, get() { throw Error('Synthetic blocked preference storage'); } }));
-  await open('screen=workspace'); await page.getByRole('button', { name: 'Pin Orders', exact: true }).click();
+  await open('screen=workspace'); await page.getByText('Pinned and recent work', { exact: true }).click(); await page.getByRole('button', { name: 'Pin Orders', exact: true }).click();
   await expect(page.getByText(/This pin could not be saved/)).toBeVisible(); await expect(page.getByRole('button', { name: 'Pin Orders', exact: true })).toBeVisible();
 });
 
 test("NOV-002/100: permitted workspace pins support explicit keyboard reordering and company isolation", async () => {
-  await open("screen=workspace"); await page.getByRole("button", { name: "Pin Orders", exact: true }).click(); await page.getByRole("button", { name: "Pin Production", exact: true }).click();
+  await open("screen=workspace"); await page.getByText("Pinned and recent work", { exact: true }).click(); await page.getByRole("button", { name: "Pin Orders", exact: true }).click(); await page.getByRole("button", { name: "Pin Production", exact: true }).click();
   const pinned = page.getByRole("region", { name: "Pinned", exact: true });
   await pinned.getByRole("button", { name: "Move Orders earlier", exact: true }).focus(); await page.keyboard.press("Enter");
   await expect(pinned.getByRole("link").first()).toHaveText("Orders");

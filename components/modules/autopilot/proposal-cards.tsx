@@ -78,10 +78,48 @@ function ScheduleFields({ row, onSubmit, onCancel, today }: { row: ProposalRow; 
   </div>;
 }
 
+// AP-036: choose another rate-card option or enter the freight agreed; any change needs the reason.
+function FreightFields({ row, onSubmit, onCancel }: { row: ProposalRow; onSubmit: (payload: Record<string, unknown>) => void; onCancel: () => void }) {
+  const options = (row.payload.options as Array<{ transporter: string; vehicle_type: string | null; vehicles: number; amount: number; basis: string }>) ?? [];
+  const [index, setIndex] = useState(Number(row.payload.option_index ?? 0));
+  const [amount, setAmount] = useState(String(options[Number(row.payload.option_index ?? 0)]?.amount ?? row.payload.amount ?? ""));
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  function submit() {
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value < 0) return setError("Enter the freight amount in rupees.");
+    if ((index !== 0 || value !== Number(row.payload.amount)) && reason.trim().length < 5) return setError("Say why the estimate is overridden (at least 5 characters).");
+    onSubmit({ option_index: index, amount: value, reason: reason.trim() || null });
+  }
+  return <div className="mt-3 space-y-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+    <fieldset className="space-y-1"><legend className="text-sm font-semibold">Rate-card options</legend>
+      {options.map((option, i) => <label key={i} className="flex items-center gap-2 text-sm"><input type="radio" name={`freight-${row.id}`} checked={index === i} onChange={() => { setIndex(i); setAmount(String(option.amount)); }} />
+        {option.transporter} · {option.basis === "per_kg" ? "per kg" : `${option.vehicles} × ${option.vehicle_type}`} · ₹{Number(option.amount).toLocaleString("en-IN")}</label>)}</fieldset>
+    <div className="grid gap-3 sm:grid-cols-2">
+      <label className="block text-sm font-semibold">Freight agreed (₹)<input inputMode="decimal" className="mt-1 h-11 w-full rounded-xl border border-neutral-300 bg-white px-3 text-sm" value={amount} onChange={event => setAmount(event.target.value)} /></label>
+      <label className="block text-sm font-semibold">Reason for the change<input className="mt-1 h-11 w-full rounded-xl border border-neutral-300 bg-white px-3 text-sm" value={reason} onChange={event => setReason(event.target.value)} placeholder="For example: customer wants a dedicated truck" /></label>
+    </div>
+    {error ? <p role="alert" className="text-sm font-semibold text-rose-700">{error}</p> : null}
+    <div className="flex flex-wrap gap-2"><button type="button" onClick={submit} className="min-h-11 rounded-xl bg-neutral-950 px-4 text-sm font-bold text-white">Accept with these changes</button>
+      <button type="button" onClick={onCancel} className="min-h-11 rounded-xl border border-neutral-300 bg-white px-4 text-sm font-bold">Cancel</button></div>
+  </div>;
+}
+
 function EditFields({ row, onSubmit, onCancel, today }: { row: ProposalRow; onSubmit: (payload: Record<string, unknown>) => void; onCancel: () => void; today: string }) {
+  if (row.proposal_type === "billet.shortage") return <BilletRouteFields onSubmit={onSubmit} onCancel={onCancel} />;
   if (row.proposal_type === "production.expected_output") return <ExpectedOutputFields row={row} onSubmit={onSubmit} onCancel={onCancel} />;
+  if (row.proposal_type === "freight.estimate") return <FreightFields row={row} onSubmit={onSubmit} onCancel={onCancel} />;
   if (row.proposal_type === "die.service_due" || row.proposal_type === "maintenance.pm_due") return <ScheduleFields row={row} onSubmit={onSubmit} onCancel={onCancel} today={today} />;
   return <TextFields row={row} onSubmit={onSubmit} onCancel={onCancel} today={today} />;
+}
+
+function BilletRouteFields({ onSubmit, onCancel }: { onSubmit: (payload: Record<string, unknown>) => void; onCancel: () => void }) {
+  const [route, setRoute] = useState("purchase");
+  return <div className="mt-3 space-y-3 rounded-xl border bg-neutral-50 p-3">
+    <label className="block text-sm font-semibold">Prepare through<select className="mt-1 min-h-11 w-full rounded-xl border bg-white px-3" value={route} onChange={e => setRoute(e.target.value)}><option value="purchase">Purchase</option><option value="foundry">Foundry</option></select></label>
+    <div className="flex flex-wrap gap-2"><button type="button" className="min-h-11 rounded-xl bg-neutral-950 px-4 text-sm font-bold text-white" onClick={() => onSubmit({ route })}>Accept with this route</button>
+      <button type="button" className="min-h-11 rounded-xl border px-4 text-sm" onClick={onCancel}>Cancel</button></div>
+  </div>;
 }
 
 function TextFields({ row, onSubmit, onCancel, today }: { row: ProposalRow; onSubmit: (payload: Record<string, unknown>) => void; onCancel: () => void; today: string }) {
