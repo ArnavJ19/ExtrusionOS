@@ -22,6 +22,7 @@ import { BATCH5_READS, finishingCommands, quoteSalesCommands, usualCommands } fr
 import { OPERATIONS_READS, accountsCommands, digestCommands, planningCommands, stockCommands } from "@/lib/autopilot-batch5/operations";
 import { BATCH6_READS, billetLengthCommands, einvoiceCommands, healthCommands, ncrCommands, offlineCommands, pressPlanCommands, reorderCommands, repriceCommands, tdsCommands, weightCommands } from "@/lib/autopilot-batch6/commands";
 import { BATCH7_READS, delayCommands, priceCommands, qualityCommands, statementCommands } from "@/lib/autopilot-batch7/commands";
+import { BATCH8_READS, capacityCommands, customerHealthCommands, dieWindowCommands, mtcCommands, spcCommands, viewCommands } from "@/lib/autopilot-batch8/commands";
 
 export type ApResult<T = unknown> = { success: true; data: T } | { success: false; error: string; unavailable?: boolean };
 
@@ -77,11 +78,14 @@ const COMMANDS: Record<string, Record<string, z.ZodTypeAny>> = {
   ap_einvoice: einvoiceCommands, ap_billet_length: billetLengthCommands, ap_offline: offlineCommands, ap_press_plan: pressPlanCommands,
   // Batch 7: automation quality, purchase price checks, customer delay notices and monthly statements
   // (a statement emailed through the provider goes through lib/actions/autopilot-batch7).
-  ap_quality: qualityCommands, ap_price: priceCommands, ap_delay: delayCommands, ap_statement: statementCommands
+  ap_quality: qualityCommands, ap_price: priceCommands, ap_delay: delayCommands, ap_statement: statementCommands,
+  // Batch 8: saved views, die availability, sellable capacity, customer health, control charts and mill certificates
+  // (a certificate draft is written by lib/actions/autopilot-batch8 after it read the uploaded file).
+  ap_views: viewCommands, ap_die_window: dieWindowCommands, ap_capacity: capacityCommands, ap_customer_health: customerHealthCommands, ap_spc: spcCommands, ap_mtc: mtcCommands
 };
 const READS = new Set(["read", "add_working_days", "list", "get", "overview", "runs", "layout", "usage", "pending_count", "flags", "record", "attention", "visit",
   "station", "push", "undo", "job", "expected", "cycle_times", "floor", "downtime", "die_changes", "settings", "reconcile", "service", "options", "plans", "compliance",
-  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS, ...BATCH5_READS, ...OPERATIONS_READS, ...BATCH6_READS, ...BATCH7_READS]);
+  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS, ...BATCH5_READS, ...OPERATIONS_READS, ...BATCH6_READS, ...BATCH7_READS, ...BATCH8_READS]);
 const REVALIDATE: Record<string, string[]> = {
   ap_calendar: ["/production/calendar"], ap_series: ["/settings/numbering"], ap_proposals: ["/dashboard", "/settings/navigation", "/settings/numbering", "/invoices/periods", "/production", "/production/floor", "/dies", "/maintenance"],
   ap_jobs: ["/automation"], ap_navigation: ["/settings/navigation"], ap_period: ["/invoices/periods"], ap_import: ["/settings/data/import"],
@@ -98,7 +102,9 @@ const REVALIDATE: Record<string, string[]> = {
   ap_ncr: ["/quality", "/quality/ncrs"], ap_tds: ["/payments/tds", "/payments", "/invoices"], ap_einvoice: ["/invoices/einvoice"], ap_billet_length: ["/production"],
   ap_offline: ["/mobile", "/production/floor"], ap_press_plan: ["/production/schedule", "/production/schedule/draft"],
   ap_quality: ["/settings/automation-quality"], ap_price: ["/vendors/purchasing", "/vendors/purchasing/prices"], ap_delay: ["/orders/delay-notices", "/orders"],
-  ap_statement: ["/payments/statements"]
+  ap_statement: ["/payments/statements"],
+  ap_views: [], ap_die_window: ["/dies", "/production/schedule", "/production/capacity"], ap_capacity: ["/quotes"], ap_customer_health: ["/crm"],
+  ap_spc: ["/quality", "/quality/spc"], ap_mtc: ["/quality/certificates"]
 };
 
 function friendly(error: { code?: string; message?: string } | null | undefined): ApResult<never> {

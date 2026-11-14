@@ -19,6 +19,11 @@ import { LocationGuidance } from "@/components/modules/operations/operator-tools
 import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
 import { DieServicePanel } from "@/components/modules/press/die-service";
 import { DieWeightPanel } from "@/components/modules/autopilot-batch6/weight";
+import { DiePerformancePanel } from "@/components/modules/autopilot-batch8/die-attention";
+import { DieAvailabilityPanel } from "@/components/modules/autopilot-batch8/die-availability";
+import { SpcDiePanel } from "@/components/modules/autopilot-batch8/spc";
+import { DIE_HEALTH_ROLES, healthFromStatus, recommendationFromStatus } from "@/lib/dies/intelligence";
+import { SPC_READERS } from "@/lib/autopilot-batch8/commands";
 function DetailItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
@@ -58,6 +63,9 @@ export default async function DieDetailPage({ params }: { params: Promise<{ id: 
     supabase.from("technical_documents").select("*").eq("company_id", context.companyId).eq("linked_entity_type", "die").eq("linked_entity_id", id).order("created_at", { ascending: false }).limit(50),
     supabase.from("production_jobs").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).eq("die_id", id),
   ]);
+  // AP-043: die health from the former Die Intelligence page.
+  const metricResult = await supabase.from("die_health_metrics").select("health_score, recommendation, rejection_rate, total_rejection_kg, correction_count, trial_count, cost_per_kg, last_correction_date, last_trial_date, updated_at").eq("company_id", context.companyId).eq("die_id", id).maybeSingle();
+  const showHealthCost = !context.dealerId && (DIE_HEALTH_ROLES as readonly string[]).includes(context.role);
 
   const customer = die.customers?.company_name || die.customers?.customer_name || "-";
   const profile = die.aluminium_profiles ? `${die.aluminium_profiles.profile_code} · ${die.aluminium_profiles.profile_name}` : "-";
@@ -230,7 +238,10 @@ export default async function DieDetailPage({ params }: { params: Promise<{ id: 
           </CardContent>
         </Card>
       )}
+      {!context.dealerId ? <DiePerformancePanel metric={metricResult.data ?? null} showCost={showHealthCost} fallbackScore={healthFromStatus(die.die_status)} fallbackRecommendation={recommendationFromStatus(die.die_status)} /> : null}
+      {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "sales_manager", "sales", "viewer"].includes(context.role) ? <DieAvailabilityPanel dieId={id} role={context.role} today={getBusinessDateBoundaries().today} /> : null}
       {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "sales_manager"].includes(context.role) ? <DieServicePanel dieId={id} today={getBusinessDateBoundaries().today} /> : null}
+      {!context.dealerId && (SPC_READERS as readonly string[]).includes(context.role) ? <SpcDiePanel dieId={id} /> : null}
       {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "sales_manager"].includes(context.role) ? <DieWeightPanel dieId={id} today={getBusinessDateBoundaries().today} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="die" id={id} role={context.role} /> : null}
     </div>

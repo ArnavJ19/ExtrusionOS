@@ -7,6 +7,8 @@
 //   saw     = pieces x kerf x kg/m
 //   cut-off = the remainder, so butt + crops + saw + good + cut-off = billet kg exactly
 
+import { recoveryPercentOf } from "../insights/metrics.ts";
+
 export type ScrapStandardInput = {
   buttLengthMm: number | null;
   frontCropMm: number | null;
@@ -57,7 +59,9 @@ export function bundleSplit(pieces: number, piecesPerBundle: number | null) {
 /** Recovery % = good output kg / billet kg; null when either is unknown. */
 export function recoveryPercent(goodKg: number | null, billetKg: number | null) {
   if (!positive(goodKg) || !positive(billetKg)) return null;
-  return Math.round(goodKg * 10000 / billetKg) / 100;
+  // AP-044: one definition of recovery (METRICS.recovery); rounded to 2 decimals without floating-point noise.
+  const value = recoveryPercentOf(goodKg, billetKg);
+  return value === null ? null : Math.round(Number((value * 100).toFixed(6))) / 100;
 }
 
 /** Expected good output after the person enters rejects (mirrors private.ap2_apply_expected). */

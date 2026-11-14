@@ -1,3 +1,4 @@
+import { DieConflictsPanel } from "@/components/modules/autopilot-batch8/die-availability";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { PressScheduleGrid } from "@/components/modules/production-planning/press-schedule-grid";
@@ -66,6 +67,8 @@ export default async function ProductionSchedulePage() {
       ) : (
         <PressScheduleGrid presses={presses} jobs={jobs} slots={slots} canUpdate={can(context.role, "update", "production")} />
       )}
+      {/* AP-065: no job is planned on a die that is away without a warning. */}
+      {!context.dealerId ? <DieConflictsPanel /> : null}
     </div>
   );
 }

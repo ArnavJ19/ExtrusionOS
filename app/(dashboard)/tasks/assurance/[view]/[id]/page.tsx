@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { AssuranceRecord } from "@/components/modules/assurance/record";
 import { getSessionContext } from "@/lib/auth";
 import { assuranceAction } from "@/lib/actions/assurance";
+import { CertificateLinePanel } from "@/components/modules/autopilot-batch8/certificates";
+import { MTC_READERS, MTC_UPLOADERS } from "@/lib/autopilot-batch8/commands";
 import { ASSURANCE_VIEWS, assuranceDetailSchema, canReadAssurance, type AssuranceView } from "@/lib/workflow/assurance";
 
 export default async function AssuranceDetailPage({ params, searchParams }: { params: Promise<{ view: string; id: string }>; searchParams: Promise<{ page?: string }> }) {
@@ -20,6 +22,7 @@ export default async function AssuranceDetailPage({ params, searchParams }: { pa
   return <div className="mx-auto max-w-4xl space-y-5"><PageHeader density="compact" title={ASSURANCE_VIEWS[view]} description="Current source position, the rule applied and retained change history." actions={<Link href={`/tasks/assurance/database?view=${view}`} className="rounded-xl border bg-white px-4 py-3 text-sm font-bold">View database</Link>} />
     {!data ? <p role="alert" className="rounded-xl bg-amber-50 p-4 text-sm font-semibold text-amber-950">{!result.success ? result.error : "The record could not be read. Reload to retry."}</p> : <>
       <AssuranceRecord key={`${view}:${route.id}:${data.as_of}`} view={view} detail={data} context={context} />
+      {view === "incoming" && !context.dealerId && (MTC_READERS as readonly string[]).includes(context.role) ? <CertificateLinePanel receiptLineId={route.id} canUpload={(MTC_UPLOADERS as readonly string[]).includes(context.role)} /> : null}
       <section className="space-y-3 rounded-2xl border bg-white p-4"><h2 className="font-bold">Recorded assurance history</h2>{data.events.length ? <ol className="space-y-4">{data.events.map(event => <li key={event.id} className="space-y-1 border-l-2 border-slate-200 pl-3"><p className="text-sm font-bold">{event.action.replaceAll(".", " ")} · {event.actor}</p><p className="break-words text-sm text-slate-700">{event.note}</p><p className="text-xs text-slate-500">{new Date(event.recorded_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST</p></li>)}</ol> : <p className="text-sm text-slate-600">No assurance actions recorded on this page. Operational history remains in the source workflow.</p>}
         {pages > 1 ? <nav aria-label="History pages" className="flex flex-wrap justify-between gap-3 text-sm font-bold">{page > 1 ? <Link href={historyHref(page - 1)}>Previous history</Link> : <span />}<span>{page} of {pages}</span>{page < pages ? <Link href={historyHref(page + 1)}>Next history</Link> : <span />}</nav> : null}
       </section>

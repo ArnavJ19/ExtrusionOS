@@ -52,7 +52,7 @@ test("AP-038 GSTIN check digit, state fill and the explicit unregistered choice 
 
 test("AP-001 scheduled jobs run once per window, manual runs are labelled, and three failed windows raise one alert", async () => {
   const first = await f.cron("nightly");
-  assert.equal(first.runs.length, 22, "eleven nightly jobs for each of the two companies, including billet forecasts, late-line predictions and the batch 6 nightly jobs");
+  assert.equal(first.runs.length, 24, "twelve nightly jobs for each of the two companies, including billet forecasts, late-line predictions, the batch 6 nightly jobs and batch 8 customer health");
   assert.ok(first.runs.every(run => run.state === "succeeded"), JSON.stringify(first.runs));
   const again = await f.cron("nightly");
   assert.ok(again.runs.every(run => run.state === "already_ran"), "a retried cron call in the same window does nothing");
@@ -443,8 +443,9 @@ test("every new table has RLS and company scoping, and only the intended functio
   // Batch 5 adds ap_finishing, ap_quote_sales and ap_usual; tests/autopilot-batch5-sql.test.mjs covers them.
   // Batch 6 adds ap_billet_length, ap_einvoice, ap_health, ap_ncr, ap_offline, ap_press_plan, ap_reorder, ap_reprice, ap_tds and ap_weight; tests/autopilot-batch6*-sql.test.mjs cover them.
   // Batch 7 adds ap_delay, ap_price, ap_quality and ap_statement; tests/autopilot-batch7-sql.test.mjs covers them.
+  // Batch 8 adds ap_capacity, ap_customer_health, ap_die_window, ap_mtc, ap_spc and ap_views; tests/autopilot-batch8-sql.test.mjs covers them.
   // Batch 4 (dispatch and compliance) adds ap_dispatch, ap_eway, ap_freight, ap_order_status (also anonymous), ap_share and ap_tally; tests/autopilot-batch4-sql.test.mjs covers them.
-  assert.deepEqual(callable, ["ap_accounts", "ap_billet_length", "ap_billing", "ap_calendar", "ap_cash", "ap_credit", "ap_cutover", "ap_delay", "ap_dies", "ap_digest", "ap_dispatch", "ap_dupes", "ap_einvoice", "ap_eway", "ap_finishing", "ap_freight", "ap_health", "ap_home_work", "ap_import", "ap_jobdrafts", "ap_jobs", "ap_navigation", "ap_ncr", "ap_offline", "ap_order_status", "ap_period", "ap_planning", "ap_pm", "ap_press", "ap_press_plan", "ap_price", "ap_proposals", "ap_quality", "ap_quote_sales", "ap_quotes", "ap_reorder", "ap_reprice", "ap_sampling", "ap_scrap", "ap_series", "ap_share", "ap_statement", "ap_stock", "ap_tally", "ap_tds", "ap_usual", "ap_weight"]);
+  assert.deepEqual(callable, ["ap_accounts", "ap_billet_length", "ap_billing", "ap_calendar", "ap_capacity", "ap_cash", "ap_credit", "ap_customer_health", "ap_cutover", "ap_delay", "ap_die_window", "ap_dies", "ap_digest", "ap_dispatch", "ap_dupes", "ap_einvoice", "ap_eway", "ap_finishing", "ap_freight", "ap_health", "ap_home_work", "ap_import", "ap_jobdrafts", "ap_jobs", "ap_mtc", "ap_navigation", "ap_ncr", "ap_offline", "ap_order_status", "ap_period", "ap_planning", "ap_pm", "ap_press", "ap_press_plan", "ap_price", "ap_proposals", "ap_quality", "ap_quote_sales", "ap_quotes", "ap_reorder", "ap_reprice", "ap_sampling", "ap_scrap", "ap_series", "ap_share", "ap_spc", "ap_statement", "ap_stock", "ap_tally", "ap_tds", "ap_usual", "ap_views", "ap_weight"]);
   const definers = (await f.db.query(`select p.proname, p.proconfig from pg_proc p where p.pronamespace in ('public'::regnamespace,'private'::regnamespace) and p.proname like 'ap\\_%' and p.prosecdef`)).rows;
   for (const fn of definers) assert.ok(fn.proconfig?.some(c => c.startsWith("search_path=")), `${fn.proname} pins its search path`);
   // Rows of another company are invisible through direct reads.
@@ -475,7 +476,7 @@ test("AP-001 pg_cron runs the schedules through the private runner; Vercel keeps
   // pg_cron calls private.ap_jobs_run as the database owner, without a JWT.
   const run = (await f.db.query("select private.ap_jobs_run('nightly') data")).rows[0].data;
   // Nightly jobs × the two fixture companies (batch 6 adds four nightly jobs: 11 × 2).
-  assert.equal(run.runs.length, 22);
+  assert.equal(run.runs.length, 24, "twelve nightly jobs per company (batch 8 adds customer health)");
   assert.ok(run.runs.every(r => r.state === "succeeded"), JSON.stringify(run.runs));
   const viaRoute = await f.cron("nightly");
   assert.ok(viaRoute.runs.every(r => r.state === "already_ran"), "the manual route in the same window does nothing after pg_cron ran");

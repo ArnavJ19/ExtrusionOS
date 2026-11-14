@@ -24,6 +24,7 @@ export const protectedPrefixes = [
   "/expenses",
   "/exports",
   "/foundry",
+  "/insights",
   "/inventory",
   "/invoices",
   "/maintenance",
@@ -72,6 +73,9 @@ const roleRules: RoleRule[] = [
   { prefix: "/production/scrap-standards", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "inventory_manager"] },
   // AP-016: QC records in-process samples; supervisors see sampling compliance on their jobs.
   { prefix: "/quality/samples", roles: ["owner", "admin", "quality", "factory_manager", "production_manager", "production"] },
+  // Autopilot batch 8: mill certificates are read by stores and the plant head as well as quality; control charts by the plant and quality.
+  { prefix: "/quality/certificates", roles: ["owner", "admin", "quality", "factory_manager", "production_manager", "inventory_manager"] },
+  { prefix: "/quality/spc", roles: ["owner", "admin", "quality", "factory_manager", "production_manager"] },
   { prefix: "/vendors/comparisons", roles: ["owner", "admin", "accounts"] },
   // Autopilot batch 3 (order-to-cash): credit holds, draft jobs, invoice drafts, GST rules, bank matching, reminders.
   { prefix: "/orders/credit", roles: ["owner", "admin", "accounts", "sales_manager", "sales"] },
@@ -107,6 +111,8 @@ const roleRules: RoleRule[] = [
   { prefix: "/crm", roles: ["owner", "admin", "sales_manager", "sales"] },
   { prefix: "/communications", roles: ["owner", "admin", "sales_manager", "sales"] },
   { prefix: "/reports", roles: ["owner", "admin", "sales_manager", "accounts"] },
+  // AP-044: one Insights entry point; each linked report keeps its own access rule.
+  { prefix: "/insights", roles: ["owner", "admin", "sales_manager", "accounts"] },
   { prefix: "/analytics", roles: ["owner", "admin", "sales_manager", "accounts"] },
   { prefix: "/report-builder", roles: ["owner", "admin", "sales_manager", "accounts"] },
   { prefix: "/profitability", roles: ["owner", "admin", "accounts"] },

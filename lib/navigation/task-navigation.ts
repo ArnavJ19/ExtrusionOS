@@ -43,7 +43,7 @@ const groupByHref: Record<string, string> = {
   "/orders": "Factory", "/production": "Factory", "/foundry": "Factory", "/packaging": "Factory", "/quality": "Factory", "/dies": "Factory", "/die-intelligence": "Factory", "/machines": "Factory", "/maintenance": "Factory", "/energy": "Factory",
   "/inventory": "Stock", "/profiles": "Stock", "/dealer-inventory": "Stock", "/vendors": "Stock", "/barcode": "Stock", "/scan": "Stock", "/mobile": "Stock", "/discrepancies": "Stock",
   "/dispatches": "Dispatch", "/dealer-orders": "Dispatch", "/exports": "Dispatch",
-  "/expenses": "Accounts", "/invoices": "Accounts", "/payments": "Accounts", "/profitability": "Accounts", "/reports": "Accounts", "/analytics": "Accounts",
+  "/expenses": "Accounts", "/invoices": "Accounts", "/payments": "Accounts", "/profitability": "Accounts", "/reports": "Accounts", "/analytics": "Accounts", "/insights": "Accounts",
   "/documents": "Records", "/compliance": "Records", "/automation": "Records", "/audit-logs": "Records",
   "/settings": "Administration", "/settings/access": "Administration", "/settings/enterprise": "Administration", "/settings/security": "Administration", "/settings/branding": "Administration", "/settings/data": "Administration", "/settings/integrations": "Administration"
 };
@@ -72,7 +72,8 @@ export function buildTaskNavigation(options: {
   const approved = options.approvedItems?.length ? options.approvedItems.slice(0, 9) : null;
   const priority = approved ?? rolePriorities[options.role] ?? ["/dashboard", "/tasks", "/orders"];
   const prioritized = allowed
-    .map((item, index) => ({ item, index, priority: priority.indexOf(item.href) }))
+    // A layout saved before an entry was merged (AP-043 Dies, AP-044 Insights) still places it through the old route.
+    .map((item, index) => ({ item, index, priority: [item.href, ...(item.aliases ?? [])].map(href => priority.indexOf(href)).filter(at => at >= 0).sort((a, b) => a - b)[0] ?? -1 }))
     .sort((a, b) => {
       const left = a.priority < 0 ? Number.MAX_SAFE_INTEGER : a.priority;
       const right = b.priority < 0 ? Number.MAX_SAFE_INTEGER : b.priority;

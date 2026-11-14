@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingState } from "@/components/ui/loading";
 import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 import { formatCompactCurrency, formatDate } from "@/lib/utils/format";
+import { AtRiskCustomers } from "@/components/modules/autopilot-batch8/customer-health";
 
 type Lead = {
   id: string;
@@ -174,6 +175,8 @@ export default function CrmPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="CRM and Sales Pipeline" description="Real lead, opportunity, activity, and sales target tracking for quote and order conversion." />
+      {/* AP-050: the customers drifting away, with why. */}
+      <AtRiskCustomers />
       <QueryErrorNotice messages={error ? [error] : []} />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">

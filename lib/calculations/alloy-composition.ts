@@ -130,3 +130,41 @@ export function compositionsMatch(a: AlloyComposition, b: AlloyComposition) {
     Object.hasOwn(b, key) && a[key].min === b[key].min && a[key].max === b[key].max
   );
 }
+
+// AP-020: the elements a billet mill test certificate reports, checked against the alloy's standard limits.
+// private.ap8_alloy_spec / ap8_chem_check in the database are authoritative (a test compares the two).
+export const MTC_ELEMENTS = ["Si", "Fe", "Cu", "Mn", "Mg", "Zn", "Ti"] as const;
+export type MtcElement = (typeof MTC_ELEMENTS)[number];
+export type ChemistryValues = Partial<Record<Lowercase<MtcElement>, number | null>>;
+export type ChemistryCheck = {
+  result: "in_spec" | "out_of_spec" | "incomplete" | "unknown_alloy";
+  out: { element: MtcElement; value: number; min: number; max: number }[];
+  missing: MtcElement[];
+  alloy: string | null;
+};
+
+/** "AA6063", "6063-T5" and "6063" all name 6063. */
+export function alloyNumber(alloy: string | null | undefined) {
+  return /([0-9]{4})/.exec(String(alloy ?? "").toUpperCase())?.[1] ?? null;
+}
+
+/** Min and max % for each certificate element of a standard alloy (an unspecified minimum is 0). */
+export function alloyChemistrySpec(alloy: string | null | undefined): Record<MtcElement, [number, number]> | null {
+  const number = alloyNumber(alloy);
+  const composition = number ? standardAlloyCompositions[number]?.composition : null;
+  if (!composition) return null;
+  return Object.fromEntries(MTC_ELEMENTS.map(element => [element, [composition[element]?.min ?? 0, composition[element]?.max ?? 100]])) as Record<MtcElement, [number, number]>;
+}
+
+export function checkChemistry(alloy: string | null | undefined, values: ChemistryValues): ChemistryCheck {
+  const spec = alloyChemistrySpec(alloy);
+  if (!spec) return { result: "unknown_alloy", out: [], missing: [], alloy: alloyNumber(alloy) };
+  const out: ChemistryCheck["out"] = []; const missing: MtcElement[] = [];
+  for (const element of MTC_ELEMENTS) {
+    const value = values[element.toLowerCase() as Lowercase<MtcElement>];
+    if (value === null || value === undefined || !Number.isFinite(value)) { missing.push(element); continue; }
+    const [min, max] = spec[element];
+    if (value < min || value > max) out.push({ element, value, min, max });
+  }
+  return { result: out.length ? "out_of_spec" : missing.length ? "incomplete" : "in_spec", out, missing, alloy: alloyNumber(alloy) };
+}

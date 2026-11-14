@@ -23,7 +23,7 @@ export function createNov7ActionsFixture(modulePath) {
   const state = {};
   function reset() {
     Object.assign(state, { context: { companyId: ids.company, userId: ids.owner, role: "owner", dealerId: null }, authenticated: true, calls: [], tables: {}, failTables: new Set(), insertError: null,
-      rpcHandler: null, revalidated: [] });
+      rpcHandler: null, revalidated: [], storage: state.storage ?? {} });
   }
   reset();
   function client() {
@@ -57,7 +57,12 @@ export function createNov7ActionsFixture(modulePath) {
         };
         return builder;
       },
-      rpc: async (name, payload) => { state.calls.push({ rpc: name, payload }); return state.rpcHandler ? state.rpcHandler(name, payload) : { data: null, error: { code: "PGRST202", message: "missing" } }; }
+      rpc: async (name, payload) => { state.calls.push({ rpc: name, payload }); return state.rpcHandler ? state.rpcHandler(name, payload) : { data: null, error: { code: "PGRST202", message: "missing" } }; },
+      // Synthetic storage (Autopilot batch 8): files put in state.storage by path; nothing leaves the fixture.
+      storage: { from: bucket => ({
+        download: async path => { const bytes = state.storage?.[`${bucket}/${path}`]; return bytes ? { data: new Blob([bytes]), error: null } : { data: null, error: { message: "Object not found" } }; },
+        createSignedUrl: async path => state.storage?.[`${bucket}/${path}`] ? { data: { signedUrl: `/files/${bucket}/${path}` }, error: null } : { data: null, error: { message: "Object not found" } }
+      }) }
     };
   }
   const require = createRequire(import.meta.url); require("tsx/cjs");

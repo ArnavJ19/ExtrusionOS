@@ -20,6 +20,7 @@ import { CopySummaryButton } from "@/components/modules/dispatch-autopilot/share
 import { canInternalSummary, canSummarise } from "@/lib/dispatch-autopilot/commands";
 import { PressJobPanel } from "@/components/modules/press/press-job-panel";
 import { BilletLengthPanel } from "@/components/modules/autopilot-batch6/billet-length";
+import { JobDieWarnings } from "@/components/modules/autopilot-batch8/die-availability";
 
 const SCRAP_RECORD_LIMIT = 200;
 
@@ -105,6 +106,9 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
   }
   return (
     <div id="production-readiness" className="space-y-6">
+      {/* AP-096: a paper job card with a QR, for a press without a tablet. AP-065: a die that is away is flagged on the job. */}
+      {!context.dealerId && !["completed", "cancelled"].includes(String(job.status)) ? <div className="flex flex-wrap gap-2"><a href={`/api/pdf/job-card/${id}`} target="_blank" rel="noopener" className="inline-flex min-h-11 items-center rounded-xl border border-neutral-300 bg-white px-4 text-sm font-bold">Print job card</a></div> : null}
+      {!context.dealerId && job.die_id && ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "sales_manager", "sales", "viewer"].includes(context.role) ? <JobDieWarnings jobId={id} /> : null}
       {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "inventory_manager"].includes(context.role)
         ? <PressJobPanel jobId={id} role={context.role} today={getBusinessDateBoundaries().today} /> : null}
       {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production"].includes(context.role) && ["planned", "ready", "on_hold"].includes(String(job.status))
