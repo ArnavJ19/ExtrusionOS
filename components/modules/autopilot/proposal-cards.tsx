@@ -109,6 +109,8 @@ function EditFields({ row, onSubmit, onCancel, today }: { row: ProposalRow; onSu
   if (row.proposal_type === "billet.shortage") return <BilletRouteFields onSubmit={onSubmit} onCancel={onCancel} />;
   if (row.proposal_type === "die.weight_drift") return <WeightRouteFields onSubmit={onSubmit} onCancel={onCancel} />;
   if (row.proposal_type === "stock.reorder") return <ReorderQuantityFields row={row} onSubmit={onSubmit} onCancel={onCancel} />;
+  if (row.proposal_type === "stock.reservation") return <NumberFields row={row} fields={[["pieces", "Pieces to reserve", true]]} onSubmit={onSubmit} onCancel={onCancel} />;
+  if (row.proposal_type === "profile.geometry") return <NumberFields row={row} fields={[["section_weight_kg_per_m", "Section weight (kg/m)", false], ["section_perimeter_mm", "Perimeter (mm)", false]]} onSubmit={onSubmit} onCancel={onCancel} />;
   if (row.proposal_type === "production.expected_output") return <ExpectedOutputFields row={row} onSubmit={onSubmit} onCancel={onCancel} />;
   if (row.proposal_type === "freight.estimate") return <FreightFields row={row} onSubmit={onSubmit} onCancel={onCancel} />;
   if (row.proposal_type === "die.service_due" || row.proposal_type === "maintenance.pm_due") return <ScheduleFields row={row} onSubmit={onSubmit} onCancel={onCancel} today={today} />;
@@ -126,6 +128,27 @@ function WeightRouteFields({ onSubmit, onCancel }: { onSubmit: (payload: Record<
 }
 
 // AP-033: purchase may change the requisition quantity before accepting.
+// AP-034 / AP-048: numeric edits (pieces to reserve; kg/m and perimeter from a drawing). The server rechecks each value.
+function NumberFields({ row, fields, onSubmit, onCancel }: { row: ProposalRow; fields: [string, string, boolean][]; onSubmit: (payload: Record<string, unknown>) => void; onCancel: () => void }) {
+  const [values, setValues] = useState<Record<string, string>>(() => Object.fromEntries(fields.map(([key]) => [key, String(row.payload[key] ?? "")])));
+  const [error, setError] = useState<string | null>(null);
+  function submit() {
+    const out: Record<string, number> = {};
+    for (const [key, label, whole] of fields) {
+      const v = Number(values[key]);
+      if (!values[key]?.trim() || !Number.isFinite(v) || v <= 0 || (whole && !Number.isInteger(v))) { setError(`${label}: enter ${whole ? "a whole number" : "a number"} above zero.`); return; }
+      out[key] = v;
+    }
+    onSubmit(out);
+  }
+  return <div className="mt-3 space-y-3 rounded-xl border bg-neutral-50 p-3">
+    <div className="grid gap-3 sm:grid-cols-2">{fields.map(([key, label, whole]) => <label key={key} className="block text-sm font-semibold">{label}<input inputMode={whole ? "numeric" : "decimal"} className="mt-1 h-11 w-full rounded-xl border bg-white px-3 text-sm" value={values[key] ?? ""} onChange={e => setValues(v => ({ ...v, [key]: e.target.value }))} /></label>)}</div>
+    {error ? <p role="alert" className="text-sm font-semibold text-rose-700">{error}</p> : null}
+    <div className="flex flex-wrap gap-2"><button type="button" className="min-h-11 rounded-xl bg-neutral-950 px-4 text-sm font-bold text-white" onClick={submit}>Accept with these values</button>
+      <button type="button" className="min-h-11 rounded-xl border px-4 text-sm" onClick={onCancel}>Cancel</button></div>
+  </div>;
+}
+
 function ReorderQuantityFields({ row, onSubmit, onCancel }: { row: ProposalRow; onSubmit: (payload: Record<string, unknown>) => void; onCancel: () => void }) {
   const [quantity, setQuantity] = useState(String(row.payload.quantity ?? ""));
   const [error, setError] = useState<string | null>(null);

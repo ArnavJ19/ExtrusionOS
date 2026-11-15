@@ -9,6 +9,8 @@ import { getFeatureFlagsForCompany, isFeatureEnabled } from "@/lib/enterprise/fe
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
+import { ProposalCards } from "@/components/modules/autopilot/proposal-cards";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { DealerInventoryEntryClient } from "@/components/modules/dealer-inventory-entry-client";
 
 export default async function InventoryPage() {
@@ -86,6 +88,8 @@ export default async function InventoryPage() {
           <Link href="/inventory/reservations" className="inline-flex items-center justify-center rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90">Open Reservations</Link>
         </div>
       </div> : null}
+      {!context.dealerId && ["owner", "admin", "inventory_manager", "factory_manager", "production_manager"].includes(context.role) ? <div id="arrival-reservations"><ProposalCards type="stock.reservation" initial={null} today={getBusinessDateBoundaries().today}
+        title="Reserve arriving stock" description="Released finished stock that a waiting order line needs, by priority and promised date. Accepting reserves it; nothing moves until you accept." emptyText="No arriving stock is waiting for an order line." /></div> : null}
       {!context.dealerId ? <ModuleWorkflows module="inventory" role={context.role} /> : null}
     </div>
   );

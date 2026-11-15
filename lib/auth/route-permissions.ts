@@ -96,6 +96,15 @@ const roleRules: RoleRule[] = [
   { prefix: "/invoices/tally", roles: ["owner", "admin", "accounts"] },
   // Autopilot batch 5: floor prices are internal to sales and the owner.
   { prefix: "/quotes/floors", roles: ["owner", "admin", "sales_manager", "sales"] },
+  // Autopilot batch 9: rate cards and WhatsApp enquiries (sales), scrap sales (foundry, stores, accounts), weight-difference
+  // notes, the cash forecast (owner and accounts), shift registers (production), bundle weights (dispatch and quality).
+  { prefix: "/quotes/rate-cards", roles: ["owner", "admin", "sales_manager", "sales", "accounts"] },
+  { prefix: "/quotes/enquiries", roles: ["owner", "admin", "sales_manager", "sales"] },
+  { prefix: "/foundry/scrap-sales", roles: ["owner", "admin", "accounts", "factory_manager", "inventory_manager", "production_manager"] },
+  { prefix: "/invoices/weight-notes", roles: ["owner", "admin", "accounts", "sales_manager", "sales", "dispatch_manager"] },
+  { prefix: "/payments/cash-forecast", roles: ["owner", "admin", "accounts"] },
+  { prefix: "/production/registers", roles: ["owner", "admin", "factory_manager", "production_manager", "production"] },
+  { prefix: "/dispatches/bundles/weights", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "quality"] },
   { prefix: "/settings/access", roles: ["owner"] },
   // AP-007: stores, accounts and the plant head load and sign off their own opening sections.
   { prefix: "/settings/data/cutover", roles: ["owner", "admin", "accounts", "inventory_manager", "factory_manager", "production_manager", "sales_manager"] },

@@ -17,6 +17,7 @@ export const JOBS = [
   { job_key: "billets.forecast", schedule: "nightly", label: "Prepare seven-day billet requirements" },
   { job_key: "billing.prepare_drafts", schedule: "hourly", label: "Prepare invoice drafts" },
   { job_key: "calendar.check", schedule: "nightly", label: "Check the factory calendar" },
+  { job_key: "cash.forecast_snapshot", schedule: "nightly", label: "Keep the weekly cash forecast" },
   { job_key: "crm.customer_health", schedule: "nightly", label: "Score customer health" },
   { job_key: "dies.availability", schedule: "hourly", label: "Check die availability for planned jobs" },
   { job_key: "dies.predict_service", schedule: "hourly", label: "Propose die service" },
@@ -38,6 +39,7 @@ export const JOBS = [
   { job_key: "receivables.reminders", schedule: "morning", label: "Prepare payment reminders" },
   { job_key: "receivables.statements", schedule: "morning", label: "Prepare monthly customer statements" },
   { job_key: "series.propose", schedule: "nightly", label: "Propose financial-year numbering" },
+  { job_key: "stock.arrival_reservations", schedule: "hourly", label: "Propose reservations for arriving stock" },
   { job_key: "stock.reorder", schedule: "nightly", label: "Propose purchase requisitions" }
 ] as const satisfies ReadonlyArray<{ job_key: string; schedule: JobSchedule; label: string }>;
 export type JobKey = (typeof JOBS)[number]["job_key"];

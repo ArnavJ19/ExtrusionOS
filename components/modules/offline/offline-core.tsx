@@ -6,6 +6,7 @@
 // This core takes its transport from the screen, so it loads no server action itself (offline-queue.tsx adds the
 // Autopilot gateway transport; the bundle screen passes its own bundle action).
 import { useCallback, useEffect, useRef, useState } from "react";
+import { floorText, type FloorLanguage } from "@/lib/i18n/floor";
 import { CloudOff, RefreshCw } from "lucide-react";
 import { flushEntries, isPersistent, listEntries, newEntry, ownerKey, putEntry, removeEntry, type OfflineEntry, type OfflineKind, type SendOutcome } from "@/lib/offline/queue";
 
@@ -70,17 +71,18 @@ export function useOfflineQueueCore(companyId: string, userId: string, transport
   return { owner, entries, pending: entries.filter(e => e.state === "pending"), conflicts: entries.filter(e => e.state === "conflict"), online, submit, flush, resolve, adopt };
 }
 
-export function OfflineQueuePanel({ queue, what = "entries", place = "phone" }: { queue: OfflineQueue; what?: string; place?: string }) {
+export function OfflineQueuePanel({ queue, what = "entries", place = "phone", lang = "en" }: { queue: OfflineQueue; what?: string; place?: string; lang?: FloorLanguage }) {
+  const t = floorText(lang);
   if (!queue.entries.length && queue.online) return null;
   return <section aria-label="Phone entries waiting" className="space-y-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
-    {!queue.online ? <p className="flex items-center gap-2 font-semibold"><CloudOff className="h-4 w-4" aria-hidden="true" />No connection. New {what} are saved on this {place} and sent when it returns.</p> : null}
-    {queue.pending.length ? <div className="flex flex-wrap items-center justify-between gap-2"><p role="status" className="font-semibold">{queue.pending.length} {what} waiting to send from this {place}{isPersistent() === false ? " (this browser cannot keep them after closing)" : ""}.</p>
-      <button type="button" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-300 bg-white px-3 font-bold" onClick={() => void queue.flush()}><RefreshCw className="h-4 w-4" aria-hidden="true" />Send now</button></div> : null}
-    {queue.conflicts.length ? <div className="space-y-2"><p className="font-semibold">{queue.conflicts.length} queued entr{queue.conflicts.length === 1 ? "y was" : "ies were"} refused. Resolve each one:</p>
+    {!queue.online ? <p className="flex items-center gap-2 font-semibold"><CloudOff className="h-4 w-4" aria-hidden="true" />{t("of.offline", { what, place })}</p> : null}
+    {queue.pending.length ? <div className="flex flex-wrap items-center justify-between gap-2"><p role="status" className="font-semibold">{t("of.waiting", { n: queue.pending.length, what, place }).replace(/\.$/, "")}{isPersistent() === false ? t("of.notKept") : ""}.</p>
+      <button type="button" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-300 bg-white px-3 font-bold" onClick={() => void queue.flush()}><RefreshCw className="h-4 w-4" aria-hidden="true" />{t("of.send")}</button></div> : null}
+    {queue.conflicts.length ? <div className="space-y-2"><p className="font-semibold">{lang === "hi" ? t("of.refused", { n: queue.conflicts.length }) : `${queue.conflicts.length} queued entr${queue.conflicts.length === 1 ? "y was" : "ies were"} refused. Resolve each one:`}</p>
       <ul className="space-y-2">{queue.conflicts.map(e => <li key={e.request_id} className="rounded-xl bg-white p-3">
-        <p className="font-semibold">{e.label} · saved {new Date(e.queued_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
+        <p className="font-semibold">{e.label} · {t("of.saved")} {new Date(e.queued_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
         <p className="text-rose-800">{e.message}</p>
-        <div className="mt-2 flex flex-wrap gap-2"><button type="button" className="min-h-11 rounded-xl border px-3 font-bold" onClick={() => void queue.resolve(e, "redone")}>I entered it again</button>
-          <button type="button" className="min-h-11 rounded-xl border px-3 font-bold" onClick={() => void queue.resolve(e, "discarded")}>Discard</button></div></li>)}</ul></div> : null}
+        <div className="mt-2 flex flex-wrap gap-2"><button type="button" className="min-h-11 rounded-xl border px-3 font-bold" onClick={() => void queue.resolve(e, "redone")}>{t("of.redone")}</button>
+          <button type="button" className="min-h-11 rounded-xl border px-3 font-bold" onClick={() => void queue.resolve(e, "discarded")}>{t("of.discard")}</button></div></li>)}</ul></div> : null}
   </section>;
 }

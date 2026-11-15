@@ -8,6 +8,9 @@ import { formatDate } from "@/lib/utils/format";
 import { canAccessMobileDestination } from "@/lib/auth/role-experience";
 import { redirect } from "next/navigation";
 import { MobilePagination } from "@/components/ui/mobile-pagination";
+import { FloorLanguageToggle } from "@/components/modules/autopilot-batch9/floor-language";
+import { floorText } from "@/lib/i18n/floor";
+import { getFloorLanguage } from "@/lib/i18n/floor-server";
 
 export default async function MobileTasksPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const context = await getSessionContext();
@@ -16,6 +19,7 @@ export default async function MobileTasksPage({ searchParams }: { searchParams: 
   const requestedPage = Number((await searchParams).page ?? 1);
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 100000) : 1;
   const pageSize = 10;
+  const lang = await getFloorLanguage(), t = floorText(lang);
   const { data: tasks, error, count } = await supabase
     .from("tasks")
     .select("id, title, priority, status, due_date, app_users(full_name, email)", { count: "exact" })
@@ -24,17 +28,18 @@ export default async function MobileTasksPage({ searchParams }: { searchParams: 
     .or(`assigned_to.eq.${context.userId},assigned_to.is.null`)
     .order("due_date", { ascending: true, nullsFirst: false })
     .range((page - 1) * pageSize, page * pageSize - 1);
-  if (error) return <div className="mx-auto max-w-xl space-y-4"><div className="rounded-3xl bg-slate-950 p-6 text-white"><ListChecks className="h-8 w-8 text-orange" /><h1 className="mt-3 text-2xl font-black">Mobile Tasks</h1><p className="mt-1 text-sm font-medium text-slate-300">Open real operator reminders and supervisor follow-ups.</p></div><ErrorState description="Could not load assigned mobile tasks. Refresh and try again before assuming the queue is empty." /></div>;
+  if (error) return <div className="mx-auto max-w-xl space-y-4"><div className="rounded-3xl bg-slate-950 p-6 text-white"><ListChecks className="h-8 w-8 text-orange" /><h1 className="mt-3 text-2xl font-black">{t("mt.title")}</h1><p className="mt-1 text-sm font-medium text-slate-300">{t("mt.subtitle")}</p></div><ErrorState description={t("mt.error")} /></div>;
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
-      <div className="rounded-3xl bg-slate-950 p-6 text-white"><ListChecks className="h-8 w-8 text-orange" /><h1 className="mt-3 text-2xl font-black">Mobile Tasks</h1><p className="mt-1 text-sm font-medium text-slate-300">Open real operator reminders and supervisor follow-ups.</p></div>
+      <div className="flex justify-end"><FloorLanguageToggle lang={lang} /></div>
+      <div className="rounded-3xl bg-slate-950 p-6 text-white"><ListChecks className="h-8 w-8 text-orange" /><h1 className="mt-3 text-2xl font-black">{t("mt.title")}</h1><p className="mt-1 text-sm font-medium text-slate-300">{t("mt.subtitle")}</p></div>
       {tasks?.length ? tasks.map((task: any) => (
         <Link href={`/tasks/${task.id}`} key={task.id} className="block rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition active:scale-[0.99]">
-          <div className="flex items-start justify-between gap-3"><div><p className="text-lg font-black text-slate-950">{task.title}</p><p className="mt-1 text-sm font-medium text-slate-500">{task.app_users?.full_name || task.app_users?.email || "Unassigned"} - due {formatDate(task.due_date)}</p></div><span className={`rounded-full px-3 py-1 text-xs font-black capitalize ${statusClass(task.status)}`}>{String(task.status || "open").replace(/_/g, " ")}</span></div>
-          <p className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white">Open task workflow <ArrowRight className="h-4 w-4" /></p>
+          <div className="flex items-start justify-between gap-3"><div><p className="text-lg font-black text-slate-950">{task.title}</p><p className="mt-1 text-sm font-medium text-slate-500">{task.app_users?.full_name || task.app_users?.email || t("mt.unassigned")} - {t("mt.due", { date: formatDate(task.due_date) })}</p></div><span className={`rounded-full px-3 py-1 text-xs font-black capitalize ${statusClass(task.status)}`}>{String(task.status || "open").replace(/_/g, " ")}</span></div>
+          <p className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white">{t("mt.open")} <ArrowRight className="h-4 w-4" /></p>
         </Link>
-      )) : <EmptyState title="No assigned tasks" description="Tasks assigned to you and unassigned factory-wide reminders appear here." />}
+      )) : <EmptyState title={t("mt.emptyTitle")} description={t("mt.emptyHelp")} />}
       <MobilePagination path="/mobile/tasks" page={page} pageSize={pageSize} totalCount={count ?? 0} />
     </div>
   );

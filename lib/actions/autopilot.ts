@@ -23,6 +23,7 @@ import { OPERATIONS_READS, accountsCommands, digestCommands, planningCommands, s
 import { BATCH6_READS, billetLengthCommands, einvoiceCommands, healthCommands, ncrCommands, offlineCommands, pressPlanCommands, reorderCommands, repriceCommands, tdsCommands, weightCommands } from "@/lib/autopilot-batch6/commands";
 import { BATCH7_READS, delayCommands, priceCommands, qualityCommands, statementCommands } from "@/lib/autopilot-batch7/commands";
 import { BATCH8_READS, capacityCommands, customerHealthCommands, dieWindowCommands, mtcCommands, spcCommands, viewCommands } from "@/lib/autopilot-batch8/commands";
+import { BATCH9_READS, cashForecastCommands, enquiryCommands, geometryCommands, languageCommands, rateCardCommands, registerCommands, scaleCommands, scrapSaleCommands, weightNoteCommands } from "@/lib/autopilot-batch9/commands";
 
 export type ApResult<T = unknown> = { success: true; data: T } | { success: false; error: string; unavailable?: boolean };
 
@@ -81,11 +82,15 @@ const COMMANDS: Record<string, Record<string, z.ZodTypeAny>> = {
   ap_quality: qualityCommands, ap_price: priceCommands, ap_delay: delayCommands, ap_statement: statementCommands,
   // Batch 8: saved views, die availability, sellable capacity, customer health, control charts and mill certificates
   // (a certificate draft is written by lib/actions/autopilot-batch8 after it read the uploaded file).
-  ap_views: viewCommands, ap_die_window: dieWindowCommands, ap_capacity: capacityCommands, ap_customer_health: customerHealthCommands, ap_spc: spcCommands, ap_mtc: mtcCommands
+  ap_views: viewCommands, ap_die_window: dieWindowCommands, ap_capacity: capacityCommands, ap_customer_health: customerHealthCommands, ap_spc: spcCommands, ap_mtc: mtcCommands,
+  // Batch 9: rate cards, scrap sales, weight-difference notes, cash forecast, floor language, WhatsApp enquiries, shift registers,
+  // scale captures and drawing geometry (enquiry text, register photos, drawings and scale records go through lib/actions/autopilot-batch9).
+  ap_rate_card: rateCardCommands, ap_scrap_sale: scrapSaleCommands, ap_weight_note: weightNoteCommands, ap_cash_forecast: cashForecastCommands, ap_language: languageCommands,
+  ap_enquiry: enquiryCommands, ap_register: registerCommands, ap_scale: scaleCommands, ap_geometry: geometryCommands
 };
 const READS = new Set(["read", "add_working_days", "list", "get", "overview", "runs", "layout", "usage", "pending_count", "flags", "record", "attention", "visit",
   "station", "push", "undo", "job", "expected", "cycle_times", "floor", "downtime", "die_changes", "settings", "reconcile", "service", "options", "plans", "compliance",
-  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS, ...BATCH5_READS, ...OPERATIONS_READS, ...BATCH6_READS, ...BATCH7_READS, ...BATCH8_READS]);
+  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS, ...BATCH5_READS, ...OPERATIONS_READS, ...BATCH6_READS, ...BATCH7_READS, ...BATCH8_READS, ...BATCH9_READS]);
 const REVALIDATE: Record<string, string[]> = {
   ap_calendar: ["/production/calendar"], ap_series: ["/settings/numbering"], ap_proposals: ["/dashboard", "/settings/navigation", "/settings/numbering", "/invoices/periods", "/production", "/production/floor", "/dies", "/maintenance"],
   ap_jobs: ["/automation"], ap_navigation: ["/settings/navigation"], ap_period: ["/invoices/periods"], ap_import: ["/settings/data/import"],
@@ -104,7 +109,9 @@ const REVALIDATE: Record<string, string[]> = {
   ap_quality: ["/settings/automation-quality"], ap_price: ["/vendors/purchasing", "/vendors/purchasing/prices"], ap_delay: ["/orders/delay-notices", "/orders"],
   ap_statement: ["/payments/statements"],
   ap_views: [], ap_die_window: ["/dies", "/production/schedule", "/production/capacity"], ap_capacity: ["/quotes"], ap_customer_health: ["/crm"],
-  ap_spc: ["/quality", "/quality/spc"], ap_mtc: ["/quality/certificates"]
+  ap_spc: ["/quality", "/quality/spc"], ap_mtc: ["/quality/certificates"],
+  ap_rate_card: ["/quotes/rate-cards"], ap_scrap_sale: ["/foundry/scrap-sales"], ap_weight_note: ["/invoices/weight-notes"], ap_cash_forecast: ["/payments/cash-forecast"], ap_language: [],
+  ap_enquiry: ["/quotes/enquiries"], ap_register: ["/production/registers"], ap_scale: ["/dispatches/bundles/weights"], ap_geometry: ["/profiles"]
 };
 
 function friendly(error: { code?: string; message?: string } | null | undefined): ApResult<never> {

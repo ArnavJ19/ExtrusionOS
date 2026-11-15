@@ -21,6 +21,7 @@ import { canInternalSummary, canSummarise } from "@/lib/dispatch-autopilot/comma
 import { PressJobPanel } from "@/components/modules/press/press-job-panel";
 import { BilletLengthPanel } from "@/components/modules/autopilot-batch6/billet-length";
 import { JobDieWarnings } from "@/components/modules/autopilot-batch8/die-availability";
+import { JobRegisterRows } from "@/components/modules/autopilot-batch9/job-registers";
 
 const SCRAP_RECORD_LIMIT = 200;
 
@@ -113,6 +114,7 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
         ? <PressJobPanel jobId={id} role={context.role} today={getBusinessDateBoundaries().today} /> : null}
       {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production"].includes(context.role) && ["planned", "ready", "on_hold"].includes(String(job.status))
         ? <BilletLengthPanel jobId={id} canChoose={["owner", "admin", "factory_manager", "production_manager"].includes(context.role)} /> : null}
+      {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production"].includes(context.role) ? <JobRegisterRows jobId={id} /> : null}
       <ProductionOutputWorkflow job={floorJob} canUpdate={canUpdate} canCorrect={canCorrect} />
       {!context.dealerId ? <WorkRequirementsPanel companyId={context.companyId} role={context.role} stage="production" orderId={job.order_id} /> : null}
       {!context.dealerId && canFollow(context.role, "production_job") ? <RecordFollow entityType="production_job" entityId={id} /> : null}

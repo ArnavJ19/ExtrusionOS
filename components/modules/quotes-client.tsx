@@ -31,6 +31,7 @@ import { rowMatchesSearch } from "@/lib/utils/search";
 import { canSaveQuoteDraft, duplicateQuoteDraftLine, getQuoteFormShortcut, runWithInFlightGuard } from "@/lib/forms/keyboard-entry";
 import { buildQuotePasteLine, getPieceCalculationState, getQuotePasteFinishOptions, getQuotePasteLengthUnit, parseQuotePaste, validateQuotePasteRows, type QuotePasteRow } from "@/lib/forms/quote-paste";
 import { saveQuoteAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
+import { enquiryQuoteDraft, linkEnquiryQuote, type EnquiryQuoteDraft } from "@/lib/quotes/enquiry-client";
 import { hasDuplicates, warnDuplicates } from "@/components/modules/order-to-cash/duplicate-warning";
 import { UsualChoicesHint } from "@/components/modules/autopilot-usual/usual-choices";
 import { ProfileCapacityHint } from "@/components/modules/autopilot-batch8/capacity";
@@ -135,13 +136,13 @@ function mergeLookupRows<T extends { id: string }>(incoming: T[], current: T[], 
   return rows;
 }
 
-type QuotesClientProps = { context: SessionContext; mode?: "full" | "form"; initialEditId?: string; repeatFromId?: string };
+type QuotesClientProps = { context: SessionContext; mode?: "full" | "form"; initialEditId?: string; repeatFromId?: string; enquiryId?: string };
 
 export function QuotesClient(props: QuotesClientProps) {
-  return <QuoteWorkspace key={JSON.stringify([props.context.companyId, props.context.userId, props.context.role, props.mode ?? "full", props.initialEditId ?? null, props.repeatFromId ?? null])} {...props} />;
+  return <QuoteWorkspace key={JSON.stringify([props.context.companyId, props.context.userId, props.context.role, props.mode ?? "full", props.initialEditId ?? null, props.repeatFromId ?? null, props.enquiryId ?? null])} {...props} />;
 }
 
-function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }: QuotesClientProps) {
+function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId, enquiryId }: QuotesClientProps) {
   const supabase = useMemo(() => createClient(), []);
   const customerCreationScope = JSON.stringify([context.companyId, context.userId, context.role]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -164,6 +165,8 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
   const [saving, setSaving] = useState(false);
   const [repeatActive, setRepeatActive] = useState(Boolean(repeatFromId));
   const [repeatResult, setRepeatResult] = useState<Awaited<ReturnType<typeof repeatQuoteAction>> | null>(null);
+  // AP-008: a draft opened from a WhatsApp enquiry; the enquiry is marked quoted when this quotation is saved.
+  const [enquiryDraft, setEnquiryDraft] = useState<{ ok: true; draft: EnquiryQuoteDraft } | { ok: false; error: string } | null>(null);
   const [reviewedCopy, setReviewedCopy] = useState("");
   const [form, setForm] = useState({ customer_id: "", quote_date: todayIso(), valid_until: "", status: "draft" as QuoteStatus, gst_percent: 18, terms_and_conditions: "", delivery_timeline: "", payment_terms: "", approval_notes: "", notes: "" });
   const [items, setItems] = useState<FormItem[]>([{ ...emptyItem }]);
@@ -252,6 +255,22 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
   useEffect(() => {
     let cancelled = false;
     void loadAll().then(async () => {
+      if (enquiryId && !cancelled) {
+        const out = await enquiryQuoteDraft(enquiryId);
+        if (cancelled) return;
+        if (!out.success) { setEnquiryDraft({ ok: false, error: out.error }); return; }
+        const d = out.data;
+        setEnquiryDraft({ ok: true, draft: d });
+        setForm((current) => ({ ...current, customer_id: d.customer.id, gst_percent: d.gst_percent, quote_date: todayIso(), valid_until: addDays(new Date(), d.validity_days).toISOString().slice(0, 10), notes: d.notes }));
+        if (d.items.length) setItems(d.items.map((item) => ({ ...emptyItem, profile_id: item.profile_id, item_description: item.item_description, quantity_pieces: item.quantity_pieces, length_per_piece_m: item.length_per_piece_m,
+          section_weight_kg_per_m: item.section_weight_kg_per_m, billet_rate_per_kg: item.billet_rate_per_kg, conversion_charge_per_kg: item.conversion_charge_per_kg, finishing_type: item.finishing_type as FinishingType,
+          finishing_charge_type: item.finishing_charge_type, finishing_charge: item.finishing_charge, packing_charge: item.packing_charge, transport_charge: item.transport_charge, margin_percent: item.margin_percent,
+          minimum_margin_percent: item.minimum_margin_percent, gst_percent: item.gst_percent })));
+        setCustomers((current) => mergeCustomers(current, [d.customer as never]));
+        setProfiles((current) => mergeLookupRows<Profile>(d.profiles as never[], current, d.profiles.map((profile) => String(profile.id)), 120));
+        setCustomerSearch(customerLabel(d.customer as never));
+        return;
+      }
       if (!repeatFromId || cancelled) return;
       try {
         const result = await repeatQuoteAction(repeatFromId);
@@ -490,6 +509,11 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
           return toast.error(result.error);
         }
         toast.success("Quote saved");
+        if (enquiryId && enquiryDraft?.ok && result.quoteId) {
+          const linked = await linkEnquiryQuote(enquiryId, result.quoteId);
+          if (linked.success) toast.success(`Enquiry ${enquiryDraft.draft.enquiry_number} marked quoted`); else toast.error(linked.error);
+          setEnquiryDraft(null);
+        }
         setRepeatActive(false);
         setEditingId(null);
         setEditToken(null);
@@ -667,6 +691,7 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
             {editingId ? <Badge value="draft" className="w-fit" /> : null}
           </div>
           <div className="mb-5"><TaskGuidance task="quotation" /></div>
+          {enquiryDraft ? enquiryDraft.ok ? <section aria-label="Quotation from enquiry" className="mb-5 space-y-2 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950"><h3 className="font-black">Draft from enquiry {enquiryDraft.draft.enquiry_number}</h3><p>{enquiryDraft.draft.items.length} line(s) filled from the message with today&apos;s approved rates. Prices are calculated by this form; review each line before saving.</p>{enquiryDraft.draft.items.some((item) => !item.billet_rate_found || !item.finishing_rate_found) ? <p className="font-bold">Some lines have no approved billet or finishing rate for today: enter them before saving.</p> : null}{enquiryDraft.draft.skipped.length ? <ul className="list-disc pl-5">{enquiryDraft.draft.skipped.map((skip, index) => <li key={index}>Not filled: “{skip.text}” ({skip.reason}). <Link className="underline" href={`/quotes/enquiries/${enquiryId}`}>Map it on the enquiry</Link>.</li>)}</ul> : null}</section> : <p role="alert" className="mb-5 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">{enquiryDraft.error}</p> : null}
           {repeatActive && repeatResult?.success ? <section aria-label="Review repeated quotation" className="mb-5 space-y-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><h3 className="font-black">New draft from {repeatResult.sourceNumber}</h3><p>Lines, quantities, finishes, terms, and price inputs were copied for review. Dates and profile section weights were refreshed; die assignments and die charges were cleared. The original quotation and its issued documents are unchanged.</p><p className="font-bold">{repeatResult.draft.expired ? "The source quotation has expired. Its copied rates require a fresh commercial review." : "Copied prices are unverified suggestions. Review current rates and availability before saving."}</p><label className="flex items-start gap-2"><input type="checkbox" className="mt-1 h-4 w-4" checked={reviewedCopy === copyFingerprint} onChange={(event) => setReviewedCopy(event.target.checked ? copyFingerprint : "")} /><span>I reviewed the copied rates, current specifications, and commercial terms. Any further edit requires another review.</span></label></section> : null}
           <div className="grid gap-4 sm:grid-cols-4">
             <div className="sm:col-span-2"><label className="block space-y-1.5"><span className="form-label">Customer *</span><input className="form-input" placeholder="Search customer name, company, or GST..." value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} /><SearchableSelect value={form.customer_id} placeholder={filteredCustomers.length ? "Select customer" : customerSearchLoading ? "Searching customers..." : "No matching customers"} options={filteredCustomers.map((customer) => ({ value: customer.id, label: customerLabel(customer) }))} onChange={(nextValue) => { const customer = customers.find((candidate) => candidate.id === nextValue); setForm({ ...form, customer_id: nextValue }); setCustomerSearch(customer ? customerLabel(customer) : ""); }} />{selectedCustomer ? <p className="text-xs font-semibold text-slate-500">Selected: {customerLabel(selectedCustomer)}</p> : customerSearchLoading ? <p className="text-xs font-semibold text-slate-500">Searching customer database...</p> : null}</label><InTaskCustomer key={`${customerCreationScope}:${editingId ?? "new"}`} context={context} onSelected={(customer) => { setCustomers((current) => mergeCustomers(current, [customer])); setForm((current) => ({ ...current, customer_id: customer.id })); setCustomerSearch(customerLabel(customer)); }} /></div>

@@ -11,7 +11,8 @@ let state;
 const originalLoad = Module._load;
 Module._load = function (request, parent, isMain) {
   if (request === "@/lib/auth") return { getSessionContext: async () => ({ companyId: id(1), role: state.role }) };
-  if (request === "next/navigation") return { redirect(path) { throw new Error(`redirect:${path}`); } };
+  // The inventory page also shows AP-034 arrival-reservation proposals (a client card that reads the router).
+  if (request === "next/navigation") return { redirect(path) { throw new Error(`redirect:${path}`); }, useRouter: () => ({ refresh() {}, push() {}, replace() {} }) };
   if (request === "@/lib/enterprise/features") return { getFeatureFlagsForCompany: async () => ({}), isFeatureEnabled: () => true };
   if (request === "@/components/modules/operations/module-overview-client") return { ModuleOverviewClient: ({ children }) => children };
   if (request === "@/components/modules/dashboards/inventory-dashboard") return { InventoryDashboard: () => null };
