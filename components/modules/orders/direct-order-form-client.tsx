@@ -99,15 +99,23 @@ function DirectOrderLineEditor({ entry, index, onChange, onRemove, removable }: 
   </Card>;
 }
 
-export function DirectOrderFormClient() {
+/** Lines and customer filled before the form opens (AP-070: a configurator project). Rates stay blank for sales to enter. */
+export type DirectOrderPrefill = { customer: DirectOrderCustomer; notes: string;
+  lines: { profile: DirectOrderProfile; quantity_pieces: number; length_per_piece_m: number; finishing_type: string }[] };
+
+export function DirectOrderFormClient({ prefill, onCreated }: { prefill?: DirectOrderPrefill; onCreated?: (orderId: string) => Promise<string | null> } = {}) {
   const router = useRouter();
   const [customerSearch, setCustomerSearch] = useState("");
-  const [customer, setCustomer] = useState<DirectOrderCustomer | null>(null);
-  const [entries, setEntries] = useState<Entry[]>(() => [{ key: "first-line", line: emptyLine(), profile: null }]);
+  const [customer, setCustomer] = useState<DirectOrderCustomer | null>(prefill?.customer ?? null);
+  const [entries, setEntries] = useState<Entry[]>(() => prefill?.lines.length
+    ? prefill.lines.map((row, index) => ({ key: `prefill-${index}`, profile: row.profile, line: { ...emptyLine(), profile_id: row.profile.id, quantity_pieces: row.quantity_pieces,
+        length_per_piece_m: row.length_per_piece_m, expected_section_weight_kg_per_m: Number(row.profile.section_weight_kg_per_m), hsn_code: row.profile.hsn_code ?? "",
+        finishing_type: ((finishes as readonly string[]).includes(row.finishing_type) ? row.finishing_type : "mill_finish") as DirectOrderLine["finishing_type"] } }))
+    : [{ key: "first-line", line: emptyLine(), profile: null }]);
   const [orderDate, setOrderDate] = useState(() => getBusinessDateBoundaries().today);
   const [expectedDate, setExpectedDate] = useState("");
   const [priority, setPriority] = useState<"low" | "normal" | "high" | "urgent">("normal");
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(prefill?.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const attempt = useRef<{ key: string; pending: boolean } | null>(null);
@@ -134,6 +142,7 @@ export function DirectOrderFormClient() {
       const result = await createDirectOrderAction(parsed.data);
       if (!result.success) { setError(result.error); return; }
       toast.success("Direct order created with priced lines.");
+      if (onCreated && result.orderId) { const problem = await onCreated(result.orderId); if (problem) toast.error(problem); }
       router.push(`/orders/${result.orderId}`); router.refresh();
     } catch { setError("The order confirmation could not be received. Keep the submitted details and retry to check the result."); }
     finally { if (attempt.current) attempt.current.pending = false; setSaving(false); }

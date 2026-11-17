@@ -131,11 +131,17 @@ export async function loadJobCardPdf(supabase: Client, ctx: PdfContext, id: stri
     j.profile_id ? supabase.from("aluminium_profiles").select("profile_code, profile_name, alloy, temper, section_weight_kg_per_m, billet_diameter_mm, billet_diameter_required_inch, special_production_notes, pieces_per_bundle, kg_per_bundle").eq("company_id", ctx.companyId).eq("id", j.profile_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     j.die_id ? supabase.from("dies").select("die_number, number_of_cavities, die_status").eq("company_id", ctx.companyId).eq("id", j.die_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     j.machine_id ? supabase.from("machines").select("machine_name").eq("company_id", ctx.companyId).eq("id", j.machine_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
-    supabase.from("job_billet_length_choices").select("chosen_mm, recommended_mm, standard_mm").eq("company_id", ctx.companyId).eq("production_job_id", id).is("superseded_at", null).order("chosen_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("production_job_draft_lines").select("due_date").eq("company_id", ctx.companyId).eq("job_id", id).order("due_date").limit(1).maybeSingle()
+    // The billet length choice (AP-029) and the draft lines (AP-045) are readable only through their gateways; a role the
+    // gateway refuses simply gets a card without that line, as before.
+    supabase.rpc("ap_billet_length", { p_command: "job_inputs", p_payload: { job_id: id } }),
+    j.order_id ? supabase.rpc("ap_jobdrafts", { p_command: "order", p_payload: { order_id: j.order_id } }) : Promise.resolve({ data: null, error: null })
   ]);
+  const billetInputs = (billet.data ?? null) as { current?: { chosen_mm?: unknown; recommended_mm?: unknown; standard_mm?: unknown } | null; presses?: Array<{ standard_billet_mm?: unknown }> } | null;
+  const draftDue = (((draft.data as { lines?: Array<{ job_id?: string | null; due_date?: string | null }> } | null)?.lines ?? [])
+    .filter(line => line.job_id === id && line.due_date).map(line => String(line.due_date)).sort()[0]) ?? null;
   if (company.error || !company.data) return fail(404, "Company not found", label);
-  const p = profile.data as any, o = order.data as any, b = billet.data as any;
+  const p = profile.data as any, o = order.data as any;
+  const b = { chosen_mm: billetInputs?.current?.chosen_mm, recommended_mm: billetInputs?.current?.recommended_mm, standard_mm: billetInputs?.current?.standard_mm ?? (j.machine_id ? billetInputs?.presses?.[0]?.standard_billet_mm : null) } as any;
   // The approved inspection plan for the profile, else the company default (as quality entry uses it).
   const plans = await supabase.from("inspection_plans").select("id, profile_id, sampling_instruction, version").eq("company_id", ctx.companyId).eq("status", "approved")
     .or(j.profile_id ? `profile_id.eq.${j.profile_id},profile_id.is.null` : "profile_id.is.null");
@@ -147,7 +153,7 @@ export async function loadJobCardPdf(supabase: Client, ctx: PdfContext, id: stri
   const bytes = await buildJobCardPdf({
     company: { name: company.data.name },
     job: { job_number: label, status: j.status, planned_date: j.planned_date, shift: j.shift, machine: (machine.data as any)?.machine_name ?? null, order_number: o?.order_number ?? null,
-      customer: customer ? customer.company_name || customer.customer_name : null, due_date: (draft.data as any)?.due_date ?? o?.expected_dispatch_date ?? null,
+      customer: customer ? customer.company_name || customer.customer_name : null, due_date: draftDue ?? o?.expected_dispatch_date ?? null,
       planned_kg: num(j.planned_quantity_kg), pieces: num(j.pieces), planned_meters: num(j.planned_meters), cut_length_m: num(j.length_per_piece_m) ?? num(j.cut_length),
       finishing_type: j.finishing_type ?? null, remarks: j.remarks ?? null },
     profile: { code: p?.profile_code ?? null, name: p?.profile_name ?? null, kg_per_m: num(j.section_weight_kg_per_m) ?? num(p?.section_weight_kg_per_m), alloy: p?.alloy ?? null, temper: p?.temper ?? null, special_notes: p?.special_production_notes ?? null },

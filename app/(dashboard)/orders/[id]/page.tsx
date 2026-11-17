@@ -1,6 +1,9 @@
 import { ComplaintForm } from "@/components/modules/autopilot-batch6/ncr";
 import { COMPLAINT_LOGGERS } from "@/lib/autopilot-batch6/commands";
 import { OrderDelayPanel } from "@/components/modules/autopilot-batch7/delay";
+import { OrderEquivalentsPanel } from "@/components/modules/autopilot-batch10/equivalents";
+import { EQUIVALENT_ROLES } from "@/lib/autopilot-batch10/commands";
+import { getBusinessDateBoundaries as equivalentsToday } from "@/lib/utils/business-date";
 import { DELAY_READERS } from "@/lib/autopilot-batch7/commands";
 import { RestrictionPanel } from "@/components/modules/approvals/exception-requests";
 import { canRequestException } from "@/lib/workflow/exception-requests";
@@ -542,6 +545,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       {!context.dealerId && ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "sales_manager", "quality", "production_manager", "production"].includes(context.role) ? <PackingPlanPanel orderId={id} /> : null}
       {!context.dealerId && (SHARE_ROLES as readonly string[]).includes(context.role) ? <OrderStatusLinkPanel orderId={id} /> : null}
       {!context.dealerId && (DELAY_READERS as readonly string[]).includes(context.role) ? <OrderDelayPanel orderId={id} /> : null}
+      {!context.dealerId && (EQUIVALENT_ROLES as readonly string[]).includes(context.role) ? <OrderEquivalentsPanel orderId={id} today={equivalentsToday().today} /> : null}
       {!context.dealerId && (COMPLAINT_LOGGERS as readonly string[]).includes(context.role) && orderRow.customer_id ? <ComplaintForm customerId={String(orderRow.customer_id)} orderId={id} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="order" id={id} role={context.role} /> : null}
     </div>

@@ -52,7 +52,7 @@ test("AP-038 GSTIN check digit, state fill and the explicit unregistered choice 
 
 test("AP-001 scheduled jobs run once per window, manual runs are labelled, and three failed windows raise one alert", async () => {
   const first = await f.cron("nightly");
-  assert.equal(first.runs.length, 26, "thirteen nightly jobs for each of the two companies, including billet forecasts, late-line predictions, the batch 6 nightly jobs, batch 8 customer health and the batch 9 cash snapshot");
+  assert.equal(first.runs.length, 28, "fourteen nightly jobs for each of the two companies, including billet forecasts, late-line predictions, the batch 6 nightly jobs, batch 8 customer health, the batch 9 cash snapshot and batch 10 make-to-stock suggestions");
   assert.ok(first.runs.every(run => run.state === "succeeded"), JSON.stringify(first.runs));
   const again = await f.cron("nightly");
   assert.ok(again.runs.every(run => run.state === "already_ran"), "a retried cron call in the same window does nothing");
@@ -445,8 +445,9 @@ test("every new table has RLS and company scoping, and only the intended functio
   // Batch 7 adds ap_delay, ap_price, ap_quality and ap_statement; tests/autopilot-batch7-sql.test.mjs covers them.
   // Batch 8 adds ap_capacity, ap_customer_health, ap_die_window, ap_mtc, ap_spc and ap_views; tests/autopilot-batch8-sql.test.mjs covers them.
   // Batch 9 adds ap_cash_forecast, ap_enquiry, ap_geometry, ap_language, ap_rate_card, ap_register, ap_scale, ap_scrap_sale and ap_weight_note; tests/autopilot-batch9-sql.test.mjs covers them.
+  // Batch 10 adds ap_coating, ap_crew, ap_cut_combine, ap_energy, ap_equivalents, ap_stock_runs, ap_systems_order and ap_undo; tests/autopilot-batch10-sql.test.mjs covers them.
   // Batch 4 (dispatch and compliance) adds ap_dispatch, ap_eway, ap_freight, ap_order_status (also anonymous), ap_share and ap_tally; tests/autopilot-batch4-sql.test.mjs covers them.
-  assert.deepEqual(callable, ["ap_accounts", "ap_billet_length", "ap_billing", "ap_calendar", "ap_capacity", "ap_cash", "ap_cash_forecast", "ap_credit", "ap_customer_health", "ap_cutover", "ap_delay", "ap_die_window", "ap_dies", "ap_digest", "ap_dispatch", "ap_dupes", "ap_einvoice", "ap_enquiry", "ap_eway", "ap_finishing", "ap_freight", "ap_geometry", "ap_health", "ap_home_work", "ap_import", "ap_jobdrafts", "ap_jobs", "ap_language", "ap_mtc", "ap_navigation", "ap_ncr", "ap_offline", "ap_order_status", "ap_period", "ap_planning", "ap_pm", "ap_press", "ap_press_plan", "ap_price", "ap_proposals", "ap_quality", "ap_quote_sales", "ap_quotes", "ap_rate_card", "ap_register", "ap_reorder", "ap_reprice", "ap_sampling", "ap_scale", "ap_scrap", "ap_scrap_sale", "ap_series", "ap_share", "ap_spc", "ap_statement", "ap_stock", "ap_tally", "ap_tds", "ap_usual", "ap_views", "ap_weight", "ap_weight_note"]);
+  assert.deepEqual(callable, ["ap_accounts", "ap_billet_length", "ap_billing", "ap_calendar", "ap_capacity", "ap_cash", "ap_cash_forecast", "ap_coating", "ap_credit", "ap_crew", "ap_customer_health", "ap_cut_combine", "ap_cutover", "ap_delay", "ap_die_window", "ap_dies", "ap_digest", "ap_dispatch", "ap_dupes", "ap_einvoice", "ap_energy", "ap_enquiry", "ap_equivalents", "ap_eway", "ap_finishing", "ap_freight", "ap_geometry", "ap_health", "ap_home_work", "ap_import", "ap_jobdrafts", "ap_jobs", "ap_language", "ap_mtc", "ap_navigation", "ap_ncr", "ap_offline", "ap_order_status", "ap_period", "ap_planning", "ap_pm", "ap_press", "ap_press_plan", "ap_price", "ap_proposals", "ap_quality", "ap_quote_sales", "ap_quotes", "ap_rate_card", "ap_register", "ap_reorder", "ap_reprice", "ap_sampling", "ap_scale", "ap_scrap", "ap_scrap_sale", "ap_series", "ap_share", "ap_spc", "ap_statement", "ap_stock", "ap_stock_runs", "ap_systems_order", "ap_tally", "ap_tds", "ap_undo", "ap_usual", "ap_views", "ap_weight", "ap_weight_note"]);
   const definers = (await f.db.query(`select p.proname, p.proconfig from pg_proc p where p.pronamespace in ('public'::regnamespace,'private'::regnamespace) and p.proname like 'ap\\_%' and p.prosecdef`)).rows;
   for (const fn of definers) assert.ok(fn.proconfig?.some(c => c.startsWith("search_path=")), `${fn.proname} pins its search path`);
   // Rows of another company are invisible through direct reads.
@@ -477,7 +478,7 @@ test("AP-001 pg_cron runs the schedules through the private runner; Vercel keeps
   // pg_cron calls private.ap_jobs_run as the database owner, without a JWT.
   const run = (await f.db.query("select private.ap_jobs_run('nightly') data")).rows[0].data;
   // Nightly jobs × the two fixture companies (batch 6 adds four nightly jobs: 11 × 2).
-  assert.equal(run.runs.length, 26, "thirteen nightly jobs per company (batch 8 adds customer health, batch 9 the cash snapshot)");
+  assert.equal(run.runs.length, 28, "fourteen nightly jobs per company (batch 8 adds customer health, batch 9 the cash snapshot, batch 10 make-to-stock suggestions)");
   assert.ok(run.runs.every(r => r.state === "succeeded"), JSON.stringify(run.runs));
   const viaRoute = await f.cron("nightly");
   assert.ok(viaRoute.runs.every(r => r.state === "already_ran"), "the manual route in the same window does nothing after pg_cron ran");

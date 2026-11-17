@@ -105,6 +105,14 @@ const roleRules: RoleRule[] = [
   { prefix: "/payments/cash-forecast", roles: ["owner", "admin", "accounts"] },
   { prefix: "/production/registers", roles: ["owner", "admin", "factory_manager", "production_manager", "production"] },
   { prefix: "/dispatches/bundles/weights", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "quality"] },
+  // Autopilot batch 10: press meter readings, press crew, coating runs, combined cut patterns, make-to-stock runs and
+  // equivalent-profile shortages.
+  { prefix: "/energy/press-meters", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "accounts"] },
+  { prefix: "/production/crew", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "quality"] },
+  { prefix: "/production/finishing/coating-runs", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "dispatch_manager"] },
+  { prefix: "/production/cutting/combine", roles: ["owner", "admin", "factory_manager", "production_manager", "production"] },
+  { prefix: "/production/capacity/stock-runs", roles: ["owner", "admin", "factory_manager", "production_manager", "sales_manager", "inventory_manager"] },
+  { prefix: "/orders/equivalents", roles: ["owner", "admin", "sales_manager", "sales", "quality", "production_manager", "factory_manager", "inventory_manager"] },
   { prefix: "/settings/access", roles: ["owner"] },
   // AP-007: stores, accounts and the plant head load and sign off their own opening sections.
   { prefix: "/settings/data/cutover", roles: ["owner", "admin", "accounts", "inventory_manager", "factory_manager", "production_manager", "sales_manager"] },

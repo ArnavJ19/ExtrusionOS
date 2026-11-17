@@ -1,3 +1,5 @@
+import { SystemOrderPanel } from "@/components/modules/autopilot-batch10/systems-order";
+import { SYSTEM_ORDER_ROLES } from "@/lib/autopilot-batch10/commands";
 import Link from "next/link";
 import { Calculator, Download, Edit, FileSpreadsheet, Layers, PackageCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -145,6 +147,8 @@ export default async function SystemProjectDetailPage({ params }: { params: Prom
           {configuration.order_id ? <p className="mt-1 text-sm font-semibold text-slate-600">Linked order is ready. <Link href="/production" className="font-black text-orange">Open production jobs</Link>.</p> : null}
         </CardContent>
       </Card>
+
+      {!context.dealerId && (SYSTEM_ORDER_ROLES as readonly string[]).includes(context.role) ? <SystemOrderPanel configurationId={id} /> : null}
 
       <ConfigurationRelease
         configurationId={id}

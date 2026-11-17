@@ -6,7 +6,7 @@ import { DOCUMENT_SERIES, type DocumentSeriesKey } from "../numbering/financial-
 export const PROPOSAL_TYPES = {
   "navigation.role_layout": { label: "Role navigation", home: "/settings/navigation", noun: "navigation" },
   "period.close_month": { label: "Month close", home: "/invoices/periods", noun: "month close" },
-  "series.adopt": { label: "Financial-year numbering", home: "/settings/numbering", noun: "number series" },
+  "series.adopt": { label: "Financial-year numbering", home: "/invoices/numbering", noun: "number series" },
   "production.expected_output": { label: "Expected output", home: "/production", noun: "job close" },
   "die.service_due": { label: "Die service", home: "/dies", noun: "die service" },
   "maintenance.pm_due": { label: "Preventive maintenance", home: "/production/floor", noun: "maintenance window" },

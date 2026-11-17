@@ -1,5 +1,6 @@
 "use client";
 
+import { DictationTextarea } from "@/components/ui/voice-input";
 import { useState } from "react";
 import Link from "next/link";
 import { fmtWhen } from "@/lib/order-to-cash/commands";
@@ -83,8 +84,8 @@ export function NcrRecord({ id, canDecide }: { id: string; canDecide: boolean })
         <Action secondary disabled={reason.trim().length < 10} run={() => save("dismiss", { reason: reason.trim() }, "Dismissed with the reason recorded.")}>Dismiss draft</Action>
       </div> : null}
       {canDecide && n.status === "open" ? <div className="space-y-3 border-t pt-3">
-        <Field label="Cause"><textarea className={`${inputClass} min-h-20 py-2`} value={cause ?? n.cause ?? ""} maxLength={2000} onChange={e => setCause(e.target.value)} /></Field>
-        <Field label="Corrective action"><textarea className={`${inputClass} min-h-20 py-2`} value={action ?? n.action ?? ""} maxLength={2000} onChange={e => setAction(e.target.value)} /></Field>
+        <Field label="Cause"><DictationTextarea className={`${inputClass} min-h-20 py-2`} value={cause ?? n.cause ?? ""} maxLength={2000} onChange={setCause} /></Field>
+        <Field label="Corrective action"><DictationTextarea className={`${inputClass} min-h-20 py-2`} value={action ?? n.action ?? ""} maxLength={2000} onChange={setAction} /></Field>
         <div className="flex flex-wrap gap-2"><Action secondary run={() => save("update", { ...(cause?.trim() ? { cause: cause.trim() } : {}), ...(action?.trim() ? { action: action.trim() } : {}) }, "Saved.")}>Save cause and action</Action>
           <Action disabled={!(n.cause || cause?.trim()) || !(n.action || action?.trim())} run={() => save("close", {}, "NCR closed.")}>Close NCR</Action></div>
       </div> : null}
@@ -100,7 +101,7 @@ export function ComplaintForm({ customerId, orderId, dispatchId }: { customerId:
   const [text, setText] = useState(""); const [note, setNote] = useState<Note>(null); const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [ncr, setNcr] = useState<string | null>(null);
   return <Section title="Log a customer complaint" description="QC receives a draft NCR linked to this customer and order.">
-    <Field label="What the customer reported"><textarea className={`${inputClass} min-h-20 py-2`} value={text} maxLength={1000} onChange={e => setText(e.target.value)} /></Field>
+    <Field label="What the customer reported"><DictationTextarea className={`${inputClass} min-h-20 py-2`} value={text} maxLength={1000} onChange={setText} /></Field>
     <Message value={note} />
     <Action disabled={text.trim().length < 10} run={async () => {
       const data = await write<{ ncr_id: string }>("ap_ncr", "log_complaint", { request_id: requestId, customer_id: customerId, ...(orderId ? { order_id: orderId } : {}), ...(dispatchId ? { dispatch_id: dispatchId } : {}), description: text.trim() }, setNote, "Complaint logged. QC has a draft NCR.");

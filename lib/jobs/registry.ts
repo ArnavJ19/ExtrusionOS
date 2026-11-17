@@ -40,6 +40,7 @@ export const JOBS = [
   { job_key: "receivables.statements", schedule: "morning", label: "Prepare monthly customer statements" },
   { job_key: "series.propose", schedule: "nightly", label: "Propose financial-year numbering" },
   { job_key: "stock.arrival_reservations", schedule: "hourly", label: "Propose reservations for arriving stock" },
+  { job_key: "stock.make_to_stock", schedule: "nightly", label: "Suggest make-to-stock runs" },
   { job_key: "stock.reorder", schedule: "nightly", label: "Propose purchase requisitions" }
 ] as const satisfies ReadonlyArray<{ job_key: string; schedule: JobSchedule; label: string }>;
 export type JobKey = (typeof JOBS)[number]["job_key"];

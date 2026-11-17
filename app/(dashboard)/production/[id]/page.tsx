@@ -22,6 +22,10 @@ import { PressJobPanel } from "@/components/modules/press/press-job-panel";
 import { BilletLengthPanel } from "@/components/modules/autopilot-batch6/billet-length";
 import { JobDieWarnings } from "@/components/modules/autopilot-batch8/die-availability";
 import { JobRegisterRows } from "@/components/modules/autopilot-batch9/job-registers";
+import { JobEnergyPanel } from "@/components/modules/autopilot-batch10/energy";
+import { JobCrewPanel } from "@/components/modules/autopilot-batch10/crew";
+import { JobCutPanel } from "@/components/modules/autopilot-batch10/cut-combine";
+import { CREW_ROLES, CUT_ROLES, ENERGY_ROLES } from "@/lib/autopilot-batch10/commands";
 
 const SCRAP_RECORD_LIMIT = 200;
 
@@ -115,6 +119,9 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
       {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production"].includes(context.role) && ["planned", "ready", "on_hold"].includes(String(job.status))
         ? <BilletLengthPanel jobId={id} canChoose={["owner", "admin", "factory_manager", "production_manager"].includes(context.role)} /> : null}
       {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production"].includes(context.role) ? <JobRegisterRows jobId={id} /> : null}
+      {!context.dealerId && (CUT_ROLES as readonly string[]).includes(context.role) ? <JobCutPanel jobId={id} /> : null}
+      {!context.dealerId && (CREW_ROLES as readonly string[]).includes(context.role) ? <JobCrewPanel jobId={id} /> : null}
+      {!context.dealerId && (ENERGY_ROLES as readonly string[]).includes(context.role) ? <JobEnergyPanel jobId={id} /> : null}
       <ProductionOutputWorkflow job={floorJob} canUpdate={canUpdate} canCorrect={canCorrect} />
       {!context.dealerId ? <WorkRequirementsPanel companyId={context.companyId} role={context.role} stage="production" orderId={job.order_id} /> : null}
       {!context.dealerId && canFollow(context.role, "production_job") ? <RecordFollow entityType="production_job" entityId={id} /> : null}

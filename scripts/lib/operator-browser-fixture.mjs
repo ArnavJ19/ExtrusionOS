@@ -22,7 +22,7 @@ export async function createOperatorBrowserFixture() {
     "next/link": `import React from 'react';export default function Link({children,...props}){return <a {...props}>{children}</a>}`,
     "next/navigation": `export function useRouter(){return {refresh(){window.operatorFixture.refreshes++}}}`,
     "@/lib/actions/notifications": `export async function markNotificationReadAction(id){window.operatorFixture.receipts.push(id);return {success:true}}`,
-    "sonner": `export const toast={error(message){window.operatorFixture.errors.push(message)}};`
+    "sonner": `export const toast={error(message){window.operatorFixture.errors.push(message)},success(){}};`
   };
   const bundle = await build({ stdin: { sourcefile: "operator-acceptance.tsx", resolveDir: process.cwd(), loader: "tsx", contents: `
     import React from 'react';import {createRoot} from 'react-dom/client';import {CustomerAliasManager,CustomerCommitments,LocationGuidance,ProductionExceptions,CustomerCommitmentQueue} from './components/modules/operations/operator-tools';import {NotificationsClient} from './components/modules/notifications-client';

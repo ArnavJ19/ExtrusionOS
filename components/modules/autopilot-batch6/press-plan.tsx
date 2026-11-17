@@ -6,6 +6,9 @@ import { fmtDay, fmtWhen } from "@/lib/order-to-cash/commands";
 import { Empty, Failure, Loading, Message, Pager, Pill, Section, inputClass, useApRead } from "../order-to-cash/ui";
 import { Action, Field, NumberInput, Stat, kg, write, type Note, type Queue } from "./shared";
 
+// The database names the billet state by its stored value ("not_required"); people read it as words.
+const reasonText = (reason: string) => reason.replace(/billets ([a-z_]+)\./, (_, state: string) => `billets ${state.replaceAll("_", " ")}.`);
+
 type Line = { id: string; job_id: string; job_number: string | null; order_number: string | null; profile_code: string | null; die_number: string | null; alloy: string | null; machine_id: string;
   machine_name: string; shift: string; planned_start_at: string; planned_end_at: string; capacity_kg: number; sequence_number: number; reasons: string[]; origin: string; edited: boolean; removed: boolean };
 type View = { plan_date: string; can_plan?: boolean; draft: null | { id: string; status: string; generated_at: string; generated_by_name: string; edit_count: number; inputs_changed: boolean; basis: Record<string, unknown>;
@@ -32,7 +35,7 @@ export function PressPlanDraft({ initialDate, canEdit }: { initialDate?: string;
         {canEdit ? <Action secondary run={async () => { const r = await write<View>("ap_press_plan", "prepare", { date: date || v?.plan_date }, setNote, "Draft rebuilt from current facts. Earlier draft edits for this date are superseded."); apply(r); setRev(x => x + 1); }}>{v?.draft ? "Rebuild draft" : "Prepare draft now"}</Action> : null}</div>
       <Message value={note} />
       {read.error ? <Failure text={read.error} /> : read.loading && !v ? <Loading what="the draft plan" /> : !v?.draft ? <Empty>No draft for {fmtDay(v?.plan_date)} yet. The overnight job prepares one; a planner can prepare it now.</Empty> : <>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><Stat label="Status" value={v.draft.status} tone={v.draft.status === "published" ? "ok" : undefined} /><Stat label="Jobs placed" value={live.length} />
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><Stat label="Status" value={v.draft.status.charAt(0).toUpperCase() + v.draft.status.slice(1)} tone={v.draft.status === "published" ? "ok" : undefined} /><Stat label="Jobs placed" value={live.length} />
           <Stat label="Could not schedule" value={v.unscheduled.length} tone={v.unscheduled.length ? "warn" : undefined} /><Stat label="Planner edits" value={v.draft.edit_count} tone={v.draft.edit_count >= 5 ? "warn" : undefined} /></div>
         <p className="text-xs text-neutral-600">Prepared {fmtWhen(v.draft.generated_at)} by {v.draft.generated_by_name}. {String(v.draft.basis.order ?? "")}{v.draft.published_at ? ` Published ${fmtWhen(v.draft.published_at)} by ${v.draft.published_by_name}.` : ""}</p>
         {v.draft.inputs_changed && v.draft.status === "draft" ? <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">The schedule, jobs or capacity changed since this draft was prepared. Publishing still runs every schedule check; rebuild if the changes matter.</p> : null}
@@ -40,7 +43,7 @@ export function PressPlanDraft({ initialDate, canEdit }: { initialDate?: string;
           <ul className="divide-y">{lines.map(l => <PlanLine key={l.id} line={l} view={v} canEdit={canEdit && v.draft!.status === "draft"} onChanged={apply} setNote={setNote} />)}</ul></article>)}
         {v.unscheduled.length ? <article className="min-w-0 rounded-xl border border-amber-200 bg-amber-50 p-3"><h3 className="font-bold">Could not be scheduled</h3>
           <ul className="divide-y divide-amber-200">{v.unscheduled.map(u => <li key={u.job_id} className="py-2 text-sm"><Link className="font-semibold underline" href={`/production/${u.job_id}`}>{u.job_number ?? "Job"}</Link> · {u.order_number ?? ""} · {kg(u.planned_quantity_kg)}
-            <ul className="list-disc pl-5">{u.reasons.map(r => <li key={r}>{r}</li>)}</ul>{canEdit && v.draft!.status === "draft" ? <AddLine jobId={u.job_id} view={v} onChanged={apply} setNote={setNote} /> : null}</li>)}</ul></article> : null}
+            <ul className="list-disc pl-5">{u.reasons.map(r => <li key={r}>{reasonText(r)}</li>)}</ul>{canEdit && v.draft!.status === "draft" ? <AddLine jobId={u.job_id} view={v} onChanged={apply} setNote={setNote} /> : null}</li>)}</ul></article> : null}
         <Section title="Already published for this day" description="Slots already in the schedule. The draft adds jobs without a slot; it does not move published slots.">
           {!v.published.length ? <Empty>Nothing is published for this day yet.</Empty> : <ul className="divide-y text-sm">{v.published.map(p => <li key={p.slot_id} className="py-2">{p.machine_name} · {p.shift} · {time(p.planned_start_at)}–{time(p.planned_end_at)} · {p.job_number ?? ""} · {kg(p.capacity_kg)} <Pill value={p.status} /></li>)}</ul>}
         </Section>
@@ -60,7 +63,7 @@ function PlanLine({ line, view, canEdit, onChanged, setNote }: { line: Line; vie
   const [machine, setMachine] = useState(line.machine_id); const [shift, setShift] = useState(line.shift); const [start, setStart] = useState(toLocal(line.planned_start_at)); const [end, setEnd] = useState(toLocal(line.planned_end_at)); const [qty, setQty] = useState(String(line.capacity_kg));
   return <li className={`py-3 text-sm ${line.removed ? "opacity-60" : ""}`}>
     <div className="flex flex-wrap items-start justify-between gap-2"><div className="min-w-0"><p className="font-semibold">{time(line.planned_start_at)}–{time(line.planned_end_at)} · {line.shift} · <Link className="underline" href={`/production/${line.job_id}`}>{line.job_number ?? "Job"}</Link> · {line.profile_code ?? ""} · die {line.die_number ?? "—"} · {kg(line.capacity_kg)}</p>
-      <ul className="list-disc pl-5 text-xs text-neutral-600">{line.reasons.map(r => <li key={r}>{r}</li>)}</ul></div>
+      <ul className="list-disc pl-5 text-xs text-neutral-600">{line.reasons.map(r => <li key={r}>{reasonText(r)}</li>)}</ul></div>
       <div className="flex flex-wrap gap-1">{line.removed ? <Pill value="cancelled" label="Removed" /> : line.edited ? <Pill value="pending" label="Edited" /> : null}</div></div>
     {canEdit ? <div className="mt-2 flex flex-wrap gap-2">
       <Action secondary run={async () => onChanged(await write<View>("ap_press_plan", "edit_line", { line_id: line.id, remove: true }, setNote, line.removed ? "Line restored." : "Line removed from the draft."))}>{line.removed ? "Restore" : "Remove"}</Action>

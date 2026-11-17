@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { offerUndo } from "@/components/ui/undo-toast";
+import { taskUndoTarget } from "@/lib/undo/registry";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { TaskCreateForm, type TaskDealerOption as DealerOption, type TaskUserOption as UserOption } from "@/components/modules/task-create-form";
@@ -20,11 +22,19 @@ export function TasksDashboardClient({ context, tasks, users, dealers }: { conte
   const priorityCounts = ["urgent", "high", "normal", "low"].map((priority) => ({ priority, count: tasks.filter((task) => task.priority === priority).length }));
   const peopleStats = visibleUsers.map((user) => ({ user, assigned: tasks.filter((task) => task.assigned_to === user.id).length, completed: tasks.filter((task) => task.assigned_to === user.id && task.status === "completed").length })).filter((row) => row.assigned > 0 || row.completed > 0);
 
-  async function updateStatus(id: string, status: string) {
+  async function patchStatus(id: string, status: string) {
     const response = await fetch("/api/tasks", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status }) });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) return toast.error(payload.error ?? "Could not update task");
-    toast.success("Task updated");
+    return response.ok ? { success: true } : { success: false, error: String(payload.error ?? "Could not update task") };
+  }
+  async function updateStatus(id: string, status: string) {
+    const task = tasks.find(row => row.id === id);
+    const result = await patchStatus(id, status);
+    if (!result.success) return toast.error(result.error);
+    // AP-093: a status move can be put back for a few seconds through the same task update.
+    const previous = task ? taskUndoTarget(task.status, status) : null;
+    if (previous) offerUndo({ kind: "task.status", target: id, message: `Task moved to ${labelize(status)}`, undo: async () => { const back = await patchStatus(id, previous); if (back.success) router.refresh(); return back; } });
+    else toast.success("Task updated");
     router.refresh();
   }
 

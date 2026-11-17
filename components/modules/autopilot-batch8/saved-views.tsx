@@ -5,6 +5,7 @@
 // follow the person to another computer.
 import { useEffect, useRef, useState } from "react";
 import { Star, Trash2 } from "lucide-react";
+import { offerUndo } from "@/components/ui/undo-toast";
 import { clearDefaultViewAction, defaultViewAction, deleteViewAction, listViewsAction, saveViewAction, setDefaultViewAction, type SavedView } from "@/lib/preferences/saved-views-client";
 
 /** On first load without filters in the URL, applies the person's default view for this page (once). */
@@ -58,9 +59,18 @@ export function SavedViewsMenu({ pageKey, query, onApply, onSaved, appliedDefaul
       {views?.length ? <ul className="divide-y rounded-xl border">{views.map(view => <li key={view.id} className="flex items-center gap-2 p-2">
         <button type="button" className="min-w-0 flex-1 truncate text-left font-semibold underline-offset-2 hover:underline" onClick={() => { onApply(view.query, view.name); setOpen(false); }}>{view.name}{view.is_default ? " (default)" : ""}</button>
         <button type="button" disabled={busy} aria-label={view.is_default ? `Stop using ${view.name} as default` : `Make ${view.name} my default`} title={view.is_default ? "Stop using as default" : "Make my default"}
-          onClick={() => void act(() => view.is_default ? clearDefaultViewAction(pageKey) : setDefaultViewAction(view.id), view.is_default ? "No default view now." : `${view.name} opens by default.`)}
+          onClick={async () => {
+            // AP-093: the previous default (or none) can be restored for a few seconds.
+            const previous = views.find(v => v.is_default) ?? null; const message = view.is_default ? "No default view now." : `${view.name} opens by default.`;
+            if (await act(() => view.is_default ? clearDefaultViewAction(pageKey) : setDefaultViewAction(view.id), message)) offerUndo({ kind: "saved_view.default", target: pageKey, message,
+              undo: async () => { const r = previous ? await setDefaultViewAction(previous.id) : await clearDefaultViewAction(pageKey); if (r.success) { setNote("Default view restored."); await load(); } return r; } });
+          }}
           className={`rounded-lg p-1.5 ${view.is_default ? "text-amber-600" : "text-neutral-400"}`}><Star className="h-4 w-4" fill={view.is_default ? "currentColor" : "none"} /></button>
-        <button type="button" disabled={busy} aria-label={`Remove ${view.name}`} onClick={() => void act(() => deleteViewAction(view.id), "View removed.")} className="rounded-lg p-1.5 text-neutral-400 hover:text-rose-600"><Trash2 className="h-4 w-4" /></button>
+        <button type="button" disabled={busy} aria-label={`Remove ${view.name}`} onClick={async () => {
+          // AP-093: a removed view can be saved again with the same name, filters and default for a few seconds.
+          if (await act(() => deleteViewAction(view.id), "View removed.")) offerUndo({ kind: "saved_view.delete", target: pageKey, message: `View "${view.name}" removed.`,
+            undo: async () => { const r = await saveViewAction({ page_key: pageKey, name: view.name, query: view.query, make_default: view.is_default }); if (r.success) { setNote("View restored."); await load(); } return r; } });
+        }} className="rounded-lg p-1.5 text-neutral-400 hover:text-rose-600"><Trash2 className="h-4 w-4" /></button>
       </li>)}</ul> : null}
       <form className="space-y-2" onSubmit={async e => {
         e.preventDefault(); if (!name.trim()) return;

@@ -393,6 +393,7 @@ export default function EnergyPage() {
         <PageHeader
           title="Energy and Furnace Monitoring"
           description="Track machine-wise consumption with editable rates and multiple electricity/energy sources."
+          actions={<a href="/energy/press-meters" className="inline-flex min-h-10 items-center rounded-xl bg-neutral-950 px-3 text-sm font-semibold text-white">Press meter readings by shift</a>}
         />
         <div className="flex gap-2">
           <input

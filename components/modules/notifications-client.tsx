@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { markNotificationReadAction } from "@/lib/actions/notifications";
+import { offerUndo, recordUndo } from "@/components/ui/undo-toast";
 import { formatDate } from "@/lib/utils/format";
 
 export type NotificationInboxItem = {
@@ -41,6 +42,9 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
 
       setReadIds(current => [...new Set([...current, notificationId])]);
       setPendingId(null);
+      // AP-093: reading a notification by mistake can be undone for a few seconds (the person's own notifications only).
+      offerUndo({ kind: "notification.read", target: notificationId, message: "Marked as read",
+        undo: async () => { const back = await recordUndo("notification.read", notificationId, { id: notificationId }); if (back.success) { setReadIds(current => current.filter(id => id !== notificationId)); router.refresh(); } return back; } });
       router.refresh();
     });
   }

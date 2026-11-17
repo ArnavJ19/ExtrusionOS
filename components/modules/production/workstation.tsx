@@ -7,6 +7,7 @@ import { workstationAction,switchWorkstationOperatorAction } from "@/lib/actions
 import { stationPreferenceKey,workstationExpired,type WorkstationResult } from "@/lib/workflow/workstation";
 import { dispatchDraftKey } from "@/lib/forms/dispatch-draft";
 import { PressStation } from "@/components/modules/press/press-station";
+import { StationCrew } from "@/components/modules/autopilot-batch10/crew";
 import { FloorLanguageToggle } from "@/components/modules/autopilot-batch9/floor-language";
 import { floorText, type FloorLanguage } from "@/lib/i18n/floor";
 type Station=Extract<WorkstationResult,{kind:"stations"}>["items"][number];
@@ -47,6 +48,7 @@ export function Workstation({companyId,userId,operatorName,today,lang="en"}:{com
       <Button type="button" disabled={pending||!stations.some(s=>s.id===machine)} onClick={open}>{t("ws.open")}</Button></section>:<section aria-label="Station work queue" className="space-y-3"><h2 className="text-xl font-bold">{session.name}</h2>
       <PressStation key={session.id} lang={lang} companyId={companyId} userId={userId} sessionId={session.id} today={today}
         onExpired={(text)=>{setQueue(null);setLocked(true);setMessage(text);}} onRenewed={(expiresAt)=>setSession(current=>current&&current.id===session.id&&current.expires_at!==expiresAt?{...current,expires_at:expiresAt}:current)}/>
+      <StationCrew machineId={session.machine_id} machineName={session.name}/>
       <h3 className="pt-2 text-lg font-bold">{t("ws.queue")}</h3>
       {queue?queue.items.length?queue.items.map(job=><Link href={`/production/${job.id}`} key={job.id} className="block rounded-2xl border bg-white p-4"><span className="font-bold">{job.job_number}</span><span className="block text-sm">{job.status.replaceAll("_"," ")} / {job.planned_quantity_kg??t("ws.uncaptured")} kg</span><span className="mt-2 block font-semibold underline">{t("ws.openJob")}</span></Link>):<p>{t("ws.noQueue")}</p>:<p role="status">{t("ws.checking")}</p>}
     </section>}
