@@ -80,3 +80,19 @@ test("The morning intelligence job is registered on both sides and the gateways 
   }
   assert.doesNotMatch(sql, /grant (select|insert|update|delete)[^;]* to authenticated/i, "no direct table grants");
 });
+
+test("FS-38 the morning route hands each queued brief to the provider once and records the outcome", async () => {
+  const { deliverOwnerBriefs } = await import("../lib/intelligence/brief-delivery.ts");
+  const calls = [];
+  const admin = { rpc: async (name, args) => { calls.push([name, args.p_command, args.p_payload]);
+    return args.p_command === "pending" ? { data: [{ id: "a", address: "owner@x.in", subject: "Brief", message: "Text" }, { id: "b", address: "bad@x.in", subject: "Brief", message: "Text" }], error: null } : { data: {}, error: null }; } };
+  const sent = [];
+  const result = await deliverOwnerBriefs(admin, async p => { sent.push(p.to); return p.to === "bad@x.in" ? { success: false, error: "rejected" } : { success: true, provider: "resend" }; });
+  assert.deepEqual(result, { sent: 1, failed: 1 });
+  assert.deepEqual(sent, ["owner@x.in", "bad@x.in"]);
+  assert.deepEqual(calls.slice(1).map(c => c[2]), [{ id: "a", state: "sent" }, { id: "b", state: "failed", error: "rejected" }]);
+  const down = await deliverOwnerBriefs({ rpc: async () => ({ data: null, error: { code: "42501" } }) }, async () => ({ success: true, provider: "resend" }));
+  assert.equal(down.sent, 0);
+  const vercel = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
+  assert.deepEqual(vercel.crons, [{ path: "/api/cron/morning", schedule: "40 2 * * *" }], "after the 02:30 UTC pg_cron morning run, once a day");
+});

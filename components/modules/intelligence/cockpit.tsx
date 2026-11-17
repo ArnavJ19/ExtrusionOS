@@ -7,7 +7,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { fmtDay, inr } from "@/lib/order-to-cash/commands";
 import { kgText, pct, tonnes, whatsappShareUrl } from "@/lib/intelligence/format";
-import { Failure, Loading, Message, Section, secondaryClass, useFsRead, type Note } from "./shared";
+import { Empty, Failure, Loading, Message, Section, secondaryClass, useFsRead, type Note } from "./shared";
 
 type Cockpit = { as_of: string; digest_generated_at: string; digest_date: string;
   yesterday: { production_kg: number | null; recovery_percent: number | null; recovery_missing_jobs: number; dispatch_kg: number; invoiced: number; collections: number; overdue: number; credit_holds: number; red_lines: number; idle_presses: number; owner_approvals: number };
@@ -15,7 +15,7 @@ type Cockpit = { as_of: string; digest_generated_at: string; digest_date: string
   billet: { free_kg: number; daily_use_kg: number | null; days: number | null }; otif: { percent: number | null; due: number; otif: number };
   metal: { net_kg: number; direction: string; over_limit: boolean; limit_kg: number | null };
   cash: { first_week_below_minimum: string | null; lowest_week: string | null; lowest_closing: number | null; opening_balance: number | null };
-  exceptions: { key: string; label: string; count: number; kg?: number; href: string }[]; message: string };
+  exceptions: { key: string; label: string; count: number; kg?: number; href: string }[]; message: string; periods: string | null };
 type Trend = { weeks: Record<string, { days: number; production_kg: number; dispatch_kg: number; invoiced: number; collections: number }> | null;
   months: Record<string, { days: number; production_kg: number; dispatch_kg: number; invoiced: number; collections: number }> | null; basis: string };
 
@@ -29,14 +29,15 @@ export function CockpitClient() {
   const d = useFsRead<Cockpit>("fs_cockpit", "today", {}, []);
   const [message, setMessage] = useState<Note>(null);
   const v = d.data;
+  const brief = v ? v.message + (v.periods ? `\n${v.periods}` : "") : "";
   if (d.loading && !v) return <Loading what="the owner cockpit" />;
   if (d.error) return <Failure text={d.error} />;
   if (!v) return null;
   const y = v.yesterday;
   return <div className="space-y-5">
     <div className="flex flex-wrap gap-2">
-      <a className={secondaryClass + " inline-flex items-center"} href={whatsappShareUrl(v.message)} target="_blank" rel="noopener noreferrer">Open in WhatsApp</a>
-      <button type="button" className={secondaryClass} onClick={async () => { try { await navigator.clipboard.writeText(v.message); setMessage({ tone: "ok", text: "Brief copied." }); } catch { setMessage({ tone: "error", text: "Copy is not available in this browser; select the text below." }); } }}>Copy brief</button>
+      <a className={secondaryClass + " inline-flex items-center"} href={whatsappShareUrl(brief)} target="_blank" rel="noopener noreferrer">Open in WhatsApp</a>
+      <button type="button" className={secondaryClass} onClick={async () => { try { await navigator.clipboard.writeText(brief); setMessage({ tone: "ok", text: "Brief copied." }); } catch { setMessage({ tone: "error", text: "Copy is not available in this browser; select the text below." }); } }}>Copy brief</button>
     </div>
     <Message value={message} />
     <Section title="Yesterday" description={`From the morning digest of ${fmtDay(v.digest_date)}, generated ${new Date(v.digest_generated_at).toLocaleString("en-IN")}.`}>
@@ -61,7 +62,9 @@ export function CockpitClient() {
         <span>{e.label}</span><span className={`font-black tabular-nums ${e.count > 0 ? "text-rose-700" : "text-neutral-500"}`}>{e.count}{e.kg ? ` · ${kgText(e.kg)}` : ""}</span></Link></li>)}</ul>
     </Section>
     <Trends />
-    <Section title="The brief as sent"><pre className="whitespace-pre-wrap rounded-xl bg-neutral-50 p-3 text-xs">{v.message}</pre></Section>
+    <Section title="The brief as sent" description="Every morning it appears in your notifications and is emailed to each owner with an address. WhatsApp delivery needs the WhatsApp Business API (not connected); use Open in WhatsApp.">
+      <pre className="whitespace-pre-wrap rounded-xl bg-neutral-50 p-3 text-xs">{v.message}{v.periods ? `\n${v.periods}` : ""}</pre></Section>
+    <Deliveries />
   </div>;
 }
 
@@ -74,5 +77,14 @@ function Trends() {
       <thead className="bg-neutral-50 text-left text-xs uppercase text-neutral-500"><tr><th className="p-2">Period</th><th className="p-2 text-right">Production</th><th className="p-2 text-right">Dispatch</th><th className="p-2 text-right">Invoiced</th><th className="p-2 text-right">Collected</th></tr></thead>
       <tbody>{row("This week", d.data.weeks?.this_week)}{row("Last week", d.data.weeks?.last_week)}{row("This month", d.data.months?.this_month)}{row("Last month", d.data.months?.last_month)}</tbody>
     </table></div> : null}
+  </Section>;
+}
+
+function Deliveries() {
+  const d = useFsRead<{ rows: { brief_date: string; channel: string; address: string; status: string; attempts: number; last_error: string | null; sent_at: string | null }[] }>("fs_cockpit", "deliveries", {}, []);
+  return <Section title="Email deliveries" description="The last two weeks of morning briefs by email.">
+    {d.loading && !d.data ? <Loading what="deliveries" /> : d.error ? <Failure text={d.error} /> : d.data?.rows.length ? <ul className="divide-y rounded-xl border text-sm">{d.data.rows.map((r, k) => <li key={k} className="flex flex-wrap justify-between gap-2 p-2">
+      <span>{fmtDay(r.brief_date)} · {r.address}</span><span className={r.status === "failed" ? "font-bold text-rose-700" : r.status === "sent" ? "text-emerald-700" : "text-neutral-600"}>{r.status === "sent" ? "Sent" : r.status === "failed" ? `Failed: ${r.last_error ?? "provider error"}` : `Queued (${r.attempts} attempt(s))`}</span></li>)}</ul>
+      : <Empty>No email brief yet. The first is queued by the next morning run for owners with an email address.</Empty>}
   </Section>;
 }

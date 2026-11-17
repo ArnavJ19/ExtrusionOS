@@ -39,6 +39,7 @@ import { quoteEditToken, type QuoteEditConflict, type QuoteEditToken } from "@/l
 import { ProfileTechnicalChoice } from "@/components/modules/profiles/technical-options";
 import { MaterialSuggestionsPanel } from "@/components/modules/shared/transaction-evidence";
 import { costingRateAction } from "@/lib/actions/costing-rates";
+import type { DieTerms } from "@/lib/intelligence/commands";
 import { applyApprovedRates, finishingRateKey, rateLookupSchema } from "@/lib/workflow/costing-rates";
 import { dieAmortizationTypes, labelize, type DieAmortizationType, type FinishingChargeType, type FinishingType, type QuoteStatus, type SessionContext } from "@/types/app";
 
@@ -397,6 +398,19 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId, e
       }
       return next;
     }));
+    if (key === "die_id" && value) void applyDevelopmentDieTerms(index, String(value));
+  }
+
+  // FS-54: a die released through the development pipeline brings its agreed charging terms into an empty die charge.
+  async function applyDevelopmentDieTerms(index: number, dieId: string) {
+    // The gateway takes the company and role from the session; a missing upgrade or a refused role simply applies nothing.
+    const result = await (supabase as { rpc?: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }> }).rpc?.("fs_development", { p_command: "die_terms", p_payload: { die_id: dieId } });
+    if (!result || result.error || !result.data) return;
+    const terms = result.data as NonNullable<DieTerms>;
+    if (Number(items[index]?.die_charge) > 0) return; // a charge someone already typed is kept
+    setItems((current) => current.map((item, itemIndex) => itemIndex !== index || item.die_id !== dieId || Number(item.die_charge) > 0 ? item
+      : { ...item, die_charge: Number(terms.die_charge) || 0, die_amortization_type: terms.amortization_type, die_amortization_quantity_kg: Number(terms.amortization_quantity_kg) || 0 }));
+    toast.info(`Die terms from ${terms.project_number} applied${terms.terms ? `: ${terms.terms}` : ""}.`);
   }
 
   async function selectCustomerProfileAlias(index: number, option: ProfileAliasOption) {

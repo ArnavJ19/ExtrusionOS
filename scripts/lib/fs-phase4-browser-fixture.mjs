@@ -28,7 +28,7 @@ export async function createPhase4BrowserFixture() {
   const aliases = {
     "next/link": "import React from 'react';export default function Link({href,children,onClick,prefetch,...props}){return <a href={href} onClick={event=>{event.preventDefault();onClick?.(event);window.navigations.push(href)}} {...props}>{children}</a>}",
     "next/navigation": "export const useRouter=()=>({refresh:()=>{window.refreshes++},push:href=>window.navigations.push(href),replace:href=>window.navigations.push(href)});export const usePathname=()=>window.pathname||'/';",
-    "@/lib/actions/intelligence": `export const intelligenceAction=async(rpc,command,payload={})=>{window.calls.push({rpc,command});return (${post("intelligence", "intelligenceAction")})(rpc,command,payload)};`,
+    "@/lib/actions/intelligence": `export const intelligenceAction=async(rpc,command,payload={})=>{window.calls.push({rpc,command});return (${post("intelligence", "intelligenceAction")})(rpc,command,payload)};export const correctionPhotoUrlAction=async()=>({success:false,error:'Photos are not part of this fixture.'});`,
     "@/lib/actions/autopilot": `export const autopilotAction=async(rpc,command,payload={})=>{window.calls.push({rpc,command});return (${post("autopilot", "autopilotAction")})(rpc,command,payload)};`,
     "@/lib/supabase/browser": `export function createClient(){return {channel(name){const handlers=[];let presence={};const ch={on(kind,filter,cb){handlers.push({kind,filter,cb});return ch},
       subscribe(cb){window.channels.push({name,handlers,ch});setTimeout(()=>cb('SUBSCRIBED'),0);return ch},presenceState(){return presence},async track(v){window.tracked.push({name,v})},
@@ -47,6 +47,7 @@ export async function createPhase4BrowserFixture() {
     import {CockpitClient} from './components/modules/intelligence/cockpit';
     import {WallClient} from './components/modules/intelligence/wall';
     import {LiveRefresh,EditingPresence} from './components/modules/intelligence/live';
+    import {DieLabels} from './components/modules/intelligence/die-labels';
     window.ids=${JSON.stringify(ids)};Object.assign(window,{calls:[],refreshes:0,navigations:[],channels:[],tracked:[]});
     window.liveChange=table=>window.channels.forEach(c=>c.handlers.filter(h=>h.kind==='postgres_changes'&&h.filter.table===table).forEach(h=>h.cb({})));
     window.presence=names=>window.channels.filter(c=>c.name.startsWith('presence:')).forEach(c=>c.ch._presence(Object.fromEntries(names.map((n,k)=>['u'+k,[{user_id:'other-'+k,name:n}]]))));
@@ -58,8 +59,9 @@ export async function createPhase4BrowserFixture() {
       else if(screen==='metal')node=<MetalExposureClient canSetLimit={o.limit===true}/>;
       else if(screen==='order-book')node=<OrderBookClient canSet={o.set===true}/>;
       else if(screen==='mrp')node=<MaterialPlanClient canApprove={o.approve===true}/>;
-      else if(screen==='die-life')node=<DieLifeClient canSetLead={o.lead===true} canSeeMakers={o.makers===true}/>;
-      else if(screen==='promise')node=<PromiseClient profiles={lists.profiles}/>;
+      else if(screen==='die-life')node=<DieLifeClient canSetLead={o.lead===true} canSeeMakers={o.makers===true} loop={{companyId:window.ids.company,canReport:o.report===true,canCorrect:o.correct===true,canDecide:o.decide===true}}/>;
+      else if(screen==='die-labels')node=<DieLabels/>;
+      else if(screen==='promise')node=<PromiseClient profiles={lists.profiles} canReflow={o.reflow===true}/>;
       else if(screen==='development')node=<><DevelopmentBoard canEdit={o.edit!==false} lists={lists}/><DevelopmentDatabase/></>;
       else if(screen==='development-detail')node=<><EditingPresence recordKey={'development:'+o.id} me={{id:userId,name:'Fixture me'}}/><DevelopmentDetail id={o.id} canEdit={o.edit!==false} lists={lists}/></>;
       else if(screen==='cockpit')node=<CockpitClient/>;

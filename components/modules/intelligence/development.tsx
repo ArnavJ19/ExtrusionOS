@@ -15,7 +15,8 @@ export type DevProject = { id: string; project_number: string; title: string; cu
   owner_id: string; owner_name: string; age_days: number; feasibility: { ccd_mm?: number; weight_kg_per_m?: number; min_wall_mm?: number; tongue_ratio?: number; press_id?: string; verdict?: string; note?: string } | null;
   die_cost: number | null; die_cost_payer: string | null; amortisation_terms: string | null; die_cost_approved_by_customer_at: string | null; die_vendor_id: string | null; vendor_name: string | null;
   expected_die_date: string | null; die_id: string | null; die_number: string | null; profile_id: string | null; profile_code: string | null; trial_count: number; sample_reference: string | null;
-  customer_approval_reference: string | null; drop_reason: string | null; trials: { id: string; trial_date: string; result: string | null; correction_required: boolean | null; recovery_percent: number | null; remarks: string | null }[];
+  customer_approval_reference: string | null; drop_reason: string | null; customer_die_charge: number | null; die_amortization_type: string | null; die_amortization_quantity_kg: number | null;
+  die_record_update: Record<string, unknown> | null; trials: { id: string; trial_date: string; result: string | null; correction_required: boolean | null; recovery_percent: number | null; remarks: string | null }[];
   events?: { from_stage: string | null; to_stage: string; note: string; owner: string | null; recorded_by: string; recorded_at: string }[] };
 type Lists = { customers: Option[]; users: Option[]; dies: Option[]; profiles: Option[]; vendors: Option[]; presses: Option[] };
 
@@ -70,6 +71,7 @@ export function DevelopmentDetail({ id, canEdit, lists }: { id: string; canEdit:
     </Section>
     {!closed && canEdit ? <MoveForm p={p} users={lists.users} setMessage={setMessage} onMoved={refresh} /> : null}
     <Facts p={p} lists={lists} editable={!closed && canEdit} setMessage={setMessage} onSaved={refresh} />
+    <DieTerms p={p} editable={!closed && canEdit} setMessage={setMessage} onSaved={refresh} />
     <Section title="Trials on the die" description="Recorded in the die's trial register.">
       {p.trials.length ? <ul className="divide-y rounded-xl border text-sm">{p.trials.map(t => <li key={t.id} className="p-2">{fmtDay(t.trial_date)} · {t.result ?? "no result"}{t.recovery_percent !== null ? ` · recovery ${t.recovery_percent}%` : ""}{t.correction_required ? " · correction required" : ""}{t.remarks ? ` · ${t.remarks}` : ""}</li>)}</ul>
         : <Empty>{p.die_id ? "No trial recorded on this die yet." : "Link the die to see its trials."}</Empty>}
@@ -151,5 +153,24 @@ export function DevelopmentDatabase({ initialStage }: { initialStage?: string })
       </table></div> : <Empty>No developments match.</Empty>}
       <Pager page={page} total={d.data.total_count} onPage={setPage} />
     </> : null}
+  </Section>;
+}
+
+const CHARGE_TYPES: Record<string, string> = { full_die_charge: "Full die charge on the first order", per_kg: "Amortised per kg", customer_paid: "Customer pays the die maker directly", waived: "Not charged (Omalco pays)" };
+
+/** FS-54: how the die is charged to the customer. Quotations read this when the die is chosen, and the quoted die charge
+ *  is billed once through the existing invoice die-charge line. Required before release when the customer pays. */
+function DieTerms({ p, editable, setMessage, onSaved }: { p: DevProject; editable: boolean; setMessage: (m: Note) => void; onSaved: () => void }) {
+  const [type, setType] = useState(p.die_amortization_type ?? ""); const [charge, setCharge] = useState(p.customer_die_charge?.toString() ?? ""); const [kg, setKg] = useState(p.die_amortization_quantity_kg?.toString() ?? "");
+  return <Section title="How the die is charged" description="Quotations for this die start from these terms; the die charge is then billed once on the invoice.">
+    {p.die_record_update && Object.keys(p.die_record_update).length ? <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-900">On release the die record was updated: {Object.entries(p.die_record_update).map(([k, v]) => `${k.replaceAll("_", " ")} ${k === "die_cost" ? inr(v) : String(v).replaceAll("_", " ")}`).join(", ")}.</p> : null}
+    <div className="flex flex-wrap items-end gap-2">
+      <label className="text-xs font-bold">Charging<select className={inputClass} disabled={!editable} value={type} onChange={e => setType(e.target.value)}><option value="">Choose…</option>{Object.entries(CHARGE_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+      {["full_die_charge", "per_kg"].includes(type) ? <label className="text-xs font-bold">Die charge to customer ₹<input className={`${inputClass} w-36`} inputMode="decimal" disabled={!editable} value={charge} onChange={e => setCharge(e.target.value)} /></label> : null}
+      {type === "per_kg" ? <label className="text-xs font-bold">Amortise over kg<input className={`${inputClass} w-32`} inputMode="decimal" disabled={!editable} value={kg} onChange={e => setKg(e.target.value)} /></label> : null}
+      {editable ? <button type="button" className={buttonClass} disabled={!type} onClick={async () => {
+        if (await fsWrite("fs_development", "set_die_terms", { id: p.id, die_amortization_type: type, ...(charge.trim() ? { customer_die_charge: Number(charge) } : {}), ...(type === "per_kg" && kg.trim() ? { die_amortization_quantity_kg: Number(kg) } : {}) }, setMessage, "Die terms saved.")) onSaved();
+      }}>Save terms</button> : null}
+    </div>
   </Section>;
 }

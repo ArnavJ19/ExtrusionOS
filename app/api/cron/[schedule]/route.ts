@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { isAuthorizedCronRequest } from "@/lib/jobs/cron-auth";
 import { jobScheduleSchema } from "@/lib/jobs/registry";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendEmail } from "@/lib/communications/email";
+import { deliverOwnerBriefs } from "@/lib/intelligence/brief-delivery";
 
 // AP-001: Vercel Cron calls GET /api/cron/<hourly|nightly|morning> with "Authorization: Bearer $CRON_SECRET".
 // The service-role key stays on the server; the only thing it may call here is public.ap_jobs_cron, which runs
@@ -16,10 +18,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ sche
   const schedule = jobScheduleSchema.safeParse((await params).schedule);
   if (!schedule.success) return NextResponse.json({ error: "Unknown schedule" }, { status: 404 });
   try {
-    const result = await createAdminClient().rpc("ap_jobs_cron", { p_payload: { schedule: schedule.data } });
+    const admin = createAdminClient();
+    const result = await admin.rpc("ap_jobs_cron", { p_payload: { schedule: schedule.data } });
     if (result.error) return NextResponse.json({ error: "The job runner could not start", code: result.error.code ?? null }, { status: 500 });
     const runs = ((result.data as { runs?: Array<{ job_key: string; state: string; run_id?: string }> })?.runs ?? []).map(run => ({ job_key: run.job_key, state: run.state, run_id: run.run_id ?? null }));
-    return NextResponse.json({ schedule: schedule.data, runs }, { status: runs.some(run => run.state === "failed") ? 207 : 200 });
+    // FS-38: the morning run also hands the queued owner briefs to the email provider (queued by intelligence.morning).
+    const briefs = schedule.data === "morning" ? await deliverOwnerBriefs(admin, sendEmail).catch(() => ({ sent: 0, failed: 0, error: "delivery failed" })) : undefined;
+    return NextResponse.json({ schedule: schedule.data, runs, ...(briefs ? { briefs } : {}) }, { status: runs.some(run => run.state === "failed") ? 207 : 200 });
   } catch {
     return NextResponse.json({ error: "The job runner is not configured on this deployment" }, { status: 500 });
   }

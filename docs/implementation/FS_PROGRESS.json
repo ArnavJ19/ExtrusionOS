@@ -311,6 +311,23 @@
    ],
    "report": "docs/implementation/FS_PHASE4_BATCH_1_REPORT.md",
    "user_override": "User asked for Phase 4 ('make it intelligent') while Phase 0-1 items remain open in the Codex workstream."
+  },
+  {
+   "batch_number": "phase4-1-completion",
+   "date": "2026-11-17",
+   "completed": [
+    "FS-16",
+    "FS-54",
+    "FS-26",
+    "FS-36"
+   ],
+   "still_partial": [
+    "FS-38"
+   ],
+   "migrations": [
+    "supabase/migrations/20261118130000_fs_phase4_completion.sql"
+   ],
+   "report": "docs/implementation/FS_PHASE4_BATCH_1_REPORT.md#completion-pass"
   }
  ],
  "items": [
@@ -702,7 +719,7 @@
    "id": "FS-16",
    "title": "Die management: life prediction and a closed correction loop",
    "priority": "High",
-   "status": "PARTIAL",
+   "status": "IMPLEMENTED",
    "prerequisites": [
     "FS-125"
    ],
@@ -710,7 +727,10 @@
    "implementation_evidence": [
     "Per die: lifetime kg, rated life (recorded) or median of >=3 retired dies of the type, 8-week rate, weeks left, open order demand, replacement lead time from the maker's own history or a value the die shop sets.",
     "Replacement flag when remaining life < demand + output during lead time; morning job raises/clears one warning per die.",
-    "Die makers ranked by kg per ₹1,000 of recorded die cost; amortisation recovered on invoices for customer-owned/shared dies; open correction loops with age."
+    "Die makers ranked by kg per ₹1,000 of recorded die cost; amortisation recovered on invoices for customer-owned/shared dies; open correction loops with age.",
+    "Correction loop: defect report with photo (documents bucket, company/die-scoped path) -> corrector's action with cost -> linked die trial result -> approve or send back; out-of-order steps refused; append-only steps; defect alert closes on approval.",
+    "Per-die history: last 10 runs with recovery and kg/h from recorded pushes, average recovery, corrections with their loop, nitriding and trials.",
+    "Die-rack QR labels (EO2 die payload resolved by the existing scanner) with rack and bin, printable."
    ],
    "modified_files": [
     "supabase/migrations/20261118120000_fs_phase4_planning_cockpit.sql",
@@ -720,7 +740,10 @@
     "lib/actions/intelligence.ts",
     "components/modules/intelligence/shared.tsx",
     "lib/auth/route-permissions.ts",
-    "lib/intelligence/destinations.ts"
+    "lib/intelligence/destinations.ts",
+    "supabase/migrations/20261118130000_fs_phase4_completion.sql",
+    "components/modules/intelligence/die-labels.tsx",
+    "app/(dashboard)/dies/life/labels/page.tsx"
    ],
    "tests": [
     "tests/fs-phase4-sql.test.mjs",
@@ -728,11 +751,9 @@
     "tests/fs-phase4-browser.test.mjs"
    ],
    "commit_reference": null,
-   "blockers": [
-    "Remaining: defect photo -> corrector action -> trial result -> approve/back loop UI; die-rack QR labels; per-die recovery/speed/defect history panel."
-   ],
-   "acceptance_status": "PARTIAL_LOCAL",
-   "batch": "phase4-1",
+   "blockers": [],
+   "acceptance_status": "LOCAL_ACCEPTED_STAGING_PENDING",
+   "batch": "phase4-1 + completion",
    "updated": "2026-11-17",
    "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
   },
@@ -883,7 +904,7 @@
    "id": "FS-26",
    "title": "A finite-capacity production scheduler",
    "priority": "High",
-   "status": "PARTIAL",
+   "status": "IMPLEMENTED",
    "prerequisites": [
     "FS-53"
    ],
@@ -891,7 +912,10 @@
    "implementation_evidence": [
     "Promise-date calculator reusing AP-069 capacity: earliest dispatch from free press capacity, the later return of an away die (AP-065 windows), finishing lead time and one packing day; blocking constraints stated.",
     "Breakdown re-flow: scheduled work on a press with an open breakdown, each order's promise and slack, at-risk when slack < days down, linked to delay notices.",
-    "Existing: AP-061 nightly draft plan, schedule board and AP-065 die windows."
+    "Existing EOS drag-and-drop press timeline (factory planning) and AP-061 auto-arrange (due date, die/alloy grouping, compatible presses, shifts, maintenance, die overlap, billets short) are the board and auto-arrange; drafts can be prepared for any day 14 ahead.",
+    "AP-061 builder now leaves out presses with an open breakdown and holds jobs whose die is away over the plan date, naming the return date.",
+    "Breakdown re-flow: preview and fingerprinted apply release the stopped press's unreleased slots, prepare new drafts without that press and notify planning; released slots are listed for a floor decision.",
+    "Die failure: dies out of service or away with scheduled work are listed with each order's promise and at-risk flag."
    ],
    "modified_files": [
     "supabase/migrations/20261118120000_fs_phase4_planning_cockpit.sql",
@@ -901,7 +925,8 @@
     "lib/actions/intelligence.ts",
     "components/modules/intelligence/shared.tsx",
     "lib/auth/route-permissions.ts",
-    "lib/intelligence/destinations.ts"
+    "lib/intelligence/destinations.ts",
+    "supabase/migrations/20261118130000_fs_phase4_completion.sql"
    ],
    "tests": [
     "tests/fs-phase4-sql.test.mjs",
@@ -910,10 +935,11 @@
    ],
    "commit_reference": null,
    "blockers": [
-    "Remaining: drag-and-drop finite board with enforced die/billet/shift constraints and automatic re-flow of the schedule itself; ageing ovens and finishing."
+    "Manual drag moves onto an away die still warn (AP-065 guardrail) rather than block.",
+    "Ageing ovens and finishing are deferred by the roadmap itself ('extend downstream later')."
    ],
-   "acceptance_status": "PARTIAL_LOCAL",
-   "batch": "phase4-1",
+   "acceptance_status": "LOCAL_ACCEPTED_STAGING_PENDING",
+   "batch": "phase4-1 + completion",
    "updated": "2026-11-17",
    "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
   },
@@ -1084,13 +1110,14 @@
    "id": "FS-36",
    "title": "Live screens without refresh",
    "priority": "High",
-   "status": "PARTIAL",
+   "status": "IMPLEMENTED",
    "prerequisites": [],
    "risk": [],
    "implementation_evidence": [
     "Realtime publication limited to the nine tables behind the live screens (guarded, idempotent); a change triggers a debounced server re-read, so RLS and calculations stay server-side.",
     "Live indicator ('updated just now', paused fallback with manual refresh) on press floor, order board, dispatch queue, approval inbox and notifications.",
-    "Production-office wall: each press, current job, kg/hour against the AP-066 shift target, next die, stoppage in red; presence note on development records."
+    "Production-office wall: each press, current job, kg/hour against the AP-066 shift target, next die, stoppage in red; presence note on development records.",
+    "Presence and live refresh added to order and dispatch detail pages (batch 10 now committed)."
    ],
    "modified_files": [
     "supabase/migrations/20261118120000_fs_phase4_planning_cockpit.sql",
@@ -1107,7 +1134,9 @@
     "lib/actions/intelligence.ts",
     "components/modules/intelligence/shared.tsx",
     "lib/auth/route-permissions.ts",
-    "lib/intelligence/destinations.ts"
+    "lib/intelligence/destinations.ts",
+    "app/(dashboard)/orders/[id]/page.tsx",
+    "app/(dashboard)/dispatches/[id]/page.tsx"
    ],
    "tests": [
     "tests/fs-phase4-sql.test.mjs",
@@ -1116,11 +1145,10 @@
    ],
    "commit_reference": null,
    "blockers": [
-    "Realtime delivery against hosted Supabase not verified (migration not applied).",
-    "Presence on order/dispatch detail pages deferred: those files carry uncommitted Autopilot batch 10 work."
+    "Realtime delivery against hosted Supabase not yet verified (migrations not applied) — the same staging/hosted gate as every other item."
    ],
-   "acceptance_status": "PARTIAL_LOCAL",
-   "batch": "phase4-1",
+   "acceptance_status": "LOCAL_ACCEPTED_STAGING_PENDING",
+   "batch": "phase4-1 + completion",
    "updated": "2026-11-17",
    "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
   },
@@ -1150,7 +1178,9 @@
    "risk": [],
    "implementation_evidence": [
     "Mobile-first owner cockpit: yesterday from the stored AP-080 digest (screen and message always agree), order book and days of load per press, billet stock in days, OTIF, metal position, 13-week cash low point, five exceptions; every tile links to its list.",
-    "Weekly and monthly trends from stored digests; WhatsApp-ready brief (copy or open in WhatsApp for the owner to send)."
+    "Weekly and monthly trends from stored digests; WhatsApp-ready brief (copy or open in WhatsApp for the owner to send).",
+    "Each morning the brief is posted in-app to owners once and queued per owner email; the morning cron route (and a Vercel cron at 02:40 UTC) sends it through the configured email provider with up to three attempts; deliveries are shown on the cockpit.",
+    "Mondays add last-7-day totals and the 1st adds last-month totals."
    ],
    "modified_files": [
     "supabase/migrations/20261118120000_fs_phase4_planning_cockpit.sql",
@@ -1160,7 +1190,11 @@
     "lib/actions/intelligence.ts",
     "components/modules/intelligence/shared.tsx",
     "lib/auth/route-permissions.ts",
-    "lib/intelligence/destinations.ts"
+    "lib/intelligence/destinations.ts",
+    "supabase/migrations/20261118130000_fs_phase4_completion.sql",
+    "lib/intelligence/brief-delivery.ts",
+    "app/api/cron/[schedule]/route.ts",
+    "vercel.json"
    ],
    "tests": [
     "tests/fs-phase4-sql.test.mjs",
@@ -1169,10 +1203,10 @@
    ],
    "commit_reference": null,
    "blockers": [
-    "Automatic morning WhatsApp delivery needs FS-48 (WhatsApp Business API) and budget decision #10; not sent automatically."
+    "WhatsApp delivery needs the WhatsApp Business API (FS-48) and budget decision #10; this is the only remaining part."
    ],
    "acceptance_status": "PARTIAL_LOCAL",
-   "batch": "phase4-1",
+   "batch": "phase4-1 + completion",
    "updated": "2026-11-17",
    "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
   },
@@ -1449,13 +1483,16 @@
    "id": "FS-54",
    "title": "New-profile and new-die development pipeline",
    "priority": "High",
-   "status": "PARTIAL",
+   "status": "IMPLEMENTED",
    "prerequisites": [],
    "risk": [],
    "implementation_evidence": [
     "Stage board enquiry -> feasibility -> die quotation -> die ordered -> received -> trials -> sample -> customer approval -> released, with owner and age; paginated database page.",
     "Server-enforced gates: feasible verdict, die cost + payer + expected date, customer die-cost approval when the customer pays, linked die record, at least one die trial, sample reference, approval reference and profile.",
-    "Append-only stage history carrying die cost, payer and amortisation terms; next owner notified."
+    "Append-only stage history carrying die cost, payer and amortisation terms; next owner notified.",
+    "Structured die charging terms (full charge / per kg with kg / customer-paid / waived) required before release when the customer pays.",
+    "On release the linked die record receives the agreed cost, ownership (customer_owned/shared) and customer where not already recorded; the update is stored on the development.",
+    "Choosing that die on a quotation line fills an empty die charge and amortisation from the released development; the quoted die charge is billed once through the existing invoice die-charge line."
    ],
    "modified_files": [
     "supabase/migrations/20261118120000_fs_phase4_planning_cockpit.sql",
@@ -1467,7 +1504,9 @@
     "lib/actions/intelligence.ts",
     "components/modules/intelligence/shared.tsx",
     "lib/auth/route-permissions.ts",
-    "lib/intelligence/destinations.ts"
+    "lib/intelligence/destinations.ts",
+    "supabase/migrations/20261118130000_fs_phase4_completion.sql",
+    "components/modules/quotes-client.tsx"
    ],
    "tests": [
     "tests/fs-phase4-sql.test.mjs",
@@ -1475,11 +1514,9 @@
     "tests/fs-phase4-browser.test.mjs"
    ],
    "commit_reference": null,
-   "blockers": [
-    "Die cost/payer/amortisation do not yet flow automatically into quotations and invoices."
-   ],
-   "acceptance_status": "PARTIAL_LOCAL",
-   "batch": "phase4-1",
+   "blockers": [],
+   "acceptance_status": "LOCAL_ACCEPTED_STAGING_PENDING",
+   "batch": "phase4-1 + completion",
    "updated": "2026-11-17",
    "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
   },
@@ -3252,9 +3289,9 @@
   "verified_existing": 0
  },
  "status_counts": {
-  "IMPLEMENTED": 13,
+  "IMPLEMENTED": 17,
   "VERIFIED_EXISTING": 0,
-  "PARTIAL": 17,
+  "PARTIAL": 13,
   "BLOCKED": 3,
   "SUPERSEDED": 1,
   "NOT_STARTED": 105,
@@ -3463,12 +3500,9 @@
   "FS-12",
   "FS-10",
   "FS-11",
-  "FS-16",
-  "FS-54",
-  "FS-26",
-  "FS-36",
-  "FS-38",
   "FS-123",
-  "FS-124"
+  "FS-124",
+  "FS-68 tolerance decision",
+  "FS-38 WhatsApp (needs FS-48)"
  ]
 }

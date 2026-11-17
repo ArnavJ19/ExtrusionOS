@@ -99,3 +99,37 @@ The full test run regenerated evidence screenshots for earlier batches under `do
 IMPLEMENTED 13 · VERIFIED_EXISTING 0 · PARTIAL 17 · BLOCKED 3 · SUPERSEDED 1 · NOT_STARTED 105.
 
 This tracker was copied from Codex's batch 2 close-out. Codex's batch 3 results for its 10 IDs will change these counts when the two trackers are reconciled.
+
+## Completion pass (17 November 2026)
+
+The five partials were taken further. Four are now IMPLEMENTED (locally verified; staging/hosted acceptance pending as for every item). FS-38 remains PARTIAL only for WhatsApp.
+
+All changes are in one additive migration, `20261118130000_fs_phase4_completion.sql`.
+
+| ID | Added | Status |
+|---|---|---|
+| FS-16 | A correction loop with server-enforced order: a defect report with a photo, then the corrector's action and cost, then a linked trial result from the die's trial register, then approve or send back. A failed trial cannot be approved, the steps are append-only, and the defect alert closes on approval. A per-die history shows recovery and kg/h per run, corrections, nitriding and trials. Printable die-rack QR labels (`/dies/life/labels`) use the existing scanner's die code. | IMPLEMENTED |
+| FS-54 | Structured die charging terms, required before release when the customer pays. On release, the linked die record receives the agreed cost, ownership and customer. Choosing that die on a quotation fills an empty die charge and amortisation. From there the existing invoice die-charge line bills it once. | IMPLEMENTED |
+| FS-26 | The AP-061 auto-arrange now leaves out broken-down presses and holds jobs whose die is away. Breakdown re-flow takes a preview, then a fingerprinted apply: the stopped press's unreleased slots go back to planning and new drafts are prepared for the planner to publish. Dies out of service or away with scheduled work are listed with each order's promise and an at-risk flag. The existing EOS drag-and-drop timeline remains the board. | IMPLEMENTED |
+| FS-36 | Presence and live refresh on order and dispatch detail pages. | IMPLEMENTED |
+| FS-38 | The morning brief is posted in-app to owners once, and queued and emailed per owner through the configured provider by the morning cron route, with 3 attempts and an outcome shown on the cockpit. `vercel.json` gains a daily 02:40 UTC call to `/api/cron/morning`, after the 02:30 pg_cron run. Mondays and the 1st add weekly and monthly totals. | PARTIAL: WhatsApp needs FS-48 and budget decision #10 |
+
+**Kept as is:**
+- Dragging a job onto an away die by hand still warns, as AP-065 intends, rather than blocking.
+- Ageing ovens and finishing are deferred by the roadmap itself.
+
+**Fixed during verification:** the quotation form first imported the Phase 4 server action. That broke the bundles of eight other browser-test harnesses, which don't stub that module. The die-terms lookup now uses the form's existing browser Supabase client; the gateway still takes company and role from the session. All 73 tests in those eight files pass.
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| Lint | Pass |
+| Typecheck | Pass |
+| Build | Pass (`/dies/life/labels` compiled) |
+| Phase 4 SQL tests | 16/16 |
+| Phase 4 unit tests | 6/6 |
+| Phase 4 browser tests | 16/16 |
+| Full suite | 3,751/3,753. The 2 failures were 5-second UI timeouts in `autopilot-batch7-browser` (AP-086 shared inputs; AP-064 delay notice) under full-suite load. That file passes 10/10 on its own. |
+
+**Progress across all 139 IDs:** IMPLEMENTED 17 · VERIFIED_EXISTING 0 · PARTIAL 13 · BLOCKED 3 · SUPERSEDED 1 · NOT_STARTED 105.

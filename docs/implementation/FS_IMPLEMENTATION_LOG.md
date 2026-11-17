@@ -15,3 +15,11 @@ Existing work reused rather than duplicated: AP-076 cash forecast (extended), AP
 Three additive migrations (`20261118100000`, `110000`, `120000`), one allow-listed server action (`lib/actions/intelligence.ts`), nine gateways (`fs_otif`, `fs_metal_exposure`, `fs_order_book`, `fs_mrp`, `fs_die_life`, `fs_promise`, `fs_development`, `fs_cockpit`, `fs_wall`) plus the extended `ap_cash_forecast`, eleven pages, a Realtime hook and a morning job `intelligence.morning`.
 
 Outcome: IMPLEMENTED 5 (FS-68, 73, 72, 71, 27), PARTIAL 5 (FS-16, 38, 36, 54, 26). Details, checks and remaining work are in `FS_PHASE4_BATCH_1_REPORT.md`. Nothing was committed, pushed, applied to the hosted database or deployed.
+
+### Phase 4 completion pass – 17 November 2026
+
+The user asked to complete the partially done items. FS-16, FS-54, FS-26 and FS-36 are now IMPLEMENTED locally. FS-38 remains PARTIAL: in-app and email delivery of the morning brief are built, and WhatsApp still needs FS-48.
+
+The changes are in migration `20261118130000_fs_phase4_completion.sql`.
+
+During verification, the quotation form's new import broke eight other browser harnesses. It was replaced with a browser-client RPC, and those files then passed 73/73. Details are in the report's "Completion pass" section.

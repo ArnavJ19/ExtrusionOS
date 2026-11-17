@@ -37,3 +37,17 @@ export async function intelligenceAction(rpc: string, command: string, payload: 
     return { success: false, error: "The request could not be completed. Check your session and retry." };
   }
 }
+
+/** FS-16: a short-lived link to a correction photo. The gateway checks the company and role; storage policy checks the path. */
+export async function correctionPhotoUrlAction(stepId: string): Promise<FsResult<{ url: string }>> {
+  const located = await intelligenceAction("fs_die_life", "photo", { step_id: stepId });
+  if (!located.success) return located;
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.storage.from("documents").createSignedUrl((located.data as { path: string }).path, 300);
+    if (error || !data?.signedUrl) return { success: false, error: "The photo could not be opened. Retry." };
+    return { success: true, data: { url: data.signedUrl } };
+  } catch {
+    return { success: false, error: "The photo could not be opened. Retry." };
+  }
+}

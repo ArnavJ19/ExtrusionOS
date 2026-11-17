@@ -1,4 +1,5 @@
 import { ComplaintForm } from "@/components/modules/autopilot-batch6/ncr";
+import { EditingPresence, LiveRefresh } from "@/components/modules/intelligence/live";
 import { COMPLAINT_LOGGERS } from "@/lib/autopilot-batch6/commands";
 import { OrderDelayPanel } from "@/components/modules/autopilot-batch7/delay";
 import { OrderEquivalentsPanel } from "@/components/modules/autopilot-batch10/equivalents";
@@ -181,6 +182,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="space-y-6">
+      {/* FS-36: who else has this order open, and a refresh when it changes. */}
+      {!context.dealerId ? <div className="flex flex-wrap items-center justify-between gap-2"><EditingPresence recordKey={`order:${id}`} me={{ id: context.userId, name: context.fullName ?? "Employee" }} /><LiveRefresh name={`order-${id}`} tables={["orders", "production_jobs", "dispatches"]} /></div> : null}
       <RecordNextAction context={context} record={{ kind: "order", id, status: order.current_stage }} />
       {!context.dealerId && ["owner","admin","production_manager","production","factory_manager","inventory_manager"].includes(context.role) ? <Link href={`/orders/${id}/cutting`} className="inline-flex rounded-xl border bg-white px-4 py-3 text-sm font-bold">Plan and record stock cutting</Link> : null}
       {!context.dealerId && ["owner","admin","production_manager","factory_manager","inventory_manager"].includes(context.role) ? <Link href={`/orders/${id}/stock-plan`} className="inline-flex rounded-xl border bg-white px-4 py-3 text-sm font-bold">Plan stock and manufacturing requirement</Link> : null}

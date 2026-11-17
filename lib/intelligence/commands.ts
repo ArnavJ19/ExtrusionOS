@@ -73,14 +73,29 @@ export const DIE_MAKER_ROLES = ["owner", "admin", "production_manager", "factory
 export const dieLifeCommands = {
   dies: z.object({ page, filter: z.enum(["all", "replace", "unknown_life", "open_corrections", "customer_owned"]).optional(), search }).strict(),
   makers: none, settings: none,
-  save_settings: z.object({ replacement_lead_days: z.number().int().min(1).max(365).optional(), reason: text(5, 300, "Reason") }).strict()
+  save_settings: z.object({ replacement_lead_days: z.number().int().min(1).max(365).optional(), reason: text(5, 300, "Reason") }).strict(),
+  // FS-16 correction loop: defect (photo) -> corrector's action -> trial result -> approved or sent back.
+  history: z.object({ die_id: uuid }).strict(),
+  labels: z.object({ search }).strict(),
+  report_defect: z.object({ die_id: uuid, reason: z.enum(["die_lines", "dimensional", "surface_pickup", "slow_speed", "bearing_issue", "tongue_ratio", "other"]), note: text(3, 500, "What was seen"), photo_path: z.string().max(400).optional() }).strict(),
+  record_action: z.object({ correction_id: uuid, note: text(3, 500, "What was corrected"), vendor: text(2, 120, "Corrector").optional(), cost: z.number().finite().min(0).max(10000000).optional(), photo_path: z.string().max(400).optional() }).strict(),
+  record_trial: z.object({ correction_id: uuid, trial_id: uuid, note: text(3, 500, "Note").optional() }).strict(),
+  decide: z.object({ correction_id: uuid, decision: z.enum(["approved", "returned"]), note: text(3, 500, "Decision note") }).strict(),
+  photo: z.object({ step_id: uuid }).strict()
 };
+export const DIE_DEFECTS = { die_lines: "Die lines", dimensional: "Dimensions out", surface_pickup: "Surface pick-up", slow_speed: "Slow speed", bearing_issue: "Bearing issue", tongue_ratio: "Tongue deflection", other: "Other" } as const;
+export const DIE_REPORTERS = ["owner", "admin", "production_manager", "production", "quality", "factory_manager"] as const;
+export const DIE_CORRECTORS = ["owner", "admin", "production_manager", "factory_manager"] as const;
+export const DIE_DECIDERS = ["owner", "admin", "production_manager", "quality"] as const;
 
 export const PROMISE_ROLES = ["owner", "admin", "sales_manager", "sales", "factory_manager", "production_manager"] as const;
 export const promiseCommands = {
   estimate: z.object({ profile_id: uuid, quantity_kg: z.number({ invalid_type_error: "Quantity must be a number" }).finite().min(1, "Enter the quantity in kg").max(10000000), finishing_type: text(2, 40, "Finish").optional() }).strict(),
-  reflow: none
+  reflow: none,
+  reflow_preview: z.object({ breakdown_id: uuid }).strict(),
+  reflow_apply: z.object({ breakdown_id: uuid, fingerprint: z.string().regex(/^[0-9a-f]{32}$/), reason: text(5, 300, "Reason") }).strict()
 };
+export const REFLOW_ROLES = ["owner", "admin", "factory_manager", "production_manager"] as const;
 
 export const DEVELOPMENT_ROLES = ["owner", "admin", "sales_manager", "sales", "production_manager", "factory_manager", "quality", "production"] as const;
 export const DEVELOPMENT_EDITORS = ["owner", "admin", "sales_manager", "sales", "production_manager", "factory_manager", "quality"] as const;
@@ -104,11 +119,19 @@ export const developmentCommands = {
     die_cost_approved_by_customer_at: optionalDay, die_vendor_id: optionalUuid, expected_die_date: optionalDay, die_id: optionalUuid, profile_id: optionalUuid,
     sample_reference: text(2, 120, "Sample reference").optional(), customer_approval_reference: text(2, 120, "Customer approval reference").optional(),
     drawing_reference: text(2, 120, "Drawing reference").optional(), owner_id: uuid.optional() }).strict(),
-  move: z.object({ id: uuid, to_stage: z.enum(Object.keys(DEVELOPMENT_STAGES) as [DevelopmentStage, ...DevelopmentStage[]]), note: text(3, 500, "Note"), owner_id: uuid.optional() }).strict()
+  move: z.object({ id: uuid, to_stage: z.enum(Object.keys(DEVELOPMENT_STAGES) as [DevelopmentStage, ...DevelopmentStage[]]), note: text(3, 500, "Note"), owner_id: uuid.optional() }).strict(),
+  // FS-54: how the die is charged to the customer; quotations read it when the die is chosen.
+  set_die_terms: z.object({ id: uuid, die_amortization_type: z.enum(["full_die_charge", "per_kg", "waived", "customer_paid"]), customer_die_charge: z.number().finite().min(0).max(100000000).optional(),
+    die_amortization_quantity_kg: z.number().finite().min(1).max(100000000).optional() }).strict()
+    .refine(v => !["full_die_charge", "per_kg"].includes(v.die_amortization_type) || v.customer_die_charge !== undefined, { message: "Enter the die charge to the customer", path: ["customer_die_charge"] })
+    .refine(v => v.die_amortization_type !== "per_kg" || v.die_amortization_quantity_kg !== undefined, { message: "Enter the kg to amortise over", path: ["die_amortization_quantity_kg"] }),
+  die_terms: z.object({ die_id: uuid }).strict()
 };
+export type DieTerms = { development_id: string; project_number: string; customer_id: string; payer: string | null; die_charge: number; amortization_type: "full_die_charge" | "per_kg" | "waived" | "customer_paid";
+  amortization_quantity_kg: number | null; terms: string | null } | null;
 
 export const COCKPIT_ROLES = ["owner", "admin"] as const;
-export const cockpitCommands = { today: none, trend: none };
+export const cockpitCommands = { today: none, trend: none, deliveries: none };
 
 export const WALL_ROLES = ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "viewer", "dispatch_manager", "sales_manager"] as const;
 export const wallCommands = { board: none };
@@ -121,8 +144,8 @@ export const INTELLIGENCE_COMMANDS = {
 export type IntelligenceGateway = keyof typeof INTELLIGENCE_COMMANDS;
 
 /** Commands that only read; everything else revalidates the screens in INTELLIGENCE_PATHS. */
-export const INTELLIGENCE_READS = new Set(["summary", "lines", "history", "settings", "position", "trend", "bookings", "overview", "plan", "dies", "makers", "estimate", "reflow", "board", "list", "get", "today"]);
+export const INTELLIGENCE_READS = new Set(["summary", "lines", "history", "settings", "position", "trend", "bookings", "overview", "plan", "dies", "makers", "estimate", "reflow", "board", "list", "get", "today", "labels", "photo", "die_terms", "reflow_preview", "deliveries"]);
 export const INTELLIGENCE_PATHS: Record<IntelligenceGateway, string[]> = {
   fs_otif: ["/insights/otif"], fs_metal_exposure: ["/insights/metal-exposure"], fs_order_book: ["/insights/order-book"], fs_mrp: ["/production/material-plan"],
-  fs_die_life: ["/dies/life"], fs_promise: [], fs_development: ["/profiles/development"], fs_cockpit: [], fs_wall: []
+  fs_die_life: ["/dies/life"], fs_promise: ["/production/promise", "/production/schedule/draft"], fs_development: ["/profiles/development"], fs_cockpit: [], fs_wall: []
 };

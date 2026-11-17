@@ -104,3 +104,41 @@ for (const width of [375, 1280]) {
     await w.done("wall");
   });
 }
+
+for (const width of [375, 1280]) {
+  test(`FS-16 a defect is reported from die history and rack labels render QR codes at ${width}px`, async () => {
+    await setup(f => f.seed("update dies set rack_location='R1-A4' where id=$1", [i.die]));
+    const v = await open(width, "die-life", i.production, { report: true });
+    await v.page.getByRole("button", { name: "History and corrections" }).first().click();
+    await v.page.getByLabel("Defect").selectOption("die_lines");
+    await v.page.getByLabel("What was seen").fill("Lines on the visible face at 3 m");
+    await v.page.getByRole("button", { name: "Report defect" }).click();
+    await expect(v.page.getByText("Defect reported; the die shop is notified.")).toBeVisible();
+    await expect(v.page.getByText(/Waiting for the die shop/)).toBeVisible();
+    await v.done("die-correction");
+    const l = await open(width, "die-labels", i.production);
+    await l.page.getByLabel("Search dies or racks").fill("R1-A4");
+    await l.page.getByRole("checkbox").first().check();
+    await expect(l.page.getByLabel("Labels").locator("svg").first()).toBeVisible();
+    await l.done("die-labels");
+  });
+
+  test(`FS-26 a breakdown re-plan releases the stopped press's slot and prepares drafts at ${width}px`, async () => {
+    await setup(async f => {
+      const p1 = await f.press({ name: "Press RF-1" }), p2 = await f.press({ name: "Press RF-2" }); await f.shifts(p1, 1000); await f.shifts(p2, 1000);
+      const job = await f.job({ machine: p1, kg: 400, plannedIn: 1, due: 5 });
+      await f.seed("update production_jobs set status='ready' where id=$1", [job.job]);
+      await f.seed(`insert into production_plan_slots(company_id,production_job_id,machine_id,planned_start_at,planned_end_at,sequence_number,status,shift,capacity_kg)
+        values($1,$2,$3,(current_date+1+time '07:00') at time zone 'Asia/Kolkata',(current_date+1+time '09:00') at time zone 'Asia/Kolkata',1,'scheduled','A',400)`, [i.company, job.job, p1]);
+      await f.seed(`insert into breakdown_logs(company_id,machine_id,machine_ref_id,machine_type,breakdown_date,start_time,issue_description,status)
+        values($1,$3,$2,'extrusion_press',current_date,now()-interval '1 hour','Container liner cracked','open')`, [i.company, p1, String(p1)]);
+    });
+    const v = await open(width, "promise", i.productionManager, { reflow: true });
+    await v.page.getByRole("button", { name: "Re-plan without this press" }).click();
+    await expect(v.page.getByText(/will be released/)).toBeVisible();
+    await v.page.getByLabel("Reason").fill("Liner change, two days");
+    await v.page.getByRole("button", { name: "Release and prepare drafts" }).click();
+    await expect(v.page.getByText(/slot\(s\) released; \d+ draft plan\(s\) ready/)).toBeVisible();
+    await v.done("reflow");
+  });
+}

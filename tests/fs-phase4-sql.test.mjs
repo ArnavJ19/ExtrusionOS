@@ -310,6 +310,7 @@ test("FS-54 a development moves one stage at a time and each stage needs its evi
   await assert.rejects(() => move("sample_submitted"), /sample reference/);
   await f.ap("fs_development", "update", { id: d.id, sample_reference: "SMP-0042" }, i.quality);
   await move("sample_submitted"); await move("customer_approval");
+  await f.ap("fs_development", "set_die_terms", { id: d.id, die_amortization_type: "full_die_charge", customer_die_charge: 145000 }, i.salesManager);
   await assert.rejects(() => move("released"), /customer's approval and link the profile/);
   await f.ap("fs_development", "update", { id: d.id, customer_approval_reference: "Email 14 Nov from buyer", profile_id: i.profile2 }, i.salesManager);
   const done = await move("released", "Approved for production");
@@ -360,4 +361,135 @@ test("FS-36 the wall shows each press with a stoppage in red, and the Realtime b
   await f.db.exec(block); await f.db.exec(block);
   const published = (await f.db.query("select c.relname from pg_publication_rel pr join pg_publication p on p.oid=pr.prpubid join pg_class c on c.oid=pr.prrelid where p.pubname='supabase_realtime' order by 1")).rows.map(r => r.relname);
   assert.deepEqual(published, ["action_requests", "approval_decisions", "breakdown_logs", "dispatches", "notifications", "orders", "production_jobs", "production_plan_slots", "production_push_events"]);
+});
+
+// ---------------------------------------------------------------- Completion of the partials
+test("FS-16 the correction loop runs defect -> correction -> trial -> decision, refuses steps out of order and keeps every step", async () => {
+  const die = await f.die({ number: "D-P4-LOOP" });
+  const bad = `${i.company}/die-corrections/${i.die}/x1234-photo.jpg`;
+  await assert.rejects(() => f.ap("fs_die_life", "report_defect", { die_id: die, reason: "die_lines", note: "Lines on the visible face", photo_path: bad }, i.production), /Upload the photo again/);
+  const photo = `${i.company}/die-corrections/${die}/a1b2c-face.jpg`;
+  const r = await f.ap("fs_die_life", "report_defect", { die_id: die, reason: "die_lines", note: "Lines on the visible face", photo_path: photo }, i.production);
+  await assert.rejects(() => f.ap("fs_die_life", "report_defect", { die_id: die, reason: "other", note: "Second report" }, i.quality), /already has an open correction/);
+  const id = r.correction_id;
+  await assert.rejects(() => f.ap("fs_die_life", "record_action", { correction_id: id, note: "Polished bearing" }, i.production), denied);
+  const trial = async result => (await f.seed("insert into die_trials(company_id,die_id,trial_date,trial_result) values($1,$2,current_date,$3) returning id", [i.company, die, result]))[0].id;
+  const early = await trial("pass");
+  await assert.rejects(() => f.ap("fs_die_life", "record_trial", { correction_id: id, trial_id: early }, i.quality), /what was corrected before the trial/);
+  await f.ap("fs_die_life", "record_action", { correction_id: id, note: "Polished bearing 0.2 mm", vendor: "In-house die shop", cost: 1500 }, i.productionManager);
+  const failed = await trial("fail");
+  await f.ap("fs_die_life", "record_trial", { correction_id: id, trial_id: failed }, i.quality);
+  await assert.rejects(() => f.ap("fs_die_life", "decide", { correction_id: id, decision: "approved", note: "Looks fine" }, i.quality), /last trial failed/);
+  await f.ap("fs_die_life", "decide", { correction_id: id, decision: "returned", note: "Lines remain at 2 m" }, i.quality);
+  await f.ap("fs_die_life", "record_action", { correction_id: id, note: "Re-cut bearing", cost: 2500 }, i.productionManager);
+  await assert.rejects(() => f.ap("fs_die_life", "record_trial", { correction_id: id, trial_id: failed }, i.quality), /already linked/);
+  await f.ap("fs_die_life", "record_trial", { correction_id: id, trial_id: await trial("pass") }, i.quality);
+  await f.ap("fs_die_life", "decide", { correction_id: id, decision: "approved", note: "Clean surface over 6 m" }, i.productionManager);
+  const c = (await f.db.query("select result_status, cost from die_corrections where id=$1", [id])).rows[0];
+  assert.deepEqual([c.result_status, num(c.cost)], ["success", 4000], "1,500 + 2,500");
+  const h = await f.ap("fs_die_life", "history", { die_id: die }, i.owner);
+  assert.deepEqual(h.corrections[0].steps.map(s => s.step), ["defect", "action", "trial", "returned", "action", "trial", "approved"]);
+  assert.equal(h.corrections[0].steps[0].has_photo, true);
+  assert.equal((await f.ap("fs_die_life", "photo", { step_id: h.corrections[0].steps[0].id }, i.quality)).path, photo);
+  await assert.rejects(() => f.ap("fs_die_life", "photo", { step_id: h.corrections[0].steps[0].id }, i.foreign), /not found/);
+  await assert.rejects(() => f.ap("fs_die_life", "decide", { correction_id: id, decision: "returned", note: "Again" }, i.quality), /closed/);
+  await assert.rejects(() => f.raw("delete from die_correction_steps where correction_id=$1", [id]), /cannot be changed/);
+  assert.equal((await f.db.query("select count(*)::int n from notifications where entity_reference=$1 and resolved_at is null", [`fs4:die-correction:${id}`])).rows[0].n, 0, "the defect alert closes on approval");
+
+  await f.seed("update dies set rack_location='R3-B2' where id=$1", [die]);
+  await f.completedRun({ die, kg: 950, input: 1000, daysAgo: 2 });
+  const h2 = await f.ap("fs_die_life", "history", { die_id: die }, i.production);
+  assert.equal(num(h2.runs[0].recovery_percent), 95, "950 / 1000");
+  assert.ok((await f.ap("fs_die_life", "labels", { search: "R3-B2" }, i.production)).rows.some(l => l.die_number === "D-P4-LOOP"));
+});
+
+test("FS-54 die terms are required before release when the customer pays, reach the die record and are what quotations read", async () => {
+  const d = await f.ap("fs_development", "create", { title: "Curtain wall mullion", customer_id: i.customer2 }, i.sales);
+  const mv = (to, note = "Moved on") => f.ap("fs_development", "move", { id: d.id, to_stage: to, note }, i.salesManager);
+  const die = await f.die({ number: "D-DEV-TERMS", status: "under_trial" });
+  await mv("feasibility");
+  await f.ap("fs_development", "update", { id: d.id, feasibility: { verdict: "feasible" } }, i.productionManager);
+  await mv("die_quotation");
+  await f.ap("fs_development", "update", { id: d.id, die_cost: 180000, die_cost_payer: "customer", expected_die_date: istDay(20), die_cost_approved_by_customer_at: istDay(0) }, i.salesManager);
+  await mv("die_ordered");
+  await f.ap("fs_development", "update", { id: d.id, die_id: die }, i.productionManager);
+  await mv("die_received"); await mv("trial", "Trial 1");
+  await f.seed("insert into die_trials(company_id,die_id,trial_date,trial_result) values($1,$2,current_date,'pass')", [i.company, die]);
+  await f.ap("fs_development", "update", { id: d.id, sample_reference: "SMP-77", customer_approval_reference: "PO 4471 approval", profile_id: i.profile2 }, i.salesManager);
+  await mv("sample_submitted"); await mv("customer_approval");
+  await assert.rejects(() => mv("released"), /how the die is charged/);
+  await assert.rejects(() => f.ap("fs_development", "set_die_terms", { id: d.id, die_amortization_type: "per_kg", customer_die_charge: 60000 }, i.sales), /kg/);
+  await f.ap("fs_development", "set_die_terms", { id: d.id, die_amortization_type: "full_die_charge", customer_die_charge: 60000 }, i.sales);
+  const released = await mv("released", "Approved for production");
+  assert.deepEqual(released.die_record_update, { die_cost: 180000, ownership_type: "customer_owned", customer_id: i.customer2 });
+  const row = (await f.db.query("select die_cost, ownership_type, customer_id from dies where id=$1", [die])).rows[0];
+  assert.deepEqual([num(row.die_cost), row.ownership_type, row.customer_id], [180000, "customer_owned", i.customer2]);
+  const terms = await f.ap("fs_development", "die_terms", { die_id: die }, i.sales);
+  assert.deepEqual([terms.project_number, num(terms.die_charge), terms.amortization_type, terms.payer], [d.project_number, 60000, "full_die_charge", "customer"]);
+  assert.equal(await f.ap("fs_development", "die_terms", { die_id: i.die }, i.sales), null, "a die without a released development has no terms");
+  await assert.rejects(() => f.ap("fs_development", "die_terms", { die_id: die }, i.production), denied);
+});
+
+test("FS-26 the auto-arrange leaves out a broken-down press and holds a job whose die is away; a re-flow releases the stopped press's slots into new drafts", async () => {
+  const p1 = await f.press({ name: "Press RF-1" }), p2 = await f.press({ name: "Press RF-2" });
+  await f.shifts(p1, 1000); await f.shifts(p2, 1000);
+  const job = await f.job({ machine: p1, kg: 400, plannedIn: 1, due: 5 });
+  await f.seed("update production_jobs set status='ready' where id=$1", [job.job]);
+  await f.seed(`insert into production_plan_slots(company_id,production_job_id,machine_id,planned_start_at,planned_end_at,sequence_number,status,shift,capacity_kg)
+    values($1,$2,$3,(current_date+1+time '07:00') at time zone 'Asia/Kolkata',(current_date+1+time '09:00') at time zone 'Asia/Kolkata',1,'scheduled','A',400)`, [i.company, job.job, p1]);
+  const b = (await f.seed(`insert into breakdown_logs(company_id,machine_id,machine_ref_id,machine_type,breakdown_date,start_time,issue_description,status)
+    values($1,$3,$2,'extrusion_press',current_date,now()-interval '1 hour','Container liner cracked','open') returning id`, [i.company, p1, String(p1)]))[0].id;
+  const pv = await f.ap("fs_promise", "reflow_preview", { breakdown_id: b }, i.productionManager);
+  assert.ok(pv.slots.some(s => s.job_id === job.job && s.status === "scheduled"));
+  await assert.rejects(() => f.ap("fs_promise", "reflow_preview", { breakdown_id: b }, i.sales), denied);
+  assert.equal((await f.ap("fs_promise", "reflow_apply", { breakdown_id: b, fingerprint: "0".repeat(32), reason: "Liner change two days" }, i.productionManager)).state, "stale");
+  const ap = await f.ap("fs_promise", "reflow_apply", { breakdown_id: b, fingerprint: pv.fingerprint, reason: "Liner change two days" }, i.productionManager);
+  assert.equal(ap.state, "applied");
+  assert.equal((await f.db.query("select status from production_plan_slots where production_job_id=$1 and machine_id=$2", [job.job, p1])).rows[0].status, "cancelled");
+  const draft = ap.drafts.find(x => x.plan_date === istDay(1));
+  assert.ok(draft, JSON.stringify(ap.drafts));
+  const lines = (await f.db.query("select machine_id from press_plan_draft_lines where draft_id=$1 and production_job_id=$2", [draft.draft_id, job.job])).rows;
+  assert.ok(lines.length > 0 && lines.every(l => l.machine_id !== p1), "the job is drafted on another press");
+  assert.equal((await f.db.query("select count(*)::int n from press_plan_draft_lines where draft_id=$1 and machine_id=$2", [draft.draft_id, p1])).rows[0].n, 0, "nothing on the stopped press");
+
+  // A die that is away over the plan date cannot be drafted; the reason names the return date.
+  await f.seed(`insert into die_availability_windows(company_id,die_id,reason,starts_on,expected_return,status,set_by) values($1,$2,'nitriding',current_date,current_date+9,'open',$3)`, [i.company, i.die, i.productionManager]);
+  const prepared = await f.ap("ap_press_plan", "prepare", { date: istDay(2) }, i.productionManager);
+  const draftId = prepared.id ?? prepared.draft_id ?? prepared.draft?.id;
+  const held = (await f.db.query("select reasons from press_plan_unscheduled where draft_id=$1 and production_job_id=$2", [draftId, job.job])).rows[0];
+  assert.ok(held && held.reasons.some(r => /is away until/.test(r)), JSON.stringify(prepared).slice(0, 300));
+});
+
+test("FS-38 the morning brief reaches every owner in-app once and is queued for email; only the service role reads the outbox", async () => {
+  await f.seed("update app_users set email='owner@omalco.example' where id=$1", [i.owner]);
+  await f.db.query("select private.ap_job_execute($1,'intelligence.morning',null)", [i.company]);
+  await f.db.query("select private.ap_job_execute($1,'intelligence.morning',null)", [i.company]);
+  const inApp = (await f.db.query("select count(*)::int n from notifications where company_id=$1 and entity_reference=$2", [i.company, `fs4:brief:${istDay(0)}`])).rows[0].n;
+  assert.equal(inApp, 1);
+  const queued = (await f.db.query("select address, status from owner_brief_deliveries where company_id=$1 and brief_date=$2", [i.company, istDay(0)])).rows;
+  assert.deepEqual(queued.filter(q => q.address === "owner@omalco.example").map(q => q.status), ["pending"]);
+  await assert.rejects(() => f.ap("fs_brief_outbox", "pending", {}, i.owner), e => e.code === "42501" || /permission denied/.test(e.message));
+  const out = await f.asService("select public.fs_brief_outbox('pending','{}') r");
+  const pending = (out.rows ?? out)[0].r;
+  const mine = pending.find(p => p.address === "owner@omalco.example");
+  assert.match(mine.message, /Omalco owner brief/);
+  await f.asService("select public.fs_brief_outbox('mark', $1::jsonb)", [JSON.stringify({ id: mine.id, state: "sent" })]);
+  const rows = (await f.ap("fs_cockpit", "deliveries", {}, i.owner)).rows;
+  assert.equal(rows.find(r => r.address === "owner@omalco.example").status, "sent");
+  assert.ok("periods" in (await f.ap("fs_cockpit", "today", {}, i.owner)));
+});
+
+test("FS-26 a die that fails or goes away lists the scheduled work it puts at risk", async () => {
+  const p = await f.press({ name: "Press DF-1" });
+  const job = await f.job({ machine: p, kg: 300, plannedIn: 1, due: 3 });
+  await f.seed(`insert into production_plan_slots(company_id,production_job_id,machine_id,planned_start_at,planned_end_at,sequence_number,status,shift,capacity_kg)
+    values($1,$2,$3,(current_date+1+time '07:00') at time zone 'Asia/Kolkata',(current_date+1+time '09:00') at time zone 'Asia/Kolkata',1,'scheduled','A',300)`, [i.company, job.job, p]);
+  assert.ok(!(await f.ap("fs_promise", "reflow", {}, i.sales)).dies.some(d => d.die_id === i.die), "an active die is not listed");
+  await f.seed("update dies set die_status='under_correction' where id=$1", [i.die]);
+  let die = (await f.ap("fs_promise", "reflow", {}, i.sales)).dies.find(d => d.die_id === i.die);
+  assert.equal(die.work.find(w => w.job_id === job.job).at_risk, true, "no return date");
+  await f.seed("update dies set die_status='active' where id=$1", [i.die]);
+  await f.seed(`insert into die_availability_windows(company_id,die_id,reason,starts_on,expected_return,status,set_by) values($1,$2,'nitriding',current_date,current_date+1,'open',$3)`, [i.company, i.die, i.productionManager]);
+  die = (await f.ap("fs_promise", "reflow", {}, i.sales)).dies.find(d => d.die_id === i.die);
+  assert.equal(die.work.find(w => w.job_id === job.job).at_risk, false, "back on the slot's day");
 });
