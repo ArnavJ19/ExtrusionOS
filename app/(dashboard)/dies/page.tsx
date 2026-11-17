@@ -23,7 +23,11 @@ export default async function DiesPage() {
     showHealth ? loadDieHealth(supabase, context.companyId) : Promise.resolve(null)
   ]);
   return <div className="space-y-6">
-    {showFlags ? <Link href="/dies/weight-drift" className="inline-flex min-h-10 items-center rounded-xl bg-neutral-950 px-3 text-sm font-semibold text-white">Section weight by die</Link> : null}
+    <div className="flex flex-wrap gap-2">
+      {showFlags ? <Link href="/dies/weight-drift" className="inline-flex min-h-10 items-center rounded-xl bg-neutral-950 px-3 text-sm font-semibold text-white">Section weight by die</Link> : null}
+      <Link href="/dies/life" className="inline-flex min-h-10 items-center rounded-xl border border-neutral-300 bg-white px-3 text-sm font-semibold">Die life and replacements</Link>
+      <Link href="/profiles/development" className="inline-flex min-h-10 items-center rounded-xl border border-neutral-300 bg-white px-3 text-sm font-semibold">New developments</Link>
+    </div>
     {attention ? <DieAttentionPanel data={attention} /> : null}
     {showFlags ? <DieFlagsPanel /> : null}
     <DiesOverviewClient context={context} canCreate={can(context.role, "create", "dies")} />

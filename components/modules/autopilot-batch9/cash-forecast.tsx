@@ -1,8 +1,10 @@
 "use client";
 
-// AP-076: four weeks of expected cash in and out, from open invoices (due date plus each customer's usual delay), approved
-// unpaid bills, unbilled purchase orders, fixed expenses and one-offs accounts adds. A running balance appears only after
-// accounts enters today's bank and cash balance. Each week's first forecast is kept and compared with what happened.
+// AP-076 / FS-73: thirteen weeks of expected cash in and out, from open invoices (an open collection promise dates the
+// promised part; the rest is due date plus each customer's usual delay), approved unpaid bills, unbilled purchase orders,
+// fixed expenses (salaries, power, loan instalments) and one-offs accounts adds (tax dates). A running balance appears only
+// after accounts enters today's bank and cash balance; weeks closing below the minimum balance are flagged. Each week's
+// first forecast is kept and compared with what happened.
 import { useState } from "react";
 import Link from "next/link";
 import { fmtDay, inr } from "@/lib/order-to-cash/commands";
@@ -10,34 +12,41 @@ import { Empty, Failure, Loading, Message, Pager, Section, apWrite, buttonClass,
 
 type Note = { tone: "ok" | "error"; text: string } | null;
 type Item = { kind: string; direction: "in" | "out"; expected_on: string; amount: number; label: string; basis: string; ref_id: string };
-type Week = { week_start: string; week_end: string; cash_in: number; cash_out: number; net: number; receipts: number; payables: number; purchase_orders: number; fixed: number; one_off_in: number; one_off_out: number; closing?: number; items: Item[] };
-type Forecast = { from: string; weeks: Week[]; opening_balance: number | null; balance_as_of: string | null; basis: string };
+type Week = { week_start: string; week_end: string; cash_in: number; cash_out: number; net: number; receipts: number; promised: number; payables: number; purchase_orders: number; fixed: number; one_off_in: number; one_off_out: number; closing?: number; below_minimum?: boolean; items: Item[] };
+type Forecast = { from: string; weeks: Week[]; opening_balance: number | null; balance_as_of: string | null; minimum_balance: number | null; first_week_below_minimum: string | null; basis: string };
 const KIND: Record<string, string> = { receivable: "Invoice", scrap_sale: "Scrap sale", payable: "Bill", purchase_order: "Purchase order", fixed: "Fixed expense", one_off: "One-off" };
 const href = (i: Item) => i.kind === "receivable" ? `/invoices/${i.ref_id}` : i.kind === "scrap_sale" ? `/foundry/scrap-sales/${i.ref_id}` : i.kind === "purchase_order" ? `/vendors/purchasing/${i.ref_id}` : null;
 
 export function CashForecastClient() {
   const [key, setKey] = useState(0); const [open, setOpen] = useState<string | null>(null); const [message, setMessage] = useState<Note>(null);
-  const data = useApRead<Forecast>("ap_cash_forecast", "forecast", { weeks: 4 }, [key]);
-  const [balance, setBalance] = useState("");
+  const data = useApRead<Forecast>("ap_cash_forecast", "forecast", { weeks: 13 }, [key]);
+  const [balance, setBalance] = useState(""); const [minimum, setMinimum] = useState("");
   const f = data.data;
   return <div className="space-y-5">
-    <Section title="Next four weeks" description={f?.basis ?? "Expected receipts and payments by week."}>
+    <Section title="Next thirteen weeks" description={f?.basis ?? "Expected receipts and payments by week."}>
       {data.loading && !f ? <Loading what="the forecast" /> : data.error ? <Failure text={data.error} /> : f ? <>
         <div className="flex flex-wrap items-end gap-2 rounded-xl bg-neutral-50 p-3 text-sm">
           <p className="min-w-0 flex-1">{f.opening_balance !== null ? <>Bank and cash balance <b>{inr(f.opening_balance)}</b> as of {fmtDay(f.balance_as_of)}.</> : "Enter today's bank and cash balance to see the running balance."}</p>
           <label className="text-xs font-bold">Balance ₹<input className={inputClass} inputMode="decimal" value={balance} onChange={e => setBalance(e.target.value)} /></label>
           <button type="button" className={secondaryClass} disabled={!balance.trim()} onClick={async () => { if (await apWrite("ap_cash_forecast", "save_opening", { opening_balance: Number(balance) }, setMessage, "Balance saved.")) { setBalance(""); setKey(k => k + 1); } }}>Save balance</button>
         </div>
+        <div className="flex flex-wrap items-end gap-2 rounded-xl bg-neutral-50 p-3 text-sm">
+          <p className="min-w-0 flex-1">{f.minimum_balance !== null ? <>Minimum balance <b>{inr(f.minimum_balance)}</b>{f.first_week_below_minimum ? <> · <span className="font-bold text-rose-700">first falls below in the week of {fmtDay(f.first_week_below_minimum)}</span></> : " · no week falls below it"}.</> : "Set a minimum balance to flag the weeks that fall below it."}</p>
+          <label className="text-xs font-bold">Minimum ₹<input className={inputClass} inputMode="decimal" value={minimum} onChange={e => setMinimum(e.target.value)} /></label>
+          <button type="button" className={secondaryClass} onClick={async () => { if (await apWrite("ap_cash_forecast", "save_minimum", minimum.trim() ? { minimum_balance: Number(minimum) } : {}, setMessage, minimum.trim() ? "Minimum balance saved." : "Minimum balance cleared.")) { setMinimum(""); setKey(k => k + 1); } }}>{minimum.trim() ? "Save minimum" : "Clear minimum"}</button>
+        </div>
         <Message value={message} />
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{f.weeks.map((w, k) => <article key={w.week_start} className="min-w-0 rounded-2xl border p-4">
-          <p className="text-xs font-bold uppercase text-neutral-500">{k === 0 ? "This week" : `Week of ${fmtDay(w.week_start)}`}</p>
-          <p className={`text-2xl font-black tabular-nums ${Number(w.net) < 0 ? "text-rose-700" : "text-emerald-700"}`}>{Number(w.net) >= 0 ? `+${inr(w.net)}` : `−${inr(Math.abs(Number(w.net)))}`}</p>
-          <dl className="mt-2 space-y-0.5 text-sm"><div className="flex justify-between gap-2"><dt>In</dt><dd className="tabular-nums">{inr(w.cash_in)}</dd></div>
-            <div className="flex justify-between gap-2"><dt>Out</dt><dd className="tabular-nums">{inr(w.cash_out)}</dd></div>
-            {w.closing !== undefined ? <div className="flex justify-between gap-2 font-bold"><dt>Closing</dt><dd className={`tabular-nums ${Number(w.closing) < 0 ? "text-rose-700" : ""}`}>{inr(w.closing)}</dd></div> : null}</dl>
-          <p className="mt-2 text-xs text-neutral-600">Receipts {inr(w.receipts)} · bills {inr(w.payables)} · POs {inr(w.purchase_orders)} · fixed {inr(w.fixed)}{Number(w.one_off_in) || Number(w.one_off_out) ? ` · one-offs ${inr(Number(w.one_off_in) - Number(w.one_off_out))}` : ""}</p>
-          <button type="button" className="mt-2 text-sm font-bold underline" onClick={() => setOpen(open === w.week_start ? null : w.week_start)}>{open === w.week_start ? "Hide" : `Show ${w.items.length} item(s)`}</button>
-        </article>)}</div>
+        <div className="overflow-x-auto rounded-xl border"><table className="w-full min-w-[720px] text-sm">
+          <thead className="bg-neutral-50 text-left text-xs uppercase text-neutral-500"><tr><th className="p-2">Week</th><th className="p-2 text-right">In</th><th className="p-2 text-right">of which promised</th><th className="p-2 text-right">Out</th><th className="p-2 text-right">Net</th><th className="p-2 text-right">Closing</th><th className="p-2" /></tr></thead>
+          <tbody>{f.weeks.map((w, k) => <tr key={w.week_start} className={`border-t ${w.below_minimum ? "bg-rose-50" : ""}`}>
+            <td className="p-2 font-semibold">{k === 0 ? "This week" : fmtDay(w.week_start)}{w.below_minimum ? <span className="ml-1 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-800">Below minimum</span> : null}</td>
+            <td className="p-2 text-right tabular-nums">{inr(w.cash_in)}</td><td className="p-2 text-right tabular-nums text-neutral-600">{Number(w.promised) ? inr(w.promised) : "—"}</td>
+            <td className="p-2 text-right tabular-nums">{inr(w.cash_out)}</td>
+            <td className={`p-2 text-right font-bold tabular-nums ${Number(w.net) < 0 ? "text-rose-700" : "text-emerald-700"}`}>{Number(w.net) >= 0 ? `+${inr(w.net)}` : `−${inr(Math.abs(Number(w.net)))}`}</td>
+            <td className={`p-2 text-right tabular-nums ${Number(w.closing) < 0 || w.below_minimum ? "font-bold text-rose-700" : ""}`}>{w.closing !== undefined ? inr(w.closing) : "—"}</td>
+            <td className="p-2 text-right"><button type="button" className="text-sm font-bold underline" onClick={() => setOpen(open === w.week_start ? null : w.week_start)}>{open === w.week_start ? "Hide" : `Show ${w.items.length} item(s)`}</button></td>
+          </tr>)}</tbody>
+        </table></div>
         {open ? (() => { const w = f.weeks.find(x => x.week_start === open); return w ? <div className="overflow-x-auto rounded-xl border"><table className="w-full min-w-[640px] text-sm">
           <thead className="bg-neutral-50 text-left text-xs uppercase text-neutral-500"><tr><th className="p-2">Date</th><th className="p-2">What</th><th className="p-2">Basis</th><th className="p-2 text-right">In</th><th className="p-2 text-right">Out</th></tr></thead>
           <tbody>{w.items.map((i, k) => <tr key={k} className="border-t"><td className="p-2">{fmtDay(i.expected_on)}</td>

@@ -22,6 +22,7 @@ export const JOBS = [
   { job_key: "dies.availability", schedule: "hourly", label: "Check die availability for planned jobs" },
   { job_key: "dies.predict_service", schedule: "hourly", label: "Propose die service" },
   { job_key: "dies.weight_drift", schedule: "nightly", label: "Check section-weight drift" },
+  { job_key: "intelligence.morning", schedule: "morning", label: "Check metal position and die life" },
   { job_key: "maintenance.propose_pm", schedule: "hourly", label: "Propose preventive maintenance" },
   { job_key: "navigation.propose", schedule: "nightly", label: "Propose role navigation" },
   { job_key: "orders.predict_late", schedule: "nightly", label: "Predict late order lines" },

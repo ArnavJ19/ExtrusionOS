@@ -1,0 +1,3474 @@
+{
+ "schema_version": 1,
+ "roadmap_source": "../../../../FABLE_SUGEGSTIONS.md",
+ "date": "2026-11-17",
+ "batch_number": 2,
+ "initial_commit": "3bd03b48246eba90ac7ea7d8d4720d2b899aceab",
+ "reference_root_commit": "2833cc0390774638cbde40d8137710f9b4f223ec",
+ "working_branch": "codex/v1",
+ "notes": [
+  "Initial inventory of all 139 recommendations; NOT_STARTED means not yet reconciled, not a claim that capability is absent.",
+  "Later sets override earlier findings. Existing uncommitted work in both checkouts belongs to the user.",
+  "Prerequisites record implementation order; external acceptance and business inputs are recorded separately as blockers.",
+  "User confirmed codex/v1 as the implementation checkout; preserve both dirty checkouts.",
+  "No remote push, commit, merge, deployment or hosted migration was performed. Root PDF/report and Autopilot work was not integrated into this older dirty worktree.",
+  "Batch 1 final full suite passed 3430/3430; its evidence is preserved and is not a batch 2 result.",
+  "Batch 2 baseline rechecked 28 foundation, reference-migration and server-action tests: 28 passed. Selection and staged acceptance are in FS_BATCH_2_PLAN.md.",
+  "Batch 2 selected ten IDs: two locally implemented and eight partial. Full parent scopes and hosted/factory acceptance are not inferred from passing local stages.",
+  "Read-only hosted baseline now shows Autopilot batch 8 and none of the FS foundation/packed-key/stock-movement changes; no hosted write was performed.",
+  "Authorized hosted apply completed 17 November 2026: all fourteen FS foundation/batch-2 migrations plus Autopilot Batch 9 are recorded on AlExMS. Earlier local-only/final_git notes describe the original implementation close-out. See the latest hosted migration receipt; no partial feature parent is promoted by this apply."
+ ],
+ "selected": [
+  "FS-06",
+  "FS-08",
+  "FS-42",
+  "FS-43",
+  "FS-89",
+  "FS-109",
+  "FS-113",
+  "FS-114",
+  "FS-115",
+  "FS-133"
+ ],
+ "batch_history": [
+  {
+   "batch_number": 1,
+   "report": "docs/implementation/FS_BATCH_1_REPORT.md",
+   "selected": [
+    "FS-03",
+    "FS-04",
+    "FS-06",
+    "FS-08",
+    "FS-90",
+    "FS-93",
+    "FS-96",
+    "FS-112",
+    "FS-116",
+    "FS-136"
+   ],
+   "counts": {
+    "selected": 10,
+    "implemented": 6,
+    "partial": 4,
+    "blocked": 0,
+    "verified_existing": 0
+   },
+   "commit_reference": null,
+   "quality_gates": [
+    {
+     "command": "npm run lint",
+     "status": "PASS",
+     "errors": 0,
+     "preexisting_warnings": 5,
+     "evidence": "docs/evidence/FS_BATCH_1/lint-release-final.log"
+    },
+    {
+     "command": "npm run typecheck",
+     "status": "PASS",
+     "evidence": "docs/evidence/FS_BATCH_1/typecheck-release-final.log"
+    },
+    {
+     "command": "npm test",
+     "status": "PASS",
+     "tests": 3430,
+     "passed": 3430,
+     "failed": 0,
+     "skipped": 0,
+     "evidence": "docs/evidence/FS_BATCH_1/full-tests-release-final.log"
+    },
+    {
+     "command": "npm run build",
+     "status": "PASS",
+     "configuration": "Synthetic local CI Supabase URL and publishable key; default Next.js build command.",
+     "evidence": "docs/evidence/FS_BATCH_1/build-release-verified.log",
+     "note": "Final sandboxed repeat hit EPERM creating .next; same local build passed after automatic approval of required filesystem access."
+    },
+    {
+     "command": "npm run test:replay",
+     "status": "PASS",
+     "files_replayed": 306,
+     "baselines": 2,
+     "migrations": 304,
+     "evidence": "docs/evidence/FS_BATCH_1/replay-complete.log"
+    },
+    {
+     "command": "npm run test:postgres",
+     "status": "PASS",
+     "postgres_version": "17.12",
+     "files_replayed": 306,
+     "staff_roles": 15,
+     "staff_identities": 17,
+     "audit_mutation_refusals": 204,
+     "concurrent_backends": 2,
+     "evidence": "docs/evidence/FS_BATCH_1/postgres17-complete.log"
+    },
+    {
+     "command": "npm audit --audit-level=high",
+     "status": "PASS",
+     "high": 0,
+     "critical": 0,
+     "moderate": 7,
+     "note": "Existing moderate development-tool advisories remain.",
+     "evidence": "docs/evidence/FS_BATCH_1/dependency-audit.log"
+    },
+    {
+     "command": "node --no-warnings --experimental-strip-types --test --test-concurrency=2 tests/fs-browser.test.mjs",
+     "status": "PASS",
+     "tests": 6,
+     "widths": [
+      375,
+      1280
+     ],
+     "note": "Real React forms/actions/SQL with synthetic session adapter; not hosted Auth acceptance.",
+     "evidence": "docs/evidence/FS_BATCH_1/browser-second.log"
+    },
+    {
+     "command": "npm run test:e2e:staging",
+     "status": "UNAVAILABLE",
+     "evidence": "docs/evidence/FS_BATCH_1/staging-gate.log",
+     "note": "Runner refused disabled/unconfigured dedicated staging; no production tests attempted."
+    }
+   ],
+   "status_counts": {
+    "IMPLEMENTED": 6,
+    "VERIFIED_EXISTING": 0,
+    "PARTIAL": 6,
+    "BLOCKED": 3,
+    "SUPERSEDED": 1,
+    "NOT_STARTED": 123,
+    "IN_PROGRESS": 0
+   },
+   "preserved_evidence": {
+    "verified_original_files": 331,
+    "restored_test_generated_changes": 131,
+    "manifest": "docs/evidence/FS_BATCH_1/preserved-evidence-manifest.json"
+   },
+   "final_git": {
+    "head": "3bd03b48246eba90ac7ea7d8d4720d2b899aceab",
+    "branch": "codex/v1",
+    "worktree_dirty": true,
+    "committed": false,
+    "pushed": false,
+    "merged": false,
+    "deployed": false,
+    "hosted_migrations_applied": false,
+    "root_preserved": true
+   }
+  },
+  {
+   "batch_number": 2,
+   "report": "docs/implementation/FS_BATCH_2_REPORT.md",
+   "selected": [
+    "FS-06",
+    "FS-08",
+    "FS-42",
+    "FS-43",
+    "FS-89",
+    "FS-109",
+    "FS-113",
+    "FS-114",
+    "FS-115",
+    "FS-133"
+   ],
+   "commit_reference": null,
+   "counts": {
+    "selected": 10,
+    "implemented": 2,
+    "partial": 8,
+    "blocked": 0,
+    "verified_existing": 0
+   },
+   "quality_gates": [
+    {
+     "command": "npm run lint",
+     "status": "PASS",
+     "errors": 0,
+     "preexisting_warnings": 5,
+     "evidence": "docs/evidence/FS_BATCH_2/lint-final.log"
+    },
+    {
+     "command": "npm run typecheck",
+     "status": "PASS",
+     "evidence": "docs/evidence/FS_BATCH_2/typecheck-final.log"
+    },
+    {
+     "command": "npm test",
+     "status": "PASS",
+     "tests": 3458,
+     "passed": 3458,
+     "failed": 0,
+     "skipped": 0,
+     "cancelled": 0,
+     "evidence": "docs/evidence/FS_BATCH_2/full-tests-final.log"
+    },
+    {
+     "command": "npm run build",
+     "status": "PASS",
+     "configuration": "Synthetic local Supabase public URL/key; default Next.js build.",
+     "evidence": "docs/evidence/FS_BATCH_2/build-final.log"
+    },
+    {
+     "command": "npm run test:replay",
+     "status": "PASS",
+     "files_replayed": 314,
+     "baselines": 2,
+     "migrations": 312,
+     "evidence": "docs/evidence/FS_BATCH_2/replay-final.log",
+     "note": "Native final replay also verified the later compatibility edits."
+    },
+    {
+     "command": "npm run test:postgres",
+     "status": "PASS",
+     "postgres_version": "17.12",
+     "files_replayed": 314,
+     "staff_roles": 15,
+     "staff_identities": 17,
+     "direct_mutation_refusals": 1054,
+     "rpc_role_checks": 68,
+     "row_visibility_checks": 68,
+     "concurrent_backends": 2,
+     "laboratory_allocation_serialization": true,
+     "evidence": "docs/evidence/FS_BATCH_2/postgres17-native-final.log"
+    },
+    {
+     "command": "node --no-warnings --experimental-strip-types --test --test-concurrency=2 tests/fs-batch2-browser.test.mjs tests/fs-batch2-actions.test.mjs",
+     "status": "PASS",
+     "tests": 12,
+     "browser_tests": 8,
+     "action_tests": 4,
+     "widths": [
+      375,
+      1280
+     ],
+     "evidence": "docs/evidence/FS_BATCH_2/browser-actions-final.log",
+     "note": "Real React/action/SQL with a synthetic session adapter; email provider is mocked."
+    },
+    {
+     "command": "npm audit --audit-level=high",
+     "status": "PASS",
+     "high": 0,
+     "critical": 0,
+     "moderate": 7,
+     "evidence": "docs/evidence/FS_BATCH_2/dependency-audit.log"
+    },
+    {
+     "command": "npm run test:e2e:staging",
+     "status": "UNAVAILABLE",
+     "evidence": "docs/evidence/FS_BATCH_2/staging-gate.log",
+     "note": "Dedicated staging is disabled/unconfigured; no mutation or test was redirected to production."
+    }
+   ],
+   "previous_state_reference": "docs/implementation/FS_BATCH_1_REPORT.md",
+   "final_git": {
+    "head": "3bd03b48246eba90ac7ea7d8d4720d2b899aceab",
+    "branch": "codex/v1",
+    "worktree_dirty": true,
+    "committed": false,
+    "pushed": false,
+    "merged": false,
+    "deployed": false,
+    "hosted_migrations_applied": false,
+    "root_preserved": true,
+    "root_head_observed": "71a17b1bce853707f62106ae71128080b9f5eb8f",
+    "root_branch_observed": "feat/autopilot-batch-9",
+    "owned_postgres_stopped": true
+   },
+   "preserved_evidence": {
+    "verified_original_files": 337,
+    "restored_test_generated_changes": 136,
+    "manifest": "docs/evidence/FS_BATCH_2/preserved-evidence-manifest.json",
+    "evidence": "docs/evidence/FS_BATCH_2/preserved-evidence.log",
+    "artifact_directory": "C:/Users/arnav/.codex/visualizations/2026/11/15/01a1ded1-0211-76e3-9593-2f02aa54e51f/fs-batch2"
+   }
+  },
+  {
+   "batch_number": "phase4-1",
+   "date": "2026-11-17",
+   "selected": [
+    "FS-68",
+    "FS-73",
+    "FS-72",
+    "FS-71",
+    "FS-27",
+    "FS-16",
+    "FS-38",
+    "FS-36",
+    "FS-54",
+    "FS-26"
+   ],
+   "working_branch": "feat/autopilot-batch-10 (root, uncommitted)",
+   "initial_commit": "71a17b1bce853707f62106ae71128080b9f5eb8f",
+   "counts": {
+    "IMPLEMENTED": 5,
+    "PARTIAL": 5,
+    "BLOCKED": 0,
+    "VERIFIED_EXISTING": 0
+   },
+   "migrations": [
+    "supabase/migrations/20261118100000_fs_phase4_promises_otif.sql",
+    "supabase/migrations/20261118110000_fs_phase4_finance_outlook.sql",
+    "supabase/migrations/20261118120000_fs_phase4_planning_cockpit.sql"
+   ],
+   "report": "docs/implementation/FS_PHASE4_BATCH_1_REPORT.md",
+   "user_override": "User asked for Phase 4 ('make it intelligent') while Phase 0-1 items remain open in the Codex workstream."
+  }
+ ],
+ "items": [
+  {
+   "id": "FS-01",
+   "title": "Close the six audit P1 defects",
+   "priority": "Critical",
+   "status": "PARTIAL",
+   "prerequisites": [
+    "FS-06",
+    "FS-112"
+   ],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [
+    "FS-06 and FS-112 close portions of the former audit defects; the full six-defect regression/hosted acceptance is not established."
+   ],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [
+    "Remaining parent scope and hosted/factory acceptance are not complete."
+   ],
+   "acceptance_status": "OVERLAP_RECORDED_NOT_COUNTED_AS_NEW_COMPLETION"
+  },
+  {
+   "id": "FS-02",
+   "title": "A staging environment with one account per role",
+   "priority": "Critical",
+   "status": "BLOCKED",
+   "prerequisites": [],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [
+    "No dedicated Supabase staging project, bound Vercel preview or role-specific staging credentials available; staging runner refuses disabled configuration."
+   ],
+   "acceptance_status": "EXTERNAL_DEPENDENCY_PENDING"
+  },
+  {
+   "id": "FS-03",
+   "title": "Continuous integration that blocks bad merges",
+   "priority": "Critical",
+   "status": "PARTIAL",
+   "prerequisites": [],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [
+    "PR/push/nightly/manual GitHub Actions gates include install, lint, typecheck, configurator and application tests, build, replay, high-severity dependency audit.",
+    "Native PostgreSQL 17 replay executes schema contracts and independent-session chemistry retry verification.",
+    "Read-only GitHub check returned 404 Branch not protected for main; no repository settings changed."
+   ],
+   "modified_files": [
+    ".github/workflows/fs-quality.yml",
+    "eslint.config.mjs",
+    "package.json",
+    "scripts/lib/migration-chain-replay.mjs",
+    "scripts/replay-postgres-migrations.mjs",
+    "scripts/lib/fs-postgres-client.mjs",
+    "scripts/verify-fs-postgres.mjs",
+    "sql/fs-schema-contracts.sql"
+   ],
+   "tests": [
+    "npm run lint",
+    "npm run typecheck",
+    "npm test",
+    "npm run build",
+    "npm run test:replay",
+    "npm run test:postgres",
+    "npm audit --audit-level=high"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Workflow remains local and has not run in GitHub Actions.",
+    "main branch protection does not require Release gate. Remote changes are outside this execution."
+   ],
+   "acceptance_status": "LOCAL_WORKFLOW_VERIFIED_REMOTE_ENFORCEMENT_PENDING",
+   "acceptance_checklist": [
+    "PR checks install, lint, typecheck, all tests including configurator, build, replay, high-severity dependency audit.",
+    "Nightly real PostgreSQL 17 replay, fail closed on schema/security defects.",
+    "Document required branch-protection status; external settings remain pending until verified."
+   ]
+  },
+  {
+   "id": "FS-04",
+   "title": "One release record tying commit, deployment and database together",
+   "priority": "Critical",
+   "status": "IMPLEMENTED",
+   "prerequisites": [],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [
+    "Authenticated owner/admin Settings About reads runtime Vercel identity and the actual applied database ledger separately.",
+    "Owner-approved immutable release pairing records approver, time and acceptance note. Server rechecks runtime values and database rechecks the reviewed ledger version.",
+    "Historical hosted/repository ledger drift is documented; no history was fabricated or repaired."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261116094000_fs_release_evidence.sql",
+    "lib/releases/release-state.ts",
+    "lib/actions/fs-foundation.ts",
+    "app/(dashboard)/settings/about/page.tsx",
+    "components/modules/settings/release-approval.tsx",
+    "app/(dashboard)/settings/page.tsx"
+   ],
+   "tests": [
+    "tests/fs-contracts.test.mjs",
+    "tests/fs-server-actions.test.mjs",
+    "tests/fs-foundation-sql.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Hosted ledger reconciliation and runtime environment metadata exposure must precede deployment acceptance.",
+    "No hosted release has been approved or deployed in this batch."
+   ],
+   "acceptance_status": "LOCAL_IMPLEMENTATION_VERIFIED_HOSTED_ACCEPTANCE_PENDING",
+   "acceptance_checklist": [
+    "An authenticated About view reports runtime commit/deployment and actual database migration ledger separately.",
+    "A release is recorded with actor, commit, deployment, applied migration and timestamp; mismatched/unavailable metadata is explicit.",
+    "Document existing ledger drift and a repository CLI release procedure; no invented historical pairing."
+   ]
+  },
+  {
+   "id": "FS-05",
+   "title": "Parallel run and signed opening balances",
+   "priority": "Critical",
+   "status": "BLOCKED",
+   "prerequisites": [
+    "FS-02",
+    "FS-08",
+    "FS-09"
+   ],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [
+    "Physical opening counts, accountant agreement, month-long parallel run and signed tolerance/reconciliation acceptance require factory participation.",
+    "Full stock ledger and mass balance prerequisites remain incomplete."
+   ],
+   "acceptance_status": "EXTERNAL_DEPENDENCY_PENDING"
+  },
+  {
+   "id": "FS-06",
+   "title": "User lifecycle and access administration",
+   "priority": "Critical",
+   "status": "PARTIAL",
+   "prerequisites": [],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [
+    "Company-locked audited owner/admin deactivation/reactivation/role commands preserve existing invitation workflow.",
+    "Access-sensitive columns are denied to direct client updates; self-service contact columns remain available.",
+    "Non-recursive staff read policies, inactive access refusal, target scoping, self-change and last-owner guards; reason and old/new values are audited.",
+    "Owner-scoped invitation revoke/resend rotates the server-only token, validates origin, expires old credentials, audits the reason and reports provider delivery failure separately.",
+    "Quarterly access review stores an immutable complete roster/invitation snapshot and hash; serialized roster changes invalidate stale signatures. The real owner review page pages staff and invitations ten at a time.",
+    "Canonical access administration replaces the enterprise direct staff editor; unsupported custom-role creation returns an explicit conflict."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261116090000_fs_audit_access_and_rpc_boundary.sql",
+    "lib/actions/fs-foundation.ts",
+    "lib/auth/permissions.ts",
+    "lib/auth/route-permissions.ts",
+    "app/(dashboard)/settings/access/page.tsx",
+    "components/modules/access-control-client.tsx",
+    "supabase/migrations/20261117094000_fs_access_review_and_invitations.sql",
+    "lib/actions/fs-access-lifecycle.ts",
+    "components/modules/settings/access-lifecycle.tsx",
+    "app/(dashboard)/settings/access/review/page.tsx",
+    "app/api/access/roles/route.ts",
+    "components/modules/enterprise-foundation-client.tsx"
+   ],
+   "tests": [
+    "tests/fs-foundation-sql.test.mjs",
+    "tests/fs-server-actions.test.mjs",
+    "tests/fs-browser.test.mjs",
+    "tests/route-permissions.test.mjs",
+    "tests/enterprise-access-dealer-workflows.test.mjs",
+    "tests/fs-batch2-actions.test.mjs",
+    "tests/fs-batch2-sql.test.mjs",
+    "tests/fs-batch2-browser.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Provider-wide session revocation, MFA reset and complete hosted lifecycle acceptance remain unfinished. Email failure behavior is tested with a mock; no live invitation was sent."
+   ],
+   "acceptance_status": "LOCAL_LIFECYCLE_STAGE_VERIFIED_PARENT_INCOMPLETE",
+   "acceptance_checklist": [
+    "Owner-managed audited deactivation/reactivation/role changes validate server and database authorization, same-company targets and last-owner protection.",
+    "Normal employee self-service cannot change access fields; suspended staff lose database access.",
+    "Invitation/admin-session/MFA and access-review gaps remain explicit until every requested lifecycle operation is supported."
+   ],
+   "last_batch": 2
+  },
+  {
+   "id": "FS-07",
+   "title": "Error monitoring and uptime alerts",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-08",
+   "title": "One stock ledger for every material",
+   "priority": "Critical",
+   "status": "PARTIAL",
+   "prerequisites": [],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [
+    "Packaging reconciliation reports absent or ambiguous mapping, units and projection balance differences with server pagination/search.",
+    "Existing packaging posting locks the mapped rows, refuses pre-existing drift atomically and posts issue/return into the existing movement model.",
+    "No opening stock is invented. Historical rows and seven-model transition are preserved; FS-119 is not separately counted.",
+    "Append-only stock_movements captures the existing central inventory movement atomically, retaining company, unit, source, actor and location dimensions.",
+    "Opening balance is explicitly an unsigned observed projection. Drift aborts the source transaction and appears in the paginated reconciliation screen; physical stock is never invented."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261116093000_fs_packaging_reconciliation.sql",
+    "app/(dashboard)/inventory/reconciliation/page.tsx",
+    "app/(dashboard)/inventory/page.tsx",
+    "supabase/migrations/20261117095000_fs_stock_ledger_capture.sql",
+    "app/(dashboard)/inventory/reconciliation/ledger/page.tsx"
+   ],
+   "tests": [
+    "tests/fs-foundation-sql.test.mjs",
+    "tests/audit-integrity-repairs.test.mjs",
+    "tests/fs-batch2-sql.test.mjs",
+    "scripts/verify-fs-batch2-postgres.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "The ledger covers central inventory, not every material model. All-material writer retirement, signed physical openings and a complete nightly reconciliation remain. FS-119 is not counted separately."
+   ],
+   "acceptance_status": "LOCAL_CENTRAL_INVENTORY_STAGE_VERIFIED_PARENT_INCOMPLETE",
+   "acceptance_checklist": [
+    "Stage 1: packaging movements have immutable posting evidence, reconciled opening balances and no destructive balance overwrite.",
+    "Posted packaging consumption/restore/purchase changes reconcile to the existing authoritative balance.",
+    "Other materials and all physical reconciliations remain parent PARTIAL; FS-119 not counted again."
+   ],
+   "last_batch": 2
+  },
+  {
+   "id": "FS-09",
+   "title": "A metal mass-balance engine across the plant",
+   "priority": "Critical",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-08"
+   ],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-10",
+   "title": "Genealogy graph: one-click forward and backward trace",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-08"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-11",
+   "title": "Recall and containment workflow",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-10"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-12",
+   "title": "A costing spine: actual cost per job, per kg, per order",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-08",
+    "FS-65"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-13",
+   "title": "An event backbone so modules react to each other",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-14",
+   "title": "Foundry: multi-lot charge sheet and specification-driven chemistry",
+   "priority": "Critical",
+   "status": "PARTIAL",
+   "prerequisites": [
+    "FS-112"
+   ],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [
+    "FS-112 provides approved specification/chemistry control. Multi-lot charge and full foundry acceptance remain."
+   ],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [
+    "Remaining parent scope and hosted/factory acceptance are not complete."
+   ],
+   "acceptance_status": "OVERLAP_RECORDED_NOT_COUNTED_AS_NEW_COMPLETION"
+  },
+  {
+   "id": "FS-15",
+   "title": "Production: press-side terminal and true OEE",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-53"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-16",
+   "title": "Die management: life prediction and a closed correction loop",
+   "priority": "High",
+   "status": "PARTIAL",
+   "prerequisites": [
+    "FS-125"
+   ],
+   "risk": [],
+   "implementation_evidence": [
+    "Per die: lifetime kg, rated life (recorded) or median of >=3 retired dies of the type, 8-week rate, weeks left, open order demand, replacement lead time from the maker's own history or a value the die shop sets.",
+    "Replacement flag when remaining life < demand + output during lead time; morning job raises/clears one warning per die.",
+    "Die makers ranked by kg per ₹1,000 of recorded die cost; amortisation recovered on invoices for customer-owned/shared dies; open correction loops with age."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261118120000_fs_phase4_planning_cockpit.sql",
+    "components/modules/intelligence/die-life.tsx",
+    "app/(dashboard)/dies/life/page.tsx",
+    "lib/intelligence/commands.ts",
+    "lib/actions/intelligence.ts",
+    "components/modules/intelligence/shared.tsx",
+    "lib/auth/route-permissions.ts",
+    "lib/intelligence/destinations.ts"
+   ],
+   "tests": [
+    "tests/fs-phase4-sql.test.mjs",
+    "tests/fs-phase4.test.mjs",
+    "tests/fs-phase4-browser.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Remaining: defect photo -> corrector action -> trial result -> approve/back loop UI; die-rack QR labels; per-die recovery/speed/defect history panel."
+   ],
+   "acceptance_status": "PARTIAL_LOCAL",
+   "batch": "phase4-1",
+   "updated": "2026-11-17",
+   "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
+  },
+  {
+   "id": "FS-17",
+   "title": "Quality: specification master, sampling plans and certificates",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-18",
+   "title": "Finishing and job-work: a vendor custody ledger",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-08"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-19",
+   "title": "Packaging and dispatch: scan-to-load and weighbridge",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-08",
+    "FS-115"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-20",
+   "title": "Quotations: live metal price, win/loss tracking and margin guardrails",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-21",
+   "title": "Receivables: a collections cockpit and credit control",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-65"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-22",
+   "title": "Systems configurator: engineering sign-off and cut optimisation",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-65"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-23",
+   "title": "Dealer network: stock visibility and scheme management",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-08"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-24",
+   "title": "E-invoice and e-way bill generation",
+   "priority": "Critical",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-25",
+   "title": "Tally / accounting bridge",
+   "priority": "Critical",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-26",
+   "title": "A finite-capacity production scheduler",
+   "priority": "High",
+   "status": "PARTIAL",
+   "prerequisites": [
+    "FS-53"
+   ],
+   "risk": [],
+   "implementation_evidence": [
+    "Promise-date calculator reusing AP-069 capacity: earliest dispatch from free press capacity, the later return of an away die (AP-065 windows), finishing lead time and one packing day; blocking constraints stated.",
+    "Breakdown re-flow: scheduled work on a press with an open breakdown, each order's promise and slack, at-risk when slack < days down, linked to delay notices.",
+    "Existing: AP-061 nightly draft plan, schedule board and AP-065 die windows."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261118120000_fs_phase4_planning_cockpit.sql",
+    "components/modules/intelligence/promise.tsx",
+    "app/(dashboard)/production/promise/page.tsx",
+    "lib/intelligence/commands.ts",
+    "lib/actions/intelligence.ts",
+    "components/modules/intelligence/shared.tsx",
+    "lib/auth/route-permissions.ts",
+    "lib/intelligence/destinations.ts"
+   ],
+   "tests": [
+    "tests/fs-phase4-sql.test.mjs",
+    "tests/fs-phase4.test.mjs",
+    "tests/fs-phase4-browser.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Remaining: drag-and-drop finite board with enforced die/billet/shift constraints and automatic re-flow of the schedule itself; ageing ovens and finishing."
+   ],
+   "acceptance_status": "PARTIAL_LOCAL",
+   "batch": "phase4-1",
+   "updated": "2026-11-17",
+   "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
+  },
+  {
+   "id": "FS-27",
+   "title": "Material requirements planning",
+   "priority": "High",
+   "status": "IMPLEMENTED",
+   "prerequisites": [
+    "FS-08",
+    "FS-26"
+   ],
+   "risk": [],
+   "implementation_evidence": [
+    "Billet requirement by alloy, diameter and week (8 weeks): firm from live jobs, uncertain from order lines not yet on a job, against free stock, dated billet purchase lines and planned casts; cast-or-buy suggestion with its evidence and every driving job/order listed.",
+    "Rows lacking alloy, billet diameter or recorded recovery are listed as 'cannot calculate', never guessed.",
+    "Packaging/consumables at or below reorder point (approved AP-033 quantity when present); dies due for replacement from FS-16.",
+    "Owner approves the week's plan by fingerprint (stale plans refused); purchase/foundry record the PO or cast reference per line, once."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261118120000_fs_phase4_planning_cockpit.sql",
+    "components/modules/intelligence/material-plan.tsx",
+    "app/(dashboard)/production/material-plan/page.tsx",
+    "lib/intelligence/commands.ts",
+    "lib/actions/intelligence.ts",
+    "components/modules/intelligence/shared.tsx",
+    "lib/auth/route-permissions.ts",
+    "lib/intelligence/destinations.ts"
+   ],
+   "tests": [
+    "tests/fs-phase4-sql.test.mjs",
+    "tests/fs-phase4.test.mjs",
+    "tests/fs-phase4-browser.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Uses production_jobs.extrusion_efficiency_percent, a NOT NULL column with a pre-existing default; jobs never given a real recovery inherit that default (see report risks).",
+    "Full FS-08 stock authority (Codex batch 3) will tighten the free-stock figure."
+   ],
+   "acceptance_status": "LOCAL_ACCEPTED_STAGING_PENDING",
+   "batch": "phase4-1",
+   "updated": "2026-11-17",
+   "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
+  },
+  {
+   "id": "FS-28",
+   "title": "Procure-to-pay with three-way match",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-29",
+   "title": "Scrap and remelt loop management",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-08",
+    "FS-14"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-30",
+   "title": "Preventive maintenance and spares",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-31",
+   "title": "Energy and gas per tonne",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-32",
+   "title": "Compliance calendar and document vault",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-33",
+   "title": "Shop-floor mode: big buttons, scan first, no typing",
+   "priority": "Critical",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-34",
+   "title": "An installable app that works offline",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-33"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-35",
+   "title": "Hindi and bilingual labels",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-33"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-36",
+   "title": "Live screens without refresh",
+   "priority": "High",
+   "status": "PARTIAL",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [
+    "Realtime publication limited to the nine tables behind the live screens (guarded, idempotent); a change triggers a debounced server re-read, so RLS and calculations stay server-side.",
+    "Live indicator ('updated just now', paused fallback with manual refresh) on press floor, order board, dispatch queue, approval inbox and notifications.",
+    "Production-office wall: each press, current job, kg/hour against the AP-066 shift target, next die, stoppage in red; presence note on development records."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261118120000_fs_phase4_planning_cockpit.sql",
+    "lib/realtime/live.ts",
+    "components/modules/intelligence/live.tsx",
+    "components/modules/intelligence/wall.tsx",
+    "app/(dashboard)/production/wall/page.tsx",
+    "app/(dashboard)/production/floor/page.tsx",
+    "app/(dashboard)/orders/page.tsx",
+    "app/(dashboard)/dispatches/page.tsx",
+    "app/(dashboard)/tasks/approvals/page.tsx",
+    "app/(dashboard)/notifications/page.tsx",
+    "lib/intelligence/commands.ts",
+    "lib/actions/intelligence.ts",
+    "components/modules/intelligence/shared.tsx",
+    "lib/auth/route-permissions.ts",
+    "lib/intelligence/destinations.ts"
+   ],
+   "tests": [
+    "tests/fs-phase4-sql.test.mjs",
+    "tests/fs-phase4.test.mjs",
+    "tests/fs-phase4-browser.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Realtime delivery against hosted Supabase not verified (migration not applied).",
+    "Presence on order/dispatch detail pages deferred: those files carry uncommitted Autopilot batch 10 work."
+   ],
+   "acceptance_status": "PARTIAL_LOCAL",
+   "batch": "phase4-1",
+   "updated": "2026-11-17",
+   "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
+  },
+  {
+   "id": "FS-37",
+   "title": "Role home pages that answer \"what do I do now\"",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-38",
+   "title": "Owner cockpit and a daily WhatsApp brief",
+   "priority": "High",
+   "status": "PARTIAL",
+   "prerequisites": [
+    "FS-77",
+    "FS-132"
+   ],
+   "risk": [],
+   "implementation_evidence": [
+    "Mobile-first owner cockpit: yesterday from the stored AP-080 digest (screen and message always agree), order book and days of load per press, billet stock in days, OTIF, metal position, 13-week cash low point, five exceptions; every tile links to its list.",
+    "Weekly and monthly trends from stored digests; WhatsApp-ready brief (copy or open in WhatsApp for the owner to send)."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261118120000_fs_phase4_planning_cockpit.sql",
+    "components/modules/intelligence/cockpit.tsx",
+    "app/(dashboard)/insights/cockpit/page.tsx",
+    "lib/intelligence/commands.ts",
+    "lib/actions/intelligence.ts",
+    "components/modules/intelligence/shared.tsx",
+    "lib/auth/route-permissions.ts",
+    "lib/intelligence/destinations.ts"
+   ],
+   "tests": [
+    "tests/fs-phase4-sql.test.mjs",
+    "tests/fs-phase4.test.mjs",
+    "tests/fs-phase4-browser.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Automatic morning WhatsApp delivery needs FS-48 (WhatsApp Business API) and budget decision #10; not sent automatically."
+   ],
+   "acceptance_status": "PARTIAL_LOCAL",
+   "batch": "phase4-1",
+   "updated": "2026-11-17",
+   "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
+  },
+  {
+   "id": "FS-39",
+   "title": "Design-system pass: density, states and accessibility",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-40",
+   "title": "Label and document printing that looks professional",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-41",
+   "title": "Generated database types and typed RPC contracts",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-03"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-42",
+   "title": "Structural delete protection and immutable ledgers",
+   "priority": "High",
+   "status": "IMPLEMENTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [
+    "Every cascading foreign key to quotes, orders, production jobs, foundry batches, dispatches, invoices or payments is replaced with RESTRICT; protected business parents also refuse hard deletion.",
+    "Payments retain their economic facts. The canonical idempotent reversal appends an immutable payment_reversals fact; application roles cannot update/delete receipts or ledgers.",
+    "Cutover reversal now cancels opening orders/invoices, retains order lines and archives the original section/import evidence instead of deleting business history. Reposting excludes canceled opening orders.",
+    "Actual-role mutation refusals, privileged delete refusal, canonical receipt reversal, opening-order reversal/reload and receivable reversal/reload pass. Existing audit immutability from FS-90 is retained."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261117090000_fs_history_integrity.sql",
+    "tests/autopilot-batch1-sql.test.mjs",
+    "tests/nov-batch10-sql-b.test.mjs",
+    "scripts/lib/nov-batch10-fixture.mjs",
+    "tests/fs-batch2-sql.test.mjs",
+    "sql/fs-schema-contracts.sql"
+   ],
+   "tests": [
+    "tests/fs-batch2-sql.test.mjs",
+    "tests/autopilot-batch1-sql.test.mjs",
+    "tests/nov-batch10-sql-b.test.mjs",
+    "scripts/verify-fs-batch2-postgres.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "LOCAL_RUNTIME_AND_HOSTED_SCHEMA_VERIFIED_FACTORY_AND_AUTH_ACCEPTANCE_PENDING",
+   "last_batch": 2,
+   "hosted_schema_verification": {
+    "date": "2026-11-17",
+    "project_id": "pkawmdxtmsdgigsehcmb",
+    "receipt": "docs/evidence/SUPABASE_BATCH9_FS_APPLY/hosted-apply-receipt.json"
+   }
+  },
+  {
+   "id": "FS-43",
+   "title": "A policy and permission test matrix",
+   "priority": "High",
+   "status": "PARTIAL",
+   "prerequisites": [
+    "FS-90"
+   ],
+   "risk": [],
+   "implementation_evidence": [
+    "A declarative matrix drives real authenticated PostgreSQL role execution: 15 roles plus inactive and foreign identities, 1,054 denied DML cells, 68 RPC checks and 68 seeded row-visibility checks.",
+    "The existing native PostgreSQL CI runner invokes the new harness. Anonymous access, idempotent two-backend die submission and serialized laboratory/allocation behavior are exercised."
+   ],
+   "modified_files": [
+    "tests/fixtures/fs-permission-matrix.json",
+    "scripts/lib/fs-permission-matrix.mjs",
+    "scripts/verify-fs-batch2-postgres.mjs",
+    "scripts/replay-postgres-migrations.mjs",
+    "tests/fs-batch2-sql.test.mjs",
+    "sql/fs-schema-contracts.sql"
+   ],
+   "tests": [
+    "npm run test:postgres",
+    "tests/fs-batch2-sql.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Coverage is staged across 21 sensitive tables and four read RPCs. It is not every table/RPC/bucket. Hosted sign-in/JWT and executable Storage bucket coverage remain unavailable or incomplete."
+   ],
+   "acceptance_status": "REAL_ROLE_CRITICAL_MATRIX_VERIFIED_FULL_MATRIX_INCOMPLETE",
+   "last_batch": 2
+  },
+  {
+   "id": "FS-44",
+   "title": "Performance at five years of data",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-02"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-45",
+   "title": "Backups, a restore drill and disaster recovery",
+   "priority": "Critical",
+   "status": "BLOCKED",
+   "prerequisites": [],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [
+    "Approved backup/PITR plan, Omalco-owned off-provider backup destination, staging restore target and operator restore drill are not available to verify."
+   ],
+   "acceptance_status": "EXTERNAL_DEPENDENCY_PENDING"
+  },
+  {
+   "id": "FS-46",
+   "title": "Tame the migration chain",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-03",
+    "FS-43"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-47",
+   "title": "Machine and instrument integration",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-48",
+   "title": "WhatsApp Business API, not just share links",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-13"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-49",
+   "title": "Bank feed and payment links",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-50",
+   "title": "AI that does real work, safely",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-89"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-51",
+   "title": "Security hardening for a real user base",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-52",
+   "title": "Training, SOPs and in-app help",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-02"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-53",
+   "title": "Process recipe card per profile and press",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-54",
+   "title": "New-profile and new-die development pipeline",
+   "priority": "High",
+   "status": "PARTIAL",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [
+    "Stage board enquiry -> feasibility -> die quotation -> die ordered -> received -> trials -> sample -> customer approval -> released, with owner and age; paginated database page.",
+    "Server-enforced gates: feasible verdict, die cost + payer + expected date, customer die-cost approval when the customer pays, linked die record, at least one die trial, sample reference, approval reference and profile.",
+    "Append-only stage history carrying die cost, payer and amortisation terms; next owner notified."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261118120000_fs_phase4_planning_cockpit.sql",
+    "components/modules/intelligence/development.tsx",
+    "app/(dashboard)/profiles/development/page.tsx",
+    "app/(dashboard)/profiles/development/[id]/page.tsx",
+    "app/(dashboard)/profiles/development/database/page.tsx",
+    "lib/intelligence/commands.ts",
+    "lib/actions/intelligence.ts",
+    "components/modules/intelligence/shared.tsx",
+    "lib/auth/route-permissions.ts",
+    "lib/intelligence/destinations.ts"
+   ],
+   "tests": [
+    "tests/fs-phase4-sql.test.mjs",
+    "tests/fs-phase4.test.mjs",
+    "tests/fs-phase4-browser.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Die cost/payer/amortisation do not yet flow automatically into quotations and invoices."
+   ],
+   "acceptance_status": "PARTIAL_LOCAL",
+   "batch": "phase4-1",
+   "updated": "2026-11-17",
+   "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
+  },
+  {
+   "id": "FS-55",
+   "title": "Press tooling beyond dies",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-56",
+   "title": "Die oven and preheat control",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-26"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-57",
+   "title": "Rework, re-ageing and re-finishing as first-class flows",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-10",
+    "FS-110"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-58",
+   "title": "Customer-owned metal and conversion (tolling) account",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-08"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-59",
+   "title": "Help call from the floor with response-time tracking",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-60",
+   "title": "Safety, incidents and permits to work",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-61",
+   "title": "Gate management for vehicles and material",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-62",
+   "title": "Warehouse map, length-wise stock and ageing stock",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-63",
+   "title": "Cycle counting programme",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-64",
+   "title": "Offcuts, short lengths and non-standard stock",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-08"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-65",
+   "title": "One unit-of-measure and weight-basis policy",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-66",
+   "title": "Standard-section price list and counter sales",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-20",
+    "FS-65"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-67",
+   "title": "Order 360, Customer 360, Die 360, Profile 360",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-68",
+   "title": "On-time-in-full measurement and promise tracking",
+   "priority": "High",
+   "status": "IMPLEMENTED",
+   "prerequisites": [
+    "FS-77"
+   ],
+   "risk": [],
+   "implementation_evidence": [
+    "order_line_first_promises captures the first effective date (line required date, else order expected dispatch date) once; update/delete refused by trigger.",
+    "order_promise_changes appends every later change from order-date updates and audited line-schedule events with reason and person; an unrecorded cause can be annotated once with cause and who agreed.",
+    "OTIF = lines dispatched to ordered kg less the owner-set in-full tolerance (0% until Omalco decides, audited) on or before the FIRST promise / lines due; by customer, salesperson, profile and cause; shown on the owner cockpit.",
+    "Soft keys + cleanup on line deletion so cut-over reversal of opening orders is not blocked; existing lines backfilled and labelled reconstructed."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261118100000_fs_phase4_promises_otif.sql",
+    "components/modules/intelligence/otif.tsx",
+    "app/(dashboard)/insights/otif/page.tsx",
+    "lib/intelligence/commands.ts",
+    "lib/actions/intelligence.ts",
+    "components/modules/intelligence/shared.tsx",
+    "lib/auth/route-permissions.ts",
+    "lib/intelligence/destinations.ts"
+   ],
+   "tests": [
+    "tests/fs-phase4-sql.test.mjs",
+    "tests/fs-phase4.test.mjs",
+    "tests/fs-phase4-browser.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Omalco decision #1 (dispatch weighing tolerance) sets the in-full tolerance; until then 0% applies.",
+    "Hosted migration and staging walk-through not performed."
+   ],
+   "acceptance_status": "LOCAL_ACCEPTED_STAGING_PENDING",
+   "batch": "phase4-1",
+   "updated": "2026-11-17",
+   "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
+  },
+  {
+   "id": "FS-69",
+   "title": "Customer portal: approvals, live tracking, reorder",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-70",
+   "title": "Customer acceptance with OTP and digital signature",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-71",
+   "title": "Sales forecast and order-book analytics",
+   "priority": "Medium",
+   "status": "IMPLEMENTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [
+    "Weighted pipeline from open quotes by stage (unsent/sent) x win rate measured from the last year's decided quotes (min 10), or a probability set with name and reason.",
+    "Order book in tonnes by alloy and finish; weeks of load per press from open job kg / weekly shift capacity.",
+    "Top-five concentration over 12 months' invoicing; customers ordering below a stated share of their 90-day average; seasonal projection = same months last year x capped trailing growth. Every method is printed beside its number."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261118110000_fs_phase4_finance_outlook.sql",
+    "components/modules/intelligence/order-book.tsx",
+    "app/(dashboard)/insights/order-book/page.tsx",
+    "lib/intelligence/commands.ts",
+    "lib/actions/intelligence.ts",
+    "components/modules/intelligence/shared.tsx",
+    "lib/auth/route-permissions.ts",
+    "lib/intelligence/destinations.ts"
+   ],
+   "tests": [
+    "tests/fs-phase4-sql.test.mjs",
+    "tests/fs-phase4.test.mjs",
+    "tests/fs-phase4-browser.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "LOCAL_ACCEPTED_STAGING_PENDING",
+   "batch": "phase4-1",
+   "updated": "2026-11-17",
+   "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
+  },
+  {
+   "id": "FS-72",
+   "title": "Metal price exposure and back-to-back booking",
+   "priority": "High",
+   "status": "IMPLEMENTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [
+    "Daily position: fixed-price metal still to produce less back-to-back bookings, against billet stock, cast billets, scrap pool and open billet purchase lines; net long/short and the cost of a price step (default ₹5/kg, owner-settable).",
+    "Back-to-back bookings per sales order cannot exceed the metal the order still needs; cancellation is reasoned and retained; orders can be marked price-linked with a note.",
+    "Owner-only limit; the morning job snapshots the position and raises/clears one owner alert. Visibility only: no trading or hedging advice."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261118110000_fs_phase4_finance_outlook.sql",
+    "components/modules/intelligence/metal-exposure.tsx",
+    "app/(dashboard)/insights/metal-exposure/page.tsx",
+    "lib/intelligence/commands.ts",
+    "lib/actions/intelligence.ts",
+    "components/modules/intelligence/shared.tsx",
+    "lib/auth/route-permissions.ts",
+    "lib/intelligence/destinations.ts"
+   ],
+   "tests": [
+    "tests/fs-phase4-sql.test.mjs",
+    "tests/fs-phase4.test.mjs",
+    "tests/fs-phase4-browser.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Which metal price reference Omalco buys/sells against (decision #5) is not used; the approved billet rate is shown as reference only."
+   ],
+   "acceptance_status": "LOCAL_ACCEPTED_STAGING_PENDING",
+   "batch": "phase4-1",
+   "updated": "2026-11-17",
+   "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
+  },
+  {
+   "id": "FS-73",
+   "title": "Thirteen-week cash-flow forecast",
+   "priority": "High",
+   "status": "IMPLEMENTED",
+   "prerequisites": [
+    "FS-21"
+   ],
+   "risk": [],
+   "implementation_evidence": [
+    "AP-076 forecast extended to 13 weeks (default read stays 4 for compatibility).",
+    "Open collection promises (FS-21 data) date the promised part of an invoice; payments since the promise reduce it; the remainder uses due date + customer's usual delay.",
+    "Minimum balance (owner/accounts) flags weeks closing below it and names the first such week; forecast-vs-actual comparison (AP-076) retained.",
+    "Salaries, power, loan instalments and tax dates are entered as fixed expenses/one-offs."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261118110000_fs_phase4_finance_outlook.sql",
+    "components/modules/autopilot-batch9/cash-forecast.tsx",
+    "lib/autopilot-batch9/commands.ts",
+    "app/(dashboard)/payments/cash-forecast/page.tsx",
+    "lib/intelligence/commands.ts",
+    "lib/actions/intelligence.ts",
+    "components/modules/intelligence/shared.tsx",
+    "lib/auth/route-permissions.ts",
+    "lib/intelligence/destinations.ts"
+   ],
+   "tests": [
+    "tests/fs-phase4-sql.test.mjs",
+    "tests/fs-phase4.test.mjs",
+    "tests/fs-phase4-browser.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Hosted migration not applied; opening bank balance is a manual entry until a bank feed (FS-49)."
+   ],
+   "acceptance_status": "LOCAL_ACCEPTED_STAGING_PENDING",
+   "batch": "phase4-1",
+   "updated": "2026-11-17",
+   "workspace": "root checkout, feat/autopilot-batch-10 (uncommitted)"
+  },
+  {
+   "id": "FS-74",
+   "title": "Budgets and an automatic monthly MIS pack",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-77"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-75",
+   "title": "Delegation-of-authority matrix",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-76",
+   "title": "Period close checklist",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-77",
+   "title": "KPI dictionary: one definition per number",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-78",
+   "title": "Scheduled reports and Excel everywhere",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-127"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-79",
+   "title": "History tab on every record",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-90"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-80",
+   "title": "Drawing and document revision control",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-17"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-81",
+   "title": "Master data governance",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-82",
+   "title": "One business-date service",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-83",
+   "title": "Second location readiness",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-137"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-84",
+   "title": "Privacy and data-retention policy",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-85",
+   "title": "Outbound API and webhooks for large customers",
+   "priority": "Polish",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-86",
+   "title": "Notification preferences, digests and escalation ladders",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-127"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-87",
+   "title": "Voice and photo-first capture on the floor",
+   "priority": "Polish",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-88",
+   "title": "Go-live readiness score and setup wizard",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-02",
+    "FS-05",
+    "FS-45"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-89",
+   "title": "Move every browser-side write to the server",
+   "priority": "Critical",
+   "status": "PARTIAL",
+   "prerequisites": [],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [
+    "Die creation uses a validated server action and JWT-derived, audited, idempotent database command. Identity spoofing, invalid classifications and cross-company source IDs are refused.",
+    "Module flags use an audited compare-and-set command. Direct die/flag/role/role-permission writes are revoked; the enterprise direct staff editor is replaced by canonical access navigation.",
+    "An ESLint boundary detects direct and aliased client table mutations. An exact legacy baseline inventories 32 remaining calls in 16 client files and does not grant new exceptions."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261117092000_fs_privileged_commands.sql",
+    "lib/actions/die-actions.ts",
+    "lib/actions/fs-module-access.ts",
+    "components/modules/dies/die-form-client.tsx",
+    "components/modules/enterprise-foundation-client.tsx",
+    "scripts/eslint/fs-boundaries.mjs",
+    "scripts/eslint/client-write-baseline.json",
+    "scripts/generate-fs-client-write-baseline.mjs",
+    "eslint.config.mjs"
+   ],
+   "tests": [
+    "tests/fs-batch2-actions.test.mjs",
+    "tests/fs-batch2-sql.test.mjs",
+    "tests/fs-arithmetic-boundaries.test.mjs",
+    "scripts/verify-fs-batch2-postgres.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Migrate the 32 grandfathered table-write calls and complete Storage/upload boundary coverage before declaring every browser write retired."
+   ],
+   "acceptance_status": "PRIVILEGED_WRITE_STAGE_VERIFIED_PARENT_INCOMPLETE",
+   "last_batch": 2
+  },
+  {
+   "id": "FS-90",
+   "title": "Audit entries written only by the server",
+   "priority": "Critical",
+   "status": "IMPLEMENTED",
+   "prerequisites": [],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [
+    "Direct INSERT/UPDATE/DELETE revoked on audit_logs, audit_logs_enterprise, receipt_allocation_audits and compliance_audit_records.",
+    "Trusted server-only audit helpers replace JWT-authored inserts. Data exports now derive scope/actor/counts server-side and withhold downloads if audit persistence fails.",
+    "Retention and recovery commands validate allowlists and write trusted audit metadata in the same database transaction."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261116090000_fs_audit_access_and_rpc_boundary.sql",
+    "lib/enterprise/audit.ts",
+    "lib/actions/fs-foundation.ts",
+    "app/api/data-center/export/route.ts",
+    "components/modules/data-center-client.tsx",
+    "lib/data-export/core-export.ts"
+   ],
+   "tests": [
+    "tests/fs-foundation-sql.test.mjs",
+    "tests/fs-data-export.test.mjs",
+    "tests/fs-server-actions.test.mjs",
+    "scripts/verify-fs-postgres.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Hosted JWT/PostgREST acceptance remains unavailable; local native roles and PGlite role tests do not replace it."
+   ],
+   "acceptance_status": "LOCAL_SERVER_AND_DATABASE_BOUNDARY_VERIFIED",
+   "acceptance_checklist": [
+    "No signed-in or anonymous role may insert/update/delete audit tables directly.",
+    "Server operations and trusted triggers still create genuine audit rows.",
+    "Data-centre actions no longer submit fabricated action/actor/audit metadata from the browser."
+   ]
+  },
+  {
+   "id": "FS-91",
+   "title": "Retire or rebuild the first-generation modules",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-89"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-92",
+   "title": "Break up the generic record form and adopt one form library",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-89"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-93",
+   "title": "Load the session once per request",
+   "priority": "High",
+   "status": "IMPLEMENTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [
+    "getSessionContext uses React request cache and an explicit staff projection.",
+    "Five concurrent consumers use one Auth request and one staff query; separate request/session contexts remain isolated.",
+    "Existing login, unavailable, inactive and onboarding redirects are retained."
+   ],
+   "modified_files": [
+    "lib/auth.ts"
+   ],
+   "tests": [
+    "tests/fs-session-cache.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Production traffic ranking and before/after latency measurements on the five busiest hosted pages are unavailable."
+   ],
+   "acceptance_status": "REQUEST_CACHE_BEHAVIOR_VERIFIED_HOSTED_PERFORMANCE_UNMEASURED",
+   "acceptance_checklist": [
+    "Session uses React request-scoped cache and explicitly selects required fields.",
+    "Repeated consumers in one server render share auth/staff reads; separate requests/users remain isolated.",
+    "Inactive/missing/error redirects retain existing behavior; record measurement limitations."
+   ]
+  },
+  {
+   "id": "FS-94",
+   "title": "Ask only for the columns a screen needs",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-95",
+   "title": "Streaming, lazy loading and cached reads",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-96",
+   "title": "Make the automation rule builder real or remove it",
+   "priority": "High",
+   "status": "IMPLEMENTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [
+    "Unexecuted legacy builder is removed from the Automation route with an explicit explanation.",
+    "Browser writes to automation_rules and automation_runs are denied; historical records are retained.",
+    "Actual scheduled JobsPanel and AlertResolutions remain available and an actual job run is tested."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261116090000_fs_audit_access_and_rpc_boundary.sql",
+    "app/(dashboard)/automation/page.tsx"
+   ],
+   "tests": [
+    "tests/fs-foundation-sql.test.mjs",
+    "tests/admin-command-center-practicality.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "LOCAL_AUTOMATION_HONESTY_VERIFIED",
+   "acceptance_checklist": [
+    "Trace both legacy rule builder and scheduled-job automation before choosing a route.",
+    "Hide the legacy builder with an honest explanation and refuse direct client writes to inert rules/runs.",
+    "Keep supported scheduled jobs and newer operational automation reachable; never claim a simulated run executed."
+   ]
+  },
+  {
+   "id": "FS-97",
+   "title": "Re-home the eight task hubs under business modules",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-98",
+   "title": "Replace browser confirm boxes with a consequence review",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-99",
+   "title": "Programmatic labels and automated accessibility checks",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-100",
+   "title": "Tighten the content security policy",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-101",
+   "title": "Trigger map and consolidation on the five core tables",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-43"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-102",
+   "title": "Split the giant database functions",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-103",
+   "title": "Index and policy hygiene from the advisor",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-43"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-104",
+   "title": "Constrain status values and share one state machine",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-43"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-105",
+   "title": "Contracts for JSON payloads",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-106",
+   "title": "Schema diet: review 516 tables after ninety days",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-107",
+   "title": "One documentation home; archive the rest",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-108",
+   "title": "Faster, layered test suite",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-03"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-109",
+   "title": "Merge the two billet models",
+   "priority": "Critical",
+   "status": "PARTIAL",
+   "prerequisites": [],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [
+    "Immutable company-scoped identity links reconcile a legacy lot to one real counted foundry/purchased lot only after exact alloy, temper, geometry, total/available kg and purchased supplier/certificate checks.",
+    "Mapped legacy quantities freeze. Linked incoming/laboratory holds reach physical allocation and issue; laboratory changes and physical allocation serialize on the same lock.",
+    "A paginated reconciliation page and searched lot selector create a real audited link without creating billets or moving metal. Phone/desktop browser tests verify the complete mapping action."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261117100000_fs_billet_identity_reconciliation.sql",
+    "lib/actions/fs-source-integrity.ts",
+    "components/modules/inventory/billet-identity-map.tsx",
+    "app/(dashboard)/inventory/billet-reconciliation/page.tsx",
+    "app/(dashboard)/inventory/page.tsx"
+   ],
+   "tests": [
+    "tests/fs-batch2-sql.test.mjs",
+    "tests/fs-batch2-actions.test.mjs",
+    "tests/fs-batch2-browser.test.mjs",
+    "scripts/verify-fs-batch2-postgres.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Retire or migrate all remaining legacy producers/readers after authoritative lot reconciliation. Incomplete historical geometry/supplier/certificate evidence cannot be inferred; descendant recall remains separate work."
+   ],
+   "acceptance_status": "EXPAND_MAP_AND_HOLD_PROPAGATION_VERIFIED_CONTRACT_PENDING",
+   "last_batch": 2
+  },
+  {
+   "id": "FS-110",
+   "title": "One quality record model instead of four",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-109",
+    "FS-111"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-111",
+   "title": "Join inspections to stock batch, die, press and heat by key",
+   "priority": "Critical",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-109"
+   ],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-112",
+   "title": "Enforce chemistry on the server with approved limits",
+   "priority": "Critical",
+   "status": "IMPLEMENTED",
+   "prerequisites": [],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [
+    "Versioned company-scoped alloy master requires source reference and independent quality/owner approval; no manufacturing limits are seeded.",
+    "Database computes pass/fail, refuses impossible totals and incomplete/unknown elements, pins the approved revision and binds request id to payload.",
+    "Approved chemistry is immutable; the current approved independently signed passing chemistry and a formally released heat are both required before further in-house billet allocation/issue/consumption.",
+    "Browser hints and measured-result forms read the same approved master; Wikipedia constants and manual pass picker removed.",
+    "Native tests exercise actual heat-release and billet-use triggers: unreleased heat refused, approved released heat permitted, latest failed retest refused; source/provenance/geometry/immutable guards remain active."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261116091000_fs_approved_alloy_chemistry.sql",
+    "lib/quality/alloy-specifications.ts",
+    "lib/calculations/alloy-composition.ts",
+    "lib/actions/fs-foundation.ts",
+    "components/modules/quality/alloy-specification-form.tsx",
+    "components/modules/quality/chemistry-result-form.tsx",
+    "components/modules/operations/record-form-client.tsx",
+    "lib/workflow/erp-control-panels.ts",
+    "app/(dashboard)/foundry/[id]/page.tsx",
+    "app/(dashboard)/quality/page.tsx",
+    "app/(dashboard)/quality/alloy-specifications/page.tsx",
+    "app/(dashboard)/quality/alloy-specifications/new/page.tsx",
+    "app/(dashboard)/quality/alloy-specifications/database/page.tsx",
+    "app/(dashboard)/quality/alloy-specifications/[id]/page.tsx",
+    "app/(dashboard)/quality/alloy-specifications/loading.tsx",
+    "lib/auth/route-permissions.ts"
+   ],
+   "tests": [
+    "tests/fs-foundation-sql.test.mjs",
+    "tests/fs-contracts.test.mjs",
+    "tests/fs-server-actions.test.mjs",
+    "tests/fs-browser.test.mjs",
+    "tests/autopilot-batch2-sql.test.mjs",
+    "tests/autopilot-batch2-browser.test.mjs",
+    "tests/audit-integrity-repairs.test.mjs",
+    "scripts/verify-fs-postgres.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Omalco quality must enter and independently sign authoritative alloy specifications; recording/release deliberately fails closed until then.",
+    "Full downstream recall/containment for already-produced or dispatched material remains FS-11 scope.",
+    "Quality must plan new-specification revision transitions: existing earlier-master material may require reviewed retesting; no historical evidence is silently reapproved."
+   ],
+   "acceptance_status": "LOCAL_CHEMISTRY_WORKFLOW_VERIFIED_APPROVED_FACTORY_STANDARDS_PENDING",
+   "acceptance_checklist": [
+    "Versioned alloy specification master requires approval and provenance; no invented seeded limits.",
+    "Database computes chemistry results from the approved revision and refuses impossible totals, missing readings/specs and failed release.",
+    "Browser hints read the same master; obsolete Wikipedia defaults cease acting as approval standards.",
+    "Positive/negative boundary, role, cross-company, immutability and approval tests execute against replayed SQL."
+   ]
+  },
+  {
+   "id": "FS-113",
+   "title": "A real key from production job to order line",
+   "priority": "High",
+   "status": "PARTIAL",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [
+    "Company/order/profile/source-line composite keys and a trusted production_job_lines projection preserve the existing single-line job contract and exact split planning.",
+    "The existing commitment guard continues to own remaining-quantity arithmetic. Unchanged historical source links do not block scheduling/notes; new identity or quantity changes require a valid source.",
+    "Job detail shows the actual line evidence; new links/changes audit their prior source and planned kg."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261117093000_fs_production_line_keys.sql",
+    "components/modules/production/job-line-evidence.tsx",
+    "app/(dashboard)/production/[id]/page.tsx"
+   ],
+   "tests": [
+    "tests/fs-batch2-sql.test.mjs",
+    "tests/nov-batch8-sql.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Several order lines per job and complete output/stock/packing attribution are not exposed. Reconcile unresolved historical source IDs before full constraint validation."
+   ],
+   "acceptance_status": "SINGLE_SOURCE_KEY_AND_SPLIT_STAGE_VERIFIED_MULTI_LINE_PENDING",
+   "last_batch": 2
+  },
+  {
+   "id": "FS-114",
+   "title": "Join invoice lines to packed lines",
+   "priority": "High",
+   "status": "IMPLEMENTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [
+    "Stored generated packed-line/dispatch keys derive from the canonical goods source IDs. Real composite company/dispatch/packed-row and invoice/dispatch foreign keys preserve charge lines and reject mismatches.",
+    "Existing database packing parity, exact-once coverage, one-active-invoice and immutable packing triggers enforce quantity/rate/bundle coverage; these rules are reused rather than duplicated.",
+    "Invoice detail shows packed-source links and explicit historical/error states. A paginated health RPC reports unresolved old links; clean history validates without firing historical invoice updates.",
+    "Canonical creation proves 25 kg x INR 300 = INR 7,500, exact generated keys, overbilling refusal and protected packed history."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261117091000_fs_invoice_packed_keys.sql",
+    "app/(dashboard)/invoices/[id]/page.tsx",
+    "tests/nov-batch5-sql.test.mjs",
+    "tests/fs-batch2-sql.test.mjs",
+    "sql/fs-schema-contracts.sql"
+   ],
+   "tests": [
+    "tests/fs-batch2-sql.test.mjs",
+    "tests/nov-batch5-sql.test.mjs",
+    "npm run test:postgres"
+   ],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "LOCAL_RUNTIME_AND_HOSTED_SCHEMA_VERIFIED_FACTORY_AND_AUTH_ACCEPTANCE_PENDING",
+   "last_batch": 2,
+   "hosted_schema_verification": {
+    "date": "2026-11-17",
+    "project_id": "pkawmdxtmsdgigsehcmb",
+    "receipt": "docs/evidence/SUPABASE_BATCH9_FS_APPLY/hosted-apply-receipt.json"
+   }
+  },
+  {
+   "id": "FS-115",
+   "title": "Join weighbridge sessions to dispatches and purchases",
+   "priority": "High",
+   "status": "PARTIAL",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [
+    "Current sessions already have real dispatch/receipt keys. A new read model derives current vehicle-load evidence through those keys; manual readings require independent manager approval bound to the exact readings, quantities, calibration and vehicle hash.",
+    "Finalized readings/evidence are immutable and stale approvals cannot finalize changed evidence. Dispatch detail mounts the approval workflow and a purchase-receipt evidence route is available.",
+    "Vehicle-load net includes packaging and is not written over the separately measured packed metal or partial receipt quantities."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261117101000_fs_document_weighing_evidence.sql",
+    "lib/actions/fs-source-integrity.ts",
+    "components/modules/dispatches/document-weighing-panel.tsx",
+    "components/modules/dispatches/manual-weighing-approval.tsx",
+    "app/(dashboard)/dispatches/[id]/page.tsx",
+    "app/(dashboard)/inventory/weighing/[kind]/[id]/page.tsx",
+    "tests/nov-batch10-sql-c.test.mjs"
+   ],
+   "tests": [
+    "tests/fs-batch2-sql.test.mjs",
+    "tests/fs-batch2-actions.test.mjs",
+    "tests/fs-batch2-browser.test.mjs",
+    "tests/nov-batch10-sql-c.test.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "Complete purchase UI entry links, scrap-sale integration and the approved document-weight basis/manual fallback contract. Physical device and hosted acceptance are not performed."
+   ],
+   "acceptance_status": "LINKED_DISPATCH_AND_MANUAL_APPROVAL_STAGE_VERIFIED_PARENT_INCOMPLETE",
+   "last_batch": 2
+  },
+  {
+   "id": "FS-116",
+   "title": "Turn the important soft references into real keys",
+   "priority": "High",
+   "status": "PARTIAL",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [
+    "Fifteen concrete references become company-scoped composite RESTRICT foreign keys, initially NOT VALID then validated only where no orphan exists.",
+    "Owner/admin data-health report shows live orphan counts/examples and constraint validation; existing orphan rows remain unchanged.",
+    "Reuses equivalent parent unique/child indexes and refuses new ambiguous maintenance links without freezing unrelated historical expense updates."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261116092000_fs_structural_reference_keys.sql",
+    "app/(dashboard)/settings/data-health/page.tsx",
+    "app/(dashboard)/settings/page.tsx"
+   ],
+   "tests": [
+    "tests/fs-foundation-sql.test.mjs",
+    "tests/fs-reference-migration.test.mjs",
+    "sql/fs-schema-contracts.sql"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "expense_ledger.maintenance_record_id has no canonical parent table in this schema; domain mapping is required before a valid FK/backfill.",
+    "Any hosted orphans require reviewed reconciliation, then constraint validation; no records are deleted or silently nulled."
+   ],
+   "acceptance_status": "PARTIAL_15_KEYS_VERIFIED_ONE_PARENT_MAPPING_UNRESOLVED",
+   "acceptance_checklist": [
+    "Add real history-preserving keys for every explicit FS-116 soft reference that exists in this schema.",
+    "NOT VALID expand step preserves historical rows, orphan report exposes unresolved references, validation only succeeds on clean data.",
+    "New invalid/cross-company references are refused; no silent deletion/nulling."
+   ]
+  },
+  {
+   "id": "FS-117",
+   "title": "A registry for type-and-id links",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-118",
+   "title": "One user identity target; names as keys, not text",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-119",
+   "title": "Retire legacy stock structures (exact scope for FS-08)",
+   "priority": "Critical",
+   "status": "SUPERSEDED",
+   "prerequisites": [
+    "FS-08"
+   ],
+   "risk": [
+    "safety_or_integrity",
+    "authenticated_acceptance_required"
+   ],
+   "implementation_evidence": [
+    "Later roadmap explicitly makes this the checklist for FS-08. Packaging stage is recorded there; no separate completion counted."
+   ],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "TRACKED_WITH_FS_08"
+  },
+  {
+   "id": "FS-120",
+   "title": "One scrap lot ledger",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-08"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-121",
+   "title": "Connect CRM to quotations, or remove it",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-122",
+   "title": "Customer complaints, NCR and corrective action",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-10",
+    "FS-11"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-123",
+   "title": "Connect energy to job costing",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-12"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-124",
+   "title": "Connect breakdowns to the running job and downtime",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-15"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-125",
+   "title": "Feed Die Intelligence or remove it",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-126",
+   "title": "Make a scan do something",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-08"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-127",
+   "title": "Deliver notifications through real channels",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-13"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-128",
+   "title": "Connect or hide tenders and export orders",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-129",
+   "title": "Detail pages: show the whole neighbourhood",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-130",
+   "title": "Give dead-end modules links in and out",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-131",
+   "title": "Search every record type through one index",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-117"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-132",
+   "title": "One KPI path for dashboard, command centre and analytics",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-77"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-133",
+   "title": "Pull stray arithmetic back into the calculation library",
+   "priority": "High",
+   "status": "PARTIAL",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [
+    "Shared half-up rounding matches positive/negative PostgreSQL NUMERIC ties; a finite-aware display formatter replaces 180 UI rounding/formatting expressions without rewriting surrounding dirty source.",
+    "Expense and complementary blend arithmetic move into the calculation library. ESLint blocks new Math.round/toFixed in app/components and verifies mutation-boundary detection separately.",
+    "Independent arithmetic verifies 12.5 x 245.2 = 3,065; adding 551.70 tax and 100 freight less 16.70 discount totals 3,700."
+   ],
+   "modified_files": [
+    "app/(dashboard)/analytics/page.tsx",
+    "app/(dashboard)/command-center/page.tsx",
+    "app/(dashboard)/compliance/page.tsx",
+    "app/(dashboard)/crm/page.tsx",
+    "app/(dashboard)/customers/projects/[id]/page.tsx",
+    "app/(dashboard)/dealer-orders/quote-orders/[id]/page.tsx",
+    "app/(dashboard)/dispatches/[id]/page.tsx",
+    "app/(dashboard)/energy/page.tsx",
+    "app/(dashboard)/exports/page.tsx",
+    "app/(dashboard)/inventory/reservations/page.tsx",
+    "app/(dashboard)/inventory/stock-balances/[id]/page.tsx",
+    "app/(dashboard)/orders/[id]/page.tsx",
+    "app/(dashboard)/orders/page.tsx",
+    "app/(dashboard)/profitability/page.tsx",
+    "app/(dashboard)/systems-configurator/projects/[id]/bom/page.tsx",
+    "app/(dashboard)/systems-configurator/projects/[id]/cutting-list/page.tsx",
+    "app/(dashboard)/systems-configurator/projects/[id]/glass-list/page.tsx",
+    "app/(dashboard)/systems-configurator/projects/[id]/optimization/page.tsx",
+    "app/(dashboard)/systems-configurator/projects/[id]/page.tsx",
+    "app/(dashboard)/systems-configurator/projects/[id]/quote/page.tsx",
+    "app/(dashboard)/systems-configurator/reports/page.tsx",
+    "app/(dashboard)/vendors/purchasing/database/page.tsx",
+    "app/api/dealer-inventory/items/route.ts",
+    "components/forms/planning-quantity-entry.tsx",
+    "components/modules/command-center-client.tsx",
+    "components/modules/dashboard-client.tsx",
+    "components/modules/dashboard-primitives.tsx",
+    "components/modules/dashboards/dispatches-dashboard.tsx",
+    "components/modules/dashboards/inventory-dashboard.tsx",
+    "components/modules/dashboards/orders-dashboard.tsx",
+    "components/modules/dashboards/production-dashboard.tsx",
+    "components/modules/dashboards/quotes-dashboard.tsx",
+    "components/modules/dashboards/togglable-bar-chart.tsx",
+    "components/modules/die-intelligence-client.tsx",
+    "components/modules/dispatch-form-client.tsx",
+    "components/modules/dispatches/physical-bundles.tsx",
+    "components/modules/dispatches/vehicle-loads.tsx",
+    "components/modules/financials/financial-workflow-review.tsx",
+    "components/modules/financials/payment-form-client.tsx",
+    "components/modules/foundry/billet-weight-estimate.tsx",
+    "components/modules/maintenance/maintenance-workspace-client.tsx",
+    "components/modules/operations/record-form-client.tsx",
+    "components/modules/order-to-cash/cash.tsx",
+    "components/modules/orders/stock-production.tsx",
+    "components/modules/press/floor-client.tsx",
+    "components/modules/press/press-station.tsx",
+    "components/modules/production-output-workflow.tsx",
+    "components/modules/production/machine-usage.tsx",
+    "components/modules/quotes-client.tsx",
+    "components/modules/systems-configurator/configurator-form.tsx",
+    "components/modules/systems-configurator/system-elevation-preview.tsx",
+    "components/modules/tasks/approval-inbox.tsx",
+    "components/modules/tasks/turnaround.tsx",
+    "components/modules/vendors/purchase-lifecycle.tsx",
+    "components/status-board/status-charts.tsx",
+    "components/ui/number-ticker.tsx",
+    "eslint.config.mjs",
+    "lib/calculations/expense-amounts.ts",
+    "lib/calculations/pcda/rounding.ts",
+    "lib/utils/fixed-decimal.ts",
+    "scripts/migrate-fs-rounding.mjs",
+    "tests/fs-arithmetic-boundaries.test.mjs"
+   ],
+   "tests": [
+    "tests/fs-arithmetic-boundaries.test.mjs",
+    "tests/fs-batch2-sql.test.mjs",
+    "npm run lint",
+    "npm test"
+   ],
+   "commit_reference": null,
+   "blockers": [
+    "A complete review/extraction of remaining inline GST, recovery and KPI arithmetic and consolidation of every monetary formatter remain. Existing expense zero-as-auto sentinel is preserved and needs an explicit amount-basis contract."
+   ],
+   "acceptance_status": "ROUNDING_BOUNDARY_AND_EXPENSE_EXTRACTION_VERIFIED_PARENT_INCOMPLETE",
+   "last_batch": 2
+  },
+  {
+   "id": "FS-134",
+   "title": "Shared data-access functions for the hot tables",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-94"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-135",
+   "title": "Decide now on the tables nothing uses",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-136",
+   "title": "Remove function overloads and legacy functions",
+   "priority": "Medium",
+   "status": "IMPLEMENTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [
+    "Removed public seven/nine-argument quotation wrappers; the eleven-argument versioned conversion remains canonical.",
+    "Verified the current receipt command depended on its legacy implementation; preserved that body as private.post_dealer_receipt and updated the canonical internal call.",
+    "Executable schema gate refuses overloaded callable public RPCs, callable legacy names, obsolete public variants or client execution of private receipt posting."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261116090000_fs_audit_access_and_rpc_boundary.sql",
+    "supabase/migrations/20261116095000_fs_retire_public_rpc_variants.sql",
+    "sql/fs-schema-contracts.sql"
+   ],
+   "tests": [
+    "tests/fs-foundation-sql.test.mjs",
+    "tests/commercial-upgrade-sql.test.mjs",
+    "tests/dealer-fulfillment-integrity.test.mjs",
+    "tests/dispatch-integrity-hardening.test.mjs",
+    "scripts/replay-postgres-migrations.mjs"
+   ],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "LOCAL_CANONICAL_RPC_AND_RECEIPT_REGRESSIONS_VERIFIED",
+   "acceptance_checklist": [
+    "Inventory callable overloads and legacy functions in the replayed and hosted catalogs.",
+    "Retain one canonical public contract; deny obsolete authenticated/anonymous overload and legacy execution without deleting history.",
+    "CI behavior/catalog gate prevents a new overloaded callable surface."
+   ]
+  },
+  {
+   "id": "FS-137",
+   "title": "Decide what `branches` and `plant_id` are for",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-138",
+   "title": "Carry the same link forward into documents and messages",
+   "priority": "Medium",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-117"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  },
+  {
+   "id": "FS-139",
+   "title": "A nightly connection-health check and a trace score",
+   "priority": "High",
+   "status": "NOT_STARTED",
+   "prerequisites": [
+    "FS-08",
+    "FS-113",
+    "FS-114",
+    "FS-116",
+    "FS-117"
+   ],
+   "risk": [],
+   "implementation_evidence": [],
+   "modified_files": [],
+   "tests": [],
+   "commit_reference": null,
+   "blockers": [],
+   "acceptance_status": "NOT_ASSESSED"
+  }
+ ],
+ "roadmap_sha256": "C7A64D529734A139BE1CB29C2DA452653AA823AC63271A101DB348FC60D3B3F6",
+ "workspace": "C:/Users/arnav/OneDrive/Desktop/ExtrusionOS/.worktrees/codex-v1",
+ "verification_state": "LOCAL_GATES_PASSED_HOSTED_AND_FACTORY_ACCEPTANCE_PENDING",
+ "batch_report": "docs/implementation/FS_BATCH_1_REPORT.md",
+ "next_batch": [
+  {
+   "id": "FS-43",
+   "why": "Build the executable permission matrix before further policy consolidation.",
+   "prerequisites": [
+    "FS-90"
+   ]
+  },
+  {
+   "id": "FS-89",
+   "why": "Close older browser write paths, starting with access, flags and dies; retain shared validated commands.",
+   "prerequisites": []
+  },
+  {
+   "id": "FS-42",
+   "why": "Protect financial and manufacturing history structurally and make corrections traceable.",
+   "prerequisites": []
+  },
+  {
+   "id": "FS-109",
+   "why": "Choose the existing foundry billet model and reconcile the duplicate purchased/opening lot model.",
+   "prerequisites": []
+  },
+  {
+   "id": "FS-111",
+   "why": "Bind quality holds to physical stock and derived production provenance after billet model reconciliation.",
+   "prerequisites": [
+    "FS-109"
+   ]
+  },
+  {
+   "id": "FS-113",
+   "why": "Constrain production quantities to actual order lines and preserve splits.",
+   "prerequisites": []
+  },
+  {
+   "id": "FS-114",
+   "why": "Prove invoiced quantities against packed lines and bundles.",
+   "prerequisites": []
+  },
+  {
+   "id": "FS-104",
+   "why": "Constrain statuses and generate application state lists after the permission matrix.",
+   "prerequisites": [
+    "FS-43"
+   ]
+  },
+  {
+   "id": "FS-103",
+   "why": "Consolidate policies and high-volume indexes under matrix coverage; defer usage-based removals until measured.",
+   "prerequisites": [
+    "FS-43"
+   ]
+  },
+  {
+   "id": "FS-133",
+   "why": "Unify production and financial arithmetic after the safety and quantity integrity work.",
+   "prerequisites": []
+  }
+ ],
+ "final_git": {
+  "head": "3bd03b48246eba90ac7ea7d8d4720d2b899aceab",
+  "branch": "codex/v1",
+  "worktree_dirty": true,
+  "committed": false,
+  "pushed": false,
+  "merged": false,
+  "deployed": false,
+  "hosted_migrations_applied": false,
+  "root_preserved": true,
+  "root_head_observed": "71a17b1bce853707f62106ae71128080b9f5eb8f",
+  "root_branch_observed": "feat/autopilot-batch-9",
+  "owned_postgres_stopped": true
+ },
+ "batch_counts": {
+  "selected": 10,
+  "implemented": 2,
+  "partial": 8,
+  "blocked": 0,
+  "verified_existing": 0
+ },
+ "status_counts": {
+  "IMPLEMENTED": 13,
+  "VERIFIED_EXISTING": 0,
+  "PARTIAL": 17,
+  "BLOCKED": 3,
+  "SUPERSEDED": 1,
+  "NOT_STARTED": 105,
+  "IN_PROGRESS": 0
+ },
+ "quality_gates": [
+  {
+   "command": "npm run lint",
+   "status": "PASS",
+   "errors": 0,
+   "preexisting_warnings": 5,
+   "evidence": "docs/evidence/FS_BATCH_2/lint-final.log"
+  },
+  {
+   "command": "npm run typecheck",
+   "status": "PASS",
+   "evidence": "docs/evidence/FS_BATCH_2/typecheck-final.log"
+  },
+  {
+   "command": "npm test",
+   "status": "PASS",
+   "tests": 3458,
+   "passed": 3458,
+   "failed": 0,
+   "skipped": 0,
+   "cancelled": 0,
+   "evidence": "docs/evidence/FS_BATCH_2/full-tests-final.log"
+  },
+  {
+   "command": "npm run build",
+   "status": "PASS",
+   "configuration": "Synthetic local Supabase public URL/key; default Next.js build.",
+   "evidence": "docs/evidence/FS_BATCH_2/build-final.log"
+  },
+  {
+   "command": "npm run test:replay",
+   "status": "PASS",
+   "files_replayed": 314,
+   "baselines": 2,
+   "migrations": 312,
+   "evidence": "docs/evidence/FS_BATCH_2/replay-final.log",
+   "note": "Native final replay also verified the later compatibility edits."
+  },
+  {
+   "command": "npm run test:postgres",
+   "status": "PASS",
+   "postgres_version": "17.12",
+   "files_replayed": 314,
+   "staff_roles": 15,
+   "staff_identities": 17,
+   "direct_mutation_refusals": 1054,
+   "rpc_role_checks": 68,
+   "row_visibility_checks": 68,
+   "concurrent_backends": 2,
+   "laboratory_allocation_serialization": true,
+   "evidence": "docs/evidence/FS_BATCH_2/postgres17-native-final.log"
+  },
+  {
+   "command": "node --no-warnings --experimental-strip-types --test --test-concurrency=2 tests/fs-batch2-browser.test.mjs tests/fs-batch2-actions.test.mjs",
+   "status": "PASS",
+   "tests": 12,
+   "browser_tests": 8,
+   "action_tests": 4,
+   "widths": [
+    375,
+    1280
+   ],
+   "evidence": "docs/evidence/FS_BATCH_2/browser-actions-final.log",
+   "note": "Real React/action/SQL with a synthetic session adapter; email provider is mocked."
+  },
+  {
+   "command": "npm audit --audit-level=high",
+   "status": "PASS",
+   "high": 0,
+   "critical": 0,
+   "moderate": 7,
+   "evidence": "docs/evidence/FS_BATCH_2/dependency-audit.log"
+  },
+  {
+   "command": "npm run test:e2e:staging",
+   "status": "UNAVAILABLE",
+   "evidence": "docs/evidence/FS_BATCH_2/staging-gate.log",
+   "note": "Dedicated staging is disabled/unconfigured; no mutation or test was redirected to production."
+  }
+ ],
+ "preserved_evidence": {
+  "verified_original_files": 337,
+  "restored_test_generated_changes": 136,
+  "manifest": "docs/evidence/FS_BATCH_2/preserved-evidence-manifest.json",
+  "evidence": "docs/evidence/FS_BATCH_2/preserved-evidence.log",
+  "artifact_directory": "C:/Users/arnav/.codex/visualizations/2026/11/15/01a1ded1-0211-76e3-9593-2f02aa54e51f/fs-batch2"
+ },
+ "current_batch_report": "docs/implementation/FS_PHASE4_BATCH_1_REPORT.md",
+ "next_candidates": [
+  {
+   "id": "FS-89",
+   "why": "Complete the 32 inventoried browser writes and upload boundaries before dependent refactors.",
+   "prerequisites": []
+  },
+  {
+   "id": "FS-06",
+   "why": "Finish session/MFA lifecycle semantics against a supported provider contract and dedicated staging.",
+   "prerequisites": []
+  },
+  {
+   "id": "FS-109",
+   "why": "Reconcile real lot evidence and retire remaining duplicate billet producers/readers before downstream quality consolidation.",
+   "prerequisites": []
+  },
+  {
+   "id": "FS-08",
+   "why": "Extend central capture to every material writer, then reconcile signed physical openings.",
+   "prerequisites": []
+  },
+  {
+   "id": "FS-43",
+   "why": "Broaden the actual-role matrix to every table/RPC and execute Storage/JWT coverage.",
+   "prerequisites": [
+    "FS-90"
+   ]
+  },
+  {
+   "id": "FS-113",
+   "why": "Finish historical source reconciliation and many-line output attribution through existing consumers.",
+   "prerequisites": []
+  },
+  {
+   "id": "FS-115",
+   "why": "Finish purchase/scrap navigation and approved document-weight semantics without conflating vehicle load and metal.",
+   "prerequisites": []
+  },
+  {
+   "id": "FS-116",
+   "why": "Resolve the remaining maintenance parent and important soft references after reconciling newer root work.",
+   "prerequisites": []
+  },
+  {
+   "id": "FS-117",
+   "why": "Introduce constrained type/id registry coverage for remaining polymorphic links before connection-health reporting.",
+   "prerequisites": []
+  },
+  {
+   "id": "FS-133",
+   "why": "Complete the remaining financial/recovery/KPI arithmetic and formatter inventory using shared contracts.",
+   "prerequisites": []
+  }
+ ],
+ "hosted_migration_runs": [
+  {
+   "date": "2026-11-17",
+   "project_id": "pkawmdxtmsdgigsehcmb",
+   "status": "ALL_REQUESTED_MIGRATIONS_APPLIED",
+   "report": "docs/implementation/SUPABASE_BATCH9_FS_APPLY_2026-11-17.md",
+   "receipt": "docs/evidence/SUPABASE_BATCH9_FS_APPLY/hosted-apply-receipt.json",
+   "migration_count": 15,
+   "fs_migration_count": 14,
+   "autopilot_batch9_applied": true,
+   "source_files": [
+    "20261116090000_fs_audit_access_and_rpc_boundary.sql",
+    "20261116091000_fs_approved_alloy_chemistry.sql",
+    "20261116092000_fs_structural_reference_keys.sql",
+    "20261116093000_fs_packaging_reconciliation.sql",
+    "20261116094000_fs_release_evidence.sql",
+    "20261116095000_fs_retire_public_rpc_variants.sql",
+    "20261117090000_fs_history_integrity.sql",
+    "20261117091000_fs_invoice_packed_keys.sql",
+    "20261117092000_fs_privileged_commands.sql",
+    "20261117093000_fs_production_line_keys.sql",
+    "20261117094000_fs_access_review_and_invitations.sql",
+    "20261117095000_fs_stock_ledger_capture.sql",
+    "20261117100000_fs_billet_identity_reconciliation.sql",
+    "20261117101000_fs_document_weighing_evidence.sql",
+    "20261116100000_autopilot_batch_9.sql"
+   ]
+  }
+ ],
+ "latest_hosted_migration_receipt": "docs/evidence/SUPABASE_BATCH9_FS_APPLY/hosted-apply-receipt.json",
+ "parallel_workstreams": {
+  "note": "This root tracker was seeded from the codex/v1 tracker at its batch-2 close-out. Codex is running FS batch 3 in .worktrees/codex-v1 concurrently on FS-06, 08, 43, 89, 109, 113, 115, 116, 117 and 133; that worktree's FS_PROGRESS.json is authoritative for those IDs. Reconcile both trackers when the branches are merged.",
+  "codex_batch3_ids": [
+   "FS-06",
+   "FS-08",
+   "FS-43",
+   "FS-89",
+   "FS-109",
+   "FS-113",
+   "FS-115",
+   "FS-116",
+   "FS-117",
+   "FS-133"
+  ],
+  "phase4_root_ids": [
+   "FS-68",
+   "FS-73",
+   "FS-72",
+   "FS-71",
+   "FS-27",
+   "FS-16",
+   "FS-38",
+   "FS-36",
+   "FS-54",
+   "FS-26"
+  ]
+ },
+ "next_candidates_phase4": [
+  "FS-12",
+  "FS-10",
+  "FS-11",
+  "FS-16",
+  "FS-54",
+  "FS-26",
+  "FS-36",
+  "FS-38",
+  "FS-123",
+  "FS-124"
+ ]
+}

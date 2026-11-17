@@ -1,4 +1,5 @@
 import { ModuleOverviewClient } from "@/components/modules/operations/module-overview-client";
+import { LiveRefresh } from "@/components/modules/intelligence/live";
 import { OrdersDashboard } from "@/components/modules/dashboards/orders-dashboard";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
@@ -65,6 +66,8 @@ export default async function OrdersPage() {
 
   return (
     <div className="space-y-2">
+      {/* FS-36: refresh this screen when its records change. */}
+      <div className="flex justify-end"><LiveRefresh name="orders" tables={["orders"]} /></div>
       <ModuleOverviewClient moduleKey="orders" context={context} canCreate={can(context.role, "create", "orders")} canUpdate={can(context.role, "update", "orders")} hideMetricsAndCharts={true}>
         <QueryErrorNotice messages={queryErrors} />
         {!context.dealerId ? <OrderToCashLinks area="orders" role={context.role} /> : null}

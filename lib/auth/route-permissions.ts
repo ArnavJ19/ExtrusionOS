@@ -58,6 +58,16 @@ type RoleRule = {
 };
 
 const roleRules: RoleRule[] = [
+  // FABLE_SUGGESTIONS Phase 4 screens (roles mirror lib/intelligence/commands; each database gateway re-checks them).
+  { prefix: "/insights/otif", roles: ["owner", "admin", "sales_manager", "accounts", "factory_manager", "production_manager", "dispatch_manager"] },
+  { prefix: "/insights/order-book", roles: ["owner", "admin", "sales_manager", "accounts", "factory_manager"] },
+  { prefix: "/insights/metal-exposure", roles: ["owner", "admin", "accounts"] },
+  { prefix: "/insights/cockpit", roles: ["owner", "admin"] },
+  { prefix: "/production/material-plan", roles: ["owner", "admin", "factory_manager", "inventory_manager", "accounts", "production_manager"] },
+  { prefix: "/production/promise", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "production_manager"] },
+  { prefix: "/production/wall", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "viewer", "dispatch_manager", "sales_manager"] },
+  { prefix: "/dies/life", roles: ["owner", "admin", "production_manager", "factory_manager", "production", "quality", "sales_manager", "accounts"] },
+  { prefix: "/profiles/development", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "factory_manager", "quality", "production"] },
   { prefix: "/dispatches/loads", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "production_manager", "production", "sales_manager", "sales"] },
   // Autopilot batch 7: AP-057 price checks, AP-064 delay notices, AP-079 statements, AP-003 automation quality.
   { prefix: "/vendors/purchasing/prices", roles: ["owner", "admin", "accounts", "inventory_manager", "factory_manager"] },

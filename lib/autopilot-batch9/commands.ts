@@ -73,8 +73,10 @@ export const weightNoteCommands = {
 
 export const CASH_ROLES = ["owner", "admin", "accounts"] as const;
 export const cashForecastCommands = {
-  forecast: z.object({ weeks: z.number().int().min(1).max(8).optional() }).strict(),
+  // FS-73: up to thirteen weeks, and a minimum balance below which weeks are flagged.
+  forecast: z.object({ weeks: z.number().int().min(1).max(13).optional() }).strict(),
   save_opening: z.object({ opening_balance: z.number().finite().min(-1000000000).max(1000000000).optional(), balance_as_of: day.optional() }).strict(),
+  save_minimum: z.object({ minimum_balance: z.number().finite().min(-1000000000).max(1000000000).optional() }).strict(),
   fixed: z.object({}).strict(),
   save_fixed: z.object({ label: text(3, 80, "Expense"), amount: money("Amount", 100000000), frequency: z.enum(["monthly", "weekly"]), day_of_month: z.number().int().min(1).max(28).optional(), weekday: z.number().int().min(1).max(7).optional() }).strict(),
   retire_fixed: z.object({ id: uuid }).strict(),
