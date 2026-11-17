@@ -223,7 +223,7 @@ test("AP-072 a line below its floor blocks sending until another approver approv
 
 test("Batch 5 adds the morning job without changing earlier jobs; new tables have RLS and no grants", async () => {
   const jobs = (await f.db.query("select job_key, schedule from private.ap_job_registry() order by job_key")).rows;
-  assert.equal(jobs.length, 18);
+  assert.equal(jobs.length, 23, "batch 6 adds five jobs");
   assert.ok(jobs.some(j => j.job_key === "quotes.followups" && j.schedule === "morning"));
   for (const t of ["quote_followup_settings", "quote_followup_steps", "price_floors", "quote_floor_exceptions"]) {
     const r = await f.one("select c.relrowsecurity rls, has_table_privilege('authenticated', c.oid, 'select') sel from pg_class c where c.relname=$1 and c.relnamespace='public'::regnamespace", [t]);

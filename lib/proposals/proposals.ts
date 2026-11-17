@@ -12,7 +12,10 @@ export const PROPOSAL_TYPES = {
   "maintenance.pm_due": { label: "Preventive maintenance", home: "/production/floor", noun: "maintenance window" },
   "bank.receipt_match": { label: "Bank receipt", home: "/payments/bank", noun: "receipt" },
   "freight.estimate": { label: "Freight estimate", home: "/dispatches/freight", noun: "freight" },
-  "billet.shortage": { label: "Billet shortage", home: "/production/billet-forecast", noun: "billet requirement" }
+  "billet.shortage": { label: "Billet shortage", home: "/production/billet-forecast", noun: "billet requirement" },
+  "die.weight_drift": { label: "Section-weight drift", home: "/dies/weight-drift", noun: "weight review" },
+  "quote.reprice": { label: "Reprice draft quotations", home: "/quotes/reprice", noun: "repricing" },
+  "stock.reorder": { label: "Purchase requisition", home: "/inventory/reorder", noun: "requisition" }
 } as const;
 export type ProposalType = keyof typeof PROPOSAL_TYPES;
 export const PROPOSAL_TYPE_KEYS = Object.keys(PROPOSAL_TYPES) as [ProposalType, ...ProposalType[]];
@@ -49,6 +52,7 @@ export function proposalHref(row: Pick<ProposalRow, "proposal_type" | "target_ke
   const uuid = /^[0-9a-f-]{36}/.exec(row.target_key)?.[0];
   if (row.proposal_type === "production.expected_output" && uuid) return `/production/${uuid}#proposal-${row.id}`;
   if (row.proposal_type === "die.service_due" && uuid) return `/dies/${uuid}#proposal-${row.id}`;
+  if (row.proposal_type === "die.weight_drift" && uuid) return `/dies/${uuid}#weight-drift`;
   if (row.proposal_type === "freight.estimate") {
     const [kind, id] = row.target_key.split(":");
     if (kind === "quote") return `/quotes/${id}#freight`;
@@ -66,6 +70,18 @@ const when = (value: unknown) => (typeof value === "string" && value ? new Date(
 export function proposalWhy(row: ProposalRow): string[] {
   const evidence = (row.evidence ?? {}) as Record<string, unknown>;
   const lines = [row.reason];
+  if (row.proposal_type === "die.weight_drift") {
+    lines.push(`Weighed bundles average ${row.payload.actual_kgm ?? "—"} kg/m against the master ${row.payload.theoretical_kgm ?? "—"} kg/m over ${evidence.bundles_used ?? "—"} bundles.`);
+    lines.push("Inspect die assigns the die shop; review master assigns you a profile review. The master weight changes only through the profile edit; issued quotations keep their snapshot.");
+  }
+  if (row.proposal_type === "quote.reprice") {
+    lines.push(`${row.payload.quotes ?? 0} draft quotation(s), ${row.payload.lines ?? 0} line(s). Sent quotations within validity are listed, not changed.`);
+    lines.push("Open the impact list for old and new rates and totals before accepting.");
+  }
+  if (row.proposal_type === "stock.reorder") {
+    lines.push(`Stock ${evidence.stock ?? "—"} ${row.payload.unit ?? ""} is at or below the approved reorder point ${evidence.approved_min ?? "—"}.`);
+    lines.push("Acceptance raises a requisition and a purchase task. No purchase order or stock is posted.");
+  }
   if (row.proposal_type === "billet.shortage") {
     lines.push(`Free stock ${kg(evidence.free_kg)}. Need by ${String(row.payload.need_by ?? "unknown")}. Draft demand is uncertain and is not used to reduce the firm shortage.`);
     lines.push("Acceptance creates an assigned preparation task. Purchase orders and casts use their existing reviewed workflows.");
@@ -117,6 +133,9 @@ export function proposalWhy(row: ProposalRow): string[] {
 }
 
 export function proposalSummary(row: ProposalRow): string {
+  if (row.proposal_type === "die.weight_drift") return `Die is ${row.payload.direction === "heavy" ? "heavier" : "lighter"} than the master by ${Math.abs(Number(row.payload.drift_percent ?? 0))}%. ${row.payload.route === "inspect_die" ? "Inspect the die." : "Review the master weight."}`;
+  if (row.proposal_type === "quote.reprice") return `Reprice ${row.payload.quotes} draft quotation(s) (${row.payload.lines} line(s)) to the approved billet rate of ${String(row.payload.rate_day)}.`;
+  if (row.proposal_type === "stock.reorder") return `Raise a requisition for ${row.payload.quantity} ${String(row.payload.unit ?? "")} of ${String(row.payload.item)}, needed by ${String(row.payload.need_by)}.`;
   if (row.proposal_type === "billet.shortage") return `${kg(row.payload.quantity_kg)} of ${row.payload.alloy} / ${row.payload.diameter} inch billet, needed ${row.payload.need_by}. Prepare ${row.payload.route}.`;
   if (row.proposal_type === "navigation.role_layout") return `Main navigation for ${row.target_key.replaceAll("_", " ")}: ${((row.payload.items as string[]) ?? []).join(", ")}`;
   if (row.proposal_type === "period.close_month") return `Close ${row.payload.month as string} so entries dated in it need an approved reopen.`;

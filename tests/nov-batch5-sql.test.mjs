@@ -113,7 +113,10 @@ test("NOV-069: quality decides every received portion; certificates, concessions
   assert.deepEqual([value.pending_qc, value.accepted, value.concession, value.rejected, value.awaiting_return, value.releasable].map(n), [0, 600, 100, 250, 300, 700]);
   assert.equal((await row("incoming", i.receiptLine)).status, "awaiting_release");
   await assert.rejects(() => f.prepare({ action: "incoming.dispose", receipt_line_id: i.receiptLine, disposition: "reject", quantity: 1, evidence: "Extra", note }, i.accounts), /Not permitted/);
-  assert.equal(JSON.stringify(await row("incoming", i.receiptLine, i.accounts)).includes("210"), false, "vendor rates are not projected");
+  // The vendor's 210/kg rate must not appear as a value or key. A plain substring check also matched random ids and
+  // microsecond timestamps in the disposition history, so the value is matched as a whole JSON token.
+  const projected = JSON.stringify(await row("incoming", i.receiptLine, i.accounts));
+  assert.equal(/[:\[,]"?210(\.0+)?"?[,}\]]/.test(projected) || /unit_rate|supplier_rate/.test(projected), false, "vendor rates are not projected");
 });
 
 test("NOV-069: release creates billet stock once, never beyond accepted quantity, and reversals respect downstream use", async () => {

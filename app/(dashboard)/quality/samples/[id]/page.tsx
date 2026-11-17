@@ -7,5 +7,5 @@ export default async function QualitySamplePage({ params }: { params: Promise<{ 
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) notFound();
   const context = await getSessionContext();
   if (context.dealerId || !["owner", "admin", "quality", "factory_manager", "production_manager", "production"].includes(context.role)) redirect("/dashboard");
-  return <div className="mx-auto max-w-3xl"><SampleClient id={id} /></div>;
+  return <div className="mx-auto max-w-3xl"><SampleClient id={id} companyId={context.companyId} userId={context.userId} /></div>;
 }

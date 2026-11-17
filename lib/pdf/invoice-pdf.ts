@@ -1,9 +1,11 @@
+import { rgb } from "pdf-lib";
 import { gstStateLabel } from "../calculations/gst.ts";
 import { numberToWordsINR } from "../utils/number-to-words.ts";
 import { type PdfFontLoader } from "./unicode-text.ts";
 import { nodeFontLoader } from "./font-loader-node.ts";
 import { PdfDocumentWriter, type PdfTableRow } from "./document-kit.ts";
 import { issuerName, joinParts, legalNameLine, pdfAmount, pdfDate, pdfMoney, pdfPercent, pdfQuantity, toNumber } from "./format.ts";
+import type { QrRuns } from "./qr-modules.ts";
 
 type InvoiceDocumentData = {
   company: Record<string, any>;
@@ -13,6 +15,8 @@ type InvoiceDocumentData = {
   loadFont?: PdfFontLoader;
   /** Company logo bytes (lib/pdf/logo-loader-node.ts). */
   logo?: Uint8Array | null;
+  /** AP-082: IRN, acknowledgement and the IRP's signed QR (already turned into QR modules), when recorded. */
+  irn?: { irn: string; ack_no: string; ack_date: string; qr: QrRuns | null } | null;
 };
 
 // Union-territory GST codes, matching private.canonicalize_invoice_supply().
@@ -20,7 +24,7 @@ const UT_STATE_CODES = new Set(["04", "26", "31", "35", "38"]);
 const paise = (value: number) => Math.round(value * 100);
 const lineTax = (item: Record<string, any>) => Math.round(Number(item.line_total ?? 0) * Number(item.gst_percent ?? 0) + 1e-7) / 100;
 
-export async function buildInvoicePdf({ company, customer, invoice, items, loadFont = nodeFontLoader, logo = null }: InvoiceDocumentData) {
+export async function buildInvoicePdf({ company, customer, invoice, items, loadFont = nodeFontLoader, logo = null, irn = null }: InvoiceDocumentData) {
   if (!invoice.supplier_state_code || !invoice.place_of_supply_state_code || !items.length || items.some((item) => !item.hsn_code)) {
     throw new Error("Complete supply states and HSN codes before generating this invoice.");
   }
@@ -57,6 +61,23 @@ export async function buildInvoicePdf({ company, customer, invoice, items, loadF
 
   if (status === "draft") doc.notice("Draft for review only. This document is not a valid tax invoice until it is issued.", "warning");
   if (status === "cancelled") doc.notice("This invoice has been cancelled and is not payable.", "void");
+
+  // AP-082: the IRN block, printed exactly as the IRP returned it (never generated here).
+  if (irn) {
+    const qrSize = 92;
+    doc.ensure(qrSize + 12);
+    const top = doc.y;
+    if (irn.qr) {
+      const cell = qrSize / irn.qr.size, x0 = doc.right - qrSize;
+      doc.rect(x0 - 3, top - qrSize - 3, qrSize + 6, qrSize + 6, { fill: rgb(1, 1, 1) });
+      for (const run of irn.qr.runs) doc.rect(x0 + run.x * cell, top - (run.y + 1) * cell, run.w * cell, cell, { fill: rgb(0, 0, 0) });
+    }
+    doc.text("e-Invoice", doc.left, top - 10, { size: 9, bold: true });
+    doc.text(`IRN: ${irn.irn}`, doc.left, top - 24, { size: 7.5 });
+    doc.text(`Ack No.: ${irn.ack_no}   ·   Ack Date: ${new Date(irn.ack_date).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}`, doc.left, top - 36, { size: 7.5 });
+    if (!irn.qr) doc.text("Signed QR could not be drawn; scan the IRP copy.", doc.left, top - 48, { size: 7.5 });
+    doc.y = top - qrSize - 12;
+  }
 
   doc.panels([
     { label: "Billed to", title: customerName, lines: [customer.billing_address, `GSTIN: ${customer.gst_number || "Unregistered"}`] },

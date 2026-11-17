@@ -13,6 +13,6 @@ export default async function LoadingSessionPage({ params }: { params: Promise<{
   if (!id.success) return <p role="alert">That loading session reference is invalid. <Link className="underline" href="/dispatches/loading">Open the loads</Link></p>;
   return <div className="mx-auto max-w-5xl space-y-4">
     <div><Link href="/dispatches/loading" className="text-sm font-semibold underline">Loads</Link><h1 className="text-2xl font-black">Load the vehicle</h1></div>
-    <LoadingStation key={`${context.companyId}:${context.userId}:${id.data}`} sessionId={id.data} today={getBusinessDateBoundaries().today} />
+    <LoadingStation key={`${context.companyId}:${context.userId}:${id.data}`} sessionId={id.data} today={getBusinessDateBoundaries().today} companyId={context.companyId} userId={context.userId} />
   </div>;
 }

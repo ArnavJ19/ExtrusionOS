@@ -3,12 +3,15 @@
 // AP-011 / AP-014 / AP-066 / AP-087 / AP-012: the running job at a press. One tap per billet records a push (billet,
 // weight and time come from the job's linked lot); undo is open for 30 seconds; an idle press asks for one reason; the
 // shift target from the published plan is shown against live pushes; closing the job confirms the expected output with
-// only rejects typed on the large keypad. Taps that cannot reach the server wait on this station and are sent again.
+// only rejects typed on the large keypad. Taps that cannot reach the server wait on this station and are sent again
+// (AP-094: every tap carries its own request ID through public.ap_offline, so a retry never records a push twice).
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Undo2, WifiOff } from "lucide-react";
+import { Undo2 } from "lucide-react";
 import { autopilotAction } from "@/lib/actions/autopilot";
-import { IDLE_REASONS, enqueueTap, readTapQueue, tapQueueKey, type IdleReason, type QueuedTap } from "@/lib/press/press-floor";
+import { IDLE_REASONS, tapQueueKey, type IdleReason, type QueuedTap } from "@/lib/press/press-floor";
+import { legacyTapEntries } from "@/lib/offline/queue";
+import { OfflineQueuePanel, useOfflineQueue } from "@/components/modules/offline/offline-queue";
 import { fmtClock, fmtKg, fmtNum, type PushResult, type StationView } from "@/lib/press/types";
 import { ProposalCards } from "@/components/modules/autopilot/proposal-cards";
 import { WorkstationMode } from "@/components/ui/numeric-field";
@@ -30,20 +33,13 @@ export function PressStation({ companyId, userId, sessionId, today, onExpired, o
   const [jobId, setJobId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [queued, setQueued] = useState<QueuedTap[]>([]);
   const [now, setNow] = useState(() => Date.now());
   const [note, setNote] = useState("");
   const [closing, setClosing] = useState(false);
   const [closeState, setCloseState] = useState<{ ready: boolean; messages: string[]; key: number }>({ ready: false, messages: [], key: 0 });
-  const flushing = useRef(false);
   const callbacks = useRef({ onExpired, onRenewed });
   useEffect(() => { callbacks.current = { onExpired, onRenewed }; }, [onExpired, onRenewed]);
   const key = tapQueueKey(companyId, userId);
-
-  const saveQueue = useCallback((next: QueuedTap[]) => {
-    setQueued(next);
-    try { if (next.length) localStorage.setItem(key, JSON.stringify(next)); else localStorage.removeItem(key); } catch { /* the queue stays in memory */ }
-  }, [key]);
 
   const load = useCallback(async () => {
     const result = await autopilotAction("ap_press", "station", { session_id: sessionId, ...(jobId ? { job_id: jobId } : {}) });
@@ -56,39 +52,28 @@ export function PressStation({ companyId, userId, sessionId, today, onExpired, o
     setView(data); callbacks.current.onRenewed(data.expires_at);
   }, [jobId, sessionId]);
 
-  const flush = useCallback(async () => {
-    if (flushing.current) return;
-    let queue: QueuedTap[] = [];
-    try { queue = readTapQueue(localStorage.getItem(key)); } catch { queue = []; }
-    if (!queue.length) { setQueued([]); return; }
-    flushing.current = true;
-    const remaining: QueuedTap[] = [];
-    for (const tap of queue) {
-      // A tap the server refused (job closed, session over) is dropped with the refusal; only unsent taps stay queued.
-      try { const result = await autopilotAction("ap_press", "push", tap); if (!result.success) setMessage(`A saved tap was not recorded: ${result.error}`); }
-      catch { if (Date.now() - Date.parse(tap.client_at) < 12 * 3600e3) remaining.push(tap); }
-    }
-    flushing.current = false;
-    saveQueue(remaining);
-    if (remaining.length < queue.length) void load();
-  }, [key, load, saveQueue]);
+  const queue = useOfflineQueue(companyId, userId, () => { void load(); });
+  const adopt = queue.adopt;
+  // Taps saved by the earlier station queue (localStorage) move into the offline queue once, keeping their IDs.
+  useEffect(() => {
+    try { const legacy = legacyTapEntries(queue.owner, localStorage.getItem(key)); if (legacy.length) { void adopt(legacy); } localStorage.removeItem(key); } catch { /* storage may be blocked */ }
+  }, [adopt, key, queue.owner]);
 
   useEffect(() => {
     void load();
-    try { setQueued(readTapQueue(localStorage.getItem(key))); } catch { /* storage may be blocked */ }
-    void flush();
-    const poll = setInterval(() => { void load(); void flush(); }, 15000);
+    const poll = setInterval(() => { void load(); }, 15000);
     const tick = setInterval(() => setNow(Date.now()), 1000);
     return () => { clearInterval(poll); clearInterval(tick); };
-  }, [flush, key, load]);
+  }, [load]);
 
   async function tap() {
     if (!view?.job || busy) return;
     const entry: QueuedTap = { id: crypto.randomUUID(), session_id: sessionId, job_id: view.job.id, client_at: new Date().toISOString() };
     setBusy(true); setMessage(null);
     try {
-      const result = await autopilotAction("ap_press", "push", entry);
-      if (!result.success) setMessage(result.error);
+      const result = await queue.submit({ rpc: "ap_press", command: "push", payload: entry, label: `Press push (${view.job.job_number ?? "job"})`, requestId: entry.id });
+      if (result.kind === "conflict") setMessage(result.message);
+      else if (result.kind === "retry") setMessage("No connection. The tap is saved on this station and will be sent.");
       else {
         const push = result.data as PushResult;
         if (push.state === "double_tap") setMessage(push.message ?? "Second tap ignored.");
@@ -96,9 +81,6 @@ export function PressStation({ companyId, userId, sessionId, today, onExpired, o
         if (push.samples_created) setMessage(`Push ${push.seq} recorded. QC has been asked for a sample.`);
         await load();
       }
-    } catch {
-      saveQueue(enqueueTap(queued, entry));
-      setMessage("No connection. The tap is saved on this station and will be sent.");
     } finally { setBusy(false); }
   }
 
@@ -140,7 +122,7 @@ export function PressStation({ companyId, userId, sessionId, today, onExpired, o
   const target = view.shift?.target;
 
   return <WorkstationMode><div className="space-y-4">
-    {queued.length ? <p role="status" className="flex items-center gap-2 rounded-2xl bg-amber-50 p-3 text-sm font-semibold text-amber-900"><WifiOff className="h-4 w-4" aria-hidden="true" />{queued.length} tap(s) waiting to send from this station.</p> : null}
+    <OfflineQueuePanel queue={queue} what="tap(s)" place="station" />
     {view.running_jobs.length > 1 ? <div role="group" aria-label="Running jobs on this press" className="flex flex-wrap gap-2">
       {view.running_jobs.map(item => <button key={item.id} type="button" aria-pressed={job?.id === item.id} onClick={() => { setJobId(item.id); setClosing(false); }}
         className={`min-h-12 rounded-xl border px-4 font-bold ${job?.id === item.id ? "border-neutral-950 bg-neutral-950 text-white" : "border-neutral-300 bg-white"}`}>{item.job_number ?? "Job"}</button>)}

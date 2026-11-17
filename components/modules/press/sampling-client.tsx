@@ -10,6 +10,7 @@ import { SAMPLING_KINDS, type SamplingKind } from "@/lib/press/press-floor";
 import { fmtTime, type SampleRow } from "@/lib/press/types";
 import { NumericField } from "@/components/ui/numeric-field";
 import { parseKeypadValue } from "@/lib/forms/numeric-keypad";
+import { OfflineQueuePanel, useOfflineQueue } from "@/components/modules/offline/offline-queue";
 
 const statusLabel: Record<string, string> = { open: "Due", missed: "Missed window", recorded: "Recorded", waived: "Waived" };
 const statusStyle: Record<string, string> = { open: "bg-sky-50 text-sky-800", missed: "bg-rose-50 text-rose-800", recorded: "bg-emerald-50 text-emerald-800", waived: "bg-neutral-100 text-neutral-700" };
@@ -56,7 +57,7 @@ type SampleItem = { id: string; seq: number; characteristic: string; unit: strin
 type SampleDetail = SampleRow & { can_record: boolean; items: SampleItem[] };
 const isMeasured = (item: SampleItem) => item.lower_limit !== null || item.upper_limit !== null || Boolean(item.unit && item.unit !== "visual");
 
-export function SampleClient({ id }: { id: string }) {
+export function SampleClient({ id, companyId = "local", userId = "local" }: { id: string; companyId?: string; userId?: string }) {
   const router = useRouter();
   const [sample, setSample] = useState<SampleDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +65,8 @@ export function SampleClient({ id }: { id: string }) {
   const [visual, setVisual] = useState<Record<string, boolean | undefined>>({});
   const [waive, setWaive] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  // AP-094: a reading entered without signal stays on this phone and is sent once when the connection returns.
+  const queue = useOfflineQueue(companyId, userId);
   const load = useCallback(async () => {
     const result = await autopilotAction("ap_sampling", "sample", { id });
     if (!result.success) { setError(result.error); return; }
@@ -77,9 +80,10 @@ export function SampleClient({ id }: { id: string }) {
       if (isMeasured(item)) { const value = parseKeypadValue(values[item.id] ?? ""); if (value === null) { setMessage(`Enter the measured value for ${item.characteristic}.`); return; } results.push({ item_id: item.id, observed: value }); }
       else { if (visual[item.id] === undefined) { setMessage(`Mark ${item.characteristic} as OK or not OK.`); return; } results.push({ item_id: item.id, visual_ok: visual[item.id] }); }
     }
-    const result = await autopilotAction("ap_sampling", "sample_record", { id, results });
-    if (!result.success) { setMessage(result.error); return; }
-    const data = result.data as { failed: number; late: boolean };
+    const outcome = await queue.submit({ rpc: "ap_sampling", command: "sample_record", payload: { id, results }, label: `QC reading ${sample.job_number ?? ""}`.trim() });
+    if (outcome.kind === "retry") { setMessage("No connection. The reading is saved on this phone and will be sent."); return; }
+    if (outcome.kind === "conflict") { setMessage(outcome.message); return; }
+    const data = outcome.data as { failed: number; late: boolean };
     setMessage(data.failed ? `${data.failed} characteristic(s) failed; production has been told.` : data.late ? "Recorded (late)." : "Recorded on time.");
     await load(); router.refresh();
   }
@@ -91,7 +95,7 @@ export function SampleClient({ id }: { id: string }) {
   if (error) return <p role="alert" className="rounded-2xl border bg-white p-4 text-sm text-amber-900">{error}</p>;
   if (!sample) return <p role="status" className="rounded-2xl border bg-white p-4 text-sm">Loading sample…</p>;
   const editable = sample.can_record && (sample.status === "open" || sample.status === "missed");
-  return <div className="min-w-0 space-y-4">
+  return <div className="min-w-0 space-y-4"><OfflineQueuePanel queue={queue} what="reading(s)" />
     <section className="space-y-2 rounded-2xl border bg-white p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-2"><div><h1 className="text-2xl font-black">{sample.job_number ?? "Job"} · {SAMPLING_KINDS[sample.kind as SamplingKind] ?? sample.kind}</h1>
         <p className="text-sm text-neutral-600">{sample.machine} · {sample.profile_code ?? "—"} · due {fmtTime(sample.due_at)} · window {windowText(sample)}</p></div>

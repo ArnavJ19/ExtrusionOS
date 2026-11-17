@@ -1,3 +1,5 @@
+import { ComplaintForm } from "@/components/modules/autopilot-batch6/ncr";
+import { COMPLAINT_LOGGERS } from "@/lib/autopilot-batch6/commands";
 import { RestrictionPanel } from "@/components/modules/approvals/exception-requests";
 import { canRequestException } from "@/lib/workflow/exception-requests";
 import { RecordFollow } from "@/components/modules/notifications/record-follow";
@@ -537,6 +539,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       {!context.dealerId && (DISPATCH_FLOOR_ROLES as readonly string[]).includes(context.role) ? <OrderLoadingPanel orderId={id} /> : null}
       {!context.dealerId && ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "sales_manager", "quality", "production_manager", "production"].includes(context.role) ? <PackingPlanPanel orderId={id} /> : null}
       {!context.dealerId && (SHARE_ROLES as readonly string[]).includes(context.role) ? <OrderStatusLinkPanel orderId={id} /> : null}
+      {!context.dealerId && (COMPLAINT_LOGGERS as readonly string[]).includes(context.role) && orderRow.customer_id ? <ComplaintForm customerId={String(orderRow.customer_id)} orderId={id} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="order" id={id} role={context.role} /> : null}
     </div>
   );

@@ -14,22 +14,27 @@ export type JobSchedule = keyof typeof JOB_SCHEDULES;
 export const JOBS = [
   { job_key: "alerts.reevaluate", schedule: "hourly", label: "Close cleared alerts" },
   { job_key: "bank.rematch", schedule: "hourly", label: "Rematch bank lines" },
-  { job_key: "billing.prepare_drafts", schedule: "hourly", label: "Prepare invoice drafts" },
   { job_key: "billets.forecast", schedule: "nightly", label: "Prepare seven-day billet requirements" },
+  { job_key: "billing.prepare_drafts", schedule: "hourly", label: "Prepare invoice drafts" },
   { job_key: "calendar.check", schedule: "nightly", label: "Check the factory calendar" },
   { job_key: "dies.predict_service", schedule: "hourly", label: "Propose die service" },
+  { job_key: "dies.weight_drift", schedule: "nightly", label: "Check section-weight drift" },
   { job_key: "maintenance.propose_pm", schedule: "hourly", label: "Propose preventive maintenance" },
   { job_key: "navigation.propose", schedule: "nightly", label: "Propose role navigation" },
   { job_key: "orders.predict_late", schedule: "nightly", label: "Predict late order lines" },
   { job_key: "owner.digest", schedule: "morning", label: "Prepare the owner digest" },
   { job_key: "periods.propose_close", schedule: "morning", label: "Propose month close" },
   { job_key: "press.idle_reconcile", schedule: "nightly", label: "Find unexplained press idle time" },
+  { job_key: "press.plan_draft", schedule: "nightly", label: "Draft tomorrow's press plan" },
   { job_key: "proposals.refresh", schedule: "hourly", label: "Refresh open proposals" },
+  { job_key: "quality.ncr_detect", schedule: "hourly", label: "Draft NCRs from rejections" },
   { job_key: "quality.sample_windows", schedule: "hourly", label: "Mark missed samples" },
   { job_key: "quotes.expire", schedule: "nightly", label: "Expire stale quotations" },
   { job_key: "quotes.followups", schedule: "morning", label: "Prepare quotation follow-ups" },
+  { job_key: "quotes.reprice_check", schedule: "nightly", label: "Check draft quotation rates" },
   { job_key: "receivables.reminders", schedule: "morning", label: "Prepare payment reminders" },
-  { job_key: "series.propose", schedule: "nightly", label: "Propose financial-year numbering" }
+  { job_key: "series.propose", schedule: "nightly", label: "Propose financial-year numbering" },
+  { job_key: "stock.reorder", schedule: "nightly", label: "Propose purchase requisitions" }
 ] as const satisfies ReadonlyArray<{ job_key: string; schedule: JobSchedule; label: string }>;
 export type JobKey = (typeof JOBS)[number]["job_key"];
 export const JOB_KEYS = JOBS.map(job => job.job_key) as [JobKey, ...JobKey[]];
