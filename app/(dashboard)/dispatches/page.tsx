@@ -1,4 +1,5 @@
 import { ModuleWorkflows } from "@/components/modules/home-work/module-workflows";
+import { LiveRefresh } from "@/components/modules/intelligence/live";
 import { ModuleOverviewClient } from "@/components/modules/operations/module-overview-client";
 import { DispatchesDashboard } from "@/components/modules/dashboards/dispatches-dashboard";
 import { getSessionContext } from "@/lib/auth";
@@ -53,6 +54,8 @@ export default async function DispatchesPage() {
 
   return (
     <div className="space-y-2">
+      {/* FS-36: refresh this screen when its records change. */}
+      <div className="flex justify-end"><LiveRefresh name="dispatches" tables={["dispatches", "orders"]} /></div>
       <OperationalWorkLinks area="dispatches" role={context.role} dealer={!!context.dealerId}/>
       <ModuleOverviewClient moduleKey="dispatches" context={context} canCreate={can(context.role, "create", "dispatches")} canUpdate={can(context.role, "update", "dispatches")} hideMetricsAndCharts={true}>
         <DispatchesDashboard

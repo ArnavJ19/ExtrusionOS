@@ -6,7 +6,7 @@ import { DOCUMENT_SERIES, type DocumentSeriesKey } from "../numbering/financial-
 export const PROPOSAL_TYPES = {
   "navigation.role_layout": { label: "Role navigation", home: "/settings/navigation", noun: "navigation" },
   "period.close_month": { label: "Month close", home: "/invoices/periods", noun: "month close" },
-  "series.adopt": { label: "Financial-year numbering", home: "/settings/numbering", noun: "number series" },
+  "series.adopt": { label: "Financial-year numbering", home: "/invoices/numbering", noun: "number series" },
   "production.expected_output": { label: "Expected output", home: "/production", noun: "job close" },
   "die.service_due": { label: "Die service", home: "/dies", noun: "die service" },
   "maintenance.pm_due": { label: "Preventive maintenance", home: "/production/floor", noun: "maintenance window" },
@@ -15,7 +15,9 @@ export const PROPOSAL_TYPES = {
   "billet.shortage": { label: "Billet shortage", home: "/production/billet-forecast", noun: "billet requirement" },
   "die.weight_drift": { label: "Section-weight drift", home: "/dies/weight-drift", noun: "weight review" },
   "quote.reprice": { label: "Reprice draft quotations", home: "/quotes/reprice", noun: "repricing" },
-  "stock.reorder": { label: "Purchase requisition", home: "/inventory/reorder", noun: "requisition" }
+  "stock.reorder": { label: "Purchase requisition", home: "/inventory/reorder", noun: "requisition" },
+  "stock.reservation": { label: "Reserve arriving stock", home: "/inventory", noun: "reservation" },
+  "profile.geometry": { label: "Weight from die drawing", home: "/profiles", noun: "profile weight" }
 } as const;
 export type ProposalType = keyof typeof PROPOSAL_TYPES;
 export const PROPOSAL_TYPE_KEYS = Object.keys(PROPOSAL_TYPES) as [ProposalType, ...ProposalType[]];
@@ -53,6 +55,8 @@ export function proposalHref(row: Pick<ProposalRow, "proposal_type" | "target_ke
   if (row.proposal_type === "production.expected_output" && uuid) return `/production/${uuid}#proposal-${row.id}`;
   if (row.proposal_type === "die.service_due" && uuid) return `/dies/${uuid}#proposal-${row.id}`;
   if (row.proposal_type === "die.weight_drift" && uuid) return `/dies/${uuid}#weight-drift`;
+  if (row.proposal_type === "stock.reservation") return `/inventory#arrival-reservations`;
+  if (row.proposal_type === "profile.geometry" && uuid) return `/profiles/${uuid}#drawing-geometry`;
   if (row.proposal_type === "freight.estimate") {
     const [kind, id] = row.target_key.split(":");
     if (kind === "quote") return `/quotes/${id}#freight`;
@@ -81,6 +85,14 @@ export function proposalWhy(row: ProposalRow): string[] {
   if (row.proposal_type === "stock.reorder") {
     lines.push(`Stock ${evidence.stock ?? "—"} ${row.payload.unit ?? ""} is at or below the approved reorder point ${evidence.approved_min ?? "—"}.`);
     lines.push("Acceptance raises a requisition and a purchase task. No purchase order or stock is posted.");
+  }
+  if (row.proposal_type === "stock.reservation") {
+    lines.push(`${String(row.payload.bundle ?? "Batch")}: ${evidence.available_pieces ?? "—"} piece(s) free; this line still needs ${kg(evidence.remaining_kg)}.`);
+    lines.push("Acceptance reserves through the stock allocation, which rechecks quality release, length, alloy, temper, finish and the free balance at that moment.");
+  }
+  if (row.proposal_type === "profile.geometry") {
+    lines.push(`Net section area ${evidence.net_area_mm2 ?? "—"} mm² (outer ${evidence.outer_area_mm2 ?? "—"} less ${evidence.void_count ?? 0} void(s)); density ${evidence.density_kg_m3 ?? "—"} kg/m³ from the ${evidence.density_source === "alloy_master" ? "alloy master" : "standard handbook value"}.`);
+    lines.push(`Master today: ${row.payload.current_kg_per_m ?? "—"} kg/m, perimeter ${row.payload.current_perimeter_mm ?? "not recorded"} mm. The weight change is recorded through the profile specification approval.`);
   }
   if (row.proposal_type === "billet.shortage") {
     lines.push(`Free stock ${kg(evidence.free_kg)}. Need by ${String(row.payload.need_by ?? "unknown")}. Draft demand is uncertain and is not used to reduce the firm shortage.`);
@@ -135,6 +147,8 @@ export function proposalWhy(row: ProposalRow): string[] {
 export function proposalSummary(row: ProposalRow): string {
   if (row.proposal_type === "die.weight_drift") return `Die is ${row.payload.direction === "heavy" ? "heavier" : "lighter"} than the master by ${Math.abs(Number(row.payload.drift_percent ?? 0))}%. ${row.payload.route === "inspect_die" ? "Inspect the die." : "Review the master weight."}`;
   if (row.proposal_type === "quote.reprice") return `Reprice ${row.payload.quotes} draft quotation(s) (${row.payload.lines} line(s)) to the approved billet rate of ${String(row.payload.rate_day)}.`;
+  if (row.proposal_type === "stock.reservation") return `Reserve ${row.payload.pieces} pcs (${kg(row.payload.kg)}) of ${String(row.payload.profile_code ?? "stock")} from ${String(row.payload.bundle ?? "the batch")} for ${String(row.payload.order_number)} · ${String(row.payload.customer ?? "")}.`;
+  if (row.proposal_type === "profile.geometry") return `Set ${String(row.payload.profile_code)} to ${row.payload.section_weight_kg_per_m} kg/m and perimeter ${row.payload.section_perimeter_mm} mm (from ${String(row.payload.file_name ?? "the drawing")}).`;
   if (row.proposal_type === "stock.reorder") return `Raise a requisition for ${row.payload.quantity} ${String(row.payload.unit ?? "")} of ${String(row.payload.item)}, needed by ${String(row.payload.need_by)}.`;
   if (row.proposal_type === "billet.shortage") return `${kg(row.payload.quantity_kg)} of ${row.payload.alloy} / ${row.payload.diameter} inch billet, needed ${row.payload.need_by}. Prepare ${row.payload.route}.`;
   if (row.proposal_type === "navigation.role_layout") return `Main navigation for ${row.target_key.replaceAll("_", " ")}: ${((row.payload.items as string[]) ?? []).join(", ")}`;

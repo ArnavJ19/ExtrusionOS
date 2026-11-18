@@ -28,6 +28,8 @@ import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-pa
 import { QuoteValidityPanel } from "@/components/modules/order-to-cash/quotes-alerts";
 import { CopySummaryButton } from "@/components/modules/dispatch-autopilot/share";
 import { FreightPanel } from "@/components/modules/dispatch-autopilot/freight";
+import { QuoteCapacityPanel } from "@/components/modules/autopilot-batch8/capacity";
+import { CAPACITY_ROLES } from "@/lib/autopilot-batch8/commands";
 import { QuoteFloorPanel, QuoteFollowupPanel } from "@/components/modules/quote-sales/quote-sales";
 import { FREIGHT_ROLES, canInternalSummary, canSummarise } from "@/lib/dispatch-autopilot/commands";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
@@ -420,6 +422,8 @@ export default async function QuoteDetailPage({
       {!context.dealerId && ["owner", "admin", "sales_manager", "sales", "accounts"].includes(context.role) ? <QuoteFollowupPanel quoteId={id} canRecord={["owner", "admin", "sales_manager", "sales"].includes(context.role)} /> : null}
       {canSummarise("quote", context.role, Boolean(context.dealerId)) ? <CopySummaryButton kind="quote" id={id} canInternal={canInternalSummary("quote", context.role, Boolean(context.dealerId))} /> : null}
       {!context.dealerId && (FREIGHT_ROLES as readonly string[]).includes(context.role) ? <FreightPanel kind="quote" id={id} today={getBusinessDateBoundaries().today} /> : null}
+      {/* AP-069: press load while promising a date. */}
+      {!context.dealerId && (CAPACITY_ROLES as readonly string[]).includes(context.role) ? <QuoteCapacityPanel quoteId={id} canRecord={["owner", "admin", "sales_manager", "sales"].includes(context.role)} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="quote" id={id} role={context.role} /> : null}
     </div>
   );

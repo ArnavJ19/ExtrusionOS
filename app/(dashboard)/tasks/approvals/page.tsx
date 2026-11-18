@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LiveRefresh } from "@/components/modules/intelligence/live";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -47,6 +48,8 @@ export default async function ApprovalInboxPage({ searchParams }: { searchParams
 
   return (
     <div className="space-y-5">
+      {/* FS-36: refresh this screen when its records change. */}
+      <div className="flex justify-end"><LiveRefresh name="approvals" tables={["action_requests", "approval_decisions"]} /></div>
       <PageHeader title="Approval Inbox" description="Quotations awaiting review and expenses awaiting approval that you may decide. Each decision is applied through the record's own workflow and covers only the version shown."
         actions={<Link href="/tasks" className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700">All tasks</Link>} />
       <nav className="flex flex-wrap gap-2" aria-label="Request type">

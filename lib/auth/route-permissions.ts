@@ -24,6 +24,7 @@ export const protectedPrefixes = [
   "/expenses",
   "/exports",
   "/foundry",
+  "/insights",
   "/inventory",
   "/invoices",
   "/maintenance",
@@ -57,7 +58,22 @@ type RoleRule = {
 };
 
 const roleRules: RoleRule[] = [
+  // FABLE_SUGGESTIONS Phase 4 screens (roles mirror lib/intelligence/commands; each database gateway re-checks them).
+  { prefix: "/insights/otif", roles: ["owner", "admin", "sales_manager", "accounts", "factory_manager", "production_manager", "dispatch_manager"] },
+  { prefix: "/insights/order-book", roles: ["owner", "admin", "sales_manager", "accounts", "factory_manager"] },
+  { prefix: "/insights/metal-exposure", roles: ["owner", "admin", "accounts"] },
+  { prefix: "/insights/cockpit", roles: ["owner", "admin"] },
+  { prefix: "/production/material-plan", roles: ["owner", "admin", "factory_manager", "inventory_manager", "accounts", "production_manager"] },
+  { prefix: "/production/promise", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "production_manager"] },
+  { prefix: "/production/wall", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "viewer", "dispatch_manager", "sales_manager"] },
+  { prefix: "/dies/life", roles: ["owner", "admin", "production_manager", "factory_manager", "production", "quality", "sales_manager", "accounts"] },
+  { prefix: "/profiles/development", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "factory_manager", "quality", "production"] },
   { prefix: "/dispatches/loads", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "production_manager", "production", "sales_manager", "sales"] },
+  // Autopilot batch 7: AP-057 price checks, AP-064 delay notices, AP-079 statements, AP-003 automation quality.
+  { prefix: "/vendors/purchasing/prices", roles: ["owner", "admin", "accounts", "inventory_manager", "factory_manager"] },
+  { prefix: "/orders/delay-notices", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "dispatch_manager"] },
+  { prefix: "/payments/statements", roles: ["owner", "admin", "accounts"] },
+  { prefix: "/settings/automation-quality", roles: ["owner", "admin", "factory_manager"] },
   { prefix: "/vendors/purchasing", roles: ["owner", "admin", "accounts", "inventory_manager"] },
   { prefix: "/tasks/changes", roles: ["owner", "admin", "sales_manager", "production_manager", "factory_manager", "inventory_manager", "dispatch_manager", "quality", "accounts"] },
   { prefix: "/customers/portal-responses", roles: ["owner", "admin", "sales_manager", "sales"] },
@@ -67,6 +83,9 @@ const roleRules: RoleRule[] = [
   { prefix: "/production/scrap-standards", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "inventory_manager"] },
   // AP-016: QC records in-process samples; supervisors see sampling compliance on their jobs.
   { prefix: "/quality/samples", roles: ["owner", "admin", "quality", "factory_manager", "production_manager", "production"] },
+  // Autopilot batch 8: mill certificates are read by stores and the plant head as well as quality; control charts by the plant and quality.
+  { prefix: "/quality/certificates", roles: ["owner", "admin", "quality", "factory_manager", "production_manager", "inventory_manager"] },
+  { prefix: "/quality/spc", roles: ["owner", "admin", "quality", "factory_manager", "production_manager"] },
   { prefix: "/vendors/comparisons", roles: ["owner", "admin", "accounts"] },
   // Autopilot batch 3 (order-to-cash): credit holds, draft jobs, invoice drafts, GST rules, bank matching, reminders.
   { prefix: "/orders/credit", roles: ["owner", "admin", "accounts", "sales_manager", "sales"] },
@@ -87,6 +106,23 @@ const roleRules: RoleRule[] = [
   { prefix: "/invoices/tally", roles: ["owner", "admin", "accounts"] },
   // Autopilot batch 5: floor prices are internal to sales and the owner.
   { prefix: "/quotes/floors", roles: ["owner", "admin", "sales_manager", "sales"] },
+  // Autopilot batch 9: rate cards and WhatsApp enquiries (sales), scrap sales (foundry, stores, accounts), weight-difference
+  // notes, the cash forecast (owner and accounts), shift registers (production), bundle weights (dispatch and quality).
+  { prefix: "/quotes/rate-cards", roles: ["owner", "admin", "sales_manager", "sales", "accounts"] },
+  { prefix: "/quotes/enquiries", roles: ["owner", "admin", "sales_manager", "sales"] },
+  { prefix: "/foundry/scrap-sales", roles: ["owner", "admin", "accounts", "factory_manager", "inventory_manager", "production_manager"] },
+  { prefix: "/invoices/weight-notes", roles: ["owner", "admin", "accounts", "sales_manager", "sales", "dispatch_manager"] },
+  { prefix: "/payments/cash-forecast", roles: ["owner", "admin", "accounts"] },
+  { prefix: "/production/registers", roles: ["owner", "admin", "factory_manager", "production_manager", "production"] },
+  { prefix: "/dispatches/bundles/weights", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "quality"] },
+  // Autopilot batch 10: press meter readings, press crew, coating runs, combined cut patterns, make-to-stock runs and
+  // equivalent-profile shortages.
+  { prefix: "/energy/press-meters", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "accounts"] },
+  { prefix: "/production/crew", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "quality"] },
+  { prefix: "/production/finishing/coating-runs", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "dispatch_manager"] },
+  { prefix: "/production/cutting/combine", roles: ["owner", "admin", "factory_manager", "production_manager", "production"] },
+  { prefix: "/production/capacity/stock-runs", roles: ["owner", "admin", "factory_manager", "production_manager", "sales_manager", "inventory_manager"] },
+  { prefix: "/orders/equivalents", roles: ["owner", "admin", "sales_manager", "sales", "quality", "production_manager", "factory_manager", "inventory_manager"] },
   { prefix: "/settings/access", roles: ["owner"] },
   // AP-007: stores, accounts and the plant head load and sign off their own opening sections.
   { prefix: "/settings/data/cutover", roles: ["owner", "admin", "accounts", "inventory_manager", "factory_manager", "production_manager", "sales_manager"] },
@@ -102,6 +138,8 @@ const roleRules: RoleRule[] = [
   { prefix: "/crm", roles: ["owner", "admin", "sales_manager", "sales"] },
   { prefix: "/communications", roles: ["owner", "admin", "sales_manager", "sales"] },
   { prefix: "/reports", roles: ["owner", "admin", "sales_manager", "accounts"] },
+  // AP-044: one Insights entry point; each linked report keeps its own access rule.
+  { prefix: "/insights", roles: ["owner", "admin", "sales_manager", "accounts"] },
   { prefix: "/analytics", roles: ["owner", "admin", "sales_manager", "accounts"] },
   { prefix: "/report-builder", roles: ["owner", "admin", "sales_manager", "accounts"] },
   { prefix: "/profitability", roles: ["owner", "admin", "accounts"] },

@@ -1,3 +1,5 @@
+import { InvoiceWeightPanel } from "@/components/modules/autopilot-batch9/weight-notes";
+import { WEIGHT_NOTE_APPROVERS, WEIGHT_NOTE_READERS } from "@/lib/autopilot-batch9/commands";
 import { RecordFollow } from "@/components/modules/notifications/record-follow";
 import { canFollow } from "@/lib/workflow/subscriptions";
 import Link from "next/link";
@@ -27,6 +29,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       {!context.dealerId && ["owner","admin","accounts"].includes(context.role) ? <TransactionCommunication invoiceId={id} /> : null}
       {!context.dealerId && canFollow(context.role, "invoice") ? <RecordFollow entityType="invoice" entityId={id} /> : null}
       <InvoiceSettlementPanel invoiceId={id} canManage={can(context.role, "create", "financials")} />
+      {!context.dealerId && (WEIGHT_NOTE_READERS as readonly string[]).includes(context.role) ? <InvoiceWeightPanel invoiceId={id} canDecide={(WEIGHT_NOTE_APPROVERS as readonly string[]).includes(context.role)} /> : null}
       {canSummarise("invoice", context.role, Boolean(context.dealerId)) ? <CopySummaryButton kind="invoice" id={id} canInternal={canInternalSummary("invoice", context.role, Boolean(context.dealerId))} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="invoice" id={id} role={context.role} /> : null}
     </div>

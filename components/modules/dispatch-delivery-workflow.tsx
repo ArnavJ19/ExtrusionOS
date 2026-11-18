@@ -6,6 +6,7 @@ import { AlertTriangle, CheckCircle2, ExternalLink, RotateCcw, Truck, Upload } f
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AttachmentDropZone } from "@/components/ui/attachment-drop-zone";
 import { updateDeliveryStatusAction } from "@/lib/actions/dispatches";
 import { createClient } from "@/lib/supabase/browser";
 import { getSignedFileUrl, removeTenantFile, uploadTenantFile } from "@/lib/utils/files";
@@ -71,9 +72,7 @@ export function DispatchDeliveryWorkflow({
   const [proofUrl, setProofUrl] = useState(dispatch.proof_of_delivery_url ?? "");
   const [remarks, setRemarks] = useState(dispatch.remarks ?? "");
 
-  async function uploadProof(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  async function uploadProof(file: File) {
     setUploading(true);
     let storagePath: string | null = null;
 
@@ -109,7 +108,6 @@ export function DispatchDeliveryWorkflow({
       toast.error(getErrorMessage(error, "Proof-of-delivery upload failed"));
     } finally {
       setUploading(false);
-      event.target.value = "";
     }
   }
 
@@ -167,10 +165,12 @@ export function DispatchDeliveryWorkflow({
             <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-navy px-4 py-2 text-sm font-black text-white transition hover:bg-navy/90 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50">
               <Upload className="h-4 w-4" />
               {uploading ? "Uploading..." : "Take photo or upload POD"}
-              <input className="hidden" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment" onChange={uploadProof} disabled={!canUpdate || isPending || uploading} />
+              <input className="hidden" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment" onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void uploadProof(file); }} disabled={!canUpdate || isPending || uploading} />
             </label>
             {proofUrl ? <Button type="button" variant="secondary" onClick={openProof} disabled={uploading}><ExternalLink className="h-4 w-4" />View proof</Button> : null}
           </div>
+          <AttachmentDropZone className="hidden sm:block" onFile={uploadProof} busy={uploading} disabled={!canUpdate || isPending} accept="image/jpeg,image/png,image/webp,application/pdf"
+            label="Or drop or paste the POD image" hint="Copy the photo from WhatsApp Web, click here and press Ctrl+V." />
           <input className="form-input" value={proofUrl} readOnly aria-label="Stored proof-of-delivery path" placeholder="Upload a photo or PDF to create durable evidence" />
           <p className="text-xs font-semibold text-slate-500">Photos and PDFs are stored privately under this company and dispatch.</p>
         </div>

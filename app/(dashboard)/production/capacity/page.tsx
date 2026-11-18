@@ -1,3 +1,6 @@
+import { DieConflictsPanel } from "@/components/modules/autopilot-batch8/die-availability";
+import { CapacityAccuracy } from "@/components/modules/autopilot-batch8/capacity";
+import { CAPACITY_ROLES } from "@/lib/autopilot-batch8/commands";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { FactoryPlanning } from "@/components/modules/production/factory-planning";
@@ -30,6 +33,8 @@ export default async function FactoryCapacityPage() {
         canConfigure={["owner", "admin", "production_manager", "factory_manager"].includes(context.role)}
         orders={(ordersResult.data ?? []).map(order => ({ id: order.id, order_number: order.order_number, customer_name: order.customer_name }))}
       />
+      <DieConflictsPanel />
+      {(CAPACITY_ROLES as readonly string[]).includes(context.role) ? <CapacityAccuracy /> : null}
     </div>
   );
 }

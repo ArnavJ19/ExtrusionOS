@@ -23,8 +23,12 @@ import { RecordPreview } from "./record-preview";
 import { ActiveFilters } from "@/components/data/active-filters";
 import { databaseFilterChips, parseDatabaseView, type DatabaseViewRules } from "@/lib/ui/database-view";
 import { classifyReadFailure, readStateMessage, type ReadFailure } from "@/lib/ui/read-state";
+import { SavedViewsMenu, useDefaultView } from "@/components/modules/autopilot-batch8/saved-views";
+import { PrintSelectedBar, SelectCheckbox, usePrintSelection, type PrintKind } from "@/components/modules/autopilot-batch8/print-selected";
 
 const pageSize = 10;
+// AP-091: database pages whose records print as documents, and which document.
+const PRINT_KINDS: Partial<Record<ModuleKey, PrintKind>> = { dispatches: "challan", invoices: "invoice", quotes: "quote", production: "job_card" };
 const relationFilterFields = ["customer_id", "profile_id", "order_id", "quote_id", "production_job_id", "inventory_item_id", "expense_ledger_id", "source_record_id", "material_id", "job_id"];
 
 // NOV-089: an exact, company-scoped re-read of the previewed record through the same authorized source.
@@ -76,12 +80,13 @@ function ModuleDatabaseWorkspace({ moduleKey, context, canCreate, initialStatus 
   const [workspaceState, setWorkspace] = useState<WorkspacePreferences | null>(null);
   const [loadedPreferenceKey, setLoadedPreferenceKey] = useState<string | null>(null);
   const workspace = loadedPreferenceKey === preferenceKey ? workspaceState : null;
-  const [viewName, setViewName] = useState("");
   const requestVersion = useRef(0);
   const previewTriggerRef = useRef<HTMLElement | null>(null);
   const [previewSelection, setPreviewSelection] = useState<{ id: string; scope: string; queryKey: string } | null>(null);
   const historyRestoreSearch = useRef<string | null>(null);
   const [relationFilters, setRelationFilters] = useState(() => Object.entries(firstState.relationFilters).map(([field, value]) => ({ field, value })));
+  const printKind = context.dealerId ? undefined : PRINT_KINDS[moduleKey];
+  const printSelection = usePrintSelection();
 
   useEffect(() => {
     const refresh = () => {
@@ -204,6 +209,7 @@ function ModuleDatabaseWorkspace({ moduleKey, context, canCreate, initialStatus 
     mobileWhen: column.path === "priority" ? (row) => ["urgent", "high"].includes(String(getPath(row, column.path))) : undefined
   });
   const columns: DataTableColumn<Record<string, any>>[] = visibleColumns.map(toColumn);
+  if (printKind) columns.unshift({ id: "print_select", header: "Print", mobile: "primary", accessor: (row) => <SelectCheckbox id={String(row.id)} label={String(getPath(row, config.card.titlePath) ?? "record")} selection={printSelection} /> });
   columns.push({ id: "data_freshness", header: "Data source & age", mobile: "secondary", accessor: (row) => <DataFreshness row={row} fetchedAt={refreshedAt} /> });
   columns.push({ id: "record_preview", header: "Quick view", mobile: "secondary", accessor: (row) => <button type="button" className="min-h-10 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" aria-label={`Preview ${String(displayValue(row, config.card.titlePath, "text") || "record")}`} onClick={(event) => { event.stopPropagation(); previewTriggerRef.current = event.currentTarget; setPreviewSelection({ id: String(row.id), scope: requestScope, queryKey: dataQueryKey }); }}>Preview</button> });
   const mobileColumns = [...columns, ...criticalMobileColumns.filter((column) => !visibleColumns.some((visible) => visible.id === column.id)).map(toColumn)];
@@ -216,6 +222,15 @@ function ModuleDatabaseWorkspace({ moduleKey, context, canCreate, initialStatus 
     setPage(next.page); setSortColumn(next.sort); setSortDirection(next.direction);
     setRelationFilters(Object.entries(next.relationFilters).map(([field, value]) => ({ field, value })));
   }
+
+  // AP-092: a saved view is the list URL's query; applying one starts at its first page.
+  function applySavedQuery(query: string) {
+    const params = new URLSearchParams(query); params.delete("page");
+    applyView(parseDatabaseView(params, viewRules, ""));
+    setOpenedViewHref(`${config.basePath}/database${params.size ? `?${params.toString()}` : ""}`);
+  }
+  const appliedDefault = useDefaultView(moduleKey, searchParams.size > 0 || Boolean(initialStatus), applySavedQuery);
+  const savedQuery = (() => { const params = new URLSearchParams(stateParams); params.delete("page"); return params.toString(); })();
 
   function clearFilters() {
     applyView({ ...viewState, search: "", status: "", secondary: "", dateFrom: "", dateTo: "", relationFilters: {}, page: 1 });
@@ -250,12 +265,12 @@ function ModuleDatabaseWorkspace({ moduleKey, context, canCreate, initialStatus 
     persistWorkspace({ ...workspace, pinned });
   }
 
-  function saveNamedView() {
-    if (!workspace || !viewName.trim()) return;
-    const view = { href: listHref, label: viewName.trim().slice(0, 100), moduleKey, updatedAt: Date.now(), state: viewState };
+  /** A view saved on the server (AP-092) is also kept as a Workspace shortcut in this browser. */
+  function saveNamedView(name: string) {
+    if (!workspace || !name.trim()) return;
+    const view = { href: listHref, label: name.trim().slice(0, 100), moduleKey, updatedAt: Date.now(), state: viewState };
     persistWorkspace({ ...workspace, views: upsertNamedWorkspaceView(workspace.views, view) });
-    setViewName("");
-    toast.success("Saved view added to Workspace shortcuts.");
+    toast.success("Saved view added to My views and Workspace shortcuts.");
   }
 
   function saveColumns(layout: ColumnLayout) {
@@ -266,7 +281,7 @@ function ModuleDatabaseWorkspace({ moduleKey, context, canCreate, initialStatus 
   return (
     <DataPageLayout title={config.databaseTitle} description={`Search, filter, sort, and paginate ${config.title.toLowerCase()} records. The overview remains focused on what needs attention now.`} backHref={config.basePath} backLabel={`Back to ${config.title}`} actions={<>
       {workspace ? <Button type="button" variant="secondary" onClick={pinCurrentView}><Bookmark className="mr-2 h-4 w-4" />{workspace.pinned.some((item) => item.href === listHref) ? "Unpin view" : "Pin view"}</Button> : null}
-      {workspace ? <div className="flex items-center gap-1"><input aria-label="Saved view name" value={viewName} onChange={(event) => setViewName(event.target.value)} placeholder="Name this view" maxLength={100} className="w-36 rounded-xl border border-neutral-200 px-3 py-2 text-sm" /><Button type="button" variant="secondary" onClick={saveNamedView} disabled={!viewName.trim()}>Save view</Button></div> : null}
+      {!context.dealerId ? <SavedViewsMenu pageKey={moduleKey} query={savedQuery} onApply={(query) => applySavedQuery(query)} onSaved={saveNamedView} appliedDefault={appliedDefault} /> : null}
       {canCreate && (config.fields || config.createHref) ? <Link href={config.createHref ?? `${config.basePath}/new`} className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"><Plus className="h-4 w-4" /> {config.primaryAction}</Link> : null}
     </>}>
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4"><DataFreshnessSummary refreshedAt={refreshedAt} refreshing={loading} onRefresh={() => void loadRows()} /><TableColumnPreferences columns={permittedColumns} identifier={resolvedColumns.identifier} layout={workspace?.columns[moduleKey] ?? { order: getRoleColumnOrder(moduleKey, context.role, permittedColumns), hidden: [], widths: {} }} onChange={saveColumns} /></div>
@@ -278,10 +293,12 @@ function ModuleDatabaseWorkspace({ moduleKey, context, canCreate, initialStatus 
           <>
             {config.groupField && config.groups ? <StatusFilter label={labelize(config.groupField)} value={status} onChange={(value) => { setStatus(value); setPage(1); }} options={config.groups.map((value) => ({ value, label: labelize(value) }))} /> : null}
             {config.secondaryFilter ? <StatusFilter label={config.secondaryFilter.label} value={secondary} onChange={(value) => { setSecondary(value); setPage(1); }} options={config.secondaryFilter.options} /> : null}
-            {config.dateFilterField ? <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={(value) => { setDateFrom(value); setPage(1); }} onToChange={(value) => { setDateTo(value); setPage(1); }} /> : null}
+            {config.dateFilterField ? <DateRangeFilter from={dateFrom} to={dateTo} onFromChange={(value) => { setDateFrom(value); setPage(1); }} onToChange={(value) => { setDateTo(value); setPage(1); }} onRangeChange={(nextFrom, nextTo) => { setDateFrom(nextFrom); setDateTo(nextTo); setPage(1); }} /> : null}
           </>
         )}
       />
+      {printKind ? <PrintSelectedBar kind={printKind} selection={printSelection} pageRows={loadedForView ? rows.map((row) => ({ id: String(row.id), label: String(getPath(row, config.card.titlePath) ?? "record") })) : []}
+        singleDay={printKind === "challan" && dateFrom && dateFrom === dateTo ? dateFrom : null} /> : null}
       <ActiveFilters filters={activeFilters} count={loadedForView && !error ? totalCount : null} loading={loading || search !== debouncedSearch} onRemove={removeFilter} onClear={clearFilters} onResetSavedView={savedView ? () => applyView(parseDatabaseView(viewStateParams(savedView.state), viewRules)) : undefined} />
       {moduleKey === "orders" && loadedForView && rows.length ? <StageWaiting key={`${requestScope}:${dataQueryKey}:${rows.map((row) => row.id).join(",")}`} orderIds={rows.map((row) => String(row.id))} /> : null}
       <DataTable

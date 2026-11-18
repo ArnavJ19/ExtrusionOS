@@ -87,7 +87,9 @@ test("notification and task badges match the records an operator can open", () =
   assert.match(mobileTasks, /assigned_to\.eq\.\$\{context\.userId\},assigned_to\.is\.null/);
   assert.match(tasksPage, /assigned_to\.eq\.\$\{context\.userId\},assigned_to\.is\.null/);
   assert.match(notificationsPage, /QueryErrorNotice/);
-  assert.match(mobileTasks, /Could not load assigned mobile tasks/);
+  // AP-095: the error text is in the floor catalogue; the page shows it through t("mt.error").
+  assert.match(mobileTasks, /<ErrorState description=\{t\("mt\.error"\)\}/);
+  assert.match(readFileSync(new URL("../lib/i18n/floor.ts", import.meta.url), "utf8"), /"mt\.error": "Could not load assigned mobile tasks/);
 });
 
 test("enterprise access controls are owner-owned and blank assignments become broadcasts", () => {

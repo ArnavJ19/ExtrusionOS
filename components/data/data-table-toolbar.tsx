@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DATE_PRESETS, activePreset, presetRange } from "@/lib/utils/date-ranges";
 
 type DataTableToolbarProps = {
   search: string;
@@ -37,11 +38,26 @@ export function StatusFilter({ value, options, onChange, label = "Status" }: { v
   );
 }
 
-export function DateRangeFilter({ from, to, onFromChange, onToChange }: { from: string; to: string; onFromChange: (value: string) => void; onToChange: (value: string) => void }) {
+/** AP-086: one shared date-range filter with chips (IST days, Monday weeks, April financial year) above the two dates. */
+export function DateRangeFilter({ from, to, onFromChange, onToChange, onRangeChange, fromLabel = "From date", toLabel = "To date", className, clearable = true }: { from: string; to: string; onFromChange: (value: string) => void; onToChange: (value: string) => void; onRangeChange?: (from: string, to: string) => void; fromLabel?: string; toLabel?: string; className?: string; clearable?: boolean }) {
+  const active = activePreset({ from, to });
+  const apply = (range: { from: string; to: string }) => {
+    if (onRangeChange) onRangeChange(range.from, range.to);
+    else { onFromChange(range.from); onToChange(range.to); }
+  };
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
-      <input className="form-input" type="date" aria-label="From date" value={from} onChange={(event) => onFromChange(event.target.value)} />
-      <input className="form-input" type="date" aria-label="To date" value={to} onChange={(event) => onToChange(event.target.value)} />
+    <div className={`min-w-0 space-y-2 ${className ?? ""}`}>
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Date range shortcuts">
+        {DATE_PRESETS.map((preset) => (
+          <button key={preset.key} type="button" aria-pressed={active === preset.key}
+            className={`min-h-9 rounded-full border px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange ${active === preset.key ? "border-neutral-950 bg-neutral-950 text-white" : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"}`}
+            onClick={() => apply(active === preset.key && clearable ? { from: "", to: "" } : presetRange(preset.key))}>{preset.label}</button>
+        ))}
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <input className="form-input" type="date" aria-label={fromLabel} value={from} onChange={(event) => onFromChange(event.target.value)} />
+        <input className="form-input" type="date" aria-label={toLabel} value={to} onChange={(event) => onToChange(event.target.value)} />
+      </div>
     </div>
   );
 }

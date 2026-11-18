@@ -11,6 +11,8 @@ import { QueryErrorNotice } from "@/components/ui/query-error-notice";
 import { CustomerAliasManager, CustomerCommitments } from "@/components/modules/operations/operator-tools";
 import { canManageCustomerRequirements } from "@/lib/workflow/customer-step-requirements";
 import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
+import { CustomerHealthPanel } from "@/components/modules/autopilot-batch8/customer-health";
+import { HEALTH_ROLES } from "@/lib/autopilot-batch8/commands";
 import { CustomerCreditPanel } from "@/components/modules/order-to-cash/credit";
 import { PackingSpecPanel } from "@/components/modules/dispatch-autopilot/packing";
 
@@ -202,6 +204,7 @@ export default async function CustomerDetailPage({ params, searchParams }: { par
       <div id="customer-commitments"><CustomerCommitments key={`commitments:${context.companyId}:${context.userId}:${context.role}:${id}:${selectedCommitment ?? ""}`} context={context} customerId={id} commitmentId={selectedCommitment} /></div>
       {!context.dealerId && ["owner", "admin", "accounts", "sales_manager", "sales"].includes(context.role) ? <CustomerCreditPanel customerId={id} /> : null}
       {!context.dealerId && ["owner", "admin", "sales_manager", "dispatch_manager", "factory_manager", "quality", "production_manager"].includes(context.role) ? <PackingSpecPanel customerId={id} /> : null}
+      {!context.dealerId && (HEALTH_ROLES as readonly string[]).includes(context.role) ? <CustomerHealthPanel customerId={id} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="customer" id={id} role={context.role} /> : null}
     </div>
   );

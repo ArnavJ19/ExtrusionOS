@@ -3,6 +3,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { autopilotAction } from "@/lib/actions/autopilot";
 import { buttonClass, inputClass, secondaryClass } from "../order-to-cash/ui";
+import { resolveNumericEntry } from "@/lib/forms/arithmetic";
 
 export type Note = { tone: "ok" | "error"; text: string } | null;
 export type Queue<T> = { rows: T[]; page: number; total_count: number };
@@ -30,7 +31,12 @@ export function Field({ label, children, hint }: { label: string; children: Reac
   return <label className="block min-w-0 text-sm font-semibold">{label}<div className="mt-1">{children}</div>{hint ? <span className="mt-1 block text-xs font-normal text-neutral-500">{hint}</span> : null}</label>;
 }
 export function NumberInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
-  return <input inputMode="decimal" className={inputClass} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} />;
+  // AP-088: a typed calculation ("=12*6.4", "250+180") becomes its result when focus leaves; the expression stays as a hint.
+  const [calc, setCalc] = useState<{ hint: string | null; error: string | null }>({ hint: null, error: null });
+  return <><input inputMode="decimal" className={inputClass} value={value} placeholder={placeholder} onChange={e => { setCalc({ hint: null, error: null }); onChange(e.target.value); }}
+    onBlur={() => { const out = resolveNumericEntry(value); if (out.error || out.hint) { setCalc({ hint: out.hint, error: out.error }); if (!out.error) onChange(out.value); } }} />
+    {calc.hint ? <span className="mt-1 block text-xs font-normal text-neutral-600">{calc.hint}</span> : null}
+    {calc.error ? <span role="alert" className="mt-1 block text-xs font-normal text-rose-700">{calc.error}</span> : null}</>;
 }
 /** Text from an input as a number, or undefined when blank (blank stays blank, never zero). */
 export const optional = (value: string) => value.trim() === "" ? undefined : Number(value);

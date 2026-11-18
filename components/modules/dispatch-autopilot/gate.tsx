@@ -9,6 +9,7 @@ import { LogOut } from "lucide-react";
 import { fmtDay, fmtWhen, inr } from "@/lib/order-to-cash/commands";
 import { Empty, Failure, Loading, Message, Pager, Pill, Section, apWrite, buttonClass, inputClass, secondaryClass, useApRead } from "../order-to-cash/ui";
 import { StartLoadingButton } from "./loading";
+import { DateRangeFilter } from "@/components/data/data-table-toolbar";
 
 type Note = { tone: "ok" | "error"; text: string } | null;
 type Waiting = { dispatch_id: string; dispatch_number: string; order_number: string; customer: string; vehicle_number: string | null; transporter_name: string | null; lr_number: string | null;
@@ -64,7 +65,7 @@ export function GateClient({ supervisor, canGate = true }: { supervisor: boolean
         <div className="grid gap-3 lg:grid-cols-2">{waiting.data.rows.map(d => <GateCard key={d.dispatch_id} d={d} supervisor={supervisor} onOut={text => { setMessage({ tone: "ok", text }); setKey(k => k + 1); }} />)}</div>}
       {waiting.data ? <Pager page={page} total={waiting.data.total_count} onPage={setPage} /> : null}
     </Section> : <Section title="Gate register (outbound dispatches)" description={register.data ? `${fmtDay(register.data.from)} to ${fmtDay(register.data.to)}` : undefined}
-      actions={<span className="flex flex-wrap gap-2"><input type="date" aria-label="From" className={`${inputClass} w-40`} value={from} onChange={e => { setFrom(e.target.value); setRPage(1); }} /><input type="date" aria-label="To" className={`${inputClass} w-40`} value={to} onChange={e => { setTo(e.target.value); setRPage(1); }} /></span>}>
+      actions={<DateRangeFilter clearable={false} fromLabel="From" toLabel="To" from={from} to={to} onFromChange={v => { setFrom(v); setRPage(1); }} onToChange={v => { setTo(v); setRPage(1); }} onRangeChange={(f, t) => { setFrom(f); setTo(t); setRPage(1); }} />}>
       {register.loading && !register.data ? <Loading what="the register" /> : register.error ? <Failure text={register.error} /> : !register.data?.rows.length ? <Empty>No vehicle left in this period.</Empty> :
         <div className="overflow-x-auto"><table className="w-full min-w-[720px] text-sm"><thead><tr className="text-left text-neutral-500"><th className="py-1">Out at</th><th>Vehicle</th><th>Dispatch</th><th>Customer</th><th>LR / transporter</th><th>E-way bill</th><th>Security</th></tr></thead>
           <tbody>{register.data.rows.map(x => <tr key={x.id} className="border-t border-neutral-100 align-top"><td className="py-2">{fmtWhen(x.exited_at)}</td><td className="font-mono font-bold">{x.vehicle_number}{x.vehicle_check === "override" ? <span className="block text-xs font-normal text-rose-700">Different vehicle: {x.override_reason}</span> : x.vehicle_check === "filled" ? <span className="block text-xs font-normal text-neutral-500">recorded at the gate</span> : null}</td>

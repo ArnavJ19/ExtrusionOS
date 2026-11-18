@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
+import { AttachmentDropZone } from "@/components/ui/attachment-drop-zone";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/browser";
 import { removeTenantFile, uploadTenantFile } from "@/lib/utils/files";
@@ -31,9 +31,7 @@ export function TechnicalDocumentUpload({ context, entityType, entityId, onUploa
   const [docType, setDocType] = useState("other");
   const [notes, setNotes] = useState("");
 
-  async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  async function handleUpload(file: File) {
     setUploading(true);
 
     let storagePath: string | null = null;
@@ -71,7 +69,6 @@ export function TechnicalDocumentUpload({ context, entityType, entityId, onUploa
       toast.error(getErrorMessage(err, "Upload failed"));
     } finally {
       setUploading(false);
-      event.target.value = "";
     }
   }
 
@@ -91,11 +88,8 @@ export function TechnicalDocumentUpload({ context, entityType, entityId, onUploa
             <input className="form-input" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Rev 3, customer spec" />
           </label>
         </div>
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-aluminium/30 p-6 transition hover:border-orange hover:bg-orange/5">
-          <Upload className="h-5 w-5 text-slate-500" />
-          <span className="text-sm font-bold text-slate-600">{uploading ? "Uploading..." : "Click to select file (PDF, Image, DXF, DWG — max 10 MB)"}</span>
-          <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp,.dxf,.dwg,.csv,.xlsx" onChange={handleUpload} disabled={uploading} />
-        </label>
+        <AttachmentDropZone onFile={handleUpload} busy={uploading} accept=".pdf,.jpg,.jpeg,.png,.webp,.dxf,.dwg,.csv,.xlsx"
+          label="Choose, drop or paste a file (PDF, image, DXF, DWG — max 10 MB)" hint="Click, drop a file, or click here and press Ctrl+V to paste a screenshot." />
       </CardContent>
     </Card>
   );

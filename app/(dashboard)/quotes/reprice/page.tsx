@@ -8,6 +8,6 @@ import { REPRICE_APPLIERS, REPRICE_READERS } from "@/lib/autopilot-batch6/comman
 export default async function RepricePage() {
   const context = await getSessionContext();
   if (context.dealerId || !(REPRICE_READERS as readonly string[]).includes(context.role)) redirect("/dashboard");
-  return <div className="space-y-5"><PageHeader title="Reprice drafts" description="Apply today's approved billet rate to every draft quotation in one action." actions={<Link href="/quotes" className="text-sm font-bold underline print:hidden">Back to quotations</Link>} />
+  return <div className="space-y-5"><PageHeader title="Reprice drafts" description="Apply today's approved billet rate to every draft quotation in one action." actions={<span className="flex flex-wrap gap-3 print:hidden"><Link href="/quotes/rate-cards" className="text-sm font-bold underline">Prepare today&apos;s rate cards</Link><Link href="/quotes" className="text-sm font-bold underline print:hidden">Back to quotations</Link></span>} />
     <RepriceClient canApply={(REPRICE_APPLIERS as readonly string[]).includes(context.role)} /></div>;
 }

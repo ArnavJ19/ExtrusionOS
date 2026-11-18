@@ -2,6 +2,7 @@
 // recorded transactions, and process mass balance. Missing inputs return null ("Not captured");
 // a recorded zero is a real observation and is never confused with a missing one.
 import { roundPercent, roundWeight } from "./pcda/rounding.ts";
+import { recoveryPercentOf } from "../insights/metrics.ts";
 
 // Billet statuses counted as job input. Must match complete_production_job_with_scrap_atomic.
 export const PRODUCTION_INPUT_BILLET_STATUSES = ["allocated", "issued", "consumed"] as const;
@@ -172,7 +173,8 @@ export function productionPerformance(input: { inputKg: unknown; goodOutputKg: u
   const scrapKg = finiteNonNegative(input.scrapKg);
   const plannedOutputKg = finitePositive(input.plannedOutputKg);
   return {
-    recoveryPercent: inputKg !== null && goodOutputKg !== null ? roundPercent(goodOutputKg / inputKg * 100) : null,
+    // AP-044: one definition of recovery (METRICS.recovery).
+    recoveryPercent: (() => { const value = recoveryPercentOf(goodOutputKg, inputKg); return value === null ? null : roundPercent(value); })(),
     scrapPercent: inputKg !== null && scrapKg !== null ? roundPercent(scrapKg / inputKg * 100) : null,
     planAttainmentPercent: plannedOutputKg !== null && goodOutputKg !== null ? roundPercent(goodOutputKg / plannedOutputKg * 100) : null
   };

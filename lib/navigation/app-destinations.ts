@@ -9,8 +9,8 @@ export const APP_DESTINATIONS = [
   { href: "/customers", label: "Customers", icon: "Users", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "factory_manager", "dispatch_manager", "accounts", "viewer"] },
   { href: "/crm", label: "CRM", icon: "Target", roles: ["owner", "admin", "sales_manager", "sales"], module: "crm" },
   { href: "/profiles", label: "Profiles", icon: "Shapes", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "inventory_manager", "quality", "viewer"] },
-  { href: "/dies", label: "Dies", icon: "Wrench", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "quality", "viewer"] },
-  { href: "/die-intelligence", label: "Die Intel", icon: "Activity", roles: ["owner", "admin", "production_manager", "quality"] },
+  // AP-043: Die Intelligence is part of Dies (the old route redirects to the die overview).
+  { href: "/dies", label: "Dies", icon: "Wrench", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "quality", "viewer"], aliases: ["/die-intelligence"] },
   { href: "/quotes", label: "Quotes", icon: "FileText", roles: ["owner", "admin", "sales_manager", "sales", "accounts", "viewer"] },
   { href: "/ai/quotation-assistant", label: "AI Quotes", icon: "Bot", roles: ["owner", "admin", "sales_manager", "sales"], module: "ai_assistant" },
   { href: "/systems-configurator", label: "Configurator", icon: "PackageCheck", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "viewer"] },
@@ -37,9 +37,8 @@ export const APP_DESTINATIONS = [
   { href: "/tenders", label: "Tenders", icon: "Building2", roles: ["owner", "admin", "sales_manager"], module: "tender_management" },
   { href: "/exports", label: "Exports", icon: "Factory", roles: ["owner", "admin", "sales_manager", "dispatch_manager"], module: "export_docs" },
   { href: "/compliance", label: "Compliance", icon: "ShieldCheck", roles: ["owner", "admin", "quality"], module: "bis_compliance" },
-  { href: "/profitability", label: "Profitability", icon: "TrendingUp", roles: ["owner", "admin", "accounts"], module: "profitability_intelligence" },
-  { href: "/reports", label: "Reports", icon: "BarChart3", roles: ["owner", "admin", "sales_manager", "accounts"], module: "report_builder", aliases: ["/report-builder"] },
-  { href: "/analytics", label: "Analytics", icon: "BarChart3", roles: ["owner", "admin", "sales_manager", "accounts"] },
+  // AP-044: one Insights entry for analytics, profitability and the report builder (each keeps its own access rule).
+  { href: "/insights", label: "Insights", icon: "BarChart3", roles: ["owner", "admin", "sales_manager", "accounts"], aliases: ["/reports", "/report-builder", "/analytics", "/profitability"] },
   { href: "/automation", label: "Automation", icon: "WandSparkles", roles: ["owner", "admin"], module: "automation" },
   { href: "/expenses", label: "Expenses", icon: "IndianRupee", roles: ["owner", "admin", "accounts", "viewer"] },
   { href: "/invoices", label: "Invoices", icon: "FileText", roles: ["owner", "admin", "accounts", "viewer"] },

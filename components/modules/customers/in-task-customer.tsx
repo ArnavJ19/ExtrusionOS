@@ -6,6 +6,7 @@ import { inTaskCustomerDefaults, type InTaskCustomerInput, type InTaskCustomerMa
 import { can } from "@/lib/auth/permissions";
 import { customerTypes, labelize, type SessionContext } from "@/types/app";
 import { Button } from "@/components/ui/button";
+import { PincodeInput } from "@/components/ui/pincode-input";
 
 export function InTaskCustomer({ context, onSelected, taskLabel = "quotation" }: { context: SessionContext; onSelected: (customer: InTaskCustomerOption) => void; taskLabel?: string }) {
   const id = useId();
@@ -98,7 +99,8 @@ export function InTaskCustomer({ context, onSelected, taskLabel = "quotation" }:
           <label className="space-y-1"><span className="form-label">Email</span><input className="form-input" type="email" autoComplete="email" value={customer.email ?? ""} maxLength={160} onChange={(event) => update("email", event.target.value)} /></label>
           <details className="sm:col-span-2"><summary className="cursor-pointer py-2 text-sm font-semibold">Address and location (optional)</summary><div className="mt-2 grid gap-3 sm:grid-cols-2">
             {([ ["billing_address", "Billing address"], ["shipping_address", "Shipping address"] ] as const).map(([field, label]) => <label key={field} className="space-y-1"><span className="form-label">{label}</span><textarea className="form-input" maxLength={1000} value={customer[field] ?? ""} onChange={(event) => update(field, event.target.value)} /></label>)}
-            {([ ["city", "City"], ["state", "State"], ["pincode", "Pincode"] ] as const).map(([field, label]) => <label key={field} className="space-y-1"><span className="form-label">{label}</span><input className="form-input" maxLength={160} value={customer[field] ?? ""} onChange={(event) => update(field, event.target.value)} /></label>)}
+            <label className="space-y-1"><span className="form-label">PIN code</span><PincodeInput value={customer.pincode ?? ""} onChange={(next) => update("pincode", next)} state={customer.state ?? ""} onState={(next) => update("state", next)} city={customer.city ?? ""} onCity={(next) => update("city", next)} label="PIN code" /></label>
+            {([ ["city", "City"], ["state", "State"] ] as const).map(([field, label]) => <label key={field} className="space-y-1"><span className="form-label">{label}</span><input className="form-input" maxLength={160} value={customer[field] ?? ""} onChange={(event) => update(field, event.target.value)} /></label>)}
           </div></details>
         </fieldset>
         {error ? <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p> : null}

@@ -8,6 +8,9 @@ import { formatWeight } from "@/lib/utils/format";
 import { canAccessMobileDestination } from "@/lib/auth/role-experience";
 import { redirect } from "next/navigation";
 import { MobilePagination } from "@/components/ui/mobile-pagination";
+import { FloorLanguageToggle } from "@/components/modules/autopilot-batch9/floor-language";
+import { floorText } from "@/lib/i18n/floor";
+import { getFloorLanguage } from "@/lib/i18n/floor-server";
 
 export default async function MobileJobsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const context = await getSessionContext();
@@ -16,6 +19,7 @@ export default async function MobileJobsPage({ searchParams }: { searchParams: P
   const requestedPage = Number((await searchParams).page ?? 1);
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 100000) : 1;
   const pageSize = 10;
+  const lang = await getFloorLanguage(), t = floorText(lang);
   const { data: jobs, error, count } = await supabase
     .from("production_jobs")
     .select("id, job_number, status, planned_date, planned_quantity_kg, actual_quantity_kg, machines(machine_name), dies(die_number), orders(order_number, priority, customers(customer_name, company_name)), aluminium_profiles(profile_code, profile_name), scrap_records(weight_kg)", { count: "exact" })
@@ -23,19 +27,20 @@ export default async function MobileJobsPage({ searchParams }: { searchParams: P
     .not("status", "in", "(completed,cancelled)")
     .order("planned_date", { ascending: true, nullsFirst: false })
     .range((page - 1) * pageSize, page * pageSize - 1);
-  if (error) return <div className="mx-auto max-w-xl space-y-4"><MobileTitle icon={Factory} title="Active Jobs" subtitle="Open real production jobs to record status, output, scrap, and proof from the job workflow." /><ErrorState description="Could not load active production jobs. Refresh and try again before assuming the queue is empty." /></div>;
+  if (error) return <div className="mx-auto max-w-xl space-y-4"><MobileTitle icon={Factory} title={t("mj.title")} subtitle={t("mj.subtitle")} /><ErrorState description={t("mj.error")} /></div>;
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
-      <MobileTitle icon={Factory} title="Active Jobs" subtitle="Open real production jobs to record status, output, scrap, and proof from the job workflow." />
+      <div className="flex justify-end"><FloorLanguageToggle lang={lang} /></div>
+      <MobileTitle icon={Factory} title={t("mj.title")} subtitle={t("mj.subtitle")} />
       {jobs?.length ? jobs.map((job: any) => (
         <Link href={`/production/${job.id}`} key={job.id} className="block rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition active:scale-[0.99]">
-          <div className="flex items-start justify-between gap-3"><div><p className="text-xl font-black text-slate-950">{job.job_number}</p><p className="mt-1 text-sm font-medium text-slate-500">{job.orders?.customers?.company_name || job.orders?.customers?.customer_name || job.orders?.order_number || "Customer"} - {job.aluminium_profiles?.profile_code || job.aluminium_profiles?.profile_name || "Profile"}</p></div><span className={`rounded-full px-3 py-1 text-xs font-black capitalize ${statusClass(job.orders?.priority || "normal")}`}>{String(job.orders?.priority || "normal").replace(/_/g, " ")}</span></div>
-          <div className="mt-4 grid grid-cols-3 gap-2 text-center"><Mini label="Plan" value={formatWeight(job.planned_quantity_kg)} /><Mini label="Actual" value={formatWeight(job.actual_quantity_kg)} /><Mini label="Scrap" value={formatWeight(totalScrapWeight(job.scrap_records))} /></div>
-          <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-sm font-bold text-slate-700"><Gauge className="mr-2 inline h-4 w-4 text-orange" />{job.machines?.machine_name || "Machine not assigned"} - {String(job.status || "planned").replace(/_/g, " ")} - {job.dies?.die_number || "No die"}</div>
-          <p className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white">Open job workflow <ArrowRight className="h-4 w-4" /></p>
+          <div className="flex items-start justify-between gap-3"><div><p className="text-xl font-black text-slate-950">{job.job_number}</p><p className="mt-1 text-sm font-medium text-slate-500">{job.orders?.customers?.company_name || job.orders?.customers?.customer_name || job.orders?.order_number || t("mj.customer")} - {job.aluminium_profiles?.profile_code || job.aluminium_profiles?.profile_name || t("ps.profile")}</p></div><span className={`rounded-full px-3 py-1 text-xs font-black capitalize ${statusClass(job.orders?.priority || "normal")}`}>{String(job.orders?.priority || "normal").replace(/_/g, " ")}</span></div>
+          <div className="mt-4 grid grid-cols-3 gap-2 text-center"><Mini label={t("mj.plan")} value={formatWeight(job.planned_quantity_kg)} /><Mini label={t("mj.actual")} value={formatWeight(job.actual_quantity_kg)} /><Mini label={t("mj.scrap")} value={formatWeight(totalScrapWeight(job.scrap_records))} /></div>
+          <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-sm font-bold text-slate-700"><Gauge className="mr-2 inline h-4 w-4 text-orange" />{job.machines?.machine_name || t("mj.noMachine")} - {String(job.status || "planned").replace(/_/g, " ")} - {job.dies?.die_number || t("mj.noDie")}</div>
+          <p className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-black text-white">{t("mj.open")} <ArrowRight className="h-4 w-4" /></p>
         </Link>
-      )) : <EmptyState title="No active production jobs" description="Production jobs appear here when they are planned or in progress." />}
+      )) : <EmptyState title={t("mj.emptyTitle")} description={t("mj.emptyHelp")} />}
       <MobilePagination path="/mobile/jobs" page={page} pageSize={pageSize} totalCount={count ?? 0} />
     </div>
   );

@@ -7,6 +7,7 @@ import { Html5QrcodeScanner } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
 import { recordScanSessionAction, resolveScanAction, type ScanResolution, type ScanSessionResult } from "@/lib/actions/scan";
 import { SCAN_TASKS, type ScanTask } from "@/lib/qr/scan-task";
+import { WEDGE_PAGE_EVENT, WEDGE_PENDING_KEY } from "@/lib/qr/wedge";
 
 type Mode = "lookup" | ScanTask;
 type SessionItem = { code: string; result: Extract<ScanResolution, { ok: true }>; at: string };
@@ -55,6 +56,16 @@ export default function QRScannerPage() {
       void handle(code);
     };
   });
+
+  // AP-025: a USB scanner used anywhere on this page, or a scan handed over from another screen, is handled here.
+  useEffect(() => {
+    const onWedge = (event: Event) => handler.current(String((event as CustomEvent<string>).detail ?? ""));
+    window.addEventListener(WEDGE_PAGE_EVENT, onWedge);
+    let pending: string | null = null;
+    try { pending = window.sessionStorage.getItem(WEDGE_PENDING_KEY); window.sessionStorage.removeItem(WEDGE_PENDING_KEY); } catch { pending = null; }
+    if (pending) handler.current(pending);
+    return () => window.removeEventListener(WEDGE_PAGE_EVENT, onWedge);
+  }, []);
 
   useEffect(() => {
     if (!camera) return;

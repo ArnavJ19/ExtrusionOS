@@ -15,14 +15,24 @@ const MODULE_LINKS: Partial<Record<ModuleKey, Array<{ href: string; label: strin
     { href: "/production/workstation", label: "Press workstation", roles: FLOOR },
     { href: "/production/scrap-standards", label: "Scrap standards", roles: FLOOR },
     { href: "/production/calendar", label: "Factory calendar", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "viewer"] },
-    { href: "/production/drafts", label: "Draft jobs from orders", roles: ["owner", "admin", "production_manager", "factory_manager", "sales_manager"] }],
+    { href: "/production/drafts", label: "Draft jobs from orders", roles: ["owner", "admin", "production_manager", "factory_manager", "sales_manager"] },
+    // Autopilot batch 9: AP-009 photographed shift registers.
+    { href: "/production/registers", label: "Shift registers", roles: FLOOR },
+    // Autopilot batch 10: AP-022 crew, AP-021 meter readings, AP-055 coating runs, AP-067 combined cuts, AP-068 stock runs.
+    { href: "/production/crew", label: "Press crew", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "quality"] },
+    { href: "/energy/press-meters", label: "Press meter readings", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "accounts"] },
+    { href: "/production/finishing/coating-runs", label: "Coating runs by shade", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "dispatch_manager"] },
+    { href: "/production/cutting/combine", label: "Combine cut lengths", roles: ["owner", "admin", "factory_manager", "production_manager", "production"] },
+    { href: "/production/capacity/stock-runs", label: "Make-to-stock runs", roles: ["owner", "admin", "factory_manager", "production_manager", "sales_manager", "inventory_manager"] }],
   inventory: [{ href: "/inventory/movements", label: "Stock ledger", roles: ["owner", "admin", "factory_manager", "production_manager", "inventory_manager", "accounts"] },
     { href: "/inventory/reorder", label: "Reorder points", roles: ["owner", "admin", "inventory_manager", "factory_manager", "production_manager", "accounts"] }],
   quality: [{ href: "/quality/samples", label: "In-process samples", roles: ["owner", "admin", "quality", "factory_manager", "production_manager"] },
     { href: "/quality/ncrs", label: "NCRs", roles: ["owner", "admin", "quality", "factory_manager", "production_manager"] }],
   invoices: [{ href: "/invoices/drafts", label: "Drafts to post", roles: ["owner", "admin", "accounts"] }, { href: "/invoices/tax-rules", label: "GST place of supply", roles: ["owner", "admin", "accounts"] },
     { href: "/invoices/periods", label: "Month close", roles: ["owner", "admin", "accounts", "viewer"] }, { href: "/invoices/numbering", label: "Document numbering", roles: ["owner", "admin", "accounts", "viewer"] },
-    { href: "/invoices/tally", label: "Tally export", roles: ["owner", "admin", "accounts"] }, { href: "/invoices/einvoice", label: "E-invoices", roles: ["owner", "admin", "accounts"] }],
+    { href: "/invoices/tally", label: "Tally export", roles: ["owner", "admin", "accounts"] }, { href: "/invoices/einvoice", label: "E-invoices", roles: ["owner", "admin", "accounts"] },
+    // Autopilot batch 9: AP-075 customer receipt weights.
+    { href: "/invoices/weight-notes", label: "Weight differences", roles: ["owner", "admin", "accounts", "sales_manager", "sales", "dispatch_manager"] }],
   // Autopilot batch 4: dispatch and compliance.
   dispatches: [
     { href: "/dispatches/ready", label: "Ready to ship", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "sales_manager", "sales", "accounts"] },
@@ -31,21 +41,34 @@ const MODULE_LINKS: Partial<Record<ModuleKey, Array<{ href: string; label: strin
     { href: "/dispatches/labels", label: "Bundle labels", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager"] },
     { href: "/dispatches/packing", label: "Packing standard", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "sales_manager", "quality"] },
     { href: "/dispatches/eway", label: "E-way bills", roles: ["owner", "admin", "accounts", "dispatch_manager", "dispatch"] },
-    { href: "/dispatches/freight", label: "Freight rate cards", roles: ["owner", "admin", "dispatch_manager", "dispatch", "factory_manager", "sales_manager", "sales", "accounts"] }]
+    { href: "/dispatches/freight", label: "Freight rate cards", roles: ["owner", "admin", "dispatch_manager", "dispatch", "factory_manager", "sales_manager", "sales", "accounts"] },
+    // Autopilot batch 9: AP-010 packing scale and bundle weights.
+    { href: "/dispatches/bundles/weights", label: "Bundle weights", roles: ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "quality"] }],
+  // Autopilot batch 7: AP-057 purchase price checks.
+  vendors: [{ href: "/vendors/purchasing/prices", label: "Purchase price checks", roles: ["owner", "admin", "accounts", "inventory_manager", "factory_manager"] }]
 };
 
 // Autopilot batch 3 pages on modules that have no workflow strip of their own (orders, payments, quotations).
 const AREA_LINKS: Record<"orders" | "payments" | "quotes", Array<{ href: string; label: string; roles: string[] }>> = {
   orders: [{ href: "/orders/at-risk", label: "Order red list", roles: ["owner", "admin", "factory_manager", "production_manager", "inventory_manager", "sales_manager", "sales", "dispatch_manager"] },
-    { href: "/orders/credit", label: "Credit holds", roles: ["owner", "admin", "accounts", "sales_manager", "sales"] }],
+    { href: "/orders/credit", label: "Credit holds", roles: ["owner", "admin", "accounts", "sales_manager", "sales"] },
+    { href: "/orders/delay-notices", label: "Delay notices", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "dispatch_manager"] },
+    // Autopilot batch 10: AP-049 shortages an approved equivalent could cover.
+    { href: "/orders/equivalents", label: "Equivalents for shortages", roles: ["owner", "admin", "sales_manager", "sales", "quality", "production_manager", "factory_manager", "inventory_manager"] }],
   payments: [{ href: "/payments/bank", label: "Bank statement", roles: ["owner", "admin", "accounts"] }, { href: "/payments/reminders", label: "Payment reminders", roles: ["owner", "admin", "accounts"] },
     { href: "/payments/msme", label: "MSME supplier deadlines", roles: ["owner", "admin", "accounts"] },
     { href: "/payments/tds", label: "Customer TDS", roles: ["owner", "admin", "accounts"] },
-    { href: "/payments/receipts#allocate", label: "Receive money", roles: ["owner", "admin", "accounts"] }],
+    { href: "/payments/statements", label: "Monthly statements", roles: ["owner", "admin", "accounts"] },
+    { href: "/payments/receipts#allocate", label: "Receive money", roles: ["owner", "admin", "accounts"] },
+    // Autopilot batch 9: AP-076 four-week cash forecast.
+    { href: "/payments/cash-forecast", label: "Cash forecast", roles: ["owner", "admin", "accounts"] }],
   // Autopilot batch 5: quotation follow-ups (AP-071) and floor prices (AP-072).
   quotes: [{ href: "/quotes/followups", label: "Follow-ups", roles: ["owner", "admin", "sales_manager", "sales", "accounts"] },
     { href: "/quotes/floors", label: "Floor prices", roles: ["owner", "admin", "sales_manager", "sales"] },
-    { href: "/quotes/reprice", label: "Reprice drafts", roles: ["owner", "admin", "sales_manager", "sales", "accounts"] }]
+    { href: "/quotes/reprice", label: "Reprice drafts", roles: ["owner", "admin", "sales_manager", "sales", "accounts"] },
+    // Autopilot batch 9: AP-073 rate cards and AP-008 WhatsApp enquiries.
+    { href: "/quotes/rate-cards", label: "Rate cards", roles: ["owner", "admin", "sales_manager", "sales", "accounts"] },
+    { href: "/quotes/enquiries", label: "WhatsApp enquiries", roles: ["owner", "admin", "sales_manager", "sales"] }]
 };
 export function OrderToCashLinks({ area, role }: { area: keyof typeof AREA_LINKS; role: string }) {
   const links = AREA_LINKS[area].filter(link => link.roles.includes(role));

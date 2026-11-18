@@ -53,7 +53,7 @@ export default async function FoundryPage() {
           <p className="text-xs font-black uppercase tracking-[0.16em] text-orange">Scrap Control</p>
           <h2 className="section-title mt-1">Aluminium Scrap</h2>
           <p className="mt-1 text-sm font-medium text-slate-500">Track incoming and in-house scrap by supplier, quality, weight, and usage status.</p>
-          <Link href="/foundry/scrap" className="mt-4 inline-flex rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white">Open Scrap</Link>
+          <Link href="/foundry/scrap" className="mt-4 inline-flex rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white">Open Scrap</Link> <Link href="/foundry/scrap-sales" className="mt-4 inline-flex rounded-xl border border-charcoal px-4 py-2.5 text-sm font-bold">Scrap sales</Link>
         </div>
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-orange">Cast Output</p>

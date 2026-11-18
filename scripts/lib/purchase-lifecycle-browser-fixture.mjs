@@ -26,6 +26,10 @@ const dashboard = {
 const actionStub = `
   const fixtureHash=${JSON.stringify(hash)}, vendorId=${JSON.stringify(vendorId)}, orderId=${JSON.stringify(orderId)}, lineId=${JSON.stringify(lineId)}, billId=${JSON.stringify(billId)};
   const matchSnapshot=${JSON.stringify(matchSnapshot)}, matchedSnapshot=${JSON.stringify(matchedSnapshot)};
+  export async function purchasePriceAction(command) {
+    if(command==="order_checks") return {success:true,data:{lines:[],status:"draft"}};
+    return {success:true,data:{last:[],same_supplier:null,reference_rate:null,variance_percent:null,flagged:false,basis:"No earlier issued purchase order has this description and unit."}};
+  }
   export async function purchaseLifecycleAction(input) {
     window.fixture.calls.push(input);
     if (window.fixture.failCommand===input.command) {

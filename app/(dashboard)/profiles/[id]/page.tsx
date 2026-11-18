@@ -16,6 +16,11 @@ import { GenerateReportButton } from "@/components/modules/shared/generate-repor
 import { ReportDownloadList } from "@/components/modules/shared/report-download-list";
 import { RevisionHistory } from "@/components/modules/shared/revision-history";
 import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
+import { DrawingGeometryPanel } from "@/components/modules/autopilot-batch9/drawing-geometry";
+import { ProfileEquivalentsPanel } from "@/components/modules/autopilot-batch10/equivalents";
+import { EQUIVALENT_ROLES } from "@/lib/autopilot-batch10/commands";
+import { GEOMETRY_READERS, GEOMETRY_UPLOADERS } from "@/lib/autopilot-batch9/commands";
+import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 
 function DetailItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -259,6 +264,9 @@ export default async function ProfileDetailPage({ params }: { params: Promise<{ 
       <ReportDownloadList context={context} entityType="profile" entityId={id} />
 
       <RevisionHistory context={context} entityType="profile" entityId={id} />
+      {!context.dealerId && (GEOMETRY_READERS as readonly string[]).includes(context.role) ? <DrawingGeometryPanel companyId={context.companyId} profileId={id} today={getBusinessDateBoundaries().today}
+        canUpload={(GEOMETRY_UPLOADERS as readonly string[]).includes(context.role)} canSetDensity={["owner", "admin", "quality"].includes(context.role)} /> : null}
+      {!context.dealerId && (EQUIVALENT_ROLES as readonly string[]).includes(context.role) ? <ProfileEquivalentsPanel profileId={id} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="profile" id={id} role={context.role} /> : null}
     </div>
   );

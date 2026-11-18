@@ -12,6 +12,10 @@ Batch records: [Batch 1](AUTOPILOT_UPGRADE_BATCH_1.md) (AP-001, 002, 004, 005, 0
 [Batch 4](AUTOPILOT_UPGRADE_BATCH_4.md) (AP-018, 019, 051, 081, 083, 017, 035, 036, 089, 060, dispatch and compliance; hosted migration recorded applied 13 November 2026).
 [Batch 5](AUTOPILOT_UPGRADE_BATCH_5.md) (AP-026, 056, 071, 072, 080, 047, 062, 085, 063, 078; all ten implemented; completion and correctness migrations applied to hosted Supabase 13 November 2026; operating acceptance remains).
 [Batch 6](AUTOPILOT_UPGRADE_BATCH_6.md) (AP-027, 030, 100, 033, 053, 077, 082, 029, 094, 061; built and verified locally 14 November 2026; hosted migration not applied).
+[Batch 7](AUTOPILOT_UPGRADE_BATCH_7.md) (AP-086, 090, 099, 003, 025, 039, 040, 057, 064, 079; built and verified locally 14 November 2026; hosted migration not applied).
+[Batch 8](AUTOPILOT_UPGRADE_BATCH_8.md) (AP-091, 092, 096, 020, 043, 044, 050, 052, 065, 069; built and verified locally 15 November 2026; hosted migration not applied).
+[Batch 9](AUTOPILOT_UPGRADE_BATCH_9.md) (AP-073, 074, 075, 076, 095, 008, 009, 010, 034, 048; built and verified locally 15 November 2026; hosted migration not applied).
+[Batch 10](AUTOPILOT_UPGRADE_BATCH_10.md) (AP-055, 067, 088, 022, 023, 093, 021, 049, 068, 070, the last ten; built and verified locally 17 November 2026; hosted migration not applied; AP-070 off until the owner confirms Omalco sells systems).
 
 ## Why this catalogue exists
 

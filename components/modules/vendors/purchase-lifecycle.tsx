@@ -13,6 +13,7 @@ import {
   type PurchaseLifecycleResult,
   type SupplierDocumentProposal
 } from "@/lib/workflow/purchase-lifecycle";
+import { OrderPriceChecks, PriceCheck } from "@/components/modules/vendors/purchase-price-check";
 
 type Dashboard = Extract<PurchaseLifecycleResult, { kind: "dashboard" }>;
 type DocumentState = {
@@ -34,7 +35,8 @@ type BillLineDraft = {
   tax_amount: string;
 };
 type PurchaseUnit = "kg" | "m" | "piece" | "set" | "box" | "lot";
-type OrderLineDraft = { description: string; specification: string; unit: PurchaseUnit; quantity: string; rate: string; gst: string };
+// AP-057: price_flagged/price_reason come from the line's price check (earlier prices for the same description and unit).
+type OrderLineDraft = { description: string; specification: string; unit: PurchaseUnit; quantity: string; rate: string; gst: string; price_flagged?: boolean; price_reason?: string };
 type CurrentBill = {
   id: string;
   status: "draft" | "posted";
@@ -179,7 +181,8 @@ export function PurchaseLifecycle({
           gst_percent: money(line.gst),
           rate_tolerance: 0.01,
           tax_tolerance: 0.01
-        }))
+        })),
+        price_reasons: orderLines.flatMap((line, index) => line.price_flagged && (line.price_reason ?? "").trim().length >= 10 ? [{ line_number: index + 1, reason: (line.price_reason ?? "").trim() }] : [])
       }
     };
     const completed = async (result: PurchaseLifecycleResult) => {
@@ -551,6 +554,9 @@ export function PurchaseLifecycle({
             <label className="text-xs font-semibold text-slate-600">Rate INR / unit<input required min="0" step="0.01" type="number" value={line.rate} onChange={(event) => setOrderLines((old) => old.map((row, rowIndex) => rowIndex === index ? { ...row, rate: event.target.value } : row))} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
             <label className="text-xs font-semibold text-slate-600">GST %<input required min="0" max="100" step="0.01" type="number" value={line.gst} onChange={(event) => setOrderLines((old) => old.map((row, rowIndex) => rowIndex === index ? { ...row, gst: event.target.value } : row))} className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>
             <div className="flex items-end"><button type="button" disabled={orderLines.length === 1} onClick={() => setOrderLines((old) => old.filter((_, rowIndex) => rowIndex !== index))} className="rounded-lg px-3 py-2 text-xs font-bold text-slate-500 underline disabled:opacity-40">Remove line</button></div>
+            <PriceCheck description={line.description} unit={line.unit} vendorId={orderVendor} rate={line.rate} reason={line.price_reason ?? ""}
+              onReason={(value) => setOrderLines((old) => old.map((row, rowIndex) => rowIndex === index ? { ...row, price_reason: value } : row))}
+              onFlag={(flagged) => setOrderLines((old) => old.map((row, rowIndex) => rowIndex === index && Boolean(row.price_flagged) !== flagged ? { ...row, price_flagged: flagged } : row))} />
           </fieldset>)}
           <button type="button" disabled={orderLines.length >= 100} onClick={() => setOrderLines((old) => [...old, { description: "", specification: "", unit: "kg", quantity: "", rate: "", gst: "18" }])} className="text-sm font-bold text-slate-700 underline">Add another PO line</button>
         </div>
@@ -595,6 +601,7 @@ export function PurchaseLifecycle({
         <ReceiptBalances line={line} />
         {canReceive && selectedOrder.status === "open" ? <button type="button" onClick={() => openReceipt(selectedOrder.id, line.id, line.unit)} className="mt-3 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700">Record this receipt</button> : null}
       </article>)}</div>
+      <div className="mt-4"><OrderPriceChecks key={selectedOrder.id} orderId={selectedOrder.id} canJustify={canManage} /></div>
       {canManage && selectedOrder.status === "draft" ? <button type="button" onClick={() => issueOrder(selectedOrder.id)} className="mt-4 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white">Issue PO for receiving</button> : null}
       <button type="button" onClick={() => setWorkspace("overview")} className="mt-4 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700">Back to overview</button>
     </section> : null}

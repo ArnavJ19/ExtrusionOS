@@ -1,3 +1,5 @@
+import { recoveryPercentOf } from "../insights/metrics.ts";
+
 export type CompletedProductionJob = {
   id: string;
   actual_quantity_kg: number | string | null;
@@ -67,9 +69,8 @@ export function calculateIssuedBilletRecovery(
   }
 
   return {
-    percent: capturedJobCount > 0 && missingJobCount === 0 && issuedInputKg > 0
-      ? (capturedOutputKg / issuedInputKg) * 100
-      : null,
+    // AP-044: one definition of recovery (METRICS.recovery).
+    percent: capturedJobCount > 0 && missingJobCount === 0 ? recoveryPercentOf(capturedOutputKg, issuedInputKg) : null,
     issuedInputKg,
     capturedOutputKg,
     capturedJobCount,

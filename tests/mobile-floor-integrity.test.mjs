@@ -5,6 +5,8 @@ import test from "node:test";
 const home = readFileSync(new URL("../app/(dashboard)/mobile/page.tsx", import.meta.url), "utf8");
 const jobs = readFileSync(new URL("../app/(dashboard)/mobile/jobs/page.tsx", import.meta.url), "utf8");
 const quality = readFileSync(new URL("../app/(dashboard)/mobile/quality/page.tsx", import.meta.url), "utf8");
+// AP-095: floor-page labels and error text live in the English/Hindi catalogue.
+const floorCatalogue = readFileSync(new URL("../lib/i18n/floor.ts", import.meta.url), "utf8");
 
 test("mobile home counts the real active production and inspection records", () => {
   assert.match(home, /from\("production_jobs"\)[\s\S]*\.not\("status", "in", "\(completed,cancelled\)"\)/);
@@ -17,7 +19,8 @@ test("mobile production queue uses actual production schema and surfaces errors"
   assert.match(jobs, /actual_quantity_kg/);
   assert.match(jobs, /scrap_records\(weight_kg\)/);
   assert.match(jobs, /\.not\("status", "in", "\(completed,cancelled\)"\)/);
-  assert.match(jobs, /Could not load active production jobs/);
+  assert.match(jobs, /<ErrorState description=\{t\("mj\.error"\)\}/);
+  assert.match(floorCatalogue, /"mj\.error": "Could not load active production jobs/);
   assert.doesNotMatch(jobs, /current_stage|actual_output_kg|planned_start_date|scrap_kg/);
 });
 

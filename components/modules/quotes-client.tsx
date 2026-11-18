@@ -31,12 +31,15 @@ import { rowMatchesSearch } from "@/lib/utils/search";
 import { canSaveQuoteDraft, duplicateQuoteDraftLine, getQuoteFormShortcut, runWithInFlightGuard } from "@/lib/forms/keyboard-entry";
 import { buildQuotePasteLine, getPieceCalculationState, getQuotePasteFinishOptions, getQuotePasteLengthUnit, parseQuotePaste, validateQuotePasteRows, type QuotePasteRow } from "@/lib/forms/quote-paste";
 import { saveQuoteAction, updateQuoteStatusAction } from "@/lib/actions/quotes-orders";
+import { enquiryQuoteDraft, linkEnquiryQuote, type EnquiryQuoteDraft } from "@/lib/quotes/enquiry-client";
 import { hasDuplicates, warnDuplicates } from "@/components/modules/order-to-cash/duplicate-warning";
 import { UsualChoicesHint } from "@/components/modules/autopilot-usual/usual-choices";
+import { ProfileCapacityHint } from "@/components/modules/autopilot-batch8/capacity";
 import { quoteEditToken, type QuoteEditConflict, type QuoteEditToken } from "@/lib/workflow/quote-edit-conflicts";
 import { ProfileTechnicalChoice } from "@/components/modules/profiles/technical-options";
 import { MaterialSuggestionsPanel } from "@/components/modules/shared/transaction-evidence";
 import { costingRateAction } from "@/lib/actions/costing-rates";
+import type { DieTerms } from "@/lib/intelligence/commands";
 import { applyApprovedRates, finishingRateKey, rateLookupSchema } from "@/lib/workflow/costing-rates";
 import { dieAmortizationTypes, labelize, type DieAmortizationType, type FinishingChargeType, type FinishingType, type QuoteStatus, type SessionContext } from "@/types/app";
 
@@ -74,7 +77,7 @@ type Die = { id: string; die_number: string; profile_id: string; die_status: str
 type QuoteRow = Record<string, any>;
 type CompanySettingsRow = Record<string, any>;
 
-type FormItem = QuoteItemInput & { profile_id: string; technical_option_id?: string | null; die_id: string; item_description: string; finishing_type: FinishingType; die_amortization_type: DieAmortizationType };
+type FormItem = QuoteItemInput & { length_input_text?: string | null; profile_id: string; technical_option_id?: string | null; die_id: string; item_description: string; finishing_type: FinishingType; die_amortization_type: DieAmortizationType };
 
 const emptyItem: FormItem = {
   profile_id: "",
@@ -134,13 +137,13 @@ function mergeLookupRows<T extends { id: string }>(incoming: T[], current: T[], 
   return rows;
 }
 
-type QuotesClientProps = { context: SessionContext; mode?: "full" | "form"; initialEditId?: string; repeatFromId?: string };
+type QuotesClientProps = { context: SessionContext; mode?: "full" | "form"; initialEditId?: string; repeatFromId?: string; enquiryId?: string };
 
 export function QuotesClient(props: QuotesClientProps) {
-  return <QuoteWorkspace key={JSON.stringify([props.context.companyId, props.context.userId, props.context.role, props.mode ?? "full", props.initialEditId ?? null, props.repeatFromId ?? null])} {...props} />;
+  return <QuoteWorkspace key={JSON.stringify([props.context.companyId, props.context.userId, props.context.role, props.mode ?? "full", props.initialEditId ?? null, props.repeatFromId ?? null, props.enquiryId ?? null])} {...props} />;
 }
 
-function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }: QuotesClientProps) {
+function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId, enquiryId }: QuotesClientProps) {
   const supabase = useMemo(() => createClient(), []);
   const customerCreationScope = JSON.stringify([context.companyId, context.userId, context.role]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -163,6 +166,8 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
   const [saving, setSaving] = useState(false);
   const [repeatActive, setRepeatActive] = useState(Boolean(repeatFromId));
   const [repeatResult, setRepeatResult] = useState<Awaited<ReturnType<typeof repeatQuoteAction>> | null>(null);
+  // AP-008: a draft opened from a WhatsApp enquiry; the enquiry is marked quoted when this quotation is saved.
+  const [enquiryDraft, setEnquiryDraft] = useState<{ ok: true; draft: EnquiryQuoteDraft } | { ok: false; error: string } | null>(null);
   const [reviewedCopy, setReviewedCopy] = useState("");
   const [form, setForm] = useState({ customer_id: "", quote_date: todayIso(), valid_until: "", status: "draft" as QuoteStatus, gst_percent: 18, terms_and_conditions: "", delivery_timeline: "", payment_terms: "", approval_notes: "", notes: "" });
   const [items, setItems] = useState<FormItem[]>([{ ...emptyItem }]);
@@ -251,6 +256,22 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
   useEffect(() => {
     let cancelled = false;
     void loadAll().then(async () => {
+      if (enquiryId && !cancelled) {
+        const out = await enquiryQuoteDraft(enquiryId);
+        if (cancelled) return;
+        if (!out.success) { setEnquiryDraft({ ok: false, error: out.error }); return; }
+        const d = out.data;
+        setEnquiryDraft({ ok: true, draft: d });
+        setForm((current) => ({ ...current, customer_id: d.customer.id, gst_percent: d.gst_percent, quote_date: todayIso(), valid_until: addDays(new Date(), d.validity_days).toISOString().slice(0, 10), notes: d.notes }));
+        if (d.items.length) setItems(d.items.map((item) => ({ ...emptyItem, profile_id: item.profile_id, item_description: item.item_description, quantity_pieces: item.quantity_pieces, length_per_piece_m: item.length_per_piece_m,
+          section_weight_kg_per_m: item.section_weight_kg_per_m, billet_rate_per_kg: item.billet_rate_per_kg, conversion_charge_per_kg: item.conversion_charge_per_kg, finishing_type: item.finishing_type as FinishingType,
+          finishing_charge_type: item.finishing_charge_type, finishing_charge: item.finishing_charge, packing_charge: item.packing_charge, transport_charge: item.transport_charge, margin_percent: item.margin_percent,
+          minimum_margin_percent: item.minimum_margin_percent, gst_percent: item.gst_percent })));
+        setCustomers((current) => mergeCustomers(current, [d.customer as never]));
+        setProfiles((current) => mergeLookupRows<Profile>(d.profiles as never[], current, d.profiles.map((profile) => String(profile.id)), 120));
+        setCustomerSearch(customerLabel(d.customer as never));
+        return;
+      }
       if (!repeatFromId || cancelled) return;
       try {
         const result = await repeatQuoteAction(repeatFromId);
@@ -377,6 +398,19 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
       }
       return next;
     }));
+    if (key === "die_id" && value) void applyDevelopmentDieTerms(index, String(value));
+  }
+
+  // FS-54: a die released through the development pipeline brings its agreed charging terms into an empty die charge.
+  async function applyDevelopmentDieTerms(index: number, dieId: string) {
+    // The gateway takes the company and role from the session; a missing upgrade or a refused role simply applies nothing.
+    const result = await (supabase as { rpc?: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }> }).rpc?.("fs_development", { p_command: "die_terms", p_payload: { die_id: dieId } });
+    if (!result || result.error || !result.data) return;
+    const terms = result.data as NonNullable<DieTerms>;
+    if (Number(items[index]?.die_charge) > 0) return; // a charge someone already typed is kept
+    setItems((current) => current.map((item, itemIndex) => itemIndex !== index || item.die_id !== dieId || Number(item.die_charge) > 0 ? item
+      : { ...item, die_charge: Number(terms.die_charge) || 0, die_amortization_type: terms.amortization_type, die_amortization_quantity_kg: Number(terms.amortization_quantity_kg) || 0 }));
+    toast.info(`Die terms from ${terms.project_number} applied${terms.terms ? `: ${terms.terms}` : ""}.`);
   }
 
   async function selectCustomerProfileAlias(index: number, option: ProfileAliasOption) {
@@ -489,6 +523,11 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
           return toast.error(result.error);
         }
         toast.success("Quote saved");
+        if (enquiryId && enquiryDraft?.ok && result.quoteId) {
+          const linked = await linkEnquiryQuote(enquiryId, result.quoteId);
+          if (linked.success) toast.success(`Enquiry ${enquiryDraft.draft.enquiry_number} marked quoted`); else toast.error(linked.error);
+          setEnquiryDraft(null);
+        }
         setRepeatActive(false);
         setEditingId(null);
         setEditToken(null);
@@ -666,6 +705,7 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
             {editingId ? <Badge value="draft" className="w-fit" /> : null}
           </div>
           <div className="mb-5"><TaskGuidance task="quotation" /></div>
+          {enquiryDraft ? enquiryDraft.ok ? <section aria-label="Quotation from enquiry" className="mb-5 space-y-2 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950"><h3 className="font-black">Draft from enquiry {enquiryDraft.draft.enquiry_number}</h3><p>{enquiryDraft.draft.items.length} line(s) filled from the message with today&apos;s approved rates. Prices are calculated by this form; review each line before saving.</p>{enquiryDraft.draft.items.some((item) => !item.billet_rate_found || !item.finishing_rate_found) ? <p className="font-bold">Some lines have no approved billet or finishing rate for today: enter them before saving.</p> : null}{enquiryDraft.draft.skipped.length ? <ul className="list-disc pl-5">{enquiryDraft.draft.skipped.map((skip, index) => <li key={index}>Not filled: “{skip.text}” ({skip.reason}). <Link className="underline" href={`/quotes/enquiries/${enquiryId}`}>Map it on the enquiry</Link>.</li>)}</ul> : null}</section> : <p role="alert" className="mb-5 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">{enquiryDraft.error}</p> : null}
           {repeatActive && repeatResult?.success ? <section aria-label="Review repeated quotation" className="mb-5 space-y-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><h3 className="font-black">New draft from {repeatResult.sourceNumber}</h3><p>Lines, quantities, finishes, terms, and price inputs were copied for review. Dates and profile section weights were refreshed; die assignments and die charges were cleared. The original quotation and its issued documents are unchanged.</p><p className="font-bold">{repeatResult.draft.expired ? "The source quotation has expired. Its copied rates require a fresh commercial review." : "Copied prices are unverified suggestions. Review current rates and availability before saving."}</p><label className="flex items-start gap-2"><input type="checkbox" className="mt-1 h-4 w-4" checked={reviewedCopy === copyFingerprint} onChange={(event) => setReviewedCopy(event.target.checked ? copyFingerprint : "")} /><span>I reviewed the copied rates, current specifications, and commercial terms. Any further edit requires another review.</span></label></section> : null}
           <div className="grid gap-4 sm:grid-cols-4">
             <div className="sm:col-span-2"><label className="block space-y-1.5"><span className="form-label">Customer *</span><input className="form-input" placeholder="Search customer name, company, or GST..." value={customerSearch} onChange={(event) => setCustomerSearch(event.target.value)} /><SearchableSelect value={form.customer_id} placeholder={filteredCustomers.length ? "Select customer" : customerSearchLoading ? "Searching customers..." : "No matching customers"} options={filteredCustomers.map((customer) => ({ value: customer.id, label: customerLabel(customer) }))} onChange={(nextValue) => { const customer = customers.find((candidate) => candidate.id === nextValue); setForm({ ...form, customer_id: nextValue }); setCustomerSearch(customer ? customerLabel(customer) : ""); }} />{selectedCustomer ? <p className="text-xs font-semibold text-slate-500">Selected: {customerLabel(selectedCustomer)}</p> : customerSearchLoading ? <p className="text-xs font-semibold text-slate-500">Searching customer database...</p> : null}</label><InTaskCustomer key={`${customerCreationScope}:${editingId ?? "new"}`} context={context} onSelected={(customer) => { setCustomers((current) => mergeCustomers(current, [customer])); setForm((current) => ({ ...current, customer_id: customer.id })); setCustomerSearch(customerLabel(customer)); }} /></div>
@@ -736,9 +776,9 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
                 <div className="mb-4 flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-orange">Extrusion item</p><h3 className="mt-1 font-black text-slate-950">Item {index + 1}</h3></div>{items.length > 1 ? <Button variant="ghost" type="button" onClick={() => setItems(items.filter((_, itemIndex) => itemIndex !== index))}>Remove</Button> : null}</div>
                 <div className="grid gap-3 md:grid-cols-4">
                   <div className="space-y-1.5 md:col-span-2"><label className="block space-y-1.5"><span className="form-label">Profile *</span><ProfileSelector value={item.profile_id} profiles={profiles} companyId={context.companyId} onChange={(nextValue) => updateItem(index, "profile_id", nextValue)} onSearchChange={searchProfiles} searching={profileSearchLoading} /></label>{form.customer_id && !context.dealerId && canUseOperatorCommand(context.role, "aliases.search") ? <CustomerProfileAliasPicker key={`${context.companyId}:${context.userId}:${context.role}:${form.customer_id}:${index}`} customerId={form.customer_id} onSelect={option => selectCustomerProfileAlias(index, option)} /> : null}</div>
-                  <label className="block space-y-1.5"><span className="form-label">Die</span><SearchableSelect value={item.die_id} placeholder={item.profile_id ? "Search compatible die" : "Select a profile first"} options={compatibleDies.map((die) => ({ value: die.id, label: `${die.die_number} · ${labelize(die.die_status)}` }))} onChange={(nextValue) => updateItem(index, "die_id", nextValue)} onSearchChange={(query) => searchDies(query, item.profile_id)} searching={dieSearchLoading} disabled={!item.profile_id} /></label>
+                  <label className="block space-y-1.5"><span className="form-label">Die</span><SearchableSelect scanAccept={["die"]} value={item.die_id} placeholder={item.profile_id ? "Search compatible die" : "Select a profile first"} options={compatibleDies.map((die) => ({ value: die.id, label: `${die.die_number} · ${labelize(die.die_status)}` }))} onChange={(nextValue) => updateItem(index, "die_id", nextValue)} onSearchChange={(query) => searchDies(query, item.profile_id)} searching={dieSearchLoading} disabled={!item.profile_id} /></label>
                   <label className="block space-y-1.5"><span className="form-label">Qty pcs</span><input className="form-input" type="number" inputMode="numeric" min="1" value={item.quantity_pieces} onChange={(event) => updateItem(index, "quantity_pieces", Number(event.target.value))} /></label>
-                  <LengthUnitInput metres={item.length_per_piece_m} onChange={value => updateItem(index, "length_per_piece_m", value)} />
+                  <LengthUnitInput metres={item.length_per_piece_m} text={item.length_input_text} onChange={value => updateItem(index, "length_per_piece_m", value)} onTextChange={value => setItems(current => current.map((line, i) => i === index ? { ...line, length_input_text: value } : line))} />
                   <label className="block space-y-1.5"><span className="form-label">Kg/m</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.001" value={item.section_weight_kg_per_m} onChange={(event) => updateItem(index, "section_weight_kg_per_m", Number(event.target.value))} /></label>
                 </div><details className="mt-4 rounded-2xl border border-slate-200 bg-white/70 p-3"><summary className="cursor-pointer text-sm font-bold">Costing and recovery for item {index + 1}</summary><p className="mt-2 text-xs text-slate-500">Price, recovery and optional allowances remain saved when this section is closed.</p><div className="mt-3 grid gap-3 md:grid-cols-4">
                   <label className="block space-y-1.5"><span className="form-label">Additional handling/offcut allowance %</span><input className="form-input" type="number" inputMode="decimal" min="0" step="0.01" value={item.scrap_allowance_percent ?? 0} onChange={(event) => updateItem(index, "scrap_allowance_percent", Number(event.target.value))} /></label>
@@ -765,6 +805,8 @@ function QuoteWorkspace({ context, mode = "full", initialEditId, repeatFromId }:
                 </details>
                 <div className="mt-4 grid gap-3 rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-sm sm:grid-cols-5"><p className="text-slate-500">Total metres<br /><b className="text-slate-950">{pieceState.source === "invalid" ? "Not calculated" : formatMeters(calculated.total_meters)}</b></p><p className="text-slate-500">Theoretical weight<br /><b className="text-slate-950">{pieceState.source === "missing" || pieceState.source === "invalid" ? "Not available" : formatWeight(calculated.total_weight_kg)}</b></p><p className="text-slate-500">Billing weight<br /><b className="text-slate-950">{formatWeight(calculated.billing_weight_kg)}</b></p><p className="text-slate-500">Profit<br /><b className={calculated.estimated_profit_amount < 0 ? "text-red-700" : "text-slate-950"}>{formatCurrency(calculated.estimated_profit_amount)} ({calculated.estimated_profit_percent.toFixed(2)}%)</b></p><p className="text-slate-500">Line total<br /><b className="text-slate-950">{formatCurrency(calculated.line_total_before_gst)}</b></p></div>
                 <p aria-live="polite" className={pieceState.message ? "mt-2 rounded-xl border border-orange-200 bg-orange-50 p-3 text-xs font-semibold text-orange-900" : "mt-2 text-xs font-semibold text-slate-500"}>{pieceState.message ?? (pieceState.source === "profile-master" ? `Theoretical quantity: ${formatMeters(calculated.total_meters)} x ${item.section_weight_kg_per_m} kg/m from the company profile master = ${formatWeight(calculated.total_weight_kg)}. Measured weight is recorded separately and is not changed here.` : pieceState.source === "manual" ? `Theoretical quantity uses the manually entered ${item.section_weight_kg_per_m} kg/m. Measured weight is recorded separately and is not changed here.` : pieceState.source === "invalid" ? "Calculation unavailable until piece count and cut length are valid." : "Calculation unavailable until a valid section weight source is provided.")}</p>
+                {/* AP-069: press load for this profile while promising a date. */}
+                {item.profile_id && !context.dealerId ? <div className="mt-2"><ProfileCapacityHint profileId={item.profile_id} quantityKg={Number.isFinite(calculated.billing_weight_kg) ? calculated.billing_weight_kg : null} finishingType={item.finishing_type} /></div> : null}
                 {warnings.length ? <div className="mt-3 grid gap-2 md:grid-cols-2">{warnings.map((warning) => <div key={`${index}-${warning.code}`} className={warning.severity === "critical" ? "rounded-2xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-800" : warning.severity === "warning" ? "rounded-2xl border border-orange-200 bg-orange-50 p-3 text-xs font-semibold text-orange-800" : "rounded-2xl border border-slate-200 bg-white p-3 text-xs font-semibold text-slate-600"}>{warning.message}</div>)}</div> : null}
               </div>;
             })}

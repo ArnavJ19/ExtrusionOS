@@ -1,4 +1,5 @@
 import { RecordFollow } from "@/components/modules/notifications/record-follow";
+import { EditingPresence, LiveRefresh } from "@/components/modules/intelligence/live";
 import { canFollow } from "@/lib/workflow/subscriptions";
 import { WorkRequirementsPanel } from "@/components/modules/orders/work-requirements-panel";
 import { RecordDetailClient } from "@/components/modules/operations/record-detail-client";
@@ -33,6 +34,8 @@ export default async function DispatchDetailPage({ params, searchParams }: {
   const query = await searchParams ?? {};
   const reservationPage = getReservationLedgerOptions({ page: query.reservationPage }).page;
   return <div className="space-y-6">
+    {/* FS-36: who else has this dispatch open, and a refresh when it changes. */}
+    {!context.dealerId ? <div className="flex flex-wrap items-center justify-between gap-2"><EditingPresence recordKey={`dispatch:${id}`} me={{ id: context.userId, name: context.fullName ?? "Employee" }} /><LiveRefresh name={`dispatch-${id}`} tables={["dispatches"]} /></div> : null}
     {!context.dealerId && ["owner","admin","inventory_manager","dispatch_manager","accounts"].includes(context.role) ? <Link href={`/dispatches/${id}/returns`} className="inline-flex rounded-xl border bg-white px-4 py-3 text-sm font-semibold">Receive and inspect a connected return</Link> : null}
     {!context.dealerId && ["owner","admin","dispatch_manager","inventory_manager","factory_manager","accounts"].includes(context.role) ? <Link href={`/tasks/changes?source_type=dispatch&source_id=${id}`} className="inline-flex rounded-xl border bg-white px-4 py-3 text-sm font-semibold">Reconcile this dispatch boundary</Link> : null}
     <RecordDetailClient moduleKey="dispatches" context={context} recordId={id} canEdit={false} />

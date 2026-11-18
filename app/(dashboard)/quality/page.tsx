@@ -8,6 +8,8 @@ import { getFeatureFlagsForCompany, isFeatureEnabled } from "@/lib/enterprise/fe
 import { createClient } from "@/lib/supabase/server";
 import { canReadPlans } from "@/lib/workflow/inspection-plans";
 import { redirect } from "next/navigation";
+import { SpcAlarmsPanel } from "@/components/modules/autopilot-batch8/spc";
+import { MTC_READERS, SPC_READERS } from "@/lib/autopilot-batch8/commands";
 
 export default async function QualityPage() {
   const context = await getSessionContext();
@@ -31,6 +33,16 @@ export default async function QualityPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div><p className="text-xs font-black uppercase tracking-[0.16em] text-orange">From press output</p><h2 className="section-title mt-1">In-process samples</h2><p className="mt-1 text-sm font-medium text-slate-500">First-piece, periodic and last-piece samples created automatically from pushes; missed samples can block QC release.</p></div>
             <Link href="/quality/samples" className="inline-flex items-center justify-center rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90">Open samples</Link>
+          </div>
+        </div>
+      ) : null}
+      {/* AP-052: drift alarms are QC's queue on the quality overview. */}
+      {!context.dealerId && (SPC_READERS as readonly string[]).includes(context.role) ? <SpcAlarmsPanel /> : null}
+      {!context.dealerId && (MTC_READERS as readonly string[]).includes(context.role) ? (
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div><p className="text-xs font-black uppercase tracking-[0.16em] text-orange">Incoming billet</p><h2 className="section-title mt-1">Mill test certificates</h2><p className="mt-1 text-sm font-medium text-slate-500">Chemistry read from supplier certificates and checked against the alloy specification; batches still without one.</p></div>
+            <Link href="/quality/certificates" className="inline-flex items-center justify-center rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white transition hover:bg-charcoal/90">Open certificates</Link>
           </div>
         </div>
       ) : null}

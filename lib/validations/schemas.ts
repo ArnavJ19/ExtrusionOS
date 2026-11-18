@@ -1,5 +1,7 @@
 import { z } from "zod";
-import { gstNumber, gstRegistration, indianPhone, optionalEmail, optionalText, requireGstChoice } from "./common";
+import { gstNumber, gstRegistration, indianPhone, optionalEmail, optionalPincode, optionalText, requireGstChoice } from "./common";
+
+const hasControlCharacters = (value: string) => /[\u0000-\u001f\u007f]/.test(value);
 
 export const customerSchema = z.object({
   customer_name: z.string().trim().min(1, "Customer name is required"),
@@ -14,7 +16,7 @@ export const customerSchema = z.object({
   shipping_address: optionalText,
   city: optionalText,
   state: optionalText,
-  pincode: optionalText,
+  pincode: optionalPincode,
   contact_person: optionalText,
   payment_terms: optionalText,
   notes: optionalText,
@@ -211,6 +213,8 @@ export const quoteItemSchema = z.object({
   item_description: optionalText,
   quantity_pieces: z.coerce.number().int().positive().max(100000, "Quantity looks too high"),
   length_per_piece_m: z.coerce.number().positive().max(1000, "Length looks too high"),
+  // AP-040: the length as the customer said it ("21ft", "12' 6\""), kept on the line for audit beside the stored metres.
+  length_input_text: z.string().trim().max(40, "Keep the length text within 40 characters").refine((value) => !hasControlCharacters(value), "Remove control characters").optional().nullable().transform((value) => value || null),
   section_weight_kg_per_m: z.coerce.number().positive().max(1000, "Section weight looks too high"),
   scrap_allowance_percent: z.coerce.number().nonnegative().max(100, "Scrap allowance looks too high").default(0),
   expected_recovery_percent: z.coerce.number().positive("Recovery must be above zero").max(100, "Recovery percent cannot exceed 100").default(100),
@@ -402,6 +406,7 @@ export const vendorSchema = z.object({
   address: optionalText,
   city: optionalText,
   state: optionalText,
+  pincode: optionalPincode,
   payment_terms: optionalText,
   notes: optionalText,
   is_active: z.coerce.boolean().default(true)

@@ -1,5 +1,11 @@
 import { ComplaintForm } from "@/components/modules/autopilot-batch6/ncr";
+import { EditingPresence, LiveRefresh } from "@/components/modules/intelligence/live";
 import { COMPLAINT_LOGGERS } from "@/lib/autopilot-batch6/commands";
+import { OrderDelayPanel } from "@/components/modules/autopilot-batch7/delay";
+import { OrderEquivalentsPanel } from "@/components/modules/autopilot-batch10/equivalents";
+import { EQUIVALENT_ROLES } from "@/lib/autopilot-batch10/commands";
+import { getBusinessDateBoundaries as equivalentsToday } from "@/lib/utils/business-date";
+import { DELAY_READERS } from "@/lib/autopilot-batch7/commands";
 import { RestrictionPanel } from "@/components/modules/approvals/exception-requests";
 import { canRequestException } from "@/lib/workflow/exception-requests";
 import { RecordFollow } from "@/components/modules/notifications/record-follow";
@@ -176,6 +182,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="space-y-6">
+      {/* FS-36: who else has this order open, and a refresh when it changes. */}
+      {!context.dealerId ? <div className="flex flex-wrap items-center justify-between gap-2"><EditingPresence recordKey={`order:${id}`} me={{ id: context.userId, name: context.fullName ?? "Employee" }} /><LiveRefresh name={`order-${id}`} tables={["orders", "production_jobs", "dispatches"]} /></div> : null}
       <RecordNextAction context={context} record={{ kind: "order", id, status: order.current_stage }} />
       {!context.dealerId && ["owner","admin","production_manager","production","factory_manager","inventory_manager"].includes(context.role) ? <Link href={`/orders/${id}/cutting`} className="inline-flex rounded-xl border bg-white px-4 py-3 text-sm font-bold">Plan and record stock cutting</Link> : null}
       {!context.dealerId && ["owner","admin","production_manager","factory_manager","inventory_manager"].includes(context.role) ? <Link href={`/orders/${id}/stock-plan`} className="inline-flex rounded-xl border bg-white px-4 py-3 text-sm font-bold">Plan stock and manufacturing requirement</Link> : null}
@@ -539,6 +547,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       {!context.dealerId && (DISPATCH_FLOOR_ROLES as readonly string[]).includes(context.role) ? <OrderLoadingPanel orderId={id} /> : null}
       {!context.dealerId && ["owner", "admin", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "sales_manager", "quality", "production_manager", "production"].includes(context.role) ? <PackingPlanPanel orderId={id} /> : null}
       {!context.dealerId && (SHARE_ROLES as readonly string[]).includes(context.role) ? <OrderStatusLinkPanel orderId={id} /> : null}
+      {!context.dealerId && (DELAY_READERS as readonly string[]).includes(context.role) ? <OrderDelayPanel orderId={id} /> : null}
+      {!context.dealerId && (EQUIVALENT_ROLES as readonly string[]).includes(context.role) ? <OrderEquivalentsPanel orderId={id} today={equivalentsToday().today} /> : null}
       {!context.dealerId && (COMPLAINT_LOGGERS as readonly string[]).includes(context.role) && orderRow.customer_id ? <ComplaintForm customerId={String(orderRow.customer_id)} orderId={id} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="order" id={id} role={context.role} /> : null}
     </div>

@@ -127,11 +127,11 @@ export function ProfileFormTabs({ form, update, dies }: Props) {
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <div className="block space-y-1.5">
                 <span className="form-label">Primary die</span>
-                <SearchableSelect value={form.primary_die_id} placeholder="Select primary die" options={dies} onChange={(v) => update("primary_die_id", v)} />
+                <SearchableSelect scanAccept={["die"]} value={form.primary_die_id} placeholder="Select primary die" options={dies} onChange={(v) => update("primary_die_id", v)} />
               </div>
               <div className="block space-y-1.5">
                 <span className="form-label">Backup die</span>
-                <SearchableSelect value={form.backup_die_id} placeholder="Select backup die" options={dies} onChange={(v) => update("backup_die_id", v)} />
+                <SearchableSelect scanAccept={["die"]} value={form.backup_die_id} placeholder="Select backup die" options={dies} onChange={(v) => update("backup_die_id", v)} />
               </div>
             </div>
           </CardContent>

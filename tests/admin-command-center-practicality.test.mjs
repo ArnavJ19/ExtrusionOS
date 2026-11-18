@@ -68,7 +68,8 @@ test("tenant users cannot assign their own subscription entitlements", () => {
 test("factory date defaults use the shared business calendar", () => {
   const businessDateConsumers = [
     "app/(dashboard)/dealer-orders/page.tsx",
-    "app/(dashboard)/die-intelligence/page.tsx",
+    // AP-043: the die health loader moved from the Die Intelligence page into the die module library.
+    "lib/dies/intelligence.ts",
     "app/(dashboard)/energy/page.tsx",
     "components/modules/maintenance/maintenance-workspace-client.tsx",
     "components/modules/task-create-form.tsx",

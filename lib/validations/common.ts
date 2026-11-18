@@ -2,6 +2,8 @@ import { z } from "zod";
 import { checkGstin, normalizeGstin } from "./gstin.ts";
 
 export const optionalText = z.string().trim().optional().nullable().transform((value) => value || null);
+/** AP-039: six-digit Indian PIN code (blank stays blank). */
+export const optionalPincode = z.string().trim().optional().nullable().refine((value) => !value || /^[1-9][0-9]{5}$/.test(value), "A PIN code has six digits and does not start with 0").transform((value) => value || null);
 export const optionalEmail = z.string().trim().optional().nullable().refine((value) => !value || z.string().email().safeParse(value).success, "Enter a valid email").transform((value) => value || null);
 export const indianPhone = z.string().trim().optional().nullable().refine((value) => {
   if (!value) return true;

@@ -17,8 +17,12 @@ export const JOBS = [
   { job_key: "billets.forecast", schedule: "nightly", label: "Prepare seven-day billet requirements" },
   { job_key: "billing.prepare_drafts", schedule: "hourly", label: "Prepare invoice drafts" },
   { job_key: "calendar.check", schedule: "nightly", label: "Check the factory calendar" },
+  { job_key: "cash.forecast_snapshot", schedule: "nightly", label: "Keep the weekly cash forecast" },
+  { job_key: "crm.customer_health", schedule: "nightly", label: "Score customer health" },
+  { job_key: "dies.availability", schedule: "hourly", label: "Check die availability for planned jobs" },
   { job_key: "dies.predict_service", schedule: "hourly", label: "Propose die service" },
   { job_key: "dies.weight_drift", schedule: "nightly", label: "Check section-weight drift" },
+  { job_key: "intelligence.morning", schedule: "morning", label: "Check metal position and die life" },
   { job_key: "maintenance.propose_pm", schedule: "hourly", label: "Propose preventive maintenance" },
   { job_key: "navigation.propose", schedule: "nightly", label: "Propose role navigation" },
   { job_key: "orders.predict_late", schedule: "nightly", label: "Predict late order lines" },
@@ -29,11 +33,15 @@ export const JOBS = [
   { job_key: "proposals.refresh", schedule: "hourly", label: "Refresh open proposals" },
   { job_key: "quality.ncr_detect", schedule: "hourly", label: "Draft NCRs from rejections" },
   { job_key: "quality.sample_windows", schedule: "hourly", label: "Mark missed samples" },
+  { job_key: "quality.spc_check", schedule: "hourly", label: "Check quality control charts" },
   { job_key: "quotes.expire", schedule: "nightly", label: "Expire stale quotations" },
   { job_key: "quotes.followups", schedule: "morning", label: "Prepare quotation follow-ups" },
   { job_key: "quotes.reprice_check", schedule: "nightly", label: "Check draft quotation rates" },
   { job_key: "receivables.reminders", schedule: "morning", label: "Prepare payment reminders" },
+  { job_key: "receivables.statements", schedule: "morning", label: "Prepare monthly customer statements" },
   { job_key: "series.propose", schedule: "nightly", label: "Propose financial-year numbering" },
+  { job_key: "stock.arrival_reservations", schedule: "hourly", label: "Propose reservations for arriving stock" },
+  { job_key: "stock.make_to_stock", schedule: "nightly", label: "Suggest make-to-stock runs" },
   { job_key: "stock.reorder", schedule: "nightly", label: "Propose purchase requisitions" }
 ] as const satisfies ReadonlyArray<{ job_key: string; schedule: JobSchedule; label: string }>;
 export type JobKey = (typeof JOBS)[number]["job_key"];

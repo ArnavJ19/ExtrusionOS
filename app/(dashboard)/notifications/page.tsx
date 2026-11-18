@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header";
+import { LiveRefresh } from "@/components/modules/intelligence/live";
 import { NotificationsClient } from "@/components/modules/notifications-client";
 import Link from "next/link";
 import { loadNotificationActions } from "@/lib/operations/notification-actions";
@@ -38,6 +39,8 @@ export default async function NotificationsPage({ searchParams = Promise.resolve
 
   return (
     <div className="space-y-6">
+      {/* FS-36: refresh this screen when its records change. */}
+      <div className="flex justify-end"><LiveRefresh name="notifications" tables={["notifications"]} /></div>
       <PageHeader 
         title="Notifications" 
         description="Your recent alerts and system messages."

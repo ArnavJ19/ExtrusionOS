@@ -18,6 +18,8 @@ import { getSearchResourceKeys } from "@/lib/auth/role-experience";
 import { buildTaskNavigation } from "@/lib/navigation/task-navigation";
 import { APP_DESTINATIONS } from "@/lib/navigation/app-destinations";
 import { NavVisitBeacon } from "./nav-visit-beacon";
+import { RecentScopeProvider } from "@/components/ui/recent-scope";
+import { WedgeScanner } from "@/components/ui/wedge-scanner";
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const context = await getSessionContext();
@@ -92,7 +94,8 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         <div className="min-h-[calc(100vh-73px)] bg-[#f7f7f8] p-4 lg:p-8">
           <ModuleNavigator items={moduleNavigation} />
           <NavVisitBeacon destinations={moduleNavigation} />
-          {children}
+          <WedgeScanner />
+          <RecentScopeProvider scope={`${context.companyId}:${context.userId}`}>{children}</RecentScopeProvider>
         </div>
       </main>
     </div>

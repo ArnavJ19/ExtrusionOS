@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getMobileDestinationKeys, type MobileDestinationKey } from "@/lib/auth/role-experience";
+import { FloorLanguageToggle } from "@/components/modules/autopilot-batch9/floor-language";
+import { floorText, type FloorKey } from "@/lib/i18n/floor";
+import { getFloorLanguage } from "@/lib/i18n/floor-server";
 
 const links = [
   { key: "jobs", href: "/mobile/jobs", label: "Active Jobs", icon: Factory, description: "Open production jobs and update them from the job detail workflow." },
@@ -19,6 +22,7 @@ export default async function MobileHomePage() {
   const context = await getSessionContext();
   const allowedDestinations = getMobileDestinationKeys(context.role);
   const supabase = await createClient();
+  const lang = await getFloorLanguage(), t = floorText(lang);
 
   const countQueries: Partial<Record<MobileDestinationKey, () => PromiseLike<any>>> = {
     jobs: () => supabase.from("production_jobs").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).not("status", "in", "(completed,cancelled)"),
@@ -36,20 +40,21 @@ export default async function MobileHomePage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-5">
-      <PageHeader title="Mobile Factory Floor" description="Fast, low-typing shortcuts for real operator, supervisor, quality, and dispatch records." />
+      <div className="flex justify-end"><FloorLanguageToggle lang={lang} /></div>
+      <PageHeader title={t("mb.title")} description={t("mb.description")} />
       <div className="grid grid-cols-2 gap-3">
-        {allowedDestinations.includes("jobs") ? <Stat label="Jobs" value={String(counts.jobs ?? 0)} /> : null}
-        {allowedDestinations.includes("dispatch") ? <Stat label="Dispatches" value={String(counts.dispatch ?? 0)} /> : null}
-        {allowedDestinations.includes("quality") ? <Stat label="Quality" value={String(counts.quality ?? 0)} /> : null}
-        {allowedDestinations.includes("tasks") ? <Stat label="Tasks" value={String(counts.tasks ?? 0)} /> : null}
+        {allowedDestinations.includes("jobs") ? <Stat label={t("mb.statJobs")} value={String(counts.jobs ?? 0)} /> : null}
+        {allowedDestinations.includes("dispatch") ? <Stat label={t("mb.statDispatches")} value={String(counts.dispatch ?? 0)} /> : null}
+        {allowedDestinations.includes("quality") ? <Stat label={t("mb.statQuality")} value={String(counts.quality ?? 0)} /> : null}
+        {allowedDestinations.includes("tasks") ? <Stat label={t("mb.statTasks")} value={String(counts.tasks ?? 0)} /> : null}
       </div>
       <div className="space-y-3">
         {visibleLinks.map((item) => {
           const Icon = item.icon;
-          return <Link key={item.href} href={item.href} className="flex items-center gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition active:scale-[0.99]"><span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950"><Icon className="h-6 w-6 text-orange" /></span><span className="min-w-0 flex-1"><span className="block text-lg font-black text-slate-950">{item.label}</span><span className="mt-1 block text-sm font-medium leading-5 text-slate-500">{item.description}</span></span><ArrowRight className="h-5 w-5 text-slate-400" /></Link>;
+          return <Link key={item.href} href={item.href} className="flex items-center gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition active:scale-[0.99]"><span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950"><Icon className="h-6 w-6 text-orange" /></span><span className="min-w-0 flex-1"><span className="block text-lg font-black text-slate-950">{t(`mb.${item.key}` as FloorKey)}</span><span className="mt-1 block text-sm font-medium leading-5 text-slate-500">{t(`mb.${item.key}Help` as FloorKey)}</span></span><ArrowRight className="h-5 w-5 text-slate-400" /></Link>;
         })}
       </div>
-      <Card><CardContent className="p-5"><div className="flex items-center justify-between gap-3"><div><p className="font-black text-slate-950">Real mobile shortcuts</p><p className="mt-1 text-sm font-medium text-slate-500">Counts and queues are loaded from tenant-scoped records. Actions open existing detail workflows.</p></div><Badge value="RLS" /></div></CardContent></Card>
+      <Card><CardContent className="p-5"><div className="flex items-center justify-between gap-3"><div><p className="font-black text-slate-950">{t("mb.shortcuts")}</p><p className="mt-1 text-sm font-medium text-slate-500">{t("mb.shortcutsHelp")}</p></div><Badge value="RLS" /></div></CardContent></Card>
     </div>
   );
 }
