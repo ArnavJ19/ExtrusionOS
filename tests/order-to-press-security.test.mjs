@@ -91,7 +91,13 @@ test("press scheduling is atomic, non-overlapping, and releases the selected slo
   assert.doesNotMatch(productionAction, /\.from\("production_plan_slots"\)\.insert/);
   assert.match(scheduleGrid, /releaseJob\(slot\.id\)/);
   assert.match(scheduleGrid, /Planned end is required|both a start and end time/);
-  assert.match(scheduleGrid, /!job\.machine_id/);
+  // A press chosen on the job form is not a schedule: only an active slot takes a job out of the scheduling list.
+  assert.doesNotMatch(scheduleGrid, /!job\.machine_id/);
+  assert.match(scheduleGrid, /jobsWithoutActiveSlot\(jobs, activeJobIds\)/);
+  assert.match(schedulePage, /\.in\("status", \["scheduled", "released"\]\)/);
+  // Older slots saved without an end time can be given one, and release says so instead of failing in the trigger.
+  assert.match(scheduleGrid, /saveProductionScheduleSlotAction\(\{\s*id: slot\.id/);
+  assert.match(readFileSync(join(repoRoot, "supabase/migrations/20261119160000_production_slot_legacy_end_repair.sql"), "utf8"), /planned_end_at is null then\s*raise exception 'This press slot has no planned end time/);
   assert.match(scheduleGrid, /formatBusinessDateTime\(slot\.planned_start_at\)/);
   assert.match(scheduleIntegrityMigration, /enforce_production_schedule_integrity/);
   assert.match(scheduleIntegrityMigration, /already has an active press slot/);
