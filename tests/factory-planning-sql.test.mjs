@@ -166,3 +166,28 @@ test("30: assignment uniqueness is released only after a reviewed load removes t
 });
 
 test('30: a stale saved bundle can be selectively released from a past load with an inactive vehicle',staleSavedBundleRelease);
+
+test("legacy press slot without an end time: release explains the fix, the slot can be given an end time, then released", async () => {
+  await fixture.actor();
+  const today = (await fixture.scheduleSnapshot(null, null)).today;
+  const day = addDays(today, 30); // a weekday the other tests do not configure
+  await fixture.saveShift({ weekday: weekday(day), shift_name: "Day", starts_local: "08:00", ends_local: "20:00", capacity_kg: 500 });
+  const slotId = cid(870);
+  // A slot saved before the schedule-integrity rule: scheduled with no planned end. Inserted with triggers off, as
+  // the rows that already exist on the live database were.
+  await fixture.db.exec("set session_replication_role = replica");
+  await fixture.db.query(`insert into production_plan_slots(id,company_id,production_job_id,machine_id,planned_start_at,planned_end_at,shift,sequence_number,capacity_kg,status,created_by)
+    values($1,$2,$3,$4,$5,null,'Day',0,100,'scheduled',$6)`, [slotId, fixture.ids.company, fixture.ids.secondJob, fixture.ids.press, `${day}T09:00:00+05:30`, fixture.ids.owner]);
+  await fixture.db.exec("set session_replication_role = origin");
+
+  await assert.rejects(fixture.db.query("select public.release_production_schedule_slot_atomic($1)", [slotId]), /no planned end time\. Set its end time/);
+  assert.equal((await fixture.db.query("select status from production_plan_slots where id=$1", [slotId])).rows[0].status, "scheduled");
+
+  await fixture.db.query("select public.save_production_schedule_slot_atomic($1,$2)", [slotId, {
+    production_job_id: fixture.ids.secondJob, machine_id: fixture.ids.press, planned_start_at: `${day}T09:00:00+05:30`, planned_end_at: `${day}T11:00:00+05:30`,
+    shift: "Day", sequence_number: 0, capacity_kg: 100, status: "scheduled"
+  }]);
+  assert.ok((await fixture.db.query("select planned_end_at from production_plan_slots where id=$1", [slotId])).rows[0].planned_end_at);
+  await fixture.db.query("select public.release_production_schedule_slot_atomic($1)", [slotId]);
+  assert.equal((await fixture.db.query("select status from production_plan_slots where id=$1", [slotId])).rows[0].status, "released");
+});

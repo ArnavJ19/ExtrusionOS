@@ -6,7 +6,7 @@ import { CalendarClock, LockKeyhole, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ReadinessBadge } from "@/components/modules/production-planning/readiness-badge";
-import { assignProductionJobToPressAction, releaseProductionJobToPressAction } from "@/lib/actions/production";
+import { assignProductionJobToPressAction, releaseProductionJobToPressAction, saveProductionScheduleSlotAction } from "@/lib/actions/production";
 import { formatWeight } from "@/lib/utils/format";
 import { formatBusinessDateTime } from "@/lib/utils/business-date";
 
@@ -47,10 +47,23 @@ function machineName(presses: Press[], id: string | null | undefined) {
   return presses.find((press) => press.id === id)?.machine_name ?? "Unassigned";
 }
 
-export function PressScheduleGrid({ presses, jobs, slots, canUpdate }: { presses: Press[]; jobs: Job[]; slots: Slot[]; canUpdate: boolean }) {
+/** A job can take a new press slot when it has no active (scheduled or released) slot. A press chosen on the job form
+ * (production_jobs.machine_id) is only a preference and does not make the job scheduled. */
+export function jobsWithoutActiveSlot<T extends { id: string }>(jobs: T[], activeSlotJobIds: Iterable<string>) {
+  const active = new Set(activeSlotJobIds);
+  return jobs.filter((job) => !active.has(job.id));
+}
+
+export function PressScheduleGrid({ presses, jobs, slots, activeSlotJobIds, canUpdate }: { presses: Press[]; jobs: Job[]; slots: Slot[]; activeSlotJobIds: string[]; canUpdate: boolean }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const schedulableJobs = useMemo(() => jobs.filter((job) => !job.machine_id && ["planned", "ready", "on_hold"].includes(job.status)), [jobs]);
+  const activeJobIds = useMemo(
+    () => [...activeSlotJobIds, ...slots.filter((slot) => ["scheduled", "released"].includes(slot.status)).map((slot) => slot.production_job_id)],
+    [activeSlotJobIds, slots]
+  );
+  const unslottedJobs = useMemo(() => jobsWithoutActiveSlot(jobs, activeJobIds), [jobs, activeJobIds]);
+  const schedulableJobs = useMemo(() => unslottedJobs.filter((job) => ["planned", "ready", "on_hold"].includes(job.status)), [unslottedJobs]);
+  const [endRepairs, setEndRepairs] = useState<Record<string, string>>({});
   const [selectedJobId, setSelectedJobId] = useState(schedulableJobs[0]?.id ?? "");
   const [selectedPressId, setSelectedPressId] = useState(presses[0]?.id ?? "");
   const [plannedStart, setPlannedStart] = useState(() => new Date().toISOString().slice(0, 16));
@@ -74,9 +87,43 @@ export function PressScheduleGrid({ presses, jobs, slots, canUpdate }: { presses
 
   useEffect(() => {
     if (!schedulableJobs.some((job) => job.id === selectedJobId)) {
-      setSelectedJobId(schedulableJobs[0]?.id ?? "");
+      selectJob(schedulableJobs[0]?.id ?? "");
     }
   }, [schedulableJobs, selectedJobId]);
+
+  function selectJob(jobId: string) {
+    setSelectedJobId(jobId);
+    // Start from the press already chosen on the job, when it is one of the available presses.
+    const preferred = jobsById.get(jobId)?.machine_id;
+    if (preferred && presses.some((press) => press.id === preferred)) setSelectedPressId(preferred);
+  }
+
+  // Older slots could be saved without an end time; they must get one before release.
+  async function setSlotEnd(slot: Slot) {
+    if (!canUpdate) return toast.error("You do not have permission to schedule production.");
+    const end = endRepairs[slot.id];
+    if (!end) return toast.error("Choose the planned end time for this press slot.");
+    startTransition(async () => {
+      const result = await saveProductionScheduleSlotAction({
+        id: slot.id,
+        production_job_id: slot.production_job_id,
+        machine_id: slot.machine_id,
+        planned_start_at: slot.planned_start_at,
+        planned_end_at: new Date(end).toISOString(),
+        shift: slot.shift,
+        sequence_number: Number(slot.sequence_number ?? 0),
+        capacity_kg: slot.capacity_kg,
+        status: "scheduled"
+      });
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Press slot end time saved");
+      setEndRepairs((current) => { const next = { ...current }; delete next[slot.id]; return next; });
+      router.refresh();
+    });
+  }
 
   async function scheduleJob() {
     if (!canUpdate) return toast.error("You do not have permission to schedule production.");
@@ -127,7 +174,7 @@ export function PressScheduleGrid({ presses, jobs, slots, canUpdate }: { presses
         <div className="mt-5 grid gap-4 lg:grid-cols-6">
           <label className="block space-y-1.5 lg:col-span-2">
             <span className="form-label">Production job</span>
-            <select className="form-input" value={selectedJobId} onChange={(event) => setSelectedJobId(event.target.value)} disabled={!canUpdate || isPending}>
+            <select className="form-input" value={selectedJobId} onChange={(event) => selectJob(event.target.value)} disabled={!canUpdate || isPending}>
               {schedulableJobs.map((job) => <option key={job.id} value={job.id}>{job.job_number} · {job.order?.order_number ?? "Order"} · {job.profile?.profile_code ?? "Profile"}</option>)}
             </select>
           </label>
@@ -194,6 +241,23 @@ export function PressScheduleGrid({ presses, jobs, slots, canUpdate }: { presses
                       <div className="mt-3">
                         {slot.status === "released" ? (
                           <span className="inline-flex items-center gap-2 text-xs font-black text-emerald-700"><LockKeyhole className="h-3.5 w-3.5" /> Released</span>
+                        ) : slot.status === "scheduled" && !slot.planned_end_at ? (
+                          <div className="space-y-2">
+                            <p className="text-xs font-bold text-amber-700">This slot has no planned end time. Set one before releasing it.</p>
+                            <label className="block space-y-1">
+                              <span className="form-label">Planned end</span>
+                              <input
+                                className="form-input"
+                                type="datetime-local"
+                                value={endRepairs[slot.id] ?? ""}
+                                onChange={(event) => setEndRepairs((current) => ({ ...current, [slot.id]: event.target.value }))}
+                                disabled={!canUpdate || isPending}
+                              />
+                            </label>
+                            <Button type="button" variant="secondary" onClick={() => setSlotEnd(slot)} disabled={!canUpdate || isPending || !endRepairs[slot.id]}>
+                              <CalendarClock className="h-4 w-4" /> Set end time
+                            </Button>
+                          </div>
                         ) : (
                           <Button type="button" variant="secondary" onClick={() => releaseJob(slot.id)} disabled={!canUpdate || isPending}>
                             <Send className="h-4 w-4" /> Release
@@ -214,7 +278,7 @@ export function PressScheduleGrid({ presses, jobs, slots, canUpdate }: { presses
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="section-title">Unscheduled / Ready Jobs</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {jobs.filter((job) => !job.machine_id).map((job) => (
+          {unslottedJobs.map((job) => (
             <div key={job.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
