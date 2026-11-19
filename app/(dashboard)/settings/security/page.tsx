@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { SecurityCenterClient } from "@/components/modules/security-center-client";
+import { LoginHistory } from "@/components/modules/fs-batch4/login-history";
 import { redirect } from "next/navigation";
 
 export default async function SecurityPage() {
@@ -83,6 +84,7 @@ export default async function SecurityPage() {
         description="Login history, role changes, sensitive action logs, and data access audit for your company."
       />
       <QueryErrorNotice messages={queryErrors} />
+      <div className="mb-6"><LoginHistory /></div>
       <SecurityCenterClient
         loginEvents={loginEvents}
         sensitiveActions={sensitiveActions}

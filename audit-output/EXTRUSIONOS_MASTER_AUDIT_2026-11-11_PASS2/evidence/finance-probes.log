@@ -1,0 +1,31 @@
+{"id":"F1-concurrent-receipts-700+700-on-1000","expect":"second refused or held as advance; amount_paid never above 1000 without a credit record","first":{"ok":true,"err":""},"second":{"ok":false,"err":"ERROR:  Payment amount exceeds the outstanding invoice balance"},"invoice":{"status":"partially_paid","amount_paid":700,"grand_total":1000,"balance_due":300,"credit_due":0,"payments":[{"amount":700,"status":"PAID"}]}}
+{"id":"F2-concurrent-same-idempotency-key","expect":"one payment of 400","first":{"ok":true,"err":""},"second":{"ok":true,"err":"","out":"{\"invoice_id\": \"bd000000-0000-4000-8000-000000000602\", \"payment_id\": \"32531162-a0e1-4503-9a53-5601ac5a8311\", \"amount_paid\": 400.00, \"balance_due\": 600.00, \"invoice_status\": \"partially_paid\", \"idempote"},"invoice":{"status":"partially_paid","amount_paid":400,"grand_total":1000,"balance_due":600,"credit_due":0,"payments":[{"amount":400,"status":"PAID"}]}}
+{"id":"F2b-idempotency-key-reused-for-other-invoice","expect":"refused, not silently replayed as success","ok":false,"err":"ERROR:  The idempotency key is already assigned to another invoice","out":"","invoice":{"status":"generated","amount_paid":0,"grand_total":1000,"balance_due":1000,"credit_due":0,"payments":[]}}
+{"id":"F3-overpayment-1500-on-1000","expect":"refused or explicit advance","ok":false,"err":"ERROR:  Payment amount exceeds the outstanding invoice balance","invoice":{"status":"generated","amount_paid":0,"grand_total":1000,"balance_due":1000,"credit_due":0,"payments":[]}}
+{"id":"F4-direct-rpc-zero","expect":"refused","ok":false,"err":"ERROR:  Payment amount must be greater than zero"}
+{"id":"F4-direct-rpc-negative","expect":"refused","ok":false,"err":"ERROR:  Payment amount must be greater than zero"}
+{"id":"F4-direct-rpc-sub-paisa","expect":"refused","ok":false,"err":"ERROR:  Payment amount must be greater than zero"}
+{"id":"F4-direct-rpc-fractional-paisa","expect":"refused","ok":true,"err":""}
+{"id":"F4-direct-rpc-future-date","expect":"refused","ok":false,"err":"ERROR:  Payment date cannot be in the future"}
+{"id":"F4-direct-rpc-ancient-date","expect":"refused","ok":false,"err":"ERROR:  A payment receipt dated 1990-01-01 cannot predate its invoice dated 2026-11-01"}
+{"id":"F4-direct-rpc-unknown-method","expect":"refused","ok":false,"err":"ERROR:  Select a valid payment method"}
+{"id":"F4-direct-rpc-nan","expect":"refused","ok":false,"err":"ERROR:  Payment amount exceeds the outstanding invoice balance"}
+{"id":"F4-invoice-after-direct-rpc","invoice":{"status":"partially_paid","amount_paid":100.01,"grand_total":1000,"balance_due":899.99,"credit_due":0,"payments":[{"amount":100.01,"status":"PAID"}]}}
+{"id":"F5-receipt-as-sales","expect":"refused","ok":false,"err":"ERROR:  Permission denied for payments"}
+{"id":"F5-receipt-as-viewer","expect":"refused","ok":false,"err":"ERROR:  Permission denied for payments"}
+{"id":"F5-receipt-as-production","expect":"refused","ok":false,"err":"ERROR:  Permission denied for payments"}
+{"id":"F5-receipt-as-dealer","expect":"refused","ok":false,"err":"ERROR:  Permission denied for payments"}
+{"id":"F5-receipt-as-inactive","expect":"refused","ok":false,"err":"ERROR:  Authentication required"}
+{"id":"F5-receipt-as-foreign-owner","expect":"refused","ok":false,"err":"ERROR:  Invoice not found for this company"}
+{"id":"F5-receipt-as-owner","expect":"accepted","ok":true,"err":""}
+{"id":"F5-invoice-after-role-attempts","invoice":{"status":"partially_paid","amount_paid":10,"grand_total":1000,"balance_due":990,"credit_due":0,"payments":[{"amount":10,"status":"PAID"}]}}
+{"id":"F6-receipt-on-cancelled-invoice","expect":"refused","ok":false,"err":"ERROR:  Payments can only be posted to an issued, unpaid invoice","invoice":{"status":"cancelled","amount_paid":0,"grand_total":1000,"balance_due":1000,"credit_due":0,"payments":[]}}
+{"id":"F7-concurrent-double-reversal","expect":"one reversal; balance returns to 1000 exactly once","first":{"ok":true,"err":""},"second":{"ok":false,"err":"ERROR:  Only a posted receipt can be reversed"},"invoice":{"status":"sent","amount_paid":0,"grand_total":1000,"balance_due":1000,"credit_due":0,"payments":[{"amount":600,"status":"CANCELLED"}]}}
+{"id":"F8-amount_paid-vs-payment-ledger","expect":"amount_paid equals the sum of live payments on every invoice","rows":[{"invoice":"AUD/26-27/0001","amount_paid":700,"ledger":700,"statuses":["PAID"]},{"invoice":"AUD/26-27/0002","amount_paid":400,"ledger":400,"statuses":["PAID"]},{"invoice":"AUD/26-27/0003","amount_paid":0,"ledger":0,"statuses":null},{"invoice":"AUD/26-27/0004","amount_paid":100.01,"ledger":100.01,"statuses":["PAID"]},{"invoice":"AUD/26-27/0005","amount_paid":10,"ledger":10,"statuses":["PAID"]},{"invoice":"AUD/26-27/0006","amount_paid":0,"ledger":600,"statuses":["CANCELLED"]},{"invoice":"AUD/26-27/0007","amount_paid":0,"ledger":0,"statuses":null},{"invoice":"AUD/26-27/0008","amount_paid":0,"ledger":0,"statuses":null}]}
+{"id":"F9-accounts-direct-update-invoice-amount_paid","expect":"refused or no row","ok":true,"rows":0,"err":""}
+{"id":"F9-accounts-direct-update-invoice-grand_total","expect":"refused or no row","ok":true,"rows":0,"err":""}
+{"id":"F9-accounts-direct-insert-payment-row","expect":"refused or no row","ok":false,"rows":0,"err":"ERROR:  new row violates row-level security policy for table \"payments\""}
+{"id":"F9-accounts-direct-delete-payment-row","expect":"refused or no row","ok":true,"rows":0,"err":""}
+{"id":"F9-accounts-direct-update-payment-amount","expect":"refused or no row","ok":true,"rows":0,"err":""}
+{"id":"F9-accounts-direct-delete-invoice","expect":"refused or no row","ok":true,"rows":0,"err":""}
+{"id":"F9-invoice-after-direct-writes","invoice":{"status":"generated","amount_paid":0,"grand_total":1000,"balance_due":1000,"credit_due":0,"payments":[]}}

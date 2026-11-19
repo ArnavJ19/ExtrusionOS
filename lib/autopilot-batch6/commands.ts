@@ -97,6 +97,7 @@ export const einvoiceCommands = {
   save_settings: z.object({ applicable: z.boolean(), applicable_from: day.optional(), reason: text(10, 500, "Reason") }).strict()
     .refine(v => !v.applicable || v.applicable_from, { message: "Choose the date e-invoicing applies from", path: ["applicable_from"] }),
   queue: z.object({ page, search, show: z.enum(["pending", "with_irn", "all"]).optional() }).strict(),
+  confirm_buyer_address: z.object({ invoice_id: uuid, city: text(3, 100, "Buyer city"), pincode: z.string().trim().regex(/^[1-9][0-9]{5}$/, "Enter a six-digit buyer PIN"), reason: text(10, 500, "Issued invoice reference") }).strict(),
   irn: z.object({ invoice_id: uuid }).strict()
 };
 

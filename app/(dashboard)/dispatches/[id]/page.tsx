@@ -1,4 +1,7 @@
 import { RecordFollow } from "@/components/modules/notifications/record-follow";
+import { DispatchWeightsPanel } from "@/components/modules/fs-batch4/weight-basis";
+import { WEIGHT_DISPATCH_ROLES as WEIGHT_POLICY_DISPATCH_ROLES } from "@/lib/fs-batch4/commands";
+import { RecordHistory } from "@/components/modules/fs-batch4/record-history";
 import { EditingPresence, LiveRefresh } from "@/components/modules/intelligence/live";
 import { canFollow } from "@/lib/workflow/subscriptions";
 import { WorkRequirementsPanel } from "@/components/modules/orders/work-requirements-panel";
@@ -44,12 +47,14 @@ export default async function DispatchDetailPage({ params, searchParams }: {
     {!context.dealerId && canFollow(context.role, "dispatch") ? <RecordFollow entityType="dispatch" entityId={id} /> : null}
     <div id="delivery-history"><DispatchDeliveryPanel dispatchId={id} canUpdate={canUpdate} /></div>
     <DispatchPackingPanel dispatchId={id} />
+    {!context.dealerId && (WEIGHT_POLICY_DISPATCH_ROLES as readonly string[]).includes(context.role) ? <DispatchWeightsPanel dispatchId={id} /> : null}
     <DispatchReservationPanel dispatchId={id} page={reservationPage} />
     <DispatchControlsPanel dispatchId={id} />
     <DispatchCreditNotePanel dispatchId={id} />
     {canSummarise("dispatch", context.role, Boolean(context.dealerId)) ? <CopySummaryButton kind="dispatch" id={id} canInternal={canInternalSummary("dispatch", context.role, Boolean(context.dealerId))} /> : null}
     {!context.dealerId && (FREIGHT_ROLES as readonly string[]).includes(context.role) ? <FreightPanel kind="dispatch" id={id} today={getBusinessDateBoundaries().today} /> : null}
     {!context.dealerId ? <RelatedWorkPanel kind="dispatch" id={id} role={context.role} /> : null}
+    {!context.dealerId ? <RecordHistory entityType="dispatch" entityId={id} /> : null}
   </div>;
 }
 

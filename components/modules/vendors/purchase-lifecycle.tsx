@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { businessToday } from "@/lib/utils/business-date";
 import {
   extractSupplierDocumentAction,
   purchaseLifecycleAction
@@ -96,7 +97,7 @@ export function PurchaseLifecycle({
   const [workspace, setWorkspace] = useState<WorkspaceView>(() => initialSelection?.kind === "order_loaded" ? "order-detail" : initialSelection?.kind === "bill_loaded" ? "bill-review" : "overview");
   const [selectedOrder, setSelectedOrder] = useState<OrderView | null>(() => initialSelection?.kind === "order_loaded" ? initialSelection.order : initialSelection?.kind === "bill_loaded" ? initialSelection.bill.order : null);
   const [orderVendor, setOrderVendor] = useState("");
-  const [orderDate, setOrderDate] = useState(new Date().toISOString().slice(0, 10));
+  const [orderDate, setOrderDate] = useState(businessToday());
   const [expectedFreight, setExpectedFreight] = useState("0");
   const [expectedDiscount, setExpectedDiscount] = useState("0");
   const [orderLines, setOrderLines] = useState<OrderLineDraft[]>([{ description: "", specification: "", unit: "kg", quantity: "", rate: "", gst: "18" }]);

@@ -1,4 +1,5 @@
 import { ComplaintForm } from "@/components/modules/autopilot-batch6/ncr";
+import { RecordHistory } from "@/components/modules/fs-batch4/record-history";
 import { EditingPresence, LiveRefresh } from "@/components/modules/intelligence/live";
 import { COMPLAINT_LOGGERS } from "@/lib/autopilot-batch6/commands";
 import { OrderDelayPanel } from "@/components/modules/autopilot-batch7/delay";
@@ -551,6 +552,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       {!context.dealerId && (EQUIVALENT_ROLES as readonly string[]).includes(context.role) ? <OrderEquivalentsPanel orderId={id} today={equivalentsToday().today} /> : null}
       {!context.dealerId && (COMPLAINT_LOGGERS as readonly string[]).includes(context.role) && orderRow.customer_id ? <ComplaintForm customerId={String(orderRow.customer_id)} orderId={id} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="order" id={id} role={context.role} /> : null}
+      {!context.dealerId ? <RecordHistory entityType="order" entityId={id} /> : null}
     </div>
   );
 }

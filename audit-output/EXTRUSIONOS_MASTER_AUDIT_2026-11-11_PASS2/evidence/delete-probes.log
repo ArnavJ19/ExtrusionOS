@@ -1,0 +1,18 @@
+{"id":"DEL-owner-production_jobs","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":""}
+{"id":"DEL-owner-dispatches","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":"ERROR:  Dispatch DC-AUD-1 has left the plant (status dispatched) and cannot be deleted; record a return or a document amendment instead"}
+{"id":"DEL-owner-orders","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":"ERROR:  permission denied for schema auth"}
+{"id":"DEL-owner-foundry_batches","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":"ERROR:  Foundry batches cannot be deleted; cancel a planned batch instead"}
+{"id":"DEL-owner-quotes","expect":"refused or 0 rows for records with downstream history","deleted":1,"err":""}
+{"id":"DEL-owner-dies","expect":"refused or 0 rows for records with downstream history","deleted":1,"err":""}
+{"id":"DEL-owner-aluminium_profiles","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":"ERROR:  Profile AL-AUD has production jobs; deactivate it instead of deleting it"}
+{"id":"DEL-owner-customers","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":"ERROR:  update or delete on table \"customers\" violates foreign key constraint \"quotes_customer_id_fkey\" on table \"quotes\" | DETAIL:  Key is still refe"}
+{"id":"DEL-owner-invoices","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":""}
+{"id":"DEL-admin-production_jobs","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":""}
+{"id":"DEL-admin-dispatches","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":"ERROR:  Dispatch DC-AUD-1 has left the plant (status dispatched) and cannot be deleted; record a return or a document amendment instead"}
+{"id":"DEL-admin-orders","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":"ERROR:  permission denied for schema auth"}
+{"id":"DEL-admin-foundry_batches","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":"ERROR:  Foundry batches cannot be deleted; cancel a planned batch instead"}
+{"id":"DEL-admin-quotes","expect":"refused or 0 rows for records with downstream history","deleted":1,"err":""}
+{"id":"DEL-admin-dies","expect":"refused or 0 rows for records with downstream history","deleted":1,"err":""}
+{"id":"DEL-admin-aluminium_profiles","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":"ERROR:  Profile AL-AUD has production jobs; deactivate it instead of deleting it"}
+{"id":"DEL-admin-customers","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":"ERROR:  update or delete on table \"customers\" violates foreign key constraint \"quotes_customer_id_fkey\" on table \"quotes\" | DETAIL:  Key is still refe"}
+{"id":"DEL-admin-invoices","expect":"refused or 0 rows for records with downstream history","deleted":0,"err":""}

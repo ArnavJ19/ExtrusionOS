@@ -1,0 +1,2 @@
+{"id":"MFA-017","expectedPackagingMetres":100,"actual":{"packaging_metres":"0.000","inventory_metres":"100.000"},"reproduced":true}
+{"id":"quote-extension-fixture-differential","headerOnly":{"response":{"sqlstate":"P0001","message":"AP: The validity cannot be extended: Complete quotation item costing before confirmation. Incomplete drafts may still be saved."},"status":"expired","valid_until":"2026-11-10"},"withLine":{"response":{"state":"approved"},"status":"sent","valid_until":"2026-11-21"}}

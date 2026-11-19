@@ -1,0 +1,1917 @@
+[
+ {
+  "id": "NOV-001",
+  "title": "[November batch 2](NOV_UPGRADE_BATCH_2.md) covers ten further U1/N1 delivery slices: NOV-001, 002, 004, 006, 0",
+  "testsNamingId": {
+   "pass": 7,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch2-actions.test.mjs",
+   "nov-batch2-browser.test.mjs",
+   "nov-batch2.test.mjs",
+   "nov-verification-fixes.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 2,
+   "browser-fixture": 1,
+   "unit-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-002",
+  "title": "6 [NOV-002]( nov-002) Give each employee a small relevant workspace C2 U1 N1 4",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 2
+  },
+  "testFiles": [
+   "nov-batch2-browser.test.mjs",
+   "nov-batch2.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "unit-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-003",
+  "title": "[November batch 7](NOV_UPGRADE_BATCH_7.md) covers delivery ranks 61 to 70: NOV-003, 009, 010, 011, 017, 025, 0",
+  "testsNamingId": {
+   "pass": 5,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch7-browser.test.mjs",
+   "nov-batch7.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 2,
+  "sampleRefs": [
+   "lib/workflow/instant-search.ts",
+   "components/search/global-find.tsx"
+  ]
+ },
+ {
+  "id": "NOV-004",
+  "title": "21 [NOV-004]( nov-004) Put one clear next action on each record C3 U1 N1 15",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch2.test.mjs",
+   "nov-verification-fixes.test.mjs"
+  ],
+  "testKinds": {
+   "unit-behaviour": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-005",
+  "title": "[November batch 4](NOV_UPGRADE_BATCH_4.md) covers the next ten U1/N1 cross-module slices: NOV-005, 007, 013, 0",
+  "testsNamingId": {
+   "pass": 6,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch4-browser.test.mjs",
+   "nov-batch4-sql.test.mjs",
+   "nov-batch4.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 2
+  },
+  "sourceRefs": 5,
+  "sampleRefs": [
+   "lib/actions/operations-control.ts",
+   "lib/workflow/operations-control.ts",
+   "components/modules/control/fulfilment-lines.tsx",
+   "components/modules/orders/fulfilment-ledger.tsx"
+  ]
+ },
+ {
+  "id": "NOV-006",
+  "title": "7 [NOV-006]( nov-006) Show only fields needed at the current stage C2 U1 N1 5",
+  "testsNamingId": {
+   "pass": 5,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch2-browser.test.mjs",
+   "nov-batch2.test.mjs",
+   "nov-verification-fixes.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "unit-behaviour": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-007",
+  "title": "56 [NOV-007]( nov-007) Carry known information through the entire process C4 U1 N1 32",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch4-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103200000_november_operations_control.sql"
+  ]
+ },
+ {
+  "id": "NOV-008",
+  "title": "[November batch 6](NOV_UPGRADE_BATCH_6.md) covers delivery ranks 51 to 60: NOV-008, 021, 027, 058, 060, 063, 0",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch6-sql.test.mjs",
+   "nov-batch6.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 2
+  },
+  "sourceRefs": 4,
+  "sampleRefs": [
+   "lib/forms/visible-defaults.ts",
+   "lib/ui/form-workflow.ts",
+   "components/modules/operations/record-form-client.tsx",
+   "supabase/migrations/20261103400000_november_lifecycle.sql"
+  ]
+ },
+ {
+  "id": "NOV-009",
+  "title": "40 [NOV-009]( nov-009) Extend Repeat Previous beyond quotations C3 U2 N2 63",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch7-sql.test.mjs",
+   "nov-batch7.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 2
+  },
+  "sourceRefs": 5,
+  "sampleRefs": [
+   "lib/forms/repeat-previous.ts",
+   "components/forms/repeat-previous-picker.tsx",
+   "components/modules/dispatch-form-client.tsx",
+   "components/modules/operations/record-form-client.tsx"
+  ]
+ },
+ {
+  "id": "NOV-010",
+  "title": "41 [NOV-010]( nov-010) Create missing master records without leaving the task C3 U2 N2 64",
+  "testsNamingId": {
+   "pass": 1,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch7.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 4,
+  "sampleRefs": [
+   "lib/actions/in-task-vendors.ts",
+   "lib/forms/in-task-vendor.ts",
+   "components/modules/operations/record-form-client.tsx",
+   "components/modules/vendors/in-task-vendor.tsx"
+  ]
+ },
+ {
+  "id": "NOV-011",
+  "title": "42 [NOV-011]( nov-011) Make repeated line entry work like a spreadsheet C3 U2 N2 65",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch7-browser.test.mjs",
+   "nov-batch7.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 3,
+  "sampleRefs": [
+   "lib/forms/line-paste.ts",
+   "components/modules/dispatch-form-client.tsx",
+   "components/modules/dispatches/bundle-paste.tsx"
+  ]
+ },
+ {
+  "id": "NOV-012",
+  "title": "22 [NOV-012]( nov-012) Ask employees for the quantity they actually know C3 U1 N1 16",
+  "testsNamingId": {
+   "pass": 12,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch2-actions.test.mjs",
+   "nov-batch2-browser.test.mjs",
+   "nov-batch2.test.mjs",
+   "nov-verification-fixes.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 2,
+   "browser-fixture": 1,
+   "unit-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-013",
+  "title": "57 [NOV-013]( nov-013) Extend dependable drafts to every lengthy form C4 U1 N1 33",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch4-browser.test.mjs",
+   "nov-batch4.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 3,
+  "sampleRefs": [
+   "lib/forms/form-draft.ts",
+   "components/forms/form-draft-recovery.tsx",
+   "components/modules/operations/record-form-client.tsx"
+  ]
+ },
+ {
+  "id": "NOV-014",
+  "title": "75 [NOV-014]( nov-014) Allow small updates directly from work queues C4 U2 N2 74",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch8-browser.test.mjs",
+   "nov-batch8-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 3,
+  "sampleRefs": [
+   "lib/workflow/execution.ts",
+   "components/modules/execution/queue-panel.tsx",
+   "supabase/migrations/20261103600000_november_execution.sql"
+  ]
+ },
+ {
+  "id": "NOV-015",
+  "title": "58 [NOV-015]( nov-015) Make department handoffs part of completing work C4 U1 N1 34",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch4-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103200000_november_operations_control.sql"
+  ]
+ },
+ {
+  "id": "NOV-016",
+  "title": "Implementation records: [November batch 1](NOV_UPGRADE_BATCH_1.md) covers the first ten selected U1/N1 interfa",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-upgrades-browser.test.mjs",
+   "nov-upgrades.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "unit-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-017",
+  "title": "43 [NOV-017]( nov-017) Make QR scanning lead directly into the relevant task C3 U2 N2 66",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "dealer-boundary-hardening.test.mjs",
+   "nov-batch7-browser.test.mjs",
+   "nov-batch7.test.mjs"
+  ],
+  "testKinds": {
+   "source-text-only": 1,
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 5,
+  "sampleRefs": [
+   "lib/actions/scan.ts",
+   "lib/qr/payload.ts",
+   "lib/qr/scan-task.ts",
+   "app/(dashboard)/scan/page.tsx"
+  ]
+ },
+ {
+  "id": "NOV-018",
+  "title": "23 [NOV-018]( nov-018) Expand focused phone workflows for factory work C3 U1 N1 17",
+  "testsNamingId": {
+   "pass": 15,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch2-actions.test.mjs",
+   "nov-batch2-browser.test.mjs",
+   "nov-batch2.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1,
+   "browser-fixture": 1,
+   "unit-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-019",
+  "title": "76 [NOV-019]( nov-019) Keep documents and communication beside the transaction C4 U2 N2 75",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch8-browser.test.mjs",
+   "nov-batch8-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 2,
+  "sampleRefs": [
+   "components/modules/execution/message-tools.tsx",
+   "supabase/migrations/20261103600000_november_execution.sql"
+  ]
+ },
+ {
+  "id": "NOV-020",
+  "title": "94 [NOV-020]( nov-020) Remove double entry between operations accounts and equipment C5 U3 N2 88",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch9-browser.test.mjs",
+   "nov-batch9-sql-c.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 2,
+  "sampleRefs": [
+   "lib/workflow/commercial.ts",
+   "supabase/migrations/20261103700000_november_commercial.sql"
+  ]
+ },
+ {
+  "id": "NOV-021",
+  "title": "The IDs in this file are independent of [UPGRADE_EOS.md](UPGRADE_EOS.md). NOV-021 means the twenty-first sugge",
+  "testsNamingId": {
+   "pass": 5,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch6-browser.test.mjs",
+   "nov-batch6-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 2,
+  "sampleRefs": [
+   "lib/workflow/lifecycle.ts",
+   "supabase/migrations/20261103400000_november_lifecycle.sql"
+  ]
+ },
+ {
+  "id": "NOV-022",
+  "title": "59 [NOV-022]( nov-022) Turn material shortages into a purchasing plan C4 U1 N1 35",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch4-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103200000_november_operations_control.sql"
+  ]
+ },
+ {
+  "id": "NOV-023",
+  "title": "95 [NOV-023]( nov-023) Suggest compatible production runs and their sequence C5 U3 N2 89",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch9-sql-c.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103700000_november_commercial.sql"
+  ]
+ },
+ {
+  "id": "NOV-024",
+  "title": "96 [NOV-024]( nov-024) Add a what happens if planning tool C5 U3 N2 90",
+  "testsNamingId": {
+   "pass": 5,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch9-browser.test.mjs",
+   "nov-batch9-sql-c.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 2,
+  "sampleRefs": [
+   "components/modules/commercial/mutation-form.tsx",
+   "supabase/migrations/20261103700000_november_commercial.sql"
+  ]
+ },
+ {
+  "id": "NOV-025",
+  "title": "44 [NOV-025]( nov-025) Give every die a useful operating history C3 U2 N2 67",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch7-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 3,
+  "sampleRefs": [
+   "lib/workflow/improvement.ts",
+   "components/modules/improvement/die-service-note.tsx",
+   "supabase/migrations/20261103500000_november_improvement.sql"
+  ]
+ },
+ {
+  "id": "NOV-026",
+  "title": "[November batch 5](NOV_UPGRADE_BATCH_5.md) covers the last four U1 entries and the first six U2/N1 entries: NO",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch5-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 2,
+  "sampleRefs": [
+   "lib/workflow/assurance.ts",
+   "supabase/migrations/20261103300000_november_assurance.sql"
+  ]
+ },
+ {
+  "id": "NOV-027",
+  "title": "91 [NOV-027]( nov-027) Trace material from source to customer C5 U2 N1 55",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch6-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103400000_november_lifecycle.sql"
+  ]
+ },
+ {
+  "id": "NOV-028",
+  "title": "60 [NOV-028]( nov-028) Track work in progress by physical location and age C4 U1 N1 36",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch4-browser.test.mjs",
+   "nov-batch4-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103200000_november_operations_control.sql"
+  ]
+ },
+ {
+  "id": "NOV-029",
+  "title": "84 [NOV-029]( nov-029) Manage reusable remnants and excess production C4 U3 N2 87",
+  "testsNamingId": {
+   "pass": 5,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch9-browser.test.mjs",
+   "nov-batch9-sql-c.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103700000_november_commercial.sql"
+  ]
+ },
+ {
+  "id": "NOV-030",
+  "title": "69 [NOV-030]( nov-030) Introduce a cycle-counting workflow C4 U2 N1 48",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch5-browser.test.mjs",
+   "nov-batch5-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103300000_november_assurance.sql"
+  ]
+ },
+ {
+  "id": "NOV-031",
+  "title": "61 [NOV-031]( nov-031) Maintain a material account for each finishing vendor C4 U1 N1 37",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch4-browser.test.mjs",
+   "nov-batch4-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103200000_november_operations_control.sql"
+  ]
+ },
+ {
+  "id": "NOV-032",
+  "title": "99 [NOV-032]( nov-032) Support customer-owned metal and job-work settlement C5 U4 N3 99",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch10-sql-c.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 2,
+  "sampleRefs": [
+   "lib/workflow/specialist.ts",
+   "supabase/migrations/20261103800000_november_specialist.sql"
+  ]
+ },
+ {
+  "id": "NOV-033",
+  "title": "70 [NOV-033]( nov-033) Generate a complete quality document pack C4 U2 N1 49",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch5-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103300000_november_assurance.sql"
+  ]
+ },
+ {
+  "id": "NOV-034",
+  "title": "89 [NOV-034]( nov-034) Show consequences of an order revision C5 U1 N1 44",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch5-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103300000_november_assurance.sql"
+  ]
+ },
+ {
+  "id": "NOV-035",
+  "title": "93 [NOV-035]( nov-035) Compare estimated and actual job profitability C5 U2 N2 83",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch9-sql-b.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103700000_november_commercial.sql"
+  ]
+ },
+ {
+  "id": "NOV-036",
+  "title": "77 [NOV-036]( nov-036) Plan a vehicle load across multiple orders C4 U2 N2 76",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch8-browser.test.mjs",
+   "nov-batch8-load-review-fixes.test.mjs",
+   "nov-batch8-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 2
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103600000_november_execution.sql"
+  ]
+ },
+ {
+  "id": "NOV-037",
+  "title": "85 [NOV-037]( nov-037) Support blanket orders with scheduled releases C4 U4 N3 95",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch10-sql-b.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103800000_november_specialist.sql"
+  ]
+ },
+ {
+  "id": "NOV-038",
+  "title": "71 [NOV-038]( nov-038) Manage a return through final resolution C4 U2 N1 50",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch5-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103300000_november_assurance.sql"
+  ]
+ },
+ {
+  "id": "NOV-039",
+  "title": "51 [NOV-039]( nov-039) Measure supplier and finishing-vendor reliability C3 U3 N2 85",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch9-sql-b.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103700000_november_commercial.sql"
+  ]
+ },
+ {
+  "id": "NOV-040",
+  "title": "[November batch 3](NOV_UPGRADE_BATCH_3.md) covers the next ten U1/N1 coordination and responsibility slices: N",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch3-browser.test.mjs",
+   "nov-batch3-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-041",
+  "title": "25 [NOV-041]( nov-041) Give every order one accountable coordinator C3 U1 N1 19",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch3-browser.test.mjs",
+   "nov-batch3-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-042",
+  "title": "62 [NOV-042]( nov-042) Define what each role can decide independently C4 U1 N1 38",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch4-browser.test.mjs",
+   "nov-batch4-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 2,
+  "sampleRefs": [
+   "lib/workflow/exception-requests.ts",
+   "supabase/migrations/20261103200000_november_operations_control.sql"
+  ]
+ },
+ {
+  "id": "NOV-043",
+  "title": "26 [NOV-043]( nov-043) Create one shared priority policy C3 U1 N1 20",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch3-sql.test.mjs",
+   "nov-batch3.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 2
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-044",
+  "title": "78 [NOV-044]( nov-044) Protect an agreed execution window C4 U2 N2 77",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch8-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103600000_november_execution.sql"
+  ]
+ },
+ {
+  "id": "NOV-045",
+  "title": "79 [NOV-045]( nov-045) Control how much work enters each stage C4 U2 N2 78",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch8-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103600000_november_execution.sql"
+  ]
+ },
+ {
+  "id": "NOV-046",
+  "title": "27 [NOV-046]( nov-046) Agree service expectations between departments C3 U1 N1 21",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch3-browser.test.mjs",
+   "nov-batch3-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-047",
+  "title": "80 [NOV-047]( nov-047) Assign work using capacity and eligibility together C4 U2 N2 79",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch8-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103600000_november_execution.sql"
+  ]
+ },
+ {
+  "id": "NOV-048",
+  "title": "28 [NOV-048]( nov-048) Identify backup owners before somebody is absent C3 U1 N1 22",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch3-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-049",
+  "title": "29 [NOV-049]( nov-049) Run daily coordination from live records C3 U1 N1 23",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch3-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-050",
+  "title": "30 [NOV-050]( nov-050) Make requests between teams trackable C3 U1 N1 24",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch3-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-051",
+  "title": "63 [NOV-051]( nov-051) Agree what done means for every important step C4 U1 N1 39",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch4-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103200000_november_operations_control.sql"
+  ]
+ },
+ {
+  "id": "NOV-052",
+  "title": "81 [NOV-052]( nov-052) Use approved workflow paths for different order types C4 U2 N2 80",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch8-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103600000_november_execution.sql"
+  ]
+ },
+ {
+  "id": "NOV-053",
+  "title": "45 [NOV-053]( nov-053) Give recurring problems a permanent improvement owner C3 U2 N2 68",
+  "testsNamingId": {
+   "pass": 5,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch7-browser.test.mjs",
+   "nov-batch7-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103500000_november_improvement.sql"
+  ]
+ },
+ {
+  "id": "NOV-054",
+  "title": "46 [NOV-054]( nov-054) Measure team outcomes with useful context C3 U2 N2 69",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch7-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103500000_november_improvement.sql"
+  ]
+ },
+ {
+  "id": "NOV-055",
+  "title": "37 [NOV-055]( nov-055) Connect training to demonstrated work C3 U2 N1 45",
+  "testsNamingId": {
+   "pass": 1,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch5-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103300000_november_assurance.sql"
+  ]
+ },
+ {
+  "id": "NOV-056",
+  "title": "31 [NOV-056]( nov-056) Assign ownership of important master data C3 U1 N1 25",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch3-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-057",
+  "title": "64 [NOV-057]( nov-057) Make process changes reach the people doing work C4 U1 N1 40",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch4-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103200000_november_operations_control.sql"
+  ]
+ },
+ {
+  "id": "NOV-058",
+  "title": "72 [NOV-058]( nov-058) Close orders through a coordinated final review C4 U2 N1 51",
+  "testsNamingId": {
+   "pass": 6,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch6-browser.test.mjs",
+   "nov-batch6-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103400000_november_lifecycle.sql"
+  ]
+ },
+ {
+  "id": "NOV-059",
+  "title": "47 [NOV-059]( nov-059) Give employees a practical improvement channel C3 U2 N2 70",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch7-browser.test.mjs",
+   "nov-batch7-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 3,
+  "sampleRefs": [
+   "components/layout/suggest-improvement.tsx",
+   "app/(dashboard)/tasks/improvement/new/page.tsx",
+   "supabase/migrations/20261103500000_november_improvement.sql"
+  ]
+ },
+ {
+  "id": "NOV-060",
+  "title": "17 [NOV-060]( nov-060) Review the whole journey with the people involved C2 U2 N2 60",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch6-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103400000_november_lifecycle.sql"
+  ]
+ },
+ {
+  "id": "NOV-061",
+  "title": "97 [NOV-061]( nov-061) Turn customer purchase orders into reviewable drafts C5 U3 N2 91",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch10-browser.test.mjs",
+   "nov-batch10-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103800000_november_specialist.sql"
+  ]
+ },
+ {
+  "id": "NOV-062",
+  "title": "65 [NOV-062]( nov-062) Manage drawing approval as a complete workflow C4 U1 N1 41",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch5-browser.test.mjs",
+   "nov-batch5-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 2,
+  "sampleRefs": [
+   "app/(dashboard)/documents/intelligence/page.tsx",
+   "supabase/migrations/20261103300000_november_assurance.sql"
+  ]
+ },
+ {
+  "id": "NOV-063",
+  "title": "73 [NOV-063]( nov-063) Track samples and first-piece approvals C4 U2 N1 52",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch6-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103400000_november_lifecycle.sql"
+  ]
+ },
+ {
+  "id": "NOV-064",
+  "title": "82 [NOV-064]( nov-064) Apply quantity-based pricing and minimum charges C4 U2 N2 81",
+  "testsNamingId": {
+   "pass": 7,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch9-browser.test.mjs",
+   "nov-batch9-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103700000_november_commercial.sql"
+  ]
+ },
+ {
+  "id": "NOV-065",
+  "title": "86 [NOV-065]( nov-065) Maintain a die and tooling commercial account C4 U4 N3 96",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch10-sql-b.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103800000_november_specialist.sql"
+  ]
+ },
+ {
+  "id": "NOV-066",
+  "title": "52 [NOV-066]( nov-066) Understand why quotations are won or lost C3 U3 N2 86",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch9-sql-b.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103700000_november_commercial.sql"
+  ]
+ },
+ {
+  "id": "NOV-067",
+  "title": "87 [NOV-067]( nov-067) Handle stock transfers between warehouses properly C4 U4 N3 97",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch10-browser.test.mjs",
+   "nov-batch10-sql-c.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103800000_november_specialist.sql"
+  ]
+ },
+ {
+  "id": "NOV-068",
+  "title": "92 [NOV-068]( nov-068) Split and combine physical bundles with traceability C5 U2 N1 56",
+  "testsNamingId": {
+   "pass": 5,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch6-browser.test.mjs",
+   "nov-batch6-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103400000_november_lifecycle.sql"
+  ]
+ },
+ {
+  "id": "NOV-069",
+  "title": "66 [NOV-069]( nov-069) Give incoming material an acceptance workflow C4 U1 N1 42",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch5-browser.test.mjs",
+   "nov-batch5-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103300000_november_assurance.sql"
+  ]
+ },
+ {
+  "id": "NOV-070",
+  "title": "38 [NOV-070]( nov-070) Link inspection results to measuring equipment C3 U2 N1 46",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch5-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103300000_november_assurance.sql"
+  ]
+ },
+ {
+  "id": "NOV-071",
+  "title": "53 [NOV-071]( nov-071) Track external laboratory testing C3 U4 N3 93",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch10-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103800000_november_specialist.sql"
+  ]
+ },
+ {
+  "id": "NOV-072",
+  "title": "88 [NOV-072]( nov-072) Manage ageing or heat-treatment batches C4 U4 N3 98",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch10-browser.test.mjs",
+   "nov-batch10-sql-c.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103800000_november_specialist.sql"
+  ]
+ },
+ {
+  "id": "NOV-073",
+  "title": "54 [NOV-073]( nov-073) Control finish and shade references across repeat orders C3 U4 N3 94",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch10-sql-b.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103800000_november_specialist.sql"
+  ]
+ },
+ {
+  "id": "NOV-074",
+  "title": "100 [NOV-074]( nov-074) Add a complete weighbridge transaction workflow C5 U4 N3 100",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch10-browser.test.mjs",
+   "nov-batch10-sql-c.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103800000_november_specialist.sql"
+  ]
+ },
+ {
+  "id": "NOV-075",
+  "title": "[November batch 8](NOV_UPGRADE_BATCH_8.md) covers delivery ranks 71 to 80: NOV-075, 077, 087, 014, 019, 036, 0",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch8-browser.test.mjs",
+   "nov-batch8-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103600000_november_execution.sql"
+  ]
+ },
+ {
+  "id": "NOV-076",
+  "title": "67 [NOV-076]( nov-076) Record partial acceptance and delivery exceptions C4 U1 N1 43",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch5-browser.test.mjs",
+   "nov-batch5-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103300000_november_assurance.sql"
+  ]
+ },
+ {
+  "id": "NOV-077",
+  "title": "49 [NOV-077]( nov-077) Track returnable gate passes and custody C3 U2 N2 72",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch8-browser.test.mjs",
+   "nov-batch8-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 2,
+  "sampleRefs": [
+   "components/modules/execution/die-custody-note.tsx",
+   "supabase/migrations/20261103600000_november_execution.sql"
+  ]
+ },
+ {
+  "id": "NOV-078",
+  "title": "83 [NOV-078]( nov-078) Manage supplier claims through to recovery C4 U2 N2 82",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch9-browser.test.mjs",
+   "nov-batch9-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103700000_november_commercial.sql"
+  ]
+ },
+ {
+  "id": "NOV-079",
+  "title": "74 [NOV-079]( nov-079) Generate customer-specific packing instructions and labels C4 U2 N1 53",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch6-browser.test.mjs",
+   "nov-batch6-sql.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103400000_november_lifecycle.sql"
+  ]
+ },
+ {
+  "id": "NOV-080",
+  "title": "The inspected automation builder records a simulated run under a completed status with a simulated marker in r",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch10-sql.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "supabase/migrations/20261103800000_november_specialist.sql"
+  ]
+ },
+ {
+  "id": "NOV-081",
+  "title": "4 [NOV-081]( nov-081) Make page headers more compact C1 U2 N2 57",
+  "testsNamingId": {
+   "pass": 1,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch6.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "components/layout/page-header.tsx"
+  ]
+ },
+ {
+  "id": "NOV-082",
+  "title": "19 [NOV-082]( nov-082) Offer comfortable and compact display options C2 U3 N2 84",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch9-browser.test.mjs",
+   "nov-batch9.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "unit-behaviour": 1
+  },
+  "sourceRefs": 4,
+  "sampleRefs": [
+   "lib/preferences/density.ts",
+   "lib/workflow/commercial.ts",
+   "components/layout/density-control.tsx",
+   "supabase/migrations/20261103700000_november_commercial.sql"
+  ]
+ },
+ {
+  "id": "NOV-083",
+  "title": "9 [NOV-083]( nov-083) Use the same page structure across modules C2 U1 N1 7",
+  "testsNamingId": {
+   "pass": 2,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-upgrades-browser.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-084",
+  "title": "10 [NOV-084]( nov-084) Keep the current record identity visible C2 U1 N1 8",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-upgrades-browser.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-085",
+  "title": "11 [NOV-085]( nov-085) Keep important form actions within reach C2 U1 N1 9",
+  "testsNamingId": {
+   "pass": 1,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-upgrades-browser.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-086",
+  "title": "1 [NOV-086]( nov-086) Give status colours one consistent meaning C1 U1 N1 1",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-upgrades-browser.test.mjs",
+   "nov-upgrades.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "unit-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-087",
+  "title": "50 [NOV-087]( nov-087) Show workflow progress visually C3 U2 N2 73",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch8-browser.test.mjs",
+   "nov-batch8-sql.test.mjs",
+   "nov-batch8.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 2
+  },
+  "sourceRefs": 3,
+  "sampleRefs": [
+   "lib/actions/execution.ts",
+   "components/modules/execution/progress-strip.tsx",
+   "supabase/migrations/20261103600000_november_execution.sql"
+  ]
+ },
+ {
+  "id": "NOV-088",
+  "title": "12 [NOV-088]( nov-088) Make phone cards shorter and more selective C2 U1 N1 10",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-upgrades-browser.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-089",
+  "title": "18 [NOV-089]( nov-089) Standardise quick record previews C2 U2 N2 61",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch7-browser.test.mjs",
+   "nov-batch7.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 3,
+  "sampleRefs": [
+   "lib/workflow/record-preview.ts",
+   "components/modules/operations/module-database-client.tsx",
+   "components/modules/operations/record-preview.tsx"
+  ]
+ },
+ {
+  "id": "NOV-090",
+  "title": "5 [NOV-090]( nov-090) Keep table headings and identifiers visible C1 U2 N2 58",
+  "testsNamingId": {
+   "pass": 1,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch6.test.mjs"
+  ],
+  "testKinds": {
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 1,
+  "sampleRefs": [
+   "components/data/data-table.tsx"
+  ]
+ },
+ {
+  "id": "NOV-091",
+  "title": "13 [NOV-091]( nov-091) Make active filters obvious C2 U1 N1 11",
+  "testsNamingId": {
+   "pass": 6,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-upgrades-browser.test.mjs",
+   "nov-upgrades.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "unit-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-092",
+  "title": "14 [NOV-092]( nov-092) Make selection menus easier to distinguish C2 U1 N1 12",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-upgrades-browser.test.mjs",
+   "nov-upgrades.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "unit-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-093",
+  "title": "2 [NOV-093]( nov-093) Make quantities and amounts easier to compare C1 U1 N1 2",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-upgrades.test.mjs"
+  ],
+  "testKinds": {
+   "unit-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-094",
+  "title": "32 [NOV-094]( nov-094) Explain where each field value came from C3 U1 N1 26",
+  "testsNamingId": {
+   "pass": 3,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch2-browser.test.mjs",
+   "nov-batch2.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "unit-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-095",
+  "title": "15 [NOV-095]( nov-095) Place reference information beside task inputs C2 U1 N1 13",
+  "testsNamingId": {
+   "pass": 5,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch2-browser.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1
+  },
+  "sourceRefs": 3,
+  "sampleRefs": [
+   "app/(dashboard)/packaging/[id]/edit/page.tsx",
+   "app/(dashboard)/production/[id]/edit/page.tsx",
+   "app/(dashboard)/quality/[id]/edit/page.tsx"
+  ]
+ },
+ {
+  "id": "NOV-096",
+  "title": "33 [NOV-096]( nov-096) Make validation specific and easy to resolve C3 U1 N1 27",
+  "testsNamingId": {
+   "pass": 5,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch2.test.mjs"
+  ],
+  "testKinds": {
+   "unit-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-097",
+  "title": "34 [NOV-097]( nov-097) Show the consequence of a final action clearly C3 U1 N1 28",
+  "testsNamingId": {
+   "pass": 5,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch3-browser.test.mjs",
+   "nov-batch3-sql.test.mjs",
+   "nov-batch3.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "sql-behaviour": 2
+  },
+  "sourceRefs": 7,
+  "sampleRefs": [
+   "components/modules/assurance/action-center.tsx",
+   "components/modules/commercial/action-center.tsx",
+   "components/modules/control/action-center.tsx",
+   "components/modules/execution/action-center.tsx"
+  ]
+ },
+ {
+  "id": "NOV-098",
+  "title": "35 [NOV-098]( nov-098) Keep meaningful action results visible C3 U1 N1 29",
+  "testsNamingId": {
+   "pass": 11,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-batch3-browser.test.mjs",
+   "nov-batch3.test.mjs",
+   "nov-batch4-browser.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 2,
+   "sql-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-099",
+  "title": "3 [NOV-099]( nov-099) Give empty and unavailable screens useful explanations C1 U1 N1 3",
+  "testsNamingId": {
+   "pass": 6,
+   "fail": 0
+  },
+  "testFiles": [
+   "nov-upgrades-browser.test.mjs",
+   "nov-upgrades.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1,
+   "unit-behaviour": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ },
+ {
+  "id": "NOV-100",
+  "title": "36 [NOV-100]( nov-100) Make accessibility practical for everyday factory use C3 U1 N1 30",
+  "testsNamingId": {
+   "pass": 4,
+   "fail": 1
+  },
+  "testFiles": [
+   "nov-batch2-browser.test.mjs"
+  ],
+  "testKinds": {
+   "browser-fixture": 1
+  },
+  "sourceRefs": 0,
+  "sampleRefs": []
+ }
+]

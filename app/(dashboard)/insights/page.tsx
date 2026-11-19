@@ -32,7 +32,7 @@ export default async function InsightsPage() {
         <p className="font-black">{d.label}</p><p className="mt-1 text-sm text-neutral-600">{d.description}</p></Link>)}</div>
     </section> : null}
     <section aria-labelledby="kpi-catalogue" className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-4">
-      <div><h2 id="kpi-catalogue" className="text-lg font-bold">What each number means</h2><p className="text-sm text-neutral-600">One definition per KPI, used by every screen that shows it. Where a definition changes, it changes here and on every screen together.</p></div>
+      <div><h2 id="kpi-catalogue" className="text-lg font-bold">What each number means</h2><p className="text-sm text-neutral-600">One definition per KPI, used by every screen that shows it. Where a definition changes, it changes here and on every screen together. <Link href="/insights/kpis" className="font-bold underline">See this month&apos;s values</Link>.</p></div>
       {areas.map(area => <div key={area} className="space-y-2"><h3 className="text-sm font-black uppercase tracking-wide text-neutral-500">{AREA[area]}</h3>
         <dl className="grid gap-2 lg:grid-cols-2">{metrics.filter(m => m.area === area).map(m => <div key={m.key} className="min-w-0 rounded-xl bg-neutral-50 p-3">
           <dt className="font-bold">{m.label}</dt><dd className="mt-1 text-sm">{m.definition}</dd>

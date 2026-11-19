@@ -72,12 +72,12 @@ function fallbackUuid() {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
 
-/** Sends pending entries oldest first. Stops at the first connection failure so order is kept; conflicts stay listed. */
-export async function flushEntries(owner: string, send: (entry: OfflineEntry) => Promise<SendOutcome>): Promise<{ applied: number; conflicts: number; waiting: number }> {
+/** Sends one transport's pending entries oldest first; other kinds are left untouched. */
+export async function flushEntries(owner: string, kind: OfflineKind, send: (entry: OfflineEntry) => Promise<SendOutcome>): Promise<{ applied: number; conflicts: number; waiting: number }> {
   let applied = 0, conflicts = 0;
   const entries = await listEntries(owner);
   for (const entry of entries) {
-    if (entry.state !== "pending") continue;
+    if (entry.kind !== kind || entry.state !== "pending") continue;
     let outcome: SendOutcome;
     try { outcome = await send(entry); } catch { outcome = { kind: "retry" }; }
     if (outcome.kind === "applied") { await removeEntry(entry.request_id); applied++; }
@@ -85,7 +85,7 @@ export async function flushEntries(owner: string, send: (entry: OfflineEntry) =>
     else { await putEntry({ ...entry, attempts: entry.attempts + 1, message: outcome.message ?? "Waiting for a connection." }); break; }
   }
   const left = await listEntries(owner);
-  return { applied, conflicts, waiting: left.filter(e => e.state === "pending").length };
+  return { applied, conflicts, waiting: left.filter(e => e.kind === kind && e.state === "pending").length };
 }
 
 /** Moves older press-station taps (batch 2 localStorage queue) into this queue once, keeping their IDs. */

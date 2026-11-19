@@ -1,0 +1,4 @@
+{"signup":307,"signupLocation":"/login","scanner":307,"scannerLocation":"/account-unavailable","expectedAnonymousScannerLocation":"/login","anonymousAuthError":"AuthSessionMissingError","authNetworkCalls":0,"login":200,"cameraPolicy":"camera=(), microphone=(), geolocation=()"}
+{"route":"/login","width":375,"viewport":375,"content":375,"emailPasswordAndSubmit":"present"}
+{"route":"/login","width":768,"viewport":768,"content":768,"emailPasswordAndSubmit":"present"}
+{"route":"/login","width":1280,"viewport":1280,"content":1280,"emailPasswordAndSubmit":"present"}

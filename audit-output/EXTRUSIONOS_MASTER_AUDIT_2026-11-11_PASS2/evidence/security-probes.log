@@ -1,0 +1,85 @@
+{"id":"S1-self-role-viewer","expect":"no row changed","outcome":"refused","code":"42P17","message":"infinite recursion detected in policy for relation \"app_users\""}
+{"id":"S1-self-role-sales","expect":"no row changed","outcome":"refused","code":"42P17","message":"infinite recursion detected in policy for relation \"app_users\""}
+{"id":"S1-self-role-production","expect":"no row changed","outcome":"refused","code":"42P17","message":"infinite recursion detected in policy for relation \"app_users\""}
+{"id":"S1-self-role-dealer","expect":"no row changed","outcome":"refused","code":"42P17","message":"infinite recursion detected in policy for relation \"app_users\""}
+{"id":"S1-self-role-admin","expect":"no row changed","outcome":"refused","code":"42P17","message":"infinite recursion detected in policy for relation \"app_users\""}
+{"id":"S1-admin-promotes-other-to-owner","expect":"policy decision: admin may not mint owners","outcome":"refused","code":"42P17","message":"infinite recursion detected in policy for relation \"app_users\""}
+{"id":"S1-self-company-move","expect":"no row changed","outcome":"refused","code":"42P17","message":"infinite recursion detected in policy for relation \"app_users\""}
+{"id":"S1-inactive-self-reactivate","expect":"no row changed","outcome":"refused","code":"42P17","message":"infinite recursion detected in policy for relation \"app_users\""}
+{"id":"S1-stranger-inserts-own-app_user","expect":"refused","outcome":"refused","code":"42501","message":"new row violates row-level security policy for table \"app_users\""}
+{"id":"S2-foreign-reads-orders","expect":0,"outcome":"executed","result":0}
+{"id":"S2-foreign-reads-customers","expect":0,"outcome":"executed","result":0}
+{"id":"S2-foreign-reads-invoices","expect":0,"outcome":"executed","result":0}
+{"id":"S2-foreign-reads-quotes","expect":0,"outcome":"executed","result":0}
+{"id":"S2-foreign-reads-app_users","expect":0,"outcome":"executed","result":0}
+{"id":"S2-foreign-reads-payments","expect":0,"outcome":"executed","result":0}
+{"id":"S2-foreign-reads-profile_stock_batches","expect":0,"outcome":"executed","result":0}
+{"id":"S2-foreign-reads-billet_batches","expect":0,"outcome":"executed","result":0}
+{"id":"S2-foreign-reads-audit_logs","expect":0,"outcome":"executed","result":0}
+{"id":"S2-foreign-reads-costing_rates","expect":0,"outcome":"executed","result":0}
+{"id":"S2-foreign-reads-bank_statement_lines","expect":0,"outcome":"refused","code":"42501","message":"permission denied for table bank_statement_lines"}
+{"id":"S2-foreign-reads-dies","expect":0,"outcome":"executed","result":0}
+{"id":"S2-foreign-reads-documents","expect":0,"outcome":"executed","result":0}
+{"id":"S2-foreign-updates-order","expect":0,"outcome":"executed","result":0}
+{"id":"S2-sales-inserts-customer-into-foreign-company","expect":"refused","outcome":"refused","code":"42501","message":"new row violates row-level security policy for table \"customers\""}
+{"id":"S3-inactive-reads-orders","expect":0,"outcome":"executed","result":0}
+{"id":"S3-inactive-reads-customers","expect":0,"outcome":"executed","result":0}
+{"id":"S3-inactive-reads-invoices","expect":0,"outcome":"executed","result":0}
+{"id":"S3-inactive-reads-app_users","expect":0,"outcome":"executed","result":1}
+{"id":"S3-inactive-coordination-command","expect":"refused","outcome":"refused","code":"42501","message":"Not permitted"}
+{"id":"S3-inactive-get_stock_snapshot","expect":"all zero / refused","outcome":"executed","result":{"holdKg":0,"billetKg":0,"finishedKg":0,"reservedKg":0,"lowItemCount":0,"billetByAlloy":[],"finishedPieces":0,"outOfStockCount":0,"billetBatchCount":0,"finishedByFinish":[],"consumableItemCount":0}}
+{"id":"S4-stranger-reads-orders","expect":0,"outcome":"executed","result":0}
+{"id":"S4-stranger-reads-customers","expect":0,"outcome":"executed","result":0}
+{"id":"S4-stranger-reads-invoices","expect":0,"outcome":"executed","result":0}
+{"id":"S4-stranger-reads-app_users","expect":0,"outcome":"executed","result":0}
+{"id":"S4-stranger-reads-companies","expect":0,"outcome":"executed","result":0}
+{"id":"S4-stranger-reads-aluminium_profiles","expect":0,"outcome":"executed","result":0}
+{"id":"S4-stranger-reads-pcda_master_alloys","expect":0,"outcome":"executed","result":0}
+{"id":"S4-stranger-reads-subscription_plans","expect":0,"outcome":"executed","result":4}
+{"id":"S4-stranger-reads-permissions","expect":0,"outcome":"executed","result":25}
+{"id":"S4-stranger-reads-roles","expect":0,"outcome":"executed","result":0}
+{"id":"S4-stranger-reads-system_templates","expect":0,"outcome":"executed","result":0}
+{"id":"S4-stranger-onboards-second-company","expect":"refused","outcome":"refused","code":"23514","message":"This workspace is dedicated to Omalco Extrusion; additional companies cannot be created"}
+{"id":"S4-stranger-onboards-when-no-company-exists","expect":"refused for an invitation-only deployment","outcome":"executed","result":1}
+{"id":"S5-anon-reads-orders","expect":"0 or refused","outcome":"refused","code":"42501","message":"permission denied for table orders"}
+{"id":"S5-anon-reads-customers","expect":"0 or refused","outcome":"refused","code":"42501","message":"permission denied for function customer_has_current_dealer_record"}
+{"id":"S5-anon-reads-invoices","expect":"0 or refused","outcome":"executed","rows":[{"c":0}]}
+{"id":"S5-anon-reads-app_users","expect":"0 or refused","outcome":"executed","rows":[{"c":0}]}
+{"id":"S5-anon-reads-companies","expect":"0 or refused","outcome":"executed","rows":[{"c":0}]}
+{"id":"S5-anon-reads-quotes","expect":"0 or refused","outcome":"refused","code":"42501","message":"permission denied for table quotes"}
+{"id":"S5-anon-reads-invitations","expect":"0 or refused","outcome":"executed","rows":[{"c":0}]}
+{"id":"S5-anon-reads-pcda_master_alloys","expect":"0 or refused","outcome":"executed","rows":[{"c":0}]}
+{"id":"S5-anon-executable-functions","expect":"none beyond trigger/helper functions","outcome":"executed","rows":[{"f":["current_user_has_permission","get_current_user_company_id","get_current_user_dealer_id","get_current_user_role","is_owner_or_admin"]}]}
+{"id":"S6-viewer-updates-invoice-paid","expect":0,"outcome":"executed","result":0}
+{"id":"S6-production-updates-invoice-paid","expect":0,"outcome":"executed","result":0}
+{"id":"S6-sales-updates-invoice-paid","expect":0,"outcome":"executed","result":0}
+{"id":"S6-accounts-direct-updates-invoice-paid (bypassing receipt writer)","expect":"refused or reconciled by trigger","outcome":"refused","code":"42703","message":"column \"payment_status\" does not exist"}
+{"id":"S6-accounts-direct-zeroes-invoice-total","expect":"refused","outcome":"executed","result":[]}
+{"id":"S6-viewer-updates-order-value","expect":0,"outcome":"executed","result":0}
+{"id":"S6-production-updates-order-value","expect":0,"outcome":"executed","result":0}
+{"id":"S6-dealer-reads-internal-invoices","expect":0,"outcome":"executed","result":0}
+{"id":"S6-dealer-reads-costing-rates","expect":0,"outcome":"executed","result":0}
+{"id":"S6-dealer-reads-customers","expect":0,"outcome":"executed","result":0}
+{"id":"S6-dealer-reads-staff-emails","expect":"own row only","outcome":"executed","result":16}
+{"id":"S6-production-reads-costing-rates","expect":"policy decision","outcome":"executed","result":0}
+{"id":"S6-viewer-deletes-customer","expect":0,"outcome":"executed","result":0}
+{"id":"S6-sales-deletes-invoice","expect":0,"outcome":"executed","result":0}
+{"id":"S6-owner-deletes-invoice","expect":"refused (history)","outcome":"executed","result":0}
+{"id":"S7-owner-updates-audit_logs","expect":0,"outcome":"executed","result":0}
+{"id":"S7-owner-deletes-audit_logs","expect":0,"outcome":"executed","result":0}
+{"id":"S7-owner-updates-audit_logs_enterprise","expect":0,"outcome":"executed","result":0}
+{"id":"S7-owner-deletes-audit_logs_enterprise","expect":0,"outcome":"executed","result":0}
+{"id":"S7-owner-updates-sensitive_action_logs","expect":0,"outcome":"executed","result":0}
+{"id":"S7-owner-deletes-sensitive_action_logs","expect":0,"outcome":"executed","result":0}
+{"id":"S7-owner-updates-order_stage_history","expect":0,"outcome":"executed","result":0}
+{"id":"S7-owner-deletes-order_stage_history","expect":0,"outcome":"executed","result":0}
+{"id":"S7-sales-forges-audit-log","expect":"refused","outcome":"refused","code":"42703","message":"column \"user_id\" of relation \"audit_logs\" does not exist"}
+{"id":"C1-rls","result":{"with_rls":516,"without_rls":0,"rls_no_policy":115}}
+{"id":"C2-definers","result":{"definers":856,"no_search_path":0,"public_definers_authenticated":176,"definers_anon":5}}
+{"id":"C3-private-schema-usage","result":{"authenticated_usage":true,"anon_usage":true,"private_fns_authenticated":40}}
+{"id":"C4-permissive-policies","result":{"total":806,"literally_true":0,"write_true_tables":[],"read_true_tables":[]}}
+{"id":"C5-policies-for-anon-or-public","result":{"t":[]}}
+{"id":"C6-views-not-security-invoker","result":{"v":["company_settings_authorized","expense_ledger_authorized","expense_ledger_reconciliation_issues","finish_options_authorized","finishing_accepted_outputs","glass_items_authorized","hardware_items_authorized","invoice_dispatch_tax_basis_authorized","invoice_items_authorized","invoice_settlement_review","invoices_authorized","order_dealer_stock_fulfillments_authorized","order_items_authorized","orders_authorized","packing_list_items_authorized","production_jobs_authorized","quote_items_authorized","quotes_authorized","system_configurations_authorized","system_glass_cuts_authorized","system_hardware_bom_authorized","system_material_summary_authorized","system_templates_authorized"]}}
+{"id":"C7-definers-taking-company-id","result":{"f":["current_portal_user_owns"]}}
+{"id":"C8-storage-buckets","result":{"b":[{"id":"company-assets","public":false},{"id":"profile-drawings","public":false},{"id":"die-drawings","public":false},{"id":"quote-pdfs","public":false},{"id":"dispatch-documents","public":false},{"id":"reports","public":false},{"id":"documents","public":false},{"id":"technical-drawings","public":false},{"id":"maintenance-bills","public":false}]}}
+{"id":"C9-storage-policies","result":{"n":18,"p":[{"cmd":"SELECT","name":"tenant storage read","roles":["public"]},{"cmd":"INSERT","name":"tenant storage insert","roles":["public"]},{"cmd":"UPDATE","name":"tenant storage update","roles":["public"]},{"cmd":"DELETE","name":"tenant storage delete","roles":["public"]},{"cmd":"INSERT","name":"dispatch document objects insert","roles":["public"]},{"cmd":"SELECT","name":"technical drawings storage read","roles":["public"]},{"cmd":"SELECT","name":"technical documents storage read","roles":["public"]},{"cmd":"INSERT","name":"technical documents storage insert","roles":["public"]},{"cmd":"UPDATE","name":"technical documents storage update","roles":["public"]},{"cmd":"DELETE","name":"technical documents storage delete","roles":["public"]},{"cmd":"INSERT","name":"technical drawings storage insert","roles":["public"]},{"cmd":"SELECT","name":"dispatch document objects read","roles":["public"]},{"cmd":"UPDATE","name":"technical drawings storage update","roles":["public"]},{"cmd":"DELETE","name":"technical drawings storage delete","roles":["public"]},{"cmd":"SELECT","name":"maintenance bills storage read","roles":["public"]},{"cmd":"INSERT","name":"maintenance bills storage insert","roles":["public"]},{"cmd":"UPDATE","name":"maintenance bills storage update","roles":["public"]},{"cmd":"DELETE","name":"maintenance bills storage delete","roles":["public"]}]}}

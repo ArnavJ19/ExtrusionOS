@@ -1,0 +1,14 @@
+# PASS2 working notes (HEAD a0ef08d)
+- PA2-001 P1 CONFIRMED native PG18 + hosted policy present: any authenticated UPDATE on app_users -> 42P17 infinite recursion (policy app_users_update_self, 20260603100000:7-20 subselects app_users). No UI/API path to suspend user / change role / revoke invite (access-control-client.tsx:124 read-only table). Offboarding impossible without service role.
+- PA2-002 drift: hosted ledger has 20261111064948 audit_revoke_self_service_onboarding, no file in repo; repo replay grants onboard_company_atomic to authenticated; S4 probe: stranger onboards as owner when companies empty. Hosted: grant false, 1 company, 1 owner, 1 auth user.
+- hosted ledger has no single_tenant_omalco entry though trigger exists (tgenabled O).
+- hosted cron: 3 jobs, 0 runs as of 12:29 UTC (applied 12:08 UTC; first due 13:05 UTC).
+- dealer_admin reads 16 app_users rows (all factory staff) - S6.
+- stranger (no app_users) reads subscription_plans(4), permissions(25).
+- lint exit 1: error from prior audit artifact audit-output/.../capture-inventory.mjs:85 (eslint does not ignore audit-output).
+- native replay 298/298 OK 13s. typecheck exit 0.
+- HEAD reruns of prior repro scripts: MFA-005/006/007 FIXED; MFA-002/003/004/010/017 STILL REPRODUCE (rerun-*.log). MFA-009 camera=() still in next.config.ts:49.
+- finance-probes (native, 2 sessions): record_payment_atomic serializes racing receipts (700+700 on 1000 -> 2nd refused), same idempotency key -> single payment replay, key reuse other invoice refused, overpay refused, zero/neg/future/predate/unknown method refused, roles sales/viewer/production/dealer/inactive/foreign refused, cancelled invoice refused, concurrent double reversal -> one. Direct table writes by accounts: no rows / RLS refusal. Minor: 100.005 accepted -> 100.01 (direct RPC only); after reversal invoice status 'sent' (was 'generated').
+- API routes: all 32 authenticate via getSessionContext/server action or are intentionally public (invite accept, cron w/ bearer). /api/payments has no Origin check (others do) - relies on SameSite cookie.
+- PA2-003 P1 CONFIRMED (native PG, storage-probes.log): "tenant storage read/insert/update/delete" on company-assets, profile-drawings, die-drawings, quote-pdfs, dispatch-documents, reports check only company folder, no role. dealer_admin + viewer + production can read/delete/rename/upload .html there. AP-003 open. Hosted buckets: no file_size_limit, no allowed_mime_types on all 9 buckets.
+- MFA-004 nuance: partial issue is a normal state (issue_production_billets issues selected linked billets); completion counts all linked (issued+allocated). Workaround path: save_production_job_atomic -> release_production_job_billets (not verified for in_progress).

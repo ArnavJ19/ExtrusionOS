@@ -1,0 +1,28 @@
+{
+  "observed_at_utc": "2026-11-11T17:28:15Z",
+  "method": "read-only catalog queries and the security advisor on the linked project; no writes",
+  "postgres": "17.6",
+  "migration_ledger_rows": 269,
+  "ledger_latest": ["20261111120801 autopilot_pg_cron", "20261111120739 stock_snapshot_open_reservations", "20261111120718 autopilot_batch_3_part07"],
+  "onboard_company_atomic_executable_by_authenticated": false,
+  "companies": 1,
+  "staff_rows": { "owner": 1 },
+  "auth_users": 1,
+  "companies_triggers": ["set_companies_updated_at (enabled)", "trg_enforce_single_company (enabled)"],
+  "app_users_policies": ["app users insert self [INSERT]", "app users select own company [SELECT]", "app users update owner non self [UPDATE]", "app_users_update_self [UPDATE]"],
+  "cron_jobs": ["autopilot-hourly 5 * * * *", "autopilot-nightly 0 19 * * *", "autopilot-morning 30 2 * * *"],
+  "cron_runs": { "count": 5, "statuses": ["succeeded"], "last_start_utc": "2026-11-11T17:05:00Z" },
+  "storage_buckets": { "count": 9, "public": 0, "with_file_size_limit": 0, "with_allowed_mime_types": 0 },
+  "storage_objects": 0,
+  "ap_cash_present": true,
+  "security_advisor": { "security_definer_view": 23, "auth_leaked_password_protection": 1, "also_reported": ["rls_enabled_no_policy", "authenticated_security_definer_function_executable"] },
+  "cascade_foreign_keys_on_lineage_parents": {
+    "invoices": ["invoice_items", "payments", "customer_on_account_applications", "invoice_supply_derivations"],
+    "orders": ["order_items", "production_jobs", "order_stage_history", "finishing_jobs", "packaging_jobs", "profile_stock_reservations", "profile_stock_consumptions", "and 10 more"],
+    "foundry_batches": ["foundry_billets", "foundry_cast_results", "foundry_chemistry_tests"],
+    "production_jobs": ["production_billet_issues", "production_scrap_lines", "production_job_status_history", "and 3 more"],
+    "dispatches": ["packing_list_items", "dispatch_status_history", "profile_stock_consumptions", "and 3 more"],
+    "quotes": ["quote_items", "quote_revisions", "quote_rate_bindings", "quote_validity_events", "quote_validity_requests"],
+    "profile_stock_batches": ["profile_stock_consumptions", "profile_stock_reservations"]
+  }
+}

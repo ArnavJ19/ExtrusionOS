@@ -10,7 +10,7 @@ import { DECISIONS, decisionEffect, sourceHref, type ApprovalItem, type Decision
 
 const doneText: Record<Decision, string> = { approve: "Approved.", reject: "Rejected.", clarify: "Question sent. The request stays in the inbox." };
 
-function ApprovalCard({ item }: { item: ApprovalItem }) {
+function ApprovalCard({ item, firstApprover = null }: { item: ApprovalItem; firstApprover?: string | null }) {
   const router = useRouter();
   const [decision, setDecision] = useState<Decision | null>(null);
   const [note, setNote] = useState("");
@@ -45,6 +45,7 @@ function ApprovalCard({ item }: { item: ApprovalItem }) {
           </p>
           {item.detail ? <p className="mt-1 text-sm text-slate-500">{item.detail}</p> : null}
           <p className="mt-1 text-xs font-semibold text-slate-500">Requested by {item.requester_name ?? "unknown"} · last changed {formatDate(item.requested_at)}</p>
+          {firstApprover ? <p className="mt-1 text-xs font-bold text-amber-800">First approval by {firstApprover}. A second, different approver is needed for this amount.</p> : null}
         </div>
         <div className="text-right">
           <p className="text-lg font-black text-slate-900">{formatCurrency(item.amount)}</p>
@@ -85,6 +86,6 @@ function ApprovalCard({ item }: { item: ApprovalItem }) {
 }
 
 // UPGRADE_EOS feature 44: one queue of the approvals this employee may decide.
-export function ApprovalInboxList({ items }: { items: ApprovalItem[] }) {
-  return <ul className="space-y-3">{items.map((item) => <ApprovalCard key={`${item.source_type}:${item.source_id}:${item.version}`} item={item} />)}</ul>;
+export function ApprovalInboxList({ items, awaitingSecond = {} }: { items: ApprovalItem[]; awaitingSecond?: Record<string, string> }) {
+  return <ul className="space-y-3">{items.map((item) => <ApprovalCard key={`${item.source_type}:${item.source_id}:${item.version}`} item={item} firstApprover={awaitingSecond[item.source_id] ?? null} />)}</ul>;
 }

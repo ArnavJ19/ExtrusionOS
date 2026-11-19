@@ -62,6 +62,7 @@ export function TallyClient() {
       {pending.data ? <Pager page={page} total={pending.data.total_count} onPage={setPage} /> : null}
     </Section>
     <Section title="Ledger mapping" description="Names exactly as in Tally. Parties without a mapping use their name in ExtrusionOS; sales ledgers can be set per GST rate and local/interstate.">
+      <p className="text-sm">Map TDS receivable for customer tax deductions. These export as Journal vouchers against the invoice; deductions without this mapping remain pending.</p>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
         <label className="text-sm font-semibold">Ledger for<select className={`${inputClass} mt-1`} value={form.kind} onChange={e => setForm({ ...form, kind: e.target.value as TallyLedgerKind })}>{Object.entries(TALLY_LEDGER_KINDS).filter(([k]) => k !== "customer" && k !== "vendor").map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
         {form.kind === "sales" || form.kind === "purchase" ? <><label className="text-sm font-semibold">GST rate (optional)<input inputMode="decimal" className={`${inputClass} mt-1`} value={form.gst_rate} onChange={e => setForm({ ...form, gst_rate: e.target.value })} placeholder="18" /></label>

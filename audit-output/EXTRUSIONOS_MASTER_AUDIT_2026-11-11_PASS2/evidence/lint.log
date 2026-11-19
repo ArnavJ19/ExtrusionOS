@@ -1,0 +1,20 @@
+
+> extrusionos-pro@0.1.0 lint
+> eslint .
+
+
+C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\audit-output\EXTRUSIONOS_MASTER_AUDIT_2026-11-11\evidence\capture-inventory.mjs
+   85:3   error    Do not assign to the variable `module`. See: https://nextjs.org/docs/messages/no-assign-module-variable  @next/next/no-assign-module-variable
+  137:10  warning  '_' is assigned a value but never used                                                                   @typescript-eslint/no-unused-vars
+
+C:\Users\arnav\OneDrive\Desktop\ExtrusionOS\tests\nov-batch8-sql.test.mjs
+    5:31  warning  'executionDetailSchema' is defined but never used  @typescript-eslint/no-unused-vars
+  199:19  warning  '_omitted' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  436:7   warning  'assign' is assigned a value but never used        @typescript-eslint/no-unused-vars
+
+✖ 5 problems (1 error, 4 warnings)
+
+
+real	1m30.261s
+user	0m0.183s
+sys	0m0.121s

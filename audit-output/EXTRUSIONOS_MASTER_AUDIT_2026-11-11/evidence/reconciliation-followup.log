@@ -1,0 +1,2 @@
+{"id":"MFA-017","fixtureError":"new row for relation \"packaging_materials\" violates check constraint \"packaging_materials_consumption_rate_positive\"","code":"23514"}
+{"id":"quote-extension-fixture-differential","headerOnly":{"response":{"sqlstate":"P0001","message":"Complete quotation item costing before confirmation. Incomplete drafts may still be saved."},"status":"expired","valid_until":"2026-11-10"},"withLine":{"response":{"state":"approved"},"status":"sent","valid_until":"2026-11-21"}}

@@ -1,4 +1,5 @@
 import { RelatedWorkPanel } from "@/components/modules/home-work/related-work-panel";
+import { RecordHistory } from "@/components/modules/fs-batch4/record-history";
 import { RecordDetailClient } from "@/components/modules/operations/record-detail-client";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
@@ -12,6 +13,7 @@ export default async function VendorDetailPage({ params }: { params: Promise<{ i
   return <div className="space-y-6">
     <RecordDetailClient moduleKey="vendors" context={context} recordId={id} canEdit={can(context.role, "update", "vendors")} />
     {!context.dealerId ? <RelatedWorkPanel kind="vendor" id={id} role={context.role} /> : null}
+    {!context.dealerId ? <RecordHistory entityType="vendor" entityId={id} /> : null}
     {!context.dealerId && ["owner", "admin", "accounts"].includes(context.role) ? <VendorMsmeTerms vendorId={id} /> : null}
   </div>;
 }

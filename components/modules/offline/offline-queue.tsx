@@ -27,6 +27,7 @@ async function send(entry: OfflineEntry, fromQueue: boolean): Promise<SendOutcom
   return { kind: "applied", data: data.result };
 }
 const gateway: OfflineTransport = {
+  kind: "ap",
   send,
   resolve: async (entry, resolution) => { await autopilotAction("ap_offline", "resolve", { request_id: entry.request_id, resolution }); }
 };

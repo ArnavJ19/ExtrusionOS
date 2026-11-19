@@ -4,6 +4,7 @@ import type { UserRole } from "@/types/app";
 import { hasRouteAccess, isProtectedPath } from "@/lib/auth/route-permissions";
 import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/config";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
+import { isSameOriginRequest } from "@/lib/security/origin";
 
 /** Rate-limited API path prefixes and their configurations */
 const rateLimitedPaths: { prefix: string; limit: number; windowSeconds: number }[] = [
@@ -12,6 +13,10 @@ const rateLimitedPaths: { prefix: string; limit: number; windowSeconds: number }
   { prefix: "/api/ai/quotation-assistant", limit: 10, windowSeconds: 60 },
   { prefix: "/api/email/send", limit: 10, windowSeconds: 60 },
   { prefix: "/api/enterprise/data-exchange", limit: 5, windowSeconds: 60 },
+  // FS-51: document generation and the health endpoint.
+  { prefix: "/api/pdf", limit: 30, windowSeconds: 60 },
+  { prefix: "/api/reports", limit: 20, windowSeconds: 60 },
+  { prefix: "/api/health", limit: 30, windowSeconds: 60 },
   // AP-060: public order-status links (token guessing is already infeasible; this bounds scraping).
   { prefix: "/status/", limit: 30, windowSeconds: 60 },
 ];
@@ -31,6 +36,12 @@ async function hashRateLimitIdentifier(value: string): Promise<string> {
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+
+  // FS-51: a state-changing API request must come from this site. Browsers send Origin (and Sec-Fetch-Site) on these
+  // requests; a cross-site one is refused before any route runs. Server-to-server callers send neither.
+  if (pathname.startsWith("/api/") && !["GET", "HEAD", "OPTIONS"].includes(request.method) && !isSameOriginRequest({ method: request.method, headers: request.headers, host: request.nextUrl.host })) {
+    return NextResponse.json({ error: "Cross-site requests are not accepted." }, { status: 403 });
+  }
 
   // Rate limiting for sensitive API endpoints
   const matchedLimit = rateLimitedPaths.find((rule) => pathname.startsWith(rule.prefix));

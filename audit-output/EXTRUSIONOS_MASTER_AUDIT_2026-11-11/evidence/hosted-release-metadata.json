@@ -1,0 +1,4067 @@
+{
+  "queryScope": "Project configured in local environment, hosting binding unverified. Metadata only.",
+  "checkedOn": "2026-11-11 Asia/Kolkata",
+  "latestProductionDeployments": [
+    {
+      "commit": "0a5cc3d62d8fd679dc3a3fdce06d9bbc158db627",
+      "branch": "main",
+      "state": "READY",
+      "target": "production",
+      "createdUtc": "2026-11-09T10:58:16.752Z"
+    },
+    {
+      "commit": "caa0573cfcf214214ee4cd8278fd76e9a3de029c",
+      "branch": "main",
+      "state": "READY",
+      "target": "production",
+      "createdUtc": "2026-11-04T21:13:39.966Z"
+    },
+    {
+      "commit": "7de3985b59a70ef9f4324ea42d972bfc1eade96a",
+      "branch": "main",
+      "state": "READY",
+      "target": "production",
+      "createdUtc": "2026-11-02T20:18:36.306Z"
+    },
+    {
+      "commit": "9573426cac124d96acce7d55c6ab9e7e7fd6a360",
+      "branch": "main",
+      "state": "READY",
+      "target": "production",
+      "createdUtc": "2026-11-02T19:21:14.471Z"
+    }
+  ],
+  "linkedProjectCatalog": {
+    "server_version": "17.6",
+    "single_company_guard": true,
+    "stock_snapshot_rpc": true,
+    "batch3_cash_rpc": false,
+    "batch2_press_rpc": true,
+    "authenticated_onboarding_grant": true,
+    "storage_object_policies": 18,
+    "customer_history_cascade_count": 0,
+    "cast_body_md5": "23edaeefade009911c44de2de21889a9",
+    "production_completion_body_md5": "5fae36bf08e49086cca2bed1b83ab87f"
+  },
+  "securityAdvisor": {
+    "total": 4,
+    "names": {
+      "rls_enabled_no_policy": 1,
+      "security_definer_view": 1,
+      "authenticated_security_definer_function_executable": 1,
+      "auth_leaked_password_protection": 1
+    },
+    "auth": [
+      {
+        "name": "auth_leaked_password_protection",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+      }
+    ],
+    "error": false
+  },
+  "localFileCount": 294,
+  "hostedLedgerRows": 259,
+  "localExactVersionMatches": 0,
+  "localNormalizedNameMatches": 195,
+  "localNoExactVersionOrNameMatch": 99,
+  "comparison": [
+    {
+      "file": "20260511000000_phase1_quote_engine.sql",
+      "localVersion": "20260511000000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260511000100_phase2_terminology_and_stages.sql",
+      "localVersion": "20260511000100",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260512000000_phase1_rls_fixes.sql",
+      "localVersion": "20260512000000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260512000100_phase3_operational_depth.sql",
+      "localVersion": "20260512000100",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260512000200_phase4_quality_dispatch.sql",
+      "localVersion": "20260512000200",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260512000300_phase5_financials_analytics.sql",
+      "localVersion": "20260512000300",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260512000400_audit_fixes.sql",
+      "localVersion": "20260512000400",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260513000000_enterprise_phase1_foundation.sql",
+      "localVersion": "20260513000000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260513000100_enterprise_phase1_hardening.sql",
+      "localVersion": "20260513000100",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260513000200_enterprise_phase2_ai_quotation_assistant.sql",
+      "localVersion": "20260513000200",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260513000300_enterprise_phase2_nvidia_ai_provider.sql",
+      "localVersion": "20260513000300",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515000800_enterprise_phase_3.sql",
+      "localVersion": "20260515000800",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515000900_enterprise_phase_4.sql",
+      "localVersion": "20260515000900",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515001000_enterprise_phase_5.sql",
+      "localVersion": "20260515001000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515001100_enterprise_phase_6.sql",
+      "localVersion": "20260515001100",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515001200_enterprise_phase5_qr_update.sql",
+      "localVersion": "20260515001200",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515001300_enterprise_phase_7.sql",
+      "localVersion": "20260515001300",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515001400_phase6_schema_upgrade.sql",
+      "localVersion": "20260515001400",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515001500_enterprise_phase_8.sql",
+      "localVersion": "20260515001500",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515001600_enterprise_phase_9.sql",
+      "localVersion": "20260515001600",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515001700_enterprise_phase_10.sql",
+      "localVersion": "20260515001700",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515001800_enterprise_phase_11.sql",
+      "localVersion": "20260515001800",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515001900_enterprise_phase_12.sql",
+      "localVersion": "20260515001900",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515002000_enterprise_phase_13.sql",
+      "localVersion": "20260515002000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515002100_enterprise_phase_14.sql",
+      "localVersion": "20260515002100",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515002200_enterprise_phase_15.sql",
+      "localVersion": "20260515002200",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515002300_enterprise_phase_16.sql",
+      "localVersion": "20260515002300",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515002400_enterprise_phase_17.sql",
+      "localVersion": "20260515002400",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515002500_enterprise_phase_18.sql",
+      "localVersion": "20260515002500",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515002600_enterprise_phase_19.sql",
+      "localVersion": "20260515002600",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515002700_enterprise_phase_20.sql",
+      "localVersion": "20260515002700",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515002800_enterprise_phase_21.sql",
+      "localVersion": "20260515002800",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515002900_enterprise_phase_22.sql",
+      "localVersion": "20260515002900",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515003000_systems_configurator_phase_1.sql",
+      "localVersion": "20260515003000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515003100_profile_stock_reservations.sql",
+      "localVersion": "20260515003100",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515003200_enterprise_phase_23_security.sql",
+      "localVersion": "20260515003200",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515003201_profile_stock_consumptions.sql",
+      "localVersion": "20260515003201",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515003300_enterprise_phase_24_command_center.sql",
+      "localVersion": "20260515003300",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515003400_enterprise_phase_23_24_hardening.sql",
+      "localVersion": "20260515003400",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515003401_security_audit_fixes.sql",
+      "localVersion": "20260515003401",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515003500_phase_23_security_limitations_fix.sql",
+      "localVersion": "20260515003500",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515003600_fix_production_jobs_job_number.sql",
+      "localVersion": "20260515003600",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515003601_phase_5_to_10_operational_hardening.sql",
+      "localVersion": "20260515003601",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515003700_quote_order_fulfillment_controls.sql",
+      "localVersion": "20260515003700",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515003800_order_dealer_stock_fulfillment.sql",
+      "localVersion": "20260515003800",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515003900_fix_system_configurations_status.sql",
+      "localVersion": "20260515003900",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515004000_access_control_dealer_workflows.sql",
+      "localVersion": "20260515004000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515004100_dealer_roles_inventory_automation.sql",
+      "localVersion": "20260515004100",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515004200_dealer_quote_order_isolation.sql",
+      "localVersion": "20260515004200",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515004300_dealer_order_workflow_hardening.sql",
+      "localVersion": "20260515004300",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515004400_order_production_requirements.sql",
+      "localVersion": "20260515004400",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515004500_dealer_isolation_and_inventory_entry.sql",
+      "localVersion": "20260515004500",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515004600_dealer_factory_status_and_tasks.sql",
+      "localVersion": "20260515004600",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515004700_dealer_factory_collaboration.sql",
+      "localVersion": "20260515004700",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515004800_security_advisor_function_hardening.sql",
+      "localVersion": "20260515004800",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515004900_security_advisor_remaining_definer_cleanup.sql",
+      "localVersion": "20260515004900",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515005000_production_pieces_and_foundry.sql",
+      "localVersion": "20260515005000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515005100_foundry_sources_scrap_billets_packaging.sql",
+      "localVersion": "20260515005100",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515005200_packaging_queue_and_calculation_hardening.sql",
+      "localVersion": "20260515005200",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515005300_vendors_created_by.sql",
+      "localVersion": "20260515005300",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515005400_billet_diameter_vendor_source_scrap_workflow.sql",
+      "localVersion": "20260515005400",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515005500_billet_inventory_and_outsourced_billets.sql",
+      "localVersion": "20260515005500",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515005501_machines_and_foundry_enhancements.sql",
+      "localVersion": "20260515005501",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515005600_order_billet_requirements_and_allocation.sql",
+      "localVersion": "20260515005600",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515005700_foundry_furnace_mix_and_chemistry.sql",
+      "localVersion": "20260515005700",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260515005900_reports_storage_bucket.sql",
+      "localVersion": "20260515005900",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260530000000_packaging_multiple_materials.sql",
+      "localVersion": "20260530000000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260530000001_machines_created_by.sql",
+      "localVersion": "20260530000001",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260530000002_foundry_billet_allocation_repairs.sql",
+      "localVersion": "20260530000002",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260530000003_production_jobs_created_by.sql",
+      "localVersion": "20260530000003",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260531000000_expenses_module.sql",
+      "localVersion": "20260531000000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260531010000_expenses_phase2_packaging_and_controls.sql",
+      "localVersion": "20260531010000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260531020000_expenses_phase3_energy_maintenance_approval.sql",
+      "localVersion": "20260531020000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260601000000_pcda_die_profile_enrichment.sql",
+      "localVersion": "20260601000000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260601000001_pcda_master_data_catalogs.sql",
+      "localVersion": "20260601000001",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260602000000_pcda_phase1_completion.sql",
+      "localVersion": "20260602000000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260602000001_add_label_to_qr_codes.sql",
+      "localVersion": "20260602000001",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260602000002_security_definer_access_hardening.sql",
+      "localVersion": "20260602000002",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260603000000_pcda_master_catalog_tables_consolidated.sql",
+      "localVersion": "20260603000000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260603100000_security_audit_fixes_june2026.sql",
+      "localVersion": "20260603100000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260604000000_pcda_quote_items_enrichment.sql",
+      "localVersion": "20260604000000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260604000001_pcda_order_items_enrichment.sql",
+      "localVersion": "20260604000001",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260604000002_pcda_production_dispatch_enrichment.sql",
+      "localVersion": "20260604000002",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260604000003_pcda_invoice_items.sql",
+      "localVersion": "20260604000003",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260608000000_pcda_crm_enrichment.sql",
+      "localVersion": "20260608000000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260715000000_atomic_business_workflows.sql",
+      "localVersion": "20260715000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721085917",
+          "name": "20260715000000_atomic_business_workflows"
+        }
+      ]
+    },
+    {
+      "file": "20260715010000_role_aware_sensitive_rls.sql",
+      "localVersion": "20260715010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090106",
+          "name": "20260715010000_role_aware_sensitive_rls"
+        }
+      ]
+    },
+    {
+      "file": "20260715011000_legacy_role_rls_observability.sql",
+      "localVersion": "20260715011000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090108",
+          "name": "20260715011000_legacy_role_rls_observability"
+        }
+      ]
+    },
+    {
+      "file": "20260715020000_documents_storage_bucket.sql",
+      "localVersion": "20260715020000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090110",
+          "name": "20260715020000_documents_storage_bucket"
+        }
+      ]
+    },
+    {
+      "file": "20260715030000_distributed_api_rate_limits.sql",
+      "localVersion": "20260715030000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090112",
+          "name": "20260715030000_distributed_api_rate_limits"
+        }
+      ]
+    },
+    {
+      "file": "20260715040000_documents_storage_role_rls.sql",
+      "localVersion": "20260715040000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090114",
+          "name": "20260715040000_documents_storage_role_rls"
+        }
+      ]
+    },
+    {
+      "file": "20260715041000_mixed_ownership_role_rls.sql",
+      "localVersion": "20260715041000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090116",
+          "name": "20260715041000_mixed_ownership_role_rls"
+        }
+      ]
+    },
+    {
+      "file": "20260718009999_financial_payment_compatibility.sql",
+      "localVersion": "20260718009999",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090232",
+          "name": "20260718009999_financial_payment_compatibility"
+        }
+      ]
+    },
+    {
+      "file": "20260718010000_financial_closure.sql",
+      "localVersion": "20260718010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090243",
+          "name": "20260718010000_financial_closure"
+        }
+      ]
+    },
+    {
+      "file": "20260718010100_financial_collection_analytics.sql",
+      "localVersion": "20260718010100",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090245",
+          "name": "20260718010100_financial_collection_analytics"
+        }
+      ]
+    },
+    {
+      "file": "20260718020000_production_quality_packaging_handoffs.sql",
+      "localVersion": "20260718020000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090247",
+          "name": "20260718020000_production_quality_packaging_handoffs"
+        }
+      ]
+    },
+    {
+      "file": "20260718020500_finishing_route_and_quality_yield.sql",
+      "localVersion": "20260718020500",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090249",
+          "name": "20260718020500_finishing_route_and_quality_yield"
+        }
+      ]
+    },
+    {
+      "file": "20260718021000_dispatch_readiness_and_delivery.sql",
+      "localVersion": "20260718021000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090252",
+          "name": "20260718021000_dispatch_readiness_and_delivery"
+        }
+      ]
+    },
+    {
+      "file": "20260718021500_floor_output_and_finishing_workflows.sql",
+      "localVersion": "20260718021500",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090254",
+          "name": "20260718021500_floor_output_and_finishing_workflows"
+        }
+      ]
+    },
+    {
+      "file": "20260718040000_report_builder_data_sources.sql",
+      "localVersion": "20260718040000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090256",
+          "name": "20260718040000_report_builder_data_sources"
+        }
+      ]
+    },
+    {
+      "file": "20260718050000_customer_accepted_quote_orders.sql",
+      "localVersion": "20260718050000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090258",
+          "name": "20260718050000_customer_accepted_quote_orders"
+        }
+      ]
+    },
+    {
+      "file": "20260718051000_quote_status_transitions.sql",
+      "localVersion": "20260718051000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090300",
+          "name": "20260718051000_quote_status_transitions"
+        }
+      ]
+    },
+    {
+      "file": "20260718052000_invoice_packing_line_parity.sql",
+      "localVersion": "20260718052000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090301",
+          "name": "20260718052000_invoice_packing_line_parity"
+        }
+      ]
+    },
+    {
+      "file": "20260718053000_reservation_consumption_safety.sql",
+      "localVersion": "20260718053000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090303",
+          "name": "20260718053000_reservation_consumption_safety"
+        }
+      ]
+    },
+    {
+      "file": "20260718054000_dispatch_proof_upload.sql",
+      "localVersion": "20260718054000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090305",
+          "name": "20260718054000_dispatch_proof_upload"
+        }
+      ]
+    },
+    {
+      "file": "20260721091000_security_advisor_cleanup.sql",
+      "localVersion": "20260721091000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721090359",
+          "name": "20260721091000_security_advisor_cleanup"
+        }
+      ]
+    },
+    {
+      "file": "20260721091224_performance_fk_indexes.sql",
+      "localVersion": "20260721091224",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721091303",
+          "name": "20260721091224_performance_fk_indexes"
+        }
+      ]
+    },
+    {
+      "file": "20260721091307_physical_dispatch_stock_provenance.sql",
+      "localVersion": "20260721091307",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721092723",
+          "name": "20260721091307_physical_dispatch_stock_provenance"
+        }
+      ]
+    },
+    {
+      "file": "20260721091327_advanced_analytics_aggregates.sql",
+      "localVersion": "20260721091327",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721092352",
+          "name": "20260721091327_advanced_analytics_aggregates"
+        }
+      ]
+    },
+    {
+      "file": "20260721091345_remove_duplicate_indexes.sql",
+      "localVersion": "20260721091345",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721091400",
+          "name": "20260721091345_remove_duplicate_indexes"
+        }
+      ]
+    },
+    {
+      "file": "20260721091534_restrict_trigger_function_execution.sql",
+      "localVersion": "20260721091534",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721091552",
+          "name": "20260721091534_restrict_trigger_function_execution"
+        }
+      ]
+    },
+    {
+      "file": "20260721091620_quote_atomic_dealer_lineage.sql",
+      "localVersion": "20260721091620",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721092850",
+          "name": "20260721091620_quote_atomic_dealer_lineage"
+        }
+      ]
+    },
+    {
+      "file": "20260721091808_atomic_company_onboarding.sql",
+      "localVersion": "20260721091808",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721091932",
+          "name": "20260721091808_atomic_company_onboarding"
+        }
+      ]
+    },
+    {
+      "file": "20260721093238_lineage_fk_indexes.sql",
+      "localVersion": "20260721093238",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260721093417",
+          "name": "20260721093238_lineage_fk_indexes"
+        }
+      ]
+    },
+    {
+      "file": "20260722000000_production_plan_slots.sql",
+      "localVersion": "20260722000000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260723010000_production_schedule_integrity.sql",
+      "localVersion": "20260723010000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260723020000_atomic_dealer_quote_order_handoff.sql",
+      "localVersion": "20260723020000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260723030000_atomic_system_production_handoff.sql",
+      "localVersion": "20260723030000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260723040000_returned_dispatch_invoice_guard.sql",
+      "localVersion": "20260723040000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260723050000_subscription_entitlement_guard.sql",
+      "localVersion": "20260723050000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260723055000_canonical_factory_minimum_queue.sql",
+      "localVersion": "20260723055000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260723060000_exact_dispatch_manifest_and_consolidation.sql",
+      "localVersion": "20260723060000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260723070000_dispatch_return_credit_notes.sql",
+      "localVersion": "20260723070000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260723080000_production_completion_analytics.sql",
+      "localVersion": "20260723080000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260723090000_notification_read_receipts.sql",
+      "localVersion": "20260723090000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20260809000000_quote_conversion_status_gate_alignment.sql",
+      "localVersion": "20260809000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260809133148",
+          "name": "quote_conversion_status_gate_alignment"
+        }
+      ]
+    },
+    {
+      "file": "20260809000001_widen_app_users_role_check.sql",
+      "localVersion": "20260809000001",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260809133129",
+          "name": "widen_app_users_role_check"
+        }
+      ]
+    },
+    {
+      "file": "20260809000002_expense_approval_and_payment_hardening.sql",
+      "localVersion": "20260809000002",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260809133215",
+          "name": "expense_approval_and_payment_hardening"
+        }
+      ]
+    },
+    {
+      "file": "20260809000003_billet_stock_integrity.sql",
+      "localVersion": "20260809000003",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260809133237",
+          "name": "billet_stock_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20260809000004_production_billet_release_and_compat.sql",
+      "localVersion": "20260809000004",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260809133311",
+          "name": "production_billet_release_and_compat"
+        }
+      ]
+    },
+    {
+      "file": "20260809000005_invoice_reversal_status.sql",
+      "localVersion": "20260809000005",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260809133328",
+          "name": "invoice_reversal_status"
+        }
+      ]
+    },
+    {
+      "file": "20260809000006_revoke_trigger_fn_execute.sql",
+      "localVersion": "20260809000006",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260809133453",
+          "name": "revoke_trigger_fn_execute"
+        }
+      ]
+    },
+    {
+      "file": "20260809000007_process_scrap_recovery_loop.sql",
+      "localVersion": "20260809000007",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260809135011",
+          "name": "process_scrap_recovery_loop"
+        }
+      ]
+    },
+    {
+      "file": "20260809000008_fix_source_expense_link_triggers.sql",
+      "localVersion": "20260809000008",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260809135640",
+          "name": "fix_source_expense_link_triggers"
+        }
+      ]
+    },
+    {
+      "file": "20260809000009_foundry_source_sync_recursion_guard.sql",
+      "localVersion": "20260809000009",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260809140231",
+          "name": "foundry_source_sync_recursion_guard"
+        }
+      ]
+    },
+    {
+      "file": "20260809000010_fix_billet_reconcile_status.sql",
+      "localVersion": "20260809000010",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260809140456",
+          "name": "fix_billet_reconcile_status"
+        }
+      ]
+    },
+    {
+      "file": "20260809000011_expense_payment_update_guard.sql",
+      "localVersion": "20260809000011",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20260810120125",
+          "name": "expense_payment_update_guard"
+        }
+      ]
+    },
+    {
+      "file": "20260810000000_tenant_boundary_and_dealer_workflow_hardening.sql",
+      "localVersion": "20260810000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060105",
+          "name": "20260810000000_tenant_boundary_and_dealer_workflow_hardening"
+        }
+      ]
+    },
+    {
+      "file": "20260810010000_manufacturing_reference_and_material_guards.sql",
+      "localVersion": "20260810010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060108",
+          "name": "20260810010000_manufacturing_reference_and_material_guards"
+        }
+      ]
+    },
+    {
+      "file": "20260810020000_atomic_dealer_order_creation_and_workflow.sql",
+      "localVersion": "20260810020000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060110",
+          "name": "20260810020000_atomic_dealer_order_creation_and_workflow"
+        }
+      ]
+    },
+    {
+      "file": "20260810030000_quote_and_order_financial_integrity.sql",
+      "localVersion": "20260810030000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060112",
+          "name": "20260810030000_quote_and_order_financial_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20260810040000_storage_and_catalog_policy_alignment.sql",
+      "localVersion": "20260810040000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060114",
+          "name": "20260810040000_storage_and_catalog_policy_alignment"
+        }
+      ]
+    },
+    {
+      "file": "20260810050000_factory_queue_weight_runtime_fix.sql",
+      "localVersion": "20260810050000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060116",
+          "name": "20260810050000_factory_queue_weight_runtime_fix"
+        }
+      ]
+    },
+    {
+      "file": "20260812000000_security_and_notification_integrity.sql",
+      "localVersion": "20260812000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060145",
+          "name": "20260812000000_security_and_notification_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20260812010000_dispatch_return_and_manifest_integrity.sql",
+      "localVersion": "20260812010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060148",
+          "name": "20260812010000_dispatch_return_and_manifest_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20260812020000_invite_acceptance_integrity.sql",
+      "localVersion": "20260812020000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060150",
+          "name": "20260812020000_invite_acceptance_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20260812030000_profile_configuration_integrity.sql",
+      "localVersion": "20260812030000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060152",
+          "name": "20260812030000_profile_configuration_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20260918000000_production_source_line_integrity.sql",
+      "localVersion": "20260918000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060154",
+          "name": "20260918000000_production_source_line_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20260929000000_business_logic_fixes.sql",
+      "localVersion": "20260929000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060157",
+          "name": "20260929000000_business_logic_fixes"
+        }
+      ]
+    },
+    {
+      "file": "20260930000000_astra_audit_fixes.sql",
+      "localVersion": "20260930000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060200",
+          "name": "20260930000000_astra_audit_fixes"
+        }
+      ]
+    },
+    {
+      "file": "20261008000000_foundry_material_integrity.sql",
+      "localVersion": "20261008000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060224",
+          "name": "20261008000000_foundry_material_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261008010000_access_projection_integrity.sql",
+      "localVersion": "20261008010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060227",
+          "name": "20261008010000_access_projection_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261008020000_factory_workflow_integrity.sql",
+      "localVersion": "20261008020000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060230",
+          "name": "20261008020000_factory_workflow_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261008030000_configuration_quote_integrity.sql",
+      "localVersion": "20261008030000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060233",
+          "name": "20261008030000_configuration_quote_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261008040000_management_metrics_integrity.sql",
+      "localVersion": "20261008040000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060236",
+          "name": "20261008040000_management_metrics_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261008050000_operation_search_integrity.sql",
+      "localVersion": "20261008050000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060238",
+          "name": "20261008050000_operation_search_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261013000000_audit_workflow_followup.sql",
+      "localVersion": "20261013000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060240",
+          "name": "20261013000000_audit_workflow_followup"
+        }
+      ]
+    },
+    {
+      "file": "20261013010000_dealer_fulfillment_integrity.sql",
+      "localVersion": "20261013010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060243",
+          "name": "20261013010000_dealer_fulfillment_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261015000000_reservation_release_replay_integrity.sql",
+      "localVersion": "20261015000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060333",
+          "name": "20261015000000_reservation_release_replay_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261015010000_reservation_ledger_projection.sql",
+      "localVersion": "20261015010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060335",
+          "name": "20261015010000_reservation_ledger_projection"
+        }
+      ]
+    },
+    {
+      "file": "20261015020000_credit_settlement_exclusivity.sql",
+      "localVersion": "20261015020000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060338",
+          "name": "20261015020000_credit_settlement_exclusivity"
+        }
+      ]
+    },
+    {
+      "file": "20261015030000_credit_note_retry_binding.sql",
+      "localVersion": "20261015030000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060340",
+          "name": "20261015030000_credit_note_retry_binding"
+        }
+      ]
+    },
+    {
+      "file": "20261015040000_direct_priced_orders.sql",
+      "localVersion": "20261015040000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060342",
+          "name": "20261015040000_direct_priced_orders"
+        }
+      ]
+    },
+    {
+      "file": "20261015050000_dispatch_reservation_ledger.sql",
+      "localVersion": "20261015050000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060345",
+          "name": "20261015050000_dispatch_reservation_ledger"
+        }
+      ]
+    },
+    {
+      "file": "20261015060000_order_cancellation_stock_integrity.sql",
+      "localVersion": "20261015060000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060347",
+          "name": "20261015060000_order_cancellation_stock_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261019000000_retained_dispatch_invoices.sql",
+      "localVersion": "20261019000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060425",
+          "name": "20261019000000_retained_dispatch_invoices"
+        }
+      ]
+    },
+    {
+      "file": "20261019010000_terminal_finishing_evidence.sql",
+      "localVersion": "20261019010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060428",
+          "name": "20261019010000_terminal_finishing_evidence"
+        }
+      ]
+    },
+    {
+      "file": "20261019020000_finishing_accepted_dispositions.sql",
+      "localVersion": "20261019020000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060430",
+          "name": "20261019020000_finishing_accepted_dispositions"
+        }
+      ]
+    },
+    {
+      "file": "20261019030000_packaging_material_evidence.sql",
+      "localVersion": "20261019030000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060433",
+          "name": "20261019030000_packaging_material_evidence"
+        }
+      ]
+    },
+    {
+      "file": "20261019040000_finishing_workload_projection.sql",
+      "localVersion": "20261019040000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060436",
+          "name": "20261019040000_finishing_workload_projection"
+        }
+      ]
+    },
+    {
+      "file": "20261019050000_billet_link_repair_integrity.sql",
+      "localVersion": "20261019050000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060438",
+          "name": "20261019050000_billet_link_repair_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261020000000_manual_billet_requirement_lineage.sql",
+      "localVersion": "20261020000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020061032",
+          "name": "20261020000000_manual_billet_requirement_lineage"
+        }
+      ]
+    },
+    {
+      "file": "20261020010000_expense_ledger_integrity.sql",
+      "localVersion": "20261020010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020061529",
+          "name": "20261020010000_expense_ledger_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261020020000_receivables_integrity.sql",
+      "localVersion": "20261020020000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020062956",
+          "name": "20261020020000_receivables_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261020030000_finance_reporting_integrity.sql",
+      "localVersion": "20261020030000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020063338",
+          "name": "20261020030000_finance_reporting_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261020060043_reconcile_historical_audit_columns.sql",
+      "localVersion": "20261020060043",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020060454",
+          "name": "20261020060043_reconcile_historical_audit_columns"
+        }
+      ]
+    },
+    {
+      "file": "20261020061323_close_post_reconciliation_function_grants.sql",
+      "localVersion": "20261020061323",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020061532",
+          "name": "20261020061323_close_post_reconciliation_function_grants"
+        }
+      ]
+    },
+    {
+      "file": "20261020070000_manual_billet_allocation_options.sql",
+      "localVersion": "20261020070000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020085531",
+          "name": "manual_billet_allocation_options"
+        }
+      ]
+    },
+    {
+      "file": "20261020090729_priority_billet_allocation_integrity.sql",
+      "localVersion": "20261020090729",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020092500",
+          "name": "20261020090729_priority_billet_allocation_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261020120000_invoice_supplier_snapshot_contact.sql",
+      "localVersion": "20261020120000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020201639",
+          "name": "20261020120000_invoice_supplier_snapshot_contact"
+        }
+      ]
+    },
+    {
+      "file": "20261020142106_posted_reservation_delivery_lifecycle.sql",
+      "localVersion": "20261020142106",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020201724",
+          "name": "20261020142106_posted_reservation_delivery_lifecycle"
+        }
+      ]
+    },
+    {
+      "file": "20261020162949_production_billet_material_normalization.sql",
+      "localVersion": "20261020162949",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020201748",
+          "name": "20261020162949_production_billet_material_normalization"
+        }
+      ]
+    },
+    {
+      "file": "20261021000000_order_stage_allocation_side_effect.sql",
+      "localVersion": "20261021000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020201752",
+          "name": "20261021000000_order_stage_allocation_side_effect"
+        }
+      ]
+    },
+    {
+      "file": "20261021010000_scrap_and_foundry_source_write_guards.sql",
+      "localVersion": "20261021010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020201818",
+          "name": "20261021010000_scrap_and_foundry_source_write_guards"
+        }
+      ]
+    },
+    {
+      "file": "20261021020000_machine_and_die_status_authority.sql",
+      "localVersion": "20261021020000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020201826",
+          "name": "20261021020000_machine_and_die_status_authority"
+        }
+      ]
+    },
+    {
+      "file": "20261021030000_dispatch_logistics_freeze.sql",
+      "localVersion": "20261021030000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020201837",
+          "name": "20261021030000_dispatch_logistics_freeze"
+        }
+      ]
+    },
+    {
+      "file": "20261021040000_reservation_packing_commercial_lineage.sql",
+      "localVersion": "20261021040000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020201905",
+          "name": "20261021040000_reservation_packing_commercial_lineage"
+        }
+      ]
+    },
+    {
+      "file": "20261021050000_die_schedule_exclusivity.sql",
+      "localVersion": "20261021050000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020201927",
+          "name": "20261021050000_die_schedule_exclusivity"
+        }
+      ]
+    },
+    {
+      "file": "20261021060000_quality_release_rules.sql",
+      "localVersion": "20261021060000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020201948",
+          "name": "20261021060000_quality_release_rules"
+        }
+      ]
+    },
+    {
+      "file": "20261021070000_audit_log_actor_identity.sql",
+      "localVersion": "20261021070000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261020201954",
+          "name": "20261021070000_audit_log_actor_identity"
+        }
+      ]
+    },
+    {
+      "file": "20261021080000_close_low_level_dispatch_rpc.sql",
+      "localVersion": "20261021080000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021133502",
+          "name": "20261021080000_close_low_level_dispatch_rpc"
+        }
+      ]
+    },
+    {
+      "file": "20261021090000_outsourced_billet_commitment_guard.sql",
+      "localVersion": "20261021090000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021133534",
+          "name": "20261021090000_outsourced_billet_commitment_guard"
+        }
+      ]
+    },
+    {
+      "file": "20261021100000_production_cancel_billet_release.sql",
+      "localVersion": "20261021100000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021133636",
+          "name": "20261021100000_production_cancel_billet_release"
+        }
+      ]
+    },
+    {
+      "file": "20261021110000_revoke_client_truncate_and_anon_writes.sql",
+      "localVersion": "20261021110000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021133650",
+          "name": "20261021110000_revoke_client_truncate_and_anon_writes"
+        }
+      ]
+    },
+    {
+      "file": "20261021120000_order_delivery_stage_resolution.sql",
+      "localVersion": "20261021120000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021133713",
+          "name": "20261021120000_order_delivery_stage_resolution"
+        }
+      ]
+    },
+    {
+      "file": "20261021130000_die_identity_and_derived_usage.sql",
+      "localVersion": "20261021130000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021133811",
+          "name": "20261021130000_die_identity_and_derived_usage"
+        }
+      ]
+    },
+    {
+      "file": "20261021140000_dispatch_packaged_weight_cap.sql",
+      "localVersion": "20261021140000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021133844",
+          "name": "20261021140000_dispatch_packaged_weight_cap"
+        }
+      ]
+    },
+    {
+      "file": "20261021150000_production_input_evidence.sql",
+      "localVersion": "20261021150000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021133921",
+          "name": "20261021150000_production_input_evidence"
+        }
+      ]
+    },
+    {
+      "file": "20261021160000_role_explicit_write_policies.sql",
+      "localVersion": "20261021160000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021133950",
+          "name": "20261021160000_role_explicit_write_policies"
+        }
+      ]
+    },
+    {
+      "file": "20261021170000_dispatch_document_amendments.sql",
+      "localVersion": "20261021170000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021134026",
+          "name": "20261021170000_dispatch_document_amendments"
+        }
+      ]
+    },
+    {
+      "file": "20261021180000_machine_maintenance_lifecycle.sql",
+      "localVersion": "20261021180000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021134136",
+          "name": "20261021180000_machine_maintenance_lifecycle"
+        }
+      ]
+    },
+    {
+      "file": "20261021190000_accounting_period_lock.sql",
+      "localVersion": "20261021190000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021134213",
+          "name": "20261021190000_accounting_period_lock"
+        }
+      ]
+    },
+    {
+      "file": "20261021190916_collaboration_procedure_routines.sql",
+      "localVersion": "20261021190916",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021200851",
+          "name": "20261021190916_collaboration_procedure_routines"
+        }
+      ]
+    },
+    {
+      "file": "20261021200000_metal_receipt_plausibility.sql",
+      "localVersion": "20261021200000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021134223",
+          "name": "20261021200000_metal_receipt_plausibility"
+        }
+      ]
+    },
+    {
+      "file": "20261021201325_collaboration_foreign_key_indexes.sql",
+      "localVersion": "20261021201325",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021201717",
+          "name": "20261021201325_collaboration_foreign_key_indexes"
+        }
+      ]
+    },
+    {
+      "file": "20261021210000_scrap_genealogy_and_alloy_segregation.sql",
+      "localVersion": "20261021210000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021134349",
+          "name": "20261021210000_scrap_genealogy_and_alloy_segregation"
+        }
+      ]
+    },
+    {
+      "file": "20261021220000_inventory_ledger_integrity.sql",
+      "localVersion": "20261021220000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021134438",
+          "name": "20261021220000_inventory_ledger_integrity"
+        }
+      ]
+    },
+    {
+      "file": "20261021230000_finished_goods_origin_and_qc_hold.sql",
+      "localVersion": "20261021230000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021134533",
+          "name": "20261021230000_finished_goods_origin_and_qc_hold"
+        }
+      ]
+    },
+    {
+      "file": "20261021240000_casting_results_and_chemistry_release.sql",
+      "localVersion": "20261021240000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021134713",
+          "name": "20261021240000_casting_results_and_chemistry_release"
+        }
+      ]
+    },
+    {
+      "file": "20261021250000_material_dispositions_and_partial_credit_notes.sql",
+      "localVersion": "20261021250000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021134820",
+          "name": "20261021250000_material_dispositions_and_partial_credit_notes"
+        }
+      ]
+    },
+    {
+      "file": "20261021260000_physical_billet_issue_step.sql",
+      "localVersion": "20261021260000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021134901",
+          "name": "20261021260000_physical_billet_issue_step"
+        }
+      ]
+    },
+    {
+      "file": "20261021270000_kpi_definitions.sql",
+      "localVersion": "20261021270000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021135043",
+          "name": "20261021270000_kpi_definitions"
+        }
+      ]
+    },
+    {
+      "file": "20261021280000_profile_spec_change_control.sql",
+      "localVersion": "20261021280000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021135116",
+          "name": "20261021280000_profile_spec_change_control"
+        }
+      ]
+    },
+    {
+      "file": "20261021290000_foundry_single_source_charge_fix.sql",
+      "localVersion": "20261021290000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021135137",
+          "name": "20261021290000_foundry_single_source_charge_fix"
+        }
+      ]
+    },
+    {
+      "file": "20261021290100_operation_page_null_projection.sql",
+      "localVersion": "20261021290100",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021185430",
+          "name": "20261021290100_operation_page_null_projection"
+        }
+      ]
+    },
+    {
+      "file": "20261021300000_reconcile_metal_sources_and_validate.sql",
+      "localVersion": "20261021300000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021135205",
+          "name": "20261021300000_reconcile_metal_sources_and_validate"
+        }
+      ]
+    },
+    {
+      "file": "20261021310000_quote_invoice_rate_basis.sql",
+      "localVersion": "20261021310000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021142053",
+          "name": "20261021310000_quote_invoice_rate_basis"
+        }
+      ]
+    },
+    {
+      "file": "20261021320000_cancelled_batch_phantom_billets.sql",
+      "localVersion": "20261021320000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021143026",
+          "name": "20261021320000_cancelled_batch_phantom_billets"
+        }
+      ]
+    },
+    {
+      "file": "20261021330000_invoice_die_freight_charge_lines.sql",
+      "localVersion": "20261021330000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021185609",
+          "name": "20261021330000_invoice_die_freight_charge_lines"
+        }
+      ]
+    },
+    {
+      "file": "20261022000000_operator_workflow_helpers.sql",
+      "localVersion": "20261022000000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021185730",
+          "name": "20261022000000_operator_workflow_helpers"
+        }
+      ]
+    },
+    {
+      "file": "20261022010000_fk_covering_indexes_and_rls_initplan.sql",
+      "localVersion": "20261022010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261021185749",
+          "name": "20261022010000_fk_covering_indexes_and_rls_initplan"
+        }
+      ]
+    },
+    {
+      "file": "20261022020000_ai_provider_and_report_source_checks.sql",
+      "localVersion": "20261022020000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261022014811",
+          "name": "20261022020000_ai_provider_and_report_source_checks"
+        }
+      ]
+    },
+    {
+      "file": "20261022100000_dispatch_delete_lifecycle_guard.sql",
+      "localVersion": "20261022100000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261022023509",
+          "name": "20261022100000_dispatch_delete_lifecycle_guard"
+        }
+      ]
+    },
+    {
+      "file": "20261022110000_operational_history_retention.sql",
+      "localVersion": "20261022110000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261022023534",
+          "name": "20261022110000_operational_history_retention"
+        }
+      ]
+    },
+    {
+      "file": "20261022120000_profile_master_delete_restrict.sql",
+      "localVersion": "20261022120000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261022023553",
+          "name": "20261022120000_profile_master_delete_restrict"
+        }
+      ]
+    },
+    {
+      "file": "20261022130000_metal_source_disposition.sql",
+      "localVersion": "20261022130000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261022023639",
+          "name": "20261022130000_metal_source_disposition"
+        }
+      ]
+    },
+    {
+      "file": "20261022140000_customer_history_retention.sql",
+      "localVersion": "20261022140000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102154144",
+          "name": "20261022140000_customer_history_retention"
+        }
+      ]
+    },
+    {
+      "file": "20261022200000_quote_revision_comparison.sql",
+      "localVersion": "20261022200000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102154232",
+          "name": "20261022200000_quote_revision_comparison"
+        }
+      ]
+    },
+    {
+      "file": "20261022210000_production_readiness_and_holds.sql",
+      "localVersion": "20261022210000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102154323",
+          "name": "20261022210000_production_readiness_and_holds"
+        }
+      ]
+    },
+    {
+      "file": "20261022220000_shift_handover_summaries.sql",
+      "localVersion": "20261022220000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102154406",
+          "name": "20261022220000_shift_handover_summaries"
+        }
+      ]
+    },
+    {
+      "file": "20261022230000_order_line_delivery_schedule.sql",
+      "localVersion": "20261022230000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102154443",
+          "name": "20261022230000_order_line_delivery_schedule"
+        }
+      ]
+    },
+    {
+      "file": "20261022240000_customer_projects.sql",
+      "localVersion": "20261022240000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102154533",
+          "name": "20261022240000_customer_projects"
+        }
+      ]
+    },
+    {
+      "file": "20261022250000_profile_stock_balance_explanation.sql",
+      "localVersion": "20261022250000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102154614",
+          "name": "20261022250000_profile_stock_balance_explanation"
+        }
+      ]
+    },
+    {
+      "file": "20261022260000_department_handoffs.sql",
+      "localVersion": "20261022260000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102154651",
+          "name": "20261022260000_department_handoffs"
+        }
+      ]
+    },
+    {
+      "file": "20261022270000_bulk_queue_actions.sql",
+      "localVersion": "20261022270000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102154729",
+          "name": "20261022270000_bulk_queue_actions"
+        }
+      ]
+    },
+    {
+      "file": "20261022280000_approval_inbox.sql",
+      "localVersion": "20261022280000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102154808",
+          "name": "20261022280000_approval_inbox"
+        }
+      ]
+    },
+    {
+      "file": "20261022290000_handoff_acceptance.sql",
+      "localVersion": "20261022290000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102154900",
+          "name": "20261022290000_handoff_acceptance"
+        }
+      ]
+    },
+    {
+      "file": "20261022300000_turnaround_targets.sql",
+      "localVersion": "20261022300000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102154942",
+          "name": "20261022300000_turnaround_targets"
+        }
+      ]
+    },
+    {
+      "file": "20261022310000_task_delegation.sql",
+      "localVersion": "20261022310000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102155030",
+          "name": "20261022310000_task_delegation"
+        }
+      ]
+    },
+    {
+      "file": "20261022320000_inspection_plans.sql",
+      "localVersion": "20261022320000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102155111",
+          "name": "20261022320000_inspection_plans"
+        }
+      ]
+    },
+    {
+      "file": "20261022330000_competencies.sql",
+      "localVersion": "20261022330000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102155157",
+          "name": "20261022330000_competencies"
+        }
+      ]
+    },
+    {
+      "file": "20261022340000_costing_rates.sql",
+      "localVersion": "20261022340000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102155246",
+          "name": "20261022340000_costing_rates"
+        }
+      ]
+    },
+    {
+      "file": "20261022350000_task_trigger_rules.sql",
+      "localVersion": "20261022350000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102155404",
+          "name": "20261022350000_task_trigger_rules"
+        }
+      ]
+    },
+    {
+      "file": "20261022360000_task_completion_criteria.sql",
+      "localVersion": "20261022360000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102155515",
+          "name": "20261022360000_task_completion_criteria"
+        }
+      ]
+    },
+    {
+      "file": "20261022370000_record_subscriptions.sql",
+      "localVersion": "20261022370000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102155632",
+          "name": "20261022370000_record_subscriptions"
+        }
+      ]
+    },
+    {
+      "file": "20261022380000_exception_requests.sql",
+      "localVersion": "20261022380000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102155736",
+          "name": "20261022380000_exception_requests"
+        }
+      ]
+    },
+    {
+      "file": "20261022390000_procedure_versions.sql",
+      "localVersion": "20261022390000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102155849",
+          "name": "20261022390000_procedure_versions"
+        }
+      ]
+    },
+    {
+      "file": "20261022400000_task_blueprints.sql",
+      "localVersion": "20261022400000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160003",
+          "name": "20261022400000_task_blueprints"
+        }
+      ]
+    },
+    {
+      "file": "20261022410000_procedure_effectiveness.sql",
+      "localVersion": "20261022410000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160108",
+          "name": "20261022410000_procedure_effectiveness"
+        }
+      ]
+    },
+    {
+      "file": "20261028010000_guided_sop_execution.sql",
+      "localVersion": "20261028010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160215",
+          "name": "20261028010000_guided_sop_execution"
+        }
+      ]
+    },
+    {
+      "file": "20261028020000_sop_recovery_and_observation.sql",
+      "localVersion": "20261028020000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160301",
+          "name": "20261028020000_sop_recovery_and_observation"
+        }
+      ]
+    },
+    {
+      "file": "20261028030000_customer_step_requirements.sql",
+      "localVersion": "20261028030000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160340",
+          "name": "20261028030000_customer_step_requirements"
+        }
+      ]
+    },
+    {
+      "file": "20261028040000_sop_qualification_versions.sql",
+      "localVersion": "20261028040000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160358",
+          "name": "20261028040000_sop_qualification_versions"
+        }
+      ]
+    },
+    {
+      "file": "20261028100000_commercial_review.sql",
+      "localVersion": "20261028100000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160429",
+          "name": "20261028100000_commercial_review"
+        }
+      ]
+    },
+    {
+      "file": "20261028110000_quote_party_population.sql",
+      "localVersion": "20261028110000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160500",
+          "name": "20261028110000_quote_party_population"
+        }
+      ]
+    },
+    {
+      "file": "20261028120000_profile_technical_options.sql",
+      "localVersion": "20261028120000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160552",
+          "name": "20261028120000_profile_technical_options"
+        }
+      ]
+    },
+    {
+      "file": "20261028130000_material_suggestions.sql",
+      "localVersion": "20261028130000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160618",
+          "name": "20261028130000_material_suggestions"
+        }
+      ]
+    },
+    {
+      "file": "20261028140000_order_transaction_progress.sql",
+      "localVersion": "20261028140000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160640",
+          "name": "20261028140000_order_transaction_progress"
+        }
+      ]
+    },
+    {
+      "file": "20261028150000_reusable_document_links.sql",
+      "localVersion": "20261028150000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160710",
+          "name": "20261028150000_reusable_document_links"
+        }
+      ]
+    },
+    {
+      "file": "20261028160000_supplier_offer_comparisons.sql",
+      "localVersion": "20261028160000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160759",
+          "name": "20261028160000_supplier_offer_comparisons"
+        }
+      ]
+    },
+    {
+      "file": "20261028170000_accepted_order_source_snapshots.sql",
+      "localVersion": "20261028170000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160828",
+          "name": "20261028170000_accepted_order_source_snapshots"
+        }
+      ]
+    },
+    {
+      "file": "20261029010000_downstream_party_context.sql",
+      "localVersion": "20261029010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160853",
+          "name": "20261029010000_downstream_party_context"
+        }
+      ]
+    },
+    {
+      "file": "20261029020000_prepared_physical_bundles.sql",
+      "localVersion": "20261029020000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160919",
+          "name": "20261029020000_prepared_physical_bundles"
+        }
+      ]
+    },
+    {
+      "file": "20261029030000_invoice_communication_preview.sql",
+      "localVersion": "20261029030000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160947",
+          "name": "20261029030000_invoice_communication_preview"
+        }
+      ]
+    },
+    {
+      "file": "20261029040000_workstation_sessions.sql",
+      "localVersion": "20261029040000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102160951",
+          "name": "20261029040000_workstation_sessions"
+        }
+      ]
+    },
+    {
+      "file": "20261029050000_stock_manufacturing_requirements.sql",
+      "localVersion": "20261029050000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102161053",
+          "name": "20261029050000_stock_manufacturing_requirements"
+        }
+      ]
+    },
+    {
+      "file": "20261029060000_cutting_requirements_and_actuals.sql",
+      "localVersion": "20261029060000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102161153",
+          "name": "20261029060000_cutting_requirements_and_actuals"
+        }
+      ]
+    },
+    {
+      "file": "20261029070000_machine_usage_events.sql",
+      "localVersion": "20261029070000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102161237",
+          "name": "20261029070000_machine_usage_events"
+        }
+      ]
+    },
+    {
+      "file": "20261029100000_quote_physical_manufacturing_basis.sql",
+      "localVersion": "20261029100000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102161306",
+          "name": "20261029100000_quote_physical_manufacturing_basis"
+        }
+      ]
+    },
+    {
+      "file": "20261029110000_purchase_receipt_matching.sql",
+      "localVersion": "20261029110000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102161554",
+          "name": "20261029110000_purchase_receipt_matching"
+        }
+      ]
+    },
+    {
+      "file": "20261029120000_factory_capacity_and_loads.sql",
+      "localVersion": "20261029120000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102161702",
+          "name": "20261029120000_factory_capacity_and_loads"
+        }
+      ]
+    },
+    {
+      "file": "20261029120001_vehicle_load_proposals.sql",
+      "localVersion": "20261029120001",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102161826",
+          "name": "20261029120001_vehicle_load_proposals"
+        }
+      ]
+    },
+    {
+      "file": "20261029120002_vehicle_load_release.sql",
+      "localVersion": "20261029120002",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102161846",
+          "name": "20261029120002_vehicle_load_release"
+        }
+      ]
+    },
+    {
+      "file": "20261029130000_financial_workflow_review.sql",
+      "localVersion": "20261029130000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102162015",
+          "name": "20261029130000_financial_workflow_review"
+        }
+      ]
+    },
+    {
+      "file": "20261029140000_reviewed_master_consolidation.sql",
+      "localVersion": "20261029140000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102162124",
+          "name": "20261029140000_reviewed_master_consolidation"
+        }
+      ]
+    },
+    {
+      "file": "20261029141000_partial_line_balances.sql",
+      "localVersion": "20261029141000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102162127",
+          "name": "20261029141000_partial_line_balances"
+        }
+      ]
+    },
+    {
+      "file": "20261029142000_connected_return_receipts.sql",
+      "localVersion": "20261029142000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102162236",
+          "name": "20261029142000_connected_return_receipts"
+        }
+      ]
+    },
+    {
+      "file": "20261029143000_source_reviews_and_reconciliation.sql",
+      "localVersion": "20261029143000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102162321",
+          "name": "20261029143000_source_reviews_and_reconciliation"
+        }
+      ]
+    },
+    {
+      "file": "20261029144000_customer_self_service.sql",
+      "localVersion": "20261029144000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102162350",
+          "name": "20261029144000_customer_self_service"
+        }
+      ]
+    },
+    {
+      "file": "20261029150000_configuration_output_release.sql",
+      "localVersion": "20261029150000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102162524",
+          "name": "20261029150000_configuration_output_release"
+        }
+      ]
+    },
+    {
+      "file": "20261103010000_pin_requirement_stage_role_search_path.sql",
+      "localVersion": "20261103010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261102191636",
+          "name": "20261103010000_pin_requirement_stage_role_search_path"
+        }
+      ]
+    },
+    {
+      "file": "20261103100000_november_coordination.sql",
+      "localVersion": "20261103100000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261104083456",
+          "name": "november_coordination_part1"
+        },
+        {
+          "version": "20261104094525",
+          "name": "november_coordination_part2"
+        },
+        {
+          "version": "20261104094601",
+          "name": "november_coordination_part3"
+        }
+      ]
+    },
+    {
+      "file": "20261103200000_november_operations_control.sql",
+      "localVersion": "20261103200000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261104094805",
+          "name": "november_operations_control_part1"
+        },
+        {
+          "version": "20261104094936",
+          "name": "november_operations_control_part2"
+        },
+        {
+          "version": "20261104095143",
+          "name": "november_operations_control_part3"
+        }
+      ]
+    },
+    {
+      "file": "20261103300000_november_assurance.sql",
+      "localVersion": "20261103300000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20261103400000_november_lifecycle.sql",
+      "localVersion": "20261103400000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261104095341",
+          "name": "november_lifecycle_part1"
+        },
+        {
+          "version": "20261104095535",
+          "name": "november_lifecycle_part2"
+        },
+        {
+          "version": "20261104095657",
+          "name": "november_lifecycle_part3"
+        },
+        {
+          "version": "20261104095924",
+          "name": "november_lifecycle_part4"
+        },
+        {
+          "version": "20261104123351",
+          "name": "november_lifecycle_part5"
+        },
+        {
+          "version": "20261104123421",
+          "name": "november_lifecycle_part6"
+        }
+      ]
+    },
+    {
+      "file": "20261103500000_november_improvement.sql",
+      "localVersion": "20261103500000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261104214737",
+          "name": "november_improvement_part1"
+        },
+        {
+          "version": "20261104214837",
+          "name": "november_improvement_part2"
+        },
+        {
+          "version": "20261104214934",
+          "name": "november_improvement_part3"
+        },
+        {
+          "version": "20261104215028",
+          "name": "november_improvement_part4"
+        },
+        {
+          "version": "20261104215123",
+          "name": "november_improvement_part5"
+        }
+      ]
+    },
+    {
+      "file": "20261103600000_november_execution.sql",
+      "localVersion": "20261103600000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261105195501",
+          "name": "november_execution_part01"
+        },
+        {
+          "version": "20261105195602",
+          "name": "november_execution_part02"
+        },
+        {
+          "version": "20261105195717",
+          "name": "november_execution_part03"
+        },
+        {
+          "version": "20261105195821",
+          "name": "november_execution_part04"
+        },
+        {
+          "version": "20261105195927",
+          "name": "november_execution_part05"
+        },
+        {
+          "version": "20261105200035",
+          "name": "november_execution_part06"
+        },
+        {
+          "version": "20261105200151",
+          "name": "november_execution_part07"
+        },
+        {
+          "version": "20261105200155",
+          "name": "november_execution_part08"
+        },
+        {
+          "version": "20261105200232",
+          "name": "november_execution_part09"
+        }
+      ]
+    },
+    {
+      "file": "20261103700000_november_commercial.sql",
+      "localVersion": "20261103700000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261105200341",
+          "name": "november_commercial_part01"
+        },
+        {
+          "version": "20261105200450",
+          "name": "november_commercial_part02"
+        },
+        {
+          "version": "20261105200537",
+          "name": "november_commercial_part03"
+        },
+        {
+          "version": "20261105200647",
+          "name": "november_commercial_part04"
+        },
+        {
+          "version": "20261105200803",
+          "name": "november_commercial_part05"
+        },
+        {
+          "version": "20261105200902",
+          "name": "november_commercial_part06"
+        },
+        {
+          "version": "20261105201011",
+          "name": "november_commercial_part07"
+        },
+        {
+          "version": "20261105201122",
+          "name": "november_commercial_part08"
+        },
+        {
+          "version": "20261105201158",
+          "name": "november_commercial_part09"
+        }
+      ]
+    },
+    {
+      "file": "20261103800000_november_specialist.sql",
+      "localVersion": "20261103800000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261105201307",
+          "name": "november_specialist_part01"
+        },
+        {
+          "version": "20261105201416",
+          "name": "november_specialist_part02"
+        },
+        {
+          "version": "20261105201531",
+          "name": "november_specialist_part03"
+        },
+        {
+          "version": "20261105201709",
+          "name": "november_specialist_part04"
+        },
+        {
+          "version": "20261105201808",
+          "name": "november_specialist_part05"
+        },
+        {
+          "version": "20261105201912",
+          "name": "november_specialist_part06"
+        },
+        {
+          "version": "20261105202015",
+          "name": "november_specialist_part07"
+        },
+        {
+          "version": "20261105202101",
+          "name": "november_specialist_part08"
+        },
+        {
+          "version": "20261105202213",
+          "name": "november_specialist_part09"
+        },
+        {
+          "version": "20261105202303",
+          "name": "november_specialist_part10"
+        },
+        {
+          "version": "20261105202355",
+          "name": "november_specialist_part11"
+        },
+        {
+          "version": "20261105202449",
+          "name": "november_specialist_part12"
+        },
+        {
+          "version": "20261105202618",
+          "name": "november_specialist_part13"
+        },
+        {
+          "version": "20261105202650",
+          "name": "november_specialist_part14"
+        }
+      ]
+    },
+    {
+      "file": "20261109000000_single_tenant_omalco.sql",
+      "localVersion": "20261109000000",
+      "exactVersion": false,
+      "nameMatches": []
+    },
+    {
+      "file": "20261109010000_stock_snapshot.sql",
+      "localVersion": "20261109010000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261109123345",
+          "name": "stock_snapshot"
+        }
+      ]
+    },
+    {
+      "file": "20261109100000_autopilot_batch_1.sql",
+      "localVersion": "20261109100000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261110144752",
+          "name": "autopilot_batch_1_part01"
+        },
+        {
+          "version": "20261110144831",
+          "name": "autopilot_batch_1_part02"
+        },
+        {
+          "version": "20261110144933",
+          "name": "autopilot_batch_1_part03"
+        },
+        {
+          "version": "20261110145034",
+          "name": "autopilot_batch_1_part04"
+        },
+        {
+          "version": "20261110145124",
+          "name": "autopilot_batch_1_part05"
+        },
+        {
+          "version": "20261110145232",
+          "name": "autopilot_batch_1_part06"
+        },
+        {
+          "version": "20261110145415",
+          "name": "autopilot_batch_1_part07"
+        },
+        {
+          "version": "20261110145453",
+          "name": "autopilot_batch_1_part08"
+        }
+      ]
+    },
+    {
+      "file": "20261110100000_autopilot_batch_2.sql",
+      "localVersion": "20261110100000",
+      "exactVersion": false,
+      "nameMatches": [
+        {
+          "version": "20261110145602",
+          "name": "autopilot_batch_2_part01"
+        },
+        {
+          "version": "20261110145742",
+          "name": "autopilot_batch_2_part02"
+        },
+        {
+          "version": "20261110145930",
+          "name": "autopilot_batch_2_part04"
+        },
+        {
+          "version": "20261110150038",
+          "name": "autopilot_batch_2_part05"
+        },
+        {
+          "version": "20261110150152",
+          "name": "autopilot_batch_2_part06"
+        },
+        {
+          "version": "20261110150311",
+          "name": "autopilot_batch_2_part07"
+        },
+        {
+          "version": "20261110201250",
+          "name": "autopilot_batch_2_part08"
+        }
+      ]
+    },
+    {
+      "file": "20261111100000_autopilot_batch_3.sql",
+      "localVersion": "20261111100000",
+      "exactVersion": false,
+      "nameMatches": []
+    }
+  ],
+  "hostedLedger": [
+    {
+      "version": "20260602094754",
+      "name": "0012_enterprise_phase5_qr_update.sql"
+    },
+    {
+      "version": "20260721085917",
+      "name": "20260715000000_atomic_business_workflows"
+    },
+    {
+      "version": "20260721090049",
+      "name": "0036_phase_5_to_10_operational_hardening"
+    },
+    {
+      "version": "20260721090051",
+      "name": "0059_reports_storage_bucket"
+    },
+    {
+      "version": "20260721090106",
+      "name": "20260715010000_role_aware_sensitive_rls"
+    },
+    {
+      "version": "20260721090108",
+      "name": "20260715011000_legacy_role_rls_observability"
+    },
+    {
+      "version": "20260721090110",
+      "name": "20260715020000_documents_storage_bucket"
+    },
+    {
+      "version": "20260721090112",
+      "name": "20260715030000_distributed_api_rate_limits"
+    },
+    {
+      "version": "20260721090114",
+      "name": "20260715040000_documents_storage_role_rls"
+    },
+    {
+      "version": "20260721090116",
+      "name": "20260715041000_mixed_ownership_role_rls"
+    },
+    {
+      "version": "20260721090232",
+      "name": "20260718009999_financial_payment_compatibility"
+    },
+    {
+      "version": "20260721090243",
+      "name": "20260718010000_financial_closure"
+    },
+    {
+      "version": "20260721090245",
+      "name": "20260718010100_financial_collection_analytics"
+    },
+    {
+      "version": "20260721090247",
+      "name": "20260718020000_production_quality_packaging_handoffs"
+    },
+    {
+      "version": "20260721090249",
+      "name": "20260718020500_finishing_route_and_quality_yield"
+    },
+    {
+      "version": "20260721090252",
+      "name": "20260718021000_dispatch_readiness_and_delivery"
+    },
+    {
+      "version": "20260721090254",
+      "name": "20260718021500_floor_output_and_finishing_workflows"
+    },
+    {
+      "version": "20260721090256",
+      "name": "20260718040000_report_builder_data_sources"
+    },
+    {
+      "version": "20260721090258",
+      "name": "20260718050000_customer_accepted_quote_orders"
+    },
+    {
+      "version": "20260721090300",
+      "name": "20260718051000_quote_status_transitions"
+    },
+    {
+      "version": "20260721090301",
+      "name": "20260718052000_invoice_packing_line_parity"
+    },
+    {
+      "version": "20260721090303",
+      "name": "20260718053000_reservation_consumption_safety"
+    },
+    {
+      "version": "20260721090305",
+      "name": "20260718054000_dispatch_proof_upload"
+    },
+    {
+      "version": "20260721090359",
+      "name": "20260721091000_security_advisor_cleanup"
+    },
+    {
+      "version": "20260721091303",
+      "name": "20260721091224_performance_fk_indexes"
+    },
+    {
+      "version": "20260721091400",
+      "name": "20260721091345_remove_duplicate_indexes"
+    },
+    {
+      "version": "20260721091552",
+      "name": "20260721091534_restrict_trigger_function_execution"
+    },
+    {
+      "version": "20260721091932",
+      "name": "20260721091808_atomic_company_onboarding"
+    },
+    {
+      "version": "20260721092352",
+      "name": "20260721091327_advanced_analytics_aggregates"
+    },
+    {
+      "version": "20260721092723",
+      "name": "20260721091307_physical_dispatch_stock_provenance"
+    },
+    {
+      "version": "20260721092850",
+      "name": "20260721091620_quote_atomic_dealer_lineage"
+    },
+    {
+      "version": "20260721093417",
+      "name": "20260721093238_lineage_fk_indexes"
+    },
+    {
+      "version": "20260809133129",
+      "name": "widen_app_users_role_check"
+    },
+    {
+      "version": "20260809133148",
+      "name": "quote_conversion_status_gate_alignment"
+    },
+    {
+      "version": "20260809133215",
+      "name": "expense_approval_and_payment_hardening"
+    },
+    {
+      "version": "20260809133237",
+      "name": "billet_stock_integrity"
+    },
+    {
+      "version": "20260809133311",
+      "name": "production_billet_release_and_compat"
+    },
+    {
+      "version": "20260809133328",
+      "name": "invoice_reversal_status"
+    },
+    {
+      "version": "20260809133453",
+      "name": "revoke_trigger_fn_execute"
+    },
+    {
+      "version": "20260809135011",
+      "name": "process_scrap_recovery_loop"
+    },
+    {
+      "version": "20260809135640",
+      "name": "fix_source_expense_link_triggers"
+    },
+    {
+      "version": "20260809140231",
+      "name": "foundry_source_sync_recursion_guard"
+    },
+    {
+      "version": "20260809140456",
+      "name": "fix_billet_reconcile_status"
+    },
+    {
+      "version": "20260810120125",
+      "name": "expense_payment_update_guard"
+    },
+    {
+      "version": "20261020060105",
+      "name": "20260810000000_tenant_boundary_and_dealer_workflow_hardening"
+    },
+    {
+      "version": "20261020060108",
+      "name": "20260810010000_manufacturing_reference_and_material_guards"
+    },
+    {
+      "version": "20261020060110",
+      "name": "20260810020000_atomic_dealer_order_creation_and_workflow"
+    },
+    {
+      "version": "20261020060112",
+      "name": "20260810030000_quote_and_order_financial_integrity"
+    },
+    {
+      "version": "20261020060114",
+      "name": "20260810040000_storage_and_catalog_policy_alignment"
+    },
+    {
+      "version": "20261020060116",
+      "name": "20260810050000_factory_queue_weight_runtime_fix"
+    },
+    {
+      "version": "20261020060145",
+      "name": "20260812000000_security_and_notification_integrity"
+    },
+    {
+      "version": "20261020060148",
+      "name": "20260812010000_dispatch_return_and_manifest_integrity"
+    },
+    {
+      "version": "20261020060150",
+      "name": "20260812020000_invite_acceptance_integrity"
+    },
+    {
+      "version": "20261020060152",
+      "name": "20260812030000_profile_configuration_integrity"
+    },
+    {
+      "version": "20261020060154",
+      "name": "20260918000000_production_source_line_integrity"
+    },
+    {
+      "version": "20261020060157",
+      "name": "20260929000000_business_logic_fixes"
+    },
+    {
+      "version": "20261020060200",
+      "name": "20260930000000_astra_audit_fixes"
+    },
+    {
+      "version": "20261020060224",
+      "name": "20261008000000_foundry_material_integrity"
+    },
+    {
+      "version": "20261020060227",
+      "name": "20261008010000_access_projection_integrity"
+    },
+    {
+      "version": "20261020060230",
+      "name": "20261008020000_factory_workflow_integrity"
+    },
+    {
+      "version": "20261020060233",
+      "name": "20261008030000_configuration_quote_integrity"
+    },
+    {
+      "version": "20261020060236",
+      "name": "20261008040000_management_metrics_integrity"
+    },
+    {
+      "version": "20261020060238",
+      "name": "20261008050000_operation_search_integrity"
+    },
+    {
+      "version": "20261020060240",
+      "name": "20261013000000_audit_workflow_followup"
+    },
+    {
+      "version": "20261020060243",
+      "name": "20261013010000_dealer_fulfillment_integrity"
+    },
+    {
+      "version": "20261020060333",
+      "name": "20261015000000_reservation_release_replay_integrity"
+    },
+    {
+      "version": "20261020060335",
+      "name": "20261015010000_reservation_ledger_projection"
+    },
+    {
+      "version": "20261020060338",
+      "name": "20261015020000_credit_settlement_exclusivity"
+    },
+    {
+      "version": "20261020060340",
+      "name": "20261015030000_credit_note_retry_binding"
+    },
+    {
+      "version": "20261020060342",
+      "name": "20261015040000_direct_priced_orders"
+    },
+    {
+      "version": "20261020060345",
+      "name": "20261015050000_dispatch_reservation_ledger"
+    },
+    {
+      "version": "20261020060347",
+      "name": "20261015060000_order_cancellation_stock_integrity"
+    },
+    {
+      "version": "20261020060425",
+      "name": "20261019000000_retained_dispatch_invoices"
+    },
+    {
+      "version": "20261020060428",
+      "name": "20261019010000_terminal_finishing_evidence"
+    },
+    {
+      "version": "20261020060430",
+      "name": "20261019020000_finishing_accepted_dispositions"
+    },
+    {
+      "version": "20261020060433",
+      "name": "20261019030000_packaging_material_evidence"
+    },
+    {
+      "version": "20261020060436",
+      "name": "20261019040000_finishing_workload_projection"
+    },
+    {
+      "version": "20261020060438",
+      "name": "20261019050000_billet_link_repair_integrity"
+    },
+    {
+      "version": "20261020060454",
+      "name": "20261020060043_reconcile_historical_audit_columns"
+    },
+    {
+      "version": "20261020061032",
+      "name": "20261020000000_manual_billet_requirement_lineage"
+    },
+    {
+      "version": "20261020061529",
+      "name": "20261020010000_expense_ledger_integrity"
+    },
+    {
+      "version": "20261020061532",
+      "name": "20261020061323_close_post_reconciliation_function_grants"
+    },
+    {
+      "version": "20261020062956",
+      "name": "20261020020000_receivables_integrity"
+    },
+    {
+      "version": "20261020063338",
+      "name": "20261020030000_finance_reporting_integrity"
+    },
+    {
+      "version": "20261020085531",
+      "name": "manual_billet_allocation_options"
+    },
+    {
+      "version": "20261020092500",
+      "name": "20261020090729_priority_billet_allocation_integrity"
+    },
+    {
+      "version": "20261020201639",
+      "name": "20261020120000_invoice_supplier_snapshot_contact"
+    },
+    {
+      "version": "20261020201724",
+      "name": "20261020142106_posted_reservation_delivery_lifecycle"
+    },
+    {
+      "version": "20261020201748",
+      "name": "20261020162949_production_billet_material_normalization"
+    },
+    {
+      "version": "20261020201752",
+      "name": "20261021000000_order_stage_allocation_side_effect"
+    },
+    {
+      "version": "20261020201818",
+      "name": "20261021010000_scrap_and_foundry_source_write_guards"
+    },
+    {
+      "version": "20261020201826",
+      "name": "20261021020000_machine_and_die_status_authority"
+    },
+    {
+      "version": "20261020201837",
+      "name": "20261021030000_dispatch_logistics_freeze"
+    },
+    {
+      "version": "20261020201905",
+      "name": "20261021040000_reservation_packing_commercial_lineage"
+    },
+    {
+      "version": "20261020201927",
+      "name": "20261021050000_die_schedule_exclusivity"
+    },
+    {
+      "version": "20261020201948",
+      "name": "20261021060000_quality_release_rules"
+    },
+    {
+      "version": "20261020201954",
+      "name": "20261021070000_audit_log_actor_identity"
+    },
+    {
+      "version": "20261021133502",
+      "name": "20261021080000_close_low_level_dispatch_rpc"
+    },
+    {
+      "version": "20261021133534",
+      "name": "20261021090000_outsourced_billet_commitment_guard"
+    },
+    {
+      "version": "20261021133636",
+      "name": "20261021100000_production_cancel_billet_release"
+    },
+    {
+      "version": "20261021133650",
+      "name": "20261021110000_revoke_client_truncate_and_anon_writes"
+    },
+    {
+      "version": "20261021133713",
+      "name": "20261021120000_order_delivery_stage_resolution"
+    },
+    {
+      "version": "20261021133811",
+      "name": "20261021130000_die_identity_and_derived_usage"
+    },
+    {
+      "version": "20261021133844",
+      "name": "20261021140000_dispatch_packaged_weight_cap"
+    },
+    {
+      "version": "20261021133921",
+      "name": "20261021150000_production_input_evidence"
+    },
+    {
+      "version": "20261021133950",
+      "name": "20261021160000_role_explicit_write_policies"
+    },
+    {
+      "version": "20261021134026",
+      "name": "20261021170000_dispatch_document_amendments"
+    },
+    {
+      "version": "20261021134136",
+      "name": "20261021180000_machine_maintenance_lifecycle"
+    },
+    {
+      "version": "20261021134213",
+      "name": "20261021190000_accounting_period_lock"
+    },
+    {
+      "version": "20261021134223",
+      "name": "20261021200000_metal_receipt_plausibility"
+    },
+    {
+      "version": "20261021134349",
+      "name": "20261021210000_scrap_genealogy_and_alloy_segregation"
+    },
+    {
+      "version": "20261021134438",
+      "name": "20261021220000_inventory_ledger_integrity"
+    },
+    {
+      "version": "20261021134533",
+      "name": "20261021230000_finished_goods_origin_and_qc_hold"
+    },
+    {
+      "version": "20261021134713",
+      "name": "20261021240000_casting_results_and_chemistry_release"
+    },
+    {
+      "version": "20261021134820",
+      "name": "20261021250000_material_dispositions_and_partial_credit_notes"
+    },
+    {
+      "version": "20261021134901",
+      "name": "20261021260000_physical_billet_issue_step"
+    },
+    {
+      "version": "20261021135043",
+      "name": "20261021270000_kpi_definitions"
+    },
+    {
+      "version": "20261021135116",
+      "name": "20261021280000_profile_spec_change_control"
+    },
+    {
+      "version": "20261021135137",
+      "name": "20261021290000_foundry_single_source_charge_fix"
+    },
+    {
+      "version": "20261021135205",
+      "name": "20261021300000_reconcile_metal_sources_and_validate"
+    },
+    {
+      "version": "20261021142053",
+      "name": "20261021310000_quote_invoice_rate_basis"
+    },
+    {
+      "version": "20261021143026",
+      "name": "20261021320000_cancelled_batch_phantom_billets"
+    },
+    {
+      "version": "20261021185430",
+      "name": "20261021290100_operation_page_null_projection"
+    },
+    {
+      "version": "20261021185609",
+      "name": "20261021330000_invoice_die_freight_charge_lines"
+    },
+    {
+      "version": "20261021185730",
+      "name": "20261022000000_operator_workflow_helpers"
+    },
+    {
+      "version": "20261021185749",
+      "name": "20261022010000_fk_covering_indexes_and_rls_initplan"
+    },
+    {
+      "version": "20261021200851",
+      "name": "20261021190916_collaboration_procedure_routines"
+    },
+    {
+      "version": "20261021201717",
+      "name": "20261021201325_collaboration_foreign_key_indexes"
+    },
+    {
+      "version": "20261022014811",
+      "name": "20261022020000_ai_provider_and_report_source_checks"
+    },
+    {
+      "version": "20261022023509",
+      "name": "20261022100000_dispatch_delete_lifecycle_guard"
+    },
+    {
+      "version": "20261022023534",
+      "name": "20261022110000_operational_history_retention"
+    },
+    {
+      "version": "20261022023553",
+      "name": "20261022120000_profile_master_delete_restrict"
+    },
+    {
+      "version": "20261022023639",
+      "name": "20261022130000_metal_source_disposition"
+    },
+    {
+      "version": "20261102154144",
+      "name": "20261022140000_customer_history_retention"
+    },
+    {
+      "version": "20261102154232",
+      "name": "20261022200000_quote_revision_comparison"
+    },
+    {
+      "version": "20261102154323",
+      "name": "20261022210000_production_readiness_and_holds"
+    },
+    {
+      "version": "20261102154406",
+      "name": "20261022220000_shift_handover_summaries"
+    },
+    {
+      "version": "20261102154443",
+      "name": "20261022230000_order_line_delivery_schedule"
+    },
+    {
+      "version": "20261102154533",
+      "name": "20261022240000_customer_projects"
+    },
+    {
+      "version": "20261102154614",
+      "name": "20261022250000_profile_stock_balance_explanation"
+    },
+    {
+      "version": "20261102154651",
+      "name": "20261022260000_department_handoffs"
+    },
+    {
+      "version": "20261102154729",
+      "name": "20261022270000_bulk_queue_actions"
+    },
+    {
+      "version": "20261102154808",
+      "name": "20261022280000_approval_inbox"
+    },
+    {
+      "version": "20261102154900",
+      "name": "20261022290000_handoff_acceptance"
+    },
+    {
+      "version": "20261102154942",
+      "name": "20261022300000_turnaround_targets"
+    },
+    {
+      "version": "20261102155030",
+      "name": "20261022310000_task_delegation"
+    },
+    {
+      "version": "20261102155111",
+      "name": "20261022320000_inspection_plans"
+    },
+    {
+      "version": "20261102155157",
+      "name": "20261022330000_competencies"
+    },
+    {
+      "version": "20261102155246",
+      "name": "20261022340000_costing_rates"
+    },
+    {
+      "version": "20261102155404",
+      "name": "20261022350000_task_trigger_rules"
+    },
+    {
+      "version": "20261102155515",
+      "name": "20261022360000_task_completion_criteria"
+    },
+    {
+      "version": "20261102155632",
+      "name": "20261022370000_record_subscriptions"
+    },
+    {
+      "version": "20261102155736",
+      "name": "20261022380000_exception_requests"
+    },
+    {
+      "version": "20261102155849",
+      "name": "20261022390000_procedure_versions"
+    },
+    {
+      "version": "20261102160003",
+      "name": "20261022400000_task_blueprints"
+    },
+    {
+      "version": "20261102160108",
+      "name": "20261022410000_procedure_effectiveness"
+    },
+    {
+      "version": "20261102160215",
+      "name": "20261028010000_guided_sop_execution"
+    },
+    {
+      "version": "20261102160301",
+      "name": "20261028020000_sop_recovery_and_observation"
+    },
+    {
+      "version": "20261102160340",
+      "name": "20261028030000_customer_step_requirements"
+    },
+    {
+      "version": "20261102160358",
+      "name": "20261028040000_sop_qualification_versions"
+    },
+    {
+      "version": "20261102160429",
+      "name": "20261028100000_commercial_review"
+    },
+    {
+      "version": "20261102160500",
+      "name": "20261028110000_quote_party_population"
+    },
+    {
+      "version": "20261102160552",
+      "name": "20261028120000_profile_technical_options"
+    },
+    {
+      "version": "20261102160618",
+      "name": "20261028130000_material_suggestions"
+    },
+    {
+      "version": "20261102160640",
+      "name": "20261028140000_order_transaction_progress"
+    },
+    {
+      "version": "20261102160710",
+      "name": "20261028150000_reusable_document_links"
+    },
+    {
+      "version": "20261102160759",
+      "name": "20261028160000_supplier_offer_comparisons"
+    },
+    {
+      "version": "20261102160828",
+      "name": "20261028170000_accepted_order_source_snapshots"
+    },
+    {
+      "version": "20261102160853",
+      "name": "20261029010000_downstream_party_context"
+    },
+    {
+      "version": "20261102160919",
+      "name": "20261029020000_prepared_physical_bundles"
+    },
+    {
+      "version": "20261102160947",
+      "name": "20261029030000_invoice_communication_preview"
+    },
+    {
+      "version": "20261102160951",
+      "name": "20261029040000_workstation_sessions"
+    },
+    {
+      "version": "20261102161053",
+      "name": "20261029050000_stock_manufacturing_requirements"
+    },
+    {
+      "version": "20261102161153",
+      "name": "20261029060000_cutting_requirements_and_actuals"
+    },
+    {
+      "version": "20261102161237",
+      "name": "20261029070000_machine_usage_events"
+    },
+    {
+      "version": "20261102161306",
+      "name": "20261029100000_quote_physical_manufacturing_basis"
+    },
+    {
+      "version": "20261102161554",
+      "name": "20261029110000_purchase_receipt_matching"
+    },
+    {
+      "version": "20261102161702",
+      "name": "20261029120000_factory_capacity_and_loads"
+    },
+    {
+      "version": "20261102161826",
+      "name": "20261029120001_vehicle_load_proposals"
+    },
+    {
+      "version": "20261102161846",
+      "name": "20261029120002_vehicle_load_release"
+    },
+    {
+      "version": "20261102162015",
+      "name": "20261029130000_financial_workflow_review"
+    },
+    {
+      "version": "20261102162124",
+      "name": "20261029140000_reviewed_master_consolidation"
+    },
+    {
+      "version": "20261102162127",
+      "name": "20261029141000_partial_line_balances"
+    },
+    {
+      "version": "20261102162236",
+      "name": "20261029142000_connected_return_receipts"
+    },
+    {
+      "version": "20261102162321",
+      "name": "20261029143000_source_reviews_and_reconciliation"
+    },
+    {
+      "version": "20261102162350",
+      "name": "20261029144000_customer_self_service"
+    },
+    {
+      "version": "20261102162524",
+      "name": "20261029150000_configuration_output_release"
+    },
+    {
+      "version": "20261102191636",
+      "name": "20261103010000_pin_requirement_stage_role_search_path"
+    },
+    {
+      "version": "20261103153237",
+      "name": "november_assurance_part1_tables"
+    },
+    {
+      "version": "20261103153525",
+      "name": "november_assurance_part2_read_models"
+    },
+    {
+      "version": "20261103153904",
+      "name": "november_assurance_part3_review_context"
+    },
+    {
+      "version": "20261103154050",
+      "name": "november_assurance_part4_apply"
+    },
+    {
+      "version": "20261103154159",
+      "name": "november_assurance_part5_command"
+    },
+    {
+      "version": "20261104083456",
+      "name": "november_coordination_part1"
+    },
+    {
+      "version": "20261104094334",
+      "name": "november_coordination_part3_command"
+    },
+    {
+      "version": "20261104094525",
+      "name": "november_coordination_part2"
+    },
+    {
+      "version": "20261104094601",
+      "name": "november_coordination_part3"
+    },
+    {
+      "version": "20261104094805",
+      "name": "november_operations_control_part1"
+    },
+    {
+      "version": "20261104094936",
+      "name": "november_operations_control_part2"
+    },
+    {
+      "version": "20261104095143",
+      "name": "november_operations_control_part3"
+    },
+    {
+      "version": "20261104095341",
+      "name": "november_lifecycle_part1"
+    },
+    {
+      "version": "20261104095535",
+      "name": "november_lifecycle_part2"
+    },
+    {
+      "version": "20261104095657",
+      "name": "november_lifecycle_part3"
+    },
+    {
+      "version": "20261104095924",
+      "name": "november_lifecycle_part4"
+    },
+    {
+      "version": "20261104123351",
+      "name": "november_lifecycle_part5"
+    },
+    {
+      "version": "20261104123421",
+      "name": "november_lifecycle_part6"
+    },
+    {
+      "version": "20261104214737",
+      "name": "november_improvement_part1"
+    },
+    {
+      "version": "20261104214837",
+      "name": "november_improvement_part2"
+    },
+    {
+      "version": "20261104214934",
+      "name": "november_improvement_part3"
+    },
+    {
+      "version": "20261104215028",
+      "name": "november_improvement_part4"
+    },
+    {
+      "version": "20261104215123",
+      "name": "november_improvement_part5"
+    },
+    {
+      "version": "20261105195501",
+      "name": "november_execution_part01"
+    },
+    {
+      "version": "20261105195602",
+      "name": "november_execution_part02"
+    },
+    {
+      "version": "20261105195717",
+      "name": "november_execution_part03"
+    },
+    {
+      "version": "20261105195821",
+      "name": "november_execution_part04"
+    },
+    {
+      "version": "20261105195927",
+      "name": "november_execution_part05"
+    },
+    {
+      "version": "20261105200035",
+      "name": "november_execution_part06"
+    },
+    {
+      "version": "20261105200151",
+      "name": "november_execution_part07"
+    },
+    {
+      "version": "20261105200155",
+      "name": "november_execution_part08"
+    },
+    {
+      "version": "20261105200232",
+      "name": "november_execution_part09"
+    },
+    {
+      "version": "20261105200341",
+      "name": "november_commercial_part01"
+    },
+    {
+      "version": "20261105200450",
+      "name": "november_commercial_part02"
+    },
+    {
+      "version": "20261105200537",
+      "name": "november_commercial_part03"
+    },
+    {
+      "version": "20261105200647",
+      "name": "november_commercial_part04"
+    },
+    {
+      "version": "20261105200803",
+      "name": "november_commercial_part05"
+    },
+    {
+      "version": "20261105200902",
+      "name": "november_commercial_part06"
+    },
+    {
+      "version": "20261105201011",
+      "name": "november_commercial_part07"
+    },
+    {
+      "version": "20261105201122",
+      "name": "november_commercial_part08"
+    },
+    {
+      "version": "20261105201158",
+      "name": "november_commercial_part09"
+    },
+    {
+      "version": "20261105201307",
+      "name": "november_specialist_part01"
+    },
+    {
+      "version": "20261105201416",
+      "name": "november_specialist_part02"
+    },
+    {
+      "version": "20261105201531",
+      "name": "november_specialist_part03"
+    },
+    {
+      "version": "20261105201709",
+      "name": "november_specialist_part04"
+    },
+    {
+      "version": "20261105201808",
+      "name": "november_specialist_part05"
+    },
+    {
+      "version": "20261105201912",
+      "name": "november_specialist_part06"
+    },
+    {
+      "version": "20261105202015",
+      "name": "november_specialist_part07"
+    },
+    {
+      "version": "20261105202101",
+      "name": "november_specialist_part08"
+    },
+    {
+      "version": "20261105202213",
+      "name": "november_specialist_part09"
+    },
+    {
+      "version": "20261105202303",
+      "name": "november_specialist_part10"
+    },
+    {
+      "version": "20261105202355",
+      "name": "november_specialist_part11"
+    },
+    {
+      "version": "20261105202449",
+      "name": "november_specialist_part12"
+    },
+    {
+      "version": "20261105202618",
+      "name": "november_specialist_part13"
+    },
+    {
+      "version": "20261105202650",
+      "name": "november_specialist_part14"
+    },
+    {
+      "version": "20261109123345",
+      "name": "stock_snapshot"
+    },
+    {
+      "version": "20261110144752",
+      "name": "autopilot_batch_1_part01"
+    },
+    {
+      "version": "20261110144831",
+      "name": "autopilot_batch_1_part02"
+    },
+    {
+      "version": "20261110144933",
+      "name": "autopilot_batch_1_part03"
+    },
+    {
+      "version": "20261110145034",
+      "name": "autopilot_batch_1_part04"
+    },
+    {
+      "version": "20261110145124",
+      "name": "autopilot_batch_1_part05"
+    },
+    {
+      "version": "20261110145232",
+      "name": "autopilot_batch_1_part06"
+    },
+    {
+      "version": "20261110145415",
+      "name": "autopilot_batch_1_part07"
+    },
+    {
+      "version": "20261110145453",
+      "name": "autopilot_batch_1_part08"
+    },
+    {
+      "version": "20261110145602",
+      "name": "autopilot_batch_2_part01"
+    },
+    {
+      "version": "20261110145742",
+      "name": "autopilot_batch_2_part02"
+    },
+    {
+      "version": "20261110145930",
+      "name": "autopilot_batch_2_part04"
+    },
+    {
+      "version": "20261110150038",
+      "name": "autopilot_batch_2_part05"
+    },
+    {
+      "version": "20261110150152",
+      "name": "autopilot_batch_2_part06"
+    },
+    {
+      "version": "20261110150311",
+      "name": "autopilot_batch_2_part07"
+    },
+    {
+      "version": "20261110201250",
+      "name": "autopilot_batch_2_part08"
+    }
+  ]
+}

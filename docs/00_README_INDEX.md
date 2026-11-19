@@ -4,6 +4,8 @@ This folder contains project-level instructions and operating rules for Extrusio
 
 Use these documents to keep development consistent across AI coding agents and human contributors.
 
+**Which document is current:** see `DOCUMENTATION_HOME.md` for the living set, and `decisions/` for the big choices (single company, command functions, one stock ledger, business date, one KPI path). Dated batch reports and audits are history, not the system as it is now.
+
 ## Recommended Reading Order
 
 1. `AGENTS.md` in the repository root  

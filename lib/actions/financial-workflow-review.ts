@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
+import { businessToday } from "@/lib/utils/business-date";
 import { can } from "@/lib/auth/permissions";
 import { buildInvoiceItems } from "@/lib/pcda/invoice";
 import { applyInvoiceSourceTaxBasis, loadInvoiceSourceOptions } from "@/lib/financials/invoice-sources";
@@ -212,7 +213,7 @@ export async function searchOpenReceivableInvoicesAction(input: { search?: strin
     if (term) query = query.ilike("invoice_number", invoicePattern);
     const result = await query;
     if (result.error) throw result.error;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = businessToday();
     const one = <T,>(value: T | T[] | null | undefined) => Array.isArray(value) ? value[0] ?? null : value ?? null;
     const allRows = ((result.data ?? []) as any[]).map((row) => {
       const customer = one(row.customers) as { customer_name?: string | null; company_name?: string | null } | null;
@@ -501,7 +502,7 @@ export async function applyFinancialCorrectionAction(input: z.input<typeof corre
     }
     const adjustment = await client.rpc("record_payment_atomic", {
       p_invoice_id: row.id,
-      p_payment: { payment_date: new Date().toISOString().slice(0, 10), amount: parsed.data.amount,
+      p_payment: { payment_date: businessToday(), amount: parsed.data.amount,
         payment_method: "credit_note", reference_number: null, notes: parsed.data.reason,
         idempotency_key: parsed.data.idempotency_key }
     });

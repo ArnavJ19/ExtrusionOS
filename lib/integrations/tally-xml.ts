@@ -56,11 +56,12 @@ export function voucherEntries(voucher: TallyVoucher, book: LedgerBook, issues: 
     if (Number(d.igst) > 0) entries.push({ ledger: need(issues, voucher, book.account("output_igst"), "output IGST"), amount: r2(d.igst) });
   } else if (voucher.kind === "receipt" || voucher.kind === "on_account") {
     const cash = d.method === "cash";
+    const tds = d.settlement_kind === "tds";
     const party = need(issues, voucher, book.party("customer", voucher.party_id, voucher.party), "customer");
     const bills = voucher.kind === "on_account"
       ? [{ name: voucher.number, type: "On Account" as const, amount: r2(voucher.amount) }]
       : ((d.allocations ?? []) as { invoice_number: string; amount: number }[]).map(a => ({ name: a.invoice_number, type: "Agst Ref" as const, amount: r2(a.amount) }));
-    entries.push({ ledger: need(issues, voucher, book.account(cash ? "cash" : "bank"), cash ? "cash" : "bank"), amount: -r2(voucher.amount) });
+    entries.push({ ledger: need(issues, voucher, book.account(tds ? "tds_receivable" : cash ? "cash" : "bank"), tds ? "TDS receivable" : cash ? "cash" : "bank"), amount: -r2(voucher.amount) });
     entries.push({ ledger: party, amount: r2(voucher.amount), bills });
     if (d.status === "partially_reversed") issues.push({ voucher: `Receipt ${voucher.number}`, message: "Part of this receipt was reversed; enter it in Tally by hand after review." });
   } else if (voucher.kind === "purchase") {
@@ -99,7 +100,7 @@ const tallyDate = (iso: string) => iso.slice(0, 10).replace(/-/g, "");
 const amount = (value: number) => value.toFixed(2);
 
 function voucherXml(voucher: TallyVoucher, entries: TallyEntry[]) {
-  const type = VCHTYPE[voucher.kind];
+  const type = voucher.data?.settlement_kind === "tds" && voucher.kind === "receipt" ? "Journal" : VCHTYPE[voucher.kind];
   const party = entries.find(entry => entry.bills)?.ledger ?? "";
   const lines = entries.map(entry => {
     const bills = (entry.bills ?? []).map(bill => `<BILLALLOCATIONS.LIST><NAME>${xmlEscape(bill.name)}</NAME><BILLTYPE>${bill.type}</BILLTYPE><AMOUNT>${amount(bill.amount)}</AMOUNT></BILLALLOCATIONS.LIST>`).join("");
@@ -133,6 +134,6 @@ export function buildTallyExport(companyName: string, vouchers: TallyVoucher[], 
 
 export const TALLY_LEDGER_KINDS = {
   customer: "Customer (party)", vendor: "Supplier (party)", sales: "Sales", purchase: "Purchase", output_cgst: "Output CGST", output_sgst: "Output SGST", output_igst: "Output IGST",
-  input_cgst: "Input CGST", input_sgst: "Input SGST", input_igst: "Input IGST", round_off: "Round off", bank: "Bank", cash: "Cash", freight_inward: "Freight inward", discount_received: "Discount received"
+  input_cgst: "Input CGST", input_sgst: "Input SGST", input_igst: "Input IGST", round_off: "Round off", bank: "Bank", cash: "Cash", tds_receivable: "TDS receivable", freight_inward: "Freight inward", discount_received: "Discount received"
 } as const;
 export type TallyLedgerKind = keyof typeof TALLY_LEDGER_KINDS;

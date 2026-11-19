@@ -101,7 +101,7 @@ const voucherKinds = z.array(z.enum(["sales", "receipt", "on_account", "purchase
 export const tallyCommands = {
   mappings: z.object({}).strict(),
   save_mapping: z.object({ kind: z.enum(["customer", "vendor", "sales", "purchase", "output_cgst", "output_sgst", "output_igst", "input_cgst", "input_sgst", "input_igst", "round_off", "bank", "cash",
-    "freight_inward", "discount_received"]), entity_id: uuid.optional(), gst_rate: z.number().min(0).max(28).optional(), supply: z.enum(["local", "interstate"]).optional(),
+    "tds_receivable", "freight_inward", "discount_received"]), entity_id: uuid.optional(), gst_rate: z.number().min(0).max(28).optional(), supply: z.enum(["local", "interstate"]).optional(),
     ledger_name: text(1, 100, "Ledger name").refine(v => !/[<>&]/.test(v), "Ledger names cannot contain < > or &") }).strict(),
   remove_mapping: z.object({ id: uuid }).strict(),
   pending: z.object({ from: day, to: day, kinds: voucherKinds, page, show: z.enum(["pending", "all"]).optional() }).strict(),

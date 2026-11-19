@@ -14,6 +14,8 @@ const compact = (value) => String(value ?? '').replaceAll('|', '\\|').replace(/\
 const code = (text) => String.fromCharCode(96) + text + String.fromCharCode(96);
 const refs = (paths) => paths.map(code).join(', ');
 const distinct = (values) => [...new Set(values)];
+const idsIn = (line) => distinct((line.match(/\bNOV-\d{3}(?:\/\d{3})*/g) ?? [])
+  .flatMap((group) => group.slice(4).split('/').map((number) => 'NOV-' + number)));
 const inventory = json('source-inventory.json');
 const routes = json('routes.json');
 const modules = json('module-inventory.json');
@@ -63,7 +65,7 @@ output('03_MODULE_COVERAGE_MATRIX.md', moduleLines);
 
 const groups = {
   1: ['Shared controls', 'lib/ui/status-presentation.ts', 'lib/ui/database-view.ts', 'lib/utils/numeric-display.ts'],
-  2: ['Work Today and record entry', 'lib/workflow/next-action.ts', 'components/modules/operations/record-form-client.tsx'],
+  2: ['Work Today and record entry', 'lib/workflow/record-next-action.ts', 'components/modules/operations/record-form-client.tsx'],
   3: ['Coordination', 'lib/actions/coordination.ts', 'supabase/migrations/20261103100000_november_coordination.sql'],
   4: ['Operations control', 'lib/actions/operations-control.ts', 'supabase/migrations/20261103200000_november_operations_control.sql'],
   5: ['Assurance', 'lib/actions/assurance.ts', 'supabase/migrations/20261103300000_november_assurance.sql'],
@@ -80,7 +82,7 @@ for (const { file, kind } of inventory) {
   if (kind !== 'source' || !/^(app|components|lib|supabase\/migrations|tests)\//.test(file)) continue;
   const body = read(file);
   for (const [index, line] of body.split(/\r?\n/).entries()) {
-    for (const id of distinct(line.match(/\bNOV-\d{3}\b/g) ?? [])) {
+    for (const id of idsIn(line)) {
       const row = references.get(id) ?? { code: [], tests: [] };
       (file.startsWith('tests/') ? row.tests : row.code).push({ file, line: index + 1 });
       references.set(id, row);
@@ -91,7 +93,7 @@ for (const { file, kind } of inventory) {
 const tap = readFileSync(join(evidence, 'test-isolated.log'), 'utf8');
 const casesByFeature = new Map();
 for (const match of tap.matchAll(/^\s*(ok|not ok)\s+\d+\s+-\s+([^\r\n]+)$/gm)) {
-  for (const id of distinct(match[2].match(/\bNOV-\d{3}\b/g) ?? [])) {
+  for (const id of idsIn(match[2])) {
     const record = { status: match[1] === 'ok' ? 'pass' : 'fail', title: match[2] };
     const cases = casesByFeature.get(id) ?? [];
     cases.push(record);
@@ -190,4 +192,5 @@ console.log(JSON.stringify({
   novemberWithIdLabelledTestSources: catalogue.filter(({ testRefs }) => testRefs.length > 0).length,
   novemberWithIdLabelledOutcomes: catalogue.filter(({ cases }) => cases.length > 0).length,
   novemberIdLabelledCases: catalogue.reduce((n, { cases }) => n + cases.length, 0),
+  novemberWithAtLeastThreeOutcomeEntries: catalogue.filter(({ cases }) => cases.length >= 3).length,
 }));

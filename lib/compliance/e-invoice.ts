@@ -36,8 +36,9 @@ export function validateEinvoiceSource(source: EinvoiceSource): EinvoiceIssue[] 
   for (const [label, p] of [["Supplier", seller], ["Buyer", buyer]] as const) {
     if (!p.name || p.name.length < 3) issues.push({ field: `${label.toLowerCase()}_name`, message: `${label} legal name is missing.` });
     if (!p.address || p.address.length < 1) issues.push({ field: `${label.toLowerCase()}_address`, message: `${label} address is missing.` });
-    if (!p.city || p.city.length < 3) issues.push({ field: `${label.toLowerCase()}_city`, message: `${label} city is missing.` });
-    if (!p.pin || !PIN.test(p.pin)) issues.push({ field: `${label.toLowerCase()}_pin`, message: `${label} PIN code is missing or invalid.` });
+    const localityHelp = label === "Buyer" ? " For missing historical fields, use Complete buyer city and PIN and verify the original issued invoice." : "";
+    if (!p.city || p.city.length < 3) issues.push({ field: `${label.toLowerCase()}_city`, message: `${label} city is missing.${!p.city ? localityHelp : ""}` });
+    if (!p.pin || !PIN.test(p.pin)) issues.push({ field: `${label.toLowerCase()}_pin`, message: `${label} PIN code is missing or invalid.${!p.pin ? localityHelp : ""}` });
   }
   if (!source.supplier_state_code || !/^\d{2}$/.test(source.supplier_state_code)) issues.push({ field: "supplier_state", message: "Supplier state code is missing." });
   if (!source.place_of_supply_state_code || !/^\d{2}$/.test(source.place_of_supply_state_code)) issues.push({ field: "place_of_supply", message: "Place of supply is missing." });

@@ -23,15 +23,18 @@ export default async function ApprovalInboxPage({ searchParams }: { searchParams
   const historyPage = Math.min(Math.max(Number.parseInt(params.history ?? "1", 10) || 1, 1), 100000);
   const exceptionPage = Math.min(Math.max(Number.parseInt(params.exceptions ?? "1", 10) || 1, 1), 100000);
   const supabase = await createClient();
-  const [listResult, historyResult, exceptionResult] = await Promise.all([
+  const [listResult, historyResult, exceptionResult, awaitingResult] = await Promise.all([
     supabase.rpc("approval_inbox_command", { p_command: "inbox.list", p_payload: { page, ...(type ? { type } : {}) } }),
     supabase.rpc("approval_inbox_command", { p_command: "inbox.history", p_payload: { page: historyPage } }),
     // UPGRADE_EOS feature 45: exception requests raised at a restriction, for the policy's approvers.
-    supabase.rpc("exception_command", { p_command: "request.list", p_payload: { view: "to_decide", page: exceptionPage } })
+    supabase.rpc("exception_command", { p_command: "request.list", p_payload: { view: "to_decide", page: exceptionPage } }),
+    // FS-75: requests holding a first approval under the authority matrix, waiting for a second, different approver.
+    supabase.rpc("fs_authority", { p_command: "awaiting", p_payload: {} })
   ]);
   const exceptionParsed = exceptionResult.error ? null : exceptionListSchema.safeParse(exceptionResult.data);
   const exceptions = exceptionParsed?.success ? exceptionParsed.data : null;
   const exceptionPages = exceptions ? Math.max(1, Math.ceil(exceptions.total_count / 10)) : 1;
+  const awaiting = new Map(((awaitingResult.error ? [] : awaitingResult.data ?? []) as { source_id: string; first_approver: string }[]).map(a => [a.source_id, a.first_approver]));
   const unavailable = Boolean(listResult.error && ["PGRST202", "42883", "42P01"].includes(listResult.error.code ?? ""));
   const parsed = listResult.error ? null : approvalInboxSchema.safeParse(listResult.data);
   const inbox = parsed?.success ? parsed.data : null;
@@ -63,7 +66,7 @@ export default async function ApprovalInboxPage({ searchParams }: { searchParams
         </p>
       ) : !inbox.rows.length ? (
         <EmptyState title="Nothing waiting for your decision" description="New requests appear here when a quotation goes to internal review or an expense needs approval." />
-      ) : <ApprovalInboxList items={inbox.rows} />}
+      ) : <ApprovalInboxList items={inbox.rows} awaitingSecond={Object.fromEntries(awaiting)} />}
       {inbox && totalPages > 1 ? (
         <nav className="flex items-center justify-between text-sm font-bold" aria-label="Pages">
           {page > 1 ? <Link href={href({ page: page - 1 })} className="rounded-xl border border-slate-200 bg-white px-3 py-2">Previous</Link> : <span />}

@@ -142,7 +142,9 @@ test("login observability derives tenant ownership inside a restricted RPC", () 
   assert.match(legacyMigration, /p_event_type not in \('login_success', 'logout', 'password_reset'\)/);
   assert.match(legacyMigration, /revoke all on function public\.record_current_login_event\(text\) from anon/);
   assert.match(legacyMigration, /grant execute on function public\.record_current_login_event\(text\) to authenticated/);
-  assert.match(authForm, /record_current_login_event", \{ p_event_type: "login_success" \}/);
+  // FS-51: sign-in moved to the server action, which records the success with the request's address and browser.
+  assert.match(authForm, /signInAction\(\{ email, password \}\)/);
+  assert.match(readFileSync(join(process.cwd(), "lib/actions/sign-in.ts"), "utf8"), /rpc\("fs_security", \{ p_command: "login_success"/);
   assert.match(logoutButton, /record_current_login_event", \{ p_event_type: "logout" \}[\s\S]*auth\.signOut\(\)/);
 });
 

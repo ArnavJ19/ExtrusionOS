@@ -2,12 +2,13 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { PGlite } from "@electric-sql/pglite";
+import { sqlDefinition } from "../scripts/lib/historical-schema-fixture.mjs";
 
 const company = "11111111-1111-4111-8111-111111111111";
 const foreign = "22222222-2222-4222-8222-222222222222";
 const customer = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 const foreignCustomer = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
-const candidate = "20261020120000_invoice_supplier_snapshot_contact.sql";
+const candidate = "20261117120000_einvoice_buyer_snapshot_repair.sql";
 const migration = (name) => readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), "utf8");
 const legacyKeys = ["billing_address", "gst_number", "legal_name", "name"];
 const contactKeys = ["city", "email", "phone", "pincode", "state"];
@@ -25,15 +26,15 @@ test.before(async () => {
     create table companies(id uuid primary key, name text not null, legal_name text, gst_number text, phone text, email text,
       billing_address text, city text, state text, pincode text);
     create table customers(id uuid primary key, company_id uuid, customer_name text, company_name text, gst_number text,
-      billing_address text, shipping_address text);
+      billing_address text, shipping_address text, city text, pincode text);
     create table invoices(id uuid primary key default gen_random_uuid(), company_id uuid, customer_id uuid, invoice_number text, status text);
     insert into companies values
       ('${company}','Shree Extrusions','Shree Extrusions Pvt Ltd','24ABCDE1234F1Z5','+91 98250 00000','accounts@shree.example',
         'Plot 12, GIDC Phase II','Ahmedabad','Gujarat','382445'),
       ('${foreign}','Other Alu','Other Alu LLP','27ZZZZZ9999Z1Z9','+91 90000 00000','other@alu.example','Unit 4','Pune','Maharashtra','411019');
     insert into customers values
-      ('${customer}','${company}','Ramesh','Patel Fabricators','24PQRST5678K1Z2','Shop 3, Naroda','Site 7, SG Highway'),
-      ('${foreignCustomer}','${foreign}','Other','Other Fabricators',null,'Elsewhere',null);
+      ('${customer}','${company}','Ramesh','Patel Fabricators','24PQRST5678K1Z2','Shop 3, Naroda','Site 7, SG Highway','Ahmedabad','382445'),
+      ('${foreignCustomer}','${foreign}','Other','Other Fabricators',null,'Elsewhere',null,'Pune','411019');
   `);
   // Install the trigger exactly as the current baseline migration defines it.
   const astra = migration("20260930000000_astra_audit_fixes.sql");
@@ -41,7 +42,9 @@ test.before(async () => {
   assert.ok(block, "baseline snapshot trigger block not found");
   await db.exec(block[0]);
   await db.exec(`insert into invoices(company_id, customer_id, invoice_number, status) values ('${company}','${customer}','INV-LEGACY','issued');`);
-  await db.exec(migration(candidate));
+  await db.exec(migration("20261020120000_invoice_supplier_snapshot_contact.sql"));
+  await db.exec(sqlDefinition(candidate, "private.snapshot_invoice_parties"));
+  await db.exec(migration(candidate).match(/comment on function private\.snapshot_invoice_parties\(\) is\s*'[^']*';/)[0]);
 });
 
 test.after(async () => { await db?.close(); });
@@ -65,14 +68,18 @@ test("a new invoice's supplier snapshot carries city, state, PIN, phone and e-ma
   assert.deepEqual(row.customer_snapshot, {
     customer_name: "Ramesh", company_name: "Patel Fabricators", gst_number: "24PQRST5678K1Z2",
     billing_address: "Shop 3, Naroda", shipping_address: "Site 7, SG Highway",
+    city: "Ahmedabad", pincode: "382445",
   });
 });
 
 test("snapshots are frozen at insert: later company edits do not reach an issued invoice", async () => {
   await db.exec(`update companies set city='Vadodara', phone='+91 99999 11111' where id='${company}';`);
+  await db.exec(`update customers set city='Surat', pincode='395003' where id='${customer}';`);
   const row = await invoice("INV-NEW");
   assert.equal(row.supplier_snapshot.city, "Ahmedabad");
   assert.equal(row.supplier_snapshot.phone, "+91 98250 00000");
+  assert.equal(row.customer_snapshot.city, "Ahmedabad");
+  assert.equal(row.customer_snapshot.pincode, "382445");
   await db.exec(`update companies set city='Ahmedabad', phone='+91 98250 00000' where id='${company}';`);
 });
 

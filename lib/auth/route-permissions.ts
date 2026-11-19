@@ -63,6 +63,8 @@ const roleRules: RoleRule[] = [
   { prefix: "/insights/order-book", roles: ["owner", "admin", "sales_manager", "accounts", "factory_manager"] },
   { prefix: "/insights/metal-exposure", roles: ["owner", "admin", "accounts"] },
   { prefix: "/insights/cockpit", roles: ["owner", "admin"] },
+  // FS-77: the KPI dictionary with values (finance KPIs are withheld by the database for other roles).
+  { prefix: "/insights/kpis", roles: ["owner", "admin", "accounts", "sales_manager", "factory_manager", "production_manager", "quality", "dispatch_manager"] },
   { prefix: "/production/material-plan", roles: ["owner", "admin", "factory_manager", "inventory_manager", "accounts", "production_manager"] },
   { prefix: "/production/promise", roles: ["owner", "admin", "sales_manager", "sales", "factory_manager", "production_manager"] },
   { prefix: "/production/wall", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "viewer", "dispatch_manager", "sales_manager"] },

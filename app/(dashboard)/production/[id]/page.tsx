@@ -1,4 +1,5 @@
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
+import { RecordHistory } from "@/components/modules/fs-batch4/record-history";
 import { RecordFollow } from "@/components/modules/notifications/record-follow";
 import { canFollow } from "@/lib/workflow/subscriptions";
 import { WorkRequirementsPanel } from "@/components/modules/orders/work-requirements-panel";
@@ -143,6 +144,7 @@ export default async function ProductionJobDetailPage({ params }: { params: Prom
       <RecordDetailClient moduleKey="production" context={context} recordId={id} canEdit={canUpdate} />
       {canSummarise("job", context.role, Boolean(context.dealerId)) ? <CopySummaryButton kind="job" id={id} canInternal={canInternalSummary("job", context.role, Boolean(context.dealerId))} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="job" id={id} role={context.role} /> : null}
+      {!context.dealerId ? <RecordHistory entityType="production_job" entityId={id} /> : null}
     </div>
   );
 }

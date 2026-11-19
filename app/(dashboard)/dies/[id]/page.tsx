@@ -1,4 +1,5 @@
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
+import { RecordHistory } from "@/components/modules/fs-batch4/record-history";
 import Link from "next/link";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -64,7 +65,7 @@ export default async function DieDetailPage({ params }: { params: Promise<{ id: 
     supabase.from("production_jobs").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).eq("die_id", id),
   ]);
   // AP-043: die health from the former Die Intelligence page.
-  const metricResult = await supabase.from("die_health_metrics").select("health_score, recommendation, rejection_rate, total_rejection_kg, correction_count, trial_count, cost_per_kg, last_correction_date, last_trial_date, updated_at").eq("company_id", context.companyId).eq("die_id", id).maybeSingle();
+  const metricResult = await supabase.from("die_health_metrics").select("health_score, recommendation, rejection_rate, total_rejection_kg, correction_count, trial_count, cost_per_kg, last_correction_date, last_trial_date, updated_at, open_correction_count, kg_since_nitriding, runs_since_nitriding, billets_since_nitriding, last_nitriding_date, next_nitriding_due_date, life_used_percent, rated_life_kg, recent_recovery_percent, previous_recovery_percent, recovery_trend").eq("company_id", context.companyId).eq("die_id", id).maybeSingle();
   const showHealthCost = !context.dealerId && (DIE_HEALTH_ROLES as readonly string[]).includes(context.role);
 
   const customer = die.customers?.company_name || die.customers?.customer_name || "-";
@@ -244,6 +245,7 @@ export default async function DieDetailPage({ params }: { params: Promise<{ id: 
       {!context.dealerId && (SPC_READERS as readonly string[]).includes(context.role) ? <SpcDiePanel dieId={id} /> : null}
       {!context.dealerId && ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "sales_manager"].includes(context.role) ? <DieWeightPanel dieId={id} today={getBusinessDateBoundaries().today} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="die" id={id} role={context.role} /> : null}
+      {!context.dealerId ? <RecordHistory entityType="die" entityId={id} /> : null}
     </div>
   );
 }

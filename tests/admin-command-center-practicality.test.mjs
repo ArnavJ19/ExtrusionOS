@@ -113,14 +113,19 @@ test("recovery uses linked issued billet input and becomes not captured when any
   assert.equal(incomplete.missingJobCount, 1);
 });
 
-test("command center uses canonical collection events and linked billet input", () => {
+test("command center reads every KPI from the one KPI path (FS-132): canonical collections and linked billet input live there", () => {
   const page = read("app/(dashboard)/command-center/page.tsx");
   const client = read("components/modules/command-center-client.tsx");
-  assert.match(page, /getBusinessDateBoundaries\(now\)/);
-  assert.match(page, /rpc\("get_financial_collection_events"/);
-  assert.doesNotMatch(page, /from\("payments"\).*gte\("payment_date"/s);
-  assert.match(page, /from\("foundry_billets"\)/);
-  assert.match(page, /\.in\("status", \["issued", "consumed"\]\)/);
-  assert.doesNotMatch(page, /totalProduced \+ totalScrap/);
+  const kpi = read("supabase/migrations/20261119110000_fs_batch4_kpi_dictionary.sql");
+  assert.match(page, /getBusinessDateBoundaries\(new Date\(\)\)/);
+  assert.match(page, /rpc\("fs_kpi", \{ p_command: "values"/);
+  for (const key of ["order_intake", "collections", "receivables_outstanding", "shipped_kg", "production_completed_kg", "scrap_kg"]) assert.ok(page.includes(`value(k, "${key}")`), key);
+  assert.doesNotMatch(page, /from\("payments"\)/);
+  assert.doesNotMatch(page, /from\("foundry_billets"\)|from\("scrap_records"\)/, "no KPI arithmetic over raw tables on the page");
+  assert.doesNotMatch(page, /< 85|below 85%|< 20/, "no invented targets");
+  // The rules the page used to apply now live in the SQL definition.
+  assert.match(kpi, /from public\.foundry_billets b[\s\S]*b\.status in \('issued', 'consumed'\)/);
+  assert.match(kpi, /payment_status = 'PAID' and payment_method <> 'credit_note'/);
+  assert.match(kpi, /scrap_record_reversals/);
   assert.match(client, /emptyLabel="Not captured"/);
 });

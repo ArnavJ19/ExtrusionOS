@@ -9,6 +9,7 @@ import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
+import { businessToday } from "@/lib/utils/business-date";
 import { createClient } from "@/lib/supabase/server";
 import { EINVOICE_SCHEMA_VERSION, buildEinvoiceExport, parseIrnResponse, type EinvoiceIssue, type EinvoiceSource } from "@/lib/compliance/e-invoice";
 import { parseTdsStatement } from "@/lib/financials/tds-statement";
@@ -49,7 +50,7 @@ export async function exportEinvoiceAction(invoiceIds: string[]): Promise<Result
       invoices: built.included.map(s => ({ invoice_id: s.invoice_id, doc_no: s.invoice_number })) } });
     if (recorded.error) return { success: false, error: dbMessage(recorded.error, "The export could not be recorded. Nothing was marked exported.") };
     refresh("/invoices/einvoice");
-    return { success: true, data: { json, filename: `e-invoice-${new Date().toISOString().slice(0, 10)}.json`, included: built.included.map(s => ({ invoice_number: s.invoice_number })), skipped } };
+    return { success: true, data: { json, filename: `e-invoice-${businessToday()}.json`, included: built.included.map(s => ({ invoice_number: s.invoice_number })), skipped } };
   } catch { return { success: false, error: "The e-invoice file could not be prepared. Check your session and retry." }; }
 }
 

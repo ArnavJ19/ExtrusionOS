@@ -8,7 +8,8 @@ import { Empty, Failure, Loading, Message, Pager, Pill, Section, inputClass, use
 import { Action, Field, download, write, type Note, type Queue } from "./shared";
 
 type Settings = { applicable: boolean | null; applicable_from?: string | null; reason?: string; confirmed_by_name?: string; confirmed_at?: string };
-type Row = { id: string; invoice_number: string; invoice_date: string; grand_total: number; customer: string | null; buyer_gstin: string | null; irn: string | null; ack_no: string | null; ack_date: string | null; exported_at: string | null };
+type Row = { id: string; invoice_number: string; invoice_date: string; grand_total: number; customer: string | null; buyer_gstin: string | null; irn: string | null; ack_no: string | null; ack_date: string | null; exported_at: string | null;
+  buyer_city: string | null; buyer_pincode: string | null; buyer_address_confirmed: boolean };
 
 export function EinvoiceClient({ today }: { today: string }) {
   const [rev, setRev] = useState(0);
@@ -46,7 +47,11 @@ function EinvoiceQueue({ rev, onChanged }: { rev: number; onChanged: () => void 
         <label className="flex min-w-0 items-start gap-2">{!r.irn ? <input type="checkbox" className="mt-1" checked={picked.has(r.id)} onChange={e => setPicked(s => { const n = new Set(s); if (e.target.checked) n.add(r.id); else n.delete(r.id); return n; })} /> : null}
           <span className="min-w-0"><Link className="font-semibold underline" href={`/invoices/${r.id}`}>{r.invoice_number}</Link> · {fmtDay(r.invoice_date)} · {r.customer ?? ""} · {inr(r.grand_total)}
             <span className="block break-all text-xs text-neutral-500">{r.irn ? `IRN ${r.irn} · Ack ${r.ack_no} · ${fmtWhen(r.ack_date)}` : r.exported_at ? `Exported ${fmtWhen(r.exported_at)}; waiting for the IRN` : r.buyer_gstin ? `Buyer GSTIN ${r.buyer_gstin}` : "Buyer unregistered (B2C)"}</span></span></label>
-        <Pill value={r.irn ? "approved" : "pending"} label={r.irn ? "IRN recorded" : "No IRN"} /></li>)}</ul>}
+        <Pill value={r.irn ? "approved" : "pending"} label={r.irn ? "IRN recorded" : "No IRN"} />
+        {!r.irn && !r.exported_at && (!r.buyer_city || !r.buyer_pincode) ? <BuyerAddressConfirmation invoice={r} onSaved={onChanged} /> : null}
+        {(r.irn || r.exported_at) && (!r.buyer_city || !r.buyer_pincode) ? <p className="w-full text-xs text-amber-900">Buyer locality is missing from the frozen snapshot. Accounts must review the existing e-invoice submission before correcting it.</p> : null}
+        {r.buyer_address_confirmed ? <p className="w-full text-xs text-neutral-600">Missing buyer locality confirmed separately from the original issued invoice.</p> : null}
+      </li>)}</ul>}
       <Pager page={page} total={read.data.total_count} onPage={setPage} />
       <Action disabled={!picked.size} run={async () => {
         const r = await exportEinvoiceAction([...picked]);
@@ -58,6 +63,26 @@ function EinvoiceQueue({ rev, onChanged }: { rev: number; onChanged: () => void 
       {result?.skipped.length ? <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900"><p className="font-semibold">Not exported:</p><ul className="list-disc pl-5">{result.skipped.map(s => <li key={s.invoice_number}>{s.invoice_number}: {s.issues.map(i => i.message).join(" ")}</li>)}</ul></div> : null}
     </> : null}
   </Section>;
+}
+
+function BuyerAddressConfirmation({ invoice, onSaved }: { invoice: Row; onSaved: () => void }) {
+  const [city, setCity] = useState(invoice.buyer_city ?? ""); const [pin, setPin] = useState(invoice.buyer_pincode ?? "");
+  const [reason, setReason] = useState(""); const [note, setNote] = useState<Note>(null);
+  return <details className="w-full rounded-xl border border-amber-200 bg-amber-50 p-3">
+    <summary className="cursor-pointer font-semibold">Complete buyer city and PIN</summary>
+    <div className="mt-3 space-y-3">
+      <p>Verify these details against the original issued tax invoice. This one-time confirmation is kept separately with your name, time and reference; the frozen invoice snapshot stays unchanged. Do not use a changed customer master as historical evidence.</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Buyer city on issued invoice"><input className={inputClass} value={city} disabled={!!invoice.buyer_city} maxLength={100} onChange={e => setCity(e.target.value)} /></Field>
+        <Field label="Buyer PIN on issued invoice"><input className={inputClass} value={pin} disabled={!!invoice.buyer_pincode} inputMode="numeric" maxLength={6} onChange={e => setPin(e.target.value)} /></Field>
+      </div>
+      <Field label="Original invoice evidence / reference"><input className={inputClass} value={reason} maxLength={500} onChange={e => setReason(e.target.value)} /></Field>
+      <Message value={note} />
+      <Action disabled={city.trim().length < 3 || !/^[1-9][0-9]{5}$/.test(pin.trim()) || reason.trim().length < 10} run={async () => {
+        if (await write("ap_einvoice", "confirm_buyer_address", { invoice_id: invoice.id, city: city.trim(), pincode: pin.trim(), reason: reason.trim() }, setNote, "Buyer locality confirmed without changing the invoice snapshot.")) onSaved();
+      }}>Confirm issued buyer address</Action>
+    </div>
+  </details>;
 }
 
 function IrnImport({ onImported }: { onImported: () => void }) {

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { RecordHistory } from "@/components/modules/fs-batch4/record-history";
 import { getSessionContext } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
@@ -206,6 +207,7 @@ export default async function CustomerDetailPage({ params, searchParams }: { par
       {!context.dealerId && ["owner", "admin", "sales_manager", "dispatch_manager", "factory_manager", "quality", "production_manager"].includes(context.role) ? <PackingSpecPanel customerId={id} /> : null}
       {!context.dealerId && (HEALTH_ROLES as readonly string[]).includes(context.role) ? <CustomerHealthPanel customerId={id} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="customer" id={id} role={context.role} /> : null}
+      {!context.dealerId ? <RecordHistory entityType="customer" entityId={id} /> : null}
     </div>
   );
 }
