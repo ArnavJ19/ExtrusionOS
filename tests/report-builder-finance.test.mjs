@@ -64,4 +64,8 @@ test("receivable reconciliation explains the displayed balance from posted histo
   assert.equal(reconcileInvoiceSettlement({ grand_total: 100, balance_due: 40 }, [], []).matchesStoredBalance, false);
   assert.equal(signedSettlementAmount({ amount: "12.345", payment_status: "PAID", payment_type: "REFUND" }), -12.35);
   assert.equal(signedCollectionAmount({ amount: 10, payment_status: "PAID", payment_method: "credit_note", payment_type: "ADJUSTMENT" }), 0);
+  assert.equal(signedCollectionAmount({ amount: 10, payment_status: "PAID", payment_method: "bank_transfer", payment_type: "ADJUSTMENT" }), 0,
+    "an ADJUSTMENT row is non-cash whatever its method, as isCreditAdjustment and the exclusivity trigger say");
+  assert.equal(signedSettlementAmount({ amount: 10, payment_status: "PAID", payment_method: "bank_transfer", payment_type: "ADJUSTMENT" }), 10, "it still settles the invoice");
+  assert.equal(signedCollectionAmount({ amount: 10, payment_status: "PAID", payment_method: "cash", payment_type: "PARTIAL_PAYMENT" }), 10);
 });

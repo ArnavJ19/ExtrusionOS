@@ -100,6 +100,10 @@ test("finance vouchers render credit notes, expenses and supplier payments with 
   assert.equal(expense.lines.length, 1, "reversed payments are not presented as settlement");
   const payment = supplierPaymentVoucher({ company: { name: "Shree Metals" }, expense: { expense_number: "EXP-1", vendor_name_snapshot: "ગણેશ", balance_amount: 0 },
     payment: { id: "00000000-0000-4000-8000-000000000123", payment_date: "2026-10-05", amount_paid: 1180, payment_method: "bank_transfer", reference_number: "UTR9", status: "posted" } });
+  // The stored balance is today's, not the balance right after this payment, so a reprint must say so.
+  assert.deepEqual(supplierPaymentVoucher({ ...{ company: { name: "Shree Metals" }, expense: { balance_amount: 50 }, payment: { id: "00000000-0000-4000-8000-000000000124", amount_paid: 10 } }, printedOn: "2026-11-19" }).totals[1],
+    ["Current expense balance (as of 19 Nov 2026)", 50]);
+  assert.ok(!payment.totals.some(([label]) => /after posting/i.test(label)));
   for (const voucher of [credit, expense, payment]) {
     const doc = await PDFDocument.load(await buildVoucherPdf(voucher));
     assert.ok(doc.getPageCount() >= 1);

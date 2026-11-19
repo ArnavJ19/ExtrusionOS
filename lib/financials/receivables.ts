@@ -2,7 +2,7 @@
 // private.recalculate_invoice_collection_state and get_financial_collection_events:
 //   * only PAID receipts count; CANCELLED (reversed) rows never do;
 //   * REFUND rows are money paid back to the customer and count negatively;
-//   * credit_note-method ADJUSTMENT rows settle the invoice but are not cash collections;
+//   * ADJUSTMENT rows and credit_note-method rows settle the invoice but are not cash collections;
 //   * issued return credit notes reduce the receivable separately from receipts.
 
 export type ReceivablePayment = {
@@ -50,7 +50,9 @@ export function signedSettlementAmount(payment: ReceivablePayment) {
 
 /** Signed cash collection, as reported by collection analytics (adjustments excluded). */
 export function signedCollectionAmount(payment: ReceivablePayment) {
-  if (!isPostedPayment(payment) || payment.payment_method === "credit_note") return 0;
+  // Same non-cash rule as isCreditAdjustment and the payments credit-settlement exclusivity trigger: any ADJUSTMENT
+  // row, whatever its method, settles the invoice without being cash collected.
+  if (!isPostedPayment(payment) || isCreditAdjustment(payment)) return 0;
   return signedSettlementAmount(payment);
 }
 
