@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { onboardingSchema } from "@/lib/validations/schemas";
+import { signInAction } from "@/lib/actions/sign-in";
 
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const router = useRouter();
@@ -19,12 +20,16 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") || "");
     const password = String(form.get("password") || "");
-    const supabase = createClient();
-    const result = mode === "login" ? await supabase.auth.signInWithPassword({ email, password }) : await supabase.auth.signUp({ email, password });
-    setLoading(false);
-    if (result.error) return toast.error(getErrorMessage(result.error));
     if (mode === "login") {
-      await supabase.rpc("record_current_login_event", { p_event_type: "login_success" });
+      // FS-51: sign-in runs on the server (rate limit, lockout after repeated failures, login history).
+      const signedIn = await signInAction({ email, password });
+      setLoading(false);
+      if (!signedIn.success) return toast.error(signedIn.error);
+    } else {
+      const supabase = createClient();
+      const result = await supabase.auth.signUp({ email, password });
+      setLoading(false);
+      if (result.error) return toast.error(getErrorMessage(result.error));
     }
     toast.success(mode === "login" ? "Logged in" : "Account created");
     router.replace(mode === "login" ? "/dashboard" : "/onboarding");

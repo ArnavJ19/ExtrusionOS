@@ -1,0 +1,182 @@
+[
+  {
+    "file": "app/(dashboard)/automation/page.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "app/(dashboard)/customers/[id]/page.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "app/(dashboard)/orders/[id]/page.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "app/(dashboard)/orders/page.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "app/(dashboard)/payments/page.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "app/(dashboard)/payments/receipts/page.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "app/(dashboard)/quotes/[id]/page.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "app/(dashboard)/quotes/page.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "components/modules/dispatch-form-client.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "components/modules/dispatches-client.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "components/modules/financials/financial-workflow-review.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "components/modules/financials/invoice-form-client.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "components/modules/home-work/module-workflows.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "components/modules/operations/record-form-client.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "components/modules/orders-client.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "components/modules/quotes-client.tsx",
+    "change": "edited since capture"
+  },
+  {
+    "file": "lib/actions/dispatches.ts",
+    "change": "edited since capture"
+  },
+  {
+    "file": "lib/actions/financial-workflow-review.ts",
+    "change": "edited since capture"
+  },
+  {
+    "file": "lib/actions/quotes-orders.ts",
+    "change": "edited since capture"
+  },
+  {
+    "file": "lib/auth/route-permissions.ts",
+    "change": "edited since capture"
+  },
+  {
+    "file": "lib/dashboard/my-work.ts",
+    "change": "edited since capture"
+  },
+  {
+    "file": "supabase/migrations/20261111100000_autopilot_batch_3.sql",
+    "change": "edited since capture"
+  },
+  {
+    "file": "tests/autopilot-batch1-sql.test.mjs",
+    "change": "edited since capture"
+  },
+  {
+    "file": "tests/autopilot-batch3-sql.test.mjs",
+    "change": "edited since capture"
+  },
+  {
+    "file": "scripts/lib/autopilot-batch3-browser-fixture.mjs",
+    "change": "added since capture"
+  },
+  {
+    "file": "tests/autopilot-batch3-browser.test.mjs",
+    "change": "added since capture"
+  },
+  {
+    "file": "app/(dashboard)/invoices/drafts/page.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "app/(dashboard)/invoices/tax-rules/page.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "app/(dashboard)/orders/credit/page.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "app/(dashboard)/payments/bank/page.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "app/(dashboard)/payments/reminders/page.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "app/(dashboard)/production/drafts/page.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "app/(dashboard)/settings/data/duplicates/page.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "components/modules/order-to-cash/bank.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "components/modules/order-to-cash/billing.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "components/modules/order-to-cash/cash.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "components/modules/order-to-cash/credit.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "components/modules/order-to-cash/draft-jobs.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "components/modules/order-to-cash/duplicate-warning.ts",
+    "change": "added since capture"
+  },
+  {
+    "file": "components/modules/order-to-cash/quotes-alerts.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "components/modules/order-to-cash/supply-override.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "components/modules/order-to-cash/ui.tsx",
+    "change": "added since capture"
+  },
+  {
+    "file": "lib/actions/order-to-cash.ts",
+    "change": "added since capture"
+  },
+  {
+    "file": "lib/order-to-cash/duplicates.ts",
+    "change": "added since capture"
+  },
+  {
+    "file": "tests/autopilot-batch3.test.mjs",
+    "change": "added since capture"
+  }
+]

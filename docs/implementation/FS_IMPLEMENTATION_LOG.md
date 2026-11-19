@@ -23,3 +23,13 @@ The user asked to complete the partially done items. FS-16, FS-54, FS-26 and FS-
 The changes are in migration `20261118130000_fs_phase4_completion.sql`.
 
 During verification, the quotation form's new import broke eight other browser harnesses. It was replaced with a browser-client RPC, and those files then passed 73/73. Details are in the report's "Completion pass" section.
+
+## Root batch 4 – 18 November 2026
+
+Root checkout `feat/autopilot-batch-10`, starting HEAD `0ad63a5`, with the user's uncommitted e-invoice/Tally/offline/TDS work preserved untouched. Codex still owns FS-06, 08, 43, 89, 109, 113, 115, 116, 117, 133 in `.worktrees/codex-v1`; none were touched, and FS-117's status was copied from the Codex tracker.
+
+Selection followed the roadmap's phase order among IDs that do not collide with Codex: Phase 0 (FS-82 business date, FS-07 monitoring, FS-51 hardening, FS-125 no fake Die Intelligence, FS-107 one documentation home), Phase 1 (FS-65 weight basis, FS-77 KPI dictionary, FS-75 authority matrix, FS-132 one KPI path), and FS-79 (history tab, prerequisite FS-90 done). FS-14 was not selected: its multi-lot charge sheet deducts lots through the stock ledger Codex is rebuilding (FS-08/109).
+
+Five additive migrations `20261119100000`–`20261119140000`, gateways `fs_kpi`, `fs_history`, `fs_monitoring`(+`_service`), `fs_security`(+`_service`), `fs_weight_basis`, `fs_authority`, server actions `lib/actions/fs-batch4.ts` and `lib/actions/sign-in.ts`, screens `/insights/kpis`, `/settings/{system-health,authority,weight-basis}`, the History tab on 12 detail pages, a dispatch weight panel and Command Center on the one KPI path.
+
+Outcome: IMPLEMENTED FS-82, FS-132, FS-125. PARTIAL FS-77, FS-79, FS-07, FS-51, FS-65, FS-75, FS-107 (each with its remaining scope in the tracker). The FS-107 archive move was refused by the session's permission guard and waits for the user. Nothing was pushed, applied to hosted or deployed. Details: `FS_ROOT_BATCH_4_REPORT.md`.

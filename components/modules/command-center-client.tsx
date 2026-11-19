@@ -76,7 +76,7 @@ export function CommandCenterClient({ metrics, delayedOrders, overdueInvoices, l
             : m.recoveryCapturedJobCount > 0
               ? `${formatWeight(m.recoveryOutputKg)} output from ${formatWeight(m.recoveryInputKg)} issued billet`
               : "No completed jobs this month"}
-          alert={m.recoveryPercent !== null && m.recoveryPercent < 85}
+          alert={m.recoveryMissingJobCount > 0}
         />
       </div>
 

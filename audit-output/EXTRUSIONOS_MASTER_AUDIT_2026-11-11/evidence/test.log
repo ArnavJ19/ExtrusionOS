@@ -22050,3 +22050,3018 @@ ok 2060 - the inventory reservation count is unavailable when its exact-count qu
   duration_ms: 10.2808
   type: 'test'
   ...
+# Subtest: one bounded JSON result includes complete histories and summaries over all 601 matching rows
+ok 2061 - one bounded JSON result includes complete histories and summaries over all 601 matching rows
+  ---
+  duration_ms: 2929.3319
+  type: 'test'
+  ...
+# Subtest: stable pages reach every row beyond the old 300-row cap with no gaps or duplicates
+ok 2062 - stable pages reach every row beyond the old 300-row cap with no gaps or duplicates
+  ---
+  duration_ms: 109662.21
+  type: 'test'
+  ...
+# Subtest: literal search and status filters share the exact count, rows and quantities
+ok 2063 - literal search and status filters share the exact count, rows and quantities
+  ---
+  duration_ms: 10728.5197
+  type: 'test'
+  ...
+# Subtest: sort choices and direction are applied before range with a stable identity tie-break
+ok 2064 - sort choices and direction are applied before range with a stable identity tie-break
+  ---
+  duration_ms: 11794.2841
+  type: 'test'
+  ...
+# Subtest: business roles, suspended identities and SQL execute privileges retain the existing reservation read boundary
+ok 2065 - business roles, suspended identities and SQL execute privileges retain the existing reservation read boundary
+  ---
+  duration_ms: 14075.2686
+  type: 'test'
+  ...
+# Subtest: another company sees only its own rows and foreign relationship labels cannot leak through an invalid source
+ok 2066 - another company sees only its own rows and foreign relationship labels cannot leak through an invalid source
+  ---
+  duration_ms: 3375.9431
+  type: 'test'
+  ...
+# Subtest: negative or overconsumed source evidence is unavailable and unknown legacy units remain null
+ok 2067 - negative or overconsumed source evidence is unavailable and unknown legacy units remain null
+  ---
+  duration_ms: 3906.66
+  type: 'test'
+  ...
+# Subtest: consumption entries with altered order, profile or batch provenance cannot produce verified totals
+ok 2068 - consumption entries with altered order, profile or batch provenance cannot produce verified totals
+  ---
+  duration_ms: 10690.0913
+  type: 'test'
+  ...
+# Subtest: the projection executes inside a read-only transaction and rejects invalid raw RPC filters
+ok 2069 - the projection executes inside a read-only transaction and rejects invalid raw RPC filters
+  ---
+  duration_ms: 1833.7054
+  type: 'test'
+  ...
+# Subtest: the client rejects truncated, duplicate, invalid and conflicting payloads without trusting summary-only success
+ok 2070 - the client rejects truncated, duplicate, invalid and conflicting payloads without trusting summary-only success
+  ---
+  duration_ms: 1925.1636
+  type: 'test'
+  ...
+# Subtest: URL option normalization bounds invalid input while keeping literal search content
+ok 2071 - URL option normalization bounds invalid input while keeping literal search content
+  ---
+  duration_ms: 11.3018
+  type: 'test'
+  ...
+# Subtest: an exact posted dispatch retry succeeds after the unconsumed hold is released
+ok 2072 - an exact posted dispatch retry succeeds after the unconsumed hold is released
+  ---
+  duration_ms: 2722.3425
+  type: 'test'
+  ...
+# Subtest: an exact posted dispatch retry succeeds after the unconsumed hold is cancelled
+ok 2073 - an exact posted dispatch retry succeeds after the unconsumed hold is cancelled
+  ---
+  duration_ms: 3068.9687
+  type: 'test'
+  ...
+# Subtest: partial release frees only the remaining hold and leaves physical stock and posted consumption unchanged
+ok 2074 - partial release frees only the remaining hold and leaves physical stock and posted consumption unchanged
+  ---
+  duration_ms: 4017.3291
+  type: 'test'
+  ...
+# Subtest: released holds reject a new dispatch and roll back an earlier source debit in the same attempt
+ok 2075 - released holds reject a new dispatch and roll back an earlier source debit in the same attempt
+  ---
+  duration_ms: 2868.8819
+  type: 'test'
+  ...
+# Subtest: a retry cannot change the posted kg, metres or pieces even after release
+ok 2076 - a retry cannot change the posted kg, metres or pieces even after release
+  ---
+  duration_ms: 2797.9141
+  type: 'test'
+  ...
+# Subtest: null manifest identity and changed ledger provenance cannot pass as an exact retry
+ok 2077 - null manifest identity and changed ledger provenance cannot pass as an exact retry
+  ---
+  duration_ms: 2938.7137
+  type: 'test'
+  ...
+# Subtest: consumed holds remain terminal and an exact exhausted reservation retry does not debit again
+ok 2078 - consumed holds remain terminal and an exact exhausted reservation retry does not debit again
+  ---
+  duration_ms: 2839.4429
+  type: 'test'
+  ...
+# Subtest: a retained delivered dispatch remains invoiceable after cancellation without changing physical stock or posted fulfillment
+ok 2079 - a retained delivered dispatch remains invoiceable after cancellation without changing physical stock or posted fulfillment
+  ---
+  duration_ms: 4353.0148
+  type: 'test'
+  ...
+# Subtest: open-order invoicing already preserves exact packing prices, GST and full source identities
+ok 2080 - open-order invoicing already preserves exact packing prices, GST and full source identities
+  ---
+  duration_ms: 37.9868
+  type: 'test'
+  ...
+# Subtest: returned or damaged dispatches remain excluded even when their order is open
+ok 2081 - returned or damaged dispatches remain excluded even when their order is open
+  ---
+  duration_ms: 44.6939
+  type: 'test'
+  ...
+# Subtest: retained-shipment invoicing still rejects repricing, duplicate packing sources and duplicate active invoices
+ok 2082 - retained-shipment invoicing still rejects repricing, duplicate packing sources and duplicate active invoices
+  ---
+  duration_ms: 121.9684
+  type: 'test'
+  ...
+# Subtest: cancelled order can invoice its retained dispatched shipment with exact quantities
+ok 2083 - cancelled order can invoice its retained dispatched shipment with exact quantities
+  ---
+  duration_ms: 56.2534
+  type: 'test'
+  ...
+# Subtest: cancelled order can invoice its retained in_transit shipment with exact quantities
+ok 2084 - cancelled order can invoice its retained in_transit shipment with exact quantities
+  ---
+  duration_ms: 56.93
+  type: 'test'
+  ...
+# Subtest: cancelled order can invoice its retained delivered shipment with exact quantities
+ok 2085 - cancelled order can invoice its retained delivered shipment with exact quantities
+  ---
+  duration_ms: 56.5252
+  type: 'test'
+  ...
+# Subtest: cancelled pending dispatch is excluded from both source selection and direct writer
+ok 2086 - cancelled pending dispatch is excluded from both source selection and direct writer
+  ---
+  duration_ms: 39.5519
+  type: 'test'
+  ...
+# Subtest: cancelled returned dispatch is excluded from both source selection and direct writer
+ok 2087 - cancelled returned dispatch is excluded from both source selection and direct writer
+  ---
+  duration_ms: 30.441
+  type: 'test'
+  ...
+# Subtest: cancelled damaged dispatch is excluded from both source selection and direct writer
+ok 2088 - cancelled damaged dispatch is excluded from both source selection and direct writer
+  ---
+  duration_ms: 30.874
+  type: 'test'
+  ...
+# Subtest: cancelled unknown dispatch is excluded from both source selection and direct writer
+ok 2089 - cancelled unknown dispatch is excluded from both source selection and direct writer
+  ---
+  duration_ms: 39.2531
+  type: 'test'
+  ...
+# Subtest: missing cancellation history fails closed without creating financial records
+ok 2090 - missing cancellation history fails closed without creating financial records
+  ---
+  duration_ms: 43.5821
+  type: 'test'
+  ...
+# Subtest: foreign cancellation history fails closed without creating financial records
+ok 2091 - foreign cancellation history fails closed without creating financial records
+  ---
+  duration_ms: 47.1855
+  type: 'test'
+  ...
+# Subtest: future cancellation history fails closed without creating financial records
+ok 2092 - future cancellation history fails closed without creating financial records
+  ---
+  duration_ms: 48.0577
+  type: 'test'
+  ...
+# Subtest: missing activation fails closed without creating financial records
+ok 2093 - missing activation fails closed without creating financial records
+  ---
+  duration_ms: 50.5056
+  type: 'test'
+  ...
+# Subtest: activation after cancellation fails closed without creating financial records
+ok 2094 - activation after cancellation fails closed without creating financial records
+  ---
+  duration_ms: 47.1221
+  type: 'test'
+  ...
+# Subtest: nonfinite dispatch creation fails closed without creating financial records
+ok 2095 - nonfinite dispatch creation fails closed without creating financial records
+  ---
+  duration_ms: 43.9945
+  type: 'test'
+  ...
+# Subtest: dispatch created after activation fails closed without creating financial records
+ok 2096 - dispatch created after activation fails closed without creating financial records
+  ---
+  duration_ms: 44.9986
+  type: 'test'
+  ...
+# Subtest: missing consumption fails closed without creating financial records
+ok 2097 - missing consumption fails closed without creating financial records
+  ---
+  duration_ms: 51.7923
+  type: 'test'
+  ...
+# Subtest: late consumption fails closed without creating financial records
+ok 2098 - late consumption fails closed without creating financial records
+  ---
+  duration_ms: 46.5501
+  type: 'test'
+  ...
+# Subtest: wrong posted quantity fails closed without creating financial records
+ok 2099 - wrong posted quantity fails closed without creating financial records
+  ---
+  duration_ms: 42.7658
+  type: 'test'
+  ...
+# Subtest: dispatch total disagrees with manifest fails closed without creating financial records
+ok 2100 - dispatch total disagrees with manifest fails closed without creating financial records
+  ---
+  duration_ms: 54.6004
+  type: 'test'
+  ...
+# Subtest: unverified manifest cannot invoice a cancelled remainder
+ok 2101 - unverified manifest cannot invoice a cancelled remainder
+  ---
+  duration_ms: 38.8854
+  type: 'test'
+  ...
+# Subtest: verification after activation cannot invoice a cancelled remainder
+ok 2102 - verification after activation cannot invoice a cancelled remainder
+  ---
+  duration_ms: 40.8415
+  type: 'test'
+  ...
+# Subtest: verification from another company cannot invoice a cancelled remainder
+ok 2103 - verification from another company cannot invoice a cancelled remainder
+  ---
+  duration_ms: 37.3578
+  type: 'test'
+  ...
+# Subtest: invalid source lineage cannot invoice a cancelled remainder
+ok 2104 - invalid source lineage cannot invoice a cancelled remainder
+  ---
+  duration_ms: 35.3144
+  type: 'test'
+  ...
+# Subtest: zero shipped metres cannot invoice a cancelled remainder
+ok 2105 - zero shipped metres cannot invoice a cancelled remainder
+  ---
+  duration_ms: 42.6239
+  type: 'test'
+  ...
+# Subtest: nonfinite net rate cannot invoice a cancelled remainder
+ok 2106 - nonfinite net rate cannot invoice a cancelled remainder
+  ---
+  duration_ms: 35.8899
+  type: 'test'
+  ...
+# Subtest: unknown source kind cannot invoice a cancelled remainder
+ok 2107 - unknown source kind cannot invoice a cancelled remainder
+  ---
+  duration_ms: 38.7435
+  type: 'test'
+  ...
+# Subtest: retained dealer_stock shipment uses its posted source without crediting physical stock
+ok 2108 - retained dealer_stock shipment uses its posted source without crediting physical stock
+  ---
+  duration_ms: 64.5744
+  type: 'test'
+  ...
+# Subtest: retained dealer_stock source cannot be posted twice across dispatches
+ok 2109 - retained dealer_stock source cannot be posted twice across dispatches
+  ---
+  duration_ms: 71.9
+  type: 'test'
+  ...
+# Subtest: retained production shipment uses its posted source without crediting physical stock
+ok 2110 - retained production shipment uses its posted source without crediting physical stock
+  ---
+  duration_ms: 59.4193
+  type: 'test'
+  ...
+# Subtest: retained production source cannot be posted twice across dispatches
+ok 2111 - retained production source cannot be posted twice across dispatches
+  ---
+  duration_ms: 54.6699
+  type: 'test'
+  ...
+# Subtest: dealer fulfillment already returned to stock cannot support a retained invoice
+ok 2112 - dealer fulfillment already returned to stock cannot support a retained invoice
+  ---
+  duration_ms: 32.0561
+  type: 'test'
+  ...
+# Subtest: production completed after dispatch cannot support a retained invoice
+ok 2113 - production completed after dispatch cannot support a retained invoice
+  ---
+  duration_ms: 28.9747
+  type: 'test'
+  ...
+# Subtest: unexplained extra posted consumption makes a retained manifest unavailable
+ok 2114 - unexplained extra posted consumption makes a retained manifest unavailable
+  ---
+  duration_ms: 44.0666
+  type: 'test'
+  ...
+# Subtest: financial roles can read retained sources; other roles, suspended and missing identities cannot
+ok 2115 - financial roles can read retained sources; other roles, suspended and missing identities cannot
+  ---
+  duration_ms: 242.9876
+  type: 'test'
+  ...
+# Subtest: another company cannot discover or invoice the retained shipment even by exact UUID
+ok 2116 - another company cannot discover or invoice the retained shipment even by exact UUID
+  ---
+  duration_ms: 31.358
+  type: 'test'
+  ...
+# Subtest: read-only financial RLS prevents direct invoice writes and private implementations remain uncallable
+ok 2117 - read-only financial RLS prevents direct invoice writes and private implementations remain uncallable
+  ---
+  duration_ms: 81.125
+  type: 'test'
+  ...
+# Subtest: source search finds old orders beyond 500 records, limits to 25 and treats wildcard characters literally
+ok 2118 - source search finds old orders beyond 500 records, limits to 25 and treats wildcard characters literally
+  ---
+  duration_ms: 119533.9377
+  type: 'test'
+  ...
+# Subtest: late manifest failure rolls back header, items, totals and audit; issued invoices retain their lock
+ok 2119 - late manifest failure rolls back header, items, totals and audit; issued invoices retain their lock
+  ---
+  duration_ms: 89.8444
+  type: 'test'
+  ...
+# Subtest: coverage guard rejects a partial manifest even through the authenticated SQL writer
+ok 2120 - coverage guard rejects a partial manifest even through the authenticated SQL writer
+  ---
+  duration_ms: 41.1029
+  type: 'test'
+  ...
+# Subtest: a retained receivable still accepts cash, return credits, refunds and credit reversal after the dispatch is returned
+ok 2121 - a retained receivable still accepts cash, return credits, refunds and credit reversal after the dispatch is returned
+  ---
+  duration_ms: 567.3188
+  type: 'test'
+  ...
+# Subtest: inactive users have a stable suspended destination and remain blocked from protected pages
+ok 2122 - inactive users have a stable suspended destination and remain blocked from protected pages
+  ---
+  duration_ms: 1.5578
+  type: 'test'
+  ...
+# Subtest: dashboard defaults operational roles to non-commercial operations views
+ok 2123 - dashboard defaults operational roles to non-commercial operations views
+  ---
+  duration_ms: 1.7423
+  type: 'test'
+  ...
+# Subtest: search resources are derived from read permissions and results open exact records
+ok 2124 - search resources are derived from read permissions and results open exact records
+  ---
+  duration_ms: 0.5267
+  type: 'test'
+  ...
+# Subtest: mobile shortcuts and direct subpages share the same module permissions
+ok 2125 - mobile shortcuts and direct subpages share the same module permissions
+  ---
+  duration_ms: 0.4873
+  type: 'test'
+  ...
+# Subtest: notification and task badges match the records an operator can open
+ok 2126 - notification and task badges match the records an operator can open
+  ---
+  duration_ms: 0.3102
+  type: 'test'
+  ...
+# Subtest: enterprise access controls are owner-owned and blank assignments become broadcasts
+ok 2127 - enterprise access controls are owner-owned and blank assignments become broadcasts
+  ---
+  duration_ms: 0.2139
+  type: 'test'
+  ...
+# Subtest: factory and inventory managers can discover their permitted operational modules
+ok 2128 - factory and inventory managers can discover their permitted operational modules
+  ---
+  duration_ms: 0.541
+  type: 'test'
+  ...
+# Subtest: security logs are tenant-scoped, self-attributed, and append-only
+ok 2129 - security logs are tenant-scoped, self-attributed, and append-only
+  ---
+  duration_ms: 2.7453
+  type: 'test'
+  ...
+# Subtest: entity revisions cannot be rewritten or deleted
+ok 2130 - entity revisions cannot be rewritten or deleted
+  ---
+  duration_ms: 0.5207
+  type: 'test'
+  ...
+# Subtest: technical artifacts use separate read, write, and administrative delete policies
+ok 2131 - technical artifacts use separate read, write, and administrative delete policies
+  ---
+  duration_ms: 1.2049
+  type: 'test'
+  ...
+# Subtest: integration configuration and sync logs are restricted to administrators
+ok 2132 - integration configuration and sync logs are restricted to administrators
+  ---
+  duration_ms: 0.8629
+  type: 'test'
+  ...
+# Subtest: maintenance and energy mutations mirror the protected route roles
+ok 2133 - maintenance and energy mutations mirror the protected route roles
+  ---
+  duration_ms: 2.2854
+  type: 'test'
+  ...
+# Subtest: the hardening migration does not recreate broad FOR ALL tenant policies
+ok 2134 - the hardening migration does not recreate broad FOR ALL tenant policies
+  ---
+  duration_ms: 0.5049
+  type: 'test'
+  ...
+# Subtest: legacy CRM, tender, technical, compliance, and finance tables use role families
+ok 2135 - legacy CRM, tender, technical, compliance, and finance tables use role families
+  ---
+  duration_ms: 0.9759
+  type: 'test'
+  ...
+# Subtest: AI quotation, barcode, and scan policies enforce their route roles and actor identity
+ok 2136 - AI quotation, barcode, and scan policies enforce their route roles and actor identity
+  ---
+  duration_ms: 0.4602
+  type: 'test'
+  ...
+# Subtest: saved reports enforce creator ownership and visibility
+ok 2137 - saved reports enforce creator ownership and visibility
+  ---
+  duration_ms: 0.9569
+  type: 'test'
+  ...
+# Subtest: automation runs are append-only and data retention is administrative
+ok 2138 - automation runs are append-only and data retention is administrative
+  ---
+  duration_ms: 0.8356
+  type: 'test'
+  ...
+# Subtest: systems configurator management is no longer granted to every tenant user
+ok 2139 - systems configurator management is no longer granted to every tenant user
+  ---
+  duration_ms: 0.434
+  type: 'test'
+  ...
+# Subtest: login observability derives tenant ownership inside a restricted RPC
+ok 2140 - login observability derives tenant ownership inside a restricted RPC
+  ---
+  duration_ms: 0.3612
+  type: 'test'
+  ...
+# Subtest: sensitive action triggers derive actor and tenant and cannot be called as RPCs
+ok 2141 - sensitive action triggers derive actor and tenant and cannot be called as RPCs
+  ---
+  duration_ms: 0.3035
+  type: 'test'
+  ...
+# Subtest: technical document storage uses the same tenant and role boundary as metadata
+ok 2142 - technical document storage uses the same tenant and role boundary as metadata
+  ---
+  duration_ms: 0.417
+  type: 'test'
+  ...
+# Subtest: mixed-workflow policies replace remaining broad mutation grants
+ok 2143 - mixed-workflow policies replace remaining broad mutation grants
+  ---
+  duration_ms: 0.2981
+  type: 'test'
+  ...
+# Subtest: portal requests derive customer ownership without recursive table policies
+ok 2144 - portal requests derive customer ownership without recursive table policies
+  ---
+  duration_ms: 0.1975
+  type: 'test'
+  ...
+# Subtest: analytics route is protected and restricted by role
+ok 2145 - analytics route is protected and restricted by role
+  ---
+  duration_ms: 1.7389
+  type: 'test'
+  ...
+# Subtest: dealer users remain restricted to dealer-safe prefixes
+ok 2146 - dealer users remain restricted to dealer-safe prefixes
+  ---
+  duration_ms: 0.3661
+  type: 'test'
+  ...
+# Subtest: internal quote and sensitive module routes fail closed by role
+ok 2147 - internal quote and sensitive module routes fail closed by role
+  ---
+  duration_ms: 0.4811
+  type: 'test'
+  ...
+# Subtest: mouse click reopens the list immediately after choosing while the input still owns focus
+not ok 2148 - mouse click reopens the list immediately after choosing while the input still owns focus
+  ---
+  duration_ms: 1190.8712
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:14:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: clicking an open input preserves the user's current filter without firing another remote search
+not ok 2149 - clicking an open input preserves the user's current filter without firing another remote search
+  ---
+  duration_ms: 0.9933
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:20:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: ArrowDown reopens a closed focused input and Enter chooses once without submitting the enclosing form
+not ok 2150 - ArrowDown reopens a closed focused input and Enter chooses once without submitting the enclosing form
+  ---
+  duration_ms: 0.1083
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:26:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: ArrowUp starts at the last available result and ArrowDown wraps to the first
+not ok 2151 - ArrowUp starts at the last available result and ArrowDown wraps to the first
+  ---
+  duration_ms: 0.0749
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:31:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: an external source change clears a previously displayed selected label while the list is open
+not ok 2152 - an external source change clears a previously displayed selected label while the list is open
+  ---
+  duration_ms: 0.1058
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:38:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: Escape preserves selection and keyboard reopening does not send another search
+not ok 2153 - Escape preserves selection and keyboard reopening does not send another search
+  ---
+  duration_ms: 0.0725
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:44:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: Tab leaves the combobox without choosing; arrow navigation keeps focus on the input
+not ok 2154 - Tab leaves the combobox without choosing; arrow navigation keeps focus on the input
+  ---
+  duration_ms: 0.0592
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:50:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: leaving the control closes it; refocusing before its delayed close keeps the reopened list available
+not ok 2155 - leaving the control closes it; refocusing before its delayed close keeps the reopened list available
+  ---
+  duration_ms: 0.1367
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:60:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: clearing does not submit, trigger a search or choose an option; the still-focused input reopens on click
+not ok 2156 - clearing does not submit, trigger a search or choose an option; the still-focused input reopens on click
+  ---
+  duration_ms: 0.352
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:67:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: pending remote search cannot choose an old option by mouse or Enter
+not ok 2157 - pending remote search cannot choose an old option by mouse or Enter
+  ---
+  duration_ms: 0.2306
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:73:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: empty results never select an option or submit while the list is open
+not ok 2158 - empty results never select an option or submit while the list is open
+  ---
+  duration_ms: 0.0577
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:82:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: Enter used to compose text does not choose an option
+not ok 2159 - Enter used to compose text does not choose an option
+  ---
+  duration_ms: 0.0536
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:87:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: disabled controls cannot open or choose, including when disabled during an open list
+not ok 2160 - disabled controls cannot open or choose, including when disabled during an open list
+  ---
+  duration_ms: 0.053
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:92:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: touch selection reopens without an extra tap outside the control
+not ok 2161 - touch selection reopens without an extra tap outside the control
+  ---
+  duration_ms: 0.0474
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:100:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: a delayed close is harmless when the control is removed
+not ok 2162 - a delayed close is harmless when the control is removed
+  ---
+  duration_ms: 0.0471
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\searchable-select.test.mjs:111:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createSearchableSelectBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\searchable-select-browser-fixture.mjs:27:28)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\searchable-select.test.mjs:6:31)
+  ...
+# Subtest: route authorization defaults
+    # Subtest: protects shipment receipts and grants employee access explicitly
+    ok 1 - protects shipment receipts and grants employee access explicitly
+      ---
+      duration_ms: 3.5328
+      type: 'test'
+      ...
+    # Subtest: does not grant access to an unmapped, unprotected route
+    ok 2 - does not grant access to an unmapped, unprotected route
+      ---
+      duration_ms: 0.3193
+      type: 'test'
+      ...
+    # Subtest: keeps every dashboard route root in the protected registry
+    ok 3 - keeps every dashboard route root in the protected registry
+      ---
+      duration_ms: 13.2552
+      type: 'test'
+      ...
+    1..3
+ok 2163 - route authorization defaults
+  ---
+  duration_ms: 18.9973
+  type: 'suite'
+  ...
+# Subtest: manual integration providers
+    # Subtest: do not report successful automated delivery
+    ok 1 - do not report successful automated delivery
+      ---
+      duration_ms: 0.9496
+      type: 'test'
+      ...
+    1..1
+ok 2164 - manual integration providers
+  ---
+  duration_ms: 1.1883
+  type: 'suite'
+  ...
+# Subtest: distributed rate limit migration
+    # Subtest: is service-role only and atomically locks counters
+    ok 1 - is service-role only and atomically locks counters
+      ---
+      duration_ms: 5.609
+      type: 'test'
+      ...
+    1..1
+ok 2165 - distributed rate limit migration
+  ---
+  duration_ms: 6.0317
+  type: 'suite'
+  ...
+# Subtest: migration is transactional and has balanced function bodies
+ok 2166 - migration is transactional and has balanced function bodies
+  ---
+  duration_ms: 1.6154
+  type: 'test'
+  ...
+# Subtest: self profile updates cannot mutate server-owned access fields
+ok 2167 - self profile updates cannot mutate server-owned access fields
+  ---
+  duration_ms: 0.3959
+  type: 'test'
+  ...
+# Subtest: notification select, mark-read, and unread count share one role and dealer audience predicate
+ok 2168 - notification select, mark-read, and unread count share one role and dealer audience predicate
+  ---
+  duration_ms: 0.5939
+  type: 'test'
+  ...
+# Subtest: billet lineage uses typed rows and does not dereference an unassigned generic requirement record
+ok 2169 - billet lineage uses typed rows and does not dereference an unassigned generic requirement record
+  ---
+  duration_ms: 0.3248
+  type: 'test'
+  ...
+# Subtest: quote headers are derived from quote items after every item mutation
+ok 2170 - quote headers are derived from quote items after every item mutation
+  ---
+  duration_ms: 0.3357
+  type: 'test'
+  ...
+# Subtest: quote header derivation preserves the atomic quote save formula and public RPC
+ok 2171 - quote header derivation preserves the atomic quote save formula and public RPC
+  ---
+  duration_ms: 0.3453
+  type: 'test'
+  ...
+# Subtest: payment server-action module exports only async action functions and types
+ok 2172 - payment server-action module exports only async action functions and types
+  ---
+  duration_ms: 1.3186
+  type: 'test'
+  ...
+# Subtest: dealer quote-order conversion enforces ownership inside one atomic workflow
+ok 2173 - dealer quote-order conversion enforces ownership inside one atomic workflow
+  ---
+  duration_ms: 1.6597
+  type: 'test'
+  ...
+# Subtest: CRM lead creation is server-owned and browser payload does not include company_id
+ok 2174 - CRM lead creation is server-owned and browser payload does not include company_id
+  ---
+  duration_ms: 0.3654
+  type: 'test'
+  ...
+# Subtest: QR code creation is server-owned and validates scoped entity before insert
+ok 2175 - QR code creation is server-owned and validates scoped entity before insert
+  ---
+  duration_ms: 0.2013
+  type: 'test'
+  ...
+# Subtest: every open or window-completed job appears once with a single category, held first
+ok 2176 - every open or window-completed job appears once with a single category, held first
+  ---
+  duration_ms: 2682.7767
+  type: 'test'
+  ...
+# Subtest: jobs completed before or after the window are excluded, other companies never appear
+ok 2177 - jobs completed before or after the window are excluded, other companies never appear
+  ---
+  duration_ms: 28.1588
+  type: 'test'
+  ...
+# Subtest: held jobs carry their recorded hold reason, resume condition and responsible person
+ok 2178 - held jobs carry their recorded hold reason, resume condition and responsible person
+  ---
+  duration_ms: 30.265
+  type: 'test'
+  ...
+# Subtest: outstanding kg is planned minus produced, never negative, and missing plan is not zero
+ok 2179 - outstanding kg is planned minus produced, never negative, and missing plan is not zero
+  ---
+  duration_ms: 39.7682
+  type: 'test'
+  ...
+# Subtest: only exceptions recorded inside the window are counted against a job
+ok 2180 - only exceptions recorded inside the window are counted against a job
+  ---
+  duration_ms: 29.6949
+  type: 'test'
+  ...
+# Subtest: breakdowns overlapping the window are clipped to it, and an open one runs to the window end
+ok 2181 - breakdowns overlapping the window are clipped to it, and an open one runs to the window end
+  ---
+  duration_ms: 37.3876
+  type: 'test'
+  ...
+# Subtest: a resolved breakdown without an end time adds no downtime instead of running forever
+ok 2182 - a resolved breakdown without an end time adds no downtime instead of running forever
+  ---
+  duration_ms: 53.5352
+  type: 'test'
+  ...
+# Subtest: quality items list only open inspections in the window; stock holds count only unsent stock
+ok 2183 - quality items list only open inspections in the window; stock holds count only unsent stock
+  ---
+  duration_ms: 50.5681
+  type: 'test'
+  ...
+# Subtest: pending loads due by the shift's business date are listed and earlier ones are flagged overdue
+ok 2184 - pending loads due by the shift's business date are listed and earlier ones are flagged overdue
+  ---
+  duration_ms: 45.9002
+  type: 'test'
+  ...
+# Subtest: lists are bounded at 100 rows and report the true total
+ok 2185 - lists are bounded at 100 rows and report the true total
+  ---
+  duration_ms: 57.3588
+  type: 'test'
+  ...
+# Subtest: invalid, reversed, over-long, stale and future windows are rejected
+ok 2186 - invalid, reversed, over-long, stale and future windows are rejected
+  ---
+  duration_ms: 70.9379
+  type: 'test'
+  ...
+# Subtest: submitting stores the server-built snapshot with the supervisor's note and name
+ok 2187 - submitting stores the server-built snapshot with the supervisor's note and name
+  ---
+  duration_ms: 56.1051
+  type: 'test'
+  ...
+# Subtest: the stored snapshot does not change when production records change later
+ok 2188 - the stored snapshot does not change when production records change later
+  ---
+  duration_ms: 61.7536
+  type: 'test'
+  ...
+# Subtest: retrying the same request returns the same handover; reusing its id for other details is refused
+ok 2189 - retrying the same request returns the same handover; reusing its id for other details is refused
+  ---
+  duration_ms: 66.865
+  type: 'test'
+  ...
+# Subtest: a second handover for the same or an overlapping window is refused; an adjacent shift is allowed
+ok 2190 - a second handover for the same or an overlapping window is refused; an adjacent shift is allowed
+  ---
+  duration_ms: 62.7092
+  type: 'test'
+  ...
+# Subtest: label and note limits, control characters and missing request identity are rejected
+ok 2191 - label and note limits, control characters and missing request identity are rejected
+  ---
+  duration_ms: 56.9899
+  type: 'test'
+  ...
+# Subtest: a different supervisor acknowledges once; a retry by the same person with the same note is a no-op
+ok 2192 - a different supervisor acknowledges once; a retry by the same person with the same note is a no-op
+  ---
+  duration_ms: 67.2763
+  type: 'test'
+  ...
+# Subtest: the person who prepared the handover cannot acknowledge it
+ok 2193 - the person who prepared the handover cannot acknowledge it
+  ---
+  duration_ms: 60.6994
+  type: 'test'
+  ...
+# Subtest: viewers can read but not submit or acknowledge; sales and dealer users have no access
+ok 2194 - viewers can read but not submit or acknowledge; sales and dealer users have no access
+  ---
+  duration_ms: 95.4305
+  type: 'test'
+  ...
+# Subtest: another company cannot list, load or acknowledge a handover, and its summary excludes our records
+ok 2195 - another company cannot list, load or acknowledge a handover, and its summary excludes our records
+  ---
+  duration_ms: 93.9787
+  type: 'test'
+  ...
+# Subtest: anonymous callers and direct table writes are refused
+ok 2196 - anonymous callers and direct table writes are refused
+  ---
+  duration_ms: 62.0662
+  type: 'test'
+  ...
+# Subtest: the list is paged at 10 rows, newest first, with open-job counts and a status filter
+ok 2197 - the list is paged at 10 rows, newest first, with open-job counts and a status filter
+  ---
+  duration_ms: 164.6359
+  type: 'test'
+  ...
+# Subtest: unknown commands and non-object payloads are refused
+ok 2198 - unknown commands and non-object payloads are refused
+  ---
+  duration_ms: 33.9958
+  type: 'test'
+  ...
+# Subtest: roles: production supervisors submit; quality, dispatch and viewers read; sales and dealers do neither
+ok 2199 - roles: production supervisors submit; quality, dispatch and viewers read; sales and dealers do neither
+  ---
+  duration_ms: 2569.3882
+  type: 'test'
+  ...
+# Subtest: window rule matches the server: reversed, over 24 h, stale, not yet ended and unparseable windows
+ok 2200 - window rule matches the server: reversed, over 24 h, stale, not yet ended and unparseable windows
+  ---
+  duration_ms: 3.5696
+  type: 'test'
+  ...
+# Subtest: command schema rejects forged context, unknown commands and bad text, and validates windows
+ok 2201 - command schema rejects forged context, unknown commands and bad text, and validates windows
+  ---
+  duration_ms: 10.5768
+  type: 'test'
+  ...
+# Subtest: recent shift presets are the three latest 12-hour shifts on IST 08:00/20:00 boundaries
+ok 2202 - recent shift presets are the three latest 12-hour shifts on IST 08:00/20:00 boundaries
+  ---
+  duration_ms: 24.1989
+  type: 'test'
+  ...
+# Subtest: IST entry converts to the right instant and rejects impossible dates
+ok 2203 - IST entry converts to the right instant and rejects impossible dates
+  ---
+  duration_ms: 1.2738
+  type: 'test'
+  ...
+# Subtest: the database preview, stored record and list parse with the app's schemas
+ok 2204 - the database preview, stored record and list parse with the app's schemas
+  ---
+  duration_ms: 59.377
+  type: 'test'
+  ...
+# Subtest: summary headline totals and the WhatsApp text reflect the stored snapshot
+ok 2205 - summary headline totals and the WhatsApp text reflect the stored snapshot
+  ---
+  duration_ms: 34.7262
+  type: 'test'
+  ...
+# Subtest: pages and action stay wired: role gates, dealer exclusion and the route rule
+ok 2206 - pages and action stay wired: role gates, dealer exclusion and the route rule
+  ---
+  duration_ms: 11.4506
+  type: 'test'
+  ...
+# Subtest: 78: numbered observations retain time and policy, retry exactly, reject ambiguous duplicates
+ok 2207 - 78: numbered observations retain time and policy, retry exactly, reject ambiguous duplicates
+  ---
+  duration_ms: 3123.4459
+  type: 'test'
+  ...
+# Subtest: 78: recovery needs a distinct designated reviewer and a real related confirmed transaction
+ok 2208 - 78: recovery needs a distinct designated reviewer and a real related confirmed transaction
+  ---
+  duration_ms: 283.4966
+  type: 'test'
+  ...
+# Subtest: 78: reconciliation rechecks the source after acquiring its lock
+ok 2209 - 78: reconciliation rechecks the source after acquiring its lock
+  ---
+  duration_ms: 318.6643
+  type: 'test'
+  ...
+# Subtest: 78: no continuity policy means no authorized offline work; policy edits are version checked
+ok 2210 - 78: no continuity policy means no authorized offline work; policy edits are version checked
+  ---
+  duration_ms: 262.8041
+  type: 'test'
+  ...
+# Subtest: 79: supervised observed work follows exact version, captures each step and requires independent owner review
+ok 2211 - 79: supervised observed work follows exact version, captures each step and requires independent owner review
+  ---
+  duration_ms: 301.6999
+  type: 'test'
+  ...
+# Subtest: 79: employees cannot self-observe, omit steps, use stale reviews or cross company boundaries
+ok 2212 - 79: employees cannot self-observe, omit steps, use stale reviews or cross company boundaries
+  ---
+  duration_ms: 284.7968
+  type: 'test'
+  ...
+# Subtest: 79: a process owner outside the factory supervisor roles can find and review their observed trial
+ok 2213 - 79: a process owner outside the factory supervisor roles can find and review their observed trial
+  ---
+  duration_ms: 292.2811
+  type: 'test'
+  ...
+# Subtest: SOP server actions refuse unauthenticated and dealership-less dealer sessions before any RPC
+ok 2214 - SOP server actions refuse unauthenticated and dealership-less dealer sessions before any RPC
+  ---
+  duration_ms: 4.679
+  type: 'test'
+  ...
+# Subtest: SOP server actions reject injected company identity and invalid versions before any write
+ok 2215 - SOP server actions reject injected company identity and invalid versions before any write
+  ---
+  duration_ms: 2.5157
+  type: 'test'
+  ...
+# Subtest: SOP server actions send only validated payloads and preserve a confirmed write across cache failure
+ok 2216 - SOP server actions send only validated payloads and preserve a confirmed write across cache failure
+  ---
+  duration_ms: 1.1395
+  type: 'test'
+  ...
+# Subtest: read-only and wrong-stage sessions cannot approve or acknowledge work
+ok 2217 - read-only and wrong-stage sessions cannot approve or acknowledge work
+  ---
+  duration_ms: 0.3966
+  type: 'test'
+  ...
+# Subtest: current business refusals reach the caller and unexpected database failures are bounded
+ok 2218 - current business refusals reach the caller and unexpected database failures are bounded
+  ---
+  duration_ms: 1.1231
+  type: 'test'
+  ...
+# Subtest: 65/66/68/70: mounted phone workflow records evidence, routes rework, verifies independently and completes
+not ok 2219 - 65/66/68/70: mounted phone workflow records evidence, routes rework, verifies independently and completes
+  ---
+  duration_ms: 4989.1689
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\sop-upgrade-browser.test.mjs:12:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\sop-upgrade-browser.test.mjs:7:80)
+  ...
+# Subtest: 78: continuity sheet and numbered recovery observation use the real reconciliation queue
+not ok 2220 - 78: continuity sheet and numbered recovery observation use the real reconciliation queue
+  ---
+  duration_ms: 2.722
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\sop-upgrade-browser.test.mjs:24:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\sop-upgrade-browser.test.mjs:7:80)
+  ...
+# Subtest: 79/80: observed trial captures employee feedback and creates a controlled improvement
+not ok 2221 - 79/80: observed trial captures employee feedback and creates a controlled improvement
+  ---
+  duration_ms: 1.4668
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\sop-upgrade-browser.test.mjs:28:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\sop-upgrade-browser.test.mjs:7:80)
+  ...
+# Subtest: 77/80: released rules and small-sample outcomes render safely at desktop and phone sizes
+not ok 2222 - 77/80: released rules and small-sample outcomes render safely at desktop and phone sizes
+  ---
+  duration_ms: 0.5478
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\sop-upgrade-browser.test.mjs:32:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\sop-upgrade-browser.test.mjs:7:80)
+  ...
+# Subtest: 70: a reviewer returns a chosen step for correction and the performer records fresh evidence
+not ok 2223 - 70: a reviewer returns a chosen step for correction and the performer records fresh evidence
+  ---
+  duration_ms: 1.5377
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\sop-upgrade-browser.test.mjs:36:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\sop-upgrade-browser.test.mjs:7:80)
+  ...
+# Subtest: 65: reassignment offers a new attempt while preserving the prior employee evidence
+not ok 2224 - 65: reassignment offers a new attempt while preserving the prior employee evidence
+  ---
+  duration_ms: 1.2138
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\sop-upgrade-browser.test.mjs:46:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\sop-upgrade-browser.test.mjs:7:80)
+  ...
+# Subtest: 57: the mounted customer requirement records an acknowledgement of the current revision
+not ok 2225 - 57: the mounted customer requirement records an acknowledgement of the current revision
+  ---
+  duration_ms: 0.4823
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\sop-upgrade-browser.test.mjs:52:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\sop-upgrade-browser.test.mjs:7:80)
+  ...
+# Subtest: 61: the mounted blueprint form saves a real revision and its prerequisites
+not ok 2226 - 61: the mounted blueprint form saves a real revision and its prerequisites
+  ---
+  duration_ms: 0.7656
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\sop-upgrade-browser.test.mjs:59:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\sop-upgrade-browser.test.mjs:7:80)
+  ...
+# Subtest: staging E2E refuses implicit or current-project credentials
+ok 2227 - staging E2E refuses implicit or current-project credentials
+  ---
+  duration_ms: 2.2442
+  type: 'test'
+  ...
+# Subtest: staging E2E seeds only disposable notification state
+ok 2228 - staging E2E seeds only disposable notification state
+  ---
+  duration_ms: 0.3802
+  type: 'test'
+  ...
+# Subtest: staging journeys cover practical factory fixes
+ok 2229 - staging journeys cover practical factory fixes
+  ---
+  duration_ms: 0.3048
+  type: 'test'
+  ...
+# Subtest: staging target defaults to the existing remote boundary
+ok 2230 - staging target defaults to the existing remote boundary
+  ---
+  duration_ms: 6.4415
+  type: 'test'
+  ...
+# Subtest: explicit local staging accepts separate loopback application and Supabase ports
+ok 2231 - explicit local staging accepts separate loopback application and Supabase ports
+  ---
+  duration_ms: 0.4587
+  type: 'test'
+  ...
+# Subtest: local staging rejects missing mutation opt-in
+ok 2232 - local staging rejects missing mutation opt-in
+  ---
+  duration_ms: 0.2365
+  type: 'test'
+  ...
+# Subtest: local staging rejects disabled staging
+ok 2233 - local staging rejects disabled staging
+  ---
+  duration_ms: 0.1747
+  type: 'test'
+  ...
+# Subtest: local staging rejects unknown target
+ok 2234 - local staging rejects unknown target
+  ---
+  duration_ms: 0.1711
+  type: 'test'
+  ...
+# Subtest: local staging rejects remote application in local mode
+ok 2235 - local staging rejects remote application in local mode
+  ---
+  duration_ms: 0.4671
+  type: 'test'
+  ...
+# Subtest: local staging rejects remote database in local mode
+ok 2236 - local staging rejects remote database in local mode
+  ---
+  duration_ms: 0.3807
+  type: 'test'
+  ...
+# Subtest: local staging rejects loopback-looking hostname
+ok 2237 - local staging rejects loopback-looking hostname
+  ---
+  duration_ms: 0.4919
+  type: 'test'
+  ...
+# Subtest: local staging rejects same application and database origin
+ok 2238 - local staging rejects same application and database origin
+  ---
+  duration_ms: 1.6782
+  type: 'test'
+  ...
+# Subtest: local staging rejects application URL credentials
+ok 2239 - local staging rejects application URL credentials
+  ---
+  duration_ms: 1.1411
+  type: 'test'
+  ...
+# Subtest: local staging rejects database URL credentials
+ok 2240 - local staging rejects database URL credentials
+  ---
+  duration_ms: 0.5602
+  type: 'test'
+  ...
+# Subtest: local staging rejects database URL path
+ok 2241 - local staging rejects database URL path
+  ---
+  duration_ms: 0.2755
+  type: 'test'
+  ...
+# Subtest: local staging rejects database URL query
+ok 2242 - local staging rejects database URL query
+  ---
+  duration_ms: 0.2732
+  type: 'test'
+  ...
+# Subtest: local staging rejects malformed URL
+ok 2243 - local staging rejects malformed URL
+  ---
+  duration_ms: 0.2484
+  type: 'test'
+  ...
+# Subtest: local staging rejects reused current database
+ok 2244 - local staging rejects reused current database
+  ---
+  duration_ms: 0.3267
+  type: 'test'
+  ...
+# Subtest: local staging rejects reused current database through a loopback alias
+ok 2245 - local staging rejects reused current database through a loopback alias
+  ---
+  duration_ms: 0.4926
+  type: 'test'
+  ...
+# Subtest: local staging rejects reused current key
+ok 2246 - local staging rejects reused current key
+  ---
+  duration_ms: 0.3565
+  type: 'test'
+  ...
+# Subtest: local staging rejects identical users
+ok 2247 - local staging rejects identical users
+  ---
+  duration_ms: 0.2284
+  type: 'test'
+  ...
+# Subtest: local staging rejects missing password
+ok 2248 - local staging rejects missing password
+  ---
+  duration_ms: 0.2245
+  type: 'test'
+  ...
+# Subtest: remote staging still rejects mismatched Supabase project identity
+ok 2249 - remote staging still rejects mismatched Supabase project identity
+  ---
+  duration_ms: 0.3943
+  type: 'test'
+  ...
+# Subtest: remote staging normalizes URL casing before rejecting the current project
+ok 2250 - remote staging normalizes URL casing before rejecting the current project
+  ---
+  duration_ms: 0.5279
+  type: 'test'
+  ...
+# Subtest: runner exits before launching without dedicated configuration
+ok 2251 - runner exits before launching without dedicated configuration
+  ---
+  duration_ms: 200.753
+  type: 'test'
+  ...
+# Subtest: explicit local skip remains visibly skipped and launches no child
+ok 2252 - explicit local skip remains visibly skipped and launches no child
+  ---
+  duration_ms: 275.904
+  type: 'test'
+  ...
+# Subtest: runner launches the installed Playwright CLI and discovers the real staging suite
+ok 2253 - runner launches the installed Playwright CLI and discovers the real staging suite
+  ---
+  duration_ms: 1781.0822
+  type: 'test'
+  ...
+# Subtest: runner preserves a failing child exit code
+ok 2254 - runner preserves a failing child exit code
+  ---
+  duration_ms: 450.153
+  type: 'test'
+  ...
+# Subtest: runner reports a child startup failure
+ok 2255 - runner reports a child startup failure
+  ---
+  duration_ms: 206.2035
+  type: 'test'
+  ...
+# Subtest: status board usability
+    # Subtest: starts every status group collapsed and caps its preview at five records
+    ok 1 - starts every status group collapsed and caps its preview at five records
+      ---
+      duration_ms: 12.092
+      type: 'test'
+      ...
+    # Subtest: offers View More only when the total exceeds the five-record preview
+    ok 2 - offers View More only when the total exceeds the five-record preview
+      ---
+      duration_ms: 5.1078
+      type: 'test'
+      ...
+    # Subtest: uses the shared behavior for generic modules, dies, and dealer orders
+    ok 3 - uses the shared behavior for generic modules, dies, and dealer orders
+      ---
+      duration_ms: 6.0271
+      type: 'test'
+      ...
+    1..3
+ok 2256 - status board usability
+  ---
+  duration_ms: 26.0286
+  type: 'suite'
+  ...
+# Subtest: a batch's availability is on hand minus the open part of active reservations, exactly
+ok 2257 - a batch's availability is on hand minus the open part of active reservations, exactly
+  ---
+  duration_ms: 2881.1575
+  type: 'test'
+  ...
+# Subtest: dispatched quantity is not counted twice: R1 shows 150 kg consumed and only 250 kg open
+ok 2258 - dispatched quantity is not counted twice: R1 shows 150 kg consumed and only 250 kg open
+  ---
+  duration_ms: 41.2807
+  type: 'test'
+  ...
+# Subtest: withdrawals list dispatches, dealer debits and cancellation credits with signs, explaining on hand from 1000 kg
+ok 2259 - withdrawals list dispatches, dealer debits and cancellation credits with signs, explaining on hand from 1000 kg
+  ---
+  duration_ms: 38.9462
+  type: 'test'
+  ...
+# Subtest: stock on QC hold is excluded with its reason and is not available
+ok 2260 - stock on QC hold is excluded with its reason and is not available
+  ---
+  duration_ms: 69.9094
+  type: 'test'
+  ...
+# Subtest: over-reserved stock shows the shortfall instead of a negative balance
+ok 2261 - over-reserved stock shows the shortfall instead of a negative balance
+  ---
+  duration_ms: 72.873
+  type: 'test'
+  ...
+# Subtest: a fully consumed reservation and legacy rows without an initial quantity follow the ledger's basis
+ok 2262 - a fully consumed reservation and legacy rows without an initial quantity follow the ledger's basis
+  ---
+  duration_ms: 109.947
+  type: 'test'
+  ...
+# Subtest: over-consumption of one reservation never adds availability back
+ok 2263 - over-consumption of one reservation never adds availability back
+  ---
+  duration_ms: 67.4923
+  type: 'test'
+  ...
+# Subtest: the list shows unsent batches with availability, filters and literal search, 10 per page
+ok 2264 - the list shows unsent batches with availability, filters and literal search, 10 per page
+  ---
+  duration_ms: 322.3689
+  type: 'test'
+  ...
+# Subtest: dealers explain only their own batches, without other parties' customer names
+ok 2265 - dealers explain only their own batches, without other parties' customer names
+  ---
+  duration_ms: 164.0653
+  type: 'test'
+  ...
+# Subtest: roles outside the stock ledger, other companies and anonymous callers are refused
+ok 2266 - roles outside the stock ledger, other companies and anonymous callers are refused
+  ---
+  duration_ms: 109.295
+  type: 'test'
+  ...
+# Subtest: readers match the reservation ledger plus dealer users for their own stock
+ok 2267 - readers match the reservation ledger plus dealer users for their own stock
+  ---
+  duration_ms: 2907.9189
+  type: 'test'
+  ...
+# Subtest: the reconciliation check catches any component that does not add up, in thousandths
+ok 2268 - the reconciliation check catches any component that does not add up, in thousandths
+  ---
+  duration_ms: 2.7413
+  type: 'test'
+  ...
+# Subtest: command schema bounds search, filters and requires a batch id
+ok 2269 - command schema bounds search, filters and requires a batch id
+  ---
+  duration_ms: 7.2952
+  type: 'test'
+  ...
+# Subtest: QC-held or sent batches are not reservable, so the configurator no longer reports stock it cannot reserve
+ok 2270 - QC-held or sent batches are not reservable, so the configurator no longer reports stock it cannot reserve
+  ---
+  duration_ms: 1.6321
+  type: 'test'
+  ...
+# Subtest: database explanations and lists parse and reconcile with the app's schema
+ok 2271 - database explanations and lists parse and reconcile with the app's schema
+  ---
+  duration_ms: 330.9108
+  type: 'test'
+  ...
+# Subtest: the database and the configurator's availability helpers agree for a released batch
+ok 2272 - the database and the configurator's availability helpers agree for a released batch
+  ---
+  duration_ms: 24.4003
+  type: 'test'
+  ...
+# Subtest: the pages gate on the same readers and refuse to show an explanation that does not reconcile
+ok 2273 - the pages gate on the same readers and refuse to show an explanation that does not reconcile
+  ---
+  duration_ms: 17.9276
+  type: 'test'
+  ...
+# Subtest: 88: allocation failure retains the confirmed manufacturing requirement
+not ok 2274 - 88: allocation failure retains the confirmed manufacturing requirement
+  ---
+  duration_ms: 130.5655
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\stock-production-browser.test.mjs:5:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createFactoryBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\factory-upgrade-browser-fixture.mjs:23:30)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\stock-production-browser.test.mjs:4:33)
+  ...
+# Subtest: 88: confirmed stock reduces manufacturing on the same basis and exact retries reserve once
+ok 2275 - 88: confirmed stock reduces manufacturing on the same basis and exact retries reserve once
+  ---
+  duration_ms: 19249.3068
+  type: 'test'
+  ...
+# Subtest: 88: another employee stale preview and failed allocation cannot reduce remaining manufacture
+ok 2276 - 88: another employee stale preview and failed allocation cannot reduce remaining manufacture
+  ---
+  duration_ms: 68.1743
+  type: 'test'
+  ...
+# Subtest: 88: stock holds and incompatible lengths are excluded; cumulative over-allocation rolls back
+ok 2277 - 88: stock holds and incompatible lengths are excluded; cumulative over-allocation rolls back
+  ---
+  duration_ms: 42.8661
+  type: 'test'
+  ...
+# Subtest: 88: ordinary production writes cannot bypass stock-covered demand
+ok 2278 - 88: ordinary production writes cannot bypass stock-covered demand
+  ---
+  duration_ms: 18.4524
+  type: 'test'
+  ...
+# Subtest: 88: uncommitted suggestions cannot change the manufacturing requirement
+ok 2279 - 88: uncommitted suggestions cannot change the manufacturing requirement
+  ---
+  duration_ms: 1.0783
+  type: 'test'
+  ...
+# Subtest: 88: allocation accepts whole pieces and exact source version, rejecting forged ownership
+ok 2280 - 88: allocation accepts whole pieces and exact source version, rejecting forged ownership
+  ---
+  duration_ms: 3.6023
+  type: 'test'
+  ...
+# Subtest: 88: existing order progress includes committed factory stock without double-counting dealer stock
+ok 2281 - 88: existing order progress includes committed factory stock without double-counting dealer stock
+  ---
+  duration_ms: 0.7881
+  type: 'test'
+  ...
+# Subtest: 88: missing, truncated and duplicate stock coverage cannot become verified zero
+ok 2282 - 88: missing, truncated and duplicate stock coverage cannot become verified zero
+  ---
+  duration_ms: 1.5982
+  type: 'test'
+  ...
+# Subtest: repeated updates to one followed record arrive as one digest line with the latest change
+ok 2283 - repeated updates to one followed record arrive as one digest line with the latest change
+  ---
+  duration_ms: 2699.3171
+  type: 'test'
+  ...
+# Subtest: digests group several records, most recent first, and follow only the chosen categories
+ok 2284 - digests group several records, most recent first, and follow only the chosen categories
+  ---
+  duration_ms: 69.8326
+  type: 'test'
+  ...
+# Subtest: an employee's own changes are not sent back to them; others following the record get them
+ok 2285 - an employee's own changes are not sent back to them; others following the record get them
+  ---
+  duration_ms: 89.7119
+  type: 'test'
+  ...
+# Subtest: events are recorded only for followed records, and only from after the follow began
+ok 2286 - events are recorded only for followed records, and only from after the follow began
+  ---
+  duration_ms: 83.4762
+  type: 'test'
+  ...
+# Subtest: access is rechecked at delivery: a role that can no longer open invoices stops receiving them
+ok 2287 - access is rechecked at delivery: a role that can no longer open invoices stops receiving them
+  ---
+  duration_ms: 89.0218
+  type: 'test'
+  ...
+# Subtest: hourly and daily digests wait for their time; quiet hours defer; digest now delivers on request
+ok 2288 - hourly and daily digests wait for their time; quiet hours defer; digest now delivers on request
+  ---
+  duration_ms: 143.7162
+  type: 'test'
+  ...
+# Subtest: quiet hours wrap midnight; preferences are validated
+ok 2289 - quiet hours wrap midnight; preferences are validated
+  ---
+  duration_ms: 111.1433
+  type: 'test'
+  ...
+# Subtest: employees follow only records they may open, in this company, with categories that apply
+ok 2290 - employees follow only records they may open, in this company, with categories that apply
+  ---
+  duration_ms: 139.1364
+  type: 'test'
+  ...
+# Subtest: a request reminds on schedule and stops as soon as its condition is resolved
+ok 2291 - a request reminds on schedule and stops as soon as its condition is resolved
+  ---
+  duration_ms: 118.413
+  type: 'test'
+  ...
+# Subtest: requests go only to people who can act on that record, once, and not for work already done
+ok 2292 - requests go only to people who can act on that record, once, and not for work already done
+  ---
+  duration_ms: 129.9571
+  type: 'test'
+  ...
+# Subtest: quiet hours defer reminders; a recipient who leaves closes the request and tells the requester
+ok 2293 - quiet hours defer reminders; a recipient who leaves closes the request and tells the requester
+  ---
+  duration_ms: 78.7704
+  type: 'test'
+  ...
+# Subtest: payment, QC and dispatch requests resolve from their records; general requests only when closed; reminders stop at 10
+ok 2294 - payment, QC and dispatch requests resolve from their records; general requests only when closed; reminders stop at 10
+  ---
+  duration_ms: 169.976
+  type: 'test'
+  ...
+# Subtest: subscriptions, digests and requests stay private; the scheduler runs every company and is not callable by users
+ok 2295 - subscriptions, digests and requests stay private; the scheduler runs every company and is not callable by users
+  ---
+  duration_ms: 134.0248
+  type: 'test'
+  ...
+# Subtest: following a kind of record is allowed exactly where the role may open its pages
+ok 2296 - following a kind of record is allowed exactly where the role may open its pages
+  ---
+  duration_ms: 2596.0781
+  type: 'test'
+  ...
+# Subtest: commands refuse bad input with a specific message
+ok 2297 - commands refuse bad input with a specific message
+  ---
+  duration_ms: 33.8679
+  type: 'test'
+  ...
+# Subtest: WhatsApp summary and quiet-hour text
+ok 2298 - WhatsApp summary and quiet-hour text
+  ---
+  duration_ms: 40.8375
+  type: 'test'
+  ...
+# Subtest: the action shows exactly the database's business messages
+ok 2299 - the action shows exactly the database's business messages
+  ---
+  duration_ms: 30.9345
+  type: 'test'
+  ...
+# Subtest: role, category and request tables match the database functions
+ok 2300 - role, category and request tables match the database functions
+  ---
+  duration_ms: 54.2
+  type: 'test'
+  ...
+# Subtest: database responses parse with the app's schemas
+ok 2301 - database responses parse with the app's schemas
+  ---
+  duration_ms: 220.0293
+  type: 'test'
+  ...
+# Subtest: pages keep dealers out and show the follow control only where the role may open the record
+ok 2302 - pages keep dealers out and show the follow control only where the role may open the record
+  ---
+  duration_ms: 62.2313
+  type: 'test'
+  ...
+# Subtest: project lists are server paged ten at a time with exact count and stable sort
+ok 2303 - project lists are server paged ten at a time with exact count and stable sort
+  ---
+  duration_ms: 21.8939
+  type: 'test'
+  ...
+# Subtest: project query controls reject arbitrary sort/filter inputs and sanitize search syntax
+ok 2304 - project query controls reject arbitrary sort/filter inputs and sanitize search syntax
+  ---
+  duration_ms: 0.5159
+  type: 'test'
+  ...
+# Subtest: failed project query renders an unavailable state rather than a fabricated empty dataset
+ok 2305 - failed project query renders an unavailable state rather than a fabricated empty dataset
+  ---
+  duration_ms: 65.0633
+  type: 'test'
+  ...
+# Subtest: safe formula evaluator supports arithmetic and functions
+ok 2306 - safe formula evaluator supports arithmetic and functions
+  ---
+  duration_ms: 2.6962
+  type: 'test'
+  ...
+# Subtest: 2-track sliding calculation generates profile cuts, glass, beading, BOM, and costing
+ok 2307 - 2-track sliding calculation generates profile cuts, glass, beading, BOM, and costing
+  ---
+  duration_ms: 24.419
+  type: 'test'
+  ...
+# Subtest: invalid dimensions produce errors and unsafe formulas are rejected
+ok 2308 - invalid dimensions produce errors and unsafe formulas are rejected
+  ---
+  duration_ms: 1.7015
+  type: 'test'
+  ...
+# Subtest: sliding door fixture calculates profiles, glass, rollers, and costing
+ok 2309 - sliding door fixture calculates profiles, glass, rollers, and costing
+  ---
+  duration_ms: 1.2439
+  type: 'test'
+  ...
+# Subtest: casement window fixture calculates openable hardware
+ok 2310 - casement window fixture calculates openable hardware
+  ---
+  duration_ms: 0.7975
+  type: 'test'
+  ...
+# Subtest: fixed window fixture does not add openable hardware
+ok 2311 - fixed window fixture does not add openable hardware
+  ---
+  duration_ms: 0.5241
+  type: 'test'
+  ...
+# Subtest: hinged door fixture calculates door hardware
+ok 2312 - hinged door fixture calculates door hardware
+  ---
+  duration_ms: 0.7755
+  type: 'test'
+  ...
+# Subtest: draft JSON validation rejects invalid edit payloads
+ok 2313 - draft JSON validation rejects invalid edit payloads
+  ---
+  duration_ms: 1.2391
+  type: 'test'
+  ...
+# Subtest: realized profit includes discount and distinguishes cost markup from sales margin
+ok 2314 - realized profit includes discount and distinguishes cost markup from sales margin
+  ---
+  duration_ms: 1.2881
+  type: 'test'
+  ...
+# Subtest: break-even and excessive discounts never show a positive profit
+ok 2315 - break-even and excessive discounts never show a positive profit
+  ---
+  duration_ms: 0.2236
+  type: 'test'
+  ...
+# Subtest: data readiness extracts template requirements
+ok 2316 - data readiness extracts template requirements
+  ---
+  duration_ms: 1.9253
+  type: 'test'
+  ...
+# Subtest: configuration data readiness blocks missing required profile mappings
+ok 2317 - configuration data readiness blocks missing required profile mappings
+  ---
+  duration_ms: 0.6626
+  type: 'test'
+  ...
+# Subtest: configuration data readiness reports ready complete setup
+ok 2318 - configuration data readiness reports ready complete setup
+  ---
+  duration_ms: 0.3001
+  type: 'test'
+  ...
+# Subtest: library readiness highlights missing rates without blocking setup
+ok 2319 - library readiness highlights missing rates without blocking setup
+  ---
+  duration_ms: 0.3776
+  type: 'test'
+  ...
+# Subtest: production handoff groups profile cuts into planned jobs
+ok 2320 - production handoff groups profile cuts into planned jobs
+  ---
+  duration_ms: 17.2959
+  type: 'test'
+  ...
+# Subtest: production handoff readiness blocks incomplete configurations
+ok 2321 - production handoff readiness blocks incomplete configurations
+  ---
+  duration_ms: 0.6539
+  type: 'test'
+  ...
+# Subtest: production handoff remarks keep configuration traceability
+ok 2322 - production handoff remarks keep configuration traceability
+  ---
+  duration_ms: 0.2665
+  type: 'test'
+  ...
+# Subtest: system configuration handoff is atomic and requires a usable die
+ok 2323 - system configuration handoff is atomic and requires a usable die
+  ---
+  duration_ms: 0.8488
+  type: 'test'
+  ...
+# Subtest: production progress summarizes planned and actual output
+ok 2324 - production progress summarizes planned and actual output
+  ---
+  duration_ms: 1.1486
+  type: 'test'
+  ...
+# Subtest: production progress handles empty and completed jobs
+ok 2325 - production progress handles empty and completed jobs
+  ---
+  duration_ms: 0.1949
+  type: 'test'
+  ...
+# Subtest: complete series loading paginates until every profile mapping is returned
+ok 2326 - complete series loading paginates until every profile mapping is returned
+  ---
+  duration_ms: 2.2751
+  type: 'test'
+  ...
+# Subtest: new and edit pages load only the complete selected series without a fixed 500 cap
+ok 2327 - new and edit pages load only the complete selected series without a fixed 500 cap
+  ---
+  duration_ms: 0.4218
+  type: 'test'
+  ...
+# Subtest: series changes use a guarded server loader and replace the form mapping library
+ok 2328 - series changes use a guarded server loader and replace the form mapping library
+  ---
+  duration_ms: 0.2976
+  type: 'test'
+  ...
+# Subtest: BOM calculation uses the same complete-series loader
+ok 2329 - BOM calculation uses the same complete-series loader
+  ---
+  duration_ms: 0.1834
+  type: 'test'
+  ...
+# Subtest: first-fit decreasing optimizes cuts by profile code
+ok 2330 - first-fit decreasing optimizes cuts by profile code
+  ---
+  duration_ms: 13.6206
+  type: 'test'
+  ...
+# Subtest: optimization accounts for saw kerf and reusable leftovers
+ok 2331 - optimization accounts for saw kerf and reusable leftovers
+  ---
+  duration_ms: 1.2675
+  type: 'test'
+  ...
+# Subtest: optimization warns when a cut exceeds stock length
+ok 2332 - optimization warns when a cut exceeds stock length
+  ---
+  duration_ms: 0.4565
+  type: 'test'
+  ...
+# Subtest: system quote description is customer readable
+ok 2333 - system quote description is customer readable
+  ---
+  duration_ms: 1.4716
+  type: 'test'
+  ...
+# Subtest: whatsapp summary includes key commercial values
+ok 2334 - whatsapp summary includes key commercial values
+  ---
+  duration_ms: 23.2932
+  type: 'test'
+  ...
+# Subtest: quote readiness blocks draft and incomplete system configurations
+ok 2335 - quote readiness blocks draft and incomplete system configurations
+  ---
+  duration_ms: 0.8111
+  type: 'test'
+  ...
+# Subtest: quote readiness assertion throws the same quote-gating message used by conversion
+ok 2336 - quote readiness assertion throws the same quote-gating message used by conversion
+  ---
+  duration_ms: 0.6574
+  type: 'test'
+  ...
+# Subtest: output status reports missing production outputs
+ok 2337 - output status reports missing production outputs
+  ---
+  duration_ms: 1.2591
+  type: 'test'
+  ...
+# Subtest: template formula validator summarizes safe formula JSON
+ok 2338 - template formula validator summarizes safe formula JSON
+  ---
+  duration_ms: 2.0734
+  type: 'test'
+  ...
+# Subtest: template formula validator blocks unsafe and malformed formulas
+ok 2339 - template formula validator blocks unsafe and malformed formulas
+  ---
+  duration_ms: 0.6836
+  type: 'test'
+  ...
+# Subtest: template formula validator warns for custom runtime variables
+ok 2340 - template formula validator warns for custom runtime variables
+  ---
+  duration_ms: 0.9121
+  type: 'test'
+  ...
+# Subtest: workflow status prioritizes production progress and completion
+ok 2341 - workflow status prioritizes production progress and completion
+  ---
+  duration_ms: 0.9871
+  type: 'test'
+  ...
+# Subtest: workflow status reports data, calculation, quote, and handoff stages
+ok 2342 - workflow status reports data, calculation, quote, and handoff stages
+  ---
+  duration_ms: 0.2068
+  type: 'test'
+  ...
+# Subtest: workflow production job matcher requires order and configuration token
+ok 2343 - workflow production job matcher requires order and configuration token
+  ---
+  duration_ms: 0.255
+  type: 'test'
+  ...
+# Subtest: accounts and dispatch roles receive different useful table defaults
+ok 2344 - accounts and dispatch roles receive different useful table defaults
+  ---
+  duration_ms: 1.6071
+  type: 'test'
+  ...
+# Subtest: identifier remains visible and pinned first after custom hide and reorder preferences
+ok 2345 - identifier remains visible and pinned first after custom hide and reorder preferences
+  ---
+  duration_ms: 0.4444
+  type: 'test'
+  ...
+# Subtest: restricted financial columns are excluded by role independently of saved visibility
+ok 2346 - restricted financial columns are excluded by role independently of saved visibility
+  ---
+  duration_ms: 0.1806
+  type: 'test'
+  ...
+# Subtest: identifier cannot be reordered away from the first visible position
+ok 2347 - identifier cannot be reordered away from the first visible position
+  ---
+  duration_ms: 0.2607
+  type: 'test'
+  ...
+# Subtest: blueprint directory pages, filters and searches records on the server
+ok 2348 - blueprint directory pages, filters and searches records on the server
+  ---
+  duration_ms: 3103.344
+  type: 'test'
+  ...
+# Subtest: unassigned work cannot authorize an unrelated employee to raise an exception
+ok 2349 - unassigned work cannot authorize an unrelated employee to raise an exception
+  ---
+  duration_ms: 92.1061
+  type: 'test'
+  ...
+# Subtest: a task kind without a blueprint starts exactly as before
+ok 2350 - a task kind without a blueprint starts exactly as before
+  ---
+  duration_ms: 76.7733
+  type: 'test'
+  ...
+# Subtest: acceptance: two task kinds expose the same eight-part structure while enforcing their own requirements
+ok 2351 - acceptance: two task kinds expose the same eight-part structure while enforcing their own requirements
+  ---
+  duration_ms: 106.8919
+  type: 'test'
+  ...
+# Subtest: start is refused while prerequisites are unmet, by any path, with a short reason
+ok 2352 - start is refused while prerequisites are unmet, by any path, with a short reason
+  ---
+  duration_ms: 103.1292
+  type: 'test'
+  ...
+# Subtest: a missing record or state is never treated as satisfied
+ok 2353 - a missing record or state is never treated as satisfied
+  ---
+  duration_ms: 87.5066
+  type: 'test'
+  ...
+# Subtest: the blueprint revision checked at start is recorded; later edits do not rewrite it
+ok 2354 - the blueprint revision checked at start is recorded; later edits do not rewrite it
+  ---
+  duration_ms: 114.812
+  type: 'test'
+  ...
+# Subtest: handoff blueprints win over task-type blueprints; inactive blueprints do not apply
+ok 2355 - handoff blueprints win over task-type blueprints; inactive blueprints do not apply
+  ---
+  duration_ms: 106.0002
+  type: 'test'
+  ...
+# Subtest: blueprint content is validated and edits need the current revision
+ok 2356 - blueprint content is validated and edits need the current revision
+  ---
+  duration_ms: 173.3305
+  type: 'test'
+  ...
+# Subtest: only managers save blueprints; every internal employee reads them; dealers and other companies cannot
+ok 2357 - only managers save blueprints; every internal employee reads them; dealers and other companies cannot
+  ---
+  duration_ms: 92.601
+  type: 'test'
+  ...
+# Subtest: an exception is routed to the blueprint's role, once per task, and resolved by someone else in that role
+ok 2358 - an exception is routed to the blueprint's role, once per task, and resolved by someone else in that role
+  ---
+  duration_ms: 132.6779
+  type: 'test'
+  ...
+# Subtest: a supervisor who raised an exception cannot resolve it themselves
+ok 2359 - a supervisor who raised an exception cannot resolve it themselves
+  ---
+  duration_ms: 89.2765
+  type: 'test'
+  ...
+# Subtest: exceptions need a blueprint and an open task
+ok 2360 - exceptions need a blueprint and an open task
+  ---
+  duration_ms: 93.1856
+  type: 'test'
+  ...
+# Subtest: the procedure version from feature 77 appears as the blueprint's steps
+ok 2361 - the procedure version from feature 77 appears as the blueprint's steps
+  ---
+  duration_ms: 145.597
+  type: 'test'
+  ...
+# Subtest: the app's role and state tables mirror the database
+ok 2362 - the app's role and state tables mirror the database
+  ---
+  duration_ms: 2545.5948
+  type: 'test'
+  ...
+# Subtest: prerequisite validation mirrors the database
+ok 2363 - prerequisite validation mirrors the database
+  ---
+  duration_ms: 5.644
+  type: 'test'
+  ...
+# Subtest: database responses parse with the app's schemas, and every blueprint shows the same eight headings
+ok 2364 - database responses parse with the app's schemas, and every blueprint shows the same eight headings
+  ---
+  duration_ms: 123.9071
+  type: 'test'
+  ...
+# Subtest: business messages passed through are raised by the migration; start refusals reach handoff takers
+ok 2365 - business messages passed through are raised by the migration; start refusals reach handoff takers
+  ---
+  duration_ms: 6.9461
+  type: 'test'
+  ...
+# Subtest: More opens on the first permitted destination and reverse Tab returns to its trigger
+ok 2366 - More opens on the first permitted destination and reverse Tab returns to its trigger
+  ---
+  duration_ms: 3441.864
+  type: 'test'
+  ...
+# Subtest: internal portal scrolling keeps lower destination focus and scroll position
+ok 2367 - internal portal scrolling keeps lower destination focus and scroll position
+  ---
+  duration_ms: 524.9594
+  type: 'test'
+  ...
+# Subtest: Escape closes More and restores focus to its trigger
+ok 2368 - Escape closes More and restores focus to its trigger
+  ---
+  duration_ms: 619.6676
+  type: 'test'
+  ...
+# Subtest: Tab from the last menu destination exits after the trigger and closes More
+ok 2369 - Tab from the last menu destination exits after the trigger and closes More
+  ---
+  duration_ms: 613.7838
+  type: 'test'
+  ...
+# Subtest: activating a More destination closes the portal and updates alias active state
+ok 2370 - activating a More destination closes the portal and updates alias active state
+  ---
+  duration_ms: 857.6413
+  type: 'test'
+  ...
+# Subtest: all 15 roles receive a short primary set and grouped additional destinations
+ok 2371 - all 15 roles receive a short primary set and grouped additional destinations
+  ---
+  duration_ms: 2.0477
+  type: 'test'
+  ...
+# Subtest: role allowlists remain intact and company-disabled modules are omitted
+ok 2372 - role allowlists remain intact and company-disabled modules are omitted
+  ---
+  duration_ms: 0.7308
+  type: 'test'
+  ...
+# Subtest: duplicate routes are removed without losing distinct destinations
+ok 2373 - duplicate routes are removed without losing distinct destinations
+  ---
+  duration_ms: 1.1314
+  type: 'test'
+  ...
+# Subtest: route access honors exact path segment boundaries
+ok 2374 - route access honors exact path segment boundaries
+  ---
+  duration_ms: 0.5264
+  type: 'test'
+  ...
+# Subtest: an overdue order creates one task for the least-loaded dispatcher; reruns create nothing
+ok 2375 - an overdue order creates one task for the least-loaded dispatcher; reruns create nothing
+  ---
+  duration_ms: 2742.2969
+  type: 'test'
+  ...
+# Subtest: retrying the same request after a lost response returns the original result without side effects
+ok 2376 - retrying the same request after a lost response returns the original result without side effects
+  ---
+  duration_ms: 88.2928
+  type: 'test'
+  ...
+# Subtest: a rescheduled order that falls overdue again is a new occurrence; the first task keeps its event reference
+ok 2377 - a rescheduled order that falls overdue again is a new occurrence; the first task keeps its event reference
+  ---
+  duration_ms: 134.3183
+  type: 'test'
+  ...
+# Subtest: a named employee falls back to the role when unavailable; without a fallback the work is unassigned and reported
+ok 2378 - a named employee falls back to the role when unavailable; without a fallback the work is unassigned and reported
+  ---
+  duration_ms: 236.9757
+  type: 'test'
+  ...
+# Subtest: unassigned work is listed for recovery and assigned only to an eligible employee, once
+ok 2379 - unassigned work is listed for recovery and assigned only to an eligible employee, once
+  ---
+  duration_ms: 148.1043
+  type: 'test'
+  ...
+# Subtest: retrying assignment applies the rule again once someone eligible is available
+ok 2380 - retrying assignment applies the rule again once someone eligible is available
+  ---
+  duration_ms: 95.5828
+  type: 'test'
+  ...
+# Subtest: a rejected inspection raises its task in the same transaction; re-rejection does not duplicate it
+ok 2381 - a rejected inspection raises its task in the same transaction; re-rejection does not duplicate it
+  ---
+  duration_ms: 129.146
+  type: 'test'
+  ...
+# Subtest: breakdown, quote and invoice rules use their thresholds; working-day due dates skip Sunday
+ok 2382 - breakdown, quote and invoice rules use their thresholds; working-day due dates skip Sunday
+  ---
+  duration_ms: 123.9543
+  type: 'test'
+  ...
+# Subtest: the task list shows whether the source condition still holds
+ok 2383 - the task list shows whether the source condition still holds
+  ---
+  duration_ms: 134.371
+  type: 'test'
+  ...
+# Subtest: rules are validated: event roles, thresholds, stale edits, immutable event
+ok 2384 - rules are validated: event roles, thresholds, stale edits, immutable event
+  ---
+  duration_ms: 396.4123
+  type: 'test'
+  ...
+# Subtest: an inactive rule creates nothing; a company keeps at most 50 rules
+ok 2385 - an inactive rule creates nothing; a company keeps at most 50 rules
+  ---
+  duration_ms: 794.7324
+  type: 'test'
+  ...
+# Subtest: only managers edit rules; supervisors see their own events; others and other companies see nothing
+ok 2386 - only managers edit rules; supervisors see their own events; others and other companies see nothing
+  ---
+  duration_ms: 251.5936
+  type: 'test'
+  ...
+# Subtest: the scheduler entry point runs every company's rules once and cannot be called through the API
+ok 2387 - the scheduler entry point runs every company's rules once and cannot be called through the API
+  ---
+  duration_ms: 148.7175
+  type: 'test'
+  ...
+# Subtest: rule checks mirror the database: thresholds per event and eligible roles
+ok 2388 - rule checks mirror the database: thresholds per event and eligible roles
+  ---
+  duration_ms: 2576.4925
+  type: 'test'
+  ...
+# Subtest: commands are parsed by name; no client company, whole numbers only
+ok 2389 - commands are parsed by name; no client company, whole numbers only
+  ---
+  duration_ms: 24.3962
+  type: 'test'
+  ...
+# Subtest: summaries, links and retry classification
+ok 2390 - summaries, links and retry classification
+  ---
+  duration_ms: 23.6732
+  type: 'test'
+  ...
+# Subtest: the action shows exactly the database's business messages
+ok 2391 - the action shows exactly the database's business messages
+  ---
+  duration_ms: 29.034
+  type: 'test'
+  ...
+# Subtest: event roles and role scopes match the database functions exactly
+ok 2392 - event roles and role scopes match the database functions exactly
+  ---
+  duration_ms: 77.291
+  type: 'test'
+  ...
+# Subtest: threshold limits match the database check at each boundary
+ok 2393 - threshold limits match the database check at each boundary
+  ---
+  duration_ms: 243.2511
+  type: 'test'
+  ...
+# Subtest: database responses parse with the app's schemas
+ok 2394 - database responses parse with the app's schemas
+  ---
+  duration_ms: 152.075
+  type: 'test'
+  ...
+# Subtest: pages gate on the trigger roles and never take a company from the client
+ok 2395 - pages gate on the trigger roles and never take a company from the client
+  ---
+  duration_ms: 45.1969
+  type: 'test'
+  ...
+# Subtest: 18: recipient and outgoing content are reviewed before copying, with no delivered claim
+not ok 2396 - 18: recipient and outgoing content are reviewed before copying, with no delivered claim
+  ---
+  duration_ms: 124.8754
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\transaction-communication-browser.test.mjs:6:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createFactoryBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\factory-upgrade-browser-fixture.mjs:23:30)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\transaction-communication-browser.test.mjs:5:33)
+  ...
+# Subtest: 18: changed invoice and failed transport cannot claim a copied or delivered message
+not ok 2397 - 18: changed invoice and failed transport cannot claim a copied or delivered message
+  ---
+  duration_ms: 0.9761
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\transaction-communication-browser.test.mjs:11:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createFactoryBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\factory-upgrade-browser-fixture.mjs:23:30)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\transaction-communication-browser.test.mjs:5:33)
+  ...
+# Subtest: 18: drafts and unauthorized actors cannot prepare customer documents
+ok 2398 - 18: drafts and unauthorized actors cannot prepare customer documents
+  ---
+  duration_ms: 20746.2648
+  type: 'test'
+  ...
+# Subtest: 18: issued preview uses historical snapshots, a bound PDF and no private commercial fields
+ok 2399 - 18: issued preview uses historical snapshots, a bound PDF and no private commercial fields
+  ---
+  duration_ms: 45.2021
+  type: 'test'
+  ...
+# Subtest: 18: message uses issued customer fields and cannot include internal cost or fake delivery
+ok 2400 - 18: message uses issued customer fields and cannot include internal cost or fake delivery
+  ---
+  duration_ms: 45.0633
+  type: 'test'
+  ...
+# Subtest: 18: phone formatting refuses ambiguous recipients and treats formatting as preparation only
+ok 2401 - 18: phone formatting refuses ambiguous recipients and treats formatting as preparation only
+  ---
+  duration_ms: 0.488
+  type: 'test'
+  ...
+# Subtest: 34: planned work and pending packing do not count as completed production or confirmed dispatch
+ok 2402 - 34: planned work and pending packing do not count as completed production or confirmed dispatch
+  ---
+  duration_ms: 2888.9723
+  type: 'test'
+  ...
+# Subtest: 34: physical return dispositions change net outward while quarantines remain independent
+ok 2403 - 34: physical return dispositions change net outward while quarantines remain independent
+  ---
+  duration_ms: 38.0124
+  type: 'test'
+  ...
+# Subtest: 34: unverified, inconsistent and missing shipment evidence is unavailable, including SQL NULL
+ok 2404 - 34: unverified, inconsistent and missing shipment evidence is unavailable, including SQL NULL
+  ---
+  duration_ms: 43.5575
+  type: 'test'
+  ...
+# Subtest: 34: a missing production observation differs from recorded zero and later correction is reflected
+ok 2405 - 34: a missing production observation differs from recorded zero and later correction is reflected
+  ---
+  duration_ms: 64.4518
+  type: 'test'
+  ...
+# Subtest: 34: receipts and credits reconcile without exposing finance to operational roles
+ok 2406 - 34: receipts and credits reconcile without exposing finance to operational roles
+  ---
+  duration_ms: 51.7144
+  type: 'test'
+  ...
+# Subtest: 34: foreign order identity and future departure timestamps never certify progress
+ok 2407 - 34: foreign order identity and future departure timestamps never certify progress
+  ---
+  duration_ms: 48.4177
+  type: 'test'
+  ...
+# Subtest: the day-shift calendar counts only Monday-Saturday 08:00-20:00 IST
+ok 2408 - the day-shift calendar counts only Monday-Saturday 08:00-20:00 IST
+  ---
+  duration_ms: 2767.7772
+  type: 'test'
+  ...
+# Subtest: open work reports elapsed, active time and the response and completion state
+ok 2409 - open work reports elapsed, active time and the response and completion state
+  ---
+  duration_ms: 65.96
+  type: 'test'
+  ...
+# Subtest: tasks without a target report elapsed time only
+ok 2410 - tasks without a target report elapsed time only
+  ---
+  duration_ms: 46.5959
+  type: 'test'
+  ...
+# Subtest: a recorded wait pauses the target clock but never reduces total elapsed time
+ok 2411 - a recorded wait pauses the target clock but never reduces total elapsed time
+  ---
+  duration_ms: 66.7224
+  type: 'test'
+  ...
+# Subtest: starting work fixes the response result; completion fixes the completion result
+ok 2412 - starting work fixes the response result; completion fixes the completion result
+  ---
+  duration_ms: 155.1778
+  type: 'test'
+  ...
+# Subtest: starting the first time is remembered even if the task goes back to open
+ok 2413 - starting the first time is remembered even if the task goes back to open
+  ---
+  duration_ms: 81.4212
+  type: 'test'
+  ...
+# Subtest: waits: assignee or supervisor records them, one at a time, with a reason; completion closes them
+ok 2414 - waits: assignee or supervisor records them, one at a time, with a reason; completion closes them
+  ---
+  duration_ms: 145.4427
+  type: 'test'
+  ...
+# Subtest: an escalation run raises each breached level once and notifies the escalation role
+ok 2415 - an escalation run raises each breached level once and notifies the escalation role
+  ---
+  duration_ms: 102.9204
+  type: 'test'
+  ...
+# Subtest: escalations resolve when work starts, finishes, or a recorded wait brings it back within target
+ok 2416 - escalations resolve when work starts, finishes, or a recorded wait brings it back within target
+  ---
+  duration_ms: 133.4746
+  type: 'test'
+  ...
+# Subtest: deactivating a target resolves its open escalations
+ok 2417 - deactivating a target resolves its open escalations
+  ---
+  duration_ms: 79.7143
+  type: 'test'
+  ...
+# Subtest: targets: managers set them; invalid kinds, roles and inverted targets are refused
+ok 2418 - targets: managers set them; invalid kinds, roles and inverted targets are refused
+  ---
+  duration_ms: 117.7861
+  type: 'test'
+  ...
+# Subtest: other companies, dealers and anonymous callers cannot see or act on this company's tasks
+ok 2419 - other companies, dealers and anonymous callers cannot see or act on this company's tasks
+  ---
+  duration_ms: 83.0739
+  type: 'test'
+  ...
+# Subtest: the open escalation list pages at 10, newest first
+ok 2420 - the open escalation list pages at 10, newest first
+  ---
+  duration_ms: 62.4767
+  type: 'test'
+  ...
+# Subtest: durations read naturally
+ok 2421 - durations read naturally
+  ---
+  duration_ms: 2725.1362
+  type: 'test'
+  ...
+# Subtest: task kinds, escalation roles and the start/complete rule mirror the database
+ok 2422 - task kinds, escalation roles and the start/complete rule mirror the database
+  ---
+  duration_ms: 10.0577
+  type: 'test'
+  ...
+# Subtest: labels and the headline state pick the most urgent condition
+ok 2423 - labels and the headline state pick the most urgent condition
+  ---
+  duration_ms: 0.6862
+  type: 'test'
+  ...
+# Subtest: database responses parse with the app's schemas (status, targets, escalations, wait)
+ok 2424 - database responses parse with the app's schemas (status, targets, escalations, wait)
+  ---
+  duration_ms: 115.7165
+  type: 'test'
+  ...
+# Subtest: pages and action restrict target changes and escalation runs to managers
+ok 2425 - pages and action restrict target changes and escalation runs to managers
+  ---
+  duration_ms: 9.8741
+  type: 'test'
+  ...
+# Subtest: instant find is bounded, scoped and excludes financial or private response fields
+ok 2426 - instant find is bounded, scoped and excludes financial or private response fields
+  ---
+  duration_ms: 7.2507
+  type: 'test'
+  ...
+# Subtest: quick actions point to an exact permitted source, with repricing restricted
+ok 2427 - quick actions point to an exact permitted source, with repricing restricted
+  ---
+  duration_ms: 5.0448
+  type: 'test'
+  ...
+# Subtest: instant find retains slash and hyphen separators used in business record numbers
+ok 2428 - instant find retains slash and hyphen separators used in business record numbers
+  ---
+  duration_ms: 1.423
+  type: 'test'
+  ...
+# Subtest: unavailable search resources are separate from verified empty matches
+ok 2429 - unavailable search resources are separate from verified empty matches
+  ---
+  duration_ms: 3.1991
+  type: 'test'
+  ...
+# Subtest: malformed, short and unauthenticated reads perform no business query
+ok 2430 - malformed, short and unauthenticated reads perform no business query
+  ---
+  duration_ms: 3.3467
+  type: 'test'
+  ...
+# Subtest: repeat permissions are checked before any priced data is read
+ok 2431 - repeat permissions are checked before any priced data is read
+  ---
+  duration_ms: 0.6516
+  type: 'test'
+  ...
+# Subtest: repeat creates no record, strips identity and approvals, and refreshes profile and dates
+ok 2432 - repeat creates no record, strips identity and approvals, and refreshes profile and dates
+  ---
+  duration_ms: 6.6773
+  type: 'test'
+  ...
+# Subtest: repeat rejects other-company sources, inactive customers and unavailable profiles
+ok 2433 - repeat rejects other-company sources, inactive customers and unavailable profiles
+  ---
+  duration_ms: 1.4428
+  type: 'test'
+  ...
+# Subtest: repeat rejects oversized and invalid legacy lines rather than making partial drafts
+ok 2434 - repeat rejects oversized and invalid legacy lines rather than making partial drafts
+  ---
+  duration_ms: 16.9111
+  type: 'test'
+  ...
+# Subtest: stage time uses the latest reopened interval and returns no history notes
+ok 2435 - stage time uses the latest reopened interval and returns no history notes
+  ---
+  duration_ms: 1.0777
+  type: 'test'
+  ...
+# Subtest: duplicate stage events do not restart an interval; initial events and truncated history differ
+ok 2436 - duplicate stage events do not restart an interval; initial events and truncated history differ
+  ---
+  duration_ms: 0.2571
+  type: 'test'
+  ...
+# Subtest: stage reads are bounded and missing or failed evidence stays explicitly unavailable
+ok 2437 - stage reads are bounded and missing or failed evidence stays explicitly unavailable
+  ---
+  duration_ms: 0.8232
+  type: 'test'
+  ...
+# Subtest: stage elapsed formatting separates missing, future, invalid and zero elapsed
+ok 2438 - stage elapsed formatting separates missing, future, invalid and zero elapsed
+  ---
+  duration_ms: 0.4115
+  type: 'test'
+  ...
+# Subtest: ambiguous simultaneous stage changes and external callers do not receive a fabricated interval
+ok 2439 - ambiguous simultaneous stage changes and external callers do not receive a fabricated interval
+  ---
+  duration_ms: 0.2917
+  type: 'test'
+  ...
+# Subtest: dispatch preview reconciles grouped sources and rejects stale or invalid quantities
+ok 2440 - dispatch preview reconciles grouped sources and rejects stale or invalid quantities
+  ---
+  duration_ms: 1.9392
+  type: 'test'
+  ...
+# Subtest: dispatch order balance uses ordered physical quantities and complete packing history
+ok 2441 - dispatch order balance uses ordered physical quantities and complete packing history
+  ---
+  duration_ms: 1.8279
+  type: 'test'
+  ...
+# Subtest: dispatch order balance rejects unauthorized, foreign, closed and malformed sources
+ok 2442 - dispatch order balance rejects unauthorized, foreign, closed and malformed sources
+  ---
+  duration_ms: 1.3548
+  type: 'test'
+  ...
+# Subtest: order quantity reads paginate past one response and never hide an overdispatch
+ok 2443 - order quantity reads paginate past one response and never hide an overdispatch
+  ---
+  duration_ms: 6.8094
+  type: 'test'
+  ...
+# Subtest: instant search updates without submit and offers an exact preselected source action
+ok 2444 - instant search updates without submit and offers an exact preselected source action
+  ---
+  duration_ms: 3712.998
+  type: 'test'
+  ...
+# Subtest: late instant results cannot replace a newer query; failed resources are not empty evidence
+ok 2445 - late instant results cannot replace a newer query; failed resources are not empty evidence
+  ---
+  duration_ms: 1219.9009
+  type: 'test'
+  ...
+# Subtest: repeated quotation keeps structural lines and requires renewed commercial review after edits
+ok 2446 - repeated quotation keeps structural lines and requires renewed commercial review after edits
+  ---
+  duration_ms: 1156.4971
+  type: 'test'
+  ...
+# Subtest: a failed repeat never falls back to a partially copied editable draft
+ok 2447 - a failed repeat never falls back to a partially copied editable draft
+  ---
+  duration_ms: 846.9455
+  type: 'test'
+  ...
+# Subtest: the actual quotation detail page links the exact repeat source only for permitted repricing roles
+ok 2448 - the actual quotation detail page links the exact repeat source only for permitted repricing roles
+  ---
+  duration_ms: 1049.8926
+  type: 'test'
+  ...
+# Subtest: contextual quotation guidance is available by keyboard and states units and save semantics
+ok 2449 - contextual quotation guidance is available by keyboard and states units and save semantics
+  ---
+  duration_ms: 1447.1341
+  type: 'test'
+  ...
+# Subtest: stage history is fetched on demand and missing entry is not shown as zero waiting
+ok 2450 - stage history is fetched on demand and missing entry is not shown as zero waiting
+  ---
+  duration_ms: 902.486
+  type: 'test'
+  ...
+# Subtest: linked dispatch opens on its verified order and the review lists bundles, totals and source balance
+ok 2451 - linked dispatch opens on its verified order and the review lists bundles, totals and source balance
+  ---
+  duration_ms: 1229.4401
+  type: 'test'
+  ...
+# Subtest: dispatch review shows remaining order demand separately from selected source availability
+ok 2452 - dispatch review shows remaining order demand separately from selected source availability
+  ---
+  duration_ms: 1154.9357
+  type: 'test'
+  ...
+# Subtest: a changed shipped balance at confirmation refreshes review and requires another confirmation
+ok 2453 - a changed shipped balance at confirmation refreshes review and requires another confirmation
+  ---
+  duration_ms: 1258.397
+  type: 'test'
+  ...
+# Subtest: unavailable order demand cannot be presented as a verified zero balance
+ok 2454 - unavailable order demand cannot be presented as a verified zero balance
+  ---
+  duration_ms: 1169.4204
+  type: 'test'
+  ...
+# Subtest: a stale preview is rejected before confirmation when the new source check has less material
+ok 2455 - a stale preview is rejected before confirmation when the new source check has less material
+  ---
+  duration_ms: 1167.5364
+  type: 'test'
+  ...
+# Subtest: only explicit dispatch confirmation posts; server rejection retains the entered manifest
+ok 2456 - only explicit dispatch confirmation posts; server rejection retains the entered manifest
+  ---
+  duration_ms: 1337.656
+  type: 'test'
+  ...
+# Subtest: technical drawing uploads reject SVG and oversized files
+ok 2457 - technical drawing uploads reject SVG and oversized files
+  ---
+  duration_ms: 3.9172
+  type: 'test'
+  ...
+# Subtest: technical drawing uploads allow CAD extensions with empty mime type
+ok 2458 - technical drawing uploads allow CAD extensions with empty mime type
+  ---
+  duration_ms: 0.4522
+  type: 'test'
+  ...
+# Subtest: maintenance bill uploads only allow safe bill evidence types
+ok 2459 - maintenance bill uploads only allow safe bill evidence types
+  ---
+  duration_ms: 0.357
+  type: 'test'
+  ...
+# Subtest: Indian phone validation accepts common mobile formats
+ok 2460 - Indian phone validation accepts common mobile formats
+  ---
+  duration_ms: 3.351
+  type: 'test'
+  ...
+# Subtest: Indian phone validation rejects invalid mobile numbers
+ok 2461 - Indian phone validation rejects invalid mobile numbers
+  ---
+  duration_ms: 0.8967
+  type: 'test'
+  ...
+# Subtest: only approved tenant-owned storage paths can load as profile artwork
+ok 2462 - only approved tenant-owned storage paths can load as profile artwork
+  ---
+  duration_ms: 1.4953
+  type: 'test'
+  ...
+# Subtest: non-image, unsupported, and unavailable artwork has a clear failure state
+ok 2463 - non-image, unsupported, and unavailable artwork has a clear failure state
+  ---
+  duration_ms: 0.8067
+  type: 'test'
+  ...
+# Subtest: quote profile selection shows revision-aware identity metadata in the live editor
+ok 2464 - quote profile selection shows revision-aware identity metadata in the live editor
+  ---
+  duration_ms: 0.584
+  type: 'test'
+  ...
+# Subtest: workspace storage key is isolated by both company and user
+ok 2465 - workspace storage key is isolated by both company and user
+  ---
+  duration_ms: 1.5674
+  type: 'test'
+  ...
+# Subtest: shortcut routes honor enabled navigation bases and reject prefix lookalikes
+ok 2466 - shortcut routes honor enabled navigation bases and reject prefix lookalikes
+  ---
+  duration_ms: 0.4209
+  type: 'test'
+  ...
+# Subtest: blocked and corrupt storage safely returns an empty workspace
+ok 2467 - blocked and corrupt storage safely returns an empty workspace
+  ---
+  duration_ms: 1.6612
+  type: 'test'
+  ...
+# Subtest: storage accessor catches a throwing localStorage property getter
+ok 2468 - storage accessor catches a throwing localStorage property getter
+  ---
+  duration_ms: 0.2808
+  type: 'test'
+  ...
+# Subtest: a list preference update cannot restore shell shortcuts removed since the list loaded
+ok 2469 - a list preference update cannot restore shell shortcuts removed since the list loaded
+  ---
+  duration_ms: 0.4836
+  type: 'test'
+  ...
+# Subtest: preference sanitizer bounds entries, rejects unsafe URLs, clamps widths and drops financial payloads
+ok 2470 - preference sanitizer bounds entries, rejects unsafe URLs, clamps widths and drops financial payloads
+  ---
+  duration_ms: 1.4235
+  type: 'test'
+  ...
+# Subtest: list URL state round trips search, filters, page, sort, and connected-record scope
+ok 2471 - list URL state round trips search, filters, page, sort, and connected-record scope
+  ---
+  duration_ms: 0.6457
+  type: 'test'
+  ...
+# Subtest: saving a named view updates its name or URL without duplicate shortcut identities
+ok 2472 - saving a named view updates its name or URL without duplicate shortcut identities
+  ---
+  duration_ms: 0.2687
+  type: 'test'
+  ...
+# Subtest: rapid list control updates serialize together and browser Back restores the prior list state
+ok 2473 - rapid list control updates serialize together and browser Back restores the prior list state
+  ---
+  duration_ms: 1.9694
+  type: 'test'
+  ...
+# Subtest: 53: account switch removes queued work and this operator draft while retaining only press context
+not ok 2474 - 53: account switch removes queued work and this operator draft while retaining only press context
+  ---
+  duration_ms: 2346.9315
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\workstation-browser.test.mjs:7:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createFactoryBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\factory-upgrade-browser-fixture.mjs:23:30)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\workstation-browser.test.mjs:3:33)
+  ...
+# Subtest: 53: expiry hides work and prevents continuing with the old station identity
+not ok 2475 - 53: expiry hides work and prevents continuing with the old station identity
+  ---
+  duration_ms: 1.8308
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-a82f10f\\tests\\workstation-browser.test.mjs:14:1'
+  failureType: 'hookFailed'
+  error: |-
+    browserType.launch: Executable doesn't exist at C:\Users\arnav\AppData\Local\Packages\sandbox.{a4241945-ccce-40f0-b469-393d04eed301}\AC\ms-playwright\chromium_headless_shell-1228\chrome-headless-shell-win64\chrome-headless-shell.exe
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    createFactoryBrowserFixture (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\scripts\lib\factory-upgrade-browser-fixture.mjs:23:30)
+    async TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-a82f10f\tests\workstation-browser.test.mjs:3:33)
+  ...
+# Subtest: 53: operator identity and lease are checked for every station queue
+ok 2476 - 53: operator identity and lease are checked for every station queue
+  ---
+  duration_ms: 20061.9145
+  type: 'test'
+  ...
+# Subtest: 53: changed machine, ended lease, dealership and forged scope cannot reuse privileges
+ok 2477 - 53: changed machine, ended lease, dealership and forged scope cannot reuse privileges
+  ---
+  duration_ms: 18.7859
+  type: 'test'
+  ...
+# Subtest: 53: station identity requests reject operator/tenant injection and unbounded queues
+ok 2478 - 53: station identity requests reject operator/tenant injection and unbounded queues
+  ---
+  duration_ms: 3.9188
+  type: 'test'
+  ...
+# Subtest: 53: expiry is inclusive and station preference retains no operator or lease privilege
+ok 2479 - 53: expiry is inclusive and station preference retains no operator or lease privilege
+  ---
+  duration_ms: 0.5619
+  type: 'test'
+  ...
+1..2479
+# tests 3318
+# suites 76
+# pass 3014
+# fail 304
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1452755.7045

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RecordHistory } from "@/components/modules/fs-batch4/record-history";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth";
@@ -268,6 +269,7 @@ export default async function ProfileDetailPage({ params }: { params: Promise<{ 
         canUpload={(GEOMETRY_UPLOADERS as readonly string[]).includes(context.role)} canSetDensity={["owner", "admin", "quality"].includes(context.role)} /> : null}
       {!context.dealerId && (EQUIVALENT_ROLES as readonly string[]).includes(context.role) ? <ProfileEquivalentsPanel profileId={id} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="profile" id={id} role={context.role} /> : null}
+      {!context.dealerId ? <RecordHistory entityType="profile" entityId={id} /> : null}
     </div>
   );
 }

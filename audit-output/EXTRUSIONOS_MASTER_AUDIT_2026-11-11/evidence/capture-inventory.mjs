@@ -12,7 +12,7 @@ const sorted = (values) => [...new Set(values)].sort();
 const counts = (values) => Object.fromEntries(sorted(values).map((name) => [name, values.filter((value) => value === name).length]));
 const digest = (content) => createHash('sha256').update(content).digest('hex');
 const sourcePattern = /\.(?:[cm]?[jt]sx?|sql|css|sh|ps1|toml|ya?ml)$/i;
-const generatedPattern = /(?:^|\/)(?:\.next[^/]*|coverage|node_modules|\.worktrees|\.claude\/worktrees|test-results|playwright-report)(?:\/|$)|\.tsbuildinfo$|(?:^|\/)next-env\.d\.ts$|^supabase\/full_schema_complete\.sql$|^types\/database(?:\.generated)?\.ts$/;
+const generatedPattern = /(?:^|\/)(?:\.next[^/]*|coverage|node_modules|\.worktrees|\.claude\/worktrees|test-results|playwright-report)(?:\/|$)|\.tsbuildinfo$|(?:^|\/)next-env\.d\.ts$|^supabase\/full_schema_complete\.sql$|^types\/database\.generated\.ts$/;
 const localMetadataPattern = /^(?:\.claude\/|\.env(?:\.|$)|\.vercel\/|\.codex[^/]*\/|supabase\/\.temp\/)|(?:^|\/)(?:credentials|secrets)\.[^/]+$|\.(?:log|pem|key)$/i;
 const fileNames = sorted(git('ls-files', '-z', '-c', '-o', '--exclude-standard').split('\0').filter(Boolean));
 const files = fileNames.filter((file) => !file.startsWith('audit-output/EXTRUSIONOS_MASTER_AUDIT_2026-11-11/') && existsSync(join(root, file)));
@@ -38,6 +38,7 @@ const baseline = {
 };
 
 const snapshot = process.env.EXOS_AUDIT_SNAPSHOT ? resolve(process.env.EXOS_AUDIT_SNAPSHOT) : null;
+const checkpointOnly = process.argv.includes('--checkpoint-only');
 if (snapshot) {
   if (snapshot === root || existsSync(snapshot)) throw new Error('Supply a new, separate snapshot directory');
   mkdirSync(snapshot, { recursive: true });
@@ -140,6 +141,13 @@ const featureIndex = [...nov.matchAll(/^### (NOV-\d{3}) - (.+)$/gm)].map((match)
   };
 }).sort((a, b) => a.id.localeCompare(b.id));
 const routeCounts = counts(routes.map(({ surface }) => surface));
+const summary = { snapshot, head: baseline.head, statusEntries: baseline.status.length, fileKinds: baseline.fileKinds, routes: routeCounts, modules: modules.length, migrations: sqlFiles.length, features: featureIndex.length };
+if (checkpointOnly) {
+  write('later-checkpoint.json', { ...summary, status: baseline.status, routeFiles: routes.map(({ route, file }) => ({ route, file })),
+    sourceHashes: Object.fromEntries(sourceFiles.filter(({ sha256 }) => sha256).map(({ file, sha256 }) => [file, sha256])) });
+  console.log(JSON.stringify(summary));
+  process.exit(0);
+}
 
 write('baseline.json', baseline);
 write('source-inventory.json', sourceFiles);
@@ -148,4 +156,4 @@ write('module-inventory.json', modules);
 write('sql-object-index.json', sqlFiles);
 write('november-index.json', featureIndex);
 write('dependency-index.json', Object.fromEntries(imports));
-console.log(JSON.stringify({ snapshot, head: baseline.head, statusEntries: baseline.status.length, fileKinds: baseline.fileKinds, routes: routeCounts, modules: modules.length, migrations: sqlFiles.length, features: featureIndex.length }));
+console.log(JSON.stringify(summary));

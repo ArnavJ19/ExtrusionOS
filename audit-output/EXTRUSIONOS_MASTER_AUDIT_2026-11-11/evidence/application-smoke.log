@@ -1,0 +1,21 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '/account-unavailable'
+- '/login'
+
+    at file:///C:/Users/arnav/OneDrive/Desktop/ExtrusionOS/audit-output/EXTRUSIONOS_MASTER_AUDIT_2026-11-11/evidence/application-smoke.mjs:32:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '/account-unavailable',
+  expected: '/login',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.20.0

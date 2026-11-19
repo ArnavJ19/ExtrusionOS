@@ -1,4 +1,5 @@
 import { RecordDetailClient } from "@/components/modules/operations/record-detail-client";
+import { RecordHistory } from "@/components/modules/fs-batch4/record-history";
 import { getSessionContext } from "@/lib/auth";
 import { can } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
@@ -17,5 +18,6 @@ export default async function MachineDetailPage(props: { params: Promise<{ id: s
     <RecordDetailClient moduleKey="machines" recordId={params.id} context={context} canEdit={can(context.role, "update", "machine_maintenance")} />
     <ErpControlPanel title="Return to service" actions={controls} />
     {!context.dealerId ? <RelatedWorkPanel kind="machine" id={params.id} role={context.role} /> : null}
+    {!context.dealerId ? <RecordHistory entityType="machine" entityId={params.id} /> : null}
   </div>;
 }

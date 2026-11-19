@@ -1,0 +1,3170 @@
+[
+ {
+  "file": "access-invites-security.test.mjs",
+  "tests": 3,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 12,
+  "valueAsserts": 0
+ },
+ {
+  "file": "access-projection-integrity.test.mjs",
+  "tests": 1,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 1
+ },
+ {
+  "file": "admin-command-center-practicality.test.mjs",
+  "tests": 8,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 21,
+  "valueAsserts": 18
+ },
+ {
+  "file": "advanced-analytics-rpc.test.mjs",
+  "tests": 4,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 23,
+  "valueAsserts": 0
+ },
+ {
+  "file": "advanced-analytics.test.mjs",
+  "tests": 8,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 9,
+  "valueAsserts": 56
+ },
+ {
+  "file": "approval-inbox-sql.test.mjs",
+  "tests": 17,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 50
+ },
+ {
+  "file": "approval-inbox.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 5,
+  "stringAsserts": 8,
+  "valueAsserts": 17
+ },
+ {
+  "file": "astra-calculation-regressions.test.mjs",
+  "tests": 5,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 15
+ },
+ {
+  "file": "atomic-business-workflows.test.mjs",
+  "tests": 6,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 49,
+  "valueAsserts": 0
+ },
+ {
+  "file": "audit-migration-integration.test.mjs",
+  "tests": 1,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 5
+ },
+ {
+  "file": "autopilot-batch1-browser.test.mjs",
+  "tests": 8,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 7
+ },
+ {
+  "file": "autopilot-batch1-sql.test.mjs",
+  "tests": 17,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 8,
+  "valueAsserts": 198
+ },
+ {
+  "file": "autopilot-batch1.test.mjs",
+  "tests": 11,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 9,
+  "valueAsserts": 87
+ },
+ {
+  "file": "autopilot-batch2-browser.test.mjs",
+  "tests": 9,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 10
+ },
+ {
+  "file": "autopilot-batch2-sql.test.mjs",
+  "tests": 15,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 132
+ },
+ {
+  "file": "autopilot-batch2.test.mjs",
+  "tests": 12,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 8,
+  "valueAsserts": 56
+ },
+ {
+  "file": "autopilot-batch3-browser.test.mjs",
+  "tests": 6,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 5
+ },
+ {
+  "file": "autopilot-batch3-sql.test.mjs",
+  "tests": 28,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 13,
+  "valueAsserts": 199
+ },
+ {
+  "file": "autopilot-batch3.test.mjs",
+  "tests": 10,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 9,
+  "valueAsserts": 61
+ },
+ {
+  "file": "billet-allocation-options-browser.test.mjs",
+  "tests": 13,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 3,
+  "valueAsserts": 28
+ },
+ {
+  "file": "billet-allocation-options-reader.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 5
+ },
+ {
+  "file": "billet-allocation-options.test.mjs",
+  "tests": 19,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 54
+ },
+ {
+  "file": "billet-allocation-panel.test.mjs",
+  "tests": 25,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 38
+ },
+ {
+  "file": "billet-estimate-browser.test.mjs",
+  "tests": 1,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 1
+ },
+ {
+  "file": "billet-estimate.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 18
+ },
+ {
+  "file": "billet-link-repair.test.mjs",
+  "tests": 26,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 2,
+  "valueAsserts": 61
+ },
+ {
+  "file": "bulk-queue-sql.test.mjs",
+  "tests": 14,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 4,
+  "valueAsserts": 58
+ },
+ {
+  "file": "bulk-queue.test.mjs",
+  "tests": 6,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 6,
+  "stringAsserts": 7,
+  "valueAsserts": 22
+ },
+ {
+  "file": "business-logic-regressions.test.mjs",
+  "tests": 14,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 40
+ },
+ {
+  "file": "collaboration-workflows-action.test.mjs",
+  "tests": 6,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 25
+ },
+ {
+  "file": "collaboration-workflows-browser.test.mjs",
+  "tests": 8,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 11
+ },
+ {
+  "file": "collaboration-workflows-sql.test.mjs",
+  "tests": 17,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 5,
+  "valueAsserts": 80
+ },
+ {
+  "file": "commercial-upgrade-actions.test.mjs",
+  "tests": 6,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 19
+ },
+ {
+  "file": "commercial-upgrade-browser.test.mjs",
+  "tests": 10,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 14
+ },
+ {
+  "file": "commercial-upgrade-sql.test.mjs",
+  "tests": 21,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 4,
+  "valueAsserts": 112
+ },
+ {
+  "file": "commercial-upgrade-unit.test.mjs",
+  "tests": 9,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 27
+ },
+ {
+  "file": "competency-sql.test.mjs",
+  "tests": 12,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 41
+ },
+ {
+  "file": "competency.test.mjs",
+  "tests": 4,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 7,
+  "valueAsserts": 14
+ },
+ {
+  "file": "completion-criteria-sql.test.mjs",
+  "tests": 14,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 6,
+  "valueAsserts": 72
+ },
+ {
+  "file": "completion-criteria.test.mjs",
+  "tests": 6,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 8,
+  "stringAsserts": 11,
+  "valueAsserts": 24
+ },
+ {
+  "file": "configuration-quote-integrity.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 4,
+  "valueAsserts": 14
+ },
+ {
+  "file": "configuration-release-browser.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 7
+ },
+ {
+  "file": "configuration-release-sql.test.mjs",
+  "tests": 5,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 27
+ },
+ {
+  "file": "configuration-release.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 14
+ },
+ {
+  "file": "costing-rate-sql.test.mjs",
+  "tests": 12,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 44
+ },
+ {
+  "file": "costing-rate.test.mjs",
+  "tests": 9,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 8,
+  "stringAsserts": 18,
+  "valueAsserts": 40
+ },
+ {
+  "file": "credit-note-idempotency.test.mjs",
+  "tests": 9,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 0,
+  "valueAsserts": 37
+ },
+ {
+  "file": "credit-note-reissue.test.mjs",
+  "tests": 10,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 10,
+  "valueAsserts": 37
+ },
+ {
+  "file": "credit-settlement-conflict.test.mjs",
+  "tests": 11,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 5,
+  "stringAsserts": 0,
+  "valueAsserts": 49
+ },
+ {
+  "file": "credit-settlement-guidance.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 15,
+  "valueAsserts": 10
+ },
+ {
+  "file": "csp-development.test.mjs",
+  "tests": 1,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 1,
+  "stringAsserts": 3,
+  "valueAsserts": 0
+ },
+ {
+  "file": "csv-security.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 4
+ },
+ {
+  "file": "customer-accepted-order-gate.test.mjs",
+  "tests": 4,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 6,
+  "stringAsserts": 21,
+  "valueAsserts": 0
+ },
+ {
+  "file": "customer-history-retention.test.mjs",
+  "tests": 11,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 0,
+  "valueAsserts": 26
+ },
+ {
+  "file": "customer-project-sql.test.mjs",
+  "tests": 18,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 67
+ },
+ {
+  "file": "customer-projects.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 5,
+  "stringAsserts": 5,
+  "valueAsserts": 26
+ },
+ {
+  "file": "customer-step-requirements-sql.test.mjs",
+  "tests": 5,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 0,
+  "valueAsserts": 21
+ },
+ {
+  "file": "cutting-workspace-browser.test.mjs",
+  "tests": 1,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 3
+ },
+ {
+  "file": "cutting-workspace-sql.test.mjs",
+  "tests": 3,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 19
+ },
+ {
+  "file": "cutting-workspace.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 13
+ },
+ {
+  "file": "data-freshness-browser.test.mjs",
+  "tests": 2,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 0
+ },
+ {
+  "file": "data-freshness.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 14
+ },
+ {
+  "file": "data-table-keyboard.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 10
+ },
+ {
+  "file": "dealer-boundary-hardening.test.mjs",
+  "tests": 14,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 85,
+  "valueAsserts": 0
+ },
+ {
+  "file": "dealer-fulfillment-integrity.test.mjs",
+  "tests": 1,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 1
+ },
+ {
+  "file": "dealer-stock-availability.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 0,
+  "valueAsserts": 16
+ },
+ {
+  "file": "delegation-sql.test.mjs",
+  "tests": 13,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 61
+ },
+ {
+  "file": "delegation.test.mjs",
+  "tests": 5,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 3,
+  "valueAsserts": 18
+ },
+ {
+  "file": "department-handoff-sql.test.mjs",
+  "tests": 14,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 5,
+  "valueAsserts": 55
+ },
+ {
+  "file": "department-handoffs.test.mjs",
+  "tests": 6,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 5,
+  "valueAsserts": 23
+ },
+ {
+  "file": "deployment-schema-contract.test.mjs",
+  "tests": 11,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 9,
+  "valueAsserts": 37
+ },
+ {
+  "file": "die-readiness-browser.test.mjs",
+  "tests": 10,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 4,
+  "valueAsserts": 19
+ },
+ {
+  "file": "die-readiness-contract.test.mjs",
+  "tests": 10,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 5,
+  "valueAsserts": 21
+ },
+ {
+  "file": "die-readiness-sql.test.mjs",
+  "tests": 1,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 5
+ },
+ {
+  "file": "direct-order-actions.test.mjs",
+  "tests": 8,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 11,
+  "valueAsserts": 39
+ },
+ {
+  "file": "direct-order-entry-page.test.mjs",
+  "tests": 5,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 13,
+  "valueAsserts": 1
+ },
+ {
+  "file": "direct-order.test.mjs",
+  "tests": 21,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 3,
+  "valueAsserts": 108
+ },
+ {
+  "file": "dispatch-draft-browser.test.mjs",
+  "tests": 4,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 10
+ },
+ {
+  "file": "dispatch-draft.test.mjs",
+  "tests": 5,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 15
+ },
+ {
+  "file": "dispatch-form-consistency.test.mjs",
+  "tests": 26,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 8,
+  "valueAsserts": 94
+ },
+ {
+  "file": "dispatch-integrity-hardening.test.mjs",
+  "tests": 3,
+  "kind": "mostly-source-text",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 14,
+  "valueAsserts": 1
+ },
+ {
+  "file": "dispatch-packing-availability.test.mjs",
+  "tests": 18,
+  "kind": "sql-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 4,
+  "valueAsserts": 79
+ },
+ {
+  "file": "dispatch-pod-upload.test.mjs",
+  "tests": 3,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 5,
+  "stringAsserts": 13,
+  "valueAsserts": 0
+ },
+ {
+  "file": "dispatch-readiness-index.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 7
+ },
+ {
+  "file": "dispatch-reservation-availability.test.mjs",
+  "tests": 11,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 7,
+  "valueAsserts": 54
+ },
+ {
+  "file": "dispatch-reservation-ledger-page.test.mjs",
+  "tests": 13,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 34,
+  "valueAsserts": 16
+ },
+ {
+  "file": "dispatch-reservation-ledger.test.mjs",
+  "tests": 11,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 65
+ },
+ {
+  "file": "document-storage-email.test.mjs",
+  "tests": 5,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 6,
+  "stringAsserts": 16,
+  "valueAsserts": 9
+ },
+ {
+  "file": "downstream-context-sql.test.mjs",
+  "tests": 4,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 14
+ },
+ {
+  "file": "downstream-context.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 4
+ },
+ {
+  "file": "enterprise-access-dealer-workflows.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 31
+ },
+ {
+  "file": "entry-acceptance-integration.test.mjs",
+  "tests": 8,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 17
+ },
+ {
+  "file": "eos-batch6-browser.test.mjs",
+  "tests": 5,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 18
+ },
+ {
+  "file": "eos-batch6-core-sql.test.mjs",
+  "tests": 10,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 79
+ },
+ {
+  "file": "exception-sql.test.mjs",
+  "tests": 11,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 64
+ },
+ {
+  "file": "exception.test.mjs",
+  "tests": 8,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 10,
+  "stringAsserts": 19,
+  "valueAsserts": 18
+ },
+ {
+  "file": "expense-ledger-integrity.test.mjs",
+  "tests": 18,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 152
+ },
+ {
+  "file": "expense-rules.test.mjs",
+  "tests": 10,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 11,
+  "valueAsserts": 54
+ },
+ {
+  "file": "factory-planning-browser.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 18
+ },
+ {
+  "file": "factory-planning-sql.test.mjs",
+  "tests": 6,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 48
+ },
+ {
+  "file": "factory-planning-unit.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 5,
+  "valueAsserts": 18
+ },
+ {
+  "file": "factory-practicality-closure.test.mjs",
+  "tests": 3,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 10,
+  "stringAsserts": 25,
+  "valueAsserts": 0
+ },
+ {
+  "file": "factory-upgrade-security-sql.test.mjs",
+  "tests": 5,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 21
+ },
+ {
+  "file": "factory-workflow-integrity.test.mjs",
+  "tests": 1,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 1
+ },
+ {
+  "file": "feature-flags.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 5
+ },
+ {
+  "file": "finance-reporting-integrity.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 0,
+  "valueAsserts": 44
+ },
+ {
+  "file": "financial-closure.test.mjs",
+  "tests": 7,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 60,
+  "valueAsserts": 0
+ },
+ {
+  "file": "financial-correction-action.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 0,
+  "valueAsserts": 8
+ },
+ {
+  "file": "financial-workflow-review-browser.test.mjs",
+  "tests": 3,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 11
+ },
+ {
+  "file": "financial-workflow-review.test.mjs",
+  "tests": 11,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 15,
+  "valueAsserts": 54
+ },
+ {
+  "file": "finishing-evidence.test.mjs",
+  "tests": 24,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 2,
+  "valueAsserts": 58
+ },
+ {
+  "file": "finishing-partial-retry.test.mjs",
+  "tests": 36,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 2,
+  "valueAsserts": 106
+ },
+ {
+  "file": "finishing-readiness.test.mjs",
+  "tests": 6,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 14
+ },
+ {
+  "file": "finishing-receipts-browser.test.mjs",
+  "tests": 12,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 44
+ },
+ {
+  "file": "finishing-retry-usability.test.mjs",
+  "tests": 1,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 8,
+  "valueAsserts": 0
+ },
+ {
+  "file": "finishing-workload-browser.test.mjs",
+  "tests": 5,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 12
+ },
+ {
+  "file": "finishing-workload-page.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 17,
+  "valueAsserts": 9
+ },
+ {
+  "file": "finishing-workload-reader.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 12
+ },
+ {
+  "file": "finishing-workload.test.mjs",
+  "tests": 25,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 3,
+  "valueAsserts": 87
+ },
+ {
+  "file": "fk-covering-indexes-rls-initplan.test.mjs",
+  "tests": 2,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 3,
+  "valueAsserts": 14
+ },
+ {
+  "file": "foundry-billet-readonly.test.mjs",
+  "tests": 2,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 4,
+  "valueAsserts": 0
+ },
+ {
+  "file": "foundry-billet-stock.test.mjs",
+  "tests": 6,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 29
+ },
+ {
+  "file": "foundry-material-integrity.test.mjs",
+  "tests": 1,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 0
+ },
+ {
+  "file": "foundry-source-validation.test.mjs",
+  "tests": 15,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 19,
+  "valueAsserts": 43
+ },
+ {
+  "file": "guided-sop-sql.test.mjs",
+  "tests": 17,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 77
+ },
+ {
+  "file": "guided-sop.test.mjs",
+  "tests": 8,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 0,
+  "valueAsserts": 28
+ },
+ {
+  "file": "handoff-acceptance-sql.test.mjs",
+  "tests": 12,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 45
+ },
+ {
+  "file": "handoff-acceptance.test.mjs",
+  "tests": 5,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 5,
+  "valueAsserts": 16
+ },
+ {
+  "file": "in-task-customer-action.test.mjs",
+  "tests": 11,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 49
+ },
+ {
+  "file": "in-task-customer-browser.test.mjs",
+  "tests": 9,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 23
+ },
+ {
+  "file": "inspection-plan-sql.test.mjs",
+  "tests": 14,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 49
+ },
+ {
+  "file": "inspection-plan.test.mjs",
+  "tests": 5,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 6,
+  "stringAsserts": 9,
+  "valueAsserts": 17
+ },
+ {
+  "file": "inventory-reservation-availability.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 12
+ },
+ {
+  "file": "invite-acceptance-integrity.test.mjs",
+  "tests": 2,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 5,
+  "stringAsserts": 11,
+  "valueAsserts": 1
+ },
+ {
+  "file": "invoice-packing-parity.test.mjs",
+  "tests": 4,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 18,
+  "valueAsserts": 0
+ },
+ {
+  "file": "invoice-pdf-availability.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 10
+ },
+ {
+  "file": "invoice-pdf.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 4
+ },
+ {
+  "file": "invoice-source-actions.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 2,
+  "valueAsserts": 28
+ },
+ {
+  "file": "invoice-supplier-snapshot-contact.test.mjs",
+  "tests": 8,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 3,
+  "valueAsserts": 17
+ },
+ {
+  "file": "keyboard-entry.test.mjs",
+  "tests": 6,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 10,
+  "valueAsserts": 29
+ },
+ {
+  "file": "known-limitations-regression.test.mjs",
+  "tests": 3,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 10,
+  "valueAsserts": 0
+ },
+ {
+  "file": "local-development-csp.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 3
+ },
+ {
+  "file": "lookup-search-scalability.test.mjs",
+  "tests": 4,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 6,
+  "stringAsserts": 29,
+  "valueAsserts": 2
+ },
+ {
+  "file": "machine-usage-browser.test.mjs",
+  "tests": 1,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 1
+ },
+ {
+  "file": "machine-usage-sql.test.mjs",
+  "tests": 5,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 32
+ },
+ {
+  "file": "machine-usage.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 6
+ },
+ {
+  "file": "management-metrics-integrity.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 17
+ },
+ {
+  "file": "manual-billet-allocation-actions.test.mjs",
+  "tests": 11,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 31
+ },
+ {
+  "file": "manual-billet-allocation.test.mjs",
+  "tests": 16,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 34
+ },
+ {
+  "file": "master-cleanup-sql.test.mjs",
+  "tests": 4,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 20
+ },
+ {
+  "file": "master-cleanup.test.mjs",
+  "tests": 1,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 2
+ },
+ {
+  "file": "migration-chain-replay.test.mjs",
+  "tests": 3,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 15
+ },
+ {
+  "file": "migration-ledger.test.mjs",
+  "tests": 14,
+  "kind": "sql-behaviour",
+  "property": true,
+  "reads": 2,
+  "stringAsserts": 4,
+  "valueAsserts": 53
+ },
+ {
+  "file": "mobile-bundle-browser.test.mjs",
+  "tests": 2,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 6
+ },
+ {
+  "file": "mobile-bundle-task.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 11
+ },
+ {
+  "file": "mobile-floor-integrity.test.mjs",
+  "tests": 3,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 14,
+  "valueAsserts": 0
+ },
+ {
+  "file": "module-database-state-browser.test.mjs",
+  "tests": 1,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 21
+ },
+ {
+  "file": "module-navigation.test.mjs",
+  "tests": 6,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 6,
+  "valueAsserts": 13
+ },
+ {
+  "file": "module-overview-composition.test.mjs",
+  "tests": 1,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 1,
+  "stringAsserts": 1,
+  "valueAsserts": 2
+ },
+ {
+  "file": "my-work-today.test.mjs",
+  "tests": 14,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 12,
+  "valueAsserts": 45
+ },
+ {
+  "file": "next-cache-isolation.test.mjs",
+  "tests": 2,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 4,
+  "valueAsserts": 0
+ },
+ {
+  "file": "notification-actions.test.mjs",
+  "tests": 9,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 3,
+  "valueAsserts": 32
+ },
+ {
+  "file": "notification-read-receipts.test.mjs",
+  "tests": 3,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 6,
+  "stringAsserts": 28,
+  "valueAsserts": 0
+ },
+ {
+  "file": "nov-batch10-browser.test.mjs",
+  "tests": 6,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 10
+ },
+ {
+  "file": "nov-batch10-sql-b.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 17,
+  "valueAsserts": 78
+ },
+ {
+  "file": "nov-batch10-sql-c.test.mjs",
+  "tests": 8,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 13,
+  "valueAsserts": 99
+ },
+ {
+  "file": "nov-batch10-sql.test.mjs",
+  "tests": 10,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 32,
+  "valueAsserts": 122
+ },
+ {
+  "file": "nov-batch10.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 5,
+  "stringAsserts": 12,
+  "valueAsserts": 36
+ },
+ {
+  "file": "nov-batch2-actions.test.mjs",
+  "tests": 12,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 3,
+  "valueAsserts": 63
+ },
+ {
+  "file": "nov-batch2-browser.test.mjs",
+  "tests": 20,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 13
+ },
+ {
+  "file": "nov-batch2.test.mjs",
+  "tests": 15,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 6,
+  "valueAsserts": 62
+ },
+ {
+  "file": "nov-batch3-browser.test.mjs",
+  "tests": 9,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 11
+ },
+ {
+  "file": "nov-batch3-sql.test.mjs",
+  "tests": 23,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 102
+ },
+ {
+  "file": "nov-batch3.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 3,
+  "valueAsserts": 33
+ },
+ {
+  "file": "nov-batch4-browser.test.mjs",
+  "tests": 8,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 14
+ },
+ {
+  "file": "nov-batch4-sql.test.mjs",
+  "tests": 25,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 5,
+  "valueAsserts": 154
+ },
+ {
+  "file": "nov-batch4.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 4,
+  "valueAsserts": 84
+ },
+ {
+  "file": "nov-batch5-browser.test.mjs",
+  "tests": 6,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 7
+ },
+ {
+  "file": "nov-batch5-sql.test.mjs",
+  "tests": 23,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 7,
+  "valueAsserts": 185
+ },
+ {
+  "file": "nov-batch5.test.mjs",
+  "tests": 5,
+  "kind": "sql-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 63
+ },
+ {
+  "file": "nov-batch6-browser.test.mjs",
+  "tests": 7,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 14
+ },
+ {
+  "file": "nov-batch6-sql.test.mjs",
+  "tests": 37,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 19,
+  "valueAsserts": 306
+ },
+ {
+  "file": "nov-batch6.test.mjs",
+  "tests": 8,
+  "kind": "sql-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 15,
+  "valueAsserts": 95
+ },
+ {
+  "file": "nov-batch7-browser.test.mjs",
+  "tests": 7,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 10
+ },
+ {
+  "file": "nov-batch7-sql.test.mjs",
+  "tests": 28,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 5,
+  "valueAsserts": 215
+ },
+ {
+  "file": "nov-batch7.test.mjs",
+  "tests": 20,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 43,
+  "valueAsserts": 119
+ },
+ {
+  "file": "nov-batch8-browser.test.mjs",
+  "tests": 8,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 8
+ },
+ {
+  "file": "nov-batch8-load-review-fixes.test.mjs",
+  "tests": 5,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 24
+ },
+ {
+  "file": "nov-batch8-sql.test.mjs",
+  "tests": 49,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 31,
+  "valueAsserts": 382
+ },
+ {
+  "file": "nov-batch8.test.mjs",
+  "tests": 13,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 51,
+  "valueAsserts": 97
+ },
+ {
+  "file": "nov-batch9-browser.test.mjs",
+  "tests": 7,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 3,
+  "valueAsserts": 26
+ },
+ {
+  "file": "nov-batch9-sql-b.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 9,
+  "valueAsserts": 74
+ },
+ {
+  "file": "nov-batch9-sql-c.test.mjs",
+  "tests": 14,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 17,
+  "valueAsserts": 115
+ },
+ {
+  "file": "nov-batch9-sql.test.mjs",
+  "tests": 12,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 18,
+  "valueAsserts": 129
+ },
+ {
+  "file": "nov-batch9.test.mjs",
+  "tests": 23,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 33,
+  "valueAsserts": 97
+ },
+ {
+  "file": "nov-upgrades-browser.test.mjs",
+  "tests": 17,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 15
+ },
+ {
+  "file": "nov-upgrades.test.mjs",
+  "tests": 12,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 11,
+  "valueAsserts": 73
+ },
+ {
+  "file": "nov-verification-fixes.test.mjs",
+  "tests": 4,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 29
+ },
+ {
+  "file": "numbering.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 2
+ },
+ {
+  "file": "onboarding-atomicity.test.mjs",
+  "tests": 2,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 13,
+  "valueAsserts": 0
+ },
+ {
+  "file": "operation-page-projection.test.mjs",
+  "tests": 2,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 0,
+  "valueAsserts": 23
+ },
+ {
+  "file": "operation-search-integrity.test.mjs",
+  "tests": 1,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 0
+ },
+ {
+  "file": "operator-workflows-action.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 29
+ },
+ {
+  "file": "operator-workflows-browser.test.mjs",
+  "tests": 12,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 10
+ },
+ {
+  "file": "operator-workflows-sql.test.mjs",
+  "tests": 18,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 88
+ },
+ {
+  "file": "order-cancellation-stock.test.mjs",
+  "tests": 17,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 3,
+  "valueAsserts": 57
+ },
+ {
+  "file": "order-edit-server-owned.test.mjs",
+  "tests": 4,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 6,
+  "valueAsserts": 2
+ },
+ {
+  "file": "order-line-schedule-sql.test.mjs",
+  "tests": 18,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 80
+ },
+ {
+  "file": "order-line-schedule.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 5,
+  "valueAsserts": 33
+ },
+ {
+  "file": "order-progress-finishing-area.test.mjs",
+  "tests": 8,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 29
+ },
+ {
+  "file": "order-to-press-security.test.mjs",
+  "tests": 10,
+  "kind": "mostly-source-text",
+  "property": false,
+  "reads": 15,
+  "stringAsserts": 82,
+  "valueAsserts": 4
+ },
+ {
+  "file": "ordered-migration-stack.test.mjs",
+  "tests": 7,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 49,
+  "valueAsserts": 3
+ },
+ {
+  "file": "packaging-evidence.test.mjs",
+  "tests": 24,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 2,
+  "valueAsserts": 86
+ },
+ {
+  "file": "partial-line-quantity-sql.test.mjs",
+  "tests": 1,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 0,
+  "valueAsserts": 5
+ },
+ {
+  "file": "partial-return-assurance.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 12
+ },
+ {
+  "file": "payment-retry.test.mjs",
+  "tests": 9,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 8,
+  "valueAsserts": 53
+ },
+ {
+  "file": "pcda-auto-routing.test.mjs",
+  "tests": 14,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 6,
+  "valueAsserts": 23
+ },
+ {
+  "file": "pcda-calculations.test.mjs",
+  "tests": 33,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 58
+ },
+ {
+  "file": "pcda-compliance-derivation.test.mjs",
+  "tests": 8,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 12
+ },
+ {
+  "file": "pcda-core.test.mjs",
+  "tests": 9,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 43
+ },
+ {
+  "file": "pcda-cost.test.mjs",
+  "tests": 6,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 12
+ },
+ {
+  "file": "pcda-dispatch.test.mjs",
+  "tests": 9,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 42
+ },
+ {
+  "file": "pcda-field-set-partition.test.mjs",
+  "tests": 7,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 0
+ },
+ {
+  "file": "pcda-invoice.test.mjs",
+  "tests": 6,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 34
+ },
+ {
+  "file": "pcda-labels.test.mjs",
+  "tests": 6,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 12
+ },
+ {
+  "file": "pcda-line-reuse.test.mjs",
+  "tests": 7,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 9
+ },
+ {
+  "file": "pcda-master-refs.test.mjs",
+  "tests": 9,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 0
+ },
+ {
+  "file": "pcda-master-search.test.mjs",
+  "tests": 8,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 0
+ },
+ {
+  "file": "pcda-production.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 12
+ },
+ {
+  "file": "pcda-quote-order.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 15
+ },
+ {
+  "file": "pcda-recovery.test.mjs",
+  "tests": 5,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 16
+ },
+ {
+  "file": "pcda-reports.test.mjs",
+  "tests": 10,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 5,
+  "valueAsserts": 22
+ },
+ {
+  "file": "pcda-rounding.test.mjs",
+  "tests": 19,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 12
+ },
+ {
+  "file": "pcda-sentinel.test.mjs",
+  "tests": 27,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 1
+ },
+ {
+  "file": "pcda-validation.test.mjs",
+  "tests": 31,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 4
+ },
+ {
+  "file": "pcda-weight-range.test.mjs",
+  "tests": 7,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 14,
+  "valueAsserts": 8
+ },
+ {
+  "file": "pcda-weight.test.mjs",
+  "tests": 8,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 23
+ },
+ {
+  "file": "pcda-workflow-gates.test.mjs",
+  "tests": 17,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 28
+ },
+ {
+  "file": "pdf-document-quality.test.mjs",
+  "tests": 10,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 27,
+  "valueAsserts": 42
+ },
+ {
+  "file": "pdf-unicode-text.test.mjs",
+  "tests": 10,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 1,
+  "valueAsserts": 27
+ },
+ {
+  "file": "physical-bundles-browser.test.mjs",
+  "tests": 2,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 6
+ },
+ {
+  "file": "physical-bundles-sql.test.mjs",
+  "tests": 4,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 18
+ },
+ {
+  "file": "physical-bundles.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 5
+ },
+ {
+  "file": "posted-reservation-delivery.test.mjs",
+  "tests": 13,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 1,
+  "valueAsserts": 28
+ },
+ {
+  "file": "practice-transactions.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 19
+ },
+ {
+  "file": "practice-workspace.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 9
+ },
+ {
+  "file": "priority-billet-allocation.test.mjs",
+  "tests": 20,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 0,
+  "valueAsserts": 32
+ },
+ {
+  "file": "procedure-effectiveness-sql.test.mjs",
+  "tests": 10,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 54
+ },
+ {
+  "file": "procedure-effectiveness.test.mjs",
+  "tests": 3,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 13
+ },
+ {
+  "file": "procedure-version-sql.test.mjs",
+  "tests": 20,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 83
+ },
+ {
+  "file": "procedure-version.test.mjs",
+  "tests": 6,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 6,
+  "valueAsserts": 27
+ },
+ {
+  "file": "production-billet-normalization.test.mjs",
+  "tests": 9,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 1,
+  "valueAsserts": 23
+ },
+ {
+  "file": "production-order-acceptance-browser.test.mjs",
+  "tests": 1,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 0,
+  "valueAsserts": 3
+ },
+ {
+  "file": "production-order-eligibility.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 3
+ },
+ {
+  "file": "production-overview-integrity.test.mjs",
+  "tests": 5,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 16,
+  "valueAsserts": 0
+ },
+ {
+  "file": "production-performance.test.mjs",
+  "tests": 13,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 68
+ },
+ {
+  "file": "production-readiness-holds-sql.test.mjs",
+  "tests": 14,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 4,
+  "valueAsserts": 61
+ },
+ {
+  "file": "production-readiness.test.mjs",
+  "tests": 6,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 4,
+  "valueAsserts": 28
+ },
+ {
+  "file": "production-report-reconciliation.test.mjs",
+  "tests": 30,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 12,
+  "valueAsserts": 69
+ },
+ {
+  "file": "production-report-sql.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 2
+ },
+ {
+  "file": "production-scrap-repeat.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 3
+ },
+ {
+  "file": "production-source-line-integrity.test.mjs",
+  "tests": 2,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 12,
+  "valueAsserts": 0
+ },
+ {
+  "file": "profile-configuration-integrity.test.mjs",
+  "tests": 2,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 6,
+  "stringAsserts": 14,
+  "valueAsserts": 0
+ },
+ {
+  "file": "purchase-lifecycle-browser.test.mjs",
+  "tests": 4,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 11
+ },
+ {
+  "file": "purchase-lifecycle-sql.test.mjs",
+  "tests": 4,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 67
+ },
+ {
+  "file": "purchase-lifecycle.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 22
+ },
+ {
+  "file": "qr-payload.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 4
+ },
+ {
+  "file": "quotation-assistant.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 6,
+  "valueAsserts": 10
+ },
+ {
+  "file": "quote-calculation.test.mjs",
+  "tests": 8,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 33
+ },
+ {
+  "file": "quote-dealer-lineage.test.mjs",
+  "tests": 4,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 29,
+  "valueAsserts": 0
+ },
+ {
+  "file": "quote-edit-conflicts.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 9
+ },
+ {
+  "file": "quote-edit-server.test.mjs",
+  "tests": 6,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 16
+ },
+ {
+  "file": "quote-fulfillment.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 7
+ },
+ {
+  "file": "quote-invoice-rate-basis.test.mjs",
+  "tests": 7,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 22
+ },
+ {
+  "file": "quote-length-preparation.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": true,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 11
+ },
+ {
+  "file": "quote-overview-actions.test.mjs",
+  "tests": 1,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 4,
+  "valueAsserts": 0
+ },
+ {
+  "file": "quote-overview-permissions.test.mjs",
+  "tests": 8,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 3,
+  "valueAsserts": 34
+ },
+ {
+  "file": "quote-paste-browser.test.mjs",
+  "tests": 3,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 3
+ },
+ {
+  "file": "quote-paste-quantity.test.mjs",
+  "tests": 9,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 30,
+  "valueAsserts": 31
+ },
+ {
+  "file": "quote-physical-demand-browser.test.mjs",
+  "tests": 2,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 7
+ },
+ {
+  "file": "quote-physical-demand-sql.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 27
+ },
+ {
+  "file": "quote-physical-demand.test.mjs",
+  "tests": 5,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 10
+ },
+ {
+  "file": "quote-revision-compare.test.mjs",
+  "tests": 15,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 7,
+  "valueAsserts": 56
+ },
+ {
+  "file": "quote-status-workflow.test.mjs",
+  "tests": 5,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 5,
+  "stringAsserts": 22,
+  "valueAsserts": 2
+ },
+ {
+  "file": "receivables-integrity.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 1,
+  "valueAsserts": 42
+ },
+ {
+  "file": "record-next-action.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 5,
+  "valueAsserts": 8
+ },
+ {
+  "file": "record-preview-browser.test.mjs",
+  "tests": 1,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 4,
+  "valueAsserts": 6
+ },
+ {
+  "file": "record-preview.test.mjs",
+  "tests": 6,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 22
+ },
+ {
+  "file": "report-builder-finance.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 6,
+  "valueAsserts": 29
+ },
+ {
+  "file": "report-builder-practicality.test.mjs",
+  "tests": 5,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 5,
+  "stringAsserts": 28,
+  "valueAsserts": 0
+ },
+ {
+  "file": "reservation-consumption-safety.test.mjs",
+  "tests": 5,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 6,
+  "stringAsserts": 21,
+  "valueAsserts": 1
+ },
+ {
+  "file": "reservation-consumption-totals.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 8
+ },
+ {
+  "file": "reservation-ledger-page.test.mjs",
+  "tests": 8,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 20,
+  "valueAsserts": 8
+ },
+ {
+  "file": "reservation-ledger.test.mjs",
+  "tests": 11,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 3,
+  "valueAsserts": 47
+ },
+ {
+  "file": "reservation-release-replay.test.mjs",
+  "tests": 6,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 1,
+  "valueAsserts": 22
+ },
+ {
+  "file": "retained-dispatch-invoice.test.mjs",
+  "tests": 20,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 0,
+  "valueAsserts": 63
+ },
+ {
+  "file": "role-aware-access-usability.test.mjs",
+  "tests": 7,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 14,
+  "stringAsserts": 40,
+  "valueAsserts": 22
+ },
+ {
+  "file": "role-aware-sensitive-rls.test.mjs",
+  "tests": 16,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 9,
+  "stringAsserts": 73,
+  "valueAsserts": 1
+ },
+ {
+  "file": "route-permissions.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 23
+ },
+ {
+  "file": "searchable-select.test.mjs",
+  "tests": 15,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 49
+ },
+ {
+  "file": "security-hardening.test.mjs",
+  "tests": 5,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 1,
+  "stringAsserts": 4,
+  "valueAsserts": 7
+ },
+ {
+  "file": "security-notification-financial-integrity.test.mjs",
+  "tests": 6,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 33,
+  "valueAsserts": 1
+ },
+ {
+  "file": "server-action-export-boundaries.test.mjs",
+  "tests": 1,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 6,
+  "valueAsserts": 0
+ },
+ {
+  "file": "server-owned-writes-regression.test.mjs",
+  "tests": 3,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 7,
+  "stringAsserts": 14,
+  "valueAsserts": 0
+ },
+ {
+  "file": "shift-handover-sql.test.mjs",
+  "tests": 23,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 76
+ },
+ {
+  "file": "shift-handover.test.mjs",
+  "tests": 8,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 5,
+  "stringAsserts": 17,
+  "valueAsserts": 42
+ },
+ {
+  "file": "sop-assurance-sql.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 1,
+  "valueAsserts": 34
+ },
+ {
+  "file": "sop-server-actions.test.mjs",
+  "tests": 5,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 4,
+  "valueAsserts": 20
+ },
+ {
+  "file": "sop-upgrade-browser.test.mjs",
+  "tests": 8,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 11
+ },
+ {
+  "file": "staging-e2e-harness.test.mjs",
+  "tests": 3,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 18,
+  "valueAsserts": 0
+ },
+ {
+  "file": "staging-e2e-runtime.test.mjs",
+  "tests": 10,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 8,
+  "valueAsserts": 18
+ },
+ {
+  "file": "status-board-usability.test.mjs",
+  "tests": 3,
+  "kind": "source-text-only",
+  "property": false,
+  "reads": 1,
+  "stringAsserts": 17,
+  "valueAsserts": 0
+ },
+ {
+  "file": "stock-balance-sql.test.mjs",
+  "tests": 10,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 46
+ },
+ {
+  "file": "stock-balance.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 7,
+  "valueAsserts": 21
+ },
+ {
+  "file": "stock-production-browser.test.mjs",
+  "tests": 1,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 3
+ },
+ {
+  "file": "stock-production-sql.test.mjs",
+  "tests": 4,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 16
+ },
+ {
+  "file": "stock-production.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 9
+ },
+ {
+  "file": "subscription-sql.test.mjs",
+  "tests": 13,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 84
+ },
+ {
+  "file": "subscription.test.mjs",
+  "tests": 7,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 6,
+  "stringAsserts": 12,
+  "valueAsserts": 17
+ },
+ {
+  "file": "system-project-list.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 6,
+  "valueAsserts": 14
+ },
+ {
+  "file": "systems-configurator-engine.test.mjs",
+  "tests": 8,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 39
+ },
+ {
+  "file": "systems-costing-profit.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 15
+ },
+ {
+  "file": "systems-data-readiness.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 9
+ },
+ {
+  "file": "systems-production-handoff.test.mjs",
+  "tests": 4,
+  "kind": "mostly-source-text",
+  "property": false,
+  "reads": 3,
+  "stringAsserts": 15,
+  "valueAsserts": 6
+ },
+ {
+  "file": "systems-production-progress.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 8
+ },
+ {
+  "file": "systems-profile-library-loading.test.mjs",
+  "tests": 4,
+  "kind": "mostly-source-text",
+  "property": false,
+  "reads": 5,
+  "stringAsserts": 14,
+  "valueAsserts": 4
+ },
+ {
+  "file": "systems-profile-optimization.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 15
+ },
+ {
+  "file": "systems-quote-integration.test.mjs",
+  "tests": 5,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 12,
+  "valueAsserts": 9
+ },
+ {
+  "file": "systems-template-formula-validation.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 12
+ },
+ {
+  "file": "systems-workflow-status.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 9
+ },
+ {
+  "file": "table-column-preferences.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 13
+ },
+ {
+  "file": "task-blueprint-sql.test.mjs",
+  "tests": 14,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 67
+ },
+ {
+  "file": "task-blueprint.test.mjs",
+  "tests": 4,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 6,
+  "stringAsserts": 8,
+  "valueAsserts": 16
+ },
+ {
+  "file": "task-navigation-browser.test.mjs",
+  "tests": 5,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 0
+ },
+ {
+  "file": "task-navigation.test.mjs",
+  "tests": 4,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 13
+ },
+ {
+  "file": "task-trigger-sql.test.mjs",
+  "tests": 13,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 6,
+  "valueAsserts": 76
+ },
+ {
+  "file": "task-trigger.test.mjs",
+  "tests": 8,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 9,
+  "stringAsserts": 18,
+  "valueAsserts": 21
+ },
+ {
+  "file": "transaction-communication-browser.test.mjs",
+  "tests": 2,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 2
+ },
+ {
+  "file": "transaction-communication-sql.test.mjs",
+  "tests": 2,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 7
+ },
+ {
+  "file": "transaction-communication.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 4
+ },
+ {
+  "file": "transaction-progress-sql.test.mjs",
+  "tests": 6,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 2,
+  "stringAsserts": 0,
+  "valueAsserts": 19
+ },
+ {
+  "file": "turnaround-sql.test.mjs",
+  "tests": 13,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 4,
+  "valueAsserts": 58
+ },
+ {
+  "file": "turnaround.test.mjs",
+  "tests": 5,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 5,
+  "stringAsserts": 5,
+  "valueAsserts": 23
+ },
+ {
+  "file": "upgrade-workflow-actions.test.mjs",
+  "tests": 18,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 8,
+  "valueAsserts": 74
+ },
+ {
+  "file": "upgrade-workflow-browser.test.mjs",
+  "tests": 13,
+  "kind": "browser-fixture",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 12
+ },
+ {
+  "file": "upload-validation.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 6
+ },
+ {
+  "file": "validation.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 8
+ },
+ {
+  "file": "visual-profile-selection.test.mjs",
+  "tests": 3,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 4,
+  "stringAsserts": 12,
+  "valueAsserts": 16
+ },
+ {
+  "file": "workspace-preferences.test.mjs",
+  "tests": 9,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 2,
+  "valueAsserts": 25
+ },
+ {
+  "file": "workstation-browser.test.mjs",
+  "tests": 2,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 1,
+  "valueAsserts": 4
+ },
+ {
+  "file": "workstation-sql.test.mjs",
+  "tests": 2,
+  "kind": "sql-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 10
+ },
+ {
+  "file": "workstation.test.mjs",
+  "tests": 2,
+  "kind": "unit-behaviour",
+  "property": false,
+  "reads": 0,
+  "stringAsserts": 0,
+  "valueAsserts": 7
+ }
+]

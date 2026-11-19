@@ -11,12 +11,12 @@ import { CloudOff, RefreshCw } from "lucide-react";
 import { flushEntries, isPersistent, listEntries, newEntry, ownerKey, putEntry, removeEntry, type OfflineEntry, type OfflineKind, type SendOutcome } from "@/lib/offline/queue";
 
 /** Sends one entry; fromQueue is true when it is sent later from the queue, with nobody watching the screen. */
-export type OfflineTransport = { send: (entry: OfflineEntry, fromQueue: boolean) => Promise<SendOutcome>; resolve?: (entry: OfflineEntry, resolution: "discarded" | "redone") => Promise<void> };
+export type OfflineTransport = { kind: OfflineKind; send: (entry: OfflineEntry, fromQueue: boolean) => Promise<SendOutcome>; resolve?: (entry: OfflineEntry, resolution: "discarded" | "redone") => Promise<void> };
 export type BundleSender = (payload: Record<string, unknown>) => Promise<{ success: true; data?: unknown } | { success: false; error: string }>;
 
 /** Transport for bundle capture: the bundle writer is idempotent by the bundle identity, which is the request ID. */
 export function bundleTransport(sendBundle: BundleSender): OfflineTransport {
-  return { send: async entry => {
+  return { kind: "bundle", send: async entry => {
     const result = await sendBundle(entry.payload);
     if (result.success) return { kind: "applied", data: result.data };
     // The bundle writer's own generic failure means the outcome is unknown: retry with the same identity.
@@ -30,14 +30,15 @@ export function useOfflineQueueCore(companyId: string, userId: string, transport
   const io = useRef(transport);
   useEffect(() => { io.current = transport; }, [transport]);
   const owner = ownerKey(companyId, userId);
+  const kind = transport.kind;
   const [entries, setEntries] = useState<OfflineEntry[]>([]);
   const [online, setOnline] = useState(true);
   const flushing = useRef(false); const applied = useRef(onApplied);
   useEffect(() => { applied.current = onApplied; }, [onApplied]);
-  const refresh = useCallback(async () => setEntries(await listEntries(owner)), [owner]);
+  const refresh = useCallback(async () => setEntries((await listEntries(owner)).filter(entry => entry.kind === kind)), [owner, kind]);
   const flush = useCallback(async () => {
     if (flushing.current) return; flushing.current = true;
-    try { const r = await flushEntries(owner, entry => io.current.send(entry, true)); if (r.applied) applied.current?.(); } finally { flushing.current = false; await refresh(); }
+    try { const current = io.current; const r = await flushEntries(owner, current.kind, entry => current.send(entry, true)); if (r.applied) applied.current?.(); } finally { flushing.current = false; await refresh(); }
   }, [owner, refresh]);
   useEffect(() => {
     setOnline(typeof navigator === "undefined" ? true : navigator.onLine);
@@ -50,8 +51,9 @@ export function useOfflineQueueCore(companyId: string, userId: string, transport
 
   /** Stores the entry, then sends it. Returns what happened so the screen can say so. */
   const submit = useCallback(async (input: { kind?: OfflineKind; rpc: string; command: string; payload: Record<string, unknown>; label: string; requestId?: string }): Promise<SendOutcome> => {
-    const entry = newEntry({ owner, kind: input.kind ?? "ap", rpc: input.rpc, command: input.command, payload: input.payload, label: input.label, requestId: input.requestId });
+    const entry = newEntry({ owner, kind: input.kind ?? io.current.kind, rpc: input.rpc, command: input.command, payload: input.payload, label: input.label, requestId: input.requestId });
     await putEntry(entry);
+    if (entry.kind !== io.current.kind) { await refresh(); return { kind: "retry", message: "Open the entry's original screen to send it." }; }
     let outcome: SendOutcome;
     try { outcome = await io.current.send(entry, false); } catch { outcome = { kind: "retry", message: "No connection." }; }
     if (outcome.kind === "applied") await removeEntry(entry.request_id);
@@ -63,9 +65,10 @@ export function useOfflineQueueCore(companyId: string, userId: string, transport
   }, [owner, refresh]);
 
   const resolve = useCallback(async (entry: OfflineEntry, resolution: "discarded" | "redone") => {
+    if (entry.owner !== owner || entry.kind !== io.current.kind) return;
     try { await io.current.resolve?.(entry, resolution); } catch { /* resolved on this phone; the server keeps the conflict listed */ }
     await removeEntry(entry.request_id); await refresh();
-  }, [refresh]);
+  }, [owner, refresh]);
 
   const adopt = useCallback(async (list: OfflineEntry[]) => { for (const e of list) await putEntry(e); await refresh(); void flush(); }, [flush, refresh]);
   return { owner, entries, pending: entries.filter(e => e.state === "pending"), conflicts: entries.filter(e => e.state === "conflict"), online, submit, flush, resolve, adopt };

@@ -28,7 +28,11 @@ export function DieAttentionPanel({ data }: { data: DieAttention }) {
 }
 
 export type DiePerformance = { health_score: number | null; recommendation: string | null; rejection_rate: number | null; total_rejection_kg: number | null; correction_count: number | null;
-  trial_count: number | null; cost_per_kg: number | null; last_correction_date: string | null; last_trial_date: string | null; updated_at: string | null } | null;
+  trial_count: number | null; cost_per_kg: number | null; last_correction_date: string | null; last_trial_date: string | null; updated_at: string | null;
+  // FS-125: written by the database from usage, rejections, corrections and nitriding.
+  open_correction_count?: number | null; kg_since_nitriding?: number | null; runs_since_nitriding?: number | null; billets_since_nitriding?: number | null; last_nitriding_date?: string | null; next_nitriding_due_date?: string | null;
+  life_used_percent?: number | null; rated_life_kg?: number | null; recent_recovery_percent?: number | null; previous_recovery_percent?: number | null; recovery_trend?: string | null } | null;
+const TREND: Record<string, string> = { improving: "Improving", steady: "Steady", declining: "Declining", not_enough_runs: "Fewer than 10 runs" };
 
 const RECOMMENDATION: Record<string, string> = { healthy: "Healthy", monitor: "Monitor", correction_needed: "Correction needed", replace_soon: "Replace soon", dead: "Dead" };
 
@@ -39,13 +43,18 @@ export function DiePerformancePanel({ metric, showCost, fallbackScore, fallbackR
   const fact = (label: string, value: string) => <div className="rounded-xl bg-neutral-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">{label}</p><p className="mt-1 font-black">{value}</p></div>;
   return <section id="die-health" aria-labelledby="die-health-title" className="min-w-0 space-y-3 rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5">
     <div><h2 id="die-health-title" className="text-lg font-bold">Die health</h2>
-      <p className="text-sm text-neutral-600">{metric ? "From recorded output, rejections, corrections and trials." : "No health metrics are recorded yet; the score follows the die status."}</p></div>
+      <p className="text-sm text-neutral-600">{metric ? `From recorded output, QC rejections, corrections, trials and nitriding. Updated ${metric.updated_at ? new Date(metric.updated_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "—"}.` : "No health metrics are recorded yet; the score follows the die status."}</p></div>
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
       {fact("Health", `${score}/100`)}
       {fact("Status", RECOMMENDATION[rec] ?? rec.replaceAll("_", " "))}
       {fact("Rejection", metric?.rejection_rate === null || metric?.rejection_rate === undefined ? "Not captured" : `${Number(metric.rejection_rate).toFixed(1)}%`)}
       {fact("Corrections", String(metric?.correction_count ?? 0))}
       {fact("Trials", String(metric?.trial_count ?? 0))}
+      {fact("Open corrections", String(metric?.open_correction_count ?? 0))}
+      {fact("Since nitriding", metric?.kg_since_nitriding === null || metric?.kg_since_nitriding === undefined ? "Not captured" : `${Number(metric.kg_since_nitriding).toLocaleString("en-IN", { maximumFractionDigits: 0 })} kg · ${metric.runs_since_nitriding ?? 0} runs · ${metric.billets_since_nitriding ?? 0} billets`)}
+      {fact("Nitriding due", metric?.next_nitriding_due_date ?? "Not set")}
+      {fact("Rated life used", metric?.life_used_percent === null || metric?.life_used_percent === undefined ? "No rated life" : `${Number(metric.life_used_percent).toFixed(1)}%`)}
+      {fact("Recovery trend", metric?.recovery_trend ? `${TREND[metric.recovery_trend] ?? metric.recovery_trend}${metric.recent_recovery_percent !== null && metric.recent_recovery_percent !== undefined && metric.previous_recovery_percent !== null && metric.previous_recovery_percent !== undefined ? ` (${metric.previous_recovery_percent}% → ${metric.recent_recovery_percent}%)` : ""}` : "Not captured")}
       {showCost ? fact("Die cost per kg", metric?.cost_per_kg === null || metric?.cost_per_kg === undefined ? "Not captured" : formatCurrency(Number(metric.cost_per_kg))) : null}
     </div>
   </section>;

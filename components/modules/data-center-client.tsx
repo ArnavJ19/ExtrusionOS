@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/browser";
 import { formatDate } from "@/lib/utils/format";
+import { businessToday } from "@/lib/utils/business-date";
 import { recordsToCsv } from "@/lib/utils/csv";
 import { dataRetentionSettingsSchema } from "@/lib/validations/schemas";
 import { coreExportPlan, exportCoreTables } from "@/lib/data-export/core-export";
@@ -129,7 +130,7 @@ export function DataCenterClient({ companyId, userId, retention, exportJobs, act
         data: result.data,
       };
 
-      downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }), `core-company-data-${new Date().toISOString().slice(0, 10)}.json`);
+      downloadBlob(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }), `core-company-data-${businessToday()}.json`);
       await writeAudit("export_company_data", "backup", {
         mode: "json",
         successful: result.manifest.successful.map((entry) => entry.table),
@@ -152,7 +153,7 @@ export function DataCenterClient({ companyId, userId, retention, exportJobs, act
     try {
       const rows = await fetchExportRows(table);
       const csv = toCsv(rows);
-      downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${moduleName}-${new Date().toISOString().slice(0, 10)}.csv`);
+      downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${moduleName}-${businessToday()}.csv`);
       await writeAudit("export_module_csv", moduleName, { table, rows: rows.length });
       toast.success(`${moduleName} CSV downloaded`);
     } catch (error) {
@@ -164,7 +165,7 @@ export function DataCenterClient({ companyId, userId, retention, exportJobs, act
     try {
       const rows = await fetchExportRows("documents", "id, document_type, file_name, file_url, related_entity_type, related_entity_id, created_at");
       const csv = toCsv(rows);
-      downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `document-index-${new Date().toISOString().slice(0, 10)}.csv`);
+      downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `document-index-${businessToday()}.csv`);
       await writeAudit("export_document_index", "documents", { rows: rows.length });
       toast.success("Document index downloaded");
     } catch (error) {

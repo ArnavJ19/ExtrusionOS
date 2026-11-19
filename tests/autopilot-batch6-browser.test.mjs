@@ -108,7 +108,8 @@ for (const width of [375, 1280]) {
   });
 
   test(`AP-082 applicability, export and IRN import at ${width}px`, async () => {
-    await setup(f => f.seed("update invoices set issued_at=now(), subtotal=10000, tax_total=1800, grand_total=11800, igst_amount=1800, supplier_snapshot=$2, customer_snapshot=$3 where id=$1", [i.inv1, SNAPSHOTS[0], SNAPSHOTS[1]]));
+    const { city, pincode, ...historicalBuyer } = SNAPSHOTS[1];
+    await setup(f => f.seed("update invoices set issued_at=now(), subtotal=10000, tax_total=1800, grand_total=11800, igst_amount=1800, supplier_snapshot=$2, customer_snapshot=$3 where id=$1", [i.inv1, SNAPSHOTS[0], historicalBuyer]));
     await setup(f => f.seed("insert into invoice_items(company_id,invoice_id,item_description,hsn_code,quantity,unit_rate,line_total,gst_percent,line_kind) values($1,$2,'Sliding track 6 m','7604',40,250,10000,18,'goods')", [i.company, i.inv1]));
     const v = await open(width, "einvoice", i.accounts);
     await v.page.getByLabel("E-invoicing applies").selectOption("true");
@@ -116,6 +117,14 @@ for (const width of [375, 1280]) {
     await v.page.getByLabel("Basis (turnover, notification)").fill("Aggregate turnover above the notified limit");
     await v.page.getByRole("button", { name: "Record applicability" }).click();
     await expect(v.page.getByText("Invoices for the IRP")).toBeVisible();
+    const row = v.page.locator("li").filter({ hasText: "OMX/26-27/0101" });
+    await row.getByText("Complete buyer city and PIN", { exact: true }).click();
+    await row.getByLabel("Buyer city on issued invoice").fill(city);
+    await row.getByLabel("Buyer PIN on issued invoice").fill(pincode);
+    await row.getByLabel("Original invoice evidence / reference").fill("Original signed invoice INV-0101 page 1 verified");
+    assert.equal(await v.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, "expanded buyer confirmation fits the viewport");
+    await row.getByRole("button", { name: "Confirm issued buyer address" }).click();
+    await expect(row.getByText(/Missing buyer locality confirmed separately/)).toBeVisible();
     await v.page.locator("li").filter({ hasText: "OMX/26-27/0101" }).getByRole("checkbox").check();
     await v.page.getByRole("button", { name: /Export 1 invoice/ }).click();
     await expect.poll(() => v.page.evaluate(() => window.downloads.length)).toBe(1);

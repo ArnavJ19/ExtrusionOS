@@ -4,223 +4,101 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/utils/errors";
 import { CommandCenterClient } from "@/components/modules/command-center-client";
-import { calculateIssuedBilletRecovery } from "@/lib/command-center/metrics";
 import { getBusinessDateBoundaries } from "@/lib/utils/business-date";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+
+// FS-132: every KPI figure on this page (booked revenue, receivables, collections, shipped kg, completed kg, scrap kg,
+// recovery and the quote win rate) comes from public.fs_kpi, the one SQL definition the analytics and dashboard
+// snapshots agree with (tests/fs-batch4-sql.test.mjs). The page itself only counts and lists records for attention.
+type KpiItem = { value: number | null; numerator: number | null; denominator: number | null; status: string; note: string | null; jobs?: number; missing_jobs?: number };
+type KpiValues = Record<string, KpiItem>;
+const value = (k: KpiValues | null, key: string) => Number(k?.[key]?.value ?? 0);
 
 export default async function CommandCenterPage() {
   const context = await getSessionContext();
   if (!["owner", "admin"].includes(context.role)) redirect("/dashboard");
 
   const supabase = await createClient();
-  const now = new Date();
-  const { today, monthStart, lastMonthStart, lastMonthEnd, monthStartIso, tomorrowStartIso } = getBusinessDateBoundaries(now);
+  const { today, monthStart, lastMonthStart, lastMonthEnd } = getBusinessDateBoundaries(new Date());
 
   const activeProductionStages = [
     "order_confirmed", "die_ready", "billet_ready", "billet_heating", "extrusion_planned",
     "extruded", "stretching", "cutting", "aging", "surface_treatment", "finishing", "packing",
   ];
 
-  // Execute all queries in parallel for maximum performance
   const [
-    // Sales & Revenue
-    monthlyQuotes,
-    monthlyOrders,
-    lastMonthOrders,
-    pendingQuotes,
-    sentQuotes,
-    convertedQuotes,
-
-    // Production
-    activeProduction,
-    plannedJobs,
-
-    // Dispatch
-    pendingDispatch,
-    monthlyDispatches,
-    delayedOrders,
-
-    // Receivables / Financial
-    overdueInvoices,
-    monthlyPayments,
-    totalReceivables,
-
-    // Inventory
-    lowStockItems,
-    totalInventoryItems,
-
-    // Quality
-    qualityHolds,
-    qualityFails,
-
-    // Dies
-    dieCorrectionCount,
-    dieInactiveCount,
-
-    // Alerts & Tasks
-    unreadAlerts,
-    openTasks,
-    urgentTasks,
-
-    // Customers
-    activeCustomers,
-    recentOrders,
-    topCustomers,
-
-    // Scrap & Completed Production
-    productionJobsCompleted,
-    scrapRecordsMonthly,
+    kpiMonth, kpiLastMonth,
+    monthlyQuotes, monthlyOrders, pendingQuotes, sentQuotes, convertedQuotes,
+    activeProduction, plannedJobs, pendingDispatch, monthlyDispatches, delayedOrders,
+    overdueInvoices, lowStockItems, totalInventoryItems, qualityHolds, qualityFails,
+    dieCorrectionCount, dieInactiveCount, unreadAlerts, openTasks, urgentTasks,
+    activeCustomers, recentOrders, topCustomers,
   ] = await Promise.all([
-    // Monthly quotes
+    supabase.rpc("fs_kpi", { p_command: "values", p_payload: { from: monthStart, to: today } }),
+    supabase.rpc("fs_kpi", { p_command: "values", p_payload: { from: lastMonthStart, to: lastMonthEnd } }),
+    // Quotes dated this month (pipeline value is the quoted value of these quotes)
     supabase.from("quotes_authorized").select("id, grand_total, status", { count: "exact" })
       .eq("company_id", context.companyId).gte("quote_date", monthStart).lte("quote_date", today),
-    // Monthly orders
-    supabase.from("orders_authorized").select("id, order_value, current_stage", { count: "exact" })
+    supabase.from("orders_authorized").select("id", { count: "exact", head: true })
       .eq("company_id", context.companyId).gte("order_date", monthStart).lte("order_date", today).neq("current_stage", "cancelled"),
-    // Last month orders
-    supabase.from("orders_authorized").select("id, order_value", { count: "exact" })
-      .eq("company_id", context.companyId).gte("order_date", lastMonthStart).lte("order_date", lastMonthEnd).neq("current_stage", "cancelled"),
-    // Pending quotes (draft/review)
     supabase.from("quotes_authorized").select("id", { count: "exact", head: true })
       .eq("company_id", context.companyId).in("status", ["draft", "internal_review", "approved_for_sending"]),
-    // Sent quotes
     supabase.from("quotes_authorized").select("id, grand_total", { count: "exact" })
       .eq("company_id", context.companyId).eq("status", "sent"),
-    // Converted quotes
     supabase.from("quotes_authorized").select("id", { count: "exact", head: true })
       .eq("company_id", context.companyId).eq("status", "converted_to_order").gte("quote_date", monthStart).lte("quote_date", today),
-
-    // Active production orders
     supabase.from("orders_authorized").select("id", { count: "exact", head: true })
       .eq("company_id", context.companyId).in("current_stage", activeProductionStages),
-    // Planned production jobs
     supabase.from("production_jobs").select("id, job_number, planned_quantity_kg, status, planned_date", { count: "exact" })
       .eq("company_id", context.companyId).in("status", ["planned", "ready"]).order("planned_date", { ascending: true }).limit(10),
-    // Pending dispatch
     supabase.from("orders_authorized").select("id, order_number, customer_id, expected_dispatch_date, order_value, customer_name, company_name", { count: "exact" })
       .eq("company_id", context.companyId).not("current_stage", "in", "(dispatched,delivered,closed,cancelled)")
       .order("expected_dispatch_date", { ascending: true }).limit(10),
-    // Monthly dispatches
-    // KPI dictionary: shipped kg excludes pending, returned and damaged shipments.
-    supabase.from("dispatches").select("id, total_weight_kg", { count: "exact" })
+    supabase.from("dispatches").select("id", { count: "exact", head: true })
       .eq("company_id", context.companyId).gte("dispatch_date", monthStart).lte("dispatch_date", today)
       .not("delivery_status", "in", "(pending,returned,damaged)"),
-    // Delayed orders
     supabase.from("orders_authorized").select("id, order_number, expected_dispatch_date, order_value, customer_name, company_name")
       .eq("company_id", context.companyId).lt("expected_dispatch_date", today)
       .not("current_stage", "in", "(dispatched,delivered,closed,cancelled)")
       .order("expected_dispatch_date", { ascending: true }).limit(10),
-
-    // Overdue invoices
     supabase.from("invoices").select("id, invoice_number, customer_id, grand_total, balance_due, due_date, status, customers(customer_name, company_name)")
-      .eq("company_id", context.companyId).in("status", ["sent", "partially_paid", "overdue"])
+      .eq("company_id", context.companyId).in("status", ["generated", "sent", "partially_paid", "overdue"])
       .lt("due_date", today).gt("balance_due", 0).order("due_date", { ascending: true }).limit(10),
-    // Monthly payments
-    supabase.rpc("get_financial_collection_events", { p_start_date: monthStart }),
-    // Total receivables
-    supabase.from("invoices").select("id, balance_due")
-      .eq("company_id", context.companyId).in("status", ["sent", "partially_paid", "overdue"]).gt("balance_due", 0),
-
-    // Low stock
     supabase.from("inventory_items").select("id, item_code, item_name, item_category, current_stock, reorder_level, unit")
-      .eq("company_id", context.companyId).eq("is_active", true)
-      .order("current_stock", { ascending: true }).limit(100),
-    // Total inventory count
-    supabase.from("inventory_items").select("id", { count: "exact", head: true })
-      .eq("company_id", context.companyId).eq("is_active", true),
-
-    // Quality holds
-    supabase.from("quality_inspections").select("id", { count: "exact", head: true })
-      .eq("company_id", context.companyId).in("status", ["rejected", "rework"]),
-    // Quality fails this month
-    supabase.from("quality_inspections").select("id, status, quantity_checked_kg")
-      .eq("company_id", context.companyId).gte("inspection_date", monthStart).lte("inspection_date", today),
-
-    // Dies needing correction
-    supabase.from("dies").select("id", { count: "exact", head: true })
-      .eq("company_id", context.companyId).eq("die_status", "correction"),
-    // Inactive/dead dies
-    supabase.from("dies").select("id", { count: "exact", head: true })
-      .eq("company_id", context.companyId).in("die_status", ["inactive", "dead"]),
-
-    // Unread alerts
+      .eq("company_id", context.companyId).eq("is_active", true).order("current_stock", { ascending: true }).limit(100),
+    supabase.from("inventory_items").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).eq("is_active", true),
+    supabase.from("quality_inspections").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).in("status", ["rejected", "rework"]),
+    supabase.from("quality_inspections").select("id, status").eq("company_id", context.companyId).gte("inspection_date", monthStart).lte("inspection_date", today),
+    supabase.from("dies").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).eq("die_status", "correction"),
+    supabase.from("dies").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).in("die_status", ["inactive", "dead"]),
     supabase.from("notifications").select("id, title, severity, notification_type, created_at", { count: "exact" })
       .eq("company_id", context.companyId).eq("is_read", false).order("created_at", { ascending: false }).limit(8),
-    // Open tasks
     supabase.from("tasks").select("id, title, priority, status, due_date, assigned_to, task_type", { count: "exact" })
       .eq("company_id", context.companyId).in("status", ["open", "in_progress"]).order("due_date", { ascending: true }).limit(10),
-    // Urgent tasks
-    supabase.from("tasks").select("id", { count: "exact", head: true })
-      .eq("company_id", context.companyId).eq("priority", "urgent").in("status", ["open", "in_progress"]),
-
-    // Active customers
+    supabase.from("tasks").select("id", { count: "exact", head: true }).eq("company_id", context.companyId).eq("priority", "urgent").in("status", ["open", "in_progress"]),
     supabase.from("orders_authorized").select("customer_id")
       .eq("company_id", context.companyId).gte("order_date", monthStart).lte("order_date", today).neq("current_stage", "cancelled"),
-    // Recent orders
     supabase.from("orders_authorized").select("id, order_number, order_value, order_date, current_stage, priority, customer_name, company_name")
       .eq("company_id", context.companyId).order("order_date", { ascending: false }).limit(5),
-    // Top customers by order value
     supabase.from("orders_authorized").select("customer_id, order_value, customer_name, company_name")
       .eq("company_id", context.companyId).gte("order_date", monthStart).lte("order_date", today).neq("current_stage", "cancelled"),
-
-    // Completed production jobs for weight calculation
-    supabase.from("production_jobs").select("id, actual_quantity_kg")
-      .eq("company_id", context.companyId).eq("status", "completed").gte("completed_at", monthStartIso).lt("completed_at", tomorrowStartIso),
-    // Scrap records weight calculation
-    supabase.from("scrap_records").select("id, weight_kg")
-      .eq("company_id", context.companyId).gte("created_at", monthStartIso).lt("created_at", tomorrowStartIso),
   ]);
 
-  const completedProductionJobs = productionJobsCompleted.data ?? [];
-  const completedProductionJobIds = completedProductionJobs.map((job: any) => job.id);
-  const issuedBillets = completedProductionJobIds.length
-    ? await supabase.from("foundry_billets")
-      .select("production_job_id, weight_kg, measured_weight_kg")
-      .eq("company_id", context.companyId)
-      .in("production_job_id", completedProductionJobIds)
-      .in("status", ["issued", "consumed"])
-    : { data: [], error: null };
-  const scrapIds = (scrapRecordsMonthly.data ?? []).map((row: any) => row.id);
-  const [qcRejections, scrapReversals] = await Promise.all([
-    completedProductionJobIds.length
-      ? supabase.from("quality_inspections").select("production_job_id, quantity_checked_kg")
-        .eq("company_id", context.companyId).eq("status", "rejected").in("production_job_id", completedProductionJobIds)
-      : Promise.resolve({ data: [], error: null }),
-    scrapIds.length
-      ? supabase.from("scrap_record_reversals").select("scrap_record_id").eq("company_id", context.companyId).in("scrap_record_id", scrapIds)
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-  const reversedScrapIds = new Set((scrapReversals.data ?? []).map((row: any) => row.scrap_record_id));
+  const k = (kpiMonth.data ?? null) as KpiValues | null;
+  const kLast = (kpiLastMonth.data ?? null) as KpiValues | null;
+  const recovery = k?.recovery;
 
-  // Compute derived metrics
+  // Counts and lists for attention (not KPIs).
   const monthlyQuoteValue = (monthlyQuotes.data ?? []).reduce((s, q: any) => s + Number(q.grand_total ?? 0), 0);
-  const monthlyOrderValue = (monthlyOrders.data ?? []).reduce((s, o: any) => s + Number(o.order_value ?? 0), 0);
-  const lastMonthOrderValue = (lastMonthOrders.data ?? []).reduce((s, o: any) => s + Number(o.order_value ?? 0), 0);
   const sentQuoteValue = (sentQuotes.data ?? []).reduce((s, q: any) => s + Number(q.grand_total ?? 0), 0);
-  const monthlyPaymentValue = (monthlyPayments.data ?? []).reduce((s: number, p: any) => s + Number(p.amount ?? 0), 0);
-  const totalReceivableValue = (totalReceivables.data ?? []).reduce((s, i: any) => s + Number(i.balance_due ?? 0), 0);
-  const dispatchWeight = (monthlyDispatches.data ?? []).reduce((s, d: any) => s + Number(d.total_weight_kg ?? 0), 0);
   const activeCustomerIds = new Set((activeCustomers.data ?? []).map((r: any) => r.customer_id).filter(Boolean));
-
-  // Scrap & yield. Recovery uses only physical billet input linked to each
-  // completed job; it is not inferred from output plus recorded scrap.
-  const totalProduced = completedProductionJobs.reduce((s: number, j: any) => s + Number(j.actual_quantity_kg ?? 0), 0);
-  // Reversed (erroneous) scrap postings are excluded; recovery counts good output net of QC rejects.
-  const totalScrap = (scrapRecordsMonthly.data ?? []).filter((j: any) => !reversedScrapIds.has(j.id)).reduce((s, j: any) => s + Number(j.weight_kg ?? 0), 0);
-  const recovery = calculateIssuedBilletRecovery(completedProductionJobs, issuedBillets.data ?? [], qcRejections.data ?? []);
-
-  // Low stock filtering
   const lowStockFiltered = (lowStockItems.data ?? []).filter((item: any) => {
     const reorderLevel = Number(item.reorder_level ?? 0);
     return reorderLevel > 0 && Number(item.current_stock ?? 0) <= reorderLevel;
   });
-
-  // Quality metrics
   const totalInspected = (qualityFails.data ?? []).length;
   const failedInspections = (qualityFails.data ?? []).filter((q: any) => q.status === "rejected" || q.status === "rework").length;
-
-  // Top customers aggregation
   const customerMap = new Map<string, { name: string; value: number }>();
   (topCustomers.data ?? []).forEach((o: any) => {
     const name = o.company_name || o.customer_name || "Unknown";
@@ -230,60 +108,39 @@ export default async function CommandCenterPage() {
   });
   const topCustomersList = Array.from(customerMap.values()).sort((a, b) => b.value - a.value).slice(0, 5);
 
-  // Revenue growth
+  const monthlyOrderValue = value(k, "order_intake");
+  const lastMonthOrderValue = value(kLast, "order_intake");
   const revenueGrowth = lastMonthOrderValue > 0 ? ((monthlyOrderValue - lastMonthOrderValue) / lastMonthOrderValue) * 100 : 0;
+  const recoveryPercent = recovery?.status === "measured" && recovery.value !== null ? Number(recovery.value) : null;
+  const winRate = k?.quote_win_rate?.status === "measured" ? Number(k.quote_win_rate.value) : 0;
 
-  // Quote conversion
-  const quoteConversionRate = (monthlyQuotes.count ?? 0) > 0 ? ((convertedQuotes.count ?? 0) / (monthlyQuotes.count ?? 0)) * 100 : 0;
-
-  // Build insights
+  // Facts only: no targets are invented here (FS-77). Reorder levels and promise dates are the company's own.
   const insights: { text: string; severity: "info" | "warning" | "critical" | "success" }[] = [];
-
-  if (revenueGrowth > 10) insights.push({ text: `Revenue grew ${revenueGrowth.toFixed(0)}% compared to last month. Strong momentum.`, severity: "success" });
-  else if (revenueGrowth < -10) insights.push({ text: `Revenue declined ${Math.abs(revenueGrowth).toFixed(0)}% compared to last month. Review pipeline.`, severity: "warning" });
-
-  if (totalReceivableValue > monthlyOrderValue * 0.5) insights.push({ text: `Receivables (₹${(totalReceivableValue / 100000).toFixed(1)}L) exceed 50% of monthly revenue. Follow up urgently.`, severity: "critical" });
-
-  if (recovery.percent !== null && recovery.percent < 85) insights.push({ text: `Recovery rate ${recovery.percent.toFixed(1)}% is below 85% target. Investigate billet quality and die condition.`, severity: "warning" });
-  else if (recovery.percent !== null && recovery.percent >= 90) insights.push({ text: `Recovery rate ${recovery.percent.toFixed(1)}% — excellent yield performance this month.`, severity: "success" });
-  else if (recovery.missingJobCount > 0) insights.push({ text: `Recovery is not captured: ${recovery.missingJobCount} completed production job(s) have no issued billet input.`, severity: "warning" });
-
-  if (lowStockFiltered.length > 3) insights.push({ text: `${lowStockFiltered.length} inventory items below reorder level. Check billet and packing material stock.`, severity: "warning" });
-
-  if ((delayedOrders.data ?? []).length > 0) insights.push({ text: `${(delayedOrders.data ?? []).length} orders past expected dispatch date. Production or finishing delay likely.`, severity: "critical" });
-
-  if (quoteConversionRate > 0 && quoteConversionRate < 20) insights.push({ text: `Quote conversion rate is ${quoteConversionRate.toFixed(0)}% this month. Below 20% indicates pricing or follow-up issues.`, severity: "warning" });
-  else if (quoteConversionRate >= 40) insights.push({ text: `Quote conversion rate ${quoteConversionRate.toFixed(0)}% — strong closing performance.`, severity: "success" });
-
-  if ((dieCorrectionCount.count ?? 0) > 2) insights.push({ text: `${dieCorrectionCount.count} dies in correction queue. This may bottleneck production scheduling.`, severity: "warning" });
-
-  if ((qualityHolds.count ?? 0) > 0) insights.push({ text: `${qualityHolds.count} quality holds pending. Resolve before dispatch to prevent customer complaints.`, severity: "critical" });
-
-  if (topCustomersList.length > 0) {
-    insights.push({ text: `Top customer this month: ${topCustomersList[0].name} with ₹${(topCustomersList[0].value / 100000).toFixed(1)}L in orders.`, severity: "info" });
-  }
+  if (lastMonthOrderValue > 0) insights.push({ text: `Booked revenue this month is ${Math.abs(revenueGrowth).toFixed(0)}% ${revenueGrowth >= 0 ? "above" : "below"} last month so far.`, severity: "info" });
+  if (recovery?.status === "not_captured" && Number(recovery.missing_jobs ?? 0) > 0) insights.push({ text: `Recovery is not captured: ${recovery.missing_jobs} completed production job(s) have no issued billet input.`, severity: "warning" });
+  if (lowStockFiltered.length > 0) insights.push({ text: `${lowStockFiltered.length} inventory item(s) at or below their reorder level.`, severity: "warning" });
+  if ((delayedOrders.data ?? []).length > 0) insights.push({ text: `${(delayedOrders.data ?? []).length} order(s) past their expected dispatch date.`, severity: "critical" });
+  if ((dieCorrectionCount.count ?? 0) > 0) insights.push({ text: `${dieCorrectionCount.count} die(s) in correction.`, severity: "warning" });
+  if ((qualityHolds.count ?? 0) > 0) insights.push({ text: `${qualityHolds.count} quality hold(s) pending. Resolve before dispatch.`, severity: "critical" });
+  if (topCustomersList.length > 0) insights.push({ text: `Top customer this month: ${topCustomersList[0].name} with ₹${(topCustomersList[0].value / 100000).toFixed(1)}L in orders.`, severity: "info" });
 
   const queryErrors = [
-    monthlyQuotes, monthlyOrders, lastMonthOrders, pendingQuotes, sentQuotes, convertedQuotes,
-    activeProduction, plannedJobs,
-    pendingDispatch, monthlyDispatches, delayedOrders,
-    overdueInvoices, monthlyPayments, totalReceivables,
-    lowStockItems, totalInventoryItems,
-    qualityHolds, qualityFails,
-    dieCorrectionCount, dieInactiveCount,
-    unreadAlerts, openTasks, urgentTasks,
-    activeCustomers, recentOrders, topCustomers, productionJobsCompleted, scrapRecordsMonthly, issuedBillets,
+    kpiMonth, kpiLastMonth, monthlyQuotes, monthlyOrders, pendingQuotes, sentQuotes, convertedQuotes,
+    activeProduction, plannedJobs, pendingDispatch, monthlyDispatches, delayedOrders, overdueInvoices,
+    lowStockItems, totalInventoryItems, qualityHolds, qualityFails, dieCorrectionCount, dieInactiveCount,
+    unreadAlerts, openTasks, urgentTasks, activeCustomers, recentOrders, topCustomers,
   ].map((r) => (r.error ? getErrorMessage(r.error) : "")).filter(Boolean);
 
   return (
     <div>
       <PageHeader
         title="Command Center"
-        description="Owner-level intelligence dashboard — revenue, production, dispatch, receivables, quality, inventory, and AI-powered business insights."
+        description="Owner-level view of revenue, production, dispatch, receivables, quality and inventory. Every KPI uses the KPI dictionary definition."
         actions={
-          <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 shadow-sm transition hover:border-orange hover:text-orange">
-            Standard Dashboard
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/insights/kpis" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 shadow-sm transition hover:border-orange hover:text-orange">KPI definitions</Link>
+            <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 shadow-sm transition hover:border-orange hover:text-orange">Standard Dashboard</Link>
+          </div>
         }
       />
       <QueryErrorNotice messages={queryErrors} />
@@ -299,25 +156,25 @@ export default async function CommandCenterPage() {
           sentQuoteCount: sentQuotes.count ?? 0,
           pendingQuoteCount: pendingQuotes.count ?? 0,
           convertedQuoteCount: convertedQuotes.count ?? 0,
-          quoteConversionRate,
+          quoteConversionRate: winRate,
           activeProductionCount: activeProduction.count ?? 0,
           plannedJobCount: plannedJobs.count ?? 0,
           monthlyDispatchCount: monthlyDispatches.count ?? 0,
-          dispatchWeight,
+          dispatchWeight: value(k, "shipped_kg"),
           delayedOrderCount: (delayedOrders.data ?? []).length,
           pendingDispatchCount: pendingDispatch.count ?? 0,
-          totalReceivableValue,
+          totalReceivableValue: value(k, "receivables_outstanding"),
           overdueInvoiceCount: (overdueInvoices.data ?? []).length,
-          monthlyPaymentValue,
+          monthlyPaymentValue: value(k, "collections"),
           lowStockCount: lowStockFiltered.length,
           totalInventoryCount: totalInventoryItems.count ?? 0,
-          totalProduced,
-          totalScrap,
-          recoveryPercent: recovery.percent,
-          recoveryInputKg: recovery.issuedInputKg,
-          recoveryOutputKg: recovery.capturedOutputKg,
-          recoveryCapturedJobCount: recovery.capturedJobCount,
-          recoveryMissingJobCount: recovery.missingJobCount,
+          totalProduced: value(k, "production_completed_kg"),
+          totalScrap: value(k, "scrap_kg"),
+          recoveryPercent,
+          recoveryInputKg: Number(recovery?.denominator ?? 0),
+          recoveryOutputKg: Number(recovery?.numerator ?? 0),
+          recoveryCapturedJobCount: Math.max(0, Number(recovery?.jobs ?? 0) - Number(recovery?.missing_jobs ?? 0)),
+          recoveryMissingJobCount: Number(recovery?.missing_jobs ?? 0),
           qualityHoldCount: qualityHolds.count ?? 0,
           totalInspected,
           failedInspections,

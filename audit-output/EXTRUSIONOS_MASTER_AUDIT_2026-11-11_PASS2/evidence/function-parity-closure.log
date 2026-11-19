@@ -1,0 +1,8 @@
+bulk_queue_command 20261022270000_bulk_queue_actions.sql len 11474 nocomment_nows 09c7cd276c5beb063fb89c4e15ac6a91 nows 4d903e88e6008813484ab1b73f55012f CR true
+procedure_effectiveness_command 20261022410000_procedure_effectiveness.sql len 16398 nocomment_nows 58347991e504d36e81dcafebd4e9c7d6 nows 5aa3d5804ae967e7218d72ecc5d7de70 CR true
+procedure_version_command 20261022390000_procedure_versions.sql len 18038 nocomment_nows a13a12e289a9e398802c0c56d722f11d nows fb145baa20a66d9fb046aa807321cc0b CR true
+hosted (read-only, 2026-11-11T17:28Z), same normalisation (block comments, line comments and whitespace removed):
+bulk_queue_command nocomment_nows 09c7cd276c5beb063fb89c4e15ac6a91
+procedure_effectiveness_command nocomment_nows 58347991e504d36e81dcafebd4e9c7d6
+procedure_version_command nocomment_nows a13a12e289a9e398802c0c56d722f11d
+result: all three equal; the residual difference in hosted-vs-local-functions.json is comments and line endings only.

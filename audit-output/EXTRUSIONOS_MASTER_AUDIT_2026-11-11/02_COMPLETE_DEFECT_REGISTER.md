@@ -103,6 +103,14 @@
 - **Evidence and impact.** The current security advisor reports `auth_leaked_password_protection`. The provider reports the additional compromised-password check as disabled. [Supabase password security](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)
 - **Fix and regression.** Confirm plan and policy, enable the control through the approved release process, then verify permitted password, invitation and reset behavior in staging.
 
+### MFA-017 | A packaging purchase credits a different balance than consumption uses
+
+- **Class and scope.** Reproduced in the later capture. Packaging materials, stores and expense-linked purchases. October AP-005.
+- **Source.** supabase/migrations/20261020010000_expense_ledger_integrity.sql:1604–1617 maps the purchase to an `inventory_items` record. supabase/migrations/20260515005200_packaging_queue_and_calculation_hardening.sql:85–103 uses `packaging_materials.current_stock` for consumption.
+- **Expected and observed.** A posted packaging receipt should reconcile with the quantity available to the packaging workflow, including an explicit disposition for material awaiting release. Posting a synthetic purchase for 100 m created 100 m in the linked inventory item and left the packaging material balance at 0 m.
+- **Reproduction and impact.** Seed a zero-stock material, record the purchase in the disposable database with the posting triggers active, and compare both balances by material code and unit. Packing can show a shortage for material that stores show as received. [Fixture output](evidence/reconciliation-followup-verified.log)
+- **Fix and regression.** Use one authoritative movement basis or a transactional, reconcilable projection. Test purchase, inspection if required, use, reversal, rate-only change and consistent metre/unit totals.
+
 ## P3
 
 ### MFA-010 | Malformed stock data appears as legitimate zeros
@@ -113,9 +121,16 @@
 - **Reproduction and impact.** Run the parser fixture. A malformed or incompatible response can be mistaken for empty stock. [Fixture output](evidence/business-invariants-verified.log)
 - **Fix and regression.** Validate the required payload and preserve zero only when it is a valid explicit value. Cover omitted fields, null, nonnumeric input, true zero and read failure.
 
-### MFA-014 | Earlier Autopilot tests assert obsolete job and grant inventories
+### MFA-014 | Earlier tests assert obsolete inventories and navigation
 
 - **Class and scope.** Reproduced test-suite defect. Cron and RPC inventory assertions.
-- **Source.** tests/autopilot-batch1-sql.test.mjs:53–55 and :422; supabase/migrations/20261111100000_autopilot_batch_3.sql:1976 and :2095 onward. The older job assertion expected eight fixture runs and observed ten. The exact RPC list excludes new intended Batch 3 entry points.
-- **Expected and observed.** Regression tests should compare against the intended full current registry and allowlist. The two old assertions fail. Focused Batch 3 registry/grant checks pass.
+- **Source.** tests/autopilot-batch1-sql.test.mjs:53–55 and :422; tests/nov-batch9.test.mjs:255; tests/nov-batch2-browser.test.mjs:167–174. The older job assertion expected eight fixture runs and observed ten. The exact RPC list excludes new intended Batch 3 entry points. The migration inventory predates Autopilot. Two pin tests do not open the newer workspace disclosure.
+- **Expected and observed.** Regression tests should check the current intended release inventory and interact with the current UI. Five assertions or interactions failed in the run. Focused Batch 3 registry/grant checks pass. The UI fixture mismatch is supported by the current component structure.
 - **Fix and regression.** Define the complete intended registry and allowlist explicitly at the release boundary while retaining tests that catch unintended extra grants. Rerun the whole suite. [Suite output](evidence/test-isolated.log)
+
+### MFA-016 | A signed-out deep link opens Account Unavailable
+
+- **Class and scope.** Reproduced in the built local app. Session experience for protected routes.
+- **Source.** proxy.ts:75–94; lib/auth.ts:7–9. The protected-path error branch handles the ordinary missing-session result before the login redirect branch.
+- **Expected and observed.** A signed-out operator following a protected scanner link should receive the sign-in page and return path. The SDK returned `AuthSessionMissingError` with zero network calls. The built app gave `307 /account-unavailable` for signed-out `/scan`. Public `/signup` correctly redirected to `/login` in the audited candidate.
+- **Fix and regression.** Classify no-session separately from actual Auth/backend failure. Exercise direct protected links, expired sessions, suspended users and real backend outages. [Built app output](evidence/application-smoke-verified.log)

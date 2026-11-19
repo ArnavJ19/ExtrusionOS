@@ -1,7 +1,7 @@
 {
  "schema_version": 1,
  "roadmap_source": "../../../../FABLE_SUGEGSTIONS.md",
- "date": "2026-11-17",
+ "date": "2026-11-18",
  "batch_number": 2,
  "initial_commit": "3bd03b48246eba90ac7ea7d8d4720d2b899aceab",
  "reference_root_commit": "2833cc0390774638cbde40d8137710f9b4f223ec",
@@ -16,7 +16,8 @@
   "Batch 2 baseline rechecked 28 foundation, reference-migration and server-action tests: 28 passed. Selection and staged acceptance are in FS_BATCH_2_PLAN.md.",
   "Batch 2 selected ten IDs: two locally implemented and eight partial. Full parent scopes and hosted/factory acceptance are not inferred from passing local stages.",
   "Read-only hosted baseline now shows Autopilot batch 8 and none of the FS foundation/packed-key/stock-movement changes; no hosted write was performed.",
-  "Authorized hosted apply completed 17 November 2026: all fourteen FS foundation/batch-2 migrations plus Autopilot Batch 9 are recorded on AlExMS. Earlier local-only/final_git notes describe the original implementation close-out. See the latest hosted migration receipt; no partial feature parent is promoted by this apply."
+  "Authorized hosted apply completed 17 November 2026: all fourteen FS foundation/batch-2 migrations plus Autopilot Batch 9 are recorded on AlExMS. Earlier local-only/final_git notes describe the original implementation close-out. See the latest hosted migration receipt; no partial feature parent is promoted by this apply.",
+  "2026-11-18 root batch 4: FS-82, 132, 125 implemented; FS-77, 79, 07, 51, 65, 75, 107 partial. Codex-owned IDs were reconciled from the Codex tracker (codex/v1), whose code is not in this checkout until merged."
  ],
  "selected": [
   "FS-06",
@@ -542,15 +543,50 @@
    "id": "FS-07",
    "title": "Error monitoring and uptime alerts",
    "priority": "High",
-   "status": "NOT_STARTED",
+   "status": "PARTIAL",
    "prerequisites": [],
    "risk": [],
-   "implementation_evidence": [],
-   "modified_files": [],
-   "tests": [],
+   "implementation_evidence": [
+    "app_error_events (no direct access): browser errors (error boundary + window error/unhandled-rejection reporter) and server errors (instrumentation.ts onRequestError via service-role-only fs_monitoring_service) stored with route path, role, error name and a message scrubbed of e-mails, numbers, identifiers and GSTINs.",
+    "First occurrence of an error per business day alerts owner and admin once; a failed system_job_runs row alerts until the job's next successful run.",
+    "/settings/system-health: last run per job with 24-hour failures, the week's top five errors, latest errors paged.",
+    "/api/health (Bearer HEALTH_CHECK_TOKEN or a signed-in owner/admin; 503 on database failure or failed/stuck jobs) and unauthenticated /api/health/live."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261119130000_fs_batch4_history_monitoring_security.sql",
+    "instrumentation.ts",
+    "app/(dashboard)/error.tsx",
+    "app/(dashboard)/layout.tsx",
+    "components/monitoring/error-reporter.tsx",
+    "lib/monitoring/report.ts",
+    "components/modules/fs-batch4/system-health.tsx",
+    "app/(dashboard)/settings/system-health/page.tsx",
+    "app/api/health/route.ts",
+    "app/api/health/live/route.ts"
+   ],
+   "tests": [
+    "tests/fs-batch4-sql.test.mjs",
+    "tests/fs-batch4.test.mjs"
+   ],
    "commit_reference": null,
-   "blockers": [],
-   "acceptance_status": "NOT_ASSESSED"
+   "blockers": [
+    "No external error tracker (Sentry or similar), uptime monitor or phone alerting: needs a provider account and budget (FABLE input #10). HEALTH_CHECK_TOKEN must be set in Vercel and an uptime monitor pointed at /api/health and /login.",
+    "No app/global-error.tsx yet for errors in the root layout."
+   ],
+   "acceptance_status": "LOCAL_PGLITE_VERIFIED_EXTERNAL_PROVIDER_PENDING",
+   "last_batch": "root-4",
+   "hosted_schema_verification": {
+    "date": "2026-11-18",
+    "project_id": "pkawmdxtmsdgigsehcmb",
+    "migrations": [
+     "fs_batch4_business_date",
+     "fs_batch4_kpi_dictionary",
+     "fs_batch4_die_health",
+     "fs_batch4_history_monitoring_security",
+     "fs_batch4_weight_basis_authority"
+    ],
+    "ledger_after": 319
+   }
   },
   {
    "id": "FS-08",
@@ -1439,15 +1475,49 @@
    "id": "FS-51",
    "title": "Security hardening for a real user base",
    "priority": "High",
-   "status": "NOT_STARTED",
+   "status": "PARTIAL",
    "prerequisites": [],
    "risk": [],
-   "implementation_evidence": [],
-   "modified_files": [],
-   "tests": [],
+   "implementation_evidence": [
+    "Password sign-in moved to a server action: per-address+email rate limit, lockout after 5 failures in 15 minutes (counted per staff account; unknown e-mails reveal nothing), success recorded with IP and browser from request headers. Browser inserts into login_events revoked.",
+    "Owner/admin sign-in history (paged, with 24-hour failures) on the security page.",
+    "Origin / Sec-Fetch-Site check refuses cross-site state-changing /api requests; rate limits added for /api/pdf, /api/reports, /api/health.",
+    "documents, technical-drawings and maintenance-bills buckets limited to 10 MB and PDF/image/CSV/Excel types (matching the app's upload rule); reports bucket capped at 25 MB."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261119130000_fs_batch4_history_monitoring_security.sql",
+    "lib/actions/sign-in.ts",
+    "components/modules/auth-forms.tsx",
+    "lib/security/origin.ts",
+    "proxy.ts",
+    "components/modules/fs-batch4/login-history.tsx",
+    "app/(dashboard)/settings/security/page.tsx",
+    "tests/role-aware-sensitive-rls.test.mjs"
+   ],
+   "tests": [
+    "tests/fs-batch4-sql.test.mjs",
+    "tests/fs-batch4.test.mjs"
+   ],
    "commit_reference": null,
-   "blockers": [],
-   "acceptance_status": "NOT_ASSESSED"
+   "blockers": [
+    "Two-factor authentication belongs with FS-06 (Codex) and the Supabase Auth MFA settings; leaked-password protection is a hosted Auth setting: both need owner authorisation to change live auth policy.",
+    "Session timeout/device list, CSP review (FS-100), weekly dependency automation, written incident-response plan and external penetration test not done.",
+    "Bucket MIME limits could refuse CAD drawing formats if any are uploaded today: confirm before applying to hosted."
+   ],
+   "acceptance_status": "LOCAL_PGLITE_AND_UNIT_VERIFIED_PARTIAL_SCOPE",
+   "last_batch": "root-4",
+   "hosted_schema_verification": {
+    "date": "2026-11-18",
+    "project_id": "pkawmdxtmsdgigsehcmb",
+    "migrations": [
+     "fs_batch4_business_date",
+     "fs_batch4_kpi_dictionary",
+     "fs_batch4_die_health",
+     "fs_batch4_history_monitoring_security",
+     "fs_batch4_weight_basis_authority"
+    ],
+    "ledger_after": 319
+   }
   },
   {
    "id": "FS-52",
@@ -1673,15 +1743,44 @@
    "id": "FS-65",
    "title": "One unit-of-measure and weight-basis policy",
    "priority": "High",
-   "status": "NOT_STARTED",
+   "status": "PARTIAL",
    "prerequisites": [],
    "risk": [],
-   "implementation_evidence": [],
-   "modified_files": [],
-   "tests": [],
+   "implementation_evidence": [
+    "Policy recorded once: stock basis fixed at actual weighed kg; invoice basis (actual weighed or theoretical) decided by the owner per company and per customer, starting undecided; default tolerance where a profile has none; every change appended to weight_basis_events (immutable).",
+    "One conversion: private.weight_compare and lib/calculations/weight-basis.ts (theoretical = pieces x cut length x kg/m, kg 3 dp, % 2 dp, half away from zero), equal on the same cases by test.",
+    "/settings/weight-basis screen and a dispatch panel showing theoretical and actual kg per bundle with the tolerance check and the applicable invoice basis."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261119140000_fs_batch4_weight_basis_authority.sql",
+    "lib/calculations/weight-basis.ts",
+    "components/modules/fs-batch4/weight-basis.tsx",
+    "app/(dashboard)/settings/weight-basis/page.tsx",
+    "app/(dashboard)/dispatches/[id]/page.tsx"
+   ],
+   "tests": [
+    "tests/fs-batch4-sql.test.mjs",
+    "tests/fs-batch4.test.mjs"
+   ],
    "commit_reference": null,
-   "blockers": [],
-   "acceptance_status": "NOT_ASSESSED"
+   "blockers": [
+    "Omalco decision #4 (invoice basis) is not made, so invoice creation still uses its current line quantities; applying the basis to invoice drafting comes after the decision.",
+    "Both weights are shown on dispatches; not yet on invoices, packing and order screens."
+   ],
+   "acceptance_status": "LOCAL_PGLITE_VERIFIED_BUSINESS_DECISION_PENDING",
+   "last_batch": "root-4",
+   "hosted_schema_verification": {
+    "date": "2026-11-18",
+    "project_id": "pkawmdxtmsdgigsehcmb",
+    "migrations": [
+     "fs_batch4_business_date",
+     "fs_batch4_kpi_dictionary",
+     "fs_batch4_die_health",
+     "fs_batch4_history_monitoring_security",
+     "fs_batch4_weight_basis_authority"
+    ],
+    "ledger_after": 319
+   }
   },
   {
    "id": "FS-66",
@@ -1912,15 +2011,44 @@
    "id": "FS-75",
    "title": "Delegation-of-authority matrix",
    "priority": "High",
-   "status": "NOT_STARTED",
+   "status": "PARTIAL",
    "prerequisites": [],
    "risk": [],
-   "implementation_evidence": [],
-   "modified_files": [],
-   "tests": [],
+   "implementation_evidence": [
+    "authority_rules (type x amount band x approving roles, optional second approver from an amount; changes retire and re-add, never edit), authority_delegations (dated stand-ins, max 90 days, admins cannot delegate the owner), authority_approvals (append-only).",
+    "private.authority_check: band lookup, nobody approves their own entry (owner included), delegated roles. The approval inbox's role rule now asks the matrix when a type is configured; record-level triggers on quotes and expenses enforce it and hold the first of two approvals (record unchanged except updated_at) until a different permitted person approves.",
+    "/settings/authority screen (rules, delegations, monthly approval report with stand-ins marked); inbox cards show 'first approval by X, second approver needed'."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261119140000_fs_batch4_weight_basis_authority.sql",
+    "components/modules/fs-batch4/authority.tsx",
+    "app/(dashboard)/settings/authority/page.tsx",
+    "app/(dashboard)/tasks/approvals/page.tsx",
+    "components/modules/tasks/approval-inbox.tsx"
+   ],
+   "tests": [
+    "tests/fs-batch4-sql.test.mjs",
+    "tests/fs-batch4.test.mjs"
+   ],
    "commit_reference": null,
-   "blockers": [],
-   "acceptance_status": "NOT_ASSESSED"
+   "blockers": [
+    "Enforced only for quotation, low-margin quotation and expense approvals. Discount, credit-limit override, stock adjustment, write-off, purchase order, payment, concession and price override can be configured but their workflows do not read the matrix yet (the screen says so).",
+    "transition_expense_approval keeps its built-in Rs 25,000 ceiling for accounts: the matrix can narrow but not widen expense authority."
+   ],
+   "acceptance_status": "LOCAL_PGLITE_VERIFIED_PARTIAL_SCOPE",
+   "last_batch": "root-4",
+   "hosted_schema_verification": {
+    "date": "2026-11-18",
+    "project_id": "pkawmdxtmsdgigsehcmb",
+    "migrations": [
+     "fs_batch4_business_date",
+     "fs_batch4_kpi_dictionary",
+     "fs_batch4_die_health",
+     "fs_batch4_history_monitoring_security",
+     "fs_batch4_weight_basis_authority"
+    ],
+    "ledger_after": 319
+   }
   },
   {
    "id": "FS-76",
@@ -1940,15 +2068,47 @@
    "id": "FS-77",
    "title": "KPI dictionary: one definition per number",
    "priority": "High",
-   "status": "NOT_STARTED",
+   "status": "PARTIAL",
    "prerequisites": [],
    "risk": [],
-   "implementation_evidence": [],
-   "modified_files": [],
-   "tests": [],
+   "implementation_evidence": [
+    "private.kpi_values defines each KPI over a business-date period with value, numerator, denominator and status (measured / not_captured / not_measurable): shipped kg, on-time dispatch, OTIF, planned and completed kg, recovery (= yield), process scrap %, scrap kg, QC-rejected kg, OEE quality, OEE availability/performance/OEE (not measurable: need FS-15 run/stop capture and approved ideal rates), kWh/t, die life (median of retired dies), quote win rate, order intake, collections, receivables outstanding/overdue, DSO, conversion cost per tonne (not measurable: FS-12).",
+    "public.fs_kpi gateway (finance KPIs only for owner/admin/accounts); /insights/kpis page with an 'i' definition on every figure; registry (lib/insights/metrics.ts) and docs/KPI_DICTIONARY.md extended and kept equal by the existing test.",
+    "Production attainment text corrected to what the analytics snapshot actually computes (found discrepancy)."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261119110000_fs_batch4_kpi_dictionary.sql",
+    "lib/insights/metrics.ts",
+    "docs/KPI_DICTIONARY.md",
+    "components/modules/fs-batch4/kpi-values.tsx",
+    "app/(dashboard)/insights/kpis/page.tsx",
+    "app/(dashboard)/insights/page.tsx",
+    "lib/auth/route-permissions.ts"
+   ],
+   "tests": [
+    "tests/fs-batch4-sql.test.mjs",
+    "tests/fs-batch4.test.mjs"
+   ],
    "commit_reference": null,
-   "blockers": [],
-   "acceptance_status": "NOT_ASSESSED"
+   "blockers": [
+    "The 'i' definition is on the KPI page, not yet beside every number on analytics, dashboard and reports.",
+    "Analytics and dashboard snapshots still compute their figures with their own SQL (equal by test, FS-132), not by calling private.kpi_values.",
+    "OEE availability/performance and conversion cost stay not measurable until FS-15 and FS-12."
+   ],
+   "acceptance_status": "LOCAL_PGLITE_VERIFIED_PARTIAL_SCOPE",
+   "last_batch": "root-4",
+   "hosted_schema_verification": {
+    "date": "2026-11-18",
+    "project_id": "pkawmdxtmsdgigsehcmb",
+    "migrations": [
+     "fs_batch4_business_date",
+     "fs_batch4_kpi_dictionary",
+     "fs_batch4_die_health",
+     "fs_batch4_history_monitoring_security",
+     "fs_batch4_weight_basis_authority"
+    ],
+    "ledger_after": 319
+   }
   },
   {
    "id": "FS-78",
@@ -1970,17 +2130,44 @@
    "id": "FS-79",
    "title": "History tab on every record",
    "priority": "High",
-   "status": "NOT_STARTED",
+   "status": "PARTIAL",
    "prerequisites": [
     "FS-90"
    ],
    "risk": [],
-   "implementation_evidence": [],
-   "modified_files": [],
-   "tests": [],
+   "implementation_evidence": [
+    "public.fs_history returns a record's field changes (user, time, field, old, new), order stage moves and approval decisions, ten a page, from audit_logs_enterprise; it checks the record is the company's and the role may open its page, and hides cost/margin/profit/supplier-rate/internal-note fields from roles other than owner, admin, accounts and sales manager.",
+    "Field-level value capture added (existing changed-fields trigger) to dies, customers, profiles, production jobs, vendors and machines, which previously logged only who touched them.",
+    "RecordHistory mounted on 12 detail pages: orders, quotes, invoices, payments, dispatches, inventory items, dies, customers, profiles, production jobs, vendors, machines."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261119130000_fs_batch4_history_monitoring_security.sql",
+    "components/modules/fs-batch4/record-history.tsx",
+    "app/(dashboard)/{orders,quotes,invoices,payments,dispatches,inventory,dies,customers,profiles,production,vendors,machines}/[id]/page.tsx"
+   ],
+   "tests": [
+    "tests/fs-batch4-sql.test.mjs",
+    "tests/fs-batch4.test.mjs"
+   ],
    "commit_reference": null,
-   "blockers": [],
-   "acceptance_status": "NOT_ASSESSED"
+   "blockers": [
+    "Not yet on foundry batches, finishing, packaging, quality inspections, purchase orders, expenses and other detail pages.",
+    "History starts from when value capture existed for each table; older rows show only what was recorded."
+   ],
+   "acceptance_status": "LOCAL_PGLITE_VERIFIED_PARTIAL_SCOPE",
+   "last_batch": "root-4",
+   "hosted_schema_verification": {
+    "date": "2026-11-18",
+    "project_id": "pkawmdxtmsdgigsehcmb",
+    "migrations": [
+     "fs_batch4_business_date",
+     "fs_batch4_kpi_dictionary",
+     "fs_batch4_die_health",
+     "fs_batch4_history_monitoring_security",
+     "fs_batch4_weight_basis_authority"
+    ],
+    "ledger_after": 319
+   }
   },
   {
    "id": "FS-80",
@@ -2016,15 +2203,49 @@
    "id": "FS-82",
    "title": "One business-date service",
    "priority": "High",
-   "status": "NOT_STARTED",
+   "status": "IMPLEMENTED",
    "prerequisites": [],
    "risk": [],
-   "implementation_evidence": [],
-   "modified_files": [],
-   "tests": [],
+   "implementation_evidence": [
+    "private.business_today() is the one SQL 'today in India'; private.ist_today() kept as an identical alias; private.business_date_of, private.business_shift (shift day = the IST date the shift started, from factory_calendar_settings) and private.business_financial_year added; public.business_calendar() for the app.",
+    "Migration rewrote every live public/private function body that read current_date (30 functions, 47 uses in the PGlite replay) and every date column default (8) to private.business_today().",
+    "lib/utils/business-date.ts adds businessToday, businessDateOf, businessShift and financialYearOf; the 20 'new Date().toISOString().slice(0, 10)' uses in app code are replaced.",
+    "Guard tests fail if a raw current_date returns in a function body, a default, or a later migration, or if the UTC idiom returns in app code."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261119100000_fs_batch4_business_date.sql",
+    "lib/utils/business-date.ts",
+    "lib/actions/autopilot-batch6.ts",
+    "lib/actions/financial-workflow-review.ts",
+    "components/modules/data-center-client.tsx",
+    "components/modules/dispatch-autopilot/freight.tsx",
+    "components/modules/operations/module-config.ts",
+    "components/modules/vendors/purchase-lifecycle.tsx",
+    "docs/decisions/0004-business-date.md"
+   ],
+   "tests": [
+    "tests/fs-batch4-sql.test.mjs",
+    "tests/fs-batch4.test.mjs"
+   ],
    "commit_reference": null,
-   "blockers": [],
-   "acceptance_status": "NOT_ASSESSED"
+   "blockers": [
+    "Hosted apply pending: the rewrite runs against whatever functions hosted has at apply time; re-run the guard query after applying.",
+    "Module-level default dates in module-config.ts are evaluated when the module loads (pre-existing behaviour), now in IST."
+   ],
+   "acceptance_status": "LOCAL_PGLITE_AND_UNIT_VERIFIED_HOSTED_SCHEMA_APPLIED",
+   "last_batch": "root-4",
+   "hosted_schema_verification": {
+    "date": "2026-11-18",
+    "project_id": "pkawmdxtmsdgigsehcmb",
+    "migrations": [
+     "fs_batch4_business_date",
+     "fs_batch4_kpi_dictionary",
+     "fs_batch4_die_health",
+     "fs_batch4_history_monitoring_security",
+     "fs_batch4_weight_basis_authority"
+    ],
+    "ledger_after": 319
+   }
   },
   {
    "id": "FS-83",
@@ -2465,15 +2686,44 @@
    "id": "FS-107",
    "title": "One documentation home; archive the rest",
    "priority": "Medium",
-   "status": "NOT_STARTED",
+   "status": "PARTIAL",
    "prerequisites": [],
    "risk": [],
-   "implementation_evidence": [],
-   "modified_files": [],
-   "tests": [],
+   "implementation_evidence": [
+    "Decision records 0001-0005 in docs/decisions (single company, command functions, one stock ledger, business date, one KPI path).",
+    "docs/DOCUMENTATION_HOME.md lists the living documents and the exact archive plan; docs/00_README_INDEX.md points to it. Generated playwright-report/ and test-results/ were already ignored and untracked."
+   ],
+   "modified_files": [
+    "docs/decisions/0001-single-company-omalco.md",
+    "docs/decisions/0002-database-command-functions.md",
+    "docs/decisions/0003-one-stock-ledger.md",
+    "docs/decisions/0004-business-date.md",
+    "docs/decisions/0005-one-kpi-path.md",
+    "docs/DOCUMENTATION_HOME.md",
+    "docs/00_README_INDEX.md"
+   ],
+   "tests": [
+    "tests/fs-batch4-sql.test.mjs",
+    "tests/fs-batch4.test.mjs"
+   ],
    "commit_reference": null,
-   "blockers": [],
-   "acceptance_status": "NOT_ASSESSED"
+   "blockers": [
+    "Moving the ~35 dated root documents, ~40 dated docs/ reports and ~45 one-off scripts to archive folders was refused by this session's permission guard; it needs the user's go-ahead. The plan lists every file; nothing in code, tests or CI references them."
+   ],
+   "acceptance_status": "PARTIAL_USER_APPROVAL_PENDING",
+   "last_batch": "root-4",
+   "hosted_schema_verification": {
+    "date": "2026-11-18",
+    "project_id": "pkawmdxtmsdgigsehcmb",
+    "migrations": [
+     "fs_batch4_business_date",
+     "fs_batch4_kpi_dictionary",
+     "fs_batch4_die_health",
+     "fs_batch4_history_monitoring_security",
+     "fs_batch4_weight_basis_authority"
+    ],
+    "ledger_after": 319
+   }
   },
   {
    "id": "FS-108",
@@ -2756,15 +3006,22 @@
    "id": "FS-117",
    "title": "A registry for type-and-id links",
    "priority": "High",
-   "status": "NOT_STARTED",
+   "status": "PARTIAL",
    "prerequisites": [],
    "risk": [],
-   "implementation_evidence": [],
+   "implementation_evidence": [
+    "A sealed entity_types table and shared TypeScript registry cover 17 core types with canonical aliases, labels and safe local routes. Tasks/notifications normalize registered aliases and validate same-company, non-deleted source existence at transaction end, preserving BEFORE-source notifications.",
+    "Notification links reuse the helper while retaining current authorization/source revalidation. An owner/admin paginated review reports valid, missing and unregistered links without mutating historical evidence. SQL and TypeScript entries are compared by executable tests.",
+    "Registered purchased billet lots, lab requests and weighing sessions using existing routes. The established deferred source check now covers those types on tasks and notifications."
+   ],
    "modified_files": [],
    "tests": [],
    "commit_reference": null,
-   "blockers": [],
-   "acceptance_status": "NOT_ASSESSED"
+   "blockers": [
+    "Other legacy record types, polymorphic consumers and verified source navigation remain."
+   ],
+   "acceptance_status": "LOCAL_STAGE_VERIFIED_PARENT_INCOMPLETE",
+   "note_root": "Copied from .worktrees/codex-v1 tracker on 2026-11-18; root checkout does not contain this code until codex/v1 is merged."
   },
   {
    "id": "FS-118",
@@ -2884,15 +3141,42 @@
    "id": "FS-125",
    "title": "Feed Die Intelligence or remove it",
    "priority": "High",
-   "status": "NOT_STARTED",
+   "status": "IMPLEMENTED",
    "prerequisites": [],
    "risk": [],
-   "implementation_evidence": [],
-   "modified_files": [],
-   "tests": [],
+   "implementation_evidence": [
+    "die_health_metrics now has a cascading foreign key to dies (orphan rows copied to die_health_metrics_orphans before keying) and is written only by private.fs_refresh_die_health; direct writes revoked from signed-in roles.",
+    "Refreshed by triggers on dies (fires when refresh_die_usage updates total_production_kg/runs/recovery), production job completion, QC inspections, trials, corrections and nitriding; backfilled for every die.",
+    "Adds open corrections, kg / runs / issued billets since the last nitriding, next nitriding due, rated life used % (from the die's own rated life), and a recovery trend (last 5 jobs with billet input against the 5 before). Health score keeps the published status rule; recommendation uses recorded facts only.",
+    "Die detail page shows the new facts."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261119120000_fs_batch4_die_health.sql",
+    "components/modules/autopilot-batch8/die-attention.tsx",
+    "app/(dashboard)/dies/[id]/page.tsx"
+   ],
+   "tests": [
+    "tests/fs-batch4-sql.test.mjs",
+    "tests/fs-batch4.test.mjs"
+   ],
    "commit_reference": null,
-   "blockers": [],
-   "acceptance_status": "NOT_ASSESSED"
+   "blockers": [
+    "Recovery trend reads foundry_billets (the model production uses) until FS-109 reconciles the billet models."
+   ],
+   "acceptance_status": "LOCAL_PGLITE_VERIFIED_HOSTED_SCHEMA_APPLIED",
+   "last_batch": "root-4",
+   "hosted_schema_verification": {
+    "date": "2026-11-18",
+    "project_id": "pkawmdxtmsdgigsehcmb",
+    "migrations": [
+     "fs_batch4_business_date",
+     "fs_batch4_kpi_dictionary",
+     "fs_batch4_die_health",
+     "fs_batch4_history_monitoring_security",
+     "fs_batch4_weight_basis_authority"
+    ],
+    "ledger_after": 319
+   }
   },
   {
    "id": "FS-126",
@@ -2988,17 +3272,46 @@
    "id": "FS-132",
    "title": "One KPI path for dashboard, command centre and analytics",
    "priority": "High",
-   "status": "NOT_STARTED",
+   "status": "IMPLEMENTED",
    "prerequisites": [
     "FS-77"
    ],
    "risk": [],
-   "implementation_evidence": [],
-   "modified_files": [],
-   "tests": [],
+   "implementation_evidence": [
+    "Command Center no longer sums 13 tables: every KPI figure (booked revenue this and last month, receivables, collections, shipped kg, completed kg, scrap kg, recovery with captured/missing jobs, quote win rate) comes from public.fs_kpi.",
+    "Two discrepancies removed on the way: shipped kg was dispatches.total_weight_kg (now packed net kg as the dictionary says) and receivables excluded 'generated' invoices (now the analytics rule).",
+    "Invented targets removed (85% recovery, 20%/40% conversion, 50% receivables): insights now state facts only.",
+    "tests/fs-batch4-sql.test.mjs fetches the same figures through fs_kpi, get_advanced_analytics_snapshot and get_dashboard_snapshot on one fixture and requires equality."
+   ],
+   "modified_files": [
+    "supabase/migrations/20261119110000_fs_batch4_kpi_dictionary.sql",
+    "app/(dashboard)/command-center/page.tsx",
+    "components/modules/command-center-client.tsx",
+    "tests/admin-command-center-practicality.test.mjs",
+    "docs/decisions/0005-one-kpi-path.md"
+   ],
+   "tests": [
+    "tests/fs-batch4-sql.test.mjs",
+    "tests/fs-batch4.test.mjs"
+   ],
    "commit_reference": null,
-   "blockers": [],
-   "acceptance_status": "NOT_ASSESSED"
+   "blockers": [
+    "Codex FS-133 (codex/v1) also edited command-center page/client formatting: expect a merge conflict when codex/v1 is merged."
+   ],
+   "acceptance_status": "LOCAL_PGLITE_VERIFIED_HOSTED_SCHEMA_APPLIED",
+   "last_batch": "root-4",
+   "hosted_schema_verification": {
+    "date": "2026-11-18",
+    "project_id": "pkawmdxtmsdgigsehcmb",
+    "migrations": [
+     "fs_batch4_business_date",
+     "fs_batch4_kpi_dictionary",
+     "fs_batch4_die_health",
+     "fs_batch4_history_monitoring_security",
+     "fs_batch4_weight_basis_authority"
+    ],
+    "ledger_after": 319
+   }
   },
   {
    "id": "FS-133",
@@ -3289,12 +3602,12 @@
   "verified_existing": 0
  },
  "status_counts": {
-  "IMPLEMENTED": 17,
-  "VERIFIED_EXISTING": 0,
-  "PARTIAL": 13,
+  "PARTIAL": 21,
   "BLOCKED": 3,
+  "IMPLEMENTED": 20,
+  "NOT_STARTED": 94,
   "SUPERSEDED": 1,
-  "NOT_STARTED": 105,
+  "VERIFIED_EXISTING": 0,
   "IN_PROGRESS": 0
  },
  "quality_gates": [
@@ -3504,5 +3817,187 @@
   "FS-124",
   "FS-68 tolerance decision",
   "FS-38 WhatsApp (needs FS-48)"
+ ],
+ "root_batch": {
+  "name": "FS batch 4 (root workstream)",
+  "report": "docs/implementation/FS_ROOT_BATCH_4_REPORT.md",
+  "initial_commit": "0ad63a5",
+  "branch": "feat/autopilot-batch-10",
+  "selected": [
+   "FS-82",
+   "FS-77",
+   "FS-132",
+   "FS-125",
+   "FS-79",
+   "FS-07",
+   "FS-51",
+   "FS-65",
+   "FS-75",
+   "FS-107"
+  ],
+  "counts": {
+   "selected": 10,
+   "implemented": 3,
+   "partial": 7,
+   "blocked": 0,
+   "verified_existing": 0
+  },
+  "reconciled_from_codex": [
+   "FS-117: NOT_STARTED -> PARTIAL (Codex tracker is authoritative)"
+  ],
+  "quality_gates": [
+   {
+    "command": "npm run lint",
+    "status": "PASS"
+   },
+   {
+    "command": "npm run typecheck",
+    "status": "PASS"
+   },
+   {
+    "command": "npm run build",
+    "status": "PASS"
+   },
+   {
+    "command": "tests/fs-batch4-sql.test.mjs",
+    "status": "PASS",
+    "tests": 11
+   },
+   {
+    "command": "tests/fs-batch4.test.mjs",
+    "status": "PASS",
+    "tests": 8
+   },
+   {
+    "command": "npm test",
+    "status": "FAIL_THEN_FIXED",
+    "tests": 3773,
+    "passed": 3757,
+    "failed": 16,
+    "note": "14 from this batch's browser-bundle import, fixed and those files re-run green; 1 intermittent batch7 375px browser test passes in isolation; full suite not re-run after the fix."
+   }
+  ],
+  "hosted": {
+   "applied": true,
+   "ledger_before": 312,
+   "ledger_after": 319,
+   "also_applied_with_user_approval": [
+    "einvoice_buyer_snapshot_repair",
+    "tds_tally_receivable"
+   ]
+  }
+ },
+ "root_batch_history": [
+  {
+   "name": "FS batch 4 (root workstream)",
+   "report": "docs/implementation/FS_ROOT_BATCH_4_REPORT.md",
+   "initial_commit": "0ad63a5",
+   "branch": "feat/autopilot-batch-10",
+   "selected": [
+    "FS-82",
+    "FS-77",
+    "FS-132",
+    "FS-125",
+    "FS-79",
+    "FS-07",
+    "FS-51",
+    "FS-65",
+    "FS-75",
+    "FS-107"
+   ],
+   "counts": {
+    "selected": 10,
+    "implemented": 3,
+    "partial": 7,
+    "blocked": 0,
+    "verified_existing": 0
+   },
+   "reconciled_from_codex": [
+    "FS-117: NOT_STARTED -> PARTIAL (Codex tracker is authoritative)"
+   ],
+   "quality_gates": [
+    {
+     "command": "npm run lint",
+     "status": "PASS"
+    },
+    {
+     "command": "npm run typecheck",
+     "status": "PASS"
+    },
+    {
+     "command": "npm run build",
+     "status": "PASS"
+    },
+    {
+     "command": "tests/fs-batch4-sql.test.mjs",
+     "status": "PASS",
+     "tests": 11
+    },
+    {
+     "command": "tests/fs-batch4.test.mjs",
+     "status": "PASS",
+     "tests": 8
+    },
+    {
+     "command": "npm test",
+     "status": "FAIL_THEN_FIXED",
+     "tests": 3773,
+     "passed": 3757,
+     "failed": 16,
+     "note": "14 from this batch's browser-bundle import, fixed and those files re-run green; 1 intermittent batch7 375px browser test passes in isolation; full suite not re-run after the fix."
+    }
+   ],
+   "hosted": {
+    "applied": true,
+    "ledger_before": 312,
+    "ledger_after": 319,
+    "also_applied_with_user_approval": [
+     "einvoice_buyer_snapshot_repair",
+     "tds_tally_receivable"
+    ]
+   }
+  }
+ ],
+ "next_batch_root": [
+  {
+   "id": "FS-79",
+   "why": "Finish the history tab on foundry, finishing, packaging, quality, purchase orders and expenses (same component)."
+  },
+  {
+   "id": "FS-75",
+   "why": "Connect stock adjustment, write-off, purchase order, payment and credit-limit override approvals to authority_check."
+  },
+  {
+   "id": "FS-77",
+   "why": "Put the KPI 'i' beside every number on analytics/dashboard and make the snapshots call private.kpi_values."
+  },
+  {
+   "id": "FS-107",
+   "why": "Run the archive move once the user approves it (plan in docs/DOCUMENTATION_HOME.md)."
+  },
+  {
+   "id": "FS-98",
+   "why": "Replace the remaining browser confirm()/prompt() dialogs with consequence reviews."
+  },
+  {
+   "id": "FS-129",
+   "why": "Detail pages that show the whole neighbourhood, building on the history tab."
+  },
+  {
+   "id": "FS-104",
+   "why": "Status constraints and one state machine once Codex's FS-43 matrix covers the tables (prerequisite)."
+  },
+  {
+   "id": "FS-139",
+   "why": "Nightly connection-health check after Codex FS-113/116/117 land."
+  },
+  {
+   "id": "FS-65",
+   "why": "Apply the owner's invoice-basis decision to invoice drafting once Omalco decides (input #4)."
+  },
+  {
+   "id": "FS-37",
+   "why": "Role home pages answering 'what do I do now' over the new KPI and history paths."
+  }
  ]
 }

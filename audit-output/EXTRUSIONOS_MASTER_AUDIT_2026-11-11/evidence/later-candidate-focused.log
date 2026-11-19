@@ -1,0 +1,350 @@
+TAP version 13
+# Subtest: AP-032 an approver decides a credit hold from the queue; the order and customer show exposure and history, at 375px
+ok 1 - AP-032 an approver decides a credit hold from the queue; the order and customer show exposure and history, at 375px
+  ---
+  duration_ms: 30456.3487
+  type: 'test'
+  ...
+# Subtest: AP-045 the planner releases a draft group as planned jobs; a held order is skipped with the reason, at 375px
+ok 2 - AP-045 the planner releases a draft group as planned jobs; a held order is skipped with the reason, at 375px
+  ---
+  duration_ms: 1063.3021
+  type: 'test'
+  ...
+# Subtest: AP-046 accounts sees the gate-out draft with totals and explains an unbilled dispatch, at 375px
+ok 3 - AP-046 accounts sees the gate-out draft with totals and explains an unbilled dispatch, at 375px
+  ---
+  duration_ms: 1215.2253
+  type: 'test'
+  ...
+# Subtest: AP-037 accounts confirms the place-of-supply rule; the invoice form shows the derived state and records an override, at 375px
+ok 4 - AP-037 accounts confirms the place-of-supply rule; the invoice form shows the derived state and records an override, at 375px
+  ---
+  duration_ms: 1492.4924
+  type: 'test'
+  ...
+# Subtest: AP-024 / AP-058 a bank match is accepted on the card, an unknown remitter is assigned, and money is received by hand oldest first, at 375px
+ok 5 - AP-024 / AP-058 a bank match is accepted on the card, an unknown remitter is assigned, and money is received by hand oldest first, at 375px
+  ---
+  duration_ms: 2284.7884
+  type: 'test'
+  ...
+# Subtest: AP-084 the reminder queue is copied, sent and covered; AP-031 an expired quotation is extended with approval; AP-097/098 audits show, at 375px
+not ok 6 - AP-084 the reminder queue is copied, sent and covered; AP-031 an expired quotation is extended with approval; AP-097/098 audits show, at 375px
+  ---
+  duration_ms: 7225.1173
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-5e2a0f6\\tests\\autopilot-batch3-browser.test.mjs:157:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    expect(locator).toBeVisible() failed
+    
+    Locator: getByRole('status').filter({ hasText: 'Extension approved' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+    
+    Call log:
+      - Expect "to.be.visible" with timeout 5000ms
+      - waiting for getByRole('status').filter({ hasText: 'Extension approved' })
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    captureRawStack (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-5e2a0f6\node_modules\playwright-core\lib\coreBundle.js:3172:17)
+    callMatcherAsStep (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-5e2a0f6\node_modules\playwright\lib\matchers\expect.js:12877:57)
+    Object.toBeVisible (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-5e2a0f6\node_modules\playwright\lib\matchers\expect.js:12867:23)
+    TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-5e2a0f6\tests\autopilot-batch3-browser.test.mjs:181:94)
+  ...
+# Subtest: AP-032 an approver decides a credit hold from the queue; the order and customer show exposure and history, at 1280px
+ok 7 - AP-032 an approver decides a credit hold from the queue; the order and customer show exposure and history, at 1280px
+  ---
+  duration_ms: 2185.2999
+  type: 'test'
+  ...
+# Subtest: AP-045 the planner releases a draft group as planned jobs; a held order is skipped with the reason, at 1280px
+ok 8 - AP-045 the planner releases a draft group as planned jobs; a held order is skipped with the reason, at 1280px
+  ---
+  duration_ms: 977.7156
+  type: 'test'
+  ...
+# Subtest: AP-046 accounts sees the gate-out draft with totals and explains an unbilled dispatch, at 1280px
+ok 9 - AP-046 accounts sees the gate-out draft with totals and explains an unbilled dispatch, at 1280px
+  ---
+  duration_ms: 1196.7939
+  type: 'test'
+  ...
+# Subtest: AP-037 accounts confirms the place-of-supply rule; the invoice form shows the derived state and records an override, at 1280px
+ok 10 - AP-037 accounts confirms the place-of-supply rule; the invoice form shows the derived state and records an override, at 1280px
+  ---
+  duration_ms: 1352.962
+  type: 'test'
+  ...
+# Subtest: AP-024 / AP-058 a bank match is accepted on the card, an unknown remitter is assigned, and money is received by hand oldest first, at 1280px
+ok 11 - AP-024 / AP-058 a bank match is accepted on the card, an unknown remitter is assigned, and money is received by hand oldest first, at 1280px
+  ---
+  duration_ms: 2089.3787
+  type: 'test'
+  ...
+# Subtest: AP-084 the reminder queue is copied, sent and covered; AP-031 an expired quotation is extended with approval; AP-097/098 audits show, at 1280px
+not ok 12 - AP-084 the reminder queue is copied, sent and covered; AP-031 an expired quotation is extended with approval; AP-097/098 audits show, at 1280px
+  ---
+  duration_ms: 7198.6107
+  type: 'test'
+  location: 'C:\\Users\\arnav\\.codex\\visualizations\\2026\\11\\10\\01a1c747-4e6e-7321-a6fa-495982203424\\extrusionos-audit-5e2a0f6\\tests\\autopilot-batch3-browser.test.mjs:157:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    expect(locator).toBeVisible() failed
+    
+    Locator: getByRole('status').filter({ hasText: 'Extension approved' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+    
+    Call log:
+      - Expect "to.be.visible" with timeout 5000ms
+      - waiting for getByRole('status').filter({ hasText: 'Extension approved' })
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    captureRawStack (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-5e2a0f6\node_modules\playwright-core\lib\coreBundle.js:3172:17)
+    callMatcherAsStep (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-5e2a0f6\node_modules\playwright\lib\matchers\expect.js:12877:57)
+    Object.toBeVisible (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-5e2a0f6\node_modules\playwright\lib\matchers\expect.js:12867:23)
+    TestContext.<anonymous> (C:\Users\arnav\.codex\visualizations\2026\11\10\01a1c747-4e6e-7321-a6fa-495982203424\extrusionos-audit-5e2a0f6\tests\autopilot-batch3-browser.test.mjs:181:94)
+  ...
+# Subtest: AP-037 place of supply comes from the billing GSTIN, or the recorded state when unregistered; unknown stays blank
+ok 13 - AP-037 place of supply comes from the billing GSTIN, or the recorded state when unregistered; unknown stays blank
+  ---
+  duration_ms: 18612.6345
+  type: 'test'
+  ...
+# Subtest: AP-037 an invoice without a place of supply takes the derived state; a different state needs a recorded override once the rule is confirmed
+ok 14 - AP-037 an invoice without a place of supply takes the derived state; a different state needs a recorded override once the rule is confirmed
+  ---
+  duration_ms: 215.6596
+  type: 'test'
+  ...
+# Subtest: AP-037 HSN defaults by item type: new profiles take the confirmed code and accounts can fill the blanks
+ok 15 - AP-037 HSN defaults by item type: new profiles take the confirmed code and accounts can fill the blanks
+  ---
+  duration_ms: 57.0041
+  type: 'test'
+  ...
+# Subtest: AP-032 credit limits are set by accounts with a reason and versioned; exposure adds open balances, unbilled dispatches and the order, less on-account money
+ok 16 - AP-032 credit limits are set by accounts with a reason and versioned; exposure adds open balances, unbilled dispatches and the order, less on-account money
+  ---
+  duration_ms: 84.8632
+  type: 'test'
+  ...
+# Subtest: AP-032 an over-limit order confirms into credit hold with an approval request; within-limit and no-limit customers pass
+ok 17 - AP-032 an over-limit order confirms into credit hold with an approval request; within-limit and no-limit customers pass
+  ---
+  duration_ms: 186.9764
+  type: 'test'
+  ...
+# Subtest: AP-032 holds are decided by an approver other than the order's creator; dispatch needs an unexpired approval that covers the exposure
+ok 18 - AP-032 holds are decided by an approver other than the order's creator; dispatch needs an unexpired approval that covers the exposure
+  ---
+  duration_ms: 341.7226
+  type: 'test'
+  ...
+# Subtest: AP-032 / AP-098 a payment that brings the customer within limit clears the hold by itself and records why
+ok 19 - AP-032 / AP-098 a payment that brings the customer within limit clears the hold by itself and records why
+  ---
+  duration_ms: 207.8479
+  type: 'test'
+  ...
+# Subtest: AP-045 confirmed orders become draft jobs grouped by die, alloy and temper; drafts reserve nothing
+ok 20 - AP-045 confirmed orders become draft jobs grouped by die, alloy and temper; drafts reserve nothing
+  ---
+  duration_ms: 171.6201
+  type: 'test'
+  ...
+# Subtest: AP-045 releasing a draft creates planned jobs per order line through the job save; held, covered and released lines are not re-released
+ok 21 - AP-045 releasing a draft creates planned jobs per order line through the job save; held, covered and released lines are not re-released
+  ---
+  duration_ms: 243.9169
+  type: 'test'
+  ...
+# Subtest: AP-046 gate-out prepares an invoice draft with totals and no number; an unpriced packing list stays blocked with its reason
+ok 22 - AP-046 gate-out prepares an invoice draft with totals and no number; an unpriced packing list stays blocked with its reason
+  ---
+  duration_ms: 320.691
+  type: 'test'
+  ...
+# Subtest: AP-046 an invoice for the dispatch closes its draft and cancelling it reopens the draft; unbilled dispatches age in working days and need an explanation
+ok 23 - AP-046 an invoice for the dispatch closes its draft and cancelling it reopens the draft; unbilled dispatches age in working days and need an explanation
+  ---
+  duration_ms: 300.3331
+  type: 'test'
+  ...
+# Subtest: AP-058 allocation takes invoices named in the narration first, then the oldest; anything above the open invoices stays on account
+ok 24 - AP-058 allocation takes invoices named in the narration first, then the oldest; anything above the open invoices stays on account
+  ---
+  duration_ms: 47.014
+  type: 'test'
+  ...
+# Subtest: AP-058 a reviewed receipt posts the allocated part and keeps the rest on account; retries are idempotent; on-account money is applied later oldest first
+ok 25 - AP-058 a reviewed receipt posts the allocated part and keeps the rest on account; retries are idempotent; on-account money is applied later oldest first
+  ---
+  duration_ms: 217.7079
+  type: 'test'
+  ...
+# Subtest: AP-024 importing a statement dedupes lines, ignores debits, reports unreadable rows and refuses the same file twice
+ok 26 - AP-024 importing a statement dedupes lines, ignores debits, reports unreadable rows and refuses the same file twice
+  ---
+  duration_ms: 95.5443
+  type: 'test'
+  ...
+# Subtest: AP-024 accepting a match posts one receipt; an unknown remitter is assigned once and learned; reversal needs a reason and frees the line
+ok 27 - AP-024 accepting a match posts one receipt; an unknown remitter is assigned once and learned; reversal needs a reason and frees the line
+  ---
+  duration_ms: 144.7529
+  type: 'test'
+  ...
+# Subtest: AP-024 a match goes stale when the customer's open invoices change before it is accepted
+ok 28 - AP-024 a match goes stale when the customer's open invoices change before it is accepted
+  ---
+  duration_ms: 66.1245
+  type: 'test'
+  ...
+# Subtest: AP-084 the morning queue prepares one reminder per customer; commitments skip invoices; nothing is sent automatically
+ok 29 - AP-084 the morning queue prepares one reminder per customer; commitments skip invoices; nothing is sent automatically
+  ---
+  duration_ms: 84.653
+  type: 'test'
+  ...
+# Subtest: AP-031 the nightly job expires sent quotations with history; an order cannot be created from a lapsed quotation
+ok 30 - AP-031 the nightly job expires sent quotations with history; an order cannot be created from a lapsed quotation
+  ---
+  duration_ms: 94.8636
+  type: 'test'
+  ...
+# Subtest: AP-031 extending validity needs an approver other than the requester; approval brings an expired quotation back to sent
+ok 31 - AP-031 extending validity needs an approver other than the requester; approval brings an expired quotation back to sent
+  ---
+  duration_ms: 120.8256
+  type: 'test'
+  ...
+# Subtest: AP-031 requote copies the lines into a new revision at today's approved rates and returns the quotation to draft
+ok 32 - AP-031 requote copies the lines into a new revision at today's approved rates and returns the quotation to draft
+  ---
+  duration_ms: 101.7476
+  type: 'test'
+  ...
+# Subtest: AP-097 possible duplicates are reported before saving and the person's decision is logged
+ok 33 - AP-097 possible duplicates are reported before saving and the person's decision is logged
+  ---
+  duration_ms: 291.076
+  type: 'test'
+  ...
+# Subtest: AP-098 a trigger task closes itself when its invoice is paid, and a failing-job alert resolves after the job succeeds
+ok 34 - AP-098 a trigger task closes itself when its invoice is paid, and a failing-job alert resolves after the job succeeds
+  ---
+  duration_ms: 127.2775
+  type: 'test'
+  ...
+# Subtest: Batch 3 tables have RLS, a company-scoped read policy, a company-leading index and no client grants; only the six new entry points are callable
+ok 35 - Batch 3 tables have RLS, a company-scoped read policy, a company-leading index and no client grants; only the six new entry points are callable
+  ---
+  duration_ms: 279.296
+  type: 'test'
+  ...
+# Subtest: Batch 3 jobs are registered and run from the cron entry
+ok 36 - Batch 3 jobs are registered and run from the cron entry
+  ---
+  duration_ms: 66.5788
+  type: 'test'
+  ...
+# Subtest: AP-024 the remitter rule is the same in SQL and TypeScript
+ok 37 - AP-024 the remitter rule is the same in SQL and TypeScript
+  ---
+  duration_ms: 211.2903
+  type: 'test'
+  ...
+# Subtest: AP-024 the heading row is found below the bank's account details, and columns are mapped by their words
+ok 38 - AP-024 the heading row is found below the bank's account details, and columns are mapped by their words
+  ---
+  duration_ms: 10.7024
+  type: 'test'
+  ...
+# Subtest: AP-024 dates, Indian amounts and single-amount Dr/Cr statements
+ok 39 - AP-024 dates, Indian amounts and single-amount Dr/Cr statements
+  ---
+  duration_ms: 1.3206
+  type: 'test'
+  ...
+# Subtest: AP-024 the remitter is the narration without transfer words, references, IFSC codes and numbers
+ok 40 - AP-024 the remitter is the narration without transfer words, references, IFSC codes and numbers
+  ---
+  duration_ms: 0.5487
+  type: 'test'
+  ...
+# Subtest: AP-084 WhatsApp links only for Indian mobile numbers; amounts use Indian grouping
+ok 41 - AP-084 WhatsApp links only for Indian mobile numbers; amounts use Indian grouping
+  ---
+  duration_ms: 25.5022
+  type: 'test'
+  ...
+# Subtest: Batch 3 command schemas refuse malformed input before the database
+ok 42 - Batch 3 command schemas refuse malformed input before the database
+  ---
+  duration_ms: 5.0325
+  type: 'test'
+  ...
+# Subtest: AP-097 the duplicate gate stops a save only for a confirmed match list, logs 'save anyway', and never blocks when the check cannot run
+ok 43 - AP-097 the duplicate gate stops a save only for a confirmed match list, logs 'save anyway', and never blocks when the check cannot run
+  ---
+  duration_ms: 1.9019
+  type: 'test'
+  ...
+# Subtest: AP-024 bank matches use the shared proposal card and say where the money goes
+ok 44 - AP-024 bank matches use the shared proposal card and say where the money goes
+  ---
+  duration_ms: 7.9075
+  type: 'test'
+  ...
+# Subtest: Batch 3 jobs and entry points are registered on the client side
+ok 45 - Batch 3 jobs and entry points are registered on the client side
+  ---
+  duration_ms: 4.8875
+  type: 'test'
+  ...
+# Subtest: technical document paths remain durable and legacy Supabase URLs are parsed
+ok 46 - technical document paths remain durable and legacy Supabase URLs are parsed
+  ---
+  duration_ms: 1.8791
+  type: 'test'
+  ...
+# Subtest: technical document uploads persist paths and remove orphaned objects on metadata failure
+ok 47 - technical document uploads persist paths and remove orphaned objects on metadata failure
+  ---
+  duration_ms: 5.1894
+  type: 'test'
+  ...
+# Subtest: documents bucket is private and tenant-scoped for every storage operation
+ok 48 - documents bucket is private and tenant-scoped for every storage operation
+  ---
+  duration_ms: 3.3168
+  type: 'test'
+  ...
+# Subtest: invite email falls back to Resend when a webhook is incomplete
+ok 49 - invite email falls back to Resend when a webhook is incomplete
+  ---
+  duration_ms: 44.2122
+  type: 'test'
+  ...
+# Subtest: email webhook calls require an explicitly configured matching secret
+ok 50 - email webhook calls require an explicitly configured matching secret
+  ---
+  duration_ms: 3.825
+  type: 'test'
+  ...
+1..50
+# tests 50
+# suites 0
+# pass 48
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 63550.6797

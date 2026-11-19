@@ -1,0 +1,8 @@
+
+> extrusionos-pro@0.1.0 typecheck
+> tsc --noEmit
+
+
+real	0m7.882s
+user	0m0.182s
+sys	0m0.372s

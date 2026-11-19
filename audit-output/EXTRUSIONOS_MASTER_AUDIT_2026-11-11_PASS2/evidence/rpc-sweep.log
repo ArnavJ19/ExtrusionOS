@@ -1,0 +1,17 @@
+{"id":"RPC-sweep","functions":176,"summary":{"stranger":{"refused_permission":168,"refused_other":6,"returned":2},"inactive":{"refused_permission":168,"refused_other":6,"returned":2},"viewer":{"refused_permission":126,"refused_other":43,"returned":7}}}
+{"who":"stranger","fn":"complete_production_job_with_scrap_atomic","kind":"non-permission error first","err":"ERROR:  Scrap lines must be a list of {category, weight_kg}"}
+{"who":"stranger","fn":"configuration_release_command","kind":"non-permission error first","err":"ERROR:  Unknown configurator release command"}
+{"who":"stranger","fn":"current_portal_user_owns","kind":"returned","value":""}
+{"who":"stranger","fn":"get_books_locked_through","kind":"returned","value":""}
+{"who":"stranger","fn":"onboard_company_atomic","kind":"non-permission error first","err":"ERROR:  Company name and user name are required"}
+{"who":"stranger","fn":"portal_self_service_command","kind":"non-permission error first","err":"ERROR:  An active customer portal identity is required"}
+{"who":"stranger","fn":"purchase_lifecycle_command","kind":"non-permission error first","err":"ERROR:  Unknown purchase lifecycle command"}
+{"who":"stranger","fn":"record_current_login_event","kind":"non-permission error first","err":"ERROR:  Unsupported login event type"}
+{"who":"inactive","fn":"complete_production_job_with_scrap_atomic","kind":"non-permission error first","err":"ERROR:  Scrap lines must be a list of {category, weight_kg}"}
+{"who":"inactive","fn":"configuration_release_command","kind":"non-permission error first","err":"ERROR:  Unknown configurator release command"}
+{"who":"inactive","fn":"current_portal_user_owns","kind":"returned","value":""}
+{"who":"inactive","fn":"get_books_locked_through","kind":"returned","value":""}
+{"who":"inactive","fn":"onboard_company_atomic","kind":"non-permission error first","err":"ERROR:  Company name and user name are required"}
+{"who":"inactive","fn":"portal_self_service_command","kind":"non-permission error first","err":"ERROR:  An active customer portal identity is required"}
+{"who":"inactive","fn":"purchase_lifecycle_command","kind":"non-permission error first","err":"ERROR:  Unknown purchase lifecycle command"}
+{"who":"inactive","fn":"record_current_login_event","kind":"non-permission error first","err":"ERROR:  Unsupported login event type"}

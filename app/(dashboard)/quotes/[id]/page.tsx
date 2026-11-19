@@ -1,4 +1,5 @@
 import { RestrictionPanel } from "@/components/modules/approvals/exception-requests";
+import { RecordHistory } from "@/components/modules/fs-batch4/record-history";
 import { canRequestException } from "@/lib/workflow/exception-requests";
 import { RecordFollow } from "@/components/modules/notifications/record-follow";
 import { canFollow } from "@/lib/workflow/subscriptions";
@@ -425,6 +426,7 @@ export default async function QuoteDetailPage({
       {/* AP-069: press load while promising a date. */}
       {!context.dealerId && (CAPACITY_ROLES as readonly string[]).includes(context.role) ? <QuoteCapacityPanel quoteId={id} canRecord={["owner", "admin", "sales_manager", "sales"].includes(context.role)} /> : null}
       {!context.dealerId ? <RelatedWorkPanel kind="quote" id={id} role={context.role} /> : null}
+      {!context.dealerId ? <RecordHistory entityType="quote" entityId={id} /> : null}
     </div>
   );
 }

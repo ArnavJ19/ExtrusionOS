@@ -131,13 +131,13 @@ test("AP-094 the queue keeps order, stops at a connection failure, keeps conflic
   const e3 = newEntry({ owner, kind: "ap", rpc: "ap_press", command: "push", payload: { n: 3 }, label: "three", now: new Date("2026-11-14T08:02:00Z") });
   for (const e of [e3, e1, e2]) await putEntry(e);
   const seen = [];
-  let r = await flushEntries(owner, async e => { seen.push(e.payload.n); return e.payload.n === 1 ? { kind: "applied" } : e.payload.n === 2 ? { kind: "conflict", message: "Job closed" } : { kind: "retry" }; });
+  let r = await flushEntries(owner, "ap", async e => { seen.push(e.payload.n); return e.payload.n === 1 ? { kind: "applied" } : e.payload.n === 2 ? { kind: "conflict", message: "Job closed" } : { kind: "retry" }; });
   assert.deepEqual(seen, [1, 2, 3]); assert.deepEqual(r, { applied: 1, conflicts: 1, waiting: 1 });
   const left = await listEntries(owner);
   assert.deepEqual(left.map(e => [e.payload.n, e.state]), [[2, "conflict"], [3, "pending"]]);
-  r = await flushEntries(owner, async () => { throw new Error("offline"); });
+  r = await flushEntries(owner, "ap", async () => { throw new Error("offline"); });
   assert.equal(r.waiting, 1);
-  r = await flushEntries(owner, async () => ({ kind: "applied" }));
+  r = await flushEntries(owner, "ap", async () => ({ kind: "applied" }));
   assert.equal(r.applied, 1, "only pending entries are re-sent; conflicts wait for the employee");
   const legacy = legacyTapEntries(owner, JSON.stringify([{ id: "t1", session_id: "s", job_id: "j", client_at: "2026-11-14T07:00:00Z" }, { bad: true }]));
   assert.equal(legacy.length, 1); assert.equal(legacy[0].request_id, "t1"); assert.equal(legacy[0].payload.id, "t1");

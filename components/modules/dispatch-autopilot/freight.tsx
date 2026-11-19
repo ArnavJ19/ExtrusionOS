@@ -5,6 +5,7 @@
 // Supplier rates are internal: nothing here reaches a customer document.
 import { useState } from "react";
 import { Truck } from "lucide-react";
+import { businessToday } from "@/lib/utils/business-date";
 import { ProposalCards } from "@/components/modules/autopilot/proposal-cards";
 import { GST_STATE_OPTIONS, fmtDay, fmtWhen, inr } from "@/lib/order-to-cash/commands";
 import { Empty, Failure, Loading, Message, Pager, Pill, Section, apWrite, buttonClass, inputClass, secondaryClass, useApRead } from "../order-to-cash/ui";
@@ -58,7 +59,7 @@ export function FreightCardsClient() {
   const cards = useApRead<{ rows: Card[]; total_count: number; can_edit: boolean }>("ap_freight", "cards", { page, status }, [key]);
   const variance = useApRead<{ rows: Variance[]; total_count: number; unbilled: number }>("ap_freight", "variance", { page: vPage }, [key]);
   const transporters = useApRead<Transporter[]>("ap_freight", "transporters", {}, []);
-  const [form, setForm] = useState({ transporter_id: "", basis: "per_kg", vehicle_type: "", vehicle_capacity_kg: "", destination_state: "27", destination_city: "", rate: "", min_charge: "", effective_from: new Date().toISOString().slice(0, 10) });
+  const [form, setForm] = useState({ transporter_id: "", basis: "per_kg", vehicle_type: "", vehicle_capacity_kg: "", destination_state: "27", destination_city: "", rate: "", min_charge: "", effective_from: businessToday() });
   const [message, setMessage] = useState<Note>(null);
   const [retire, setRetire] = useState<{ id: string; reason: string } | null>(null);
   const set = (k: keyof typeof form) => (e: { target: { value: string } }) => setForm(f => ({ ...f, [k]: e.target.value }));
