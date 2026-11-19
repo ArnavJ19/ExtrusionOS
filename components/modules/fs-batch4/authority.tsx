@@ -4,7 +4,7 @@
 // amount, leave delegations with dates, and the month's approvals under the matrix. The database enforces it in the
 // approval workflows listed as enforced; the others are recorded for when their workflow is connected.
 import { useState } from "react";
-import { APPROVER_ROLES, AUTHORITY_TYPES, ENFORCED_AUTHORITY_TYPES, type AuthorityType } from "@/lib/fs-batch4/commands";
+import { AUTHORITY_TYPES, ENFORCED_AUTHORITY_TYPES, approverRolesFor, type AuthorityType } from "@/lib/fs-batch4/commands";
 import { businessToday } from "@/lib/utils/business-date";
 import { Empty, Failure, Loading, Message, Pill, Section, b4Write, buttonClass, inputClass, secondaryClass, useB4Read, when, type Note } from "./shared";
 
@@ -40,7 +40,7 @@ export function AuthorityMatrix() {
   }
   async function saveRule() {
     const ok = await run("save_rule", { transaction_type: rule.transaction_type, min_amount: num(rule.min) ?? 0, max_amount: num(rule.max), approver_roles: rule.roles,
-      second_approver_from: num(rule.second), second_approver_roles: rule.secondRoles.length ? rule.secondRoles : null, reason: rule.reason, ...(rule.replaces ? { replaces: rule.replaces } : {}) }, "Rule saved.");
+      second_approver_from: num(rule.second), second_approver_roles: rule.secondRoles, reason: rule.reason, ...(rule.replaces ? { replaces: rule.replaces } : {}) }, "Rule saved.");
     if (ok) setRule(r => ({ ...r, reason: "", replaces: "" }));
   }
   async function retire(id: string) {
@@ -75,21 +75,24 @@ export function AuthorityMatrix() {
     {data.can_edit_rules ? <Section title={rule.replaces ? "Change a rule" : "Add a rule"} description="A change retires the old rule and adds a new one; nothing is edited in place.">
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="text-sm font-semibold">Transaction
-          <select className={inputClass} value={rule.transaction_type} onChange={e => setRule({ ...rule, transaction_type: e.target.value as AuthorityType })}>
+          <select className={inputClass} value={rule.transaction_type} onChange={e => {
+            const type = e.target.value as AuthorityType, valid = approverRolesFor(type) as readonly string[];
+            setRule({ ...rule, transaction_type: type, roles: rule.roles.filter(r => valid.includes(r)), secondRoles: rule.secondRoles.filter(r => valid.includes(r)) });
+          }}>
             {Object.entries(AUTHORITY_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select></label>
         <label className="text-sm font-semibold">From ₹<input className={inputClass} inputMode="decimal" value={rule.min} onChange={e => setRule({ ...rule, min: e.target.value })} /></label>
         <label className="text-sm font-semibold">Up to ₹ (blank = no limit)<input className={inputClass} inputMode="decimal" value={rule.max} onChange={e => setRule({ ...rule, max: e.target.value })} /></label>
       </div>
       <fieldset className="text-sm"><legend className="font-semibold">Approving roles</legend>
-        <div className="mt-1 flex flex-wrap gap-2">{APPROVER_ROLES.map(r => <label key={r} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-neutral-300 px-3">
+        <div className="mt-1 flex flex-wrap gap-2">{approverRolesFor(rule.transaction_type).map(r => <label key={r} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-neutral-300 px-3">
           <input type="checkbox" checked={rule.roles.includes(r)} onChange={() => setRule({ ...rule, roles: toggle(rule.roles, r) })} />{r.replaceAll("_", " ")}</label>)}</div></fieldset>
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="text-sm font-semibold">Second approver from ₹ (optional)<input className={inputClass} inputMode="decimal" value={rule.second} onChange={e => setRule({ ...rule, second: e.target.value })} /></label>
         <label className="text-sm font-semibold sm:col-span-2">Reason<input className={inputClass} value={rule.reason} onChange={e => setRule({ ...rule, reason: e.target.value })} /></label>
       </div>
       {rule.second.trim() !== "" ? <fieldset className="text-sm"><legend className="font-semibold">Second-approver roles (blank = same as above)</legend>
-        <div className="mt-1 flex flex-wrap gap-2">{APPROVER_ROLES.map(r => <label key={r} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-neutral-300 px-3">
+        <div className="mt-1 flex flex-wrap gap-2">{approverRolesFor(rule.transaction_type).map(r => <label key={r} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-neutral-300 px-3">
           <input type="checkbox" checked={rule.secondRoles.includes(r)} onChange={() => setRule({ ...rule, secondRoles: toggle(rule.secondRoles, r) })} />{r.replaceAll("_", " ")}</label>)}</div></fieldset> : null}
       <div className="flex flex-wrap gap-2">
         <button type="button" className={buttonClass} disabled={busy || rule.roles.length === 0 || rule.reason.trim().length < 5} onClick={saveRule}>{rule.replaces ? "Replace the rule" : "Add the rule"}</button>

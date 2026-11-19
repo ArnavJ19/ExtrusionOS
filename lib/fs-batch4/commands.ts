@@ -3,6 +3,7 @@
 // every command and takes the company, the actor and the role from the session; these schemas only refuse malformed
 // input early and list the roles each screen is for.
 import { z } from "zod";
+import { APPROVERS as INBOX_APPROVERS } from "../workflow/approval-inbox.ts";
 
 const uuid = z.string().uuid();
 const page = z.number().int().min(1).max(1000).optional();
@@ -60,6 +61,14 @@ export type AuthorityType = keyof typeof AUTHORITY_TYPES;
 /** Types whose approval workflow reads the matrix today. The others can be configured but are not yet enforced. */
 export const ENFORCED_AUTHORITY_TYPES: AuthorityType[] = ["quote", "low_margin_quote", "expense"];
 export const APPROVER_ROLES = ["owner", "admin", "sales_manager", "accounts", "factory_manager", "production_manager", "inventory_manager", "dispatch_manager", "quality"] as const;
+export type ApproverRole = (typeof APPROVER_ROLES)[number];
+/** Enforced types are decided in the approval inbox, which only these roles can open (fs_authority save_rule checks the same). */
+export const approverRolesFor = (type: AuthorityType): readonly ApproverRole[] =>
+  ENFORCED_AUTHORITY_TYPES.includes(type) ? APPROVER_ROLES.filter(r => (INBOX_APPROVERS as readonly string[]).includes(r)) : APPROVER_ROLES;
+const rolesFit = (v: { transaction_type: AuthorityType; approver_roles: string[]; second_approver_roles: string[] | null }) => {
+  const valid = approverRolesFor(v.transaction_type) as readonly string[];
+  return [...v.approver_roles, ...(v.second_approver_roles ?? [])].every(r => valid.includes(r));
+};
 const authorityType = z.enum(Object.keys(AUTHORITY_TYPES) as [AuthorityType, ...AuthorityType[]]);
 const approver = z.enum(APPROVER_ROLES);
 export const authorityCommands = {
@@ -67,7 +76,8 @@ export const authorityCommands = {
   save_rule: z.object({ transaction_type: authorityType, min_amount: amount, max_amount: amount.nullable(), approver_roles: z.array(approver).min(1, "Choose at least one approving role").max(6),
     second_approver_from: amount.nullable(), second_approver_roles: z.array(approver).max(6).nullable(), reason: text(5, 300, "Reason"), replaces: uuid.optional() }).strict()
     .refine(v => v.max_amount === null || v.max_amount > v.min_amount, "The band must end above where it starts")
-    .refine(v => v.second_approver_from === null || (v.second_approver_from >= v.min_amount && (v.max_amount === null || v.second_approver_from < v.max_amount)), "The second-approver amount must fall inside the band"),
+    .refine(v => v.second_approver_from === null || (v.second_approver_from >= v.min_amount && (v.max_amount === null || v.second_approver_from < v.max_amount)), "The second-approver amount must fall inside the band")
+    .refine(rolesFit, "Quotation and expense approvals are decided in the approval inbox: choose from owner, admin, sales manager and accounts"),
   retire_rule: z.object({ id: uuid, reason: text(5, 300, "Reason") }).strict(),
   delegate: z.object({ from_user: uuid, to_user: uuid, starts_on: day, ends_on: day, transaction_types: z.array(authorityType).max(11).optional(), reason: text(5, 300, "Reason") }).strict()
     .refine(v => v.from_user !== v.to_user, "Choose two different people").refine(v => v.ends_on >= v.starts_on, "The leave must end on or after it starts"),

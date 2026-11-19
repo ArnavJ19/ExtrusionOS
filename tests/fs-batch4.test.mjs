@@ -6,7 +6,7 @@ import { businessDateOf, businessShift, businessToday, financialYearOf } from ".
 import { compareWeights, invoiceKg, roundHalfAway, theoreticalKg } from "../lib/calculations/weight-basis.ts";
 import { isSameOriginRequest } from "../lib/security/origin.ts";
 import { hasRouteAccess } from "../lib/auth/route-permissions.ts";
-import { BATCH4_COMMANDS, BATCH4_PATHS, BATCH4_READS, HISTORY_ENTITIES, KPI_READERS, authorityCommands, weightCommands } from "../lib/fs-batch4/commands.ts";
+import { BATCH4_COMMANDS, BATCH4_PATHS, BATCH4_READS, HISTORY_ENTITIES, KPI_READERS, approverRolesFor, authorityCommands, weightCommands } from "../lib/fs-batch4/commands.ts";
 import { METRICS, METRIC_KEYS } from "../lib/insights/metrics.ts";
 
 // FABLE_SUGGESTIONS batch 4: the TypeScript halves and the static contracts (FS-82, 65, 51, 77, 132, 79, 75, 07).
@@ -105,6 +105,11 @@ test("FS-75 and the gateways: schemas refuse malformed input before the database
   assert.equal(authorityCommands.save_rule.safeParse({ transaction_type: "quote", min_amount: 0, max_amount: null, approver_roles: [], second_approver_from: null, second_approver_roles: null, reason: "Policy" }).success, false);
   assert.equal(authorityCommands.save_rule.safeParse({ transaction_type: "quote", min_amount: 0, max_amount: 1000, approver_roles: ["owner"], second_approver_from: 2000, second_approver_roles: null, reason: "Policy" }).success, false, "second approver amount outside the band");
   assert.equal(authorityCommands.save_rule.safeParse({ transaction_type: "expense", min_amount: 0, max_amount: null, approver_roles: ["owner"], second_approver_from: 100000, second_approver_roles: ["admin"], reason: "Owner policy" }).success, true);
+  // Enforced types are decided in the approval inbox, so only its roles may be chosen; other types allow every approver role.
+  assert.equal(authorityCommands.save_rule.safeParse({ transaction_type: "quote", min_amount: 0, max_amount: null, approver_roles: ["quality"], second_approver_from: null, second_approver_roles: null, reason: "Policy" }).success, false);
+  assert.equal(authorityCommands.save_rule.safeParse({ transaction_type: "expense", min_amount: 0, max_amount: null, approver_roles: ["owner"], second_approver_from: 0, second_approver_roles: ["factory_manager"], reason: "Policy" }).success, false);
+  assert.equal(authorityCommands.save_rule.safeParse({ transaction_type: "stock_adjustment", min_amount: 0, max_amount: null, approver_roles: ["inventory_manager"], second_approver_from: null, second_approver_roles: [], reason: "Policy" }).success, true);
+  assert.deepEqual([...approverRolesFor("low_margin_quote")], ["owner", "admin", "sales_manager", "accounts"]);
   assert.equal(authorityCommands.delegate.safeParse({ from_user: crypto.randomUUID(), to_user: crypto.randomUUID(), starts_on: "2026-11-20", ends_on: "2026-11-19", reason: "Leave" }).success, false);
   for (const gateway of Object.keys(BATCH4_COMMANDS)) assert.ok(gateway in BATCH4_PATHS, gateway);
   for (const r of ["values", "record", "health", "policy", "overview", "report", "awaiting"]) assert.ok(BATCH4_READS.has(r), r);

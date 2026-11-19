@@ -306,3 +306,36 @@ test("FS-75 the authority matrix decides who approves, needs a second different 
   await assert.rejects(() => f.decide("expense", exp2, "approve", i.accounts), e => e.code === "NOT_LISTED", "after revocation accounts no longer approves");
   await assert.rejects(() => f.raw("update authority_approvals set amount=0"), /cannot be changed/);
 });
+
+test("FS-75 a blank second-approver list saves, the second approval follows the second-approver roles, and enforced types use only inbox roles", async () => {
+  // The screen sends JSON null for a blank list; that reads as "no second-approver roles", not an error.
+  const blank = await f.ap("fs_authority", "save_rule", { transaction_type: "discount", min_amount: 0, max_amount: null, approver_roles: ["owner"], second_approver_from: null,
+    second_approver_roles: null, reason: "Owner approves every discount" }, i.owner);
+  assert.equal((await one("select second_approver_roles r from authority_rules where id=$1", [blank.id])).r, null);
+
+  // First approver sales manager, second approver owner only.
+  await f.ap("fs_authority", "save_rule", { transaction_type: "quote", min_amount: 0, max_amount: null, approver_roles: ["sales_manager"], second_approver_from: 100000,
+    second_approver_roles: ["owner"], reason: "Sales manager first, owner second above 1 lakh" }, i.owner);
+  const early = await f.reviewQuote({ total: 140000 });
+  await assert.rejects(() => f.decide("quote", early, "approve", i.owner), /does not approve this amount/, "the owner gives the second approval, not the first");
+  const q = await f.reviewQuote({ total: 150000 });
+  await f.decide("quote", q, "approve", i.salesManager);
+  assert.equal((await one("select status from quotes where id=$1", [q])).status, "internal_review");
+  await assert.rejects(() => f.decide("quote", q, "approve", i.admin), e => e.code === "NOT_LISTED", "admin is in neither role set");
+  await f.decide("quote", q, "approve", i.owner);
+  assert.equal((await one("select status from quotes where id=$1", [q])).status, "approved_for_sending");
+  const steps = (await f.ap("fs_authority", "report", {}, i.owner)).approvals.filter(a => a.source_id === q).map(a => [a.step, a.completes, a.role]).sort();
+  assert.deepEqual(steps, [[1, false, "sales_manager"], [2, true, "owner"]]);
+
+  // Quotation and expense approvals are decided in the approval inbox; roles that cannot open it are refused.
+  await assert.rejects(() => f.ap("fs_authority", "save_rule", { transaction_type: "expense", approver_roles: ["quality"], reason: "Quality approves expenses" }, i.owner), /approval inbox/);
+  await assert.rejects(() => f.ap("fs_authority", "save_rule", { transaction_type: "low_margin_quote", approver_roles: ["owner"], second_approver_from: 0,
+    second_approver_roles: ["factory_manager"], reason: "Factory second" }, i.owner), /approval inbox/);
+  await f.ap("fs_authority", "save_rule", { transaction_type: "stock_adjustment", approver_roles: ["inventory_manager"], reason: "Stores approve adjustments" }, i.owner);
+  const prodRole = (await one("select role from app_users where id=$1", [i.production])).role;
+  assert.ok(!["owner", "admin", "sales_manager", "accounts"].includes(prodRole));
+  const leave = { from_user: i.owner, to_user: i.production, starts_on: istDay(0), ends_on: istDay(3), reason: "Owner travelling" };
+  await assert.rejects(() => f.ap("fs_authority", "delegate", { ...leave, transaction_types: ["expense"] }, i.owner), /approval inbox/);
+  await assert.rejects(() => f.ap("fs_authority", "delegate", leave, i.owner), /approval inbox/, "all types includes the enforced ones");
+  assert.ok((await f.ap("fs_authority", "delegate", { ...leave, transaction_types: ["stock_adjustment"] }, i.owner)).id);
+});
