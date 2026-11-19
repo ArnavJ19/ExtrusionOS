@@ -86,6 +86,7 @@ test.before(async () => {
       ('${foreign}',null,'Foreign',null,99999,1,1,1,1,1,1,1,1,1,1,1,0);
   `);
   await db.exec(migration("20261020030000_finance_reporting_integrity.sql"));
+  await db.exec(migration("20261119170000_profitability_aging_by_order.sql"));
 });
 test.after(async () => { await db?.close(); });
 
@@ -159,4 +160,33 @@ test("RPT-05 / RPT-08 / RPT-09: profitability aggregates all rows, marks unknown
 test("credit notes are an accepted saved-report source", async () => {
   await db.exec("insert into saved_reports(data_source) values ('credit_notes')");
   await assert.rejects(db.exec("insert into saved_reports(data_source) values ('salary_slips')"), /saved_reports_data_source_check/);
+});
+
+test("profitability aging counts each order once, however many cost lines it has", async () => {
+  const orderC = "99999999-9999-4999-8999-999999999999";
+  await db.exec("begin");
+  try {
+    // Order B (INV-3, settled in 20 days) gets two more cost lines on a second profile; order C settles in 40 days on one line.
+    await db.exec(`
+      insert into order_cost_breakdown(company_id, order_id, customer_name, profile_name, month_key, revenue, total_weight_kg, material_cost, conversion_cost,
+        finishing_cost, packing_cost, transport_cost, scrap_cost, energy_cost, die_cost_allocated, overhead_cost, other_cost, payment_days) values
+        ('${company}','${orderB}','Shree Fabricators','P-2','2026-09',10,1,1,1,0,0,0,0,0,0,0,0,0),
+        ('${company}','${orderB}','Shree Fabricators','P-2','2026-09',10,1,1,1,0,0,0,0,0,0,0,0,0),
+        ('${company}','${orderC}','Shree Fabricators','P-2','2026-09',10,1,1,1,0,0,0,0,0,0,0,0,0);
+      insert into invoices(company_id, customer_id, order_id, invoice_number, invoice_date, due_date, status, grand_total, balance_due, customer_credit_due, paid_date) values
+        ('${company}','${customerA}','${orderC}','INV-C','2026-09-01','2026-09-11','paid',100,0,0,'2026-10-11');`);
+    const summary = await profitability(owner);
+    assert.equal(Number(summary.totals.rows), 6, "cost-line counts are unchanged");
+    assert.equal(Number(summary.totals.settledRows), 2, "orders B and C, not one per cost line");
+    assert.equal(Number(summary.totals.avgPayDays), 30, "(20 + 40) / 2 orders; per line it would have been (20 x 3 + 40) / 4 = 25");
+    assert.equal(Number(summary.totals.openRows), 1, "order A has open invoices");
+    const shree = summary.groups.find((group) => group.key === "Shree Fabricators");
+    assert.equal(Number(shree.settledRows), 2);
+    assert.equal(Number(shree.avgPayDays), 30);
+    const p2 = (await profitability(owner, "profile")).groups.find((group) => group.key === "P-2");
+    assert.equal(Number(p2.rows), 3);
+    assert.deepEqual([Number(p2.settledRows), Number(p2.avgPayDays)], [2, 30], "two orders touch profile P-2");
+  } finally {
+    await db.exec("rollback");
+  }
 });

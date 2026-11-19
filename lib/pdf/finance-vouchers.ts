@@ -1,4 +1,5 @@
 import { numberToWordsINR } from "../utils/number-to-words.ts";
+import { businessToday } from "../utils/business-date.ts";
 import { type PdfFontLoader } from "./unicode-text.ts";
 import { nodeFontLoader } from "./font-loader-node.ts";
 import { PdfDocumentWriter, type PdfTableRow, type StampTone } from "./document-kit.ts";
@@ -182,8 +183,13 @@ export function supplierPaymentVoucher(input: {
   company: Record<string, any>;
   payment: Record<string, any>;
   expense: Record<string, any>;
+  /** Business date the voucher is printed; the expense balance shown is the balance on this date. */
+  printedOn?: string;
 }): VoucherDocument {
   const { payment, expense } = input;
+  // expense_ledger.balance_amount is the balance now: later payments, refunds and supplier credits have moved it since
+  // this payment, so a reprint labels it as the current balance rather than the balance after this payment.
+  const balanceLabel = `Current expense balance (as of ${pdfDate(input.printedOn ?? businessToday())})`;
   return {
     title: payment.status === "reversed" ? "REVERSED PAYMENT VOUCHER" : "PAYMENT VOUCHER",
     number: `PV-${String(payment.id).slice(0, 8).toUpperCase()}`,
@@ -199,7 +205,7 @@ export function supplierPaymentVoucher(input: {
       ["Bank account", String(payment.bank_account ?? "")],
       ...(payment.status === "reversed" ? [["Reversal", `${payment.reversed_at ? pdfDate(payment.reversed_at) : "Date not recorded"}: ${payment.reversal_reason ?? ""}`] as [string, string]] : [])
     ],
-    totals: [["Amount paid", Number(payment.amount_paid ?? 0), true], ["Expense balance after posting", Number(expense.balance_amount ?? 0)]],
+    totals: [["Amount paid", Number(payment.amount_paid ?? 0), true], [balanceLabel, Number(expense.balance_amount ?? 0)]],
     amountInWords: Number(payment.amount_paid ?? 0),
     notes: payment.notes ?? null,
     signatures: ["Prepared by", "Approved by", "Receiver's signature"]
