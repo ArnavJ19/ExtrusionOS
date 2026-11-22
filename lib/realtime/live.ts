@@ -9,8 +9,9 @@ import { createClient } from "@/lib/supabase/browser";
 
 export type LiveStatus = "connecting" | "live" | "paused";
 
-/** Tables published for Realtime by migration 20261118120000; a screen may subscribe only to these. */
-export const LIVE_TABLES = ["production_jobs", "production_push_events", "production_plan_slots", "breakdown_logs", "orders", "dispatches", "notifications", "action_requests", "approval_decisions"] as const;
+/** Tables published for Realtime by migrations 20261118120000 and 20261122100000; a screen may subscribe only to these. */
+export const LIVE_TABLES = ["production_jobs", "production_push_events", "production_plan_slots", "breakdown_logs", "orders", "dispatches", "notifications", "action_requests", "approval_decisions",
+  "olo_events", "olo_task_events", "quality_containments", "die_preparation_events", "dispatch_communications"] as const;
 export type LiveTable = (typeof LIVE_TABLES)[number];
 
 export function useLiveTables(name: string, tables: readonly LiveTable[], onChange: () => void, debounceMs = 1500) {

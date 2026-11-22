@@ -502,19 +502,8 @@ export const externalAluminiumSourceSchema = z.object({
   item_type: z.enum(["aluminum_ingot", "aluminum_sows", "aluminum_billets", "aluminum_wire_rods", "aluminum_t_ingots", "aluminum_chips"]),
   weight_kg: z.coerce.number().positive("Weight is required"),
   unit: z.string().trim().min(1).default("kg"),
-  rate: z.coerce.number().nonnegative("Rate cannot be negative").default(0),
-  base_amount: z.coerce.number().nonnegative("Base amount cannot be negative").default(0),
-  tax_amount: z.coerce.number().nonnegative("Tax amount cannot be negative").default(0),
-  freight_amount: z.coerce.number().nonnegative("Freight amount cannot be negative").default(0),
-  discount_amount: z.coerce.number().nonnegative("Discount amount cannot be negative").default(0),
-  total_amount: z.coerce.number().nonnegative("Total amount cannot be negative").default(0),
-  invoice_number: optionalText,
-  invoice_date: optionalText,
-  due_date: optionalText,
-  payment_status: z.enum(["unpaid", "partially_paid", "paid", "overdue", "cancelled", "reversed"]).default("unpaid"),
-  payment_method: optionalText,
+  // Vendor, bill, rate and tax are entered by accounts (ap_scrap_receipt source_finance_save); the database refuses them from other roles.
   quantity: z.coerce.number().positive("Quantity is required unless item is chips").optional().nullable(),
-  vendor_id: z.string().uuid("Select vendor").optional().nullable().or(z.literal("")),
   source_origin: z.string().trim().min(1, "Source origin is required"),
   received_date: optionalText,
   alloy: optionalText,
@@ -533,19 +522,8 @@ export const aluminiumScrapSchema = z.object({
   scrap_source: z.enum(["incoming", "in_house"]),
   weight_kg: z.coerce.number().positive("Scrap weight is required"),
   unit: z.string().trim().min(1).default("kg"),
-  rate: z.coerce.number().nonnegative("Rate cannot be negative").default(0),
-  base_amount: z.coerce.number().nonnegative("Base amount cannot be negative").default(0),
-  tax_amount: z.coerce.number().nonnegative("Tax amount cannot be negative").default(0),
-  freight_amount: z.coerce.number().nonnegative("Freight amount cannot be negative").default(0),
-  discount_amount: z.coerce.number().nonnegative("Discount amount cannot be negative").default(0),
-  total_amount: z.coerce.number().nonnegative("Total amount cannot be negative").default(0),
-  invoice_number: optionalText,
-  invoice_date: optionalText,
-  due_date: optionalText,
-  payment_status: z.enum(["unpaid", "partially_paid", "paid", "overdue", "cancelled", "reversed"]).default("unpaid"),
-  payment_method: optionalText,
+  // Vendor, bill, rate and tax are entered by accounts (ap_scrap_receipt finance_save); the database refuses them from other roles.
   available_weight_kg: z.coerce.number().nonnegative("Available scrap cannot be negative").optional().nullable(),
-  vendor_id: z.string().uuid("Select vendor").optional().nullable().or(z.literal("")),
   scrap_quality: z.enum(["clean", "painted", "mixed", "contaminated", "segregation_required", "rejected"]),
   // EXOS-AUD-005: alloy keeps scrap segregated; set once, required to charge into a batch without a deviation.
   alloy: optionalText,
@@ -554,10 +532,6 @@ export const aluminiumScrapSchema = z.object({
   origin_reference: optionalText,
   status: z.enum(["available", "reserved", "used", "rejected"]).default("available"),
   notes: optionalText
-}).superRefine((value, ctx) => {
-  if (value.scrap_source === "incoming" && !value.vendor_id) {
-    ctx.addIssue({ code: "custom", path: ["vendor_id"], message: "Vendor is required for incoming scrap" });
-  }
 });
 
 export const packagingMaterialSchema = z.object({

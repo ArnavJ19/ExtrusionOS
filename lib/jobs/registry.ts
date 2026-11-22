@@ -25,6 +25,7 @@ export const JOBS = [
   { job_key: "intelligence.morning", schedule: "morning", label: "Check metal position and die life" },
   { job_key: "maintenance.propose_pm", schedule: "hourly", label: "Propose preventive maintenance" },
   { job_key: "navigation.propose", schedule: "nightly", label: "Propose role navigation" },
+  { job_key: "orchestration.hourly", schedule: "hourly", label: "Order lifecycle orchestration" },
   { job_key: "orders.predict_late", schedule: "nightly", label: "Predict late order lines" },
   { job_key: "owner.digest", schedule: "morning", label: "Prepare the owner digest" },
   { job_key: "periods.propose_close", schedule: "morning", label: "Propose month close" },

@@ -24,6 +24,7 @@ import { BATCH6_READS, billetLengthCommands, einvoiceCommands, healthCommands, n
 import { BATCH7_READS, delayCommands, priceCommands, qualityCommands, statementCommands } from "@/lib/autopilot-batch7/commands";
 import { BATCH8_READS, capacityCommands, customerHealthCommands, dieWindowCommands, mtcCommands, spcCommands, viewCommands } from "@/lib/autopilot-batch8/commands";
 import { BATCH9_READS, cashForecastCommands, enquiryCommands, geometryCommands, languageCommands, rateCardCommands, registerCommands, scaleCommands, scrapSaleCommands, weightNoteCommands } from "@/lib/autopilot-batch9/commands";
+import { SCRAP_RECEIPT_READS, scrapReceiptCommands } from "@/lib/foundry/scrap-receiving";
 import { BATCH10_READS, coatingCommands, crewCommands, cutCombineCommands, energyCommands, equivalentCommands, stockRunCommands, systemsOrderCommands, undoCommands } from "@/lib/autopilot-batch10/commands";
 
 export type ApResult<T = unknown> = { success: true; data: T } | { success: false; error: string; unavailable?: boolean };
@@ -91,11 +92,13 @@ const COMMANDS: Record<string, Record<string, z.ZodTypeAny>> = {
   // Batch 10: press energy, crew sign-ins, equivalent profiles, make-to-stock runs, coating runs, combined cut patterns, configurator orders and undo
   // (the coating run order, the cut pattern and the configurator order go through lib/actions/autopilot-batch10, which computes first).
   ap_energy: energyCommands, ap_crew: crewCommands, ap_equivalents: equivalentCommands, ap_stock_runs: stockRunCommands, ap_coating: coatingCommands,
-  ap_cut_combine: cutCombineCommands, ap_systems_order: systemsOrderCommands, ap_undo: undoCommands
+  ap_cut_combine: cutCombineCommands, ap_systems_order: systemsOrderCommands, ap_undo: undoCommands,
+  // Foundry scrap receiving: requests, the guided receipt, exit approval and the accounts bill (photos and bills are uploaded first).
+  ap_scrap_receipt: scrapReceiptCommands
 };
 const READS = new Set(["read", "add_working_days", "list", "get", "overview", "runs", "layout", "usage", "pending_count", "flags", "record", "attention", "visit",
   "station", "push", "undo", "job", "expected", "cycle_times", "floor", "downtime", "die_changes", "settings", "reconcile", "service", "options", "plans", "compliance",
-  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS, ...BATCH5_READS, ...OPERATIONS_READS, ...BATCH6_READS, ...BATCH7_READS, ...BATCH8_READS, ...BATCH9_READS, ...BATCH10_READS]);
+  "triggers", "samples", "sample", "queue", ...CASH_READS, ...DISPATCH_READS, ...BATCH5_READS, ...OPERATIONS_READS, ...BATCH6_READS, ...BATCH7_READS, ...BATCH8_READS, ...BATCH9_READS, ...BATCH10_READS, ...SCRAP_RECEIPT_READS]);
 const REVALIDATE: Record<string, string[]> = {
   ap_calendar: ["/production/calendar"], ap_series: ["/invoices/numbering"], ap_proposals: ["/dashboard", "/settings/navigation", "/invoices/numbering", "/invoices/periods", "/production", "/production/floor", "/dies", "/maintenance"],
   ap_jobs: ["/automation"], ap_navigation: ["/settings/navigation"], ap_period: ["/invoices/periods"], ap_import: ["/settings/data/import"],
@@ -118,7 +121,8 @@ const REVALIDATE: Record<string, string[]> = {
   ap_rate_card: ["/quotes/rate-cards"], ap_scrap_sale: ["/foundry/scrap-sales"], ap_weight_note: ["/invoices/weight-notes"], ap_cash_forecast: ["/payments/cash-forecast"], ap_language: [],
   ap_enquiry: ["/quotes/enquiries"], ap_register: ["/production/registers"], ap_scale: ["/dispatches/bundles/weights"], ap_geometry: ["/profiles"],
   ap_energy: ["/energy/press-meters"], ap_crew: ["/production/crew"], ap_equivalents: ["/profiles", "/orders/equivalents"], ap_stock_runs: ["/production/capacity/stock-runs"],
-  ap_coating: ["/production/finishing/coating-runs"], ap_cut_combine: ["/production/cutting/combine"], ap_systems_order: ["/systems-configurator"], ap_undo: []
+  ap_coating: ["/production/finishing/coating-runs"], ap_cut_combine: ["/production/cutting/combine"], ap_systems_order: ["/systems-configurator"], ap_undo: [],
+  ap_scrap_receipt: ["/foundry", "/foundry/scrap", "/foundry/scrap/receipts", "/foundry/scrap/requests", "/foundry/metal-finance", "/foundry/external-sources"]
 };
 
 function friendly(error: { code?: string; message?: string } | null | undefined): ApResult<never> {

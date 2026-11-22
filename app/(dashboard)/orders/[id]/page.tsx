@@ -200,6 +200,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         />
         <div className="flex items-center gap-2 pt-2">
           <Badge value={order.current_stage} />
+          {!context.dealerId ? <Link href={`/orders/${order.id}/lifecycle`} className="inline-flex min-h-10 items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold">Lifecycle</Link> : null}
           {can(context.role, "update", "orders") ? <Link href={`/orders/${order.id}/edit`} className="inline-flex items-center gap-2 rounded-xl bg-orange px-3 py-2 text-sm font-bold text-white shadow-lg shadow-orange/20 transition hover:bg-orange/90"><Pencil className="h-4 w-4" /> Edit</Link> : null}
         </div>
       </div>

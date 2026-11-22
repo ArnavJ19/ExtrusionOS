@@ -52,8 +52,13 @@ export default async function FoundryPage() {
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-orange">Scrap Control</p>
           <h2 className="section-title mt-1">Aluminium Scrap</h2>
-          <p className="mt-1 text-sm font-medium text-slate-500">Track incoming and in-house scrap by supplier, quality, weight, and usage status.</p>
-          <Link href="/foundry/scrap" className="mt-4 inline-flex rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white">Open Scrap</Link> <Link href="/foundry/scrap-sales" className="mt-4 inline-flex rounded-xl border border-charcoal px-4 py-2.5 text-sm font-bold">Scrap sales</Link>
+          <p className="mt-1 text-sm font-medium text-slate-500">Request scrap, receive every load through the guided procedure, and track lots by type, alloy, weight and usage.</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {can(context.role, "create", "foundry") ? <Link href="/foundry/scrap/receive" className="inline-flex rounded-xl bg-charcoal px-4 py-2.5 text-sm font-bold text-white">Start receiving scrap</Link> : null}
+            <Link href="/foundry/scrap" className="inline-flex rounded-xl border border-charcoal px-4 py-2.5 text-sm font-bold">Open Scrap</Link>
+            <Link href="/foundry/scrap/requests" className="inline-flex rounded-xl border border-charcoal px-4 py-2.5 text-sm font-bold">Scrap requests</Link>
+            <Link href="/foundry/scrap-sales" className="inline-flex rounded-xl border border-charcoal px-4 py-2.5 text-sm font-bold">Scrap sales</Link>
+          </div>
         </div>
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-orange">Cast Output</p>
