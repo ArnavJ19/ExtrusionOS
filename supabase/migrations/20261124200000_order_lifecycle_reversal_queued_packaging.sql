@@ -10,6 +10,8 @@
 --   2. After a reversal, when a still-queued packaging job of the job is larger than what remains approved (less
 --      packaging already started), packaging and production planning are told to pack only QC-approved material and
 --      to correct or cancel the queue entry. The packaging job itself is not changed.
+--   3. The reversal history list gets server-side search (reversal, approval batch, job, order, reason, reference), an
+--      outcome filter (rejected / rework) and sorting by date, kilograms or number.
 -- Redefines olo_job_consumed_kg (marked "Queued packaging:") and wraps quality_reversal_command; nothing else changes.
 begin;
 set local lock_timeout = '5s';
@@ -37,9 +39,42 @@ revoke all on function private.olo_quality_reversal_command_p4(text, jsonb) from
 
 create or replace function public.quality_reversal_command(p_command text, p_payload jsonb default '{}'::jsonb)
 returns jsonb language plpgsql security definer set search_path = public, private as $$
-declare v jsonb := private.olo_quality_reversal_command_p4(p_command, p_payload); r public.quality_reversals%rowtype; v_job public.production_jobs%rowtype;
+declare v jsonb; r public.quality_reversals%rowtype; v_job public.production_jobs%rowtype;
   v_approved numeric; v_started numeric; v_over numeric; v_room numeric; pk record; v_flagged jsonb := '[]'::jsonb;
+  a jsonb; v_payload jsonb := coalesce(p_payload, '{}'::jsonb); v_page integer; v_rows jsonb; v_total bigint; v_search text; v_as text; v_sort text; v_dir text;
 begin
+  -- Reversal history: server-side search, outcome filter and sorting, 10 per page (the Phase 4 list had a page only).
+  if p_command = 'list' then
+    a := private.olo_actor(private.olo_reader_roles());
+    perform private.olo_keys(v_payload, array['page','job_id','order_id','search','reversed_as','sort','direction']);
+    v_page := private.olo_page(v_payload);
+    v_search := lower(btrim(coalesce(v_payload ->> 'search', '')));
+    if length(v_search) > 80 then raise exception 'Search for at most 80 characters' using errcode = '22023'; end if;
+    v_as := nullif(v_payload ->> 'reversed_as', '');
+    if v_as is not null and v_as not in ('rejected','rework') then raise exception 'Unknown outcome' using errcode = '22023'; end if;
+    v_sort := coalesce(nullif(v_payload ->> 'sort', ''), 'reversed_at');
+    if v_sort not in ('reversed_at','reversed_kg','reversal_number') then raise exception 'Unknown sort' using errcode = '22023'; end if;
+    v_dir := coalesce(nullif(v_payload ->> 'direction', ''), 'desc');
+    if v_dir not in ('asc','desc') then raise exception 'Unknown sort direction' using errcode = '22023'; end if;
+    select coalesce(jsonb_agg(private.olo_reversal_json((a ->> 'company')::uuid, x.id) order by x.ord), '[]'::jsonb), max(x.total) into v_rows, v_total from (
+      select y.id, count(*) over () total, row_number() over (order by
+          case when v_sort = 'reversed_at' and v_dir = 'asc' then y.reversed_at end asc, case when v_sort = 'reversed_at' and v_dir = 'desc' then y.reversed_at end desc,
+          case when v_sort = 'reversed_kg' and v_dir = 'asc' then y.reversed_kg end asc, case when v_sort = 'reversed_kg' and v_dir = 'desc' then y.reversed_kg end desc,
+          case when v_sort = 'reversal_number' and v_dir = 'asc' then y.reversal_number end asc, case when v_sort = 'reversal_number' and v_dir = 'desc' then y.reversal_number end desc,
+          y.reversed_at desc, y.id) ord
+      from (select rv.id, rv.reversed_at, rv.reversed_kg, rv.reversal_number from public.quality_reversals rv
+          left join public.quality_inspections qi on qi.id = rv.quality_inspection_id left join public.production_jobs pj on pj.id = rv.production_job_id
+          left join public.orders od on od.id = rv.order_id
+          where rv.company_id = (a ->> 'company')::uuid
+            and (v_payload ->> 'job_id' is null or rv.production_job_id = (v_payload ->> 'job_id')::uuid)
+            and (v_payload ->> 'order_id' is null or rv.order_id = (v_payload ->> 'order_id')::uuid)
+            and (v_as is null or rv.reversed_as = v_as)
+            and (v_search = '' or position(v_search in lower(concat_ws(' ', rv.reversal_number, qi.batch_number, pj.job_number, od.order_number, rv.reason, rv.reference))) > 0)) y
+      order by ord offset (v_page - 1) * 10 limit 10) x;
+    return jsonb_build_object('page', v_page, 'page_size', 10, 'total', coalesce(v_total, 0), 'rows', v_rows, 'can_reverse', (a ->> 'role') in ('owner','quality'),
+      'search', v_search, 'reversed_as', v_as, 'sort', v_sort, 'direction', v_dir);
+  end if;
+  v := private.olo_quality_reversal_command_p4(p_command, p_payload);
   if p_command <> 'reverse' or v is null then return v; end if;
   select * into r from public.quality_reversals where id = (v ->> 'id')::uuid;
   -- Packaging jobs of a run's own output (not of a finishing job) are compared with that output's approved kilograms.

@@ -9,10 +9,16 @@ const noControl = (value: string) => !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u
 const text = (min: number, max: number, message: string) => z.string().trim().min(min, message).max(max).refine(noControl, "Remove control characters");
 
 export const QC_REVERSERS = ["owner", "quality"];
+export const REVERSAL_SORTS = ["reversed_at", "reversed_kg", "reversal_number"] as const;
 export const canReverseQc = (role: string) => QC_REVERSERS.includes(role);
 
 export const reversalCommandSchema = z.discriminatedUnion("command", [
-  z.object({ command: z.literal("list"), page: z.number().int().min(1).max(100000).optional(), job_id: uuid.optional(), order_id: uuid.optional() }).strict(),
+  // Search, outcome filter and sorting are served by migration 20261124200000; older databases take page/job/order only.
+  z.object({
+    command: z.literal("list"), page: z.number().int().min(1).max(100000).optional(), job_id: uuid.optional(), order_id: uuid.optional(),
+    search: z.string().trim().max(80).refine(noControl, "Remove control characters").optional(), reversed_as: z.enum(["rejected", "rework"]).optional(),
+    sort: z.enum(REVERSAL_SORTS).optional(), direction: z.enum(["asc", "desc"]).optional()
+  }).strict(),
   z.object({ command: z.literal("get"), id: uuid }).strict(),
   z.object({ command: z.literal("preview"), inspection_id: uuid }).strict(),
   z.object({
@@ -43,7 +49,7 @@ export const reversalSchema = z.object({
   reversed_inspection_id: z.string(), retained_inspection_id: z.string().nullable(), reversed_by_name: z.string().nullable(), reversed_at: z.string()
 }).passthrough();
 export type Reversal = z.infer<typeof reversalSchema>;
-export const reversalListSchema = z.object({ page: z.number(), page_size: z.number(), total: z.number(), can_reverse: z.boolean(), rows: z.array(reversalSchema) });
+export const reversalListSchema = z.object({ page: z.number(), page_size: z.number(), total: z.number(), can_reverse: z.boolean(), rows: z.array(reversalSchema) }).passthrough();
 
 /** Largest quantity the form may offer: the database rechecks it under a lock. */
 export function reversibleKg(preview: Pick<ReversalPreview, "quantity_kg" | "max_reversible_kg">): number {

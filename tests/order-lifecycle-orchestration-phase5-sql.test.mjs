@@ -225,6 +225,10 @@ test("final QC: QA records accepted and rejected kilograms; rejection reverses t
     [i.company, a.job, i.quality], i.quality));
   const list = await fqc("queue", { view: "recorded" }, i.viewer);
   assert.deepEqual([list.total, list.can_record], [1, false]);
+  assert.equal((await fqc("queue", { view: "recorded", rejected_only: true })).total, 1, "the record has a rejection");
+  assert.equal((await fqc("queue", { view: "recorded", search: "mtc-5521" })).total, 1, "searches the certificate");
+  assert.equal((await fqc("queue", { view: "recorded", search: "no such record" })).total, 0);
+  await assert.rejects(() => fqc("queue", { view: "recorded", sort: "job_number" }), /Unknown sort/, "a sort of the other view is refused");
 });
 
 test("final QC: material first-stage QC never approved, a job without ageing and a contained job are refused", async () => {
@@ -246,6 +250,10 @@ test("final QC: material first-stage QC never approved, a job without ageing and
   assert.match((await fqc("get", { job_id: c.job })).blocker, /under QC containment/);
   const queue = await fqc("queue", {});
   assert.ok(queue.rows.some(x => x.job_id === a.job && num(x.awaiting_final_kg) === 1000), "listed for final QC although 400 kg still awaits initial QC");
+  const byFinal = await fqc("queue", { sort: "awaiting_final_kg", direction: "desc" });
+  assert.equal(byFinal.rows[0].job_id, a.job, "the job with the most awaiting final QC comes first");
+  const jobNumber = (await one("select job_number from production_jobs where id=$1", [c.job])).job_number;
+  assert.deepEqual((await fqc("queue", { search: jobNumber })).rows.map(x => x.job_id), [c.job], "searches the job number");
 });
 
 test("QC route control: off by default; when on, ageing loads need first-stage QC and ageing jobs pack only what final QC released", async () => {
@@ -277,6 +285,27 @@ test("QC route control: off by default; when on, ageing loads need first-stage Q
   await raw("insert into packaging_jobs(id,company_id,packaging_number,order_id,production_job_id,scheduled_date,pieces,profile_weight_kg,profile_length_m,status) values($1,$2,'PK-P5-3',$3,$4,current_date,10,300,60,'scheduled')",
     [id(), i.company, natural.order, natural.job]);
   assert.ok(true, "a job without ageing packs on its QC approval as before");
+});
+
+test("QC route control: packing lines, prepared bundles and stock made from the job share one final-QC cap", async () => {
+  await olo("settings.save", { enforce_qc_route: true }, i.factory);
+  const a = await order();
+  await inspect(a, 1000);
+  const tb = await load(a, 1000);
+  await review(tb, 1000);
+  await record(a, { accepted_kg: 500 });   // 500 kg still awaits final QC
+  // 500 kg dispatched directly, without a prepared-bundle record (written as the dispatch writer would, guards aside).
+  const d = id();
+  await seed("insert into dispatches(id,company_id,order_id,dispatch_number,dispatch_date,delivery_status,total_weight_kg,number_of_bundles) values($1,$2,$3,'DC-P5-1',current_date,'pending',500,1)", [d, i.company, a.order]);
+  await seed(`insert into packing_list_items(id,company_id,dispatch_id,profile_id,bundle_number,number_of_pieces,gross_weight_kg,tare_weight_kg,net_length_m,source_kind,source_record_id,source_line_id)
+    values($1,$2,$3,$4,'B-P5-D1',50,505,5,300,'production',$5,$6)`, [id(), i.company, d, i.profile2, a.order, a.job]);
+  assert.equal(num((await flow(a.job)).packed_kg), 500);
+  await assert.rejects(() => raw(`insert into prepared_physical_bundles(id,company_id,order_id,source_line_id,source_kind,profile_id,bundle_number,number_of_pieces,net_length_m,gross_weight_kg,tare_weight_kg,recorded_by,payload)
+    values($1,$2,$3,$4,'production',$5,'B-P5-P1',50,300,505,5,$6,'{}')`, [id(), i.company, a.order, a.job, i.profile2, i.production]), /would make 1,000 kg packed or stocked/,
+    "the prepared bundle is counted with the packing line already dispatched");
+  await assert.rejects(() => raw(`insert into profile_stock_batches(id,company_id,profile_id,finish,length_m,quantity_pieces,total_weight_kg,origin_type,production_job_id)
+    values($1,$2,$3,'mill_finish',105,20,100,'production_surplus',$4)`, [id(), i.company, i.profile2, a.job]), /would make 600 kg packed or stocked/,
+    "output moved into stock counts against the same release");
 });
 
 test("completion path: the packaging queue entry of a completed run is not packing; the control and a final rejection both allow for it", async () => {

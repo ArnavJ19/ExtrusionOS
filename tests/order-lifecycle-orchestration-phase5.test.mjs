@@ -5,8 +5,9 @@ import { hasRouteAccess } from "../lib/auth/route-permissions.ts";
 import { FLOOR_MESSAGES, floorText, isFloorKey } from "../lib/i18n/floor.ts";
 import { QUALITY_FLOW_EN, QUALITY_FLOW_HI } from "../lib/i18n/floor-quality-flow.ts";
 import {
-  QUALITY_STAGES, acceptableKg, belowSpec, collectResults, finalQcCommandSchema, finalQcJobSchema, finalQcRecordSchema, finalQcResultsSchema, qualityFlowSchema
+  QUALITY_STAGES, acceptableKg, belowSpec, collectResults, finalQcCommandSchema, finalQcJobSchema, finalQcRecordSchema, finalQcResultsSchema, finalQcSort, qualityFlowSchema
 } from "../lib/workflow/final-qc.ts";
+import { reversalCommandSchema } from "../lib/workflow/quality-reversal.ts";
 import { TASK_KIND_LABELS, lifecycleSchema, orchestrationCommandSchema, settingsSchema, taskWorkLink } from "../lib/workflow/orchestration.ts";
 
 // Orchestration Phase 5, application layer: final QC request validation, response shapes before and after the
@@ -42,6 +43,15 @@ test("final QC requests need kilograms, results, the method and sampling plan, a
   assert.equal(record({ company_id: id }).success, false, "company comes from the session, never the request");
   assert.equal(finalQcCommandSchema.safeParse({ command: "get", job_id: "nope" }).success, false);
   assert.equal(finalQcCommandSchema.safeParse({ command: "queue", view: "everything" }).success, false);
+  assert.equal(finalQcCommandSchema.safeParse({ command: "queue", view: "recorded", search: "JOB-7", sort: "rejected_kg", direction: "asc", rejected_only: true }).success, true);
+  assert.equal(finalQcCommandSchema.safeParse({ command: "queue", sort: "reason" }).success, false);
+  assert.equal(finalQcCommandSchema.safeParse({ command: "queue", search: "x".repeat(81) }).success, false);
+  assert.equal(finalQcSort("recorded", "job_number"), "recorded_at", "a sort of the other view falls back to the view's default");
+  assert.equal(finalQcSort("awaiting", "awaiting_final_kg"), "awaiting_final_kg");
+  assert.equal(reversalCommandSchema.safeParse({ command: "list", search: "NCR-77", reversed_as: "rework", sort: "reversed_kg", direction: "asc" }).success, true);
+  assert.equal(reversalCommandSchema.safeParse({ command: "list", sort: "reason" }).success, false);
+  const reversalPage = read("app/(dashboard)/quality/reversals/page.tsx");
+  assert.match(reversalPage, /sort !== "reversed_at" \? \{ sort \} : \{\}/, "the default reversal list sends no new options, so it reads before the upgrade too");
   assert.equal(finalQcResultsSchema.safeParse({ dimensional_ok: false, samples_tested: 1 }).success, true, "a failed check is a result");
 });
 

@@ -309,7 +309,7 @@ observations, production holds, containments and packaging jobs (statement-level
 `olo_engine_errors`); two guards (ageing load, packing of unaged material) that act only when the control is on.
 Pages: `/quality/final-qc` (waiting / recorded), `/quality/final-qc/[jobId]`; a link on `/quality`; the QC route control
 and overdue grace on `/settings/orchestration`. Hindi: `lib/i18n/floor-quality-flow.ts` (parity-tested).
-Tests: `tests/order-lifecycle-orchestration-phase5-sql.test.mjs` (10) and `tests/order-lifecycle-orchestration-phase5.test.mjs` (8).
+Tests: `tests/order-lifecycle-orchestration-phase5-sql.test.mjs` (11) and `tests/order-lifecycle-orchestration-phase5.test.mjs` (8).
 Screen fixture: `scripts/olo-phase5-preview.mjs` (launch config `olo-phase5-screens`).
 
 **Code review of Phase 5 (2026-11-24)**:
@@ -356,8 +356,20 @@ dispatches are capped by approved kilograms.
 |---|---|
 | `olo_job_consumed_kg` counts packaging jobs only once packing has started (`in_progress` or `completed`), for every caller | The reversal limit, the revocation recall alert and the final QC after ageing all ignore the queue entry. Packed and prepared bundles, started packaging and (outside a final QC) ageing loads still count. |
 | `quality_reversal_command` is wrapped (Phase 4 command moved to `private.olo_quality_reversal_command_p4`) | After a reversal, a still-queued packaging job of the run that is larger than what stays approved (less packaging already started) is flagged: packaging and production planning are told to pack only QC-approved material and to correct or cancel the queue entry, and the order timeline records it. The reversal result lists it as `queued_packaging_over`. The packaging job itself is never changed. |
+| Reversal history list (`/quality/reversals`) | Server-side search (reversal, approval batch, job, order, reason, reference), an outcome filter (rejected / rework) and sorting by date, kilograms or number, 10 per page; the column headings sort. The default list sends none of these options, so it still reads from a database without this migration. |
 
-Tests: `tests/order-lifecycle-orchestration-queued-packaging-sql.test.mjs` (4). The Phase 4 and batch 3 tests that
+Tests: `tests/order-lifecycle-orchestration-queued-packaging-sql.test.mjs` (5).
+
+**PR review fixes (PR #15, 2026-11-24)**, folded into the unapplied Phase 5 migration:
+1. With the QC route control on, packing lines and prepared bundles of an ageing job were capped separately, so 500 kg
+   dispatched directly plus 500 kg prepared could exceed a 500 kg final-QC release. One total now counts packing lines,
+   prepared bundles not yet on a dispatch (a prepared bundle is marked dispatched before its packing line is written, so
+   nothing counts twice) and stock made from the job (`private.olo_job_released_material_kg`).
+2. Output moved into stock (`production_surplus`) escaped the cap and could then be reserved and dispatched; stock made
+   from an ageing job now counts against its final-QC release, checked when the stock batch is written.
+3. The reversal history and the final-QC lists lacked search, filters and sorting (`AGENTS.md` list-page rules); both now
+   have them server-side (final QC: job / order / profile / record / method search, "only records with rejections",
+   sort by date, job, kilograms awaiting ageing or final QC, accepted or rejected). The Phase 4 and batch 3 tests that
 modelled "moved-on" material with a scheduled packaging job now use a started one; the Phase 5 migration no longer needs
 its own exception for the queue entry.
 **Deployment notes**: apply after 20261124100000. Behaviour changes only for runs whose packaging is still queued:

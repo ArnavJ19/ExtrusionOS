@@ -11,6 +11,8 @@ const optionalText = (min: number, max: number, message: string) => z.string().t
 const kgInput = z.number().min(0).max(10_000_000);
 
 export const FINAL_QC_RECORDERS = ["owner", "quality"];
+export const FINAL_QC_AWAITING_SORTS = ["created_at", "job_number", "awaiting_final_kg", "awaiting_ageing_kg"] as const;
+export const FINAL_QC_RECORDED_SORTS = ["recorded_at", "accepted_kg", "rejected_kg"] as const;
 export const canRecordFinalQc = (role: string) => FINAL_QC_RECORDERS.includes(role);
 
 /** Measured properties and checks a final QC may record; at least the sample count and one of the others. */
@@ -24,7 +26,11 @@ export const finalQcResultsSchema = z.object({
 export type FinalQcResults = z.infer<typeof finalQcResultsSchema>;
 
 export const finalQcCommandSchema = z.discriminatedUnion("command", [
-  z.object({ command: z.literal("queue"), view: z.enum(["awaiting", "recorded"]).optional(), page: z.number().int().min(1).max(100000).optional() }).strict(),
+  z.object({
+    command: z.literal("queue"), view: z.enum(["awaiting", "recorded"]).optional(), page: z.number().int().min(1).max(100000).optional(),
+    search: z.string().trim().max(80).refine(noControl, "Remove control characters").optional(), sort: z.enum([...FINAL_QC_AWAITING_SORTS, ...FINAL_QC_RECORDED_SORTS]).optional(),
+    direction: z.enum(["asc", "desc"]).optional(), rejected_only: z.boolean().optional()
+  }).strict(),
   z.object({ command: z.literal("get"), job_id: uuid }).strict(),
   z.object({ command: z.literal("record_get"), id: uuid }).strict(),
   z.object({
@@ -79,7 +85,15 @@ export type FinalQcJob = z.infer<typeof finalQcJobSchema>;
 export const finalQcQueueSchema = z.object({
   view: z.enum(["awaiting", "recorded"]), page: z.number(), page_size: z.number(), total: z.number(), can_record: z.boolean(), enforced: z.boolean(),
   rows: z.array(z.record(z.unknown()))
-});
+}).passthrough();
+
+export type FinalQcSortValue = (typeof FINAL_QC_AWAITING_SORTS)[number] | (typeof FINAL_QC_RECORDED_SORTS)[number];
+
+/** A sort for this view, else the view's default (the database rejects a sort of the other view). */
+export function finalQcSort(view: "awaiting" | "recorded", value: string | undefined): string {
+  const allowed: readonly string[] = view === "recorded" ? FINAL_QC_RECORDED_SORTS : FINAL_QC_AWAITING_SORTS;
+  return value && allowed.includes(value) ? value : allowed[0];
+}
 
 /** The most the form offers to accept: never more than is waiting, than the treatment review accepted, or than first-stage QC approved. */
 export function acceptableKg(job: Pick<FinalQcJob, "max_accept_kg" | "awaiting_final_kg">): number {

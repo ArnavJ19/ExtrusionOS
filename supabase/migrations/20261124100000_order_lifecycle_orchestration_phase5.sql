@@ -215,13 +215,12 @@ begin
   select coalesce(sum(qc.scope_kg - qc.released_accepted_kg - qc.released_rejected_kg), 0) into v_held
     from public.quality_containments qc where qc.company_id = p_company and qc.production_job_id = p_job and qc.status in ('open','partially_resolved');
   v_awaiting := greatest(v_produced - v_decided - v_held, 0);
-  -- Material physically in packing: packaging jobs that have started, or packed and prepared bundles. A 'scheduled'
+  -- Material that has left QC: packaging jobs that have started, or packed and prepared bundles and stock made from
+  -- the job. A 'scheduled'
   -- packaging job is the queue entry created when a mill-finish run completes, not packed material.
   v_packed := greatest(
     coalesce((select sum(x.profile_weight_kg) from public.packaging_jobs x where x.company_id = p_company and x.production_job_id = p_job and x.status in ('in_progress','completed')), 0),
-    coalesce((select sum(x.net_weight_kg) from public.packing_list_items x where x.company_id = p_company and x.source_kind = 'production' and x.source_line_id = p_job), 0)
-      + coalesce((select sum(x.gross_weight_kg - x.tare_weight_kg) from public.prepared_physical_bundles x where x.company_id = p_company and x.source_kind = 'production'
-          and x.source_line_id = p_job and x.dispatch_id is null), 0));
+    private.olo_job_released_material_kg(p_company, p_job));
   if v_required then
     select coalesce(sum(ti.quantity_kg) filter (where tb.retreatment_of is null), 0),
       coalesce(sum(ti.quantity_kg) filter (where tb.status in ('loaded','running','ended','interrupted')), 0),
@@ -395,31 +394,56 @@ returns jsonb language plpgsql security definer set search_path = public, privat
 declare a jsonb := private.olo_actor(private.olo_reader_roles()); v_actor uuid := (a ->> 'actor')::uuid; v_company uuid := (a ->> 'company')::uuid; v_role text := a ->> 'role';
   v_payload jsonb := coalesce(p_payload, '{}'::jsonb); v_page integer := private.olo_page(coalesce(p_payload, '{}'::jsonb)); v_rows jsonb; v_total bigint; v_view text;
   j public.production_jobs%rowtype; pr public.aluminium_profiles%rowtype; k jsonb; v_results jsonb; v_ok numeric; v_rej numeric; v_left numeric; v_take numeric;
-  v_id uuid := gen_random_uuid(); v_number text; v_order_number text; qi record; v_reversed jsonb := '[]'::jsonb; v_r jsonb; v_spec text; v_reason text;
+  v_id uuid := gen_random_uuid(); v_number text; v_order_number text; qi record; v_reversed jsonb := '[]'::jsonb; v_r jsonb; v_spec text; v_reason text; v_search text; v_sort text; v_dir text;
 begin
   if p_command = 'queue' then
-    perform private.olo_keys(v_payload, array['view','page']);
+    -- Server-side search, a filter and sorting, 10 per page.
+    perform private.olo_keys(v_payload, array['view','page','search','sort','direction','rejected_only']);
     v_view := coalesce(nullif(v_payload ->> 'view', ''), 'awaiting');
+    v_search := lower(btrim(coalesce(v_payload ->> 'search', '')));
+    if length(v_search) > 80 then raise exception 'Search for at most 80 characters' using errcode = '22023'; end if;
+    v_dir := coalesce(nullif(v_payload ->> 'direction', ''), case when v_view = 'recorded' then 'desc' else 'asc' end);
+    if v_dir not in ('asc','desc') then raise exception 'Unknown sort direction' using errcode = '22023'; end if;
+    if v_payload ? 'rejected_only' and jsonb_typeof(v_payload -> 'rejected_only') is distinct from 'boolean' then raise exception 'The rejection filter is on or off' using errcode = '22023'; end if;
     if v_view = 'recorded' then
-      select coalesce(jsonb_agg(private.olo_final_qc_json(v_company, x.id) order by x.recorded_at desc, x.id), '[]'::jsonb), max(x.total) into v_rows, v_total from (
-        select f.id, f.recorded_at, count(*) over () total from public.final_qc_records f where f.company_id = v_company
-        order by f.recorded_at desc, f.id offset (v_page - 1) * 10 limit 10) x;
+      v_sort := coalesce(nullif(v_payload ->> 'sort', ''), 'recorded_at');
+      if v_sort not in ('recorded_at','accepted_kg','rejected_kg') then raise exception 'Unknown sort' using errcode = '22023'; end if;
+      select coalesce(jsonb_agg(private.olo_final_qc_json(v_company, x.id) order by x.ord), '[]'::jsonb), max(x.total) into v_rows, v_total from (
+        select y.id, count(*) over () total, row_number() over (order by
+            case when v_sort = 'recorded_at' and v_dir = 'asc' then y.recorded_at end asc, case when v_sort = 'recorded_at' and v_dir = 'desc' then y.recorded_at end desc,
+            case when v_sort = 'accepted_kg' and v_dir = 'asc' then y.accepted_kg end asc, case when v_sort = 'accepted_kg' and v_dir = 'desc' then y.accepted_kg end desc,
+            case when v_sort = 'rejected_kg' and v_dir = 'asc' then y.rejected_kg end asc, case when v_sort = 'rejected_kg' and v_dir = 'desc' then y.rejected_kg end desc,
+            y.recorded_at desc, y.id) ord
+        from (select f.id, f.recorded_at, f.accepted_kg, f.rejected_kg from public.final_qc_records f
+            left join public.production_jobs fj on fj.id = f.production_job_id left join public.orders fo on fo.id = f.order_id
+            where f.company_id = v_company and (coalesce((v_payload ->> 'rejected_only')::boolean, false) = false or f.rejected_kg > 0)
+              and (v_search = '' or position(v_search in lower(concat_ws(' ', f.record_number, fj.job_number, fo.order_number, f.method, f.sampling_reference, f.certificate_reference))) > 0)) y
+        order by ord offset (v_page - 1) * 10 limit 10) x;
     elsif v_view = 'awaiting' then
+      v_sort := coalesce(nullif(v_payload ->> 'sort', ''), 'created_at');
+      if v_sort not in ('created_at','awaiting_final_kg','awaiting_ageing_kg','job_number') then raise exception 'Unknown sort' using errcode = '22023'; end if;
       select coalesce(jsonb_agg(x.k || jsonb_build_object('order_number', x.order_number, 'profile_code', x.profile_code) order by x.ord), '[]'::jsonb), max(x.total) into v_rows, v_total from (
-        select y.k, y.order_number, y.profile_code, count(*) over () total, row_number() over (order by y.created_at, y.id) ord from (
-          select pj.id, pj.created_at, o.order_number, p.profile_code, private.olo_job_quality_flow(v_company, pj.id) k
+        select y.k, y.order_number, y.profile_code, count(*) over () total, row_number() over (order by
+            case when v_sort = 'created_at' and v_dir = 'asc' then y.created_at end asc, case when v_sort = 'created_at' and v_dir = 'desc' then y.created_at end desc,
+            case when v_sort = 'job_number' and v_dir = 'asc' then y.job_number end asc, case when v_sort = 'job_number' and v_dir = 'desc' then y.job_number end desc,
+            case when v_sort in ('awaiting_final_kg','awaiting_ageing_kg') and v_dir = 'asc' then (y.k ->> v_sort)::numeric end asc,
+            case when v_sort in ('awaiting_final_kg','awaiting_ageing_kg') and v_dir = 'desc' then (y.k ->> v_sort)::numeric end desc,
+            y.created_at, y.id) ord from (
+          select pj.id, pj.created_at, pj.job_number, o.order_number, p.profile_code, private.olo_job_quality_flow(v_company, pj.id) k
           from public.production_jobs pj left join public.orders o on o.id = pj.order_id left join public.aluminium_profiles p on p.id = pj.profile_id
           where pj.company_id = v_company and pj.status in ('in_progress','completed','on_hold') and coalesce(pj.actual_quantity_kg, 0) > 0
-            and coalesce(pj.completed_at, pj.updated_at, pj.created_at) > now() - interval '120 days') y
+            and coalesce(pj.completed_at, pj.updated_at, pj.created_at) > now() - interval '120 days'
+            and (v_search = '' or position(v_search in lower(concat_ws(' ', pj.job_number, o.order_number, p.profile_code))) > 0)) y
         -- By quantity, not by the job's summary stage: part of a job can await final QC while another part awaits its first QC.
         where y.k -> 'route' ->> 'state' = 'required' and greatest((y.k ->> 'awaiting_ageing_kg')::numeric, (y.k ->> 'in_ageing_kg')::numeric,
           (y.k ->> 'awaiting_final_kg')::numeric) > (y.k ->> 'tolerance_kg')::numeric
-        order by y.created_at, y.id offset (v_page - 1) * 10 limit 10) x;
+        order by ord offset (v_page - 1) * 10 limit 10) x;
     else
       raise exception 'Unknown view' using errcode = '22023';
     end if;
     return jsonb_build_object('view', v_view, 'page', v_page, 'page_size', 10, 'total', coalesce(v_total, 0), 'rows', v_rows, 'can_record', v_role in ('owner','quality'),
-      'enforced', (private.olo_settings_for(v_company)).enforce_qc_route);
+      'enforced', (private.olo_settings_for(v_company)).enforce_qc_route, 'search', v_search, 'sort', v_sort, 'direction', v_dir,
+      'rejected_only', coalesce((v_payload ->> 'rejected_only')::boolean, false));
   end if;
 
   if p_command = 'get' then
@@ -598,8 +622,22 @@ end;
 $$;
 create trigger zzz_olo_p5_guard_ageing_load before insert on public.treatment_inputs for each row execute function private.olo_guard_ageing_load();
 
--- Packaging of a job that needs ageing: each packaging record type stays within what final QC released. Checked after
--- the row is written, so the row itself is counted. A packaging job is checked when packing starts: the 'scheduled'
+-- Material of a job that has physically left QC: packing-list lines and prepared bundles not yet on a dispatch (one
+-- bundle is never in both: preparing it is consumed when its packing line is written) plus stock made from the job's
+-- output (stock derived from it by a bundle transformation is the same material and is not counted again).
+create or replace function private.olo_job_released_material_kg(p_company uuid, p_job uuid) returns numeric
+language sql stable security definer set search_path = public, private as $$
+  select coalesce((select sum(x.net_weight_kg) from public.packing_list_items x where x.company_id = p_company and x.source_kind = 'production' and x.source_line_id = p_job), 0)
+    + coalesce((select sum(x.gross_weight_kg - x.tare_weight_kg) from public.prepared_physical_bundles x where x.company_id = p_company and x.source_kind = 'production'
+        and x.source_line_id = p_job and x.dispatch_id is null), 0)
+    + coalesce((select sum(b.total_weight_kg) from public.profile_stock_batches b where b.company_id = p_company and b.production_job_id = p_job and b.origin_type = 'production_surplus'
+        and not exists (select 1 from public.bundle_transformation_lines l where l.company_id = b.company_id and l.stock_batch_id = b.id and l.direction = 'output')), 0)
+$$;
+revoke all on function private.olo_job_released_material_kg(uuid, uuid) from public, anon, authenticated;
+
+-- Packaging of a job that needs ageing stays within what final QC released: bundles, packing lines and stock made from
+-- the job are counted together; started packaging jobs separately. Checked after the
+-- row is written, so the row itself is counted. A packaging job is checked when packing starts: the 'scheduled'
 -- queue entry that a completed mill-finish run creates is not packing, and refusing it would refuse the completion.
 create or replace function private.olo_guard_unaged_packing() returns trigger language plpgsql security definer set search_path = public, private as $$
 declare v_job uuid; v_total numeric; v_released numeric; v_number text; v_tol numeric;
@@ -609,21 +647,23 @@ begin
     if new.production_job_id is null or new.status not in ('in_progress','completed') then return null; end if;
     v_job := new.production_job_id;
     select coalesce(sum(x.profile_weight_kg), 0) into v_total from public.packaging_jobs x where x.company_id = new.company_id and x.production_job_id = v_job and x.status in ('in_progress','completed');
+  elsif tg_table_name = 'profile_stock_batches' then
+    if new.origin_type is distinct from 'production_surplus' or new.production_job_id is null then return null; end if;
+    v_job := new.production_job_id;
+    v_total := private.olo_job_released_material_kg(new.company_id, v_job);
   else
     if new.source_kind is distinct from 'production' or new.source_line_id is null then return null; end if;
     v_job := new.source_line_id;
-    if tg_table_name = 'packing_list_items' then
-      select coalesce(sum(x.net_weight_kg), 0) into v_total from public.packing_list_items x where x.company_id = new.company_id and x.source_kind = 'production' and x.source_line_id = v_job;
-    else
-      select coalesce(sum(x.gross_weight_kg - x.tare_weight_kg), 0) into v_total from public.prepared_physical_bundles x where x.company_id = new.company_id and x.source_kind = 'production' and x.source_line_id = v_job;
-    end if;
+    -- One total for both bundle records (a dispatched prepared bundle is already marked dispatched when its packing
+    -- line is written, so nothing counts twice) plus stock made from the job.
+    v_total := private.olo_job_released_material_kg(new.company_id, v_job);
   end if;
   if private.olo_job_route(new.company_id, v_job) ->> 'state' <> 'required' then return null; end if;
   select coalesce(sum(f.accepted_kg), 0) into v_released from public.final_qc_records f where f.company_id = new.company_id and f.production_job_id = v_job;
   v_tol := greatest(1, v_released * 0.005);
   if v_total > v_released + v_tol then
     select job_number into v_number from public.production_jobs where id = v_job;
-    raise exception 'Job % needs ageing: % is released by final QC after ageing, and this would make % packed. Complete the ageing cycle and the final QC first.',
+    raise exception 'Job % needs ageing: % is released by final QC after ageing, and this would make % packed or stocked. Complete the ageing cycle and the final QC first.',
       coalesce(v_number, '-'), private.olo_fmt_kg(v_released), private.olo_fmt_kg(v_total) using errcode = '23514';
   end if;
   return null;
@@ -632,6 +672,7 @@ $$;
 create trigger zzz_olo_p5_guard_unaged after insert or update of status, production_job_id, profile_weight_kg on public.packaging_jobs for each row execute function private.olo_guard_unaged_packing();
 create trigger zzz_olo_p5_guard_unaged after insert on public.packing_list_items for each row execute function private.olo_guard_unaged_packing();
 create trigger zzz_olo_p5_guard_unaged after insert on public.prepared_physical_bundles for each row execute function private.olo_guard_unaged_packing();
+create trigger zzz_olo_p5_guard_unaged after insert on public.profile_stock_batches for each row execute function private.olo_guard_unaged_packing();
 
 -- ---------------------------------------------------------------------------------------------------------------
 -- Evaluation: QC, ageing and final QC work; ageing cycle monitoring; run notifications

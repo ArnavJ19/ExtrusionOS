@@ -97,6 +97,23 @@ test("revoking an approval under containment raises no recall for a run whose pa
   assert.doesNotMatch(alert.body, /already moved to ageing, packaging or dispatch/, "no recall is asked for material that was never packed");
 });
 
+test("reversal history: server-side search, outcome filter and sorting, 10 per page", async () => {
+  const a = await run({ packaging: [] }), b = await run({ packaging: [] });
+  const ra = await reverse(a, 100);
+  const rb = await reverse(b, 300, { reversed_as: "rework", reason: "Wall below drawing minimum on bundle 4", reference: "NCR-77" });
+  const all = await rev("list", {}, i.viewer);
+  assert.deepEqual([all.total, all.sort, all.direction], [2, "reversed_at", "desc"]);
+  assert.deepEqual(all.rows.map(r => r.id), [rb.id, ra.id], "newest first by default");
+  assert.deepEqual((await rev("list", { sort: "reversed_kg", direction: "asc" })).rows.map(r => r.id), [ra.id, rb.id]);
+  assert.deepEqual((await rev("list", { reversed_as: "rework" })).rows.map(r => r.id), [rb.id]);
+  assert.deepEqual((await rev("list", { search: "ncr-77" })).rows.map(r => r.id), [rb.id], "searches the reference, case-insensitively");
+  const jobNumber = (await one("select job_number from production_jobs where id=$1", [a.job])).job_number;
+  assert.deepEqual((await rev("list", { search: jobNumber.toLowerCase() })).rows.map(r => r.id), [ra.id], "searches the job number");
+  await assert.rejects(() => rev("list", { sort: "reason" }), /Unknown sort/);
+  await assert.rejects(() => rev("list", { search: "x".repeat(81) }), /at most 80 characters/);
+  await assert.rejects(() => rev("list", { company_id: i.company }), /Unexpected field/);
+});
+
 test("the migration changes one function where it says so and wraps the reversal command", () => {
   const sql = readFileSync(new URL("../supabase/migrations/20261124200000_order_lifecycle_reversal_queued_packaging.sql", import.meta.url), "utf8");
   assert.equal((sql.match(/-- Queued packaging:/g) ?? []).length, 1);
