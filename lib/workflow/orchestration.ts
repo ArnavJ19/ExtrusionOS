@@ -27,7 +27,10 @@ export const RISK_LABELS: Record<string, string> = { late: "Late", at_risk: "At 
 export const TASK_KIND_LABELS: Record<string, string> = {
   billet_allocation: "Billet allocation", die_preparation: "Die preparation", billet_shortage: "Billet shortage", reproduction: "Reproduction",
   delivery_confirmation: "Delivery confirmation", delivery_followup: "Customer acceptance", containment: "QC containment", remelt_approval: "Remelt approval",
-  remelt_receipt: "Remelt receipt", priority_approval: "Priority approval", dispatch_clearance: "Dispatch finance clearance", dispatch_intimation: "Customer dispatch update"
+  remelt_receipt: "Remelt receipt", priority_approval: "Priority approval", dispatch_clearance: "Dispatch finance clearance", dispatch_intimation: "Customer dispatch update",
+  // Phase 5 (migration 20261124100000): production runs, ageing and final QC.
+  initial_qc: "Initial QC after the run", ageing_release: "Material released for ageing", ageing_cycle: "Ageing cycle overdue", ageing_review: "Ageing treatment review",
+  final_qc: "Final QC after ageing"
 };
 
 /** Where the work of a workflow task is done, and the label of that action. */
@@ -45,6 +48,11 @@ export function taskWorkLink(task: { kind: string; order_id: string | null; job_
     case "priority_approval": return { href: "/orders/priority-requests", label: "Decide priority" };
     case "dispatch_clearance": return { href: task.source_id ? `/dispatches/clearance/${task.source_id}` : "/dispatches/clearance", label: "Clear dispatch" };
     case "dispatch_intimation": return { href: task.source_id ? `/dispatches/communications/${task.source_id}` : "/dispatches/communications", label: "Send customer update" };
+    case "initial_qc": return { href: "/quality/new", label: "Record QC" };
+    case "ageing_release": return { href: "/tasks/specialist/new?action=treat.create", label: "Load ageing batch" };
+    case "ageing_cycle": return { href: task.source_id ? `/tasks/specialist/treatment/${task.source_id}` : "/tasks/specialist/database?view=treatment", label: "End the cycle" };
+    case "ageing_review": return { href: task.source_id ? `/tasks/specialist/treatment/${task.source_id}` : "/tasks/specialist/database?view=treatment", label: "Review the batch" };
+    case "final_qc": return { href: task.job_id ? `/quality/final-qc/${task.job_id}` : "/quality/final-qc", label: "Record final QC" };
     default: return { href: task.order_id ? `/orders/${task.order_id}/lifecycle` : "/orders/lifecycle", label: "Open order" };
   }
 }
@@ -84,7 +92,12 @@ export const orchestrationCommandSchema = z.discriminatedUnion("command", [
     command: z.literal("settings.save"),
     billet_rank_threshold: z.number().int().min(1).max(50).optional(), die_rank_threshold: z.number().int().min(1).max(50).optional(),
     material_risk_horizon_days: z.number().int().min(1).max(120).optional(), ack_sla_hours: z.number().int().min(1).max(168).optional(),
-    action_sla_hours: z.number().int().min(1).max(720).optional(), enforce_die_preparation: z.boolean().optional(), enforce_preheat: z.boolean().optional()
+    action_sla_hours: z.number().int().min(1).max(720).optional(), enforce_die_preparation: z.boolean().optional(), enforce_preheat: z.boolean().optional(),
+    // Phase 4 (migration 20261123100000): batch 2 settings and the finance release validity.
+    delivery_confirmation_days: z.number().int().min(1).max(60).optional(), reproduction_tolerance_kg: z.number().min(0).max(1000).optional(),
+    dispatch_release_hours: z.number().int().min(4).max(168).optional(),
+    // Phase 5 (migration 20261124100000): the QC route control and the ageing overdue grace.
+    enforce_qc_route: z.boolean().optional(), ageing_overdue_grace_minutes: z.number().int().min(0).max(720).optional()
   }).strict(),
   z.object({ command: z.literal("routing.save"), department: departmentEnum, stage: z.number().int().min(0).max(3), roles: z.array(roleEnum).min(1).max(8).optional(), reset: z.boolean().optional() }).strict(),
   z.object({
@@ -154,7 +167,10 @@ const blocker = z.object({ label: z.string().nullable(), department: z.string() 
 const quantities = z.object({
   ordered_kg: z.coerce.number(), produced_kg: z.coerce.number(), qc_accepted_kg: z.coerce.number(), qc_pending_kg: z.coerce.number(), qc_rejected_kg: z.coerce.number(),
   packed_kg: z.coerce.number(), dispatched_kg: z.coerce.number(), delivered_kg: z.coerce.number(), outstanding_kg: z.coerce.number(),
-  qc_held_kg: z.coerce.number().optional(), reproduction_shortfall_kg: z.coerce.number().optional()
+  qc_held_kg: z.coerce.number().optional(), reproduction_shortfall_kg: z.coerce.number().optional(),
+  // Phase 5: absent before migration 20261124100000.
+  awaiting_qc_decision_kg: z.coerce.number().optional(), awaiting_ageing_kg: z.coerce.number().optional(), in_ageing_kg: z.coerce.number().optional(),
+  awaiting_final_qc_kg: z.coerce.number().optional(), final_released_kg: z.coerce.number().optional(), final_rejected_kg: z.coerce.number().optional()
 });
 const orderHeader = z.object({
   id: z.string(), order_number: z.string(), customer_name: z.string().nullable(), priority: z.string().nullable(), current_stage: z.string(),
@@ -238,7 +254,9 @@ export type PrepDetail = z.infer<typeof prepDetailSchema>;
 
 export const settingsSchema = z.object({
   settings: z.object({ billet_rank_threshold: z.number(), die_rank_threshold: z.number(), material_risk_horizon_days: z.number(), ack_sla_hours: z.number(),
-    action_sla_hours: z.number(), enforce_die_preparation: z.boolean(), enforce_preheat: z.boolean() }).passthrough(),
+    action_sla_hours: z.number(), enforce_die_preparation: z.boolean(), enforce_preheat: z.boolean(),
+    delivery_confirmation_days: z.number().optional(), reproduction_tolerance_kg: z.coerce.number().optional(), dispatch_release_hours: z.number().optional(),
+    enforce_qc_route: z.boolean().optional(), ageing_overdue_grace_minutes: z.number().optional() }).passthrough(),
   can_edit: z.boolean(), can_edit_routing: z.boolean(), can_edit_standards: z.boolean(),
   routing: z.array(z.object({ department: z.string(), stage: z.number(), roles: z.array(z.string()), customised: z.boolean() })),
   standards: z.array(z.object({ id: z.string(), name: z.string(), die_type: z.string().nullable(), min_temperature_c: z.coerce.number(), max_temperature_c: z.coerce.number(),

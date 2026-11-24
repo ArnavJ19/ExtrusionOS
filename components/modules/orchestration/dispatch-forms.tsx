@@ -5,78 +5,98 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useSubmit } from "@/components/modules/orchestration/nonconforming-forms";
+import { updateDeliveryStatusAction } from "@/lib/actions/dispatches";
 import { dispatchCommAction, dispatchFinanceAction } from "@/lib/actions/orchestration";
+import { floorText, type FloorLanguage } from "@/lib/i18n/floor";
 import { CHANNEL_LABELS, composeDispatchMessage, messageLink, type DispatchFacts } from "@/lib/workflow/dispatch-orchestration";
 
 const input = "mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm";
 const box = "space-y-2 rounded-2xl border border-slate-200 bg-white p-4";
 
 // ------------------------------------------------------------------ Payment terms
-export function TermsForm({ customers, order }: { customers: { id: string; name: string }[]; order?: { id: string; number: string } }) {
+export function TermsForm({ customers, order, lang = "en" }: { customers: { id: string; name: string }[]; order?: { id: string; number: string }; lang?: FloorLanguage }) {
+  const t = floorText(lang);
   const { busy, submit, note } = useSubmit(dispatchFinanceAction);
   const [v, setV] = useState({ scope: order ? "order" : "customer", customer_id: customers[0]?.id ?? "", terms: "payment_before_dispatch", advance_percent: "30", reason: "" });
   return (
-    <form className={box} onSubmit={e => { e.preventDefault();
+    <form className={box} lang={lang} onSubmit={e => { e.preventDefault();
       submit({ command: "terms.set", scope: v.scope, terms: v.terms, reason: v.reason,
         ...(v.scope === "customer" ? { customer_id: v.customer_id } : {}), ...(v.scope === "order" && order ? { order_id: order.id } : {}),
-        ...(v.terms === "advance_part" ? { advance_percent: Number(v.advance_percent) } : {}) }, "Payment terms saved. Pending dispatches were re-checked."); }}>
-      <h2 className="text-lg font-bold">{order ? `Payment terms for order ${order.number}` : "Set payment terms"}</h2>
-      <p className="text-xs text-slate-600">An order follows its own terms, else its customer&apos;s, else the company default. Credit terms keep only the credit-limit and overdue checks.</p>
+        ...(v.terms === "advance_part" ? { advance_percent: Number(v.advance_percent) } : {}) }, t("olo.fc.savedDone")); }}>
+      <h2 className="text-lg font-bold">{order ? t("olo.fc.termsFor", { number: order.number }) : t("olo.fc.setTerms")}</h2>
+      <p className="text-xs text-slate-600">{t("olo.fc.termsHelp")}</p>
       <div className="grid gap-3 sm:grid-cols-2">
-        {!order ? <label className="text-sm font-semibold">Applies to<select className={input} value={v.scope} onChange={e => setV({ ...v, scope: e.target.value })}>
-          <option value="customer">One customer</option><option value="company">Company default</option></select></label> : null}
-        {!order && v.scope === "customer" ? <label className="text-sm font-semibold">Customer<select className={input} value={v.customer_id} onChange={e => setV({ ...v, customer_id: e.target.value })}>
+        {!order ? <label className="text-sm font-semibold">{t("olo.fc.appliesTo")}<select className={input} value={v.scope} onChange={e => setV({ ...v, scope: e.target.value })}>
+          <option value="customer">{t("olo.fc.oneCustomer")}</option><option value="company">{t("olo.fc.scope.company")}</option></select></label> : null}
+        {!order && v.scope === "customer" ? <label className="text-sm font-semibold">{t("olo.fc.customer")}<select className={input} value={v.customer_id} onChange={e => setV({ ...v, customer_id: e.target.value })}>
           {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label> : null}
-        <label className="text-sm font-semibold">Terms<select className={input} value={v.terms} onChange={e => setV({ ...v, terms: e.target.value })}>
-          <option value="payment_before_dispatch">Payment before dispatch</option><option value="advance_part">Advance part before dispatch</option><option value="credit">Credit terms</option></select></label>
-        {v.terms === "advance_part" ? <label className="text-sm font-semibold">Advance (% of order value)<input required inputMode="decimal" className={input} value={v.advance_percent} onChange={e => setV({ ...v, advance_percent: e.target.value })} /></label> : null}
+        <label className="text-sm font-semibold">{t("olo.fc.terms")}<select className={input} value={v.terms} onChange={e => setV({ ...v, terms: e.target.value })}>
+          <option value="payment_before_dispatch">{t("olo.fc.t.payment_before_dispatch")}</option><option value="advance_part">{t("olo.fc.t.advance_part")}</option><option value="credit">{t("olo.fc.t.credit")}</option></select></label>
+        {v.terms === "advance_part" ? <label className="text-sm font-semibold">{t("olo.fc.advance")}<input required inputMode="decimal" className={input} value={v.advance_percent} onChange={e => setV({ ...v, advance_percent: e.target.value })} /></label> : null}
       </div>
-      <label className="block text-sm font-semibold">Reason<input required minLength={5} maxLength={300} className={input} value={v.reason} onChange={e => setV({ ...v, reason: e.target.value })} placeholder="e.g. New customer — agreed in the order confirmation" /></label>
-      <Button disabled={busy || (v.scope === "customer" && !order && !v.customer_id)}>Save terms</Button>{note}
+      <label className="block text-sm font-semibold">{t("olo.fc.reason")}<input required minLength={5} maxLength={300} className={input} value={v.reason} onChange={e => setV({ ...v, reason: e.target.value })} placeholder={t("olo.fc.reasonHint")} /></label>
+      <Button disabled={busy || (v.scope === "customer" && !order && !v.customer_id)}>{t("olo.fc.saveTerms")}</Button>{note}
     </form>
   );
 }
 
-export function ClearTermsButton({ id }: { id: string }) {
+export function ClearTermsButton({ id, lang = "en" }: { id: string; lang?: FloorLanguage }) {
+  const t = floorText(lang);
   const { busy, submit, note } = useSubmit(dispatchFinanceAction);
   const [reason, setReason] = useState("");
   return (
-    <details className="text-sm"><summary className="cursor-pointer font-semibold underline">Remove</summary>
-      <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={e => { e.preventDefault(); submit({ command: "terms.clear", id, reason }, "Terms removed."); }}>
-        <label className="text-xs font-semibold">Reason<input required minLength={5} maxLength={300} className={input} value={reason} onChange={e => setReason(e.target.value)} /></label>
-        <Button variant="secondary" disabled={busy}>Remove terms</Button>{note}
+    <details className="text-sm" lang={lang}><summary className="cursor-pointer font-semibold underline">{t("olo.fc.remove")}</summary>
+      <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={e => { e.preventDefault(); submit({ command: "terms.clear", id, reason }, t("olo.fc.removedDone")); }}>
+        <label className="text-xs font-semibold">{t("olo.fc.reason")}<input required minLength={5} maxLength={300} className={input} value={reason} onChange={e => setReason(e.target.value)} /></label>
+        <Button variant="secondary" disabled={busy}>{t("olo.fc.removeTerms")}</Button>{note}
       </form></details>
   );
 }
 
 // ------------------------------------------------------------------ Finance release
-export function ReleaseForm({ dispatchId, canException }: { dispatchId: string; canException: boolean }) {
+export function ReleaseForm({ dispatchId, canException, hours = 48, lang = "en" }: { dispatchId: string; canException: boolean; hours?: number; lang?: FloorLanguage }) {
+  const t = floorText(lang);
   const { busy, submit, note } = useSubmit(dispatchFinanceAction);
   const [v, setV] = useState({ basis: "payment_confirmed", reference: "", note: "" });
   return (
-    <form className={box} onSubmit={e => { e.preventDefault();
-      submit({ command: "release", dispatch_id: dispatchId, basis: v.basis, note: v.note, ...(v.reference ? { reference: v.reference } : {}) }, "Released for 48 hours. Dispatch can now go out."); }}>
-      <h2 className="text-lg font-bold">Release this dispatch</h2>
-      <p className="text-xs text-slate-600">Use when the payment has reached the bank but is not yet posted. A release covers this dispatch at its current value, lasts 48 hours and is used once at the gate.</p>
+    <form className={box} lang={lang} onSubmit={e => { e.preventDefault();
+      submit({ command: "release", dispatch_id: dispatchId, basis: v.basis, note: v.note, ...(v.reference ? { reference: v.reference } : {}) }, t("olo.fc.releasedDone", { hours })); }}>
+      <h2 className="text-lg font-bold">{t("olo.fc.releaseTitle")}</h2>
+      <p className="text-xs text-slate-600">{t("olo.fc.releaseHelp", { hours })}</p>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-sm font-semibold">Basis<select className={input} value={v.basis} onChange={e => setV({ ...v, basis: e.target.value })}>
-          <option value="payment_confirmed">Payment confirmed (reference)</option>{canException ? <option value="approved_exception">Owner exception</option> : null}</select></label>
-        {v.basis === "payment_confirmed" ? <label className="text-sm font-semibold">UTR / cheque / receipt number<input required minLength={4} maxLength={80} className={input} value={v.reference} onChange={e => setV({ ...v, reference: e.target.value })} /></label> : null}
+        <label className="text-sm font-semibold">{t("olo.fc.basis")}<select className={input} value={v.basis} onChange={e => setV({ ...v, basis: e.target.value })}>
+          <option value="payment_confirmed">{t("olo.fc.basisPayment")}</option>{canException ? <option value="approved_exception">{t("olo.fc.basisException")}</option> : null}</select></label>
+        {v.basis === "payment_confirmed" ? <label className="text-sm font-semibold">{t("olo.fc.reference")}<input required minLength={4} maxLength={80} className={input} value={v.reference} onChange={e => setV({ ...v, reference: e.target.value })} /></label> : null}
       </div>
-      <label className="block text-sm font-semibold">Basis of the release<textarea required minLength={10} maxLength={500} rows={2} className={input} value={v.note} onChange={e => setV({ ...v, note: e.target.value })} /></label>
-      <Button disabled={busy}>Record release</Button>{note}
+      <label className="block text-sm font-semibold">{t("olo.fc.basisNote")}<textarea required minLength={10} maxLength={500} rows={2} className={input} value={v.note} onChange={e => setV({ ...v, note: e.target.value })} /></label>
+      <Button disabled={busy}>{t("olo.fc.recordRelease")}</Button>{note}
     </form>
   );
 }
 
-export function RevokeReleaseButton({ releaseId }: { releaseId: string }) {
+export function RevokeReleaseButton({ releaseId, lang = "en" }: { releaseId: string; lang?: FloorLanguage }) {
+  const t = floorText(lang);
   const { busy, submit, note } = useSubmit(dispatchFinanceAction);
   const [reason, setReason] = useState("");
   return (
-    <form className="mt-2 flex flex-wrap items-end gap-2" onSubmit={e => { e.preventDefault(); submit({ command: "revoke", release_id: releaseId, reason }, "Release withdrawn."); }}>
-      <label className="text-xs font-semibold">Withdraw — reason<input required minLength={5} maxLength={300} className={input} value={reason} onChange={e => setReason(e.target.value)} /></label>
-      <Button variant="secondary" disabled={busy}>Withdraw release</Button>{note}
+    <form className="mt-2 flex flex-wrap items-end gap-2" lang={lang} onSubmit={e => { e.preventDefault(); submit({ command: "revoke", release_id: releaseId, reason }, t("olo.fc.withdrawnDone")); }}>
+      <label className="text-xs font-semibold">{t("olo.fc.withdrawReason")}<input required minLength={5} maxLength={300} className={input} value={reason} onChange={e => setReason(e.target.value)} /></label>
+      <Button variant="secondary" disabled={busy}>{t("olo.fc.withdraw")}</Button>{note}
     </form>
+  );
+}
+
+/** Review fix: a dispatch kept pending for finance clearance leaves through the normal delivery step once cleared. */
+export function SendOutButton({ dispatchId, lang = "en" }: { dispatchId: string; lang?: FloorLanguage }) {
+  const t = floorText(lang);
+  const { busy, submit, note } = useSubmit(input => updateDeliveryStatusAction(dispatchId, String((input as { status: string }).status))
+    .then(r => (r.success ? { success: true as const, data: r } : { success: false as const, error: r.error })));
+  return (
+    <div className={box} lang={lang}>
+      <h2 className="text-lg font-bold">{t("olo.fc.sendOutTitle")}</h2>
+      <p className="text-xs text-slate-600">{t("olo.fc.sendOutHelp")}</p>
+      <Button disabled={busy} onClick={() => submit({ status: "dispatched" }, t("olo.fc.sentOutDone"))}>{t("olo.fc.sendOut")}</Button>{note}
+    </div>
   );
 }
 

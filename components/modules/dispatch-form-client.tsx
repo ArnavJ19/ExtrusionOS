@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { getDispatchSourcesAction, saveDispatchAction } from "@/lib/actions/dispatches";
+import { FINANCE_HELD_MESSAGE } from "@/lib/workflow/dispatch-orchestration";
 import { hasDuplicates, warnDuplicates } from "@/components/modules/order-to-cash/duplicate-warning";
 import { dispatchOrderBalanceAction } from "@/lib/actions/dispatch-order-balance";
 import { createClient } from "@/lib/supabase/browser";
@@ -61,6 +62,7 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
   const [submitError,setSubmitError]=useState<string|null>(null);
   const [confirmationUnknown,setConfirmationUnknown]=useState(false);
   const [savedId,setSavedId]=useState<string|null>(null);
+  const [held,setHeld]=useState(false);
   const selectedOrderId=useRef("");
   const saving=useRef(false);
   const mounted=useRef(true);
@@ -293,8 +295,9 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
         if(!mounted.current)return;
         if(hasDuplicates(result)){setSubmitError(result.error);warnDuplicates(result.duplicates,()=>submit(true),href=>router.push(href));return;}
         if(result?.success===false){setReview(null);setSubmitError(result.error||"Could not record dispatch.");return;}
-        const confirmation=z.object({success:z.literal(true),dispatchId:z.string().uuid()}).parse(result);
+        const confirmation=z.object({success:z.literal(true),dispatchId:z.string().uuid(),held:z.literal("finance").optional()}).parse(result);
         setSavedId(confirmation.dispatchId);
+        setHeld(confirmation.held==="finance");
         if (repeatSource) {
           const fields = repeatLineageFields("dispatches", repeatSource.draft.copied, { order_id: orderId, transporter_name: transporterName, vehicle_number: vehicleNumber.toUpperCase(), driver_name: driverName, driver_phone: driverPhone }, { ...repeatSource.draft.values, vehicle_number: (repeatSource.draft.values.vehicle_number ?? "").toUpperCase() });
           // The lineage is informational; a failure never undoes the recorded dispatch.
@@ -302,6 +305,7 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
         }
         draft.confirmed();
         setReview(null);
+        if(confirmation.held==="finance"){toast.warning(FINANCE_HELD_MESSAGE);router.push(`/dispatches/clearance/${confirmation.dispatchId}`);router.refresh();return;}
         toast.success("Dispatch recorded from operator-verified physical bundles");
         router.push(`/dispatches/${confirmation.dispatchId}`);router.refresh();
       }catch{
@@ -378,6 +382,7 @@ function DispatchPreparationForm({context, initialOrderId}:{context:SessionConte
       <Card><CardContent><label className="block space-y-1.5"><span className="form-label">Loading remarks</span><textarea className="form-input min-h-24" value={remarks} onChange={(event) => setRemarks(event.target.value)} /></label>
         {manifestError&&sources.length?<p className="mt-4 text-sm text-slate-600">{manifestError}</p>:null}
         {submitError?<div role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><p>{submitError}</p>{confirmationUnknown?<Link href="/dispatches/database" className="mt-2 inline-block font-semibold underline">Check dispatch records</Link>:null}</div>:null}
+        {savedId&&held?<div role="status" className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><p>{FINANCE_HELD_MESSAGE}</p><Link href={`/dispatches/clearance/${savedId}`} className="mt-2 inline-block font-semibold underline">Open finance clearance</Link></div>:null}
         {savedId?<Link href={`/dispatches/${savedId}`} className="mt-4 inline-block text-sm font-semibold underline">View recorded dispatch</Link>:null}
         <div className="mt-5 flex justify-end"><Button type="button" disabled={!canSubmit} onClick={() => void prepareReview()}>{reviewing ? "Rechecking the load..." : "Review dispatch"}</Button></div></CardContent></Card>
       </fieldset>

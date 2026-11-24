@@ -21,7 +21,8 @@ type SaveDispatchInput = Omit<z.input<typeof dispatchSchema>, "number_of_bundles
   bundles?: VerifiedDispatchBundleInput[];
   confirm_duplicate?: DuplicateConfirmation;
 };
-type DispatchActionResult = { success: true; dispatchId?: string } | { success: false; error: string; duplicates?: DuplicateMatch[] };
+// `held: "finance"`: the dispatch is recorded but stays pending until its payment terms are met or accounts release it.
+type DispatchActionResult = { success: true; dispatchId?: string; held?: "finance" } | { success: false; error: string; duplicates?: DuplicateMatch[] };
 
 function revalidateDispatchPaths(dispatchId?: string, orderId?: string) {
   revalidatePath("/dispatches");
@@ -322,9 +323,14 @@ export async function saveDispatchAction(input: SaveDispatchInput): Promise<Disp
     });
     if (result.error || !result.data) throw result.error ?? new Error("Could not save dispatch");
     const dispatchId = String(result.data);
+    // The database keeps a dispatch pending when its payment terms are not met (finance clearance).
+    const saved = await supabase.from("dispatches").select("delivery_status").eq("company_id", context.companyId).eq("id", dispatchId).maybeSingle();
+    // The writer activates every saved dispatch unless finance holds it, so pending after the save means held.
+    const held = saved.data?.delivery_status === "pending";
 
     revalidateDispatchPaths(dispatchId, parsed.data.order_id);
-    return { success: true, dispatchId };
+    try { revalidatePath("/dispatches/clearance"); } catch { /* the dispatch is recorded either way */ }
+    return held ? { success: true, dispatchId, held: "finance" } : { success: true, dispatchId };
   } catch (error) {
     return { success: false, error: getErrorMessage(error, "Could not save dispatch") };
   }

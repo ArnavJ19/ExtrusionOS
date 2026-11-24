@@ -30,10 +30,16 @@ export function OrchestrationSettingsForm({ data }: { data: OrchestrationSetting
   const { busy, message, run } = useRun();
   const [s, setS] = useState(data.settings);
   const num = (key: keyof typeof s) => (e: React.ChangeEvent<HTMLInputElement>) => setS({ ...s, [key]: Number(e.target.value) });
+  const phase4 = s.dispatch_release_hours !== undefined;
+  const phase5 = s.enforce_qc_route !== undefined;
   return (
     <form className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4" onSubmit={e => { e.preventDefault(); run({ command: "settings.save", billet_rank_threshold: s.billet_rank_threshold, die_rank_threshold: s.die_rank_threshold,
       material_risk_horizon_days: s.material_risk_horizon_days, ack_sla_hours: s.ack_sla_hours, action_sla_hours: s.action_sla_hours, enforce_die_preparation: s.enforce_die_preparation,
-      enforce_preheat: s.enforce_die_preparation && s.enforce_preheat }, "Settings saved and the queue re-checked."); }}>
+      enforce_preheat: s.enforce_die_preparation && s.enforce_preheat,
+      // Phase 4 saves these; before that upgrade the database reports no release validity and accepts none of them.
+      ...(phase4 ? { delivery_confirmation_days: s.delivery_confirmation_days, reproduction_tolerance_kg: s.reproduction_tolerance_kg, dispatch_release_hours: s.dispatch_release_hours } : {}),
+      // Phase 5 saves these; before that upgrade the database reports no QC route control.
+      ...(phase5 ? { enforce_qc_route: s.enforce_qc_route, ageing_overdue_grace_minutes: s.ageing_overdue_grace_minutes } : {}) }, "Settings saved and the queue re-checked."); }}>
       <h2 className="text-lg font-bold">Queue triggers and response times</h2>
       <fieldset disabled={!data.can_edit || busy} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label className="text-sm font-semibold">Billet allocation at queue rank ≤<input type="number" min={1} max={50} className={input} value={s.billet_rank_threshold} onChange={num("billet_rank_threshold")} /></label>
@@ -41,12 +47,18 @@ export function OrchestrationSettingsForm({ data }: { data: OrchestrationSetting
         <label className="text-sm font-semibold">Billet shortage forecast horizon (days)<input type="number" min={1} max={120} className={input} value={s.material_risk_horizon_days} onChange={num("material_risk_horizon_days")} /></label>
         <label className="text-sm font-semibold">Acknowledge within (hours)<input type="number" min={1} max={168} className={input} value={s.ack_sla_hours} onChange={num("ack_sla_hours")} /></label>
         <label className="text-sm font-semibold">Complete within (hours)<input type="number" min={1} max={720} className={input} value={s.action_sla_hours} onChange={num("action_sla_hours")} /></label>
+        {phase4 ? <label className="text-sm font-semibold">Confirm delivery within (days after dispatch, when no appointment)<input type="number" min={1} max={60} className={input} value={s.delivery_confirmation_days} onChange={num("delivery_confirmation_days")} /></label> : null}
+        {phase4 ? <label className="text-sm font-semibold">Reproduction tolerance (kg short before planning is asked)<input type="number" min={0} max={1000} step="0.001" className={input} value={s.reproduction_tolerance_kg} onChange={num("reproduction_tolerance_kg")} /></label> : null}
+        {phase4 ? <label className="text-sm font-semibold">A finance release lasts (hours)<input type="number" min={4} max={168} className={input} value={s.dispatch_release_hours} onChange={num("dispatch_release_hours")} /></label> : null}
+        {phase5 ? <label className="text-sm font-semibold">Ageing cycle overdue after the recipe&apos;s maximum soak plus (minutes)<input type="number" min={0} max={720} className={input} value={s.ageing_overdue_grace_minutes} onChange={num("ageing_overdue_grace_minutes")} /></label> : null}
       </fieldset>
       <fieldset disabled={!data.can_edit || busy} className="space-y-2">
         <label className="flex min-h-11 items-start gap-3 text-sm"><input type="checkbox" className="mt-1 h-5 w-5" checked={s.enforce_die_preparation} onChange={e => setS({ ...s, enforce_die_preparation: e.target.checked, enforce_preheat: e.target.checked && s.enforce_preheat })} />
           <span><b>Refuse production start unless the die preparation is recorded.</b> Switch on once the tool room records every die check and preparation in ExtrusionOS.</span></label>
         <label className="flex min-h-11 items-start gap-3 text-sm"><input type="checkbox" className="mt-1 h-5 w-5" disabled={!s.enforce_die_preparation} checked={s.enforce_preheat} onChange={e => setS({ ...s, enforce_preheat: e.target.checked })} />
           <span><b>Also refuse start unless the die is preheated within the approved standard and hold time.</b> Needs an approved preheat standard for every die type in use.</span></label>
+        {phase5 ? <label className="flex min-h-11 items-start gap-3 text-sm"><input type="checkbox" className="mt-1 h-5 w-5" checked={s.enforce_qc_route ?? false} onChange={e => setS({ ...s, enforce_qc_route: e.target.checked })} />
+          <span><b>Enforce the QC route.</b> Material is loaded for ageing only up to its first-stage QC approval, and a job whose profile needs artificial ageing is packed only up to what final QC after ageing released. Switch on once QA records the final QC of aged material in ExtrusionOS and every profile records its temper or ageing requirement.</span></label> : null}
       </fieldset>
       {data.can_edit ? <Button disabled={busy}>Save settings</Button> : <p className="text-sm text-slate-600">Only the owner, admin or factory manager can change these settings.</p>}
       <Message message={message} />

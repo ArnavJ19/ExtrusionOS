@@ -82,6 +82,9 @@ const roleRules: RoleRule[] = [
   { prefix: "/dies/preparation", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "quality", "viewer"] },
   { prefix: "/tasks/orchestration", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer"] },
   { prefix: "/quality/containment", roles: ["owner", "admin", "quality", "factory_manager", "production_manager", "production", "viewer"] },
+  { prefix: "/quality/reversals", roles: ["owner", "admin", "quality", "factory_manager", "production_manager", "production", "viewer"] },
+  // Phase 5: the ageing team (production) and packaging (dispatch manager) follow what final QC released.
+  { prefix: "/quality/final-qc", roles: ["owner", "admin", "quality", "factory_manager", "production_manager", "production", "dispatch_manager", "viewer"] },
   { prefix: "/foundry/remelt", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "inventory_manager", "quality", "dispatch_manager", "viewer"] },
   { prefix: "/orders/lifecycle", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer"] },
   { prefix: "/vendors/purchasing", roles: ["owner", "admin", "accounts", "inventory_manager"] },

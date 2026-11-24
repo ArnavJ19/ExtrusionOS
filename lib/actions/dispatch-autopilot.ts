@@ -6,6 +6,7 @@
 // (AP-083) files are built here from database facts and recorded as exported only after the file is built.
 import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { FINANCE_HELD_MESSAGE } from "@/lib/workflow/dispatch-orchestration";
 import { z } from "zod";
 import { getSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -59,6 +60,12 @@ export async function completeLoadingAction(input: { sessionId: string; confirmD
       if (!saved.success) return { success: false, error: saved.error, duplicates: saved.duplicates };
       if (!saved.dispatchId) return { success: false, error: "The dispatch was not created. Refresh the session and try again." };
       dispatchId = saved.dispatchId;
+    }
+    // A dispatch kept pending for finance clearance has not left: the session stays open until it does.
+    const state = await supabase.from("dispatches").select("delivery_status, dispatch_number").eq("id", dispatchId).maybeSingle();
+    if (state.data?.delivery_status === "pending") {
+      for (const path of ["/dispatches", "/dispatches/loading", "/dispatches/clearance"]) { try { revalidatePath(path); } catch { /* outcome stands */ } }
+      return { success: false, error: `${FINANCE_HELD_MESSAGE} Tap Complete again once dispatch ${state.data.dispatch_number ?? "it"} has left.` };
     }
     const done = await supabase.rpc("ap_dispatch", { p_command: "complete", p_payload: { id: sessionId, dispatch_id: dispatchId } });
     if (done.error) return { success: false, error: dbMessage(done.error, "The dispatch was written but the session could not be closed. Tap Complete again to finish.") };
