@@ -15,6 +15,8 @@ export const qrEntityTypes = [
   "machine",
   "maintenance",
   "document",
+  // Phase 6: a prepared bundle, resolved by its tag or an EO2 label through the bundle trace (not offered by the QR generator).
+  "bundle",
 ] as const;
 
 export type QrEntityType = (typeof qrEntityTypes)[number];

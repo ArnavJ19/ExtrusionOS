@@ -85,6 +85,11 @@ const roleRules: RoleRule[] = [
   { prefix: "/quality/reversals", roles: ["owner", "admin", "quality", "factory_manager", "production_manager", "production", "viewer"] },
   // Phase 5: the ageing team (production) and packaging (dispatch manager) follow what final QC released.
   { prefix: "/quality/final-qc", roles: ["owner", "admin", "quality", "factory_manager", "production_manager", "production", "dispatch_manager", "viewer"] },
+  // Phase 6: the bundle register and trace serve QA (recalls), stores and accounts too; finished-goods receipt is
+  // done by dispatch and stores; packaging release is read by QA and planning.
+  { prefix: "/packaging/bundles", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "quality", "accounts", "viewer"] },
+  { prefix: "/packaging/fg-transfers", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "viewer"] },
+  { prefix: "/packaging/release", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "quality", "viewer"] },
   { prefix: "/foundry/remelt", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "inventory_manager", "quality", "dispatch_manager", "viewer"] },
   { prefix: "/orders/lifecycle", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer"] },
   { prefix: "/vendors/purchasing", roles: ["owner", "admin", "accounts", "inventory_manager"] },

@@ -47,6 +47,15 @@ export default async function OrderLifecycleDetailPage({ params }: { params: Pro
     ledger.splice(3, 0, ["olo.lc.l.awaitingAgeing", q.awaiting_ageing_kg ?? 0, "olo.lc.s.ageing"], ["olo.lc.l.inAgeing", q.in_ageing_kg ?? 0, "olo.lc.s.treatment"],
       ["olo.lc.l.awaitingFinal", q.awaiting_final_qc_kg ?? 0, "olo.lc.s.treatment"], ["olo.lc.l.finalReleased", q.final_released_kg ?? 0, "olo.lc.s.finalQc"]);
   }
+  // Phase 6: packaging release, finished goods and invoicing, once the database reports them.
+  if (q.released_for_packing_kg !== undefined) {
+    const pos = ledger.findIndex(([key]) => key === "olo.lc.l.packed");
+    ledger.splice(pos < 0 ? ledger.length : pos, 0, ["olo.lc.l.releasedPacking", q.released_for_packing_kg ?? 0, "olo.lc.s.release"], ["olo.lc.l.toPack", q.to_pack_kg ?? 0, "olo.lc.s.release"]);
+    const after = ledger.findIndex(([key]) => key === "olo.lc.l.packed") + 1;
+    ledger.splice(after, 0, ["olo.lc.l.inTransfer", q.in_fg_transfer_kg ?? 0, "olo.lc.s.fg"], ["olo.lc.l.inFg", q.in_fg_kg ?? 0, "olo.lc.s.fg"]);
+    const dispatched = ledger.findIndex(([key]) => key === "olo.lc.l.dispatched") + 1;
+    ledger.splice(dispatched, 0, ["olo.lc.l.invoiced", q.invoiced_kg ?? 0, "olo.lc.s.invoices"]);
+  }
   const flowOf = (job: Record<string, unknown>) => {
     const parsed = qualityFlowSchema.safeParse(job.quality_flow);
     return parsed.success ? parsed.data : null;

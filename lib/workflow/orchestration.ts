@@ -30,7 +30,9 @@ export const TASK_KIND_LABELS: Record<string, string> = {
   remelt_receipt: "Remelt receipt", priority_approval: "Priority approval", dispatch_clearance: "Dispatch finance clearance", dispatch_intimation: "Customer dispatch update",
   // Phase 5 (migration 20261124100000): production runs, ageing and final QC.
   initial_qc: "Initial QC after the run", ageing_release: "Material released for ageing", ageing_cycle: "Ageing cycle overdue", ageing_review: "Ageing treatment review",
-  final_qc: "Final QC after ageing"
+  final_qc: "Final QC after ageing",
+  // Phase 6 (migration 20261125100000): finished goods and invoicing.
+  fg_transfer: "Move bundles to finished goods", fg_receipt: "Receive a finished-goods transfer", dispatch_invoice: "Invoice a dispatch that left"
 };
 
 /** Where the work of a workflow task is done, and the label of that action. */
@@ -53,6 +55,9 @@ export function taskWorkLink(task: { kind: string; order_id: string | null; job_
     case "ageing_cycle": return { href: task.source_id ? `/tasks/specialist/treatment/${task.source_id}` : "/tasks/specialist/database?view=treatment", label: "End the cycle" };
     case "ageing_review": return { href: task.source_id ? `/tasks/specialist/treatment/${task.source_id}` : "/tasks/specialist/database?view=treatment", label: "Review the batch" };
     case "final_qc": return { href: task.job_id ? `/quality/final-qc/${task.job_id}` : "/quality/final-qc", label: "Record final QC" };
+    case "fg_transfer": return { href: task.order_id ? `/packaging/fg-transfers/new?order_id=${task.order_id}` : "/packaging/fg-transfers/new", label: "Send to finished goods" };
+    case "fg_receipt": return { href: task.source_id ? `/packaging/fg-transfers/${task.source_id}` : "/packaging/fg-transfers", label: "Scan bundles in" };
+    case "dispatch_invoice": return { href: "/invoices/drafts", label: "Issue the invoice" };
     default: return { href: task.order_id ? `/orders/${task.order_id}/lifecycle` : "/orders/lifecycle", label: "Open order" };
   }
 }
@@ -97,7 +102,9 @@ export const orchestrationCommandSchema = z.discriminatedUnion("command", [
     delivery_confirmation_days: z.number().int().min(1).max(60).optional(), reproduction_tolerance_kg: z.number().min(0).max(1000).optional(),
     dispatch_release_hours: z.number().int().min(4).max(168).optional(),
     // Phase 5 (migration 20261124100000): the QC route control and the ageing overdue grace.
-    enforce_qc_route: z.boolean().optional(), ageing_overdue_grace_minutes: z.number().int().min(0).max(720).optional()
+    enforce_qc_route: z.boolean().optional(), ageing_overdue_grace_minutes: z.number().int().min(0).max(720).optional(),
+    // Phase 6 (migration 20261125100000): finished-goods transfer and invoice reminders, and the receipt control.
+    fg_transfer_hours: z.number().int().min(1).max(168).optional(), invoice_due_hours: z.number().int().min(0).max(168).optional(), enforce_fg_receipt: z.boolean().optional()
   }).strict(),
   z.object({ command: z.literal("routing.save"), department: departmentEnum, stage: z.number().int().min(0).max(3), roles: z.array(roleEnum).min(1).max(8).optional(), reset: z.boolean().optional() }).strict(),
   z.object({
@@ -170,7 +177,10 @@ const quantities = z.object({
   qc_held_kg: z.coerce.number().optional(), reproduction_shortfall_kg: z.coerce.number().optional(),
   // Phase 5: absent before migration 20261124100000.
   awaiting_qc_decision_kg: z.coerce.number().optional(), awaiting_ageing_kg: z.coerce.number().optional(), in_ageing_kg: z.coerce.number().optional(),
-  awaiting_final_qc_kg: z.coerce.number().optional(), final_released_kg: z.coerce.number().optional(), final_rejected_kg: z.coerce.number().optional()
+  awaiting_final_qc_kg: z.coerce.number().optional(), final_released_kg: z.coerce.number().optional(), final_rejected_kg: z.coerce.number().optional(),
+  // Phase 6: absent before migration 20261125100000.
+  released_for_packing_kg: z.coerce.number().optional(), to_pack_kg: z.coerce.number().optional(), in_fg_kg: z.coerce.number().optional(),
+  in_fg_transfer_kg: z.coerce.number().optional(), invoiced_kg: z.coerce.number().optional(), dispatches_not_invoiced: z.coerce.number().optional()
 });
 const orderHeader = z.object({
   id: z.string(), order_number: z.string(), customer_name: z.string().nullable(), priority: z.string().nullable(), current_stage: z.string(),
@@ -256,7 +266,8 @@ export const settingsSchema = z.object({
   settings: z.object({ billet_rank_threshold: z.number(), die_rank_threshold: z.number(), material_risk_horizon_days: z.number(), ack_sla_hours: z.number(),
     action_sla_hours: z.number(), enforce_die_preparation: z.boolean(), enforce_preheat: z.boolean(),
     delivery_confirmation_days: z.number().optional(), reproduction_tolerance_kg: z.coerce.number().optional(), dispatch_release_hours: z.number().optional(),
-    enforce_qc_route: z.boolean().optional(), ageing_overdue_grace_minutes: z.number().optional() }).passthrough(),
+    enforce_qc_route: z.boolean().optional(), ageing_overdue_grace_minutes: z.number().optional(),
+    fg_transfer_hours: z.number().optional(), invoice_due_hours: z.number().optional(), enforce_fg_receipt: z.boolean().optional() }).passthrough(),
   can_edit: z.boolean(), can_edit_routing: z.boolean(), can_edit_standards: z.boolean(),
   routing: z.array(z.object({ department: z.string(), stage: z.number(), roles: z.array(z.string()), customised: z.boolean() })),
   standards: z.array(z.object({ id: z.string(), name: z.string(), die_type: z.string().nullable(), min_temperature_c: z.coerce.number(), max_temperature_c: z.coerce.number(),

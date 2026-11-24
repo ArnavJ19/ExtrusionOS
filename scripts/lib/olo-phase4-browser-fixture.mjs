@@ -95,9 +95,9 @@ export async function createOloPhase4BrowserFixture() {
     try {
       if (path === "/call") {
         const { fn, args, actor } = JSON.parse(Buffer.concat(chunks).toString("utf8"));
-        const module = ORCH.includes(fn) ? orchestration : DISP.includes(fn) ? dispatches : null;
-        if (!module) { json(response, 400, { success: false, error: "Unknown action" }); return; }
-        json(response, 200, await serialized(async () => { await as(actor); return module.actions[fn](...args); }));
+        const target = ORCH.includes(fn) ? orchestration : DISP.includes(fn) ? dispatches : null;
+        if (!target) { json(response, 400, { success: false, error: "Unknown action" }); return; }
+        json(response, 200, await serialized(async () => { await as(actor); return target.actions[fn](...args); }));
       } else if (path === "/alerts") {
         // The notification inbox of one employee: their own messages and their role's, newest first (as /notifications).
         const user = url.searchParams.get("user");

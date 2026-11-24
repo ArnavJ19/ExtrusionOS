@@ -32,6 +32,7 @@ export function OrchestrationSettingsForm({ data }: { data: OrchestrationSetting
   const num = (key: keyof typeof s) => (e: React.ChangeEvent<HTMLInputElement>) => setS({ ...s, [key]: Number(e.target.value) });
   const phase4 = s.dispatch_release_hours !== undefined;
   const phase5 = s.enforce_qc_route !== undefined;
+  const phase6 = s.enforce_fg_receipt !== undefined;
   return (
     <form className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4" onSubmit={e => { e.preventDefault(); run({ command: "settings.save", billet_rank_threshold: s.billet_rank_threshold, die_rank_threshold: s.die_rank_threshold,
       material_risk_horizon_days: s.material_risk_horizon_days, ack_sla_hours: s.ack_sla_hours, action_sla_hours: s.action_sla_hours, enforce_die_preparation: s.enforce_die_preparation,
@@ -39,7 +40,9 @@ export function OrchestrationSettingsForm({ data }: { data: OrchestrationSetting
       // Phase 4 saves these; before that upgrade the database reports no release validity and accepts none of them.
       ...(phase4 ? { delivery_confirmation_days: s.delivery_confirmation_days, reproduction_tolerance_kg: s.reproduction_tolerance_kg, dispatch_release_hours: s.dispatch_release_hours } : {}),
       // Phase 5 saves these; before that upgrade the database reports no QC route control.
-      ...(phase5 ? { enforce_qc_route: s.enforce_qc_route, ageing_overdue_grace_minutes: s.ageing_overdue_grace_minutes } : {}) }, "Settings saved and the queue re-checked."); }}>
+      ...(phase5 ? { enforce_qc_route: s.enforce_qc_route, ageing_overdue_grace_minutes: s.ageing_overdue_grace_minutes } : {}),
+      // Phase 6 saves these; before that upgrade the database reports no finished-goods receipt control.
+      ...(phase6 ? { enforce_fg_receipt: s.enforce_fg_receipt, fg_transfer_hours: s.fg_transfer_hours, invoice_due_hours: s.invoice_due_hours } : {}) }, "Settings saved and the queue re-checked."); }}>
       <h2 className="text-lg font-bold">Queue triggers and response times</h2>
       <fieldset disabled={!data.can_edit || busy} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label className="text-sm font-semibold">Billet allocation at queue rank ≤<input type="number" min={1} max={50} className={input} value={s.billet_rank_threshold} onChange={num("billet_rank_threshold")} /></label>
@@ -51,6 +54,8 @@ export function OrchestrationSettingsForm({ data }: { data: OrchestrationSetting
         {phase4 ? <label className="text-sm font-semibold">Reproduction tolerance (kg short before planning is asked)<input type="number" min={0} max={1000} step="0.001" className={input} value={s.reproduction_tolerance_kg} onChange={num("reproduction_tolerance_kg")} /></label> : null}
         {phase4 ? <label className="text-sm font-semibold">A finance release lasts (hours)<input type="number" min={4} max={168} className={input} value={s.dispatch_release_hours} onChange={num("dispatch_release_hours")} /></label> : null}
         {phase5 ? <label className="text-sm font-semibold">Ageing cycle overdue after the recipe&apos;s maximum soak plus (minutes)<input type="number" min={0} max={720} className={input} value={s.ageing_overdue_grace_minutes} onChange={num("ageing_overdue_grace_minutes")} /></label> : null}
+        {phase6 ? <label className="text-sm font-semibold">Remind packaging to move packed bundles to finished goods after (hours)<input type="number" min={1} max={168} className={input} value={s.fg_transfer_hours} onChange={num("fg_transfer_hours")} /></label> : null}
+        {phase6 ? <label className="text-sm font-semibold">Ask finance for the tax invoice of a dispatch that left after (hours; 0 = at once)<input type="number" min={0} max={168} className={input} value={s.invoice_due_hours} onChange={num("invoice_due_hours")} /></label> : null}
       </fieldset>
       <fieldset disabled={!data.can_edit || busy} className="space-y-2">
         <label className="flex min-h-11 items-start gap-3 text-sm"><input type="checkbox" className="mt-1 h-5 w-5" checked={s.enforce_die_preparation} onChange={e => setS({ ...s, enforce_die_preparation: e.target.checked, enforce_preheat: e.target.checked && s.enforce_preheat })} />
@@ -59,6 +64,8 @@ export function OrchestrationSettingsForm({ data }: { data: OrchestrationSetting
           <span><b>Also refuse start unless the die is preheated within the approved standard and hold time.</b> Needs an approved preheat standard for every die type in use.</span></label>
         {phase5 ? <label className="flex min-h-11 items-start gap-3 text-sm"><input type="checkbox" className="mt-1 h-5 w-5" checked={s.enforce_qc_route ?? false} onChange={e => setS({ ...s, enforce_qc_route: e.target.checked })} />
           <span><b>Enforce the QC route.</b> Material is loaded for ageing only up to its first-stage QC approval, and a job whose profile needs artificial ageing is packed only up to what final QC after ageing released. Switch on once QA records the final QC of aged material in ExtrusionOS and every profile records its temper or ageing requirement.</span></label> : null}
+        {phase6 ? <label className="flex min-h-11 items-start gap-3 text-sm"><input type="checkbox" className="mt-1 h-5 w-5" checked={s.enforce_fg_receipt ?? false} onChange={e => setS({ ...s, enforce_fg_receipt: e.target.checked })} />
+          <span><b>Load only bundles received in the finished-goods area.</b> A bundle is loaded or put on a dispatch only after it was sent on a finished-goods transfer and scanned in there. A bundle still on a transfer is never loaded, whether this is on or off. Switch on once packaging and dispatch use the transfer screen for every bundle.</span></label> : null}
       </fieldset>
       {data.can_edit ? <Button disabled={busy}>Save settings</Button> : <p className="text-sm text-slate-600">Only the owner, admin or factory manager can change these settings.</p>}
       <Message message={message} />
