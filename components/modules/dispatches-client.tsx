@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingState } from "@/components/ui/loading";
 import { PageHeader } from "@/components/layout/page-header";
 import { saveDispatchAction, updateDeliveryStatusAction } from "@/lib/actions/dispatches";
+import { FINANCE_HELD_MESSAGE } from "@/lib/workflow/dispatch-orchestration";
 import { hasDuplicates, warnDuplicates } from "@/components/modules/order-to-cash/duplicate-warning";
 import { dispatchSchema } from "@/lib/validations/schemas";
 import { createClient } from "@/lib/supabase/browser";
@@ -58,7 +59,7 @@ export function DispatchesClient({ context }: { context: SessionContext }) {
     setSaving(false);
     if (hasDuplicates(result)) return warnDuplicates(result.duplicates, () => void saveDispatch(true));
     if (!result.success) return toast.error(result.error);
-    toast.success("Dispatch recorded");
+    if (result.held) toast.warning(FINANCE_HELD_MESSAGE); else toast.success("Dispatch recorded");
     setForm({ order_id: "", dispatch_date: todayIso(), number_of_bundles: 1, total_weight_kg: 0, bundle_tare_weights_kg: "0", transporter_name: "", vehicle_number: "", driver_name: "", driver_phone: "", eway_bill_number: "", lr_number: "", delivery_status: "dispatched", proof_of_delivery_url: "", packing_list_url: "", remarks: "" });
     await loadAll();
   }

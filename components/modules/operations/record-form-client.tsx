@@ -15,6 +15,7 @@ import { PincodeInput } from "@/components/ui/pincode-input";
 import { DieServiceHint } from "@/components/modules/press/die-service-hint";
 import { BilletWeightEstimate } from "@/components/modules/foundry/billet-weight-estimate";
 import { saveDispatchAction } from "@/lib/actions/dispatches";
+import { FINANCE_HELD_MESSAGE } from "@/lib/workflow/dispatch-orchestration";
 import { saveManualExpenseAction } from "@/lib/actions/expenses";
 import { saveFoundryBatchAction } from "@/lib/actions/foundry";
 import { savePackagingJobAction } from "@/lib/actions/packaging";
@@ -980,8 +981,8 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
       setSaving(false);
       if (hasDuplicates(result)) return warnDuplicates(result.duplicates, () => void submit(true), href => router.push(href));
       if (!result.success || !result.dispatchId) return showSaveFailure(result.success ? "Could not save dispatch" : result.error);
-      toast.success(editing ? `${config.title} updated` : `${config.title} saved`);
-      router.push(`${config.basePath}/${result.dispatchId}`);
+      if (result.held) toast.warning(FINANCE_HELD_MESSAGE); else toast.success(editing ? `${config.title} updated` : `${config.title} saved`);
+      router.push(result.held ? `/dispatches/clearance/${result.dispatchId}` : `${config.basePath}/${result.dispatchId}`);
       router.refresh();
       return;
     }

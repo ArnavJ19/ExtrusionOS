@@ -2,6 +2,7 @@
 // dispatch update. The database decides clearance and records every message; this module validates requests and
 // response shapes, names states, and composes the customer message from the safe dispatch facts (never prices).
 import { z } from "zod";
+import type { FloorText } from "../i18n/floor.ts";
 
 const uuid = z.string().uuid();
 const page = z.number().int().min(1).max(100000).optional();
@@ -15,6 +16,7 @@ export const CLEARANCE_STATE_LABELS: Record<string, string> = {
 };
 export const COMM_STATUS_LABELS: Record<string, string> = { sent: "Sent", delivered: "Delivered", read: "Read", failed: "Failed" };
 export const CHANNEL_LABELS: Record<string, string> = { whatsapp: "WhatsApp", sms: "SMS", email: "Email", phone_call: "Phone call" };
+export const FINANCE_HELD_MESSAGE = "Dispatch recorded, but it cannot leave yet: the order's payment terms are not met. Accounts confirm the payment or record a release under Dispatches, Finance clearance; then send it out from there.";
 export const FINANCE_CLEARANCE_ROLES = ["owner", "admin", "accounts"];
 export const CUSTOMER_MESSAGE_SENDERS = ["owner", "admin", "dispatch_manager", "dispatch", "sales_manager", "sales", "factory_manager"];
 
@@ -71,6 +73,8 @@ export const clearanceQueueSchema = z.object({
 });
 export const clearanceDetailSchema = clearanceSchema.extend({
   finance_visible: z.boolean(), can_release: z.boolean(), can_exception: z.boolean(),
+  // Phase 4 (migration 20261123100000): the release validity setting; 48 h before that upgrade.
+  release_hours: z.number().int().default(48),
   releases: z.array(z.object({ id: z.string(), basis: z.string(), reference: z.string().nullable(), note: z.string(), released_at: z.string(), expires_at: z.string(),
     consumed_at: z.string().nullable(), revoked_at: z.string().nullable(), revoke_reason: z.string().nullable(), released_value: money.optional(), released_by_name: z.string().nullable(), can_revoke: z.boolean() }))
 });
@@ -148,6 +152,20 @@ export function messageLink(channel: string, recipient: string, body: string): s
   if (channel === "email") return `mailto:${recipient.trim()}?subject=${encodeURIComponent("Dispatch update")}&body=${encodeURIComponent(body)}`;
   if (channel === "phone_call") return `tel:+${phoneDigits(recipient)}`;
   return null;
+}
+
+/** Payment terms, finance states and scopes in the screen language (Phase 4); unknown codes show as recorded. */
+export function termsText(t: FloorText, terms: { terms: string; advance_percent: number | null }): string {
+  if (terms.terms === "advance_part") return t("olo.fc.t.advanceOf", { pct: terms.advance_percent });
+  if (terms.terms === "credit" || terms.terms === "payment_before_dispatch") return t(`olo.fc.t.${terms.terms}`);
+  return TERMS_LABELS[terms.terms] ?? terms.terms;
+}
+export function clearanceStateText(t: FloorText, state: string): string {
+  return ["not_required", "covered", "released", "blocked", "dispatched"].includes(state)
+    ? t(`olo.fc.state.${state as "not_required" | "covered" | "released" | "blocked" | "dispatched"}`) : CLEARANCE_STATE_LABELS[state] ?? state;
+}
+export function termsScopeText(t: FloorText, scope: string): string {
+  return ["company", "customer", "order", "default"].includes(scope) ? t(`olo.fc.scope.${scope as "company" | "customer" | "order" | "default"}`) : TERMS_SCOPE_LABELS[scope] ?? scope;
 }
 
 export const formatInr = (value: number | null | undefined) => (value === null || value === undefined ? "—" : `₹${value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);

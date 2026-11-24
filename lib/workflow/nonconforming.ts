@@ -87,7 +87,10 @@ export const containmentDetailSchema = z.object({
     inspection_id: z.string(), batch_number: z.string().nullable(), quantity_kg: kg, inspection_date: z.string().nullable(), inspector_name: z.string().nullable(),
     review: z.object({ id: z.string(), outcome: z.enum(["reconfirmed", "revoked"]), method: z.string(), note: z.string(), reviewed_at: z.string(), reviewed_by_name: z.string().nullable(),
       closed_at: z.string().nullable(), close_method: z.string().nullable(), close_note: z.string().nullable(), closed_by_name: z.string().nullable(), can_close: z.boolean() }).nullable()
-  })).default([])
+  })).default([]),
+  // Phase 4 (migration 20261123100000): reversals of this job's approvals; absent before that upgrade.
+  reversals: z.array(z.object({ id: z.string(), reversal_number: z.string(), inspection_id: z.string(), reversed_kg: kg, retained_kg: kg, reversed_as: z.string(), reversed_at: z.string() })).default([]),
+  can_reverse: z.boolean().default(false)
 }).passthrough();
 export type ContainmentDetail = z.infer<typeof containmentDetailSchema>;
 

@@ -2,6 +2,9 @@
 // floor hub, jobs and tasks) in English and Hindi. Only labels change: record values, numbers, codes and server messages
 // are shown as recorded. Every key exists in both languages (the type enforces it and a test checks the text).
 
+import { ORCHESTRATION_EN, ORCHESTRATION_HI } from "./floor-orchestration.ts";
+import { QUALITY_FLOW_EN, QUALITY_FLOW_HI } from "./floor-quality-flow.ts";
+
 export type FloorLanguage = "en" | "hi";
 export const FLOOR_LANGUAGES: Record<FloorLanguage, string> = { en: "English", hi: "हिंदी" };
 
@@ -339,7 +342,9 @@ const en = {
   "olo.dpa.recordReturn": "Record return",
   "olo.dpa.cancelTitle": "Cancel this preparation",
   "olo.dpa.reason": "Reason",
-  "olo.dpa.cancel": "Cancel preparation"
+  "olo.dpa.cancel": "Cancel preparation",
+  ...ORCHESTRATION_EN,
+  ...QUALITY_FLOW_EN
 } as const;
 
 export type FloorKey = keyof typeof en;
@@ -677,7 +682,9 @@ const hi: Record<FloorKey, string> = {
   "olo.dpa.recordReturn": "वापसी दर्ज करें",
   "olo.dpa.cancelTitle": "यह तैयारी रद्द करें",
   "olo.dpa.reason": "कारण",
-  "olo.dpa.cancel": "तैयारी रद्द करें"
+  "olo.dpa.cancel": "तैयारी रद्द करें",
+  ...ORCHESTRATION_HI,
+  ...QUALITY_FLOW_HI
 };
 
 export const FLOOR_MESSAGES: Record<FloorLanguage, Record<FloorKey, string>> = { en, hi };

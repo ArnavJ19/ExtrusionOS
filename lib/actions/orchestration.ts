@@ -9,6 +9,8 @@ import {
 } from "@/lib/workflow/orchestration";
 import { CONTAINMENT_MUTATIONS, PRIORITY_MUTATIONS, REMELT_MUTATIONS, containmentCommandSchema, priorityCommandSchema, remeltCommandSchema } from "@/lib/workflow/nonconforming";
 import { DISPATCH_COMM_MUTATIONS, DISPATCH_FINANCE_MUTATIONS, dispatchCommCommandSchema, dispatchFinanceCommandSchema } from "@/lib/workflow/dispatch-orchestration";
+import { REVERSAL_MUTATIONS, reversalCommandSchema } from "@/lib/workflow/quality-reversal";
+import { FINAL_QC_MUTATIONS, finalQcCommandSchema } from "@/lib/workflow/final-qc";
 
 const UNAVAILABLE = "Order lifecycle orchestration needs the database upgrade 20261120100000 to be applied first. Existing workflows remain available.";
 
@@ -121,4 +123,18 @@ export async function dispatchFinanceAction(input: unknown): Promise<ActionResul
 export async function dispatchCommAction(input: unknown): Promise<ActionResult> {
   return runCommand("dispatch_comm_command", dispatchCommCommandSchema as unknown as Schema, DISPATCH_COMM_MUTATIONS, input,
     ["/dispatches/communications", "/dispatches", "/orders/lifecycle", "/tasks/orchestration", "/communications/whatsapp"], UNAVAILABLE_B3);
+}
+
+// Orchestration Phase 4 (migration 20261123100000): QC reversal of an earlier approval.
+const UNAVAILABLE_P4 = "QC reversal needs the database upgrade 20261123100000 to be applied first. Existing workflows remain available.";
+export async function qualityReversalAction(input: unknown): Promise<ActionResult> {
+  return runCommand("quality_reversal_command", reversalCommandSchema as unknown as Schema, REVERSAL_MUTATIONS, input,
+    ["/quality/reversals", "/quality", "/quality/containment", "/foundry/remelt", "/orders/lifecycle", "/tasks/orchestration"], UNAVAILABLE_P4);
+}
+
+// Orchestration Phase 5 (migration 20261124100000): final QC after ageing.
+const UNAVAILABLE_P5 = "Final QC after ageing needs the database upgrade 20261124100000 to be applied first. Existing workflows remain available.";
+export async function finalQcAction(input: unknown): Promise<ActionResult> {
+  return runCommand("final_qc_command", finalQcCommandSchema as unknown as Schema, FINAL_QC_MUTATIONS, input,
+    ["/quality/final-qc", "/quality", "/quality/reversals", "/foundry/remelt", "/orders/lifecycle", "/tasks/orchestration", "/packaging"], UNAVAILABLE_P5);
 }

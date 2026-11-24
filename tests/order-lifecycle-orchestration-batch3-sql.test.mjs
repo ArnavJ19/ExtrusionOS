@@ -252,7 +252,7 @@ test("prior approvals: a revoked approval stays blocked until a second person cl
   const a = await order();
   const ins = id();
   await seed("insert into quality_inspections(id,company_id,production_job_id,profile_id,inspection_date,quantity_checked_kg,status,batch_number,inspector_name) values($1,$2,$3,$4,now()-interval '1 hour',400,'approved','LOT-EARLY2','QA day shift')", [ins, i.company, a.job, i.profile2]);
-  await seed("insert into packaging_jobs(id,company_id,packaging_number,order_id,production_job_id,scheduled_date,pieces,profile_weight_kg,profile_length_m,status) values($1,$2,'PK-B3-1',$3,$4,current_date,10,100,60,'scheduled')", [id(), i.company, a.order, a.job]);
+  await seed("insert into packaging_jobs(id,company_id,packaging_number,order_id,production_job_id,scheduled_date,pieces,profile_weight_kg,profile_length_m,status) values($1,$2,'PK-B3-1',$3,$4,current_date,10,100,60,'in_progress')", [id(), i.company, a.order, a.job]);
   const c = await qc("open", { job_id: a.job, scope_kg: 600, stage: "final", defect: "Hardness below specification on sample 2", defect_kind: "non_destructive" });
   const rv = await qc("prior_review", { id: c.id, inspection_id: ins, outcome: "revoked", method: "Webster hardness re-test", note: "Below 12 HW on 3 of 5 pieces" });
   assert.deepEqual([rv.outcome, num(rv.suspended_approved_kg), num(rv.moved_on_kg)], ["revoked", 400, 100]);
