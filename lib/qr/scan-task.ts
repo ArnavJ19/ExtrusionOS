@@ -5,7 +5,9 @@
 export type ScanWarning = { tone: "warning" | "critical"; text: string };
 export type ScanAction = { label: string; href: string };
 export type ScanTask = "stock_checked" | "die_checked" | "loaded_for_dispatch";
-export type ScanPermissions = { read: (resource: string) => boolean; create: (resource: string) => boolean; readDieHistory: boolean; splitBundles: boolean };
+export type ScanPermissions = { read: (resource: string) => boolean; create: (resource: string) => boolean; readDieHistory: boolean; splitBundles: boolean;
+  /** Phase 6: may open the bundle trace and the finished-goods transfer screens. */
+  traceBundles?: boolean; receiveFg?: boolean };
 
 const text = (row: Record<string, unknown>, key: string) => (typeof row[key] === "string" ? String(row[key]) : "");
 const words = (value: string) => value.replace(/_/g, " ");
@@ -28,6 +30,13 @@ export function scanWarnings(entityType: string, row: Record<string, unknown>): 
   if (entityType === "machine" && ["breakdown", "maintenance", "inactive", "under_maintenance"].includes(text(row, "status"))) warnings.push({ tone: "critical", text: `Machine is ${words(text(row, "status"))}.` });
   if (entityType === "inventory_item" && Number(row.current_stock ?? 0) <= 0) warnings.push({ tone: "warning", text: "No stock is recorded for this item." });
   if (entityType === "dispatch_package") warnings.push({ tone: "warning", text: "This bundle is already on a dispatch manifest." });
+  // Phase 6: a prepared bundle, from the bundle register.
+  if (entityType === "bundle") {
+    const state = text(row, "state");
+    if (["dispatched", "delivered"].includes(state)) warnings.push({ tone: "critical", text: `This bundle already left on dispatch ${text(row, "dispatch_number") || "—"}. Do not load it again.` });
+    if (text(row, "hold")) warnings.push({ tone: "critical", text: `This bundle is held in QC containment ${text(row, "hold")}. Do not load or move it until QA resolves it.` });
+    if (state === "in_transfer") warnings.push({ tone: "warning", text: `This bundle is on finished-goods transfer ${text(row, "transfer_number") || "—"}. Scan it in on that transfer.` });
+  }
   return warnings;
 }
 
@@ -56,6 +65,10 @@ export function scanActions(entityType: string, row: Record<string, unknown>, ca
     case "profile": add(can.read("profiles"), "Open profile", `/profiles/${id(row)}`); break;
     case "machine": add(can.read("production"), "Open machine", `/machines/${id(row)}`); break;
     case "inventory_item": add(can.read("inventory"), "Open inventory item", `/inventory/${id(row)}`); break;
+    case "bundle":
+      add(Boolean(can.traceBundles), "Open bundle trace", `/packaging/bundles/${id(row)}`);
+      add(Boolean(can.receiveFg) && text(row, "state") === "in_transfer" && Boolean(text(row, "transfer_id")), "Open the transfer to scan it in", `/packaging/fg-transfers/${encodeURIComponent(text(row, "transfer_id"))}`);
+      break;
   }
   return actions;
 }

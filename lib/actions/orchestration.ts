@@ -11,6 +11,7 @@ import { CONTAINMENT_MUTATIONS, PRIORITY_MUTATIONS, REMELT_MUTATIONS, containmen
 import { DISPATCH_COMM_MUTATIONS, DISPATCH_FINANCE_MUTATIONS, dispatchCommCommandSchema, dispatchFinanceCommandSchema } from "@/lib/workflow/dispatch-orchestration";
 import { REVERSAL_MUTATIONS, reversalCommandSchema } from "@/lib/workflow/quality-reversal";
 import { FINAL_QC_MUTATIONS, finalQcCommandSchema } from "@/lib/workflow/final-qc";
+import { PACKAGING_FLOW_MUTATIONS, packagingFlowCommandSchema } from "@/lib/workflow/packaging-flow";
 
 const UNAVAILABLE = "Order lifecycle orchestration needs the database upgrade 20261120100000 to be applied first. Existing workflows remain available.";
 
@@ -137,4 +138,11 @@ const UNAVAILABLE_P5 = "Final QC after ageing needs the database upgrade 2026112
 export async function finalQcAction(input: unknown): Promise<ActionResult> {
   return runCommand("final_qc_command", finalQcCommandSchema as unknown as Schema, FINAL_QC_MUTATIONS, input,
     ["/quality/final-qc", "/quality", "/quality/reversals", "/foundry/remelt", "/orders/lifecycle", "/tasks/orchestration", "/packaging"], UNAVAILABLE_P5);
+}
+
+// Orchestration Phase 6 (migration 20261125100000): packaging release, bundle trace and finished-goods transfers.
+const UNAVAILABLE_P6 = "Packaging release, bundle trace and finished-goods transfers need the database upgrade 20261125100000 to be applied first. Existing workflows remain available.";
+export async function packagingFlowAction(input: unknown): Promise<ActionResult> {
+  return runCommand("packaging_flow_command", packagingFlowCommandSchema as unknown as Schema, PACKAGING_FLOW_MUTATIONS, input,
+    ["/packaging", "/packaging/release", "/packaging/bundles", "/packaging/fg-transfers", "/dispatches/loading", "/orders/lifecycle", "/tasks/orchestration"], UNAVAILABLE_P6);
 }

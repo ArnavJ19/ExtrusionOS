@@ -32,6 +32,7 @@ export const QR_ENTITY_TABLES: Record<QrEntityType, string> = {
   machine: "machines",
   maintenance: "maintenance_schedules",
   document: "technical_documents",
+  bundle: "prepared_physical_bundles",
 };
 
 export const QR_ENTITY_SELECT: Record<QrEntityType, string> = {
@@ -49,6 +50,7 @@ export const QR_ENTITY_SELECT: Record<QrEntityType, string> = {
   machine: "id, machine_code, machine_name, status",
   maintenance: "id, machine_id, machine_type, maintenance_type, status, next_due_date",
   document: "id, file_name, document_type, approval_status",
+  bundle: "id, bundle_number",
 };
 
 export const QR_ENTITY_LABELS: Record<QrEntityType, string> = {
@@ -66,6 +68,7 @@ export const QR_ENTITY_LABELS: Record<QrEntityType, string> = {
   machine: "Machine",
   maintenance: "Maintenance",
   document: "Document",
+  bundle: "Bundle",
 };
 
 export async function fetchQrEntityDetails(supabase: any, entityType: QrEntityType, entityId: string, companyId: string) {

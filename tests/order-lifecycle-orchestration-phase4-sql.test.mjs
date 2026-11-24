@@ -82,7 +82,10 @@ test("reversal: a full reversal marks the approval reversed, rejects its kilogra
   const avail = await one("select available_kg from private.ap4_source_available($1,$2,'production',$3)", [i.company, a.order, a.job]);
   assert.equal(num(avail.available_kg), 0, "dispatch source availability no longer counts the reversed kilograms");
   assert.equal((await one("select private.handoff_for_inspection($1,$2) s", [i.company, a.ins])).s, "not_eligible");
-  assert.equal((await one("select status from tasks where handoff_key=$1", [`inspection_release:${a.ins}`])).status, "cancelled", "the packing handoff is withdrawn");
+  // Phase 6 (migration 20261125100000): OM-2045 is T5, so its first-stage approval releases the material to ageing and
+  // raises no packing handoff at all; any handoff raised earlier is withdrawn by the reversal.
+  const handoff = await one("select status from tasks where handoff_key=$1", [`inspection_release:${a.ins}`]);
+  assert.ok(handoff === undefined || handoff.status === "cancelled", "no open packing handoff remains");
   const repro = await q("select workflow_department from tasks where workflow_kind='reproduction' and workflow_order_id=$1 and status='open'", [a.order]);
   assert.equal(repro.length, 1, "planning gets a reproduction task for the shortfall");
   assert.equal((await q("select 1 from source_change_reviews where task_id=$1 and source_id=$2 and status='requires_review'", [manual, a.ins])).length, 1,

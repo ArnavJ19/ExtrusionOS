@@ -9,6 +9,8 @@ import { QR_ENTITY_LABELS, QR_ENTITY_TABLES } from "@/lib/qr/entities";
 import { SCAN_TASKS, scanActions, scanWarnings, type ScanAction, type ScanTask, type ScanWarning } from "@/lib/qr/scan-task";
 import { canReadImprovement } from "@/lib/workflow/improvement";
 import { canUseLifecycleAction } from "@/lib/workflow/lifecycle";
+import { hasRouteAccess } from "@/lib/auth/route-permissions";
+import { bundleResolveSchema } from "@/lib/workflow/packaging-flow";
 
 const SCAN_ROLES = ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "quality"];
 // Business-safe fields only: no prices, costs or customer contact details.
@@ -18,7 +20,8 @@ const SCAN_FIELDS: Record<QrEntityType, string> = {
   inventory_item: "id, item_code, item_name, item_category, current_stock, unit, location", order: "id, order_number, current_stage, expected_dispatch_date",
   quote: "id, quote_number, status, quote_date", production_job: "id, job_number, status, planned_date", dispatch_package: "id, bundle_number, number_of_pieces, net_weight_kg",
   dispatch: "id, dispatch_number, delivery_status, vehicle_number", certificate: "id, file_name, document_type, approval_status, expiry_date", machine: "id, machine_code, machine_name, status",
-  maintenance: "id, machine_type, maintenance_type, status, next_due_date", document: "id, file_name, document_type, approval_status"
+  maintenance: "id, machine_type, maintenance_type, status, next_due_date", document: "id, file_name, document_type, approval_status",
+  bundle: "id, bundle_number"
 };
 const LABEL_KEYS = ["die_number", "bundle_number", "profile_code", "batch_number", "item_code", "order_number", "quote_number", "job_number", "dispatch_number", "machine_code", "file_name"];
 
@@ -27,6 +30,31 @@ export type ScanResolution = { ok: true; qrId: string | null; entityType: QrEnti
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 type Context = Awaited<ReturnType<typeof getSessionContext>>;
+
+function scanPermissions(context: Context) {
+  return { read: (resource: string) => can(context.role, "read", resource as Resource), create: (resource: string) => can(context.role, "create", resource as Resource),
+    readDieHistory: canReadImprovement(context.role, "dies"), splitBundles: canUseLifecycleAction(context.role, "bundle.split"),
+    traceBundles: hasRouteAccess("/packaging/bundles", context.role), receiveFg: hasRouteAccess("/packaging/fg-transfers", context.role) };
+}
+
+/**
+ * Phase 6: a bundle label carries the bundle tag (or an EO2 label). It is resolved through the company-scoped bundle
+ * command, which reports where the bundle is now (packed, on a transfer, in finished goods, loaded, dispatched) and any
+ * QC hold. Returns null when no prepared bundle has this tag, or before the database upgrade.
+ */
+async function resolveBundle(supabase: Client, context: Context, tag: string): Promise<ScanResolution | null> {
+  const result = await supabase.rpc("packaging_flow_command", { p_command: "bundle.resolve", p_payload: { tag } });
+  if (result.error) return null;
+  const parsed = bundleResolveSchema.safeParse(result.data);
+  if (!parsed.success || !parsed.data.found) return null;
+  const b = parsed.data;
+  const row: Record<string, unknown> = { id: b.id, bundle_number: b.bundle_number, state: b.state, hold: b.hold, transfer_id: b.transfer_id, transfer_number: b.transfer_number,
+    dispatch_number: b.dispatch_number };
+  const details = { state: b.state, order_number: b.order_number, job_number: b.job_number, profile_code: b.profile_code, pieces: b.pieces, net_weight_kg: b.net_kg,
+    location: b.location, transfer_number: b.transfer_number, dispatch_number: b.dispatch_number, invoice_number: b.invoice_number };
+  return { ok: true, qrId: null, entityType: "bundle", entityTypeLabel: QR_ENTITY_LABELS.bundle, entityId: b.id, label: b.bundle_number, details,
+    warnings: scanWarnings("bundle", row), actions: scanActions("bundle", row, scanPermissions(context)) };
+}
 
 async function resolve(supabase: Client, context: Context, raw: string): Promise<ScanResolution> {
   const input = parseScanInput(raw);
@@ -41,18 +69,23 @@ async function resolve(supabase: Client, context: Context, raw: string): Promise
   }
   if (!qr && input.kind === "uuid") qr = (await base().eq("entity_id", input.entityId).order("created_at", { ascending: false }).limit(1).maybeSingle()).data as typeof qr;
   if (qr && qr.status !== "active") return { ok: false, error: "This label was withdrawn or replaced. Use the current label, or ask for an authorized reprint." };
+  // Phase 6: bundle labels carry the bundle tag; EO2 bundle and dispatch-package labels may name a prepared bundle.
+  if (!qr && (input.kind === "value" || (input.kind === "v2" && (input.entityType === "bundle" || input.entityType === "dispatch_package")))) {
+    const bundle = await resolveBundle(supabase, context, input.raw);
+    if (bundle) return bundle;
+  }
   if (qr?.expires_at && new Date(qr.expires_at).getTime() < Date.now()) return { ok: false, error: "This label has expired. Ask for an authorized reprint before using it." };
   const entityType = (qr?.entity_type ?? (input.kind === "v2" ? input.entityType : null)) as QrEntityType | null;
   const entityId = qr?.entity_id ?? (input.kind === "v2" ? input.entityId : null);
   if (!entityType || !entityId || !(entityType in SCAN_FIELDS)) return { ok: false, error: "No current record uses this code. Check the label, or search for the record instead." };
+  if (entityType === "bundle") return (await resolveBundle(supabase, context, `EO2:bundle:${entityId}:scan`)) ?? { ok: false, error: "This bundle is no longer available to you." };
   const { data, error } = await supabase.from(QR_ENTITY_TABLES[entityType] as any).select(SCAN_FIELDS[entityType]).eq("company_id", context.companyId).eq("id", entityId).maybeSingle();
   if (error) return { ok: false, error: "The record could not be checked. Retry the scan." };
   if (!data) return { ok: false, error: "This record is no longer available to you." };
   const row = data as unknown as Record<string, unknown>;
   const details = Object.fromEntries(Object.entries(row).filter(([key]) => key !== "id").map(([key, value]) => [key, typeof value === "object" ? null : value as string | number | boolean | null]));
   const label = String(LABEL_KEYS.map(key => row[key]).find(value => typeof value === "string" && value) ?? QR_ENTITY_LABELS[entityType]);
-  const permissions = { read: (resource: string) => can(context.role, "read", resource as Resource), create: (resource: string) => can(context.role, "create", resource as Resource),
-    readDieHistory: canReadImprovement(context.role, "dies"), splitBundles: canUseLifecycleAction(context.role, "bundle.split") };
+  const permissions = scanPermissions(context);
   return { ok: true, qrId: qr?.id ?? null, entityType, entityTypeLabel: QR_ENTITY_LABELS[entityType], entityId, label, details, warnings: scanWarnings(entityType, row), actions: scanActions(entityType, row, permissions) };
 }
 

@@ -48,6 +48,7 @@ const ENTITY_ICONS: Record<EntityType, typeof Wrench> = {
   machine: Wrench,
   maintenance: Wrench,
   document: QrCode,
+  bundle: QrCode,
 };
 
 export default function QRGeneratorPage() {

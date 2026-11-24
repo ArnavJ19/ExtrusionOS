@@ -4,6 +4,7 @@
 
 import { ORCHESTRATION_EN, ORCHESTRATION_HI } from "./floor-orchestration.ts";
 import { QUALITY_FLOW_EN, QUALITY_FLOW_HI } from "./floor-quality-flow.ts";
+import { PACKAGING_FLOW_EN, PACKAGING_FLOW_HI } from "./floor-packaging-flow.ts";
 
 export type FloorLanguage = "en" | "hi";
 export const FLOOR_LANGUAGES: Record<FloorLanguage, string> = { en: "English", hi: "हिंदी" };
@@ -344,7 +345,8 @@ const en = {
   "olo.dpa.reason": "Reason",
   "olo.dpa.cancel": "Cancel preparation",
   ...ORCHESTRATION_EN,
-  ...QUALITY_FLOW_EN
+  ...QUALITY_FLOW_EN,
+  ...PACKAGING_FLOW_EN
 } as const;
 
 export type FloorKey = keyof typeof en;
@@ -684,7 +686,8 @@ const hi: Record<FloorKey, string> = {
   "olo.dpa.reason": "कारण",
   "olo.dpa.cancel": "तैयारी रद्द करें",
   ...ORCHESTRATION_HI,
-  ...QUALITY_FLOW_HI
+  ...QUALITY_FLOW_HI,
+  ...PACKAGING_FLOW_HI
 };
 
 export const FLOOR_MESSAGES: Record<FloorLanguage, Record<FloorKey, string>> = { en, hi };

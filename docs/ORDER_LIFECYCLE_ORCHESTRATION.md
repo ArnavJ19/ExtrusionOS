@@ -124,7 +124,8 @@ Batch 2 (section I) closed items 1, 2, 3, 5 (delivery overdue and acceptance fol
 closed dispatch finance clearance, customer dispatch communication, the review of approvals made before a containment,
 real-time refresh and Hindi labels for the tool-room and task screens. Phase 4 (section K) closed the QC ledger
 reversal, Hindi on the clearance, containment and order lifecycle screens, the release validity setting and the two
-cosmetic Phase 3 items. Phase 5 (section N) connected production runs, first-stage QC, ageing and final QC. Still open:
+cosmetic Phase 3 items. Phase 5 (section N) connected production runs, first-stage QC, ageing and final QC. Phase 6
+(section P) connected packaging release, bundle traceability, finished-goods transfer and the invoice of a dispatch. Still open:
 
 * **Automatic message transport**: WhatsApp Business / SMS gateways are not wired (`lib/communications/providers.ts`);
   staff send from their own app and record the message. Needs an owner decision on the provider and its account.
@@ -374,6 +375,64 @@ modelled "moved-on" material with a scheduled packaging job now use a started on
 its own exception for the queue entry.
 **Deployment notes**: apply after 20261124100000. Behaviour changes only for runs whose packaging is still queued:
 reversals that were refused become possible, and revocations no longer ask to recall unpacked material.
+
+## P. Phase 6 — packaging and shipment (migration 20261125100000)
+
+Migration: `supabase/migrations/20261125100000_order_lifecycle_orchestration_phase6.sql` (not yet applied to hosted).
+Directive sections 22–25 and implementation phase 6 (packaging release, bundle QR traceability, finished-goods transfer,
+invoicing). Dispatch release and logistics were built in Phase 3 (section J) and AP batch 4; this phase connects packing
+to them and to the invoice.
+
+| Area | What now happens | Who |
+|---|---|---|
+| Packaging release (§22) | What a job releases to packaging follows its route (Phase 5): the final QC after ageing for a route that needs ageing, the first-stage QC approval otherwise; a route that is not documented releases on the QC approval and says so. First-stage QC of an ageing route no longer raises the "Pack N kg released by QC" handoff — the material goes to the ageing team. A final QC that accepts kilograms raises the packaging handoff instead (key `final_qc_release:<record>`, sourced from the approval that still stands at commit, so the existing acceptance checks apply), with the customer's packing specification (else the company default): wrapping, max kg and pieces per bundle, interleaving paper, battens, notes. `/packaging/release` lists per job released, packed (bundles, packing lines, stock) and still to pack; held jobs separately. | QA releases; packaging packs |
+| Bundle register and trace (§22–23) | Every prepared bundle has one physical state: packed, on a transfer, in finished goods, loaded (open loading session), dispatched, delivered — plus its issued invoice. Scanning a bundle label on `/scan` (the label carries the tag; an `EO2:bundle:` or `EO2:dispatch_package:` label works too) resolves it through the company-scoped command, warns when it already left or is held, and opens the trace. `/packaging/bundles` searches tags, orders, jobs, dispatches and invoices. `/packaging/bundles/[id]` shows order and customer, profile, production job (press, die), billets issued with their cast or supplier batch and heat, first-stage QC, ageing batches, final QC, any QC hold, packaging jobs, label prints, finished-goods custody, loading, dispatch (vehicle, LR, e-way bill, left, delivered) and invoices. A missing step is listed under "Missing records" (no billet issue, no QC approval, ageing route without final QC, route not documented, no invoice yet), never filled in. | QA, packaging, dispatch, stores, accounts, management |
+| Finished-goods transfer (§23) | Packaging sends packed bundles (1–60) to an active factory or warehouse location; refused when a bundle is dispatched, loaded, already sent or in finished goods, from dealer stock, of a closed order, or held in QC containment (each named). Dispatch or stores scan each tag in — never the sender (owner excepted). A tag not on the transfer is refused and the screen names the transfer it is on. A transfer closed short records the rest as missing (reason required) and alerts factory management and the packaging and dispatch supervisors; a missing bundle can be found and sent again. The sender or a manager cancels a transfer before any receipt. Transfers are numbered `FGT-YYMM-####`; a replayed send returns the same transfer. Rows change only through the command. | Send: production, packaging, dispatch, managers. Receive: dispatch, stores, managers |
+| Loading guard | A bundle on an open transfer is never loaded or put on a dispatch line. **Receipt control** (setting, default off): when on, only bundles received in finished goods load (loading scan and dispatch packing line both checked; the dispatch line locks the bundle first so a transfer sent at the same moment is serialised). | Database |
+| Tasks | `fg_receipt` for dispatch when a transfer is sent (closes when received, closed short or cancelled). `fg_transfer` for packaging when packed bundles of an order stay outside finished goods longer than the reminder (default 8 h) — only once the factory has a holding location and has used transfers in the last 90 days (or turned the control on). `dispatch_invoice` for finance when a dispatch left the gate (last 60 days, not returned or damaged) without an issued tax invoice after the reminder (default 4 h; 0 = at once); the task names the invoice-draft state and blocker, never amounts, and closes when an invoice for that dispatch is issued; a later cancelled invoice opens a new cycle. | Engine |
+| Order lifecycle | Ledger lines released for packing, still to pack, on transfer, in finished goods and invoiced; a domain "Packing release, finished goods and invoicing" (to pack / on transfer / in finished goods / awaiting invoice / invoiced). The next action moves to "Pack X of job J released by …" (packaging) and, when nothing else is pending, "Issue the tax invoice for dispatch D" (finance). | — |
+
+New tables: `fg_transfers`, `fg_transfer_bundles` (RLS read for internal staff; no write grants; guard trigger; Realtime).
+New view: `private.olo_bundle_register` (private). New settings: `fg_transfer_hours`, `invoice_due_hours`, `enforce_fg_receipt`.
+New task kinds: `fg_transfer`, `fg_receipt`, `dispatch_invoice`. New RPC: `packaging_flow_command` (`release.queue`, `release.get`,
+`bundles.list`, `bundle.trace`, `bundle.resolve`, `fg.locations`, `fg.candidates`, `fg.list`, `fg.get`, `fg.send`, `fg.receive`,
+`fg.close`, `fg.cancel`). Wrapped (renamed): `olo_command` (→ `private.olo_command_p5`), `olo_verify_tasks` (→ `_p5`),
+`olo_run_all` (→ `_p5`), `olo_order_core` (→ `_p5`), `handoff_for_inspection` (→ `_p5`). Redefined with the Phase 6 additions
+marked: `olo_settings_for`, `olo_guard_workflow_task`. New triggers: guards on `loading_scans` and `packing_list_items`;
+statement-level evaluation on prepared bundles, dispatches and invoices; a commit-time trigger on `final_qc_records`.
+Pages: `/packaging/release`, `/packaging/release/[jobId]`, `/packaging/bundles`, `/packaging/bundles/[id]`,
+`/packaging/fg-transfers`, `/packaging/fg-transfers/new`, `/packaging/fg-transfers/[id]`; cards on `/packaging`; the three
+settings on `/settings/orchestration`; the new `bundle` scan type (`lib/qr`, `lib/actions/scan.ts`). Hindi:
+`lib/i18n/floor-packaging-flow.ts` (parity-tested). Tests: `tests/order-lifecycle-orchestration-phase6-sql.test.mjs` (10) and
+`tests/order-lifecycle-orchestration-phase6.test.mjs` (9). Screen fixture: `scripts/olo-phase6-preview.mjs` (launch config
+`olo-phase6-screens`): send, scan-in with a wrong-transfer tag, close short and the trace were exercised in the browser,
+English and Hindi, at 375 px.
+
+**Code review of Phase 6 (2026-11-25)**:
+1. *Fixed:* a fourth handoff source type (`final_qc_record`) failed the existing `tasks_handoff_shape_check`, and the
+   acceptance and reconciliation functions treat unknown types as packaging jobs. The final-QC handoff is sourced from
+   the approval it releases (type `quality_inspection`), under its own key.
+2. *Fixed:* the final-QC handoff chose its source when the record was inserted, before the same command reversed
+   approvals for the rejected part; it now runs at commit and names an approval that still stands (regression test).
+3. *Fixed:* the dispatch-line guard read custody without locking the bundle, so a transfer sent at the same instant could
+   slip past it; it locks the bundle first (the loading scan already did).
+4. *Fixed:* the loading-scan statement trigger re-ran the whole engine on every scan for no task change; removed (the
+   dispatch consumes the bundle and that update re-evaluates).
+5. *Accepted:* the receipt task is assigned to the least-loaded dispatch person, which can be the sender when the sender
+   is dispatch staff; the command still refuses their receipt and the department sees the task.
+6. *Test updated:* the Phase 4 full-reversal scenario (a T5 job) asserted that the reversal withdraws the first-stage packing
+   handoff; for a T5 job there is no such handoff any more, so it now asserts that no open packing handoff remains.
+7. *Accepted:* the release queue derives each job's quality flow (jobs with output in the last 120 days); fine for one
+   factory, to revisit with volume. Invoices linked to an order but not to a dispatch do not close a `dispatch_invoice`
+   task — invoices are raised per dispatch in ExtrusionOS (one active invoice per dispatch).
+
+**Deployment notes for Phase 6**: apply after 20261124200000 (Phase 5 and its follow-up must be applied first: this
+migration wraps the Phase 5 functions). No new environment variables. Behaviour changes on apply: first-stage QC of a
+profile whose route needs ageing stops raising the packaging handoff (open ones already raised stay); a bundle that is on
+a transfer cannot be loaded; finance gets invoice tasks for dispatches of the last 60 days that left without an issued
+invoice more than 4 h ago — expect a one-time burst. Transfer reminders start only once transfers are used.
+Operator gates: create the holding location(s) under inventory locations; record customer (or company default) packing
+specifications; confirm the 8 h transfer and 4 h invoice reminders; decide when to switch on the receipt control.
 
 ## H. Deployment
 
