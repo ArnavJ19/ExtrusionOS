@@ -57,7 +57,7 @@ export default async function OrderLifecyclePage({ searchParams }: { searchParam
   return (
     <div className="space-y-5" lang={lang}>
       <PageHeader title={t("olo.lc.title")} description={t("olo.lc.desc")}
-        actions={<><LiveRefresh name="lifecycle-board" tables={["olo_events", "olo_task_events", "dispatches", "orders"]} /><FloorLanguageToggle lang={lang} /><Link href="/tasks/orchestration" className="rounded-xl border bg-white px-4 py-3 text-sm font-bold">{t("olo.lc.workflowTasks")}</Link><Link href="/production/order-book" className="rounded-xl border bg-white px-4 py-3 text-sm font-bold">{t("olo.lc.orderBook")}</Link></>} />
+        actions={<><LiveRefresh name="lifecycle-board" tables={["olo_events", "olo_task_events", "dispatches", "orders"]} /><FloorLanguageToggle lang={lang} /><Link href="/tasks/orchestration" className="rounded-xl border bg-white px-4 py-3 text-sm font-bold">{t("olo.lc.workflowTasks")}</Link><Link href="/production/order-book" className="rounded-xl border bg-white px-4 py-3 text-sm font-bold">{t("olo.lc.orderBook")}</Link><Link href="/orders/closure" className="rounded-xl border bg-white px-4 py-3 text-sm font-bold">{t("olo.lc.closureBoard")}</Link></>} />
       {summary ? (
         <section aria-label="Live metrics" className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-5">
           {TILES.filter(tile => !tile.finance || summary.finance_visible).map(tile => (

@@ -16,6 +16,9 @@ export const ESCALATION_STAGES = ["Receives the work", "Department supervisor", 
 
 export const OVERALL_LABELS: Record<string, string> = {
   cancelled: "Cancelled", fully_closed: "Fully closed", operationally_closed_financially_open: "Operationally closed — financial closure pending",
+  // Phase 7 (migration 20261126100000): the closure states of directive section 30.
+  operationally_fulfilled: "Operationally fulfilled — closure review due", operationally_closed_financially_settled: "Operationally closed — financially settled",
+  partially_closed_by_authorization: "Partially closed by authorisation",
   operationally_closed: "Operationally closed", awaiting_commercial_clearance: "Awaiting commercial clearance", delivered_acceptance_pending: "Delivered — acceptance pending",
   dispatched_awaiting_delivery: "Dispatched — delivery pending", partially_fulfilled: "Partially fulfilled", in_production: "In production",
   awaiting_quality: "Awaiting QC decision", in_process: "In process", planned: "Planned", awaiting_production_planning: "Awaiting production planning"
@@ -32,7 +35,11 @@ export const TASK_KIND_LABELS: Record<string, string> = {
   initial_qc: "Initial QC after the run", ageing_release: "Material released for ageing", ageing_cycle: "Ageing cycle overdue", ageing_review: "Ageing treatment review",
   final_qc: "Final QC after ageing",
   // Phase 6 (migration 20261125100000): finished goods and invoicing.
-  fg_transfer: "Move bundles to finished goods", fg_receipt: "Receive a finished-goods transfer", dispatch_invoice: "Invoice a dispatch that left"
+  fg_transfer: "Move bundles to finished goods", fg_receipt: "Receive a finished-goods transfer", dispatch_invoice: "Invoice a dispatch that left",
+  // Phase 7 (migration 20261126100000): delivery and closure.
+  delivery_discrepancy: "Delivery discrepancy", complaint_investigation: "Investigate a customer complaint", complaint_resolution: "Agree a complaint resolution",
+  complaint_replacement: "Plan complaint replacement", complaint_credit_note: "Credit note for a complaint", complaint_closure: "Verify and close a complaint",
+  payment_followup: "Customer payment follow-up", closure_review: "Operational closure review", final_closure: "Final order closure"
 };
 
 /** Where the work of a workflow task is done, and the label of that action. */
@@ -58,6 +65,11 @@ export function taskWorkLink(task: { kind: string; order_id: string | null; job_
     case "fg_transfer": return { href: task.order_id ? `/packaging/fg-transfers/new?order_id=${task.order_id}` : "/packaging/fg-transfers/new", label: "Send to finished goods" };
     case "fg_receipt": return { href: task.source_id ? `/packaging/fg-transfers/${task.source_id}` : "/packaging/fg-transfers", label: "Scan bundles in" };
     case "dispatch_invoice": return { href: "/invoices/drafts", label: "Issue the invoice" };
+    case "delivery_discrepancy": return { href: task.source_id ? `/dispatches/deliveries/${task.source_id}` : "/dispatches/deliveries", label: "Resolve the discrepancy" };
+    case "complaint_investigation": case "complaint_resolution": case "complaint_replacement": case "complaint_credit_note": case "complaint_closure":
+      return { href: task.source_id ? `/quality/complaints/${task.source_id}` : "/quality/complaints", label: "Open the complaint" };
+    case "payment_followup": return { href: task.source_id ? `/payments/follow-up/${task.source_id}` : "/payments/follow-up", label: "Follow up the payment" };
+    case "closure_review": case "final_closure": return { href: task.order_id ? `/orders/closure/${task.order_id}` : "/orders/closure", label: "Review the closure" };
     default: return { href: task.order_id ? `/orders/${task.order_id}/lifecycle` : "/orders/lifecycle", label: "Open order" };
   }
 }
@@ -104,7 +116,9 @@ export const orchestrationCommandSchema = z.discriminatedUnion("command", [
     // Phase 5 (migration 20261124100000): the QC route control and the ageing overdue grace.
     enforce_qc_route: z.boolean().optional(), ageing_overdue_grace_minutes: z.number().int().min(0).max(720).optional(),
     // Phase 6 (migration 20261125100000): finished-goods transfer and invoice reminders, and the receipt control.
-    fg_transfer_hours: z.number().int().min(1).max(168).optional(), invoice_due_hours: z.number().int().min(0).max(168).optional(), enforce_fg_receipt: z.boolean().optional()
+    fg_transfer_hours: z.number().int().min(1).max(168).optional(), invoice_due_hours: z.number().int().min(0).max(168).optional(), enforce_fg_receipt: z.boolean().optional(),
+    // Phase 7 (migration 20261126100000): payment follow-up lead before the due date.
+    payment_followup_lead_days: z.number().int().min(0).max(30).optional()
   }).strict(),
   z.object({ command: z.literal("routing.save"), department: departmentEnum, stage: z.number().int().min(0).max(3), roles: z.array(roleEnum).min(1).max(8).optional(), reset: z.boolean().optional() }).strict(),
   z.object({
@@ -180,7 +194,9 @@ const quantities = z.object({
   awaiting_final_qc_kg: z.coerce.number().optional(), final_released_kg: z.coerce.number().optional(), final_rejected_kg: z.coerce.number().optional(),
   // Phase 6: absent before migration 20261125100000.
   released_for_packing_kg: z.coerce.number().optional(), to_pack_kg: z.coerce.number().optional(), in_fg_kg: z.coerce.number().optional(),
-  in_fg_transfer_kg: z.coerce.number().optional(), invoiced_kg: z.coerce.number().optional(), dispatches_not_invoiced: z.coerce.number().optional()
+  in_fg_transfer_kg: z.coerce.number().optional(), invoiced_kg: z.coerce.number().optional(), dispatches_not_invoiced: z.coerce.number().optional(),
+  // Phase 7: absent before migration 20261126100000.
+  replacement_dispatched_kg: z.coerce.number().optional()
 });
 const orderHeader = z.object({
   id: z.string(), order_number: z.string(), customer_name: z.string().nullable(), priority: z.string().nullable(), current_stage: z.string(),
@@ -267,7 +283,8 @@ export const settingsSchema = z.object({
     action_sla_hours: z.number(), enforce_die_preparation: z.boolean(), enforce_preheat: z.boolean(),
     delivery_confirmation_days: z.number().optional(), reproduction_tolerance_kg: z.coerce.number().optional(), dispatch_release_hours: z.number().optional(),
     enforce_qc_route: z.boolean().optional(), ageing_overdue_grace_minutes: z.number().optional(),
-    fg_transfer_hours: z.number().optional(), invoice_due_hours: z.number().optional(), enforce_fg_receipt: z.boolean().optional() }).passthrough(),
+    fg_transfer_hours: z.number().optional(), invoice_due_hours: z.number().optional(), enforce_fg_receipt: z.boolean().optional(),
+    payment_followup_lead_days: z.number().optional() }).passthrough(),
   can_edit: z.boolean(), can_edit_routing: z.boolean(), can_edit_standards: z.boolean(),
   routing: z.array(z.object({ department: z.string(), stage: z.number(), roles: z.array(z.string()), customised: z.boolean() })),
   standards: z.array(z.object({ id: z.string(), name: z.string(), die_type: z.string().nullable(), min_temperature_c: z.coerce.number(), max_temperature_c: z.coerce.number(),

@@ -69,7 +69,7 @@ const tranche = z.object({ date: day, kg }).strict();
 const output = z.object({ bundle_number: tag, pieces: whole(1, 1000000), kg }).strict();
 
 export const lifecycleMutationSchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("closure.carry"), order_id: uuid, item_key: z.string().regex(/^(return|exception|change):[0-9a-f-]{36}$/, "Choose a carriable item"), note }).strict(),
+  z.object({ action: z.literal("closure.carry"), order_id: uuid, item_key: z.string().regex(/^(return|exception|change|complaint):[0-9a-f-]{36}$/, "Choose a carriable item"), note }).strict(),
   z.object({ action: z.literal("closure.close"), order_id: uuid, kind: z.enum(["operational", "final"]), note }).strict(),
   z.object({ action: z.literal("closure.reopen"), order_id: uuid, note }).strict(),
   z.object({ action: z.literal("sample.require"), order_id: uuid, profile_id: uuid, die_id: uuid.optional(), drawing_revision_id: uuid.optional(),

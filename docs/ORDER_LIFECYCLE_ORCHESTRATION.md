@@ -125,7 +125,9 @@ closed dispatch finance clearance, customer dispatch communication, the review o
 real-time refresh and Hindi labels for the tool-room and task screens. Phase 4 (section K) closed the QC ledger
 reversal, Hindi on the clearance, containment and order lifecycle screens, the release validity setting and the two
 cosmetic Phase 3 items. Phase 5 (section N) connected production runs, first-stage QC, ageing and final QC. Phase 6
-(section P) connected packaging release, bundle traceability, finished-goods transfer and the invoice of a dispatch. Still open:
+(section P) connected packaging release, bundle traceability, finished-goods transfer and the invoice of a dispatch. Phase 7
+(section Q) connected shipment tracking, delivery receipts, customer acceptance, complaints, payment follow-up and the
+closure states. Still open:
 
 * **Automatic message transport**: WhatsApp Business / SMS gateways are not wired (`lib/communications/providers.ts`);
   staff send from their own app and record the message. Needs an owner decision on the provider and its account.
@@ -370,7 +372,15 @@ Tests: `tests/order-lifecycle-orchestration-queued-packaging-sql.test.mjs` (5).
    from an ageing job now counts against its final-QC release, checked when the stock batch is written.
 3. The reversal history and the final-QC lists lacked search, filters and sorting (`AGENTS.md` list-page rules); both now
    have them server-side (final QC: job / order / profile / record / method search, "only records with rejections",
-   sort by date, job, kilograms awaiting ageing or final QC, accepted or rejected). The Phase 4 and batch 3 tests that
+   sort by date, job, kilograms awaiting ageing or final QC, accepted or rejected).
+4. The release caps read per-job totals, but the commands that write released material (`bundle.record`, packaging
+   starts, packing lines, stock, ageing loads) lock only their own rows and share-lock the job, so two concurrent
+   releases of different bundles of one job could each see only their own row and together exceed the cap (two 500 kg
+   bundles against a 500 kg final-QC release). Every guard (`olo_guard_unaged_packing`, `olo_guard_ageing_load`) now takes
+   one per-job transaction lock (`private.olo_lock_job_release`) before reading its total, so the second release waits
+   and then counts the first.
+
+   The Phase 4 and batch 3 tests that
 modelled "moved-on" material with a scheduled packaging job now use a started one; the Phase 5 migration no longer needs
 its own exception for the queue entry.
 **Deployment notes**: apply after 20261124100000. Behaviour changes only for runs whose packaging is still queued:
@@ -433,6 +443,89 @@ a transfer cannot be loaded; finance gets invoice tasks for dispatches of the la
 invoice more than 4 h ago — expect a one-time burst. Transfer reminders start only once transfers are used.
 Operator gates: create the holding location(s) under inventory locations; record customer (or company default) packing
 specifications; confirm the 8 h transfer and 4 h invoice reminders; decide when to switch on the receipt control.
+
+## Q. Phase 7 — customer delivery and order closure (migration 20261126100000)
+
+Migration: `supabase/migrations/20261126100000_order_lifecycle_orchestration_phase7.sql` (not yet applied to hosted).
+Directive sections 26–30 and implementation phase 7 (shipment tracking, delivery confirmation, POD, customer acceptance,
+complaint handling, payment follow-up, operational and financial closure). Delivery confirmation overdue and the
+acceptance follow-up were built in batch 2 (section I), customer dispatch updates in Phase 3 (section J), per-bundle
+dispositions, returns and the closure review in the November assurance and lifecycle batches; this phase connects them.
+
+| Area | What now happens | Who |
+|---|---|---|
+| Shipment tracking (§27) | Updates per dispatch: in transit, delayed, delivery attempted, revised ETA, reported delivered, with who reported it, location and note (immutable). In-transit and delay updates move the dispatch status through the existing transition (the dispatch's own remarks are kept); a revised ETA becomes the expected delivery, so the batch 2 overdue task follows it. A delivery attempt or delay alerts dispatch and sales. One shipment state per dispatch: dispatched, in transit, delivery delayed, delivery attempted, delivered — confirmation pending, proof of delivery received, delivery disputed, returned, partially returned. `/dispatches/deliveries` lists them with counts (search, sort, 10 per page). | Status updates: dispatch roles. Customer reports: sales too |
+| Delivery receipt (§27) | Once the dispatch is marked delivered with its POD (existing flow), the receipt records actual delivery time, receiving company and person, bundles and kilograms received, shortage, damage and how it was acknowledged (challan, LR, invoice, email, WhatsApp, photo, call). Immutable; a correction supersedes it with a reason. A transporter's "delivered" is never acceptance. A clean receipt may record acceptance of every bundle at once (a named receiver, the receipt as evidence). | Dispatch, sales |
+| Delivery discrepancy (§27, test 39) | A receipt with a reported shortage or damage above the tolerance, a missing bundle, or received kilograms below the dispatched net by more than the tolerance or 0.5 % (weighbridge variance) opens one `delivery_discrepancy` task for sales (dispatch alerted). It closes only when the affected bundles carry non-accepted dispositions covering the discrepancy, each resolved (redelivery, credit claim, return, verified shortage), or a corrected receipt shows none. | Sales |
+| Customer acceptance (§28) | Each delivered dispatch has one outcome: accepted in full, accepted partially, acceptance pending, customer quality complaint, quantity shortage, transit damage, material return requested or commercial dispute — from its dispositions, return authorisations and open complaints (on the dispatch or on its order). | Derived |
+| Complaints (§28) | The AP-053 complaint log becomes a workflow (additive columns; AP-053 logging still works and gets a number). Number `CC-YYMM-####`, category, severity (due in 1/3/7/14 days for critical/high/medium/low), affected bundles and kilograms, evidence, customer reference. Steps: containment decision (stock held, QC containment linked, customer stock, recall) → root cause, corrective and preventive action, responsible department → agreed resolution with what was told to the customer (replacement, credit note, rework at site, return for rework, commercial settlement, no fault found) → closure by a second person (factory manager, QA, admin, owner; not the resolver, owner excepted) once replacement material has left, any required credit note is linked and the NCR is closed. Reject (not valid; not by the logger) and withdraw are recorded with a reason. Quality categories draft an NCR. Tasks: investigation (QA, dispatch or sales by category), resolution (sales), replacement (planning), credit note (finance), closure (factory management). Logging tells sales, QA, the production manager and the factory manager; high and critical also management. History is append-only. | Log: sales, QA, dispatch, managers. Steps as listed |
+| Replacement without double billing or quantities (§28) | Replacement material is linked to the complaint on a dispatch of the same order (never the complained dispatch). Free of charge: the whole dispatch is the replacement, no `dispatch_invoice` task is raised (one raised at gate-out is withdrawn), the closure review drops its "not invoiced" item and blocks if an invoice was issued anyway. Chargeable: the complaint closes only with a credit note for the rejected material. Linked kilograms are counted out of order fulfilment in the closure review and the lifecycle ledger (`replacement_dispatched_kg`). | Dispatch, sales manager, factory manager |
+| Payment follow-up (§29) | An issued invoice (last 365 days, not opening balance) due under its terms within the lead days (setting, default 0) and still collectible gives finance one `payment_followup` task naming invoice, customer, order, due date, days overdue and delivery — never amounts (tasks are readable by all staff). Finance roles get a separate alert with the balance ("Invoice … has an outstanding balance of ₹…"). More than 30 days overdue is urgent. It closes when settled (paid, credited, or written off under authority); a reversed payment opens a new cycle. A delivered shipment never settles it. | Finance |
+| Disputes and write-offs (§29) | Per invoice, finance only (`/payments/follow-up`): a dispute (amount within the collectible balance not already disputed; does not reduce what is collectible; keeps the order financially open) is resolved as customer pays, credit note (issued after the dispute) or written off (approved after it). A write-off is proposed, then approved under the `write_off` rule of the delegation-of-authority matrix when configured (bands, second approver, delegation), else by the owner or an admin — never by the proposer (owner excepted). Approved write-offs reduce the collectible balance used by the follow-up and closure; the invoice's balance in receivables, reminders and Tally is unchanged, so accounts post the journal. | Accounts, admin, owner |
+| Closure states (§30) | `olo_closure_state` keeps operational, financial and administrative closure apart: operationally fulfilled, delivered but acceptance pending, operationally closed (financially open / settled), fully closed, partially closed by authorisation (a short closure or carried item), cancelled. The lifecycle's overall status, closure domain and next action follow them; new domains: customer acceptance and complaints. `/orders/closure` boards orders by state (search, sort, 10 per page); `/orders/closure/[id]` shows both checklists and the history. | All staff read |
+| Closure review additions (§30, test 50) | Both kinds: customer acceptance of every delivered dispatch, open complaints (carriable past operational closure with a reason, never past final), open QC containments, a free replacement invoiced anyway. Final only: a verified delivery receipt for every delivered dispatch, NCRs closed, a QC record for every completed job, no open dispute or pending write-off; billet traceability gaps are shown, never blocking. Final closure now refuses items carried past operational closure. A receivable written off under authority counts as settled. A database guard refuses any closure row with an open obligation, whatever records it. An operationally closed order is finally closed on `/orders/closure/[id]` (the operational closure is superseded, the reopen still returns to the stage before closing). Management is told when an order is fully closed. Tasks: `closure_review` (sales) when an order becomes operationally fulfilled, `final_closure` (finance) when an operationally closed order meets every final obligation; withdrawn if an obligation reopens. | Operational: sales manager, factory manager. Final: accounts, admin, owner |
+
+New tables: `dispatch_tracking_updates`, `delivery_receipts`, `customer_complaint_items`, `customer_complaint_replacements`,
+`customer_complaint_events` (RLS read for internal staff; Realtime), `receivable_exceptions` (finance-only read; not on
+Realtime). All change only through the commands (guard triggers; no write grants). New columns on `customer_complaints`
+(workflow fields; number, report date and due time set by a trigger) and `order_closures.superseded_at` (status
+`superseded`); `order_closure_carries` also carries `complaint:` items. New setting: `payment_followup_lead_days`.
+New task kinds: `delivery_discrepancy`, `complaint_investigation`, `complaint_resolution`, `complaint_replacement`,
+`complaint_credit_note`, `complaint_closure`, `payment_followup`, `closure_review`, `final_closure`. New RPCs:
+`delivery_tracking_command` (`board`, `get`, `tracking.record`, `receipt.record`), `customer_complaint_command` (`board`,
+`list`, `get`, `candidates`, `log`, `investigate`, `root_cause`, `resolve`, `link_replacement`, `unlink_replacement`,
+`link_credit_note`, `communicate`, `close`, `reject`, `withdraw`), `receivable_followup_command` (`list`, `get`,
+`dispute.open`, `dispute.resolve`, `write_off.propose`, `write_off.decide`, `exception.withdraw`; finance only),
+`order_closure_command` (`board`, `get`, `finalize`). Wrapped (renamed): `olo_command` (→ `private.olo_command_p6`),
+`olo_verify_tasks` (→ `_p6`), `olo_run_all` (→ `_p6`), `olo_order_core` (→ `_p6`), `closure_readiness` (→ `_nov`).
+Redefined with the Phase 7 addition marked: `olo_settings_for`, `olo_guard_workflow_task`, `olo_expected_delivery`
+(revised ETA first), `olo_evaluate_shipment` (no invoice task for a free replacement). Triggers: closure guard and
+completion notice on `order_closures`; statement-level evaluation on dispositions, receipts, complaints, replacements,
+closures, dispatch status, payments, credit notes and invoices (payment follow-up and closure tasks are raised hourly and
+by the commands for the order concerned; event triggers re-verify).
+Pages: `/dispatches/deliveries`, `/dispatches/deliveries/[id]`, `/quality/complaints` (+ `/database`, `/new`, `/[id]`),
+`/payments/follow-up`, `/payments/follow-up/[invoiceId]`, `/orders/closure`, `/orders/closure/[id]`; links on the
+dispatch, payment, quality and lifecycle screens; the lead days on `/settings/orchestration`. Hindi: the task kinds, work
+links, closure states and ledger line (`lib/i18n/floor-delivery-closure.ts`); the new office screens are English.
+Tests: `tests/order-lifecycle-orchestration-phase7-sql.test.mjs` (10) and `tests/order-lifecycle-orchestration-phase7.test.mjs`
+(8). Screen fixture: `scripts/olo-phase7-preview.mjs` (launch config `olo-phase7-screens`).
+
+**Existing tests adapted**: `scripts/lib/nov-batch6-fixture.mjs` records the customer's acceptance of the delivered bundle
+(operational closure now needs it); `tests/nov-batch6-sql.test.mjs` expects 3 open items for final closure (balance,
+delivery receipt, QC record); `tests/autopilot-batch8-sql.test.mjs` gives its seeded (trigger-free) complaints a number.
+
+**Code review of Phase 7 (2026-11-25)**:
+1. *Fixed:* an in-transit or delay update overwrote the dispatch's own remarks (the transition replaces them); no remarks
+   are passed now (regression assertion).
+2. *Fixed:* the closure board query used the alias `o`, also a variable of the command, so `board` failed on every call;
+   renamed and covered by a test. The other read commands (complaint board, list, candidates) are now exercised too.
+3. *Fixed:* the closure board had no sorting (list-page rule); operationally closed orders with nothing invoiced were
+   shown as settled; an order-level complaint did not affect its dispatches' acceptance; AP-053 complaints had no
+   "logged" history; a collapsed form hid its confirmation; backfilled open complaints were overdue at once.
+4. *Fixed during the build:* the engine evaluated between superseding a receipt (or an operational closure) and writing
+   the new one, withdrawing the final-closure task; both commands hold the engine until the write is complete.
+5. *Measured and fixed:* with 400 dispatches and 300 invoices on PGlite, the closure board took 2.5 s because its
+   inlined query recomputed each order's closure state once per reference; the board, delivery and receivable queries
+   now materialise each row's state once (closure board 0.3 s, delivery board 0.3 s, receivable list 30 ms, hourly
+   payment and closure evaluation under 1 s). The order lifecycle view's own cost is the Phase 6 core (Phase 7 adds about
+   0.1 s per order with 130 dispatches).
+6. *Accepted:* approved write-offs do not change `invoices.balance_due`
+   (it is generated from payments and credit notes): the AP3 customer reminders still include the written-off part until
+   accounts book it.
+7. *Verified unrelated:* in the full run, two browser tests (AP-079, FS-38) failed. Both pass on their own. Under the suite's
+   concurrency they fail now and then because OneDrive locks screenshots in `docs/evidence`; at the last commit, outside
+   OneDrive, AP batch 7 was also flaky (AP-064). With this migration, outside OneDrive, both files passed 3 of 3.
+
+**Deployment notes for Phase 7**: apply after 20261125100000 (Phase 6 first: this migration wraps the Phase 6
+functions). No new environment variables. Behaviour changes on apply: operational closure needs customer acceptance of
+every delivered dispatch and no open complaint or QC hold; final closure also needs delivery receipts, closed NCRs, QC
+records and no carried item; a closure written by any path is checked by the database. Earlier complaints get numbers;
+those whose NCR was closed or dismissed are recorded closed or rejected through it, the rest stay open (due 7 days from the
+upgrade) and get investigation tasks. Expect a one-time burst of payment follow-up tasks for overdue invoices of the last
+365 days, closure review tasks for orders already fulfilled, and investigation tasks for open legacy complaints.
+Operator gates: confirm the payment follow-up lead (0 days); configure the `write_off` rule in the authority matrix (else
+owner or admin approve); confirm the 0.5 % weighbridge tolerance and the complaint due days; record acceptance for
+delivered dispatches before closing older orders.
 
 ## H. Deployment
 

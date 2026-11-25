@@ -303,9 +303,95 @@ test("QC route control: packing lines, prepared bundles and stock made from the 
   await assert.rejects(() => raw(`insert into prepared_physical_bundles(id,company_id,order_id,source_line_id,source_kind,profile_id,bundle_number,number_of_pieces,net_length_m,gross_weight_kg,tare_weight_kg,recorded_by,payload)
     values($1,$2,$3,$4,'production',$5,'B-P5-P1',50,300,505,5,$6,'{}')`, [id(), i.company, a.order, a.job, i.profile2, i.production]), /would make 1,000 kg packed or stocked/,
     "the prepared bundle is counted with the packing line already dispatched");
-  await assert.rejects(() => raw(`insert into profile_stock_batches(id,company_id,profile_id,finish,length_m,quantity_pieces,total_weight_kg,origin_type,production_job_id)
+  await assert.rejects(() => atCommit(`insert into profile_stock_batches(id,company_id,profile_id,finish,length_m,quantity_pieces,total_weight_kg,origin_type,production_job_id)
     values($1,$2,$3,'mill_finish',105,20,100,'production_surplus',$4)`, [id(), i.company, i.profile2, a.job]), /would make 600 kg packed or stocked/,
     "output moved into stock counts against the same release");
+});
+
+// The commands that write released material lock only their own rows (and share-lock the job and order), so two releases
+// of different bundles of one job could each read only their own write and pass the cap together. Every guarded path
+// takes one per-job transaction lock before it reads the total, so a concurrent release waits and then sees the other.
+test("QC route control: every guarded release takes one per-job lock before reading its total", async () => {
+  const held = async job => (await one(`select exists(select 1 from pg_locks l where l.locktype = 'advisory' and l.objsubid = 1 and l.granted
+    and ((l.classid::bigint << 32) | l.objid::bigint) = hashtextextended('olo-job-release:' || $1::text || ':' || $2::text, 0)) h`, [i.company, job])).h;
+  // Set up with the control off (no release lock is taken), then turn it on.
+  const ready = async () => { const a = await order(); await inspect(a, 1000); const t = await load(a, 1000); await review(t, 1000); await record(a, { accepted_kg: 1000 }); return a; };
+  const bundled = await ready(), packed = await ready(), stocked = await ready();
+  const loaded = await order();
+  await inspect(loaded, 500);
+  await olo("settings.save", { enforce_qc_route: true }, i.factory);
+  for (const a of [bundled, packed, stocked, loaded]) assert.equal(await held(a.job), false);
+
+  await raw(`insert into prepared_physical_bundles(id,company_id,order_id,source_line_id,source_kind,profile_id,bundle_number,number_of_pieces,net_length_m,gross_weight_kg,tare_weight_kg,recorded_by,payload)
+    values($1,$2,$3,$4,'production',$5,'B-P5-L1',50,300,505,5,$6,'{}')`, [id(), i.company, bundled.order, bundled.job, i.profile2, i.production]);
+  assert.equal(await held(bundled.job), true, "a prepared bundle record locks its job's releases");
+  assert.equal(await held(packed.job), false, "the lock is per job");
+  await raw("insert into packaging_jobs(id,company_id,packaging_number,order_id,production_job_id,scheduled_date,pieces,profile_weight_kg,profile_length_m,status) values($1,$2,'PK-P5-L1',$3,$4,current_date,10,300,60,'in_progress')",
+    [id(), i.company, packed.order, packed.job]);
+  assert.equal(await held(packed.job), true, "a packaging start locks its job's releases");
+  await atCommit(`insert into profile_stock_batches(id,company_id,profile_id,finish,length_m,quantity_pieces,total_weight_kg,origin_type,production_job_id)
+    values($1,$2,$3,'mill_finish',105,20,100,'production_surplus',$4)`, [id(), i.company, i.profile2, stocked.job]);
+  assert.equal(await held(stocked.job), true, "stock made from the job locks its releases at commit");
+  await load(loaded, 500);
+  assert.equal(await held(loaded.job), true, "an ageing load locks its job's releases");
+});
+
+/** Runs a statement and then the commit-time stock guard (deferred until commit), inside one savepoint. */
+async function atCommit(sql, p = []) {
+  await f.db.exec("savepoint s5_commit");
+  try {
+    const r = sql ? await f.db.query(sql, p) : null;
+    await f.db.exec("set constraints public.zzz_olo_p5_guard_unaged immediate");
+    await f.db.exec("set constraints public.zzz_olo_p5_guard_unaged deferred; release savepoint s5_commit");
+    return r?.rows;
+  } catch (error) { await f.db.exec("rollback to savepoint s5_commit; release savepoint s5_commit"); throw error; }
+}
+
+test("QC route control: splitting or merging released stock is repacking, not a new release", async () => {
+  await olo("settings.save", { enforce_qc_route: true }, i.factory);
+  const a = await order();
+  await inspect(a, 1000);
+  const tb = await load(a, 1000);
+  await review(tb, 1000);
+  await record(a, { accepted_kg: 1000 });
+  const stock = id();
+  await atCommit(`insert into profile_stock_batches(id,company_id,profile_id,finish,length_m,quantity_pieces,total_weight_kg,bundle_number,status,origin_type,production_job_id)
+    values($1,$2,$3,'mill_finish',1053,100,1000,'B-P5-S0','available','production_surplus',$4)`, [stock, i.company, i.profile2, a.job]);
+  const split = { action: "bundle.split", note: "Split for two delivery drops" };
+  const ctx = { source: { inputs: [{ id: stock, kg: 1000 }], outputs: [{ bundle_number: "B-P5-S1", pieces: 60, kg: 600 }, { bundle_number: "B-P5-S2", pieces: 40, kg: 400 }] }, review: { facts: {} } };
+  const t1 = id();
+  await atCommit("select private.lifecycle_apply($1,$2,$3,$4,$5)", [i.company, i.inventory, t1, split, ctx]);
+  const outs = await q("select s.id from profile_stock_batches s join bundle_transformation_lines l on l.stock_batch_id=s.id and l.direction='output' where l.transformation_id=$1 order by s.bundle_number", [t1]);
+  assert.equal(outs.length, 2, "the split wrote both output bundles");
+  const merge = { source: { inputs: outs.map((o, n) => ({ id: o.id, kg: n === 0 ? 600 : 400 })), outputs: [{ bundle_number: "B-P5-S3", pieces: 100, kg: 1000 }] }, review: { facts: {} } };
+  await atCommit("select private.lifecycle_apply($1,$2,$3,$4,$5)", [i.company, i.inventory, id(), { action: "bundle.merge", note: "Recombined for one drop" }, merge]);
+  assert.equal(num(await one("select private.olo_job_released_material_kg($1,$2) kg", [i.company, a.job]).then(r => r.kg)), 1000, "repacked stock is counted once");
+  await assert.rejects(() => atCommit(`insert into profile_stock_batches(id,company_id,profile_id,finish,length_m,quantity_pieces,total_weight_kg,origin_type,production_job_id)
+    values($1,$2,$3,'mill_finish',10.5,1,10,'production_surplus',$4)`, [id(), i.company, i.profile2, a.job]), /would make 1,010 kg packed or stocked/,
+    "new stock beyond the release is still refused");
+});
+
+test("final QC: a coated or anodized job that needs ageing uses its after-finishing QC approvals", async () => {
+  await olo("settings.save", { enforce_qc_route: true }, i.factory);
+  const a = await order();
+  await seed("update production_jobs set finishing_type='anodizing' where id=$1", [a.job]);
+  const fin = id();
+  await seed(`insert into finishing_jobs(id,company_id,order_id,production_job_id,finishing_type,sent_date,received_date,input_weight_kg,output_weight_kg,rejection_weight_kg,status)
+    values($1,$2,$3,$4,'anodizing',current_date-2,current_date,1000,980,20,'completed')`, [fin, i.company, a.order, a.job]);
+  let k = await flow(a.job);
+  assert.deepEqual([k.qc_stage, num(k.qc_source_kg), num(k.awaiting_decision_kg)], ["after_finishing", 980, 980], "the finishing loss is not awaiting QC");
+  await f.asUser(`insert into quality_inspections(id,company_id,production_job_id,finishing_job_id,profile_id,inspection_date,quantity_checked_kg,status,batch_number,inspector_name,surface_finish_ok,weight_per_meter_actual)
+    values($1,$2,$3,$4,$5,now(),980,'approved','LOT-P5-AN','QA day shift',true,0.95)`, [id(), i.company, a.job, fin, a.profile], i.quality);
+  k = await flow(a.job);
+  assert.deepEqual([num(k.approved_kg), num(k.awaiting_decision_kg), k.stage], [980, 0, "awaiting_ageing"]);
+  await assert.rejects(() => load(a, 1000), /Only 980 kg of job .* has passed first-stage QC/);
+  const tb = await load(a, 980);
+  await review(tb, 980);
+  const r = await record(a, { accepted_kg: 900, rejected_kg: 80, rejection_reason: "Hardness 7 HW on two bundles after ageing" });
+  assert.equal(r.reversals.length, 1, "the rejection reverses the after-finishing approval");
+  assert.equal(await approvedKg(a.job), 900);
+  k = await flow(a.job);
+  assert.deepEqual([k.stage, num(k.final_accepted_kg), num(k.final_rejected_kg), num(k.awaiting_final_kg)], ["released", 900, 80, 0]);
 });
 
 test("completion path: the packaging queue entry of a completed run is not packing; the control and a final rejection both allow for it", async () => {

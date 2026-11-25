@@ -33,6 +33,7 @@ export function OrchestrationSettingsForm({ data }: { data: OrchestrationSetting
   const phase4 = s.dispatch_release_hours !== undefined;
   const phase5 = s.enforce_qc_route !== undefined;
   const phase6 = s.enforce_fg_receipt !== undefined;
+  const phase7 = s.payment_followup_lead_days !== undefined;
   return (
     <form className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4" onSubmit={e => { e.preventDefault(); run({ command: "settings.save", billet_rank_threshold: s.billet_rank_threshold, die_rank_threshold: s.die_rank_threshold,
       material_risk_horizon_days: s.material_risk_horizon_days, ack_sla_hours: s.ack_sla_hours, action_sla_hours: s.action_sla_hours, enforce_die_preparation: s.enforce_die_preparation,
@@ -42,7 +43,9 @@ export function OrchestrationSettingsForm({ data }: { data: OrchestrationSetting
       // Phase 5 saves these; before that upgrade the database reports no QC route control.
       ...(phase5 ? { enforce_qc_route: s.enforce_qc_route, ageing_overdue_grace_minutes: s.ageing_overdue_grace_minutes } : {}),
       // Phase 6 saves these; before that upgrade the database reports no finished-goods receipt control.
-      ...(phase6 ? { enforce_fg_receipt: s.enforce_fg_receipt, fg_transfer_hours: s.fg_transfer_hours, invoice_due_hours: s.invoice_due_hours } : {}) }, "Settings saved and the queue re-checked."); }}>
+      ...(phase6 ? { enforce_fg_receipt: s.enforce_fg_receipt, fg_transfer_hours: s.fg_transfer_hours, invoice_due_hours: s.invoice_due_hours } : {}),
+      // Phase 7 saves this; before that upgrade the database reports no payment follow-up lead.
+      ...(phase7 ? { payment_followup_lead_days: s.payment_followup_lead_days } : {}) }, "Settings saved and the queue re-checked."); }}>
       <h2 className="text-lg font-bold">Queue triggers and response times</h2>
       <fieldset disabled={!data.can_edit || busy} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label className="text-sm font-semibold">Billet allocation at queue rank ≤<input type="number" min={1} max={50} className={input} value={s.billet_rank_threshold} onChange={num("billet_rank_threshold")} /></label>
@@ -56,6 +59,7 @@ export function OrchestrationSettingsForm({ data }: { data: OrchestrationSetting
         {phase5 ? <label className="text-sm font-semibold">Ageing cycle overdue after the recipe&apos;s maximum soak plus (minutes)<input type="number" min={0} max={720} className={input} value={s.ageing_overdue_grace_minutes} onChange={num("ageing_overdue_grace_minutes")} /></label> : null}
         {phase6 ? <label className="text-sm font-semibold">Remind packaging to move packed bundles to finished goods after (hours)<input type="number" min={1} max={168} className={input} value={s.fg_transfer_hours} onChange={num("fg_transfer_hours")} /></label> : null}
         {phase6 ? <label className="text-sm font-semibold">Ask finance for the tax invoice of a dispatch that left after (hours; 0 = at once)<input type="number" min={0} max={168} className={input} value={s.invoice_due_hours} onChange={num("invoice_due_hours")} /></label> : null}
+        {phase7 ? <label className="text-sm font-semibold">Start customer payment follow-up before the due date (days; 0 = on the due date)<input type="number" min={0} max={30} className={input} value={s.payment_followup_lead_days} onChange={num("payment_followup_lead_days")} /></label> : null}
       </fieldset>
       <fieldset disabled={!data.can_edit || busy} className="space-y-2">
         <label className="flex min-h-11 items-start gap-3 text-sm"><input type="checkbox" className="mt-1 h-5 w-5" checked={s.enforce_die_preparation} onChange={e => setS({ ...s, enforce_die_preparation: e.target.checked, enforce_preheat: e.target.checked && s.enforce_preheat })} />

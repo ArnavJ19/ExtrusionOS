@@ -281,3 +281,15 @@ test("packaging release: the final-QC handoff names the approval that still stan
   const h = await one("select handoff_source_id sid, handoff_quantity_kg kg from tasks where handoff_key=$1", [`final_qc_release:${rec}`]);
   assert.deepEqual([h.sid, Number(h.kg)], [kept, 300]);
 });
+
+test("packaging release: a QC reversal still withdraws the packing handoff of a route without ageing", async () => {
+  const plain = await packed({ approvedKg: 0, profile: T4 });
+  const ins = await inspect(plain.job, T4, 300);
+  assert.equal((await one("select status from tasks where handoff_key=$1", [`inspection_release:${ins}`])).status, "open", "the T4 approval releases to packaging");
+  const r = await f.call("quality_reversal_command", "reverse", { inspection_id: ins, reversed_kg: 300, reversed_as: "rejected", method: "Webster hardness re-test",
+    reason: "Customer complaint: hardness below 12 HW on site" }, i.quality);
+  assert.ok(r.id);
+  assert.equal((await one("select status from tasks where handoff_key=$1", [`inspection_release:${ins}`])).status, "cancelled", "the packing handoff is withdrawn");
+  const rel = await pf("release.get", { job_id: plain.job });
+  assert.deepEqual([rel.release.basis, Number(rel.release.release_kg), Number(rel.release.to_pack_kg)], ["first_qc", 0, 0], "nothing stays released for packing");
+});

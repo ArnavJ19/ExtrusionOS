@@ -26,8 +26,9 @@ test("input contracts reject injected identity, unknown actions and inconsistent
   assert.equal(ok({ action: "order.delete", note }), false);
   assert.equal(ok({ ...journey(), baseline_to: "2026-09-30" }), false, "a baseline ends after it starts");
   assert.equal(ok({ ...journey(), note: "Bad\u0007note" }), false);
-  assert.equal(ok({ action: "closure.carry", order_id: i.orderC, item_key: `job:${i.job1}`, note }), false, "only returns, exceptions and changes are carriable");
+  assert.equal(ok({ action: "closure.carry", order_id: i.orderC, item_key: `job:${i.job1}`, note }), false, "only returns, exceptions, changes and complaints are carriable");
   assert.equal(ok({ action: "closure.carry", order_id: i.orderC, item_key: `exception:${i.job1}`, note }), true);
+  assert.equal(ok({ action: "closure.carry", order_id: i.orderC, item_key: `complaint:${i.job1}`, note }), true, "Phase 7 complaints are carriable past operational closure");
   const tranche = (date, kg) => ({ date, kg });
   assert.equal(ok({ action: "promise.propose", order_id: i.orderP, tranches: [tranche("2026-11-10", 100), tranche("2026-11-09", 100)], note }), false);
   assert.equal(ok({ action: "promise.propose", order_id: i.orderP, tranches: [], note }), false);

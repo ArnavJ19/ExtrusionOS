@@ -12,6 +12,9 @@ import { DISPATCH_COMM_MUTATIONS, DISPATCH_FINANCE_MUTATIONS, dispatchCommComman
 import { REVERSAL_MUTATIONS, reversalCommandSchema } from "@/lib/workflow/quality-reversal";
 import { FINAL_QC_MUTATIONS, finalQcCommandSchema } from "@/lib/workflow/final-qc";
 import { PACKAGING_FLOW_MUTATIONS, packagingFlowCommandSchema } from "@/lib/workflow/packaging-flow";
+import {
+  CLOSURE_MUTATIONS, COMPLAINT_MUTATIONS, DELIVERY_MUTATIONS, RECEIVABLE_MUTATIONS, closureCommandSchema, complaintCommandSchema, deliveryCommandSchema, receivableCommandSchema
+} from "@/lib/workflow/delivery-closure";
 
 const UNAVAILABLE = "Order lifecycle orchestration needs the database upgrade 20261120100000 to be applied first. Existing workflows remain available.";
 
@@ -145,4 +148,24 @@ const UNAVAILABLE_P6 = "Packaging release, bundle trace and finished-goods trans
 export async function packagingFlowAction(input: unknown): Promise<ActionResult> {
   return runCommand("packaging_flow_command", packagingFlowCommandSchema as unknown as Schema, PACKAGING_FLOW_MUTATIONS, input,
     ["/packaging", "/packaging/release", "/packaging/bundles", "/packaging/fg-transfers", "/dispatches/loading", "/orders/lifecycle", "/tasks/orchestration"], UNAVAILABLE_P6);
+}
+
+// Orchestration Phase 7 (migration 20261126100000): delivery and closure. Each RPC rechecks the role; receivables are
+// finance only in the database.
+const UNAVAILABLE_P7 = "Delivery tracking, complaints, payment follow-up and closure need the database upgrade 20261126100000 to be applied first. Existing workflows remain available.";
+export async function deliveryTrackingAction(input: unknown): Promise<ActionResult> {
+  return runCommand("delivery_tracking_command", deliveryCommandSchema as unknown as Schema, DELIVERY_MUTATIONS, input,
+    ["/dispatches/deliveries", "/dispatches", "/orders/lifecycle", "/orders/closure", "/tasks/orchestration"], UNAVAILABLE_P7);
+}
+export async function complaintAction(input: unknown): Promise<ActionResult> {
+  return runCommand("customer_complaint_command", complaintCommandSchema as unknown as Schema, COMPLAINT_MUTATIONS, input,
+    ["/quality/complaints", "/quality", "/dispatches/deliveries", "/orders/lifecycle", "/orders/closure", "/tasks/orchestration"], UNAVAILABLE_P7);
+}
+export async function receivableFollowupAction(input: unknown): Promise<ActionResult> {
+  return runCommand("receivable_followup_command", receivableCommandSchema as unknown as Schema, RECEIVABLE_MUTATIONS, input,
+    ["/payments/follow-up", "/payments", "/orders/closure", "/orders/lifecycle", "/tasks/orchestration"], UNAVAILABLE_P7);
+}
+export async function orderClosureAction(input: unknown): Promise<ActionResult> {
+  return runCommand("order_closure_command", closureCommandSchema as unknown as Schema, CLOSURE_MUTATIONS, input,
+    ["/orders/closure", "/orders/lifecycle", "/tasks/orchestration", "/tasks/lifecycle"], UNAVAILABLE_P7);
 }

@@ -57,7 +57,8 @@ test("NOV-058: a delivered and invoiced order closes operationally with receivab
   assert.equal(before.details.items[0].blocking, false); assert.equal(n(before.details.outstanding_inr), 59000);
   assert.ok((await f.command("list", { view: "closure" }, i.owner)).rows.some(r => r.id === i.orderC), "ready orders appear on the active board");
   await assert.rejects(() => f.prepare({ action: "closure.close", order_id: i.orderC, kind: "final", note }, i.salesManager), /Final commercial closure is recorded by accounts/);
-  await assert.rejects(() => f.prepare({ action: "closure.close", order_id: i.orderC, kind: "final", note }, i.accounts), /1 item\(s\) are still open, starting with: Invoice INV-NOV6-C has an outstanding balance/);
+  // Orchestration Phase 7 adds the administrative checks of final closure (delivery receipt, QC record) behind the balance.
+  await assert.rejects(() => f.prepare({ action: "closure.close", order_id: i.orderC, kind: "final", note }, i.accounts), /3 item\(s\) are still open, starting with: Invoice INV-NOV6-C has an outstanding balance/);
   await assert.rejects(() => f.prepare({ action: "closure.close", order_id: i.orderC, kind: "operational", note }, i.accounts), /Operational closure is recorded by sales or factory management/);
   await assert.rejects(() => f.prepare({ action: "closure.close", order_id: i.orderC, kind: "operational", note }, i.sales), /Not permitted/);
   const preview = await f.prepare({ action: "closure.close", order_id: i.orderC, kind: "operational", note }, i.salesManager);
