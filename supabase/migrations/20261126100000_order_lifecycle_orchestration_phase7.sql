@@ -763,6 +763,16 @@ begin
       'blocking', true, 'carriable', false, 'carried', false) order by d.dispatch_date, d.id)
     from public.dispatches d cross join lateral private.olo_dispatch_acceptance(p_company, d.id) a
     where d.company_id = p_company and d.order_id = p_order and d.delivery_status = 'delivered' and (a ->> 'pending_lines')::integer > 0), '[]'::jsonb);
+  -- A shortage, damage or missing bundle on the current delivery receipt that the bundle dispositions do not yet account
+  -- for (for example a corrected receipt recorded after every bundle was accepted). Not carriable.
+  v_add := v_add || coalesce((select jsonb_agg(jsonb_build_object('key', 'discrepancy:' || d.id, 'domain', 'acceptance', 'owner', 'sales_manager', 'href', '/dispatches/deliveries/' || d.id,
+      'label', 'Delivery discrepancy unresolved on dispatch ' || coalesce(d.dispatch_number, ''),
+      'detail', concat('The delivery receipt records ', trim_scale((x ->> 'discrepancy_kg')::numeric), ' kg short or damaged and ', (x ->> 'missing_bundles'), ' bundle(s) missing; ',
+        trim_scale((x ->> 'covered_kg')::numeric), ' kg is accounted for. Record each affected bundle''s disposition with its resolution, or record a corrected receipt.'),
+      'quantity_kg', (x ->> 'discrepancy_kg')::numeric, 'blocking', true, 'carriable', false, 'carried', false) order by d.dispatch_date, d.id)
+    from public.dispatches d cross join lateral private.olo_receipt_discrepancy(p_company, d.id) x
+    where d.company_id = p_company and d.order_id = p_order and d.delivery_status = 'delivered' and x is not null
+      and (x ->> 'open')::boolean and not (x ->> 'resolved')::boolean), '[]'::jsonb);
   -- Open customer complaints (may be carried past operational closure with a reason, never past final closure).
   v_add := v_add || coalesce((select jsonb_agg(jsonb_build_object('key', 'complaint:' || c.id, 'domain', 'quality', 'owner', case when c.status in ('open','investigating') then 'quality' else 'sales_manager' end,
       'href', '/quality/complaints/' || c.id, 'label', 'Customer complaint ' || c.complaint_number || ' is ' || replace(c.status, '_', ' '),
@@ -2265,7 +2275,7 @@ begin
       from public.order_closures h left join public.app_users u on u.id = h.closed_by where h.company_id = p_company and h.order_id = p_order),
     'operational', v_op, 'final', v_fin,
     'can_close_operational', v_cl.id is null and o.current_stage not in ('closed','cancelled') and p_role in ('owner','admin','sales_manager','factory_manager'),
-    'can_finalize', v_cl.kind = 'operational' and p_role in ('owner','admin','accounts'),
+    'can_finalize', coalesce(v_cl.kind = 'operational', false) and p_role in ('owner','admin','accounts'),
     'can_close_final_directly', v_cl.id is null and o.current_stage not in ('closed','cancelled') and p_role in ('owner','admin','accounts'));
 end;
 $$;

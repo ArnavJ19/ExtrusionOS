@@ -407,6 +407,34 @@ test("closure: final closure refuses carried complaints, missing receipts, open 
     [f.next(), i.company, a.order, i.accounts], i.accounts), /open obligation/, "the guard refuses a final closure row while obligations are open");
 });
 
+test("closure: a corrected receipt reporting a shortage after every bundle was accepted blocks closure until the bundle is resolved", async () => {
+  const a = await packed({ tags: ["P7-K1", "P7-K2"], kg: 228 });
+  const d = await ship(a.order, ["P7-K1", "P7-K2"]);
+  await deliver(d);
+  const view = await oc("get", { order_id: a.order }, i.owner);
+  assert.equal(view.can_finalize, false, "no closure yet: can_finalize is false, never null");
+  assert.equal((await oc("get", { order_id: a.order }, i.accounts)).can_finalize, false);
+  await receipt(d, { accept_all: true });
+  await receipt(d, { correction_reason: "Customer reported bundle P7-K2 missing after unloading", received_bundles: 1, received_kg: 114, shortage_kg: 114 });
+  const g = await dt("get", { dispatch_id: d });
+  assert.deepEqual([g.shipment.discrepancy.open, g.shipment.discrepancy.resolved], [true, false]);
+  for (const kind of ["operational", "final"]) {
+    const r = (await one(`select private.closure_readiness($1,$2,'${kind}') v`, [i.company, a.order])).v;
+    const item = r.items.find(x => x.key === `discrepancy:${d}`);
+    assert.ok(item, `${kind} readiness lists the unresolved receipt discrepancy`);
+    assert.deepEqual([item.blocking, item.carriable, item.domain], [true, false, "acceptance"]);
+  }
+  await assert.rejects(() => f.asOwnerFor("insert into order_closures(id,company_id,order_id,kind,previous_stage,readiness,carried,closed_by,close_note) values($1,$2,$3,'final','delivered','[]','[]',$4,'Straight to final')",
+    [f.next(), i.company, a.order, i.accounts], i.accounts), /open obligation\(s\) for final closure, starting with: .*/, "the guard refuses a final closure with an open shortage");
+  // Reverse the accepted disposition of the missing bundle and record the short claim with its resolution.
+  const [, l2] = await lines(d);
+  await f.asOwnerFor("update delivery_dispositions set reversed_at=now(), reversed_by=$2, reverse_note='Corrected receipt: bundle not received' where packing_list_item_id=$1 and reversed_at is null", [l2.id, i.salesManager], i.salesManager);
+  const sid = (await f.asOwnerFor("insert into delivery_dispositions(company_id,dispatch_id,packing_list_item_id,disposition,quantity_kg,receiver_name,evidence,owner_id,recorded_by) values($1,$2,$3,'short_claimed',114,'Mr Sharma','Bundle P7-K2 not received',$4,$4) returning id", [i.company, d, l2.id, i.sales], i.sales))[0].id;
+  await f.asOwnerFor("update delivery_dispositions set resolution='redelivery', resolution_note='Redelivered from the transporter hub', resolved_by=$2, resolved_at=now() where id=$1", [sid, i.salesManager], i.salesManager);
+  const r = (await one("select private.closure_readiness($1,$2,'final') v", [i.company, a.order])).v;
+  assert.equal(r.items.some(x => x.key === `discrepancy:${d}`), false, "a resolved disposition clears the discrepancy blocker");
+});
+
 test("security: Phase 7 records are read through the commands; tables refuse direct writes; dealers and other companies see nothing", async () => {
   const a = await packed({ tags: ["P7-S1"] });
   const d = await ship(a.order, ["P7-S1"]);
