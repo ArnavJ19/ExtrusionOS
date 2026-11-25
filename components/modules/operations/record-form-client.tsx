@@ -1022,11 +1022,9 @@ function RecordFormWorkspace({ moduleKey, context, recordId, prefillOrderId }: {
       return;
     }
     if (moduleKey === "foundry_external_sources" || moduleKey === "foundry_scrap") {
-      const qty = Number(payload.weight_kg ?? 0);
-      const rate = Number(payload.rate ?? 0);
-      const base = Number(payload.base_amount ?? 0) || Number((qty * rate).toFixed(2));
-      const total = Number(payload.total_amount ?? 0) || Number((base + Number(payload.tax_amount ?? 0) + Number(payload.freight_amount ?? 0) - Number(payload.discount_amount ?? 0)).toFixed(2));
-      payload = { ...payload, unit: payload.unit || "kg", base_amount: base, total_amount: total };
+      // Purchase money and the vendor are owned by accounts; this form never writes them.
+      for (const key of ["vendor_id", "rate", "base_amount", "tax_amount", "freight_amount", "discount_amount", "total_amount", "invoice_number", "invoice_date", "due_date", "payment_status", "payment_method"]) delete payload[key];
+      payload = { ...payload, unit: payload.unit || "kg" };
     }
     if (moduleKey === "outsourced_billets") {
       const qty = Number(payload.weight_kg ?? 0);
