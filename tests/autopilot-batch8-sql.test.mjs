@@ -119,7 +119,8 @@ test("AP-050 health falls on a slower order rhythm, lower volume, overdue invoic
   await f.orderHistory(i.customer3, [[100, 1000], [130, 1000], [160, 1000], [190, 1000], [220, 1000], [250, 1000], [280, 1000]]);
   await f.seed("insert into invoices(id,company_id,customer_id,invoice_number,invoice_date,due_date,subtotal,tax_total,grand_total,amount_paid,status) values($1,$2,$3,'INV-8-OD',current_date-120,current_date-75,10000,1800,11800,0,'sent')",
     [f.next(), i.company, i.customer3]);
-  for (let n = 0; n < 2; n++) await f.seed("insert into customer_complaints(id,company_id,customer_id,description,logged_by,logged_at,fingerprint) values($5,$1,$2,'Surface lines on last lot',$3,now()-interval '10 days',$4)", [i.company, i.customer3, i.sales, f.next(), f.next()]);
+  // Seeds bypass triggers, so the complaint number (orchestration Phase 7) is given here.
+  for (let n = 0; n < 2; n++) await f.seed("insert into customer_complaints(id,company_id,customer_id,description,logged_by,logged_at,fingerprint,complaint_number) values($5,$1,$2,'Surface lines on last lot',$3,now()-interval '10 days',$4,$6)", [i.company, i.customer3, i.sales, f.next(), f.next(), `CC-AP8-000${n + 1}`]);
   for (const status of ["customer_rejected", "expired", "customer_rejected", "converted_to_order"]) {
     await f.seed("insert into quotes(id,company_id,quote_number,customer_id,quote_date,valid_until,status) values($1,$2,$3,$4,current_date-30,current_date-1,$5)", [f.next(), i.company, `Q-8-${f.next().slice(-4)}`, i.customer3, status]);
   }

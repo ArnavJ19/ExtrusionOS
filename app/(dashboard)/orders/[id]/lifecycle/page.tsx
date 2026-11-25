@@ -56,6 +56,11 @@ export default async function OrderLifecycleDetailPage({ params }: { params: Pro
     const dispatched = ledger.findIndex(([key]) => key === "olo.lc.l.dispatched") + 1;
     ledger.splice(dispatched, 0, ["olo.lc.l.invoiced", q.invoiced_kg ?? 0, "olo.lc.s.invoices"]);
   }
+  // Phase 7: replacement material for complaints, shown only when there is some (it is not order quantity).
+  if (q.replacement_dispatched_kg) {
+    const dispatched = ledger.findIndex(([key]) => key === "olo.lc.l.dispatched") + 1;
+    ledger.splice(dispatched, 0, ["olo.lc.l.replacement", q.replacement_dispatched_kg, "olo.lc.s.replacement"]);
+  }
   const flowOf = (job: Record<string, unknown>) => {
     const parsed = qualityFlowSchema.safeParse(job.quality_flow);
     return parsed.success ? parsed.data : null;
@@ -65,7 +70,7 @@ export default async function OrderLifecycleDetailPage({ params }: { params: Pro
       <PageHeader title={`${d.order.order_number} · ${label("olo.lc.overall.", d.overall, overallLabel(d.overall))}`} backHref={`/orders/${id}`} backLabel={t("olo.lc.backOrder")}
         description={t("olo.lc.summary", { customer: d.order.customer_name ?? t("olo.lc.customer"), priority: label("olo.priority.", d.order.priority ?? "normal", d.order.priority ?? "normal"), due: formatDate(d.order.expected_dispatch_date),
           days: d.order.days_in_stage ?? 0, stage: statusText(d.order.current_stage) }) + (d.order.customer_po ? t("olo.lc.po", { po: d.order.customer_po }) : "")}
-        actions={<div className="flex flex-wrap items-center gap-2"><LiveRefresh name="order-lifecycle" tables={["olo_events", "olo_task_events", "dispatches", "dispatch_communications", "quality_reversals", "final_qc_records"]} /><FloorLanguageToggle lang={lang} /><Link href="/orders/lifecycle" className="rounded-xl border bg-white px-4 py-3 text-sm font-bold">{t("olo.lc.commandCentre")}</Link></div>} />
+        actions={<div className="flex flex-wrap items-center gap-2"><LiveRefresh name="order-lifecycle" tables={["olo_events", "olo_task_events", "dispatches", "dispatch_communications", "quality_reversals", "final_qc_records", "delivery_receipts", "customer_complaint_events"]} /><FloorLanguageToggle lang={lang} /><Link href={`/orders/closure/${id}`} className="rounded-xl border bg-white px-4 py-3 text-sm font-bold">{t("olo.lc.closureRecord")}</Link><Link href="/orders/lifecycle" className="rounded-xl border bg-white px-4 py-3 text-sm font-bold">{t("olo.lc.commandCentre")}</Link></div>} />
 
       <section className="grid gap-3 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-4">

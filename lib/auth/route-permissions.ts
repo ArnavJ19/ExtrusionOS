@@ -92,6 +92,12 @@ const roleRules: RoleRule[] = [
   { prefix: "/packaging/release", roles: ["owner", "admin", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "quality", "viewer"] },
   { prefix: "/foundry/remelt", roles: ["owner", "admin", "factory_manager", "production_manager", "production", "inventory_manager", "quality", "dispatch_manager", "viewer"] },
   { prefix: "/orders/lifecycle", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer"] },
+  // Phase 7: delivery monitoring serves dispatch, sales (customer follow-up), QA and accounts; complaints are worked by
+  // every internal department; payment follow-up shows amounts, so finance only; the closure board is read by all staff.
+  { prefix: "/dispatches/deliveries", roles: ["owner", "admin", "factory_manager", "inventory_manager", "dispatch_manager", "dispatch", "sales_manager", "sales", "accounts", "quality", "viewer"] },
+  { prefix: "/quality/complaints", roles: ["owner", "admin", "quality", "factory_manager", "production_manager", "production", "sales_manager", "sales", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "viewer"] },
+  { prefix: "/payments/follow-up", roles: ["owner", "admin", "accounts"] },
+  { prefix: "/orders/closure", roles: ["owner", "admin", "sales_manager", "sales", "production_manager", "production", "factory_manager", "dispatch_manager", "dispatch", "inventory_manager", "accounts", "quality", "viewer"] },
   { prefix: "/vendors/purchasing", roles: ["owner", "admin", "accounts", "inventory_manager"] },
   { prefix: "/tasks/changes", roles: ["owner", "admin", "sales_manager", "production_manager", "factory_manager", "inventory_manager", "dispatch_manager", "quality", "accounts"] },
   { prefix: "/customers/portal-responses", roles: ["owner", "admin", "sales_manager", "sales"] },

@@ -28,6 +28,9 @@ export async function createNov6Fixture() {
     values($1,$2,$3,'D-NOV6-C',current_date-3,1,500,'delivered',now()-interval '3 days',now()-interval '2 days',now())`, [ids.dispatchC, ids.company, ids.orderC]);
   await db.query(`insert into packing_list_items(id,company_id,dispatch_id,profile_id,bundle_number,number_of_pieces,gross_weight_kg,tare_weight_kg,order_item_id,net_length_m)
     values($1,$2,$3,$4,'C1',70,502,2,$5,420)`, [ids.packC, ids.company, ids.dispatchC, ids.profile, ids.lineC]);
+  // The customer accepted the delivered bundle (orchestration Phase 7: operational closure needs customer acceptance).
+  await db.query(`insert into delivery_dispositions(company_id,dispatch_id,packing_list_item_id,disposition,quantity_kg,receiver_name,evidence,owner_id,recorded_by)
+    values($1,$2,$3,'accepted',500,'Site store','Signed delivery challan',$4,$4)`, [ids.company, ids.dispatchC, ids.packC, ids.salesManager]);
   await db.query(`insert into invoices(id,company_id,customer_id,order_id,dispatch_id,invoice_number,invoice_date,status,grand_total,amount_paid,credited_amount,issued_at)
     values($1,$2,$3,$4,$5,'INV-NOV6-C',current_date-2,'sent',59000,0,0,now()-interval '2 days')`, [ids.invoiceC, ids.company, ids.customer, ids.orderC, ids.dispatchC]);
   // NOV-021: an order still to be produced on the compatible press only.
