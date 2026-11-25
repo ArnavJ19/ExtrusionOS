@@ -191,6 +191,29 @@ begin
 end;
 $$;
 
+-- The first-stage QC of a job is the QC of its own finished output: a mill-finish job is inspected as extruded (no
+-- finishing job), a powder-coated or anodized job only after finishing (validate_quality_production_link requires each
+-- of its inspections to name an accepted finishing receipt). Every reader of first-stage approvals on the ageing /
+-- final-QC path selects inspections by this stage.
+create or replace function private.olo_job_qc_after_finishing(p_company uuid, p_job uuid) returns boolean
+language sql stable security definer set search_path = public, private as $$
+  select coalesce((select coalesce(pj.finishing_type, 'mill_finish') <> 'mill_finish' from public.production_jobs pj
+    where pj.id = p_job and pj.company_id = p_company), false)
+$$;
+
+-- Kilograms of a job that reach its first-stage QC. Mill finish: the run's output. After finishing: the accepted
+-- output of every received finishing receipt (original or corrective retry, each the source a disposition is capped
+-- at) plus run output not yet received back from finishing, which still awaits that QC.
+create or replace function private.olo_job_qc_source_kg(p_company uuid, p_job uuid, p_produced numeric) returns numeric
+language sql stable security definer set search_path = public, private as $$
+  select case when not private.olo_job_qc_after_finishing(p_company, p_job) then p_produced
+    else coalesce((select sum(f.output_weight_kg) from public.finishing_jobs f where f.company_id = p_company and f.production_job_id = p_job
+        and f.status in ('completed','rejected') and f.received_date is not null and f.output_weight_kg > 0), 0)
+      + greatest(p_produced - coalesce((select sum(f.input_weight_kg) from public.finishing_jobs f where f.company_id = p_company and f.production_job_id = p_job
+        and f.retry_of_finishing_job_id is null and f.status in ('completed','rejected') and f.received_date is not null), 0), 0) end
+$$;
+revoke all on function private.olo_job_qc_after_finishing(uuid, uuid), private.olo_job_qc_source_kg(uuid, uuid, numeric) from public, anon, authenticated;
+
 -- Each figure describes one physical state of the job's output and comes from its own record; they are never added
 -- across states. Final-QC rejections reverse the first-stage approval, so approved + rejected-at-final is what passed
 -- first-stage QC.
@@ -200,21 +223,25 @@ declare j public.production_jobs%rowtype; v_route jsonb; v_tol numeric := (priva
   v_produced numeric; v_approved numeric; v_rejected numeric; v_pending numeric; v_rework numeric; v_decided numeric; v_held numeric; v_awaiting numeric;
   v_loaded numeric := 0; v_in numeric := 0; v_aged_ok numeric := 0; v_aged_rej numeric := 0; v_final_ok numeric := 0; v_final_rej numeric := 0;
   v_packed numeric; v_aw_ageing numeric := 0; v_aw_final numeric := 0; v_unaged numeric := 0; v_stage text; v_required boolean;
+  v_after boolean; v_source numeric;
 begin
   select * into j from public.production_jobs where id = p_job and company_id = p_company;
   if not found then return null; end if;
   v_route := private.olo_job_route(p_company, p_job);
   v_required := v_route ->> 'state' = 'required';
+  v_after := private.olo_job_qc_after_finishing(p_company, p_job);
   v_produced := case when j.status in ('in_progress','completed','on_hold') then coalesce(j.actual_quantity_kg, 0) else 0 end;
+  v_source := private.olo_job_qc_source_kg(p_company, p_job, v_produced);
+  -- First-stage QC is the job's own stage: as extruded for mill finish, after finishing for coated or anodized output.
   select coalesce(sum(qi.quantity_checked_kg) filter (where qi.status = 'approved'), 0), coalesce(sum(qi.quantity_checked_kg) filter (where qi.status = 'rejected'), 0),
     coalesce(sum(qi.quantity_checked_kg) filter (where qi.status = 'pending'), 0),
     coalesce(sum(qi.quantity_checked_kg) filter (where qi.status = 'rework' and not exists (select 1 from public.quality_rework_resolutions rr where rr.source_inspection_id = qi.id)), 0)
     into v_approved, v_rejected, v_pending, v_rework
-  from public.quality_inspections qi where qi.company_id = p_company and qi.production_job_id = p_job and qi.finishing_job_id is null;
+  from public.quality_inspections qi where qi.company_id = p_company and qi.production_job_id = p_job and (qi.finishing_job_id is not null) = v_after;
   v_decided := v_approved + v_rejected;
   select coalesce(sum(qc.scope_kg - qc.released_accepted_kg - qc.released_rejected_kg), 0) into v_held
     from public.quality_containments qc where qc.company_id = p_company and qc.production_job_id = p_job and qc.status in ('open','partially_resolved');
-  v_awaiting := greatest(v_produced - v_decided - v_held, 0);
+  v_awaiting := greatest(v_source - v_decided - v_held, 0);
   -- Material that has left QC: packaging jobs that have started, or packed and prepared bundles and stock made from
   -- the job. A 'scheduled'
   -- packaging job is the queue entry created when a mill-finish run completes, not packed material.
@@ -246,6 +273,7 @@ begin
     when v_rejected > 0 and v_approved <= v_tol then 'rejected'
     else 'awaiting_ageing' end;
   return jsonb_build_object('job_id', j.id, 'job_number', j.job_number, 'order_id', j.order_id, 'job_status', j.status, 'route', v_route, 'stage', v_stage,
+    'qc_stage', case when v_after then 'after_finishing' else 'production' end, 'qc_source_kg', v_source,
     'produced_kg', v_produced, 'approved_kg', v_approved, 'rejected_kg', v_rejected, 'pending_kg', v_pending, 'rework_open_kg', v_rework, 'held_kg', v_held,
     'awaiting_decision_kg', v_awaiting, 'packed_kg', v_packed, 'loaded_kg', v_loaded, 'in_ageing_kg', v_in, 'aged_accepted_kg', v_aged_ok, 'aged_rejected_kg', v_aged_rej,
     'final_accepted_kg', v_final_ok, 'final_rejected_kg', v_final_rej, 'awaiting_ageing_kg', v_aw_ageing, 'awaiting_final_kg', v_aw_final, 'packed_unaged_kg', v_unaged,
@@ -395,6 +423,7 @@ declare a jsonb := private.olo_actor(private.olo_reader_roles()); v_actor uuid :
   v_payload jsonb := coalesce(p_payload, '{}'::jsonb); v_page integer := private.olo_page(coalesce(p_payload, '{}'::jsonb)); v_rows jsonb; v_total bigint; v_view text;
   j public.production_jobs%rowtype; pr public.aluminium_profiles%rowtype; k jsonb; v_results jsonb; v_ok numeric; v_rej numeric; v_left numeric; v_take numeric;
   v_id uuid := gen_random_uuid(); v_number text; v_order_number text; qi record; v_reversed jsonb := '[]'::jsonb; v_r jsonb; v_spec text; v_reason text; v_search text; v_sort text; v_dir text;
+  v_after boolean; v_fin uuid;
 begin
   if p_command = 'queue' then
     -- Server-side search, a filter and sorting, 10 per page.
@@ -465,8 +494,16 @@ begin
   perform private.olo_keys(v_payload, array['job_id','accepted_kg','rejected_kg','results','method','sampling_reference','certificate_reference','temper_verified','rejection_reason','note']);
   select * into j from public.production_jobs where id = (v_payload ->> 'job_id')::uuid and company_id = v_company;
   if not found then raise exception 'Production job not found' using errcode = '23514'; end if;
-  -- One QC decision on this job at a time (the lock the QC disposition check and the reversal take), then the job row.
-  perform pg_advisory_xact_lock(hashtextextended('qc-disposition:' || v_company::text || ':' || j.id::text || ':mill-finish', 0));
+  -- One QC decision on this job at a time (the locks the QC disposition check and the reversal take: one per QC stage
+  -- source, so each finishing receipt of a coated or anodized job, in a fixed order), then the job row.
+  v_after := private.olo_job_qc_after_finishing(v_company, j.id);
+  if not v_after then
+    perform pg_advisory_xact_lock(hashtextextended('qc-disposition:' || v_company::text || ':' || j.id::text || ':mill-finish', 0));
+  else
+    for v_fin in select fj.id from public.finishing_jobs fj where fj.company_id = v_company and fj.production_job_id = j.id order by fj.id loop
+      perform pg_advisory_xact_lock(hashtextextended('qc-disposition:' || v_company::text || ':' || j.id::text || ':' || v_fin::text, 0));
+    end loop;
+  end if;
   perform 1 from public.production_jobs where id = j.id for update;
   k := private.olo_final_qc_job(v_company, j.id, v_role);
   if not (k ->> 'can_record')::boolean then raise exception '%', k ->> 'blocker' using errcode = '23514'; end if;
@@ -550,7 +587,7 @@ begin
     v_left := v_rej;
     perform set_config('olo.final_qc_job', j.id::text, true);
     for qi in select x.id, x.quantity_checked_kg from public.quality_inspections x
-        where x.company_id = v_company and x.production_job_id = j.id and x.finishing_job_id is null and x.status = 'approved'
+        where x.company_id = v_company and x.production_job_id = j.id and (x.finishing_job_id is not null) = v_after and x.status = 'approved'
         order by x.inspection_date, x.created_at, x.id loop
       exit when v_left <= 0.0005;
       v_take := least(v_left, qi.quantity_checked_kg);
@@ -598,6 +635,17 @@ $$;
 -- ---------------------------------------------------------------------------------------------------------------
 -- Optional QC route control (company setting, default off)
 -- ---------------------------------------------------------------------------------------------------------------
+-- One material release of a job at a time. Each guarded path (ageing loads, packaging starts, packing lines, prepared
+-- bundles, stock) checks a per-job aggregate, while the commands that write those rows lock only their own rows and take
+-- shared locks on the job and order, so two releases of different rows of one job would each read only their own
+-- write and pass the cap together. Every release guard takes this transaction lock before reading its aggregate; the
+-- reads after it (statements of a volatile function in read committed) see every release committed before it.
+create or replace function private.olo_lock_job_release(p_company uuid, p_job uuid) returns void
+language sql volatile security definer set search_path = public, private as $$
+  select pg_advisory_xact_lock(hashtextextended('olo-job-release:' || p_company::text || ':' || p_job::text, 0))
+$$;
+revoke all on function private.olo_lock_job_release(uuid, uuid) from public, anon, authenticated;
+
 -- Ageing loads: only what first-stage QC approved (approved now plus what final QC later rejected, which was approved
 -- when it was loaded). Retreatment batches re-load material already in treatment and are not counted again.
 create or replace function private.olo_guard_ageing_load() returns trigger language plpgsql security definer set search_path = public, private as $$
@@ -606,10 +654,13 @@ begin
   if not (private.olo_settings_for(new.company_id)).enforce_qc_route then return new; end if;
   select retreatment_of into v_retreat from public.treatment_batches where id = new.batch_id and company_id = new.company_id;
   if v_retreat is not null then return new; end if;
+  perform private.olo_lock_job_release(new.company_id, new.production_job_id);
   select coalesce(sum(ti.quantity_kg), 0) into v_loaded from public.treatment_inputs ti join public.treatment_batches tb on tb.id = ti.batch_id and tb.company_id = ti.company_id
     where ti.company_id = new.company_id and ti.production_job_id = new.production_job_id and tb.retreatment_of is null;
+  -- First-stage approvals of the job's own QC stage (after finishing for coated or anodized output).
   select coalesce(sum(qi.quantity_checked_kg) filter (where qi.status = 'approved'), 0) into v_cap from public.quality_inspections qi
-    where qi.company_id = new.company_id and qi.production_job_id = new.production_job_id and qi.finishing_job_id is null;
+    where qi.company_id = new.company_id and qi.production_job_id = new.production_job_id
+      and (qi.finishing_job_id is not null) = private.olo_job_qc_after_finishing(new.company_id, new.production_job_id);
   v_cap := v_cap + coalesce((select sum(f.rejected_kg) from public.final_qc_records f where f.company_id = new.company_id and f.production_job_id = new.production_job_id), 0);
   if v_loaded + new.quantity_kg > v_cap + 0.0005 then
     select job_number into v_job from public.production_jobs where id = new.production_job_id;
@@ -646,19 +697,23 @@ begin
   if tg_table_name = 'packaging_jobs' then
     if new.production_job_id is null or new.status not in ('in_progress','completed') then return null; end if;
     v_job := new.production_job_id;
-    select coalesce(sum(x.profile_weight_kg), 0) into v_total from public.packaging_jobs x where x.company_id = new.company_id and x.production_job_id = v_job and x.status in ('in_progress','completed');
   elsif tg_table_name = 'profile_stock_batches' then
     if new.origin_type is distinct from 'production_surplus' or new.production_job_id is null then return null; end if;
     v_job := new.production_job_id;
-    v_total := private.olo_job_released_material_kg(new.company_id, v_job);
   else
     if new.source_kind is distinct from 'production' or new.source_line_id is null then return null; end if;
     v_job := new.source_line_id;
+  end if;
+  if private.olo_job_route(new.company_id, v_job) ->> 'state' <> 'required' then return null; end if;
+  -- Serialize with every other release of this job before reading the totals (see private.olo_lock_job_release).
+  perform private.olo_lock_job_release(new.company_id, v_job);
+  if tg_table_name = 'packaging_jobs' then
+    select coalesce(sum(x.profile_weight_kg), 0) into v_total from public.packaging_jobs x where x.company_id = new.company_id and x.production_job_id = v_job and x.status in ('in_progress','completed');
+  else
     -- One total for both bundle records (a dispatched prepared bundle is already marked dispatched when its packing
     -- line is written, so nothing counts twice) plus stock made from the job.
     v_total := private.olo_job_released_material_kg(new.company_id, v_job);
   end if;
-  if private.olo_job_route(new.company_id, v_job) ->> 'state' <> 'required' then return null; end if;
   select coalesce(sum(f.accepted_kg), 0) into v_released from public.final_qc_records f where f.company_id = new.company_id and f.production_job_id = v_job;
   v_tol := greatest(1, v_released * 0.005);
   if v_total > v_released + v_tol then
@@ -672,7 +727,11 @@ $$;
 create trigger zzz_olo_p5_guard_unaged after insert or update of status, production_job_id, profile_weight_kg on public.packaging_jobs for each row execute function private.olo_guard_unaged_packing();
 create trigger zzz_olo_p5_guard_unaged after insert on public.packing_list_items for each row execute function private.olo_guard_unaged_packing();
 create trigger zzz_olo_p5_guard_unaged after insert on public.prepared_physical_bundles for each row execute function private.olo_guard_unaged_packing();
-create trigger zzz_olo_p5_guard_unaged after insert on public.profile_stock_batches for each row execute function private.olo_guard_unaged_packing();
+-- Stock is checked at commit: a bundle split or merge (private.lifecycle_apply) writes each output batch before the
+-- bundle_transformation_lines row that marks it as repacked material, so an immediate check would count the input and
+-- its outputs together and refuse a repack of released stock as a new release.
+create constraint trigger zzz_olo_p5_guard_unaged after insert on public.profile_stock_batches deferrable initially deferred
+  for each row execute function private.olo_guard_unaged_packing();
 
 -- ---------------------------------------------------------------------------------------------------------------
 -- Evaluation: QC, ageing and final QC work; ageing cycle monitoring; run notifications

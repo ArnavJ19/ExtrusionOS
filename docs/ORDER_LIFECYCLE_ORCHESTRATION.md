@@ -370,7 +370,15 @@ Tests: `tests/order-lifecycle-orchestration-queued-packaging-sql.test.mjs` (5).
    from an ageing job now counts against its final-QC release, checked when the stock batch is written.
 3. The reversal history and the final-QC lists lacked search, filters and sorting (`AGENTS.md` list-page rules); both now
    have them server-side (final QC: job / order / profile / record / method search, "only records with rejections",
-   sort by date, job, kilograms awaiting ageing or final QC, accepted or rejected). The Phase 4 and batch 3 tests that
+   sort by date, job, kilograms awaiting ageing or final QC, accepted or rejected).
+4. The release caps read per-job totals, but the commands that write released material (`bundle.record`, packaging
+   starts, packing lines, stock, ageing loads) lock only their own rows and share-lock the job, so two concurrent
+   releases of different bundles of one job could each see only their own row and together exceed the cap (two 500 kg
+   bundles against a 500 kg final-QC release). Every guard (`olo_guard_unaged_packing`, `olo_guard_ageing_load`) now takes
+   one per-job transaction lock (`private.olo_lock_job_release`) before reading its total, so the second release waits
+   and then counts the first.
+
+   The Phase 4 and batch 3 tests that
 modelled "moved-on" material with a scheduled packaging job now use a started one; the Phase 5 migration no longer needs
 its own exception for the queue entry.
 **Deployment notes**: apply after 20261124100000. Behaviour changes only for runs whose packaging is still queued:

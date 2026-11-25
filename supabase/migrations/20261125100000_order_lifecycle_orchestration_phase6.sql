@@ -334,7 +334,9 @@ returns text language plpgsql security definer set search_path = public, private
 declare v_job uuid; v_finishing uuid;
 begin
   select qi.production_job_id, qi.finishing_job_id into v_job, v_finishing from public.quality_inspections qi where qi.id = p_inspection and qi.company_id = p_company;
-  if v_job is not null and v_finishing is null and private.olo_job_route(p_company, v_job) ->> 'state' = 'required' then
+  -- First-stage QC is the job's own stage: as extruded for mill finish, after finishing for coated or anodized output.
+  if v_job is not null and (v_finishing is not null) = private.olo_job_qc_after_finishing(p_company, v_job)
+     and private.olo_job_route(p_company, v_job) ->> 'state' = 'required' then
     return 'not_eligible';
   end if;
   return private.handoff_for_inspection_p5(p_company, p_inspection);
@@ -356,7 +358,8 @@ begin
       left join public.aluminium_profiles pr on pr.id = pj.profile_id
       where pj.id = new.production_job_id and pj.company_id = new.company_id;
     select qi.id into v_source from public.quality_inspections qi
-      where qi.company_id = new.company_id and qi.production_job_id = new.production_job_id and qi.finishing_job_id is null and qi.status = 'approved'
+      where qi.company_id = new.company_id and qi.production_job_id = new.production_job_id and qi.status = 'approved'
+        and (qi.finishing_job_id is not null) = private.olo_job_qc_after_finishing(new.company_id, new.production_job_id)
       order by qi.inspection_date desc, qi.created_at desc, qi.id limit 1;
     if v_source is null then return null; end if;
     v_spec := private.olo_packing_spec(new.company_id, v_job.customer_id);
@@ -407,7 +410,8 @@ begin
     if jsonb_array_length(v_billets) = 0 then v_gaps := v_gaps || format('No billet issue is recorded for job %s; its metal source is not linked.', coalesce(v_job ->> 'job_number', '-')); end if;
     select coalesce(jsonb_agg(jsonb_build_object('id', qi.id, 'batch_number', qi.batch_number, 'status', qi.status, 'quantity_kg', qi.quantity_checked_kg,
         'inspected_at', qi.inspection_date, 'inspector', qi.inspector_name, 'from_reversal', qi.reversal_id is not null) order by qi.inspection_date, qi.id), '[]'::jsonb)
-      into v_qc from (select * from public.quality_inspections where company_id = p_company and production_job_id = reg.job_id and finishing_job_id is null
+      into v_qc from (select * from public.quality_inspections where company_id = p_company and production_job_id = reg.job_id
+          and (finishing_job_id is not null) = private.olo_job_qc_after_finishing(p_company, reg.job_id)
         order by inspection_date limit 40) qi;
     if not exists (select 1 from jsonb_array_elements(v_qc) e where e ->> 'status' = 'approved') then
       v_gaps := v_gaps || 'No first-stage QC approval is recorded for the job of this bundle.'::text;
